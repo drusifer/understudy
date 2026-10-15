@@ -21,6 +21,11 @@ import { pageApp } from './apps/page.mjs';
 const NEEDS = 'an example directory needs adapter.mjs, part/turn.yaml and part/questions.yaml';
 const QUESTION_TYPES = ['noul', 'choice', 'score'];
 // The fields each kind of target takes; anything else is a mistake, named at load.
+// The fields a kind cannot do without, with what each one is for.
+const REQUIRED = {
+  process: { command: 'the program to start, e.g. node' },
+  http: { url: 'where the API is, e.g. http://127.0.0.1:{port}', state: 'the path a look GETs, e.g. /status' },
+};
 const TARGET_FIELDS = { process: ['command', 'args'], page: ['root', 'page'], http: ['command', 'args', 'url', 'state'] };
 const APP_HOOKS = ['phase', 'project', 'options', 'act'];
 
@@ -85,6 +90,11 @@ function checkTarget(target, fail) {
   if (!known) fail(`target.kind must be ${kinds} (got ${JSON.stringify(target?.kind ?? null)})`);
   const extra = Object.keys(target).find((field) => field !== 'kind' && !known.includes(field));
   if (extra) fail(`target.${extra} is not a ${target.kind} target field (known: ${known.join(', ')})`);
+  const missing = Object.keys(REQUIRED[target.kind] ?? {}).find((field) => typeof target[field] !== 'string' || target[field] === '');
+  if (missing) fail(`target.${missing} is required for ${target.kind === 'http' ? 'an' : 'a'} ${target.kind} target (${REQUIRED[target.kind][missing]})`);
+  if (target.kind === 'http' && target.url.includes('{port}') && !target.command) {
+    fail('target.url has {port} but no command to start - give the full URL of a running service, or a command');
+  }
 }
 
 /**

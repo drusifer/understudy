@@ -50,8 +50,9 @@ export default {
 };
 ```
 
-`understudy check` refuses an adapter that is missing `name` or `target.kind`, has a
-`target` field its kind does not take, or (for `process` and `http`) lacks one of the four
+`understudy check` refuses an adapter that is missing `name` or `target.kind`, misses a field
+its kind needs (`process`: `command`; `http`: `url` and `state`, plus `command` when `url` has
+`{port}`), has a `target` field its kind does not take, or (for `process` and `http`) lacks one of the four
 `app` hooks - naming the piece. A **`page` adapter may leave out `app` entirely** and get the
 generic page app (below); `check` then says `(page, generic page app)`.
 

@@ -166,5 +166,6 @@ Run by Tank at sprint close (`*devops sdlc-check`):
 8. Nothing under `src/` or `tests/` imports from `seed/`.
 
 ---
-*Last verified: 2026-10-15 against sprint-1 at 2fba1d8 by Tank (sprint 1 close: distclean →
-install → install (lockfile unchanged) → check, 93/93 tests; make test-live green, both examples).*
+*Last verified: 2026-10-15 against sprint-2 at cff915e by Tank (sprint 2 close: distclean →
+install → install (lockfile unchanged) → check, 118/118 tests; make test-live green for cli, web
+and http).*

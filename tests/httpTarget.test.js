@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { startTarget } from '../src/targets/http.mjs';
-import { RunError, UsageError } from '../src/errors.mjs';
+import { RunError } from '../src/errors.mjs';
 
 const EXAMPLE = fileURLToPath(new URL('../examples/http', import.meta.url));
 
@@ -116,9 +116,4 @@ test('a started server that exits before answering is named with its exit code',
     assert.match(error.message, /-e process\.exit\(4\) exited with code 4 before answering/);
     return true;
   });
-});
-
-test('a {port} URL with nothing to start is refused before anything runs', async () => {
-  await assert.rejects(startTarget({ kind: 'http', url: 'http://127.0.0.1:{port}', state: '/state' }, { directory: EXAMPLE }),
-    (error) => error instanceof UsageError && error.message === 'target.url has {port} but no command to start - give the full URL of a running service, or a command');
 });

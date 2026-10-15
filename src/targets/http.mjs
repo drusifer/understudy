@@ -9,7 +9,7 @@
 // leaves the service running.
 
 import net from 'node:net';
-import { RunError, UsageError } from '../errors.mjs';
+import { RunError } from '../errors.mjs';
 import { startProgram } from './program.mjs';
 
 const READY_MS = 10_000;
@@ -48,8 +48,6 @@ export async function startTarget(spec, { directory, readyMs = READY_MS, request
     const port = await freePort();
     url = spec.url.split('{port}').join(String(port));
     program = await startProgram(spec, { directory, environment: { ...process.env, PORT: String(port) } });
-  } else if (spec.url.includes('{port}')) {
-    throw new UsageError('target.url has {port} but no command to start - give the full URL of a running service, or a command');
   }
   const describe = () => (program ? `${program.description} at ${url}` : url);
   const state = { last: null, seq: 0, body: undefined };

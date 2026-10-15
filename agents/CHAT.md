@@ -287,3 +287,50 @@ make: *** [Makefile:34: run] Error 2
 ---
 [<small>2026-10-15 18:33:56</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
  UAT phase 5 passed: documented commands run as written (check http/web, hook-field refusal message matches); links clean. Deviation flagged for Smith: UND-8 AC2 grep still hits history (sprint docs, ADR-0002 record, Sprint-2 story text) - user-facing docs/README/examples/src are clean; history kept on purpose. @Morpheus *lead review phase-5
+
+---
+[<small>2026-10-15 18:33:56</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
+ Phase 5 review passed; history kept in sprint records is correct (no back-compat applies to code and live docs, not history). All phases reviewed. @Tank *devops sdlc-check
+
+---
+[<small>2026-10-15 18:34:17</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+6:34PM INF 1 commits scanned.
+6:34PM INF scanned ~783 bytes (783 bytes) in 237ms
+6:34PM INF no leaks found
+
+---
+[<small>2026-10-15 18:34:23</small>] [**Tank**]->[**Oracle**] *devops handoff*:
+ SDLC check passed: clean rebuild, lock unchanged, check green (118/118), imports declared (no new deps), no seed imports, test-live green x3. Last verified updated. @Oracle *ora groom
+
+---
+[<small>2026-10-15 18:34:42</small>] [**Oracle**]->[**Smith**] *ora handoff*:
+ Docs groomed: 3 lessons (bounded hang tests, no commit after a refusable write, probe before designing). rubric SDLC: TRUE=S WHOLE=A CLEAN=S CLASS=A CHECK=S GAPS=A. rubric DECISION (ADR-0007..0010): CTX=S OPTS=A CONSQ=S. Chat report after launch. @Smith *user test sprint-2
+
+---
+[<small>2026-10-15 18:35:03</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make run | /home/drusifer/Projects/understudy/build/build.out
+understudy: step 2 asking -> buy:water (0.74)
+{"final":true,"outcome":"done","steps":2,"state":"finished"}
+
+---
+[<small>2026-10-15 18:35:22</small>] [**Smith**]->[**Trin**] *user bug*:
+ *user bug CMD: check <http adapter without state> | EXPECTED: refused at check naming target.state | ACTUAL: 'part OK', then run waits 10 s and says 'GET undefined' | UX ISSUE: H5 error prevention, H9. Also {port} with no command only caught at run, not check. @Trin triage.
+
+---
+[<small>2026-10-15 18:35:22</small>] [**Trin**]->[**Neo**] *qa triage*:
+ Triage: DEF-05 (Major) required target fields not checked (process: command; http: url, state); DEF-06 (Minor) {port}-without-command belongs in check. One fix in part.mjs checkTarget; move the {port} rule out of http.mjs. @Neo *swe fix DEF-05 DEF-06
+
+---
+[<small>2026-10-15 18:35:49</small>] [**make**]->[**all**] *build*:
+ Build FAILED exit=2 | make run | /home/drusifer/Projects/understudy/build/build.out
+make: *** [Makefile:34: run] Error 2
+
+---
+[<small>2026-10-15 18:35:58</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ DEF-05/06 fixed test-first: check refuses missing required target fields (process: command; http: url, state) and {port} without command, with what each field is for. 119/119, lint 0. @Trin *qa verify
+
+---
+[<small>2026-10-15 18:35:58</small>] [**Trin**]->[**Smith**] *qa handoff*:
+ Fixes verified via real check on both broken copies. @Smith *user test re-run
