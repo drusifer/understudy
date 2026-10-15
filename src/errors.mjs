@@ -11,4 +11,14 @@ export class UsageError extends Error {}
  * The run started and could not finish - the app exited, the step cap
  * was reached, Jev answered off the list twice. Exit 1.
  */
-export class RunError extends Error {}
+export class RunError extends Error {
+  /**
+   * @param {string} message
+   * @param {{ outcome?: string, cause?: unknown }} [options] `outcome` is
+   *   what the run's final log line says (`step-cap`, `off-list`, ...).
+   */
+  constructor(message, { outcome = 'error', cause } = {}) {
+    super(message, { cause });
+    this.outcome = outcome;
+  }
+}

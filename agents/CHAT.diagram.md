@@ -72,4 +72,12 @@ sequenceDiagram
     Note right of Neo: "Phase 3 impl complete:<br/>src/part.mjs (adapter<br/>shape, questions types +<br/>literal/quoted-value<br/>check, turn via<br/>parseTurn with<br/>generic+adapter l…"
     Trin->>Morpheus: "qa handoff"
     Note right of Trin: "UAT phase 3 passed via<br/>real CLI: unknown actor<br/>-><br/>file/path/name/nearest,<br/>exit 2, no stack, no key<br/>needed. Found+fixed:<br/>paths outside cwd s…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 3 review passed<br/>(services object filled<br/>at run time keeps check<br/>side-effect free).<br/>Committed. @Neo *swe<br/>impl phase-4"
+    Mouse->>All: "phase 4"
+    Note right of Mouse: "Phase 4: the run loop<br/>with test doubles"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 4 impl complete:<br/>src/run.mjs (runPart: ke<br/>y->part->judge->target-<br/>>seat loop, step cap,<br/>10s first move, app-<br/>exited, Jev error wrap,<br/>Ctr…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 4 passed:<br/>UND-1 AC2-5 vs fakes -<br/>log == stdout lines,<br/>final line on all 7<br/>outcomes, nothing sent<br/>on off-list, target<br/>closed every…"
 ```

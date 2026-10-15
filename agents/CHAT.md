@@ -169,3 +169,32 @@ npm run lint
 ---
 [<small>2026-10-15 14:26:30</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
  UAT phase 3 passed via real CLI: unknown actor -> file/path/name/nearest, exit 2, no stack, no key needed. Found+fixed: paths outside cwd showed as ../../../../tmp (now absolute). @Morpheus *lead review phase-3
+
+---
+[<small>2026-10-15 14:26:30</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 3 review passed (services object filled at run time keeps check side-effect free). Committed. @Neo *swe impl phase-4
+
+---
+[<small>2026-10-15 14:26:30</small>] [**Mouse**]->[**all**] *phase 4*:
+ Phase 4: the run loop with test doubles
+
+---
+[<small>2026-10-15 14:28:25</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test | /home/drusifer/Projects/understudy/build/build.out
+✔ Ctrl-C stops at the next safe state and says so (6.504227ms)
+ℹ tests 82
+ℹ suites 0
+ℹ pass 82
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 961.823378
+
+---
+[<small>2026-10-15 14:28:35</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 4 impl complete: src/run.mjs (runPart: key->part->judge->target->seat loop; step cap, 10s first move, app-exited, Jev error wrap, Ctrl-C to safe state; stdout+jsonl+stderr, final line always, target closed in finally). Seed runner/botRequests deleted. 82/82, lint 0. @Trin *qa uat phase-4
+
+---
+[<small>2026-10-15 14:28:35</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 4 passed: UND-1 AC2-5 vs fakes - log == stdout lines, final line on all 7 outcomes, nothing sent on off-list, target closed every time. @Morpheus *lead review phase-4

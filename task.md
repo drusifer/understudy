@@ -42,9 +42,9 @@
 
 ### Phase 4: The run loop — UND-1 AC2–5 (with test doubles)
 *Phase goal: `run` plays any target to its end state with a step cap, first-move timeout, unexpected-exit stop and JSON step log — proven with a fake target and a judge double.*
-- [ ] **Task 4.1:** `src/run.mjs` from `seed/recard/tools/jev/runner.mjs` (`playSeat`, `run(dir, { steps, makeJudge, makeTarget })`): key check → load part → start target → seat loop; step cap (default 50) message; 10 s first-move timeout; process-exit check; Jev error wrap; SIGINT→`QUIT`; stdout JSON + stderr summary + `build/runs/<name>/<ts>.jsonl`, first stderr line names the log, final line with `outcome`; target closed in `finally`. Delete `seed/recard/tools/jev/runner.mjs` and `seed/recard/tools/botRequests.mjs`. (*Owner: Neo | Verification: `bobp make test` (tests: done, step-cap, off-list twice, app exited, no first move, Jev error) fail 0*)
-- [ ] **Task 4.2:** UAT UND-1 AC2–5 against the fakes: log file lines == stdout lines; final line present on every outcome. (*Owner: Trin | Verification: `bobp make test && bobp make lint`*)
-- [ ] **Task 4.3:** Review against ARCH §4 sequence and §6 failure table. (*Owner: Morpheus | Verification: code review; commit `Phase 4`*)
+- [x] **Task 4.1:** `src/run.mjs` from `seed/recard/tools/jev/runner.mjs` (`playSeat`, `run(dir, { steps, makeJudge, makeTarget })`): key check → load part → start target → seat loop; step cap (default 50) message; 10 s first-move timeout; process-exit check; Jev error wrap; SIGINT→`QUIT`; stdout JSON + stderr summary + `build/runs/<name>/<ts>.jsonl`, first stderr line names the log, final line with `outcome`; target closed in `finally`. Delete `seed/recard/tools/jev/runner.mjs` and `seed/recard/tools/botRequests.mjs`. (*Owner: Neo | Verification: `bobp make test` (tests: done, step-cap, off-list twice, app exited, no first move, Jev error) fail 0*)
+- [x] **Task 4.2:** UAT UND-1 AC2–5 against the fakes: log file lines == stdout lines; final line present on every outcome. (*Owner: Trin | Verification: `bobp make test && bobp make lint`*)
+- [x] **Task 4.3:** Review against ARCH §4 sequence and §6 failure table. (*Owner: Morpheus | Verification: code review; commit `Phase 4`*)
 
 ### Phase 5: Process target and the CLI example — UND-1 AC1, live
 *Phase goal: a real CLI program is played to its end state by live Jev.*

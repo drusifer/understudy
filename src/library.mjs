@@ -174,7 +174,7 @@ async function play(services, { context, phase, question: questionName }) {
     result = await choose();
     const again = offListAnswer(result, criteria);
     if (again !== undefined) {
-      throw new RunError(`in phase "${phase}" Jev answered off the list twice ("${offList}", then "${again}") - offered: ${Object.keys(criteria).join(', ')}`);
+      throw new RunError(`in phase "${phase}" Jev answered off the list twice ("${offList}", then "${again}") - offered: ${Object.keys(criteria).join(', ')}`, { outcome: 'off-list' });
     }
   }
   const move = byId(result.option);
