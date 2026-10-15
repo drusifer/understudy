@@ -16,6 +16,7 @@ import { UsageError } from './errors.mjs';
 import { parseTurn, unknown } from './machine.mjs';
 import { genericLibrary, mergeLibraries } from './library.mjs';
 import { checkInstruction } from './strategyFile.mjs';
+import { pageApp } from './apps/page.mjs';
 
 const NEEDS = 'an example directory needs adapter.mjs, part/turn.yaml and part/questions.yaml';
 const QUESTION_TYPES = ['noul', 'choice', 'score'];
@@ -65,10 +66,12 @@ export async function loadAdapter(directory) {
   if (!adapter || typeof adapter !== 'object') fail('needs a default export - see docs/ADAPTERS.md');
   if (typeof adapter.name !== 'string' || adapter.name === '') fail('name must be a non-empty string - see docs/ADAPTERS.md');
   checkTarget(adapter.target, fail);
+  checkLibrary(adapter.library ?? {}, fail);
+  // A web page needs no hooks of its own: the generic page app plays what is on it.
+  if (adapter.target.kind === 'page' && adapter.app === undefined) return { ...adapter, app: pageApp, isGenericApp: true };
   for (const hook of APP_HOOKS) {
     if (typeof adapter.app?.[hook] !== 'function') fail(`app.${hook} must be a function - see docs/ADAPTERS.md`);
   }
-  checkLibrary(adapter.library ?? {}, fail);
   return adapter;
 }
 
@@ -160,7 +163,7 @@ export async function loadPart(directory) {
 export async function checkPart(directory) {
   const { adapter, questions, states } = await loadPart(directory);
   const count = Object.keys(questions).length;
-  return `${shown(directory)}: part OK - ${states} states, ${count} question${count === 1 ? '' : 's'}, adapter ${adapter.name} (${adapter.target.kind})`;
+  return `${shown(directory)}: part OK - ${states} states, ${count} question${count === 1 ? '' : 's'}, adapter ${adapter.name} (${adapter.target.kind}${adapter.isGenericApp ? ', generic page app' : ''})`;
 }
 
 /**

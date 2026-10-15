@@ -38,9 +38,9 @@
 
 ### Phase 4: Generic page app and the unmodified web example — UND-7 AC1–2, 7–8
 *Phase goal: `examples/web` is a plain page with a name-and-target adapter, played live to "Welcome aboard".*
-- [ ] **Task 4.1:** `src/apps/page.mjs` (phase/project/options/act per ARCH §4); `part.mjs` fills it in for a `page` adapter without `app`, `check` says `(page, generic page app)`; `examples/web`: hook removed from `app.js`, adapter = name + target (≤ 10 lines), part ends with `showing`. (*Owner: Neo | Verification: `bobp make test`; `bobp make run ARGS="check examples/web"` exit 0*)
-- [ ] **Task 4.2:** UAT UND-7 AC1–8 live: `run examples/web --steps 20` exit 0 with `button:...` ids; page with `window.__understudy` played identically; remove the `showing` guard → stalled with the hint; no Chromium left running; `bobp make test-live` green (3 examples). (*Owner: Trin | Verification: live runs + `bobp make check`*)
-- [ ] **Task 4.3:** Review. (*Owner: Morpheus | Verification: review; commit `Phase 4`*)
+- [x] **Task 4.1:** `src/apps/page.mjs` (phase/project/options/act per ARCH §4); `part.mjs` fills it in for a `page` adapter without `app`, `check` says `(page, generic page app)`; `examples/web`: hook removed from `app.js`, adapter = name + target (≤ 10 lines), part ends with `showing`. (*Owner: Neo | Verification: `bobp make test`; `bobp make run ARGS="check examples/web"` exit 0*)
+- [x] **Task 4.2:** UAT UND-7 AC1–8 live: `run examples/web --steps 20` exit 0 with `button:...` ids; page with `window.__understudy` played identically; remove the `showing` guard → stalled with the hint; no Chromium left running; `bobp make test-live` green (3 examples). (*Owner: Trin | Verification: live runs + `bobp make check`*)
+- [x] **Task 4.3:** Review. (*Owner: Morpheus | Verification: review; commit `Phase 4`*)
 
 ### Phase 5: Docs — UND-8
 *Phase goal: the docs describe three targets and hookless pages only.*

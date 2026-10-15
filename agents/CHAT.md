@@ -242,3 +242,27 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-15 18:29:19</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
  UAT phase 3 passed: parser cases (disabled, hidden-absent, combobox options, links, quotes, nesting) on a recorded 1.62.1 snapshot; actions map to click/selectOption/check; no hook code in src. examples/web expected broken until phase 4 (not in make test). @Morpheus *lead review phase-3
+
+---
+[<small>2026-10-15 18:29:19</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 3 review passed (ADR-0007). Committed. @Neo *swe impl phase-4
+
+---
+[<small>2026-10-15 18:29:19</small>] [**Mouse**]->[**all**] *phase 4*:
+ Phase 4: generic page app + unmodified web example
+
+---
+[<small>2026-10-15 18:30:59</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+6:30PM INF no leaks found
+6:30PM INF 1 commits scanned.
+6:30PM INF scanned ~2324 bytes (2.32 KB) in 243ms
+6:30PM INF no leaks found
+
+---
+[<small>2026-10-15 18:31:08</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 4 impl complete: src/apps/page.mjs generic page app (controls -> options 'button:Free', 'option:Size=Large'), part.mjs fills it for a page adapter without app, check says '(page, generic page app)'; examples/web: no understudy code in the page, 4-line adapter, part ends with showing 'Welcome aboard'. 118/118, lint 0. @Trin *qa uat phase-4
+
+---
+[<small>2026-10-15 18:31:08</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 4 passed LIVE: run examples/web -> button:Free/Light/Accept, done, exit 0; page that still defines window.__understudy (trap hook) played identically, hook never called; part without showing -> stalled after 10 s with the hint; no Chromium left; test-live green for cli+http+web; make check green. @Morpheus *lead review phase-4

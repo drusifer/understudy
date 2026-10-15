@@ -96,4 +96,12 @@ sequenceDiagram
     Note right of Neo: "Phase 3 impl complete:<br/>src/targets/aria.mjs<br/>(snapshot -><br/>title/text/controls,<br/>disabled dropped,<br/>options carry list,<br/>checked/selected), page…"
     Trin->>Morpheus: "qa handoff"
     Note right of Trin: "UAT phase 3 passed:<br/>parser cases (disabled,<br/>hidden-absent, combobox<br/>options, links, quotes,<br/>nesting) on a recorded<br/>1.62.1 snapshot,<br/>actions…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 3 review passed<br/>(ADR-0007). Committed.<br/>@Neo *swe impl phase-4"
+    Mouse->>All: "phase 4"
+    Note right of Mouse: "Phase 4: generic page<br/>app + unmodified web<br/>example"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 4 impl complete:<br/>src/apps/page.mjs<br/>generic page app<br/>(controls -> options<br/>'button:Free',<br/>'option:Size=Large'),<br/>part.mjs fills it for a…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 4 passed LIVE:<br/>run examples/web -> butt<br/>on:Free/Light/Accept,<br/>done, exit 0, page that<br/>still defines<br/>window.__understudy<br/>(trap hook…"
 ```
