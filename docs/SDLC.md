@@ -37,8 +37,11 @@ repeating their commands. `make help` lists them.
 
 | Target | Runs | Notes |
 |---|---|---|
-| `install` | `npm ci` | exact lockfile install; idempotent; the only target that touches the network |
+| `install` | `npm ci` | exact lockfile install; idempotent; touches the network |
+| `install-browser` | `npx playwright install chromium` | needed only for web targets; touches the network; see §9 |
 | `test` | `npm test -- $(ARGS)` → `node --test tests/*.test.js` | e.g. `ARGS="--test-name-pattern=seat"` |
+| `test-live` | `understudy run <dir> --steps 20` for every `examples/*/` | live Jev (paid) and, for web examples, Chromium; UAT only |
+| `run` | `node bin/understudy.mjs $(ARGS)` | e.g. `ARGS="check examples/cli"` |
 | `lint` | `npm run lint` → eslint over `src/**/*.mjs`, `tests/**` | config `eslint.config.js` (recommended + unicorn + sonarjs, as in recard) |
 | `secrets` | `gitleaks git` over history + uncommitted tracked changes | needs `gitleaks` installed |
 | `hooks` | `git config core.hooksPath .githooks` | installs the gitleaks pre-commit hook |
@@ -50,8 +53,8 @@ repeating their commands. `make help` lists them.
 Standard targets deliberately absent:
 - `format` — no formatter chosen; eslint is the only style tool (same as recard).
 - `build` — nothing is bundled; recard consumes understudy as source via a git dependency.
-- `run` — there is no CLI entry point yet (`bin/` does not exist). Added with the story that
-  creates `bin/understudy.mjs`, together with `bin` in `package.json`.
+- `build` / `format` only, as above. (`run` exists; until `bin/understudy.mjs` lands in sprint 1
+  phase 2 it prints a one-line hint and exits 1. `bin` is added to `package.json` with that file.)
 
 ## 4. Dependencies
 
@@ -71,7 +74,7 @@ Standard targets deliberately absent:
 |---|---|---|
 | Tests | `make test` | every handoff to Trin; sprint close |
 | Lint | `make lint` | every handoff to Trin; sprint close |
-| Live Jev runs | `make run ...` with `TYPESAFE_API_KEY` | UAT only; small runs with a step cap (owner, 2026-10-15). `make test` never calls Jev — it uses a judge test double. |
+| Live Jev runs | `make test-live` with `TYPESAFE_API_KEY` | UAT only; small runs with a step cap (owner, 2026-10-15). `make test` never calls Jev — it uses a judge test double. |
 | Secret scan | `make secrets` | every commit (pre-commit hook, if `make hooks` was run); sprint close |
 | All of the above | `make check` | sprint close |
 
@@ -136,13 +139,18 @@ None — everything runs locally on the dev Pi. A CI job, if added, must run
 - eslint rules turned off, all matching recard's config for the same reasons:
   `unicorn/filename-case` (camelCase files), `unicorn/no-null` (JSON-safe sentinel),
   `unicorn/consistent-class-member-order`, `unicorn/no-break-in-nested-loop`.
+- Playwright's Chromium is downloaded by `make install-browser` into Playwright's default
+  `~/.cache/ms-playwright`, outside the project (same as recard): browsers are large and shared
+  across projects. `make test` never launches it; only `test-live` and web runs do.
+- Two targets touch the network: `install` and `install-browser`.
 - The lint script passes `--no-error-on-unmatched-pattern` because `tests/**/*.mjs` is empty today.
 
 ## 10. Conformance check
 
 Run by Tank at sprint close (`*devops sdlc-check`):
 
-1. `make distclean && make install && make check` passes.
+1. `make distclean && make install && make check` passes, and `make test` made no network call
+   to Jev and launched no browser (unit tests use a judge double and fake targets).
 2. `make install` a second time leaves `package-lock.json` unchanged (`git status` clean).
 3. Every imported package is in `dependencies`/`devDependencies`; only one lockfile exists.
 4. Every target in section 3 exists and maps to a `package.json` script or a documented command.

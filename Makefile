@@ -6,19 +6,32 @@
 #
 # Adding a task: add the npm script first, then a one-line target here.
 
-.PHONY: help install test lint check secrets hooks clean distclean
+.PHONY: help install install-browser test test-live lint check secrets hooks run clean distclean
 
 NEED_INSTALL = @test -d node_modules || { echo "No node_modules - run 'make install' first"; exit 1; }
 
 help: ## List targets
-	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
+	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
 
-install: ## Install dependencies exactly as locked (the only target that uses the network)
+install: ## Install dependencies exactly as locked (network)
 	@if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+install-browser: ## Download Playwright's Chromium for the web target (network; lands in ~/.cache/ms-playwright)
+	$(NEED_INSTALL)
+	npx playwright install chromium
 
 test: ## Run the unit tests (node:test); ARGS="--test-name-pattern=x" to filter
 	$(NEED_INSTALL)
 	npm test -- $(ARGS)
+
+test-live: ## Live runs: every examples/*/ played with real Jev (paid; needs TYPESAFE_API_KEY), capped at 20 steps
+	$(NEED_INSTALL)
+	@for dir in examples/*/; do [ -d "$$dir" ] || continue; echo "== $$dir"; node bin/understudy.mjs run "$$dir" --steps 20 >/dev/null || exit 1; done
+
+run: ## Run the understudy command: ARGS="run examples/cli" | "check <dir>" | "library"
+	$(NEED_INSTALL)
+	@test -f bin/understudy.mjs || { echo "bin/understudy.mjs does not exist yet (sprint 1, phase 2)"; exit 1; }
+	node bin/understudy.mjs $(ARGS)
 
 lint: ## eslint over src/ and tests/
 	$(NEED_INSTALL)

@@ -44,4 +44,6 @@ sequenceDiagram
     Note right of Mouse: "Sprint planned: task.md,<br/>Phase 0 (Tank:<br/>run/install-<br/>browser/test-live<br/>targets) + phases 1-7,<br/>one Neo task each + Trin<br/>UAT + Morpheus review…"
     Morpheus->>Tank: "lead handoff"
     Note right of Morpheus: "rubric PLAN: SIZE=A<br/>GATE=S VERIF=S ALIGN=S<br/>OWNER=A. Approved. Note:<br/>Task 1.1 is the heaviest<br/>Neo task - keep the off-<br/>list change test-first…"
+    Mouse->>All: "phase 0"
+    Note right of Mouse: "Phase 0: make targets<br/>run/install-<br/>browser/test-live + SDLC<br/>update"
 ```
