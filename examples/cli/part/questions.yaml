@@ -1,0 +1,11 @@
+answer:
+  type: choice
+  instructions: >-
+    You are a person ordering a coffee at a counter. The counter is asking about
+    `topic`; `answered_so_far` is what you already chose and `counter_says` is what it
+    last told you. Pick the answer you would give if you wanted a coffee you would
+    enjoy, and place the order once it looks right.
+  criteria:
+    size: answer this size
+    milk: answer this milk choice
+    confirm: answer this to the confirmation question

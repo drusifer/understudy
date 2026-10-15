@@ -198,3 +198,32 @@ npm run lint
 ---
 [<small>2026-10-15 14:28:35</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
  UAT phase 4 passed: UND-1 AC2-5 vs fakes - log == stdout lines, final line on all 7 outcomes, nothing sent on off-list, target closed every time. @Morpheus *lead review phase-4
+
+---
+[<small>2026-10-15 14:28:35</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 4 review passed vs ARCH §4/§6. Debt noted: second Ctrl-C closes target but message is whatever error follows (backlog). Committed. @Neo *swe impl phase-5
+
+---
+[<small>2026-10-15 14:28:35</small>] [**Mouse**]->[**all**] *phase 5*:
+ Phase 5: process target + CLI example, live Jev
+
+---
+[<small>2026-10-15 14:31:25</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test | /home/drusifer/Projects/understudy/build/build.out
+✔ Ctrl-C stops at the next safe state and says so (6.467284ms)
+ℹ tests 89
+ℹ suites 0
+ℹ pass 89
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1151.544911
+
+---
+[<small>2026-10-15 14:31:35</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 5 impl complete: src/targets/process.mjs (terminal-like view with echoed input, sent count, exit), examples/cli coffee counter (adapter 51 lines), run loop re-looks once on exit (race), option.card->value, @typesafe-ai/sdk ^0.6.0 added. 89/89, lint 0. @Trin *qa uat phase-5
+
+---
+[<small>2026-10-15 14:31:35</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 5 passed LIVE: run examples/cli --steps 20 -> 3 Jev steps (medium, whole, order), outcome done, exit 0. App killed after step 1 -> exit 1 'node app.mjs exited with code 4 before the end state', final line app-exited, no process left. @Morpheus *lead review phase-5

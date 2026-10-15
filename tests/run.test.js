@@ -18,14 +18,23 @@ const GOOD = fileURLToPath(new URL('fixtures/parts/good', import.meta.url));
  * The fixture's app, in memory: on `menu` until a move is sent; `order`
  * ends it (`done`), `cancel` leaves it on the menu.
  */
-function fakeApp({ screen = 'menu', exitAfterMove = null } = {}) {
-  const app = { screen, seq: 0, acted: [], closed: false, exit: null };
+function fakeApp({ screen = 'menu', exitAfterMove = null, staleLooks = 0 } = {}) {
+  const app = { screen, seq: 0, acted: [], closed: false, exit: null, stale: null };
   app.target = {
     describe: () => 'node app.mjs',
-    view: async () => ({ screen: app.screen, seq: app.seq }),
+    async view() {
+      if (app.stale && app.stale.looks > 0) {
+        app.stale.looks -= 1;
+        return app.stale.view;
+      }
+      return { screen: app.screen, seq: app.seq };
+    },
     talk: async () => [],
     say: async () => {},
     act: async (action) => {
+      // `staleLooks`: the app is still busy (not yet showing the move's
+      // result) for that many looks - the seat's own after-step look is one.
+      app.stale = { looks: staleLooks, view: { screen: 'brewing', seq: app.seq } };
       app.acted.push(action);
       app.seq += 1;
       if (action.input === 'order') app.screen = 'done';
@@ -130,6 +139,12 @@ test('an app that exits before the end state stops the run, naming the program a
   assert.equal(run.error.message, 'node app.mjs exited with code 3 before the end state');
   assert.equal(run.final.outcome, 'app-exited');
   assert.equal(run.app.closed, true);
+});
+
+test('an app that prints its end and exits between two looks has finished, not failed', async () => {
+  const run = await play({ app: fakeApp({ exitAfterMove: 0, staleLooks: 2 }), judge: judgeAnswering('order') });
+  assert.equal(run.error, null);
+  assert.equal(run.final.outcome, 'done');
 });
 
 test('an app that never offers a first move stops the run, naming it and what was seen', async () => {

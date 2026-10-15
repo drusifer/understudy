@@ -20,16 +20,17 @@ const verdictFromAnswer = (answer) => {
 };
 
 /**
- * A Choice's criteria for this turn's options, in the questions file's
- * own words: an option's KIND (`cast` in `cast:Bear`) picks the wording,
- * and a card, when there is one, is named by path-free value because it
- * is computed at play time, never written in the file.
+ * A Choice's criteria for this step's options, in the questions file's
+ * own words: an option's KIND (`size` in `size:large`) picks the wording,
+ * and its `value`, when there is one, is shown in backticks because it is
+ * computed at play time, never written in the file. With no wording for
+ * its kind, an option is described by its own `what`.
  */
 export function criteriaFor(question, options) {
   return Object.fromEntries(options.map((option) => {
     const [kind] = option.id.split(':', 1);
     const described = question.criteria?.[kind] ?? option.what;
-    return [option.id, option.card ? `${described} (\`${option.card}\`)` : described];
+    return [option.id, option.value ? `${described} (\`${option.value}\`)` : described];
   }));
 }
 
@@ -209,12 +210,12 @@ function verification(services, option, state, context) {
   const [kind] = option.id.split(':', 1);
   const rules = Object.entries(services.questions).filter(([, question]) => question.applies_to?.includes(kind));
   if (rules.length === 0) return null;
-  const proposed = services.app.propose?.(option, state, context) ?? { what: option.what, card: option.card ?? null };
-  const card = option.card ? ` with ${option.card}` : '';
+  const proposed = services.app.propose?.(option, state, context) ?? { what: option.what, value: option.value ?? null };
+  const value = option.value ? ` with ${option.value}` : '';
   return {
     state: { ...state, proposed },
     questions: Object.fromEntries(rules.map(([name, question]) => [name, asked(question)])),
-    question: `Can I ${option.what}${card}?`,
+    question: `Can I ${option.what}${value}?`,
   };
 }
 

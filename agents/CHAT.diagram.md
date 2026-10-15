@@ -80,4 +80,12 @@ sequenceDiagram
     Note right of Neo: "Phase 4 impl complete:<br/>src/run.mjs (runPart: ke<br/>y->part->judge->target-<br/>>seat loop, step cap,<br/>10s first move, app-<br/>exited, Jev error wrap,<br/>Ctr…"
     Trin->>Morpheus: "qa handoff"
     Note right of Trin: "UAT phase 4 passed:<br/>UND-1 AC2-5 vs fakes -<br/>log == stdout lines,<br/>final line on all 7<br/>outcomes, nothing sent<br/>on off-list, target<br/>closed every…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 4 review passed vs<br/>ARCH §4/§6. Debt noted:<br/>second Ctrl-C closes<br/>target but message is<br/>whatever error follows<br/>(backlog). Committed.<br/>@N…"
+    Mouse->>All: "phase 5"
+    Note right of Mouse: "Phase 5: process target<br/>+ CLI example, live Jev"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 5 impl complete:<br/>src/targets/process.mjs<br/>(terminal-like view with<br/>echoed input, sent<br/>count, exit),<br/>examples/cli coffee<br/>counter (adapt…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 5 passed LIVE:<br/>run examples/cli --steps<br/>20 -> 3 Jev steps<br/>(medium, whole, order),<br/>outcome done, exit 0.<br/>App killed after step 1<br/>-…"
 ```

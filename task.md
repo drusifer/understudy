@@ -48,9 +48,9 @@
 
 ### Phase 5: Process target and the CLI example — UND-1 AC1, live
 *Phase goal: a real CLI program is played to its end state by live Jev.*
-- [ ] **Task 5.1:** `src/targets/process.mjs` (spawn, buffered lines + `seq`, `act({input})`, `exited`, `describe`, `close` via `waitUntilDead`); `examples/cli/`: `app.mjs` (tiny interactive program with a few prompts and an end state), `adapter.mjs` (<150 lines), `part/turn.yaml`, `part/questions.yaml`; add `@typesafe-ai/sdk ^0.6.0` (SDLC §4). Unit tests for the target against a fixture program. (*Owner: Neo | Verification: `bobp make test`; `bobp make run ARGS="check examples/cli"` exit 0*)
-- [ ] **Task 5.2:** UAT UND-1 AC1–4 live: `bobp make run ARGS="run examples/cli --steps 20"` exit 0, `outcome: done`; kill the app mid-run → exit 1 naming the program + code. (*Owner: Trin | Verification: live run (owner-approved, capped) + `bobp make test && bobp make lint`*)
-- [ ] **Task 5.3:** Review. (*Owner: Morpheus | Verification: code review; commit `Phase 5`*)
+- [x] **Task 5.1:** `src/targets/process.mjs` (spawn, buffered lines + `seq`, `act({input})`, `exited`, `describe`, `close` via `waitUntilDead`); `examples/cli/`: `app.mjs` (tiny interactive program with a few prompts and an end state), `adapter.mjs` (<150 lines), `part/turn.yaml`, `part/questions.yaml`; add `@typesafe-ai/sdk ^0.6.0` (SDLC §4). Unit tests for the target against a fixture program. (*Owner: Neo | Verification: `bobp make test`; `bobp make run ARGS="check examples/cli"` exit 0*)
+- [x] **Task 5.2:** UAT UND-1 AC1–4 live: `bobp make run ARGS="run examples/cli --steps 20"` exit 0, `outcome: done`; kill the app mid-run → exit 1 naming the program + code. (*Owner: Trin | Verification: live run (owner-approved, capped) + `bobp make test && bobp make lint`*)
+- [x] **Task 5.3:** Review. (*Owner: Morpheus | Verification: code review; commit `Phase 5`*)
 
 ### Phase 6: Page target and the web example — UND-2
 *Phase goal: the same kind of part plays a web page in headless Chromium.*

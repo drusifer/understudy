@@ -124,7 +124,12 @@ async function playUntilDone({ run, target, steps, firstMoveMs, clock, interrupt
     const next = await run.seat.nextMove({ shouldStop: interrupts.isAsked });
     if (next === 'done') return;
     const exited = target.exited?.();
-    if (exited) throw new RunError(`${target.describe()} exited with code ${exited.code} before the end state`, { outcome: 'app-exited' });
+    if (exited) {
+      // Its last output can land between the look and the exit: one more
+      // look decides whether it ended where the part ends.
+      if (await run.seat.nextMove({ shouldStop: interrupts.isAsked }) === 'done') return;
+      throw new RunError(`${target.describe()} exited with code ${exited.code} before the end state`, { outcome: 'app-exited' });
+    }
     if (next === 'move') {
       if (run.taken === steps) {
         throw new RunError(`stopped after ${steps} steps without reaching the end state (last state: ${run.seat.state})`, { outcome: 'step-cap' });
