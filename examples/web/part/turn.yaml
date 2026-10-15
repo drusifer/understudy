@@ -16,8 +16,8 @@ states:
     invoke:
       src: look
       onDone:
+        - { target: finished, guard: { type: showing, params: { text: Welcome aboard } } }
         - { target: answering, guard: { type: phase, params: { is: asking } } }
-        - { target: finished, guard: { type: phase, params: { is: done } } }
         - { target: waiting }
   answering:
     description: "A question is waiting for an answer."

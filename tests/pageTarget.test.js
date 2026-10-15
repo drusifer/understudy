@@ -1,7 +1,8 @@
-// Sprint 1 UND-2 (ARCH §5, ADR-U2): a web page as a target - served from
-// the example directory, opened headless, driven through its
-// `window[hook]`. `make test` never launches Chromium: the browser here
-// is a stand-in with the few Playwright calls the target makes.
+// Sprint 2 UND-7 (ARCH §4, ADR-0007): a web page as a target - served from
+// the example directory, opened headless, read through its accessibility
+// snapshot and moved by role and name, with nothing added to the page.
+// `make test` never launches Chromium: the browser here is a stand-in
+// with the few Playwright calls the target makes.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
@@ -37,45 +38,95 @@ test('the static server serves the example, and nothing outside it', async () =>
   }
 });
 
+const SNAPSHOT = `- heading "Sign up" [level=1]
+- paragraph: Which plan would you like?
+- button "Free"
+- button "Pro (paid monthly)"
+- combobox "Size":
+  - option "Small" [selected]
+  - option "Large"
+- checkbox "Agree"`;
+
 /**
- * A stand-in for Playwright's `chromium.launch`, recording what was
- * closed. `page` overrides the fake page's behaviour.
+ * A stand-in for Playwright's `chromium.launch`. `calls` records each
+ * move as `[method, role, name]`; `failing` makes moves time out.
  */
-function fakeLaunch(page = {}) {
-  const record = { browserClosed: false, url: null, evaluated: [] };
+function fakeLaunch({ snapshot = SNAPSHOT, failing = false } = {}) {
+  const record = { browserClosed: false, url: null, calls: [] };
+  const control = (role, { name }) => {
+    const move = (method) => async (...parameters) => {
+      if (failing) throw new Error('locator.click: Timeout 5000ms exceeded.\nCall log: ...');
+      record.calls.push([method, role, name, ...parameters.slice(0, -1)]);
+    };
+    return { first: () => ({ click: move('click'), check: move('check'), selectOption: move('selectOption') }) };
+  };
   const launch = async () => ({
     newPage: async () => ({
       goto: async (url) => { record.url = url; },
-      waitForFunction: async () => {},
-      evaluate: async (function_, argument) => {
-        record.evaluated.push(argument);
-        return page.evaluate ? page.evaluate(argument) : { screen: 'plan', seq: 1 };
-      },
+      url: () => record.url,
+      locator: () => ({ ariaSnapshot: async () => snapshot }),
+      getByRole: control,
       on: () => {},
       isClosed: () => false,
-      ...page,
     }),
     close: async () => { record.browserClosed = true; },
   });
   return { launch, record };
 }
 
-const spec = { kind: 'page', root: '.', page: 'index.html', hook: '__understudy' };
+const spec = { kind: 'page', root: '.', page: 'index.html' };
 
-test('the page is opened from the local server and driven through its hook', async () => {
+test('the page is opened from the local server and its view is what a person sees', async () => {
   const { launch, record } = fakeLaunch();
   const target = await startTarget(spec, { directory: WEB, launch });
   try {
     assert.match(record.url, /^http:\/\/127\.0\.0\.1:\d+\/index\.html$/);
     assert.equal(target.describe(), record.url);
-    assert.deepEqual(await target.view(), { screen: 'plan', seq: 1 });
-    await target.act({ press: 'pro' });
-    assert.deepEqual(record.evaluated.at(-1), { hook: '__understudy', method: 'act', argument: { press: 'pro' } });
+    const view = await target.view();
+    assert.equal(view.path, '/index.html');
+    assert.equal(view.title, 'Sign up');
+    assert.deepEqual(view.text, ['Sign up', 'Which plan would you like?']);
+    assert.deepEqual(view.controls.map((each) => `${each.role}:${each.name}`),
+      ['button:Free', 'button:Pro (paid monthly)', 'option:Small', 'option:Large', 'checkbox:Agree']);
+    assert.equal(typeof view.seq, 'number');
+    assert.deepEqual(await target.talk(), []);
     assert.equal(target.exited(), null);
   } finally {
     await target.close();
   }
   assert.equal(record.browserClosed, true);
+});
+
+test('a move uses the control by role and name: press, pick from a list, tick', async () => {
+  const { launch, record } = fakeLaunch();
+  const target = await startTarget(spec, { directory: WEB, launch });
+  try {
+    await target.act({ role: 'button', name: 'Pro (paid monthly)' });
+    await target.act({ role: 'option', name: 'Large', list: 'Size' });
+    await target.act({ role: 'checkbox', name: 'Agree' });
+    assert.deepEqual(record.calls, [
+      ['click', 'button', 'Pro (paid monthly)'],
+      ['selectOption', 'combobox', 'Size', { label: 'Large' }],
+      ['check', 'checkbox', 'Agree'],
+    ]);
+  } finally {
+    await target.close();
+  }
+});
+
+test('a control that is gone by the time of the move stops the run, naming it', async () => {
+  const { launch } = fakeLaunch({ failing: true });
+  const target = await startTarget(spec, { directory: WEB, launch });
+  try {
+    await assert.rejects(target.act({ role: 'button', name: 'Free' }), (error) => {
+      assert.ok(error instanceof RunError);
+      assert.equal(error.outcome, 'control-gone');
+      assert.equal(error.message, 'could not press button "Free" - it is no longer on the page (locator.click: Timeout 5000ms exceeded.)');
+      return true;
+    });
+  } finally {
+    await target.close();
+  }
 });
 
 test('no Chromium: refused before the run with the command that installs it, nothing left running', async () => {
@@ -85,18 +136,4 @@ test('no Chromium: refused before the run with the command that installs it, not
     assert.equal(error.message, 'Chromium is not installed - run: bobp make install-browser');
     return true;
   });
-});
-
-test('a page that never exposes its hook stops the run naming the URL and what it showed; browser closed', async () => {
-  const { launch, record } = fakeLaunch({
-    waitForFunction: async () => { throw new Error('page.waitForFunction: Timeout 10000ms exceeded.'); },
-    evaluate: async () => 'Loading...',
-  });
-  await assert.rejects(startTarget(spec, { directory: WEB, launch, readyMs: 10_000 }), (error) => {
-    assert.ok(error instanceof RunError);
-    assert.equal(error.outcome, 'no-first-move');
-    assert.match(error.message, /^no first move from http:\/\/127\.0\.0\.1:\d+\/index\.html within 10 s - the page never exposed window\.__understudy \(it showed: "Loading\.\.\."\)$/);
-    return true;
-  });
-  assert.equal(record.browserClosed, true);
 });

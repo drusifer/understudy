@@ -8,6 +8,7 @@ TLDR:
     Run: `bobp make run ARGS="run <dir>"`; check without running: `ARGS="check <dir>"`.
     Output: one JSON line per step on stdout and in build/runs/<adapter>/; exit 0 / 1 / 2.
     Your own app: copy an example directory, edit adapter.mjs and part/, `check` until OK.
+    Web pages need no changes and often no adapter code: the generic page app plays them.
     Reference: docs/ADAPTERS.md. Worked example: docs/WALKTHROUGH.md.
 
 ## Contents
@@ -27,8 +28,8 @@ TLDR:
 | Word | Meaning |
 |---|---|
 | **understudy** | the stand-in that plays your app: it looks, decides with Jev, and moves |
-| **app** | the thing being played - a command-line program or a web page |
-| **target** | how understudy sees and moves the app: `process` (stdin/stdout) or `page` (headless Chromium) |
+| **app** | the thing being played - a command-line program, a web page or a JSON API |
+| **target** | how understudy sees and moves the app: `process` (stdin/stdout), `page` (headless Chromium, read like a screen reader) or `http` (requests) |
 | **adapter** | your small `adapter.mjs`: which phase the app is in, what Jev should know, which moves are on offer, how to make one |
 | **part** | `part/turn.yaml` (a statechart: when to look, when to move, when it is over) + `part/questions.yaml` (what Jev is asked) |
 | **Jev** | TypeSafe's judgment model; it only ever picks among the moves the adapter offers |
@@ -62,9 +63,10 @@ the team chat; the last lines are shown in your terminal.
 
 ```sh
 bobp make run ARGS="run examples/cli"              # the coffee counter (a program)
-bobp make run ARGS="run examples/web"              # the sign-up wizard (a web page)
+bobp make run ARGS="run examples/web"              # the sign-up wizard (an unmodified web page)
+bobp make run ARGS="run examples/http"             # the vending machine (a JSON API)
 bobp make run ARGS="run examples/cli --steps 5"    # stop after at most 5 moves
-bobp make test-live                                # both examples, real Jev, 20-step cap
+bobp make test-live                                # every example, real Jev, 20-step cap
 ```
 
 Each Jev decision is one paid API call; a cap (`--steps`, default 50) keeps a confused part
@@ -113,7 +115,7 @@ The fastest route is to copy the example closest to your app and change it.
 **1. Copy an example.**
 
 ```sh
-cp -r examples/cli examples/myapp     # a program; use examples/web for a web page
+cp -r examples/cli examples/myapp     # a program; examples/web for a web page, examples/http for an API
 ```
 
 **2. Point the target at your app** (`examples/myapp/adapter.mjs`), and give it a new `name`:
@@ -121,20 +123,28 @@ cp -r examples/cli examples/myapp     # a program; use examples/web for a web pa
 ```js
 name: 'myapp',
 target: { kind: 'process', command: 'python3', args: ['myapp.py'] },
-// or: { kind: 'page', root: 'public', page: 'index.html', hook: '__understudy' }
+// or a web page:  { kind: 'page', root: 'public', page: 'index.html' }
+// or an API:      { kind: 'http', command: 'node', args: ['server.mjs'], url: 'http://127.0.0.1:{port}', state: '/status' }
+//   (leave out command to play a service that is already running at a fixed url)
 ```
 
-A program is started in the example directory. A web page must expose
-`window.__understudy = { view(), act(action) }` - see the web example's `app.js`.
+A program or API server is started in the example directory. A web page is played as it is -
+nothing needs adding to it.
 
-**3. Teach the adapter to read your app.** Four functions (details in
+**For a web page, you can stop here:** an adapter with only `name` and `target` gets the
+generic page app, which offers every button, link, checkbox, radio button and list option a
+person could choose. Skip to step 4, and end the part with a `showing` guard (the text your
+last screen shows) - see the web example's `part/turn.yaml`.
+
+**3. Teach the adapter to read your app** (programs and APIs). Four functions (details in
 [ADAPTERS.md §1](ADAPTERS.md#1-the-adapter)):
 
 - `phase(view)` - return a name such as `'asking'`, `'done'` or `'waiting'`. Only return the
   "it is my move" phase when there is something not yet answered.
 - `project(view)` - the facts Jev should see, as a small object with clear names.
 - `options(state)` - the moves on offer: `[{ id: 'size:large', what: 'answer large', value: 'large' }]`.
-- `act(move)` - how to make one: `{ actions: [{ input: move.value }] }` for a program.
+- `act(move)` - how to make one: `{ actions: [{ input: move.value }] }` for a program,
+  `{ actions: [{ method: 'POST', path: '/order', body: { ... } }] }` for an API.
 
 **4. Edit the part.** Keep the statechart from the example; change the phase names in the
 `phase` guards to the ones your `phase()` returns. Rewrite `part/questions.yaml` so Jev knows
@@ -173,7 +183,11 @@ Every error is one line starting `understudy:`. The common ones:
 | `Chromium is not installed - run: bobp make install-browser` | 2 | run it (or install your distribution's Chromium) |
 | `stopped after 50 steps without reaching the end state (last state: X)` | 1 | the part never reached `type: final`: check that `phase()` returns your done phase, or raise `--steps` |
 | `<command> exited with code N before the end state` | 1 | the app quit or crashed; run it by hand to see why |
-| `no first move from <app> within 10 s - ...` | 1 | `phase()` never returned the move phase; for a page, the hook was never exposed |
+| `no first move from <app> within 10 s - ...` | 1 | `phase()` never returned the move phase; for a page, nothing choosable appeared; for an API, nothing answered |
+| `stalled: nothing to do for 10 s after step N ... add a showing guard` | 1 | the app stopped offering moves; if that screen is the end, add a `showing` guard for it |
+| `lost the connection to <url>: ...` | 1 | the API went away mid-run; check it is still up |
+| `step N: could not press button "X" - it is no longer on the page` | 1 | the page changed between the look and the move; usually a page still loading |
+| `.../adapter.mjs: target.X is not a <kind> target field (known: ...)` | 2 | remove or rename the field |
 | `step N: in phase "X" Jev answered off the list twice (...)` | 1 | the question or options confuse Jev: clarify the instructions or option wording |
 | `step N: Jev request failed: ...` | 1 | network or key problem; the SDK's message says which |
 | `unexpected error: ...` | 1 | a bug in understudy or the adapter's code - please report it with the command line |

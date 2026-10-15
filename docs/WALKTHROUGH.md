@@ -1,22 +1,25 @@
-# Walkthrough: the two examples, taken apart
+# Walkthrough: the three examples, taken apart
 
-A guided tour of `examples/cli` and `examples/web`: the app, its adapter, its part, what Jev
-is actually asked, and a real run of each - then a few ways to break them on purpose.
+A guided tour of `examples/cli`, `examples/web` and `examples/http`: the app, its adapter, its
+part, what Jev is actually asked, and a real run of each - then a few ways to break them on
+purpose.
 
 TLDR:
-    Both examples have the same three pieces: an app, adapter.mjs, part/ (turn.yaml + questions.yaml).
-    The part's statechart is identical in both; only the adapter knows "terminal" or "web page".
+    Each example has the same pieces: an app, adapter.mjs, part/ (turn.yaml + questions.yaml).
+    The statechart is the same shape in all three; only the target knows terminal, page or API.
+    The web page is unmodified and its adapter is 4 lines: understudy reads it like a screen reader.
     Each step: look -> phase() says "asking" -> options() offered -> Jev picks one -> act() sends it.
-    Real runs below: 3 Jev calls each, exit 0, a JSON line per step plus a final line.
+    Real runs below: 2-3 Jev calls each, exit 0, a JSON line per step plus a final line.
     Break-it exercises show every kind of refusal and failure with its exact message.
 
 ## Contents
 
 1. [The loop in one picture](#1-the-loop-in-one-picture)
 2. [The CLI example: a coffee counter](#2-the-cli-example-a-coffee-counter)
-3. [The web example: a sign-up wizard](#3-the-web-example-a-sign-up-wizard)
-4. [Same part, different stage](#4-same-part-different-stage)
-5. [Break it on purpose](#5-break-it-on-purpose)
+3. [The web example: a sign-up wizard, unmodified](#3-the-web-example-a-sign-up-wizard-unmodified)
+4. [The HTTP example: a vending machine API](#4-the-http-example-a-vending-machine-api)
+5. [Same part, different stage](#5-same-part-different-stage)
+6. [Break it on purpose](#6-break-it-on-purpose)
 
 ---
 
@@ -26,7 +29,7 @@ TLDR:
 sequenceDiagram
     participant R as understudy run
     participant A as adapter.mjs
-    participant T as target (program | page)
+    participant T as target (program | page | API)
     participant J as Jev
     loop until the part reaches its end state
         R->>T: view()
@@ -187,50 +190,62 @@ your run. After step 3 the program prints `Order placed`, exits 0, the next look
 
 ---
 
-## 3. The web example: a sign-up wizard
+## 3. The web example: a sign-up wizard, unmodified
 
 ### The app - `examples/web/index.html` + `app.js`
 
 A plain page with three steps, each a question and some buttons: **plan** (Free / Pro (paid
 monthly)), **look** (Light / Dark), **terms** (Accept / Decline). Declining shows "You need to
-accept the terms to sign up." and asks again; accepting shows "Welcome aboard!".
-
-To be played, the page exposes a hook - the only understudy-specific code in the app:
-
-```js
-globalThis.__understudy = {
-  view: () => ({ screen, seq, prompt, note, buttons: [{ id: 'free', label: 'Free' }, ...] }),
-  act: ({ press }) => document.querySelector(`#${press}`).click(),   // presses a real button
-};
-```
-
-The hook only reads the page and clicks what is on it, so a run exercises the real UI.
+accept the terms to sign up." and asks again; accepting shows "Welcome aboard!". There is no
+understudy code in it at all.
 
 ### What understudy sees - the page target
 
-`kind: 'page'` serves `examples/web/` on `127.0.0.1` (random port, nothing outside the folder),
-opens `index.html` in headless Chromium, waits up to 10 s for `window.__understudy`, and then
-`view()` / `act()` are calls to the hook. The view at step 1:
+`kind: 'page'` serves `examples/web/` on `127.0.0.1` (random port, nothing outside the folder)
+and opens `index.html` in headless Chromium. Each look reads the page's **accessibility
+snapshot** - what a screen reader would announce. At step 1 Playwright prints:
 
-```js
-{ screen: 'plan', seq: 1, prompt: 'Which plan would you like?', note: '',
-  buttons: [{ id: 'free', label: 'Free' }, { id: 'pro', label: 'Pro (paid monthly)' }] }
+```text
+- heading "Sign up" [level=1]
+- paragraph: Which plan would you like?
+- button "Free"
+- button "Pro (paid monthly)"
 ```
 
-### The adapter - `examples/web/adapter.mjs` (24 lines)
+and understudy turns it into the view:
 
-- **`phase`** - `done` on the `welcome` screen, `asking` while there are buttons. (The page
-  re-renders synchronously on a click, so it can never show a stale question.)
-- **`project`** - `{ step: 'plan', question: 'Which plan would you like?', note: '', answers: [...buttons] }`.
-- **`options`** - `{ id: 'plan:free', what: 'answer Free', value: 'Free' }` per button.
-- **`act`** - `{ actions: [{ press: 'free' }] }`, which the hook turns into a click.
+```js
+{ path: '/index.html', title: 'Sign up', seq: ...,
+  text: ['Sign up', 'Which plan would you like?'],
+  controls: [{ role: 'button', name: 'Free' }, { role: 'button', name: 'Pro (paid monthly)' }] }
+```
+
+Hidden and disabled controls never appear. A move presses a control by role and visible name,
+exactly as a person would find it.
+
+### The adapter - `examples/web/adapter.mjs` (4 lines)
+
+```js
+export default { name: 'signup-web', target: { kind: 'page', page: 'index.html' } };
+```
+
+No `app` hooks, so understudy uses its **generic page app**: the page is `asking` whenever it
+has a control; Jev reads `{ page, says, controls }`; each control is an option named by kind and
+label (`button:Free`, `button:Pro (paid monthly)`); acting presses it.
 
 ### The part
 
-`examples/web/part/turn.yaml` is the **same statechart** as the CLI example's, state for
-state. Only the descriptions differ. The question casts Jev as "a careful new user signing up
-for an app you want to try before paying for anything", with `criteria` worded for the
-`plan`, `theme` and `terms` kinds.
+`examples/web/part/turn.yaml` has the same states as the CLI part. The one difference is how it
+knows it is done: the generic app has no `done` phase, so the part ends on what the page
+**shows**:
+
+```yaml
+- { target: finished, guard: { type: showing, params: { text: Welcome aboard } } }
+```
+
+The question casts Jev as "a careful new user signing up for an app you want to try before
+paying for anything", with `criteria` worded per control kind (`button: press this button`,
+`option: pick this from the list`, ...).
 
 ### A real run
 
@@ -239,16 +254,16 @@ bobp make run ARGS="run examples/web"
 ```
 
 ```text
-understudy: playing signup-web (http://127.0.0.1:45137/index.html) - log build/runs/signup-web/2026-10-15T19-55-32.321Z.jsonl
-understudy: step 1 asking -> plan:free (1)
-understudy: step 2 asking -> theme:light (0.86)
-understudy: step 3 asking -> terms:accept (0.94)
+understudy: playing signup-web (http://127.0.0.1:43929/index.html) - log build/runs/signup-web/2026-10-15T22-30-18.189Z.jsonl
+understudy: step 1 asking -> button:Free (1)
+understudy: step 2 asking -> button:Light (0.94)
+understudy: step 3 asking -> button:Accept (0.98)
 ```
 
 ```json
-{"step":1,"phase":"asking","options":["plan:free","plan:pro"],"picked":"plan:free","move":"plan:free","confidence":1,"state":"waiting"}
-{"step":2,"phase":"asking","options":["theme:light","theme:dark"],"picked":"theme:light","move":"theme:light","confidence":0.86,"state":"waiting"}
-{"step":3,"phase":"asking","options":["terms:accept","terms:decline"],"picked":"terms:accept","move":"terms:accept","confidence":0.94,"state":"waiting"}
+{"step":1,"phase":"asking","options":["button:Free","button:Pro (paid monthly)"],"picked":"button:Free","move":"button:Free","confidence":1,"state":"waiting"}
+{"step":2,"phase":"asking","options":["button:Light","button:Dark"],"picked":"button:Light","move":"button:Light","confidence":0.94,"state":"waiting"}
+{"step":3,"phase":"asking","options":["button:Accept","button:Decline"],"picked":"button:Accept","move":"button:Accept","confidence":0.98,"state":"waiting"}
 {"final":true,"outcome":"done","steps":3,"state":"finished"}
 ```
 
@@ -257,26 +272,85 @@ local server are closed, however it ended.
 
 ---
 
-## 4. Same part, different stage
+## 4. The HTTP example: a vending machine API
 
-| | CLI example | Web example |
-|---|---|---|
-| App | `node app.mjs` | `index.html` in headless Chromium |
-| Target | `process` | `page` |
-| View | terminal lines + `sent` | whatever the page's hook returns |
-| Move action | `{ input: 'medium' }` → stdin | `{ press: 'free' }` → button click |
-| "Don't answer twice" | questions printed > answers sent | page re-renders synchronously |
-| Adapter | 51 lines | 24 lines |
-| `turn.yaml` | waiting → looking → answering → replying → finished | identical |
-| Library names used | `look`, `phase`, `play` | identical |
+### The app - `examples/http/server.mjs`
 
-Neither part says "terminal", "program", "page" or "click": the part is about the
-**conversation** (something is asked, answer it, stop when done); the adapter is about the
-**stage**. That split is what lets one part format cover both - and an HTTP target next.
+A small JSON API with no idea understudy exists:
+
+| Request | Does |
+|---|---|
+| `GET /machine` | credit, items (name, price, stock), what it dispensed, its last message |
+| `POST /coins` `{ "coin": 1 }` | adds credit (1 and 2 only; anything else is `400`) |
+| `POST /select` `{ "item": "tea" }` | dispenses it - `402` without enough credit, `409` when sold out |
+| `POST /refund` | returns the credit |
+
+### What understudy sees - the http target
+
+```js
+target: { kind: 'http', command: 'node', args: ['server.mjs'], url: 'http://127.0.0.1:{port}', state: '/machine' }
+```
+
+understudy picks a free port, starts `node server.mjs` with `PORT` set, waits until `GET
+/machine` answers, and stops the server at the end. (Leave out `command` and give a full `url`
+to play a service that is already running - it is left running.) The view is the state plus
+the answer to the last move:
+
+```js
+{ status: 200, body: { credit: 0, items: [...], dispensed: [], message: 'Insert coins, then choose a drink.' },
+  seq: 1, last: null, exited: null }
+```
+
+### The adapter - `examples/http/adapter.mjs` (36 lines)
+
+- **`phase`** - `done` once anything was dispensed; otherwise always `asking` (an API is
+  always ready for the next request).
+- **`project`** - `{ credit, items: [{ name, price, left }], machine_says }`, where
+  `machine_says` is the last error (e.g. "tea costs 2, credit is 0") or the machine's message.
+- **`options`** - insert a 1 or 2 coin, buy each drink still in stock, or ask for a refund
+  (the last option, the safe fallback): `coin:1`, `buy:tea`, `refund:all`.
+- **`act`** - one request: `{ method: 'POST', path: '/coins', body: { coin: 1 } }`.
+
+A refused move is not a failure: buying without credit gets `402`, the step's log line keeps
+`"response": { "status": 402 }`, `machine_says` tells Jev why, and the run goes on.
+
+### A real run
+
+```text
+understudy: playing vending-http (node server.mjs at http://127.0.0.1:45391) - log build/runs/vending-http/2026-10-15T22-26-45.097Z.jsonl
+understudy: step 1 asking -> coin:1 (0.86)
+understudy: step 2 asking -> buy:water (0.75)
+```
+
+```json
+{"step":1,"phase":"asking","options":["coin:1","coin:2","buy:water","buy:tea","refund:all"],"picked":"coin:1","move":"coin:1","confidence":0.86,"response":{"status":200},"state":"waiting"}
+{"step":2,"phase":"asking","options":["coin:1","coin:2","buy:water","buy:tea","refund:all"],"picked":"buy:water","move":"buy:water","confidence":0.75,"response":{"status":200},"state":"waiting"}
+{"final":true,"outcome":"done","steps":2,"state":"finished"}
+```
+
+Coffee is sold out, so it is never offered. Jev paid exactly for water (price 1) - two calls.
 
 ---
 
-## 5. Break it on purpose
+## 5. Same part, different stage
+
+| | CLI example | Web example | HTTP example |
+|---|---|---|---|
+| App | `node app.mjs` | `index.html`, unmodified | `node server.mjs` |
+| Target | `process` | `page` | `http` |
+| View | terminal lines + `sent` | accessibility snapshot: text + controls | state JSON + last answer |
+| Move action | `{ input: 'medium' }` → stdin | `{ role: 'button', name: 'Free' }` → press | `{ method, path, body }` → request |
+| "Don't answer twice" | questions printed > answers sent | the snapshot is current after a press | each request is answered before the next look |
+| How it ends | `phase` is `done` | part's `showing` guard | `phase` is `done` |
+| Adapter | 51 lines | 4 lines (generic page app) | 36 lines |
+| Library names used | `look`, `phase`, `play` | `look`, `phase`, `showing`, `play` | `look`, `phase`, `play` |
+
+No part says "terminal", "page", "click" or "request": the part is about the **conversation**
+(something is asked, answer it, stop when done); the target and adapter are about the **stage**.
+
+---
+
+## 6. Break it on purpose
 
 Copy an example to a scratch folder and change one thing at a time
 (`cp -r examples/cli /tmp/cli-broken`). None of these need a key except where a run starts.
@@ -289,8 +363,9 @@ Copy an example to a scratch folder and change one thing at a time
 | unset `TYPESAFE_API_KEY` | `bobp make run ARGS="run examples/cli"` | `understudy run needs a TypeSafe key: set TYPESAFE_API_KEY` (2) - nothing started |
 | nothing - just cap it | `bobp make run ARGS="run examples/cli --steps 1"` | `stopped after 1 step without reaching the end state (last state: answering)` (1) |
 | `process.exit(4)` after an answer in `app.mjs` | `... run /tmp/cli-broken ...` | `node app.mjs exited with code 4 before the end state` (1) |
-| rename `__understudy` in the web example's `app.js` | `... run /tmp/web-broken ...` | after 10 s: `no first move from http://127.0.0.1:.../index.html within 10 s - the page never exposed window.__understudy (it showed: "...")` (1) |
+| delete the `showing` line from the web example's `part/turn.yaml` | `... run /tmp/web-broken ...` | after the last screen: `stalled: nothing to do for 10 s after step 3 (last state: waiting) - the app showed: {...Welcome aboard!...} - if this is where the part should end, add a showing guard (docs/ADAPTERS.md)` (1) |
+| add `hook: 'x'` to the web example's `target` | `... check /tmp/web-broken` | `.../adapter.mjs: target.hook is not a page target field (known: root, page)` (2) |
 
 Every failure after a run starts still writes the final log line (with its `outcome`) and
-closes the program or browser. Next: [USER_GUIDE.md §5](USER_GUIDE.md#5-write-a-part-for-your-own-app)
+closes the program, browser or server it started. Next: [USER_GUIDE.md §5](USER_GUIDE.md#5-write-a-part-for-your-own-app)
 to write a part for your own app, and [ADAPTERS.md](ADAPTERS.md) for the full reference.

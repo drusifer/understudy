@@ -53,7 +53,7 @@ repeating their commands. `make help` lists them.
 
 Standard targets deliberately absent:
 - `format` — no formatter chosen; eslint is the only style tool (same as recard).
-- `build` — nothing is bundled; recard consumes understudy as source via a git dependency.
+- `build` — nothing is bundled; understudy is used from a checkout (or as a git dependency).
 - (`run` calls `bin/understudy.mjs`, which is also `bin.understudy` in `package.json`.)
 
 ## 4. Dependencies
@@ -91,7 +91,7 @@ is reported to Tank so one of them gets fixed.
 |---|---|---|---|---|---|
 | Routine | feature, fix, refactor, docs, adding a dependency via section 4 | Cypher story / user request | Morpheus review (Bloop chain) | section 5 gates | `task.md`, commit |
 | Mechanism | toolchain, manifest layout, make targets, gates, CI, this document | anyone, via `@Tank *devops sdlc` | Tank + user | from-clean rebuild + section 5 | this file, `agents/CHAT.md` |
-| Release | a commit recard pins as its git dependency | user | user | `make check` | git tag / commit hash in recard's `package.json` |
+| Release | a tagged commit on `main` | user | user | `make check` | git tag on `main`, `CHANGELOG.md` |
 | Emergency | hotfix outside a sprint | user | user (may be after the fact) | `make test` at minimum | `agents/CHAT.md`, reviewed at next sprint close |
 
 ### Flow
@@ -120,16 +120,16 @@ is reported to Tank so one of them gets fixed.
 - Never commit: secrets, `.env*`, `node_modules/`, `build/` (bobp output capture), `.via/`, `.mcp.json`,
   `.claude/settings.local.json`. The relative agent-discovery symlinks (`.agents`, `.claude/skills/`,
   `.cursorrules`) are committed.
-- **Rollback:** `git revert` the offending commit; recard stays pinned to the previous good commit.
+- **Rollback:** `git revert` the offending commit and publish with `bobp make push`.
 - **Changing this document:** only Tank edits it; every edit updates the Last verified line.
 
 ## 7. Versioning and release
 
 - **Version lives in:** `version` in `package.json` (`0.1.0`).
-- **Bumped:** not yet decided — open question for the user (proposal: bump and tag at sprint close,
-  which is what recard pins).
-- **CLI entry points:** `bin` in `package.json` — none yet (see section 3).
-- **Artifact:** None — not published to npm. recard consumes understudy as a git dependency.
+- **Bumped:** only when the owner asks for a release (owner, 2026-10-15). Sprint closes do not
+  bump the version on their own.
+- **CLI entry points:** `bin.understudy` in `package.json` → `bin/understudy.mjs`.
+- **Artifact:** None — not published to npm; a release is a tag on `main`.
 
 ## 8. CI / deploy
 
@@ -166,5 +166,6 @@ Run by Tank at sprint close (`*devops sdlc-check`):
 8. Nothing under `src/` or `tests/` imports from `seed/`.
 
 ---
-*Last verified: 2026-10-15 against sprint-1 at 2fba1d8 by Tank (sprint 1 close: distclean →
-install → install (lockfile unchanged) → check, 93/93 tests; make test-live green, both examples).*
+*Last verified: 2026-10-15 against sprint-2 at cff915e by Tank (sprint 2 close: distclean →
+install → install (lockfile unchanged) → check, 118/118 tests; make test-live green for cli, web
+and http).*

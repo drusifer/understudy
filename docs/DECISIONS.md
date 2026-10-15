@@ -1,10 +1,43 @@
 # Decisions
 
 Newest first. Each record follows `agents/templates/_template_DECISION.md`, kept short.
-Sprint 1 records were made by Morpheus in `docs/sprints/ARCH_SPRINT1.md` §8 (approved at
-Smith Gate 2, 2026-10-15) and recorded here by Oracle at sprint close.
+Sprint 1 records were made by Morpheus in `docs/sprints/ARCH_SPRINT1.md` §8 and sprint 2
+records in `docs/sprints/ARCH_SPRINT2.md` §8 (both approved at Smith Gate 2, 2026-10-15).
 
 ---
+
+## ADR-0010: One stall rule in the run loop, for every target
+
+*   **Status**: Accepted · **Deciders**: Morpheus, Smith · **Date**: 2026-10-15 · **Related**: UND-6 AC9, UND-7 AC8
+*   **Context**: Smith Gate 1: a run could wait forever once the app stopped offering moves - the step cap counts moves, so it never trips. Hookless pages make this the likely failure (a last screen with no controls).
+*   **Options**: (1) one rule in `run.mjs`: 10 s with nothing offered after a move → `stalled`; (2) per-target timeouts.
+*   **Decision**: (1), sharing the idle check with the first-move rule; the message says to add a `showing` guard.
+*   **Consequences**: + no run hangs; the commonest authoring slip explains itself. − an app that legitimately takes over 10 s between moves needs a larger limit (not configurable yet).
+
+## ADR-0009: The part declares where it ends (`showing`), not the generic adapter
+
+*   **Status**: Accepted · **Deciders**: Morpheus · **Date**: 2026-10-15 · **Related**: UND-7
+*   **Context**: the generic page app cannot know a page's end; the owner wanted web adapters to be optional.
+*   **Options**: (1) a library guard `showing { text }` over the view `look` returns; (2) a `done` field on the adapter; (3) a Jev question on every look.
+*   **Decision**: (1). It works for every target and costs no Jev calls; literal text in `turn.yaml` is allowed.
+*   **Consequences**: + web adapters are a name and a target. − `showing` matches substrings anywhere in the view and may over-match on large views.
+
+## ADR-0008: HTTP target - GET-state view, request moves, error statuses are the app's answer
+
+*   **Status**: Accepted · **Deciders**: Morpheus · **Date**: 2026-10-15 · **Related**: UND-6
+*   **Context**: the third target kind the owner asked for at the start; ADR-0001's interface was meant to fit it.
+*   **Options**: (1) view = GET of a state path, move = adapter-defined request, 4xx/5xx returned and logged, play continues; (2) treat 4xx/5xx as a run failure.
+*   **Decision**: (1), with start-on-a-free-port or attach-to-a-running-URL; only a lost connection or a dead server ends the run.
+*   **Consequences**: + an API refusing a bad move is visible in the log, which is what a test wants. − no auth headers or cookies yet.
+
+## ADR-0007: Pages are read through the accessibility snapshot; the page hook is removed
+
+*   **Status**: Accepted (supersedes ADR-0002) · **Deciders**: owner, Morpheus · **Date**: 2026-10-15 · **Related**: UND-7
+*   **Context**: owner: "ditch the special hook" - play pages that were not written for understudy, with no back-compat.
+*   **Options**: (1) Playwright's `ariaSnapshot()` + `getByRole` actions; (2) raw DOM walk with CSS selectors; (3) keep the hook.
+*   **Decision**: (1). Roles and visible names are what a person (and a screen reader) meets; hidden and disabled controls are handled by the browser. All hook code, fields and docs were deleted.
+*   **Consequences**: + unmodified pages; web adapters optional (generic page app). − free-text fields deferred; duplicate control names use the first visible one.
+
 
 ## ADR-0006: `make test` never calls Jev or launches Chromium
 
@@ -38,7 +71,7 @@ Smith Gate 2, 2026-10-15) and recorded here by Oracle at sprint close.
 
 ## ADR-0002: The web target drives a page hook, not the DOM
 
-*   **Status**: Accepted · **Deciders**: Morpheus · **Date**: 2026-10-15 · **Related**: UND-2
+*   **Status**: Superseded by ADR-0007 (sprint 2) · **Deciders**: Morpheus · **Date**: 2026-10-15 · **Related**: UND-2
 *   **Context**: a web adapter needs a view and moves. recard used `window.__recardHarness`.
 *   **Options**: (1) a hook the page exposes (`window[hook]`, configurable); (2) generic DOM reading (buttons, text).
 *   **Decision**: (1), default `__understudy`. The hook should only read the page and press what is on it.

@@ -101,7 +101,7 @@ test('an adapter missing a piece is refused naming the piece', async () => {
   const directory = brokenCopy('adapter.mjs', (text) => text.replace("options: () => [{ id: 'order', what: 'place the order' }, { id: 'cancel', what: 'stop' }],", ''));
   assert.equal(await refusal(directory), `${shown(directory)}/adapter.mjs: app.options must be a function - see docs/ADAPTERS.md`);
   const kindless = brokenCopy('adapter.mjs', (text) => text.replace("kind: 'process'", "kind: 'ftp'"));
-  assert.equal(await refusal(kindless), `${shown(kindless)}/adapter.mjs: target.kind must be "process" or "page" (got "ftp")`);
+  assert.equal(await refusal(kindless), `${shown(kindless)}/adapter.mjs: target.kind must be "process", "page" or "http" (got "ftp")`);
 });
 
 test('understudy check: good exits 0 without a key; broken exits 2 with one line and no stack', async () => {
@@ -117,4 +117,24 @@ test('understudy check: good exits 0 without a key; broken exits 2 with one line
 test('a directory that does not exist, or a file, is named as such - not as a missing adapter', async () => {
   assert.equal(await refusal('examples/nope'), 'examples/nope: no such directory');
   assert.equal(await refusal('package.json'), 'package.json: not a directory - give the example directory, e.g. examples/cli');
+});
+
+test('a target field the kind does not have is refused, naming the known ones', async () => {
+  const directory = brokenCopy('adapter.mjs', (text) => text.replace("args: ['app.mjs'] }", "args: ['app.mjs'], hook: '__understudy' }"));
+  assert.equal(await refusal(directory), `${shown(directory)}/adapter.mjs: target.hook is not a process target field (known: command, args)`);
+});
+
+test('a target missing a field its kind needs is refused at check, naming it', async () => {
+  const noCommand = brokenCopy('adapter.mjs', (text) => text.replace("command: 'node', ", ''));
+  assert.equal(await refusal(noCommand), `${shown(noCommand)}/adapter.mjs: target.command is required for a process target (the program to start, e.g. node)`);
+});
+
+test('an http target needs url and state, and a {port} url needs a command', async () => {
+  const http = (target) => brokenCopy('adapter.mjs', (text) => text.replace("{ kind: 'process', command: 'node', args: ['app.mjs'] }", () => target));
+  const noState = http("{ kind: 'http', url: 'http://127.0.0.1:8080' }");
+  assert.equal(await refusal(noState), `${shown(noState)}/adapter.mjs: target.state is required for an http target (the path a look GETs, e.g. /status)`);
+  const noUrl = http("{ kind: 'http', state: '/status' }");
+  assert.equal(await refusal(noUrl), shown(noUrl) + '/adapter.mjs: target.url is required for an http target (where the API is, e.g. http://127.0.0.1:{port})');
+  const portOnly = http("{ kind: 'http', url: 'http://127.0.0.1:{port}', state: '/status' }");
+  assert.equal(await refusal(portOnly), shown(portOnly) + '/adapter.mjs: target.url has {port} but no command to start - give the full URL of a running service, or a command');
 });

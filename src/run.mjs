@@ -74,14 +74,14 @@ function watchInterrupts(signals, onSecond) {
  * @param {{ steps?: number, stdout?: { write: Function }, stderr?: { write: Function },
  *   environment?: object, makeJudge?: (environment: object) => object|Promise<object>,
  *   makeTarget?: (spec: object, options: { directory: string }) => Promise<object>,
- *   logRoot?: string, firstMoveMs?: number, pollMs?: number, signals?: import('node:events').EventEmitter,
+ *   logRoot?: string, firstMoveMs?: number, stallMs?: number, pollMs?: number, signals?: import('node:events').EventEmitter,
  *   clock?: () => number }} [options]
  * @throws {UsageError} before anything starts; {RunError} once it has.
  */
 export async function runPart(directory, {
   steps = 50, stdout = process.stdout, stderr = process.stderr, environment = process.env,
   makeJudge = typesafeJudge, makeTarget = startTarget, logRoot = path.join('build', 'runs'),
-  firstMoveMs = 10_000, pollMs = 250, signals = process, clock = Date.now,
+  firstMoveMs = 10_000, stallMs = 10_000, pollMs = 250, signals = process, clock = Date.now,
 } = {}) {
   const part = await loadPart(directory);
   const { adapter } = part;
@@ -94,14 +94,14 @@ export async function runPart(directory, {
     stdout.write(line);
     appendFileSync(logFile, line);
   };
-  const run = { taken: 0, seat: null };
+  const run = { taken: 0, seat: null, lastMoveAt: null };
   const interrupts = watchInterrupts(signals, () => target.close());
   try {
     mkdirSync(logDirectory, { recursive: true });
     stderr.write(`understudy: playing ${adapter.name} (${target.describe()}) - log ${shown(logFile)}\n`);
     Object.assign(part.services, { target, judge, name: 'understudy', player: adapter.player ?? {}, app: adapter.app });
     run.seat = new MachineSeat({ machine: part.machine, services: part.services, pollMs, clock });
-    await playUntilDone({ run, target, steps, firstMoveMs, clock, interrupts, write, stderr });
+    await playUntilDone({ run, target, steps, waits: { firstMoveMs, stallMs }, clock, interrupts, write, stderr });
   } catch (error) {
     write({ final: true, outcome: interrupts.isAsked() ? 'interrupted' : error.outcome ?? 'error', steps: run.taken, state: run.seat?.state ?? null });
     throw error;
@@ -118,9 +118,9 @@ export async function runPart(directory, {
 
 /**
  * The loop: "is it my move?", then one step, until the seat is done -
- * stopping on the step cap, a dead app or no first move.
+ * stopping on the step cap, a dead app, no first move or a stall.
  */
-async function playUntilDone({ run, target, steps, firstMoveMs, clock, interrupts, write, stderr }) {
+async function playUntilDone({ run, target, steps, waits, clock, interrupts, write, stderr }) {
   const started = clock();
   for (;;) {
     const next = await run.seat.nextMove({ shouldStop: interrupts.isAsked });
@@ -134,11 +134,26 @@ async function playUntilDone({ run, target, steps, firstMoveMs, clock, interrupt
     }
     if (next === 'move') {
       await takeStep({ run, steps, write, stderr });
-    } else if (run.taken === 0 && clock() - started >= firstMoveMs) {
-      const view = await target.view();
-      throw new RunError(`no first move from ${target.describe()} within ${firstMoveMs / 1000} s - last view: ${JSON.stringify(view)}`, { outcome: 'no-first-move' });
+      run.lastMoveAt = clock();
+    } else {
+      await checkIdle({ run, target, waits, idleFor: clock() - (run.lastMoveAt ?? started) });
     }
   }
+}
+
+/**
+ * Nothing to do yet: fine for a while, then no first move (before step 1)
+ * or a stall (after it) - one rule for every target (ADR-0010).
+ */
+async function checkIdle({ run, target, waits, idleFor }) {
+  const limit = run.taken === 0 ? waits.firstMoveMs : waits.stallMs;
+  if (idleFor < limit) return;
+  const view = JSON.stringify(await target.view());
+  if (run.taken === 0) {
+    throw new RunError(`no first move from ${target.describe()} within ${limit / 1000} s - last view: ${view}`, { outcome: 'no-first-move' });
+  }
+  throw new RunError(`stalled: nothing to do for ${limit / 1000} s after step ${run.taken} (last state: ${run.seat.state})`
+    + ` - the app showed: ${view.slice(0, 200)} - if this is where the part should end, add a showing guard (docs/ADAPTERS.md)`, { outcome: 'stalled' });
 }
 
 /**

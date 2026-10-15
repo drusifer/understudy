@@ -1,6 +1,6 @@
-// The web example's app: a three-step sign-up wizard. A person clicks
-// buttons; understudy uses the same buttons through `window.__understudy`
-// (docs/ADAPTERS.md), which only READS the page and CLICKS what is on it.
+// The web example's app: a three-step sign-up wizard. A plain page - a
+// person clicks its buttons, and so does an understudy, reading the page
+// the way a screen reader does. Nothing here is written for understudy.
 
 const STEPS = [
   { screen: 'plan', prompt: 'Which plan would you like?', buttons: [['free', 'Free'], ['pro', 'Pro (paid monthly)']] },
@@ -50,20 +50,3 @@ function choose(step, id) {
 }
 
 render();
-
-// The hook IS a global: it is how understudy finds the page's moves (docs/ADAPTERS.md).
-// eslint-disable-next-line unicorn/no-global-object-property-assignment
-globalThis.__understudy = {
-  view: () => ({
-    screen: wizard.screen,
-    seq: wizard.seq,
-    prompt: element('prompt').textContent,
-    note: element('summary').textContent,
-    buttons: [...element('buttons').querySelectorAll('button')].map((button) => ({ id: button.id, label: button.textContent })),
-  }),
-  act: ({ press }) => {
-    const button = element('buttons').querySelector(`#${press}`);
-    if (!button) throw new Error(`no button "${press}" on the ${wizard.screen} screen`);
-    button.click();
-  },
-};

@@ -79,6 +79,10 @@ export function genericLibrary(services) {
         doc: 'the last `look` found the app in phase `is`',
         fn: ({ event }, parameters) => event.output?.phase === parameters.is,
       },
+      showing: {
+        doc: 'the view the last `look` read shows `text` somewhere (how a part says what its end looks like)',
+        fn: ({ event }, parameters) => stringsIn(event.output?.view).some((each) => each.includes(parameters.text)),
+      },
       counted: {
         doc: 'context `field` has reached `at_least` (a number, or another context field)',
         fn: ({ context }, parameters) => {
@@ -136,10 +140,10 @@ export function genericLibrary(services) {
         },
       },
       look: {
-        doc: 'read the app\'s view and find its phase (the adapter decides); output phase for the `phase` guard',
+        doc: 'read the app\'s view and find its phase (the adapter decides); output phase and view for the `phase` and `showing` guards',
         fn: async ({ input }) => {
           const view = input.event?.view ?? await services.target.view();
-          return { phase: services.app.phase(view, input.context) };
+          return { phase: services.app.phase(view, input.context), view };
         },
       },
       play: {
@@ -180,16 +184,28 @@ async function play(services, { context, phase, question: questionName }) {
   }
   const move = byId(result.option);
   const { actions = [], say = null, tracks = {}, data } = app.act(move, state, view, context);
-  for (const action of actions) await target.act(action);
+  // What the app answered (an HTTP status, say) - the last answer worth keeping.
+  let response;
+  for (const action of actions) response = (await target.act(action)) ?? response;
   if (say) await target.say(say, data ?? { kind: 'understudy-move', move: move.id });
   const record = {
     at: new Date().toISOString(), phase, options: options.map((option) => option.id), picked: result.picked,
     move: move.id, confidence: result.confidence, checks: result.checks, asked: result.asked,
     ...(offList !== undefined && { offList: true, answer: offList }),
+    ...(response !== undefined && { response }),
     ...(result.blocked && { blocked: { ...result.blocked, move: result.picked } }),
   };
   services.onRecord?.(record);
   return { record, move: move.id, kind: move.id.split(':', 1)[0], tracks };
+}
+
+/**
+ * Every string inside a view, however deeply nested.
+ */
+function stringsIn(value) {
+  if (typeof value === 'string') return [value];
+  if (value && typeof value === 'object') return Object.values(value).flatMap((each) => stringsIn(each));
+  return [];
 }
 
 /**

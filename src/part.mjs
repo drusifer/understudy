@@ -16,10 +16,17 @@ import { UsageError } from './errors.mjs';
 import { parseTurn, unknown } from './machine.mjs';
 import { genericLibrary, mergeLibraries } from './library.mjs';
 import { checkInstruction } from './strategyFile.mjs';
+import { pageApp } from './apps/page.mjs';
 
 const NEEDS = 'an example directory needs adapter.mjs, part/turn.yaml and part/questions.yaml';
 const QUESTION_TYPES = ['noul', 'choice', 'score'];
-const TARGET_KINDS = new Set(['process', 'page']);
+// The fields each kind of target takes; anything else is a mistake, named at load.
+// The fields a kind cannot do without, with what each one is for.
+const REQUIRED = {
+  process: { command: 'the program to start, e.g. node' },
+  http: { url: 'where the API is, e.g. http://127.0.0.1:{port}', state: 'the path a look GETs, e.g. /status' },
+};
+const TARGET_FIELDS = { process: ['command', 'args'], page: ['root', 'page'], http: ['command', 'args', 'url', 'state'] };
 const APP_HOOKS = ['phase', 'project', 'options', 'act'];
 
 /**
@@ -63,18 +70,44 @@ export async function loadAdapter(directory) {
   const fail = (message) => { throw new UsageError(`${shown(file)}: ${message}`); };
   if (!adapter || typeof adapter !== 'object') fail('needs a default export - see docs/ADAPTERS.md');
   if (typeof adapter.name !== 'string' || adapter.name === '') fail('name must be a non-empty string - see docs/ADAPTERS.md');
-  if (!TARGET_KINDS.has(adapter.target?.kind)) fail(`target.kind must be "process" or "page" (got ${JSON.stringify(adapter.target?.kind ?? null)})`);
+  checkTarget(adapter.target, fail);
+  checkLibrary(adapter.library ?? {}, fail);
+  // A web page needs no hooks of its own: the generic page app plays what is on it.
+  if (adapter.target.kind === 'page' && adapter.app === undefined) return { ...adapter, app: pageApp, isGenericApp: true };
   for (const hook of APP_HOOKS) {
     if (typeof adapter.app?.[hook] !== 'function') fail(`app.${hook} must be a function - see docs/ADAPTERS.md`);
   }
-  const kinds = Object.entries(adapter.library ?? {});
+  return adapter;
+}
+
+/**
+ * A known kind, and only the fields that kind takes.
+ */
+function checkTarget(target, fail) {
+  const names = Object.keys(TARGET_FIELDS).map((kind) => JSON.stringify(kind));
+  const kinds = `${names.slice(0, -1).join(', ')} or ${names.at(-1)}`;
+  const known = TARGET_FIELDS[target?.kind];
+  if (!known) fail(`target.kind must be ${kinds} (got ${JSON.stringify(target?.kind ?? null)})`);
+  const extra = Object.keys(target).find((field) => field !== 'kind' && !known.includes(field));
+  if (extra) fail(`target.${extra} is not a ${target.kind} target field (known: ${known.join(', ')})`);
+  const missing = Object.keys(REQUIRED[target.kind] ?? {}).find((field) => typeof target[field] !== 'string' || target[field] === '');
+  if (missing) fail(`target.${missing} is required for ${target.kind === 'http' ? 'an' : 'a'} ${target.kind} target (${REQUIRED[target.kind][missing]})`);
+  if (target.kind === 'http' && target.url.includes('{port}') && !target.command) {
+    fail('target.url has {port} but no command to start - give the full URL of a running service, or a command');
+  }
+}
+
+/**
+ * Every name an adapter adds says what it means.
+ */
+function checkLibrary(library, fail) {
+  const kinds = Object.entries(library);
   for (const [kind, names] of kinds) {
     const entries = Object.entries(names ?? {});
     for (const [name, entry] of entries) {
       if (typeof entry?.doc !== 'string' || entry.doc === '') fail(`library.${kind}.${name} needs a one-line doc`);
     }
   }
-  return adapter;
 }
 
 /**
@@ -140,7 +173,7 @@ export async function loadPart(directory) {
 export async function checkPart(directory) {
   const { adapter, questions, states } = await loadPart(directory);
   const count = Object.keys(questions).length;
-  return `${shown(directory)}: part OK - ${states} states, ${count} question${count === 1 ? '' : 's'}, adapter ${adapter.name} (${adapter.target.kind})`;
+  return `${shown(directory)}: part OK - ${states} states, ${count} question${count === 1 ? '' : 's'}, adapter ${adapter.name} (${adapter.target.kind}${adapter.isGenericApp ? ', generic page app' : ''})`;
 }
 
 /**

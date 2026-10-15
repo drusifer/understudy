@@ -12,14 +12,15 @@ examples/<app>/
   part/questions.yaml   what Jev is asked                                   (TypeSafe questions)
 ```
 
-Two working examples to copy:
+Three working examples to copy:
 
 | Example | App | Target | Adapter |
 |---|---|---|---|
 | [`examples/cli`](../examples/cli) | a coffee counter that asks three questions on the terminal | `process` | 51 lines |
-| [`examples/web`](../examples/web) | a three-step sign-up wizard page | `page` | 24 lines |
+| [`examples/web`](../examples/web) | a three-step sign-up wizard page, unmodified | `page` | 4 lines (no hooks) |
+| [`examples/http`](../examples/http) | a vending machine JSON API | `http` | 36 lines |
 
-Their parts are the same shape — neither part names the transport.
+Their parts are the same shape — none of them names the transport.
 
 ```sh
 bobp make run ARGS="check examples/cli"       # load and check, start nothing (no key needed)
@@ -49,8 +50,11 @@ export default {
 };
 ```
 
-`understudy check` refuses an adapter that is missing any of `name`, `target.kind` or the
-four required `app` hooks, naming the missing piece.
+`understudy check` refuses an adapter that is missing `name` or `target.kind`, misses a field
+its kind needs (`process`: `command`; `http`: `url` and `state`, plus `command` when `url` has
+`{port}`), has a `target` field its kind does not take, or (for `process` and `http`) lacks one of the four
+`app` hooks - naming the piece. A **`page` adapter may leave out `app` entirely** and get the
+generic page app (below); `check` then says `(page, generic page app)`.
 
 ### `target` — how the app is seen and moved
 
@@ -74,29 +78,67 @@ with each input echoed where it was typed (`> medium`). Its **action** is
 `{ input: 'medium' }` — one line written to stdin. A program has no talk channel.
 
 **`kind: 'page'`** — a web page, served from the example directory on `127.0.0.1` and
-opened in headless Chromium (`bobp make install-browser` if it is missing).
+opened in headless Chromium (`bobp make install-browser` if it is missing). The page needs
+**nothing added to it**: understudy reads it the way a screen reader does.
 
 | Field | Default | Meaning |
 |---|---|---|
 | `root` | `.` | the folder to serve, relative to the example directory |
 | `page` | `index.html` | the page to open |
-| `hook` | `__understudy` | the global the page exposes |
 
-The page cooperates by exposing a hook, as the web example's `app.js` does:
+Its **view** comes from the page's accessibility snapshot:
 
 ```js
-globalThis.__understudy = {
-  view: () => ({ screen, seq, buttons: [...] }),   // required; must include a changing `seq`
-  act: ({ press }) => { /* click the button */ },  // required; receives your action as-is
-  talk: () => [{ name, text }],                    // optional talk channel
-  say: (text) => {},                               // optional
-};
+{ path: '/index.html', title: 'Sign up', seq: 992290554,      // seq changes when the page does
+  text: ['Sign up', 'Which plan would you like?'],              // headings, paragraphs, text
+  controls: [{ role: 'button', name: 'Free' },                  // what a person could choose
+             { role: 'option', name: 'Large', list: 'Size' },
+             { role: 'checkbox', name: 'Agree', checked: true }] }
 ```
 
-The page's **view** and **action** are whatever your hook returns and accepts. Keep the hook
-to reading the page and pressing what is on it, so a run exercises the real app. A page that
-has not exposed `view` within 10 s stops the run (exit 1), naming the URL and what the page
-showed.
+`controls` holds the enabled buttons, links, checkboxes, radio buttons and drop-down options
+(hidden and disabled ones never appear; text boxes are not offered yet). Its **action** names a
+control the same way - `{ role: 'button', name: 'Free' }`, `{ role: 'option', name: 'Large',
+list: 'Size' }` - and understudy presses, ticks or picks it. A control gone by the time of the
+move stops the run (`control-gone`).
+
+**The generic page app.** With no `app` in the adapter, understudy uses its own:
+
+| Hook | Does |
+|---|---|
+| `phase` | `'asking'` when the page has a control, else `'waiting'` |
+| `project` | `{ page: title, says: text, controls }` - what Jev reads |
+| `options` | one per control, id `<role>:<label>` (`button:Pro (paid monthly)`, `option:Size=Large`) |
+| `act` | uses that control by role and name |
+
+It cannot know where your app ends, so the **part** says it, with the `showing` guard
+(section 2). The web example's whole adapter:
+
+```js
+export default { name: 'signup-web', target: { kind: 'page', page: 'index.html' } };
+```
+
+**`kind: 'http'`** — a JSON API. A look is a GET of its state; a move is a request.
+
+| Field | Meaning |
+|---|---|
+| `url` | where it is; `{port}` is replaced by a free port when `command` starts it |
+| `state` | the path a look GETs (`/machine`) |
+| `command`, `args` | optional: start the server in the example directory (it gets `PORT`); stopped at the end |
+
+Without `command` understudy **attaches** to a service already running at `url` and leaves it
+running. Its **view**:
+
+```js
+{ status: 200, body: { credit: 0, items: [...] }, seq: 3,
+  last: { method: 'POST', path: '/select', status: 402, body: { error: '...' } } | null,
+  exited: null }
+```
+
+Its **action** is a request, `{ method: 'POST', path: '/coins', body: { coin: 1 } }`. An error
+status (4xx/5xx) is the app's answer, not a crash: it is kept in `view.last` and in the step's
+log line as `response: { status }`, and the run goes on. A server that never answers (10 s),
+exits, or drops the connection ends the run with a named reason.
 
 ### `app` — what the view means
 
@@ -106,7 +148,7 @@ These are called by the part's library names (section 4), never by you:
   `'waiting'`. The part's `look` actor calls it and its `phase` guard tests the answer.
   *Make it impossible to answer twice:* only say "asking" when there is a question that has
   not been answered yet. The CLI adapter compares the number of questions printed with
-  `view.sent`; the web page re-renders synchronously, so its buttons are always current.
+  `view.sent`; the vending machine answers each request before the next look.
 - **`project(view, context, phase)`** — the **state** Jev reads: small, named facts
   (`topic`, `choices`, `answered_so_far`). Question prose refers to these by path
   (section 3), so name them well.
@@ -120,8 +162,8 @@ These are called by the part's library names (section 4), never by you:
   Jev can only ever pick one of these: an off-list answer is never sent (section 5). The
   **last** option is the fallback used when a pick is below the player's confidence floor.
 - **`act(move, state, view, context)`** — the target actions that make `move`:
-  `{ actions: [{ input: move.value }] }` for a program, `{ actions: [{ press: 'free' }] }`
-  for the web example. It may also return `say` (a line for the talk channel) and
+  `{ actions: [{ input: move.value }] }` for a program, `{ actions: [{ method: 'POST', path:
+  '/coins', body: { coin: 1 } }] }` for an API. It may also return `say` (a line for the talk channel) and
   `tracks` (fields to keep in context, read by the `track` action).
 
 ---
@@ -129,7 +171,7 @@ These are called by the part's library names (section 4), never by you:
 ## 2. The part: `part/turn.yaml`
 
 An XState statechart in YAML, with every guard, action and actor taken from the library
-(`understudy library`). Both examples use this shape:
+(`understudy library`). The CLI and HTTP examples use this shape:
 
 ```yaml
 initial: waiting
@@ -152,6 +194,20 @@ states:
   finished:
     type: final                  # the run ends here, exit 0
 ```
+
+A hookless web part ends by what the page **shows** instead, since the generic page app has no
+`done` phase - from `examples/web/part/turn.yaml`:
+
+```yaml
+      onDone:
+        - { target: finished, guard: { type: showing, params: { text: Welcome aboard } } }
+        - { target: answering, guard: { type: phase, params: { is: asking } } }
+        - { target: waiting }
+```
+
+`showing { text }` is true when any text in the view the last `look` read contains `text`.
+Literal text is fine in `turn.yaml` (the no-literals rule is for question prose). Forget it and
+the run plays to the last screen and then **stalls**; the message says to add a `showing` guard.
 
 | Piece | Meaning |
 |---|---|
@@ -189,7 +245,8 @@ the question drifts from the value in the state. `check` refuses `Pick 2 items` 
 
 `player` in the adapter tunes what an unconvincing answer does: `floor` (0–1) is the
 confidence below which a pick is not trusted, and `escalation` is `floor_fallback` (play the
-last option) or `ask` (ask on the talk channel; page targets with `talk`/`say` only).
+last option) or `ask` (ask on the talk channel - none of the three built-in targets has one, so
+`ask` is for a target of your own).
 
 ## 4. Library names
 
@@ -197,8 +254,9 @@ last option) or `ask` (ask on the talk channel; page targets with `talk`/`say` o
 
 | Name | Kind | Does |
 |---|---|---|
-| `look` | actor | reads the view, outputs `adapter.app.phase(view)` |
+| `look` | actor | reads the view, outputs `adapter.app.phase(view)` and the view |
 | `phase` | guard | `{ is: <name> }` — the last `look` found that phase |
+| `showing` | guard | `{ text: <text> }` — the view the last `look` read contains that text |
 | `play` | actor | `{ phase, question }` — Jev picks from `options`, the move is made |
 | `judge` | actor | `{ question }` — a yes/no/unsure Noul about the view |
 | `verdict` | guard | `{ is: yes|no|unsure }` — the last judgment |
@@ -229,23 +287,27 @@ understudy run <dir> [--steps N]     # default cap 50
 ```
 
 - **stdout**: one JSON line per step — `step`, `phase`, `options`, `picked`, `move`,
-  `confidence`, `state` (and `offList`/`answer` when Jev's first pick was not offered) — then a
+  `confidence`, `state` (and `offList`/`answer` when Jev's first pick was not offered,
+  `response` when the app answered the move, e.g. an HTTP status) — then a
   final line `{ "final": true, "outcome": ..., "steps": ..., "state": ... }`. The same lines go
   to `build/runs/<adapter name>/<timestamp>.jsonl`.
 - **stderr**: where the log is, then one readable line per step.
 - **Off-list answers**: never sent. Jev is asked once more; a second off-list answer stops
   the run.
+- **Waiting**: no move offered within 10 s of the start (`no-first-move`) or for 10 s after
+  any move (`stalled`) ends the run - for every target.
 
 | Exit | Meaning | Outcomes |
 |---|---|---|
 | 0 | reached the end state | `done` |
-| 1 | started, then could not finish | `step-cap`, `app-exited`, `off-list`, `no-first-move`, `jev-error`, `interrupted` |
+| 1 | started, then could not finish | `step-cap`, `stalled`, `app-exited`, `connection-lost`, `control-gone`, `off-list`, `no-first-move`, `jev-error`, `interrupted` |
 | 2 | refused before starting anything | bad arguments, broken part, no `TYPESAFE_API_KEY`, no Chromium |
 
 ## 6. A new kind of app
 
-An app that is neither a program nor a page needs a new **target**: a module in
+An app that is not a program, a page or a JSON API needs a new **target**: a module in
 `src/targets/<kind>.mjs` exporting `startTarget(spec, { directory })`, which resolves an
 object with `view()`, `act(action)`, `talk()`, `say(text)`, `describe()`, `exited()` and
-`close()` — see `src/targets/process.mjs` (about 70 lines). An HTTP target is planned this way:
-`view` a GET, `act` a request. Nothing in parts, adapters' `app` hooks or the run loop changes.
+`close()`, plus its fields in `TARGET_FIELDS` in `src/part.mjs`. `src/targets/http.mjs` shows
+the pattern, including starting a server with `src/targets/program.mjs`. Nothing in parts,
+adapters' `app` hooks or the run loop changes.
