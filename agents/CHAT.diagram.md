@@ -88,4 +88,12 @@ sequenceDiagram
     Note right of Neo: "Phase 2 impl complete:<br/>src/targets/http.mjs<br/>(start on free port or<br/>attach, ready-wait 10 s,<br/>GET-state view w/ seq +<br/>last answer, request ac…"
     Trin->>Morpheus: "qa handoff"
     Note right of Trin: "UAT phase 2 passed LIVE:<br/>run examples/http -><br/>coin:1, buy:water, done,<br/>exit 0, attach mode<br/>plays a hand-started<br/>server and leaves it<br/>runnin…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 2 review passed<br/>(ADR-0008, program.mjs<br/>reused). Committed. @Neo<br/>*swe impl phase-3"
+    Mouse->>All: "phase 3"
+    Note right of Mouse: "Phase 3: hookless page<br/>target (accessibility<br/>snapshot)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 3 impl complete:<br/>src/targets/aria.mjs<br/>(snapshot -><br/>title/text/controls,<br/>disabled dropped,<br/>options carry list,<br/>checked/selected), page…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 3 passed:<br/>parser cases (disabled,<br/>hidden-absent, combobox<br/>options, links, quotes,<br/>nesting) on a recorded<br/>1.62.1 snapshot,<br/>actions…"
 ```

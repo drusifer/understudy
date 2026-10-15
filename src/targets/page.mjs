@@ -1,24 +1,25 @@
-// Sprint 1 UND-2 (ARCH §5, ADR-U2): a web page as a target.
+// Sprint 1 UND-2, reworked in sprint 2 UND-7 (ARCH §4, ADR-0007): a web
+// page as a target, played as a person would - with nothing added to it.
 //
-// The example directory is served on 127.0.0.1, the page is opened in
-// headless Chromium, and everything goes through the page's own hook,
-// `window[hook]` (default `__understudy`): `view()` is the view (it
-// carries its own `seq`), `act(action)` makes a move, and `talk()` /
-// `say(text)` are the talk channel when the page has one. Generalized
-// from recard's tests/harness/multiplayer.mjs (`startStaticServer`,
-// `launchChromium`, `HarnessPeer`). Headless only (recard US-119).
+// The example directory is served on 127.0.0.1 and the page opened in
+// headless Chromium. A look reads the page's accessibility snapshot (what a
+// screen reader sees: its text and the controls a person could choose,
+// `aria.mjs`); a move clicks, ticks or picks a control by its role and
+// visible name. Generalized from recard's tests/harness/multiplayer.mjs
+// (`startStaticServer`, `launchChromium`). Headless only (recard US-119).
 
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { UsageError, RunError } from '../errors.mjs';
+import { parseSnapshot } from './aria.mjs';
 
 const MIME = {
   '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css',
   '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp',
 };
 const SYSTEM_CHROMIUM = ['/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome'];
-const READY_MS = 10_000;
+const ACT_MS = 5000;
 
 /**
  * Serves `root` on 127.0.0.1 (any free port); resolves `{ baseUrl, close() }`.
@@ -86,32 +87,40 @@ async function launchChromium(launch, systemChromium) {
 }
 
 /**
- * Calls `window[hook][method](argument)` in the page; `undefined` when the
- * hook has no such method (an optional one, like `talk`).
+ * A short, stable fingerprint of a snapshot: it changes when the page does.
  */
-function callHook({ hook, method, argument }) {
-  const object = globalThis[hook];
-  return typeof object?.[method] === 'function' ? object[method](argument) : undefined;
+function fingerprint(text) {
+  let hash = 0;
+  for (const character of text) hash = (hash * 31 + character.codePointAt(0)) % 2_147_483_647;
+  return hash;
 }
 
+const VERBS = { button: 'press', link: 'follow', checkbox: 'tick', radio: 'pick', option: 'pick' };
+
 /**
- * What the page shows, for a message - empty when even that fails.
+ * Makes one move: `{ role, name, list? }` - a control as the page names it.
  */
-async function pageText(page) {
+async function choose(page, { role, name, list }) {
+  const options = { timeout: ACT_MS };
   try {
-    return await page.evaluate(() => globalThis.document.body?.textContent ?? '');
-  } catch {
-    return '';
+    if (role === 'option') {
+      await page.getByRole('combobox', { name: list, exact: true }).first().selectOption({ label: name }, options);
+    } else if (role === 'checkbox' || role === 'radio') {
+      await page.getByRole(role, { name, exact: true }).first().check(options);
+    } else {
+      await page.getByRole(role, { name, exact: true }).first().click(options);
+    }
+  } catch (error) {
+    throw new RunError(`could not ${VERBS[role] ?? 'use'} ${role} "${name}" - it is no longer on the page (${error.message.split('\n', 1)[0]})`, { outcome: 'control-gone', cause: error });
   }
 }
 
 /**
- * Serves the example, opens its page and waits for its hook.
- * @param {{ kind: 'page', root?: string, page?: string, hook?: string }} spec
- * @param {{ directory: string, launch?: Function, systemChromium?: string[], readyMs?: number }} options
+ * Serves the example and opens its page.
+ * @param {{ kind: 'page', root?: string, page?: string }} spec
+ * @param {{ directory: string, launch?: Function, systemChromium?: string[] }} options
  */
-export async function startTarget(spec, { directory, launch = playwrightLaunch, systemChromium = SYSTEM_CHROMIUM, readyMs = READY_MS }) {
-  const hook = spec.hook ?? '__understudy';
+export async function startTarget(spec, { directory, launch = playwrightLaunch, systemChromium = SYSTEM_CHROMIUM }) {
   const server = await startStaticServer(path.resolve(directory, spec.root ?? '.'));
   const url = `${server.baseUrl}/${spec.page ?? 'index.html'}`;
   let browser = null;
@@ -128,19 +137,15 @@ export async function startTarget(spec, { directory, launch = playwrightLaunch, 
     let crash = null;
     page.on('crash', () => { crash = { code: null, signal: 'page crashed' }; });
     await page.goto(url);
-    try {
-      await page.waitForFunction((name) => typeof globalThis[name]?.view === 'function', hook, { timeout: readyMs });
-    } catch {
-      const shown = await pageText(page);
-      throw new RunError(`no first move from ${url} within ${readyMs / 1000} s - the page never exposed window.${hook} (it showed: ${JSON.stringify(String(shown).trim().slice(0, 120))})`, { outcome: 'no-first-move' });
-    }
-    const call = (method, argument) => page.evaluate(callHook, { hook, method, argument });
     return {
       describe: () => url,
-      view: () => call('view'),
-      act: (action) => call('act', action),
-      talk: async () => (await call('talk')) ?? [],
-      say: (text) => call('say', text),
+      async view() {
+        const snapshot = await page.locator('body').ariaSnapshot();
+        return { path: new URL(page.url()).pathname, ...parseSnapshot(snapshot), seq: fingerprint(snapshot) };
+      },
+      act: (control) => choose(page, control),
+      talk: async () => [],
+      async say() {},
       exited: () => crash ?? (!isClosed && page.isClosed() ? { code: null, signal: 'page closed' } : null),
       close,
     };

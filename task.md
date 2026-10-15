@@ -32,9 +32,9 @@
 
 ### Phase 3: Hookless page target — UND-7 AC3–6
 *Phase goal: the page target reads the accessibility snapshot and acts by role + name; all hook code is gone.*
-- [ ] **Task 3.1:** `src/targets/aria.mjs` (snapshot text → title/text/controls; hidden absent, disabled dropped, options carry their list); `page.mjs`: view from `ariaSnapshot()`, act by `getByRole` (click/check/selectOption, 5 s, "no longer on the page" `RunError`), hook wait and `callHook` deleted. Tests: aria parser on recorded snapshots; actions on a fake page. (*Owner: Neo | Verification: `bobp make test`; `grep -rn __understudy src` empty*)
-- [ ] **Task 3.2:** UAT: parser cases (disabled, hidden, combobox options, links); no hook code left. (*Owner: Trin | Verification: `bobp make test && bobp make lint`*)
-- [ ] **Task 3.3:** Review vs ADR-0007. (*Owner: Morpheus | Verification: review; commit `Phase 3`*)
+- [x] **Task 3.1:** `src/targets/aria.mjs` (snapshot text → title/text/controls; hidden absent, disabled dropped, options carry their list); `page.mjs`: view from `ariaSnapshot()`, act by `getByRole` (click/check/selectOption, 5 s, "no longer on the page" `RunError`), hook wait and `callHook` deleted. Tests: aria parser on recorded snapshots; actions on a fake page. (*Owner: Neo | Verification: `bobp make test`; `grep -rn __understudy src` empty*)
+- [x] **Task 3.2:** UAT: parser cases (disabled, hidden, combobox options, links); no hook code left. (*Owner: Trin | Verification: `bobp make test && bobp make lint`*)
+- [x] **Task 3.3:** Review vs ADR-0007. (*Owner: Morpheus | Verification: review; commit `Phase 3`*)
 
 ### Phase 4: Generic page app and the unmodified web example — UND-7 AC1–2, 7–8
 *Phase goal: `examples/web` is a plain page with a name-and-target adapter, played live to "Welcome aboard".*

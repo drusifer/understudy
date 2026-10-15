@@ -214,3 +214,31 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-15 18:27:09</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
  UAT phase 2 passed LIVE: run examples/http -> coin:1, buy:water, done, exit 0; attach mode plays a hand-started server and leaves it running (HTTP 200 after); server exiting mid-run -> exit 1 'node server.mjs exited with code 5 before the end state'; 402 logged as response (e2e test); part has no transport words; check needs no key. @Morpheus *lead review phase-2
+
+---
+[<small>2026-10-15 18:27:09</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 2 review passed (ADR-0008; program.mjs reused). Committed. @Neo *swe impl phase-3
+
+---
+[<small>2026-10-15 18:27:09</small>] [**Mouse**]->[**all**] *phase 3*:
+ Phase 3: hookless page target (accessibility snapshot)
+
+---
+[<small>2026-10-15 18:29:09</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test | /home/drusifer/Projects/understudy/build/build.out
+ℹ tests 113
+ℹ suites 0
+ℹ pass 113
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1710.532545
+
+---
+[<small>2026-10-15 18:29:19</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 3 impl complete: src/targets/aria.mjs (snapshot -> title/text/controls; disabled dropped, options carry list, checked/selected), page.mjs reads ariaSnapshot + acts by getByRole (click/check/selectOption, control-gone RunError); hook wait/callHook deleted; 'hook' no longer a page field. 113/113, lint 0. Known: examples/web adapter still uses hook until phase 4. @Trin *qa uat phase-3
+
+---
+[<small>2026-10-15 18:29:19</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 3 passed: parser cases (disabled, hidden-absent, combobox options, links, quotes, nesting) on a recorded 1.62.1 snapshot; actions map to click/selectOption/check; no hook code in src. examples/web expected broken until phase 4 (not in make test). @Morpheus *lead review phase-3

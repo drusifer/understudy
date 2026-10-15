@@ -20,7 +20,7 @@ import { checkInstruction } from './strategyFile.mjs';
 const NEEDS = 'an example directory needs adapter.mjs, part/turn.yaml and part/questions.yaml';
 const QUESTION_TYPES = ['noul', 'choice', 'score'];
 // The fields each kind of target takes; anything else is a mistake, named at load.
-const TARGET_FIELDS = { process: ['command', 'args'], page: ['root', 'page', 'hook'], http: ['command', 'args', 'url', 'state'] };
+const TARGET_FIELDS = { process: ['command', 'args'], page: ['root', 'page'], http: ['command', 'args', 'url', 'state'] };
 const APP_HOOKS = ['phase', 'project', 'options', 'act'];
 
 /**
