@@ -1,0 +1,6 @@
+next:
+  type: choice
+  instructions: Pick the next step for the order on `screen`.
+  criteria:
+    order: place the order as it stands
+    cancel: stop without ordering

@@ -1,0 +1,31 @@
+# The web example's part: the same shape as the CLI example's - wait until
+# something is asked, answer it, stop when sign-up is complete. Every name
+# is from the library (`understudy library`).
+description: >-
+  An understudy signs up for an account: it answers each step's question as
+  a careful new user would, until the account is ready.
+
+initial: waiting
+states:
+  waiting:
+    description: "Nothing to answer yet; looks again. Safe to stop."
+    tags: [safe]
+    on: { OBSERVE: looking }
+  looking:
+    description: "Reads what the app shows to find the phase."
+    invoke:
+      src: look
+      onDone:
+        - { target: answering, guard: { type: phase, params: { is: asking } } }
+        - { target: finished, guard: { type: phase, params: { is: done } } }
+        - { target: waiting }
+  answering:
+    description: "A question is waiting for an answer."
+    tags: [move]
+    on: { STEP: replying }
+  replying:
+    description: "Jev picks one of the offered answers and it is given to the app."
+    invoke: { src: play, with: { phase: asking, question: answer }, onDone: waiting }
+  finished:
+    description: "The account is ready; the run ends."
+    type: final

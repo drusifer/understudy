@@ -1,0 +1,10 @@
+answer:
+  type: choice
+  instructions: >-
+    You are a careful new user signing up for an app you want to try before paying
+    for anything. The app is on the `step` step and asks `question`; `note` is what it
+    last told you. Pick the answer you would give to finish signing up.
+  criteria:
+    plan: answer this plan
+    theme: answer this look
+    terms: answer this to the terms of service
