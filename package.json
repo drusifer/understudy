@@ -1,0 +1,24 @@
+{
+  "name": "understudy",
+  "version": "0.1.0",
+  "description": "Stand-in players for apps under test: Jev-driven actors that play web and CLI/HTTP targets.",
+  "type": "module",
+  "license": "GPL-3.0-only",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "lint": "eslint --no-error-on-unmatched-pattern 'src/**/*.mjs' 'tests/**/*.js' 'tests/**/*.mjs'"
+  },
+  "dependencies": {
+    "xstate": "^5.33.2",
+    "yaml": "^2.9.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.9.1",
+    "eslint-plugin-sonarjs": "^4.2.0",
+    "eslint-plugin-unicorn": "^73.0.0"
+  }
+}

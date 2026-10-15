@@ -147,3 +147,11 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Bob Protocol / via — machine-local config and index, not portable
+.mcp.json
+.via/
+
+# bobp make output capture
+build/
+.claude/settings.local.json
