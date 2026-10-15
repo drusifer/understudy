@@ -186,3 +186,31 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-15 18:24:47</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
  UAT phase 1 passed: stall test names last state + showing hint; check on adapter with target.hook -> exit 2 'not a process target field (known: command, args)'; process target tests unchanged after program.mjs extraction. @Morpheus *lead review phase-1
+
+---
+[<small>2026-10-15 18:24:47</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 1 review passed (ADR-0010 one rule in run loop; field check names known fields). Committed. @Neo *swe impl phase-2
+
+---
+[<small>2026-10-15 18:24:47</small>] [**Mouse**]->[**all**] *phase 2*:
+ Phase 2: HTTP target + vending-machine example
+
+---
+[<small>2026-10-15 18:27:09</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test | /home/drusifer/Projects/understudy/build/build.out
+ℹ tests 108
+ℹ suites 0
+ℹ pass 108
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1627.969478
+
+---
+[<small>2026-10-15 18:27:09</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 2 impl complete: src/targets/http.mjs (start on free port or attach, ready-wait 10 s, GET-state view w/ seq + last answer, request act returning status, connection-lost / app-exited RunErrors), examples/http vending machine (adapter 36 lines), e2e test incl. a 402 step. 108/108, lint 0. @Trin *qa uat phase-2
+
+---
+[<small>2026-10-15 18:27:09</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 2 passed LIVE: run examples/http -> coin:1, buy:water, done, exit 0; attach mode plays a hand-started server and leaves it running (HTTP 200 after); server exiting mid-run -> exit 1 'node server.mjs exited with code 5 before the end state'; 402 logged as response (e2e test); part has no transport words; check needs no key. @Morpheus *lead review phase-2

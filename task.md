@@ -26,9 +26,9 @@
 
 ### Phase 2: HTTP target and the vending-machine example — UND-6
 *Phase goal: a JSON API is played to its end state, started or attached, with error statuses logged.*
-- [ ] **Task 2.1:** `src/targets/http.mjs` (free port + `{port}`, start via `program.mjs`, ready-wait 10 s, GET-state view, request act returning `{ status }`, connection-lost `RunError`, attach mode); `examples/http/` (`server.mjs`, adapter < 150 lines, part with no transport words). Tests against an in-process `node:http` server + the example end to end with a Jev double. (*Owner: Neo | Verification: `bobp make test`; `bobp make run ARGS="check examples/http"` exit 0*)
-- [ ] **Task 2.2:** UAT UND-6 AC1–9: live `bobp make run ARGS="run examples/http --steps 20"` exit 0; attach mode against a hand-started server (left running); error status in a step line; kill server mid-run → exit 1. (*Owner: Trin | Verification: live run (capped) + `bobp make test && bobp make lint`*)
-- [ ] **Task 2.3:** Review vs ADR-0008. (*Owner: Morpheus | Verification: review; commit `Phase 2`*)
+- [x] **Task 2.1:** `src/targets/http.mjs` (free port + `{port}`, start via `program.mjs`, ready-wait 10 s, GET-state view, request act returning `{ status }`, connection-lost `RunError`, attach mode); `examples/http/` (`server.mjs`, adapter < 150 lines, part with no transport words). Tests against an in-process `node:http` server + the example end to end with a Jev double. (*Owner: Neo | Verification: `bobp make test`; `bobp make run ARGS="check examples/http"` exit 0*)
+- [x] **Task 2.2:** UAT UND-6 AC1–9: live `bobp make run ARGS="run examples/http --steps 20"` exit 0; attach mode against a hand-started server (left running); error status in a step line; kill server mid-run → exit 1. (*Owner: Trin | Verification: live run (capped) + `bobp make test && bobp make lint`*)
+- [x] **Task 2.3:** Review vs ADR-0008. (*Owner: Morpheus | Verification: review; commit `Phase 2`*)
 
 ### Phase 3: Hookless page target — UND-7 AC3–6
 *Phase goal: the page target reads the accessibility snapshot and acts by role + name; all hook code is gone.*

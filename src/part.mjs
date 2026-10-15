@@ -20,7 +20,7 @@ import { checkInstruction } from './strategyFile.mjs';
 const NEEDS = 'an example directory needs adapter.mjs, part/turn.yaml and part/questions.yaml';
 const QUESTION_TYPES = ['noul', 'choice', 'score'];
 // The fields each kind of target takes; anything else is a mistake, named at load.
-const TARGET_FIELDS = { process: ['command', 'args'], page: ['root', 'page', 'hook'] };
+const TARGET_FIELDS = { process: ['command', 'args'], page: ['root', 'page', 'hook'], http: ['command', 'args', 'url', 'state'] };
 const APP_HOOKS = ['phase', 'project', 'options', 'act'];
 
 /**
@@ -76,7 +76,8 @@ export async function loadAdapter(directory) {
  * A known kind, and only the fields that kind takes.
  */
 function checkTarget(target, fail) {
-  const kinds = Object.keys(TARGET_FIELDS).map((kind) => JSON.stringify(kind)).join(' or ');
+  const names = Object.keys(TARGET_FIELDS).map((kind) => JSON.stringify(kind));
+  const kinds = `${names.slice(0, -1).join(', ')} or ${names.at(-1)}`;
   const known = TARGET_FIELDS[target?.kind];
   if (!known) fail(`target.kind must be ${kinds} (got ${JSON.stringify(target?.kind ?? null)})`);
   const extra = Object.keys(target).find((field) => field !== 'kind' && !known.includes(field));

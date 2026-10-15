@@ -101,7 +101,7 @@ test('an adapter missing a piece is refused naming the piece', async () => {
   const directory = brokenCopy('adapter.mjs', (text) => text.replace("options: () => [{ id: 'order', what: 'place the order' }, { id: 'cancel', what: 'stop' }],", ''));
   assert.equal(await refusal(directory), `${shown(directory)}/adapter.mjs: app.options must be a function - see docs/ADAPTERS.md`);
   const kindless = brokenCopy('adapter.mjs', (text) => text.replace("kind: 'process'", "kind: 'ftp'"));
-  assert.equal(await refusal(kindless), `${shown(kindless)}/adapter.mjs: target.kind must be "process" or "page" (got "ftp")`);
+  assert.equal(await refusal(kindless), `${shown(kindless)}/adapter.mjs: target.kind must be "process", "page" or "http" (got "ftp")`);
 });
 
 test('understudy check: good exits 0 without a key; broken exits 2 with one line and no stack', async () => {

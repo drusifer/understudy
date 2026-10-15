@@ -80,4 +80,12 @@ sequenceDiagram
     Note right of Neo: "Phase 1 impl complete:<br/>stall rule (all targets,<br/>outcome stalled, showing<br/>hint), per-kind target<br/>field check, act results<br/>-> step 'response'…"
     Trin->>Morpheus: "qa handoff"
     Note right of Trin: "UAT phase 1 passed:<br/>stall test names last<br/>state + showing hint,<br/>check on adapter with<br/>target.hook -> exit 2<br/>'not a process target<br/>field (kn…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 1 review passed<br/>(ADR-0010 one rule in<br/>run loop, field check<br/>names known fields).<br/>Committed. @Neo *swe<br/>impl phase-2"
+    Mouse->>All: "phase 2"
+    Note right of Mouse: "Phase 2: HTTP target +<br/>vending-machine example"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 2 impl complete:<br/>src/targets/http.mjs<br/>(start on free port or<br/>attach, ready-wait 10 s,<br/>GET-state view w/ seq +<br/>last answer, request ac…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 2 passed LIVE:<br/>run examples/http -><br/>coin:1, buy:water, done,<br/>exit 0, attach mode<br/>plays a hand-started<br/>server and leaves it<br/>runnin…"
 ```
