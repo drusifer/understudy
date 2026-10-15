@@ -6,7 +6,7 @@
 #
 # Adding a task: add the npm script first, then a one-line target here.
 
-.PHONY: help install install-browser test test-live lint check secrets hooks run clean distclean
+.PHONY: help install install-browser test test-live lint check secrets hooks push run clean distclean
 
 NEED_INSTALL = @test -d node_modules || { echo "No node_modules - run 'make install' first"; exit 1; }
 
@@ -46,6 +46,10 @@ hooks: ## Install the gitleaks pre-commit hook (.githooks/)
 	git config core.hooksPath .githooks
 
 check: test lint secrets ## Full gate: test + lint + secrets
+
+export MSG
+push: check ## Commit everything (MSG="...") and push the current branch + its tags, after the full gate; never forced; ARGS="--dry-run" previews
+	@scripts/push.sh $(ARGS)
 
 clean: ## Remove build outputs and caches
 	rm -rf build coverage .eslintcache

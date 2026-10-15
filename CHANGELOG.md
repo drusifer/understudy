@@ -1,6 +1,6 @@
 # Changelog
 
-## Sprint 1 — MVP first run (2026-10-15, branch `sprint-1`, not yet merged or tagged)
+## Sprint 1 — MVP first run (2026-10-15, merged to `main` at 766a47c, tag `v0.1.0`)
 
 First release of understudy: Jev-driven stand-ins that play real apps.
 

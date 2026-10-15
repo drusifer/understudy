@@ -46,6 +46,7 @@ repeating their commands. `make help` lists them.
 | `secrets` | `gitleaks git` over history + uncommitted tracked changes | needs `gitleaks` installed |
 | `hooks` | `git config core.hooksPath .githooks` | installs the gitleaks pre-commit hook |
 | `check` | `test` + `lint` + `secrets` | the full gate |
+| `push` | `check`, then `scripts/push.sh`: stage all → gitleaks scan of the staged files → commit with `MSG` → `git push --follow-tags origin <current branch>` | the only way changes are committed for publishing and pushed; `MSG="..."` required when anything is uncommitted; `ARGS="--dry-run"` commits nothing and previews; never `--force`; touches the network |
 | `clean` | removes `build/`, `coverage/`, `.eslintcache` | keeps `node_modules` |
 | `distclean` | `clean` + removes `node_modules/` | used for the from-clean check |
 | `help` | lists targets | parses `## comment` suffixes |
@@ -111,6 +112,11 @@ is reported to Tank so one of them gets fixed.
 
 - Agents commit per reviewed phase (flow step 6); they never push, merge to `main` or tag
   without the user asking.
+- Commit-and-publish is `bobp make push MSG="<message>"` only (never a bare `git commit` +
+  `git push`): full gate, stage everything, secret-scan what is staged, commit, push the
+  current branch with its annotated tags. Agents end `MSG` with their attribution lines.
+  Moving a published tag still needs a manual `git push --force origin <tag>` by the owner -
+  the target never forces.
 - Never commit: secrets, `.env*`, `node_modules/`, `build/` (bobp output capture), `.via/`, `.mcp.json`,
   `.claude/settings.local.json`. The relative agent-discovery symlinks (`.agents`, `.claude/skills/`,
   `.cursorrules`) are committed.
@@ -142,7 +148,7 @@ None — everything runs locally on the dev Pi. A CI job, if added, must run
 - Playwright's Chromium is downloaded by `make install-browser` into Playwright's default
   `~/.cache/ms-playwright`, outside the project (same as recard): browsers are large and shared
   across projects. `make test` never launches it; only `test-live` and web runs do.
-- Two targets touch the network: `install` and `install-browser`.
+- Three targets touch the network: `install`, `install-browser` and `push`.
 - The lint script passes `--no-error-on-unmatched-pattern` because `tests/**/*.mjs` is empty today.
 
 ## 10. Conformance check

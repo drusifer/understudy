@@ -5,7 +5,7 @@
 *   **Total Points**: 13 (UND-1 5, UND-2 3, UND-3 2, UND-4 1, UND-5 2)
 *   **Branch**: `sprint-1`
 *   **Stories / Arch**: `docs/sprints/USER_STORIES_SPRINT1.md`, `docs/sprints/ARCH_SPRINT1.md`
-*   **Status**: Complete — launched 2026-10-15; merge to main + tag awaiting owner
+*   **Status**: Complete — launched 2026-10-15; merged to `main` at 766a47c. Tag `v0.1.0` still points at the initial commit (66ce717) and must be moved to 766a47c
 *   **Commits**: one per phase, after Morpheus's review passes (`Phase <N>: <summary>`), never pushed (SDLC §6).
 
 ---
