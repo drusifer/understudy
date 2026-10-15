@@ -9,6 +9,9 @@
 const RANKS = '(?:ace|jack|queen|king|[2-9]|10)';
 const CARD_NAMED = new RegExp(String.raw`\b${RANKS} of (?:clubs|diamonds|hearts|spades)\b`, 'i');
 const NUMBER = /(?<![\w.[])\d+(?![\w\]])/;
+// A value in quotes ("ready", 'large') is a literal too. An apostrophe
+// inside a word (don't, the app's) is not a quote.
+const QUOTED = /"[^"]+"|(?<!\w)'[^']+'(?!\w)/;
 
 /**
  * Why this instruction may not ship, or `null` when it is fine. Text
@@ -20,6 +23,7 @@ export function checkInstruction(instructions) {
   const prose = instructions.replaceAll(/`[^`]*`/g, ' ');
   if (CARD_NAMED.test(prose)) return 'names a card in the question; put the card in state and refer to it by path';
   if (NUMBER.test(prose)) return 'carries a number in the question; put the number in state and refer to it by path';
+  if (QUOTED.test(prose)) return 'carries a quoted value in the question; put the value in state and refer to it by path';
   return null;
 }
 

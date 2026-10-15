@@ -144,3 +144,28 @@ npm run lint
 ---
 [<small>2026-10-15 14:24:21</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
  UAT phase 2 passed: UND-4 AC1 (unset + blank key -> exit 2 exact message, real bin too), AC2 (check needs no key), UND-5 AC3 listing grouped with docs, --steps 0 -> exit 2 naming flag. @Morpheus *lead review phase-2
+
+---
+[<small>2026-10-15 14:24:21</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 2 review passed (ADR-U5 consistent; commands injectable so tests never start apps). Committed. @Neo *swe impl phase-3
+
+---
+[<small>2026-10-15 14:24:21</small>] [**Mouse**]->[**all**] *phase 3*:
+ Phase 3: part loader and understudy check
+
+---
+[<small>2026-10-15 14:26:22</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make lint | /home/drusifer/Projects/understudy/build/build.out
+npm run lint
+
+> understudy@0.1.0 lint
+> eslint --no-error-on-unmatched-pattern 'src/**/*.mjs' 'bin/**/*.mjs' 'tests/**/*.js' 'tests/**/*.mjs'
+
+
+---
+[<small>2026-10-15 14:26:30</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 3 impl complete: src/part.mjs (adapter shape, questions types + literal/quoted-value check, turn via parseTurn with generic+adapter library, one-line YAML errors), understudy check. 73/73, lint 0. @Trin *qa uat phase-3
+
+---
+[<small>2026-10-15 14:26:30</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 3 passed via real CLI: unknown actor -> file/path/name/nearest, exit 2, no stack, no key needed. Found+fixed: paths outside cwd showed as ../../../../tmp (now absolute). @Morpheus *lead review phase-3

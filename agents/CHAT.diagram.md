@@ -64,4 +64,12 @@ sequenceDiagram
     Note right of Neo: "Phase 2 impl complete:<br/>bin/understudy.mjs +<br/>src/cli.mjs<br/>(run/check/library,<br/>--steps, exit 0/1/2, no<br/>stacks), key check<br/>before start, librar…"
     Trin->>Morpheus: "qa handoff"
     Note right of Trin: "UAT phase 2 passed:<br/>UND-4 AC1 (unset + blank<br/>key -> exit 2 exact<br/>message, real bin too),<br/>AC2 (check needs no<br/>key), UND-5 AC3 listing<br/>groupe…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 2 review passed<br/>(ADR-U5 consistent,<br/>commands injectable so<br/>tests never start apps).<br/>Committed. @Neo *swe<br/>impl phase-3"
+    Mouse->>All: "phase 3"
+    Note right of Mouse: "Phase 3: part loader and<br/>understudy check"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 3 impl complete:<br/>src/part.mjs (adapter<br/>shape, questions types +<br/>literal/quoted-value<br/>check, turn via<br/>parseTurn with<br/>generic+adapter l…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 3 passed via<br/>real CLI: unknown actor<br/>-><br/>file/path/name/nearest,<br/>exit 2, no stack, no key<br/>needed. Found+fixed:<br/>paths outside cwd s…"
 ```

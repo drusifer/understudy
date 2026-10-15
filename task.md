@@ -36,9 +36,9 @@
 
 ### Phase 3: Part loader and `understudy check` — UND-3
 *Phase goal: every mistake in a part is refused at load, before any app starts, with file, path, bad name and nearest name.*
-- [ ] **Task 3.1:** `src/part.mjs`: load `<dir>/adapter.mjs` (default export shape check) and `<dir>/part/turn.yaml` + `questions.yaml`; questions: known `type`, prose literal check naming the question; turn file via `parseTurn` with generic + adapter library; `check` prints `<dir>: part OK - N states, M questions, adapter <name> (<kind>)`. Fixture parts under `tests/fixtures/parts/` (good, unknown guard, unknown actor, literal in question, bad YAML). (*Owner: Neo | Verification: `bobp make test`; `bobp make run ARGS="check tests/fixtures/parts/good"` exit 0*)
-- [ ] **Task 3.2:** UAT UND-3 AC1–4: each fixture's exact message, exit 2, no stack trace, no key needed, nothing started. (*Owner: Trin | Verification: `bobp make test && bobp make lint`*)
-- [ ] **Task 3.3:** Review. (*Owner: Morpheus | Verification: code review; commit `Phase 3`*)
+- [x] **Task 3.1:** `src/part.mjs`: load `<dir>/adapter.mjs` (default export shape check) and `<dir>/part/turn.yaml` + `questions.yaml`; questions: known `type`, prose literal check naming the question; turn file via `parseTurn` with generic + adapter library; `check` prints `<dir>: part OK - N states, M questions, adapter <name> (<kind>)`. Fixture parts under `tests/fixtures/parts/` (good, unknown guard, unknown actor, literal in question, bad YAML). (*Owner: Neo | Verification: `bobp make test`; `bobp make run ARGS="check tests/fixtures/parts/good"` exit 0*)
+- [x] **Task 3.2:** UAT UND-3 AC1–4: each fixture's exact message, exit 2, no stack trace, no key needed, nothing started. (*Owner: Trin | Verification: `bobp make test && bobp make lint`*)
+- [x] **Task 3.3:** Review. (*Owner: Morpheus | Verification: code review; commit `Phase 3`*)
 
 ### Phase 4: The run loop — UND-1 AC2–5 (with test doubles)
 *Phase goal: `run` plays any target to its end state with a step cap, first-move timeout, unexpected-exit stop and JSON step log — proven with a fake target and a judge double.*
