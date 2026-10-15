@@ -5,7 +5,8 @@
 *   **Source**: Drew, 2026-10-15, recard chat log ("generalize the Jev and XState harness
     into a standalone automation tool") and recard `agents/morpheus/understudy_extraction_map.md`
     (decisions: web + CLI/HTTP targets, recard consumes via git dependency, Jev required).
-*   **Status**: Draft — awaiting Smith Gate 1
+*   **Status**: Revised after Smith Gate 1 reject (FAIL, SIZE) — awaiting re-review
+*   **Order**: UND-4 → UND-1 → UND-3 → UND-2 → UND-5 (each leaves `understudy` usable)
 
 ## Goal
 
@@ -16,7 +17,7 @@ two very different apps, a web page and a command-line program, so the tool is s
 general rather than a card-game harness renamed. This is the foundation recard will later
 move onto.
 
-## Assumptions made for the owner
+## Assumptions (confirmed by the owner, 2026-10-15)
 
 - Sprint 1 proves neutrality with **two** targets: a web page and a CLI program. HTTP is the
   third target and comes in a later sprint; the contract is designed so HTTP fits without
@@ -31,6 +32,7 @@ move onto.
 
 ## STORY-UND-1: Run a part against a command-line program
 **Points:** 5
+**Depends on:** UND-4 (the `run` command refuses to start without the key)
 
 **As an** automation author,
 **I want** to point understudy at a command-line program and a part I wrote,
@@ -45,12 +47,19 @@ move onto.
    confidence) and one readable line on stderr; the same JSON lines land in
    `build/runs/<part>/<timestamp>.jsonl`.
 3. Jev can only pick a move the adapter offered: an off-list answer is never sent to the
-   program, and the step records the fallback that was used instead.
+   program. The step's log line says `"offList": true` with Jev's raw answer, Jev is asked
+   once more, and if the second answer is also off-list the run stops, exits 1, and names
+   the step and both answers.
 4. If the program exits unexpectedly, the run stops with a message naming the program and
-   its exit code, and the command exits non-zero.
+   its exit code, and the command exits 1.
+5. A run is capped at 50 steps by default; `--steps N` changes the cap. Reaching the cap
+   stops the run, exits 1, and prints `stopped after N steps without reaching the end
+   state (last state: <state>)`. The program is stopped and the log file still ends with
+   a final summary line.
 
 ## STORY-UND-2: Run the same kind of part against a web page
 **Points:** 3
+**Depends on:** UND-1 (run command, step log, step cap)
 
 **As an** automation author,
 **I want** the same part format to drive a web page in a headless browser,
@@ -64,9 +73,14 @@ move onto.
    nothing in either part names the transport (browser, process).
 3. Steps are logged exactly as in STORY-UND-1 AC2.
 4. `--headed` is NOT offered; headless only (recard precedent, US-119).
+5. If Chromium is not installed, the run exits 2 before starting anything, printing
+   `Chromium is not installed - run: bobp make install-browser`.
+6. If the page does not offer a first move within 10 seconds, the run exits 1 naming the
+   URL and what was seen; no browser process or local server is left running.
 
 ## STORY-UND-3: A broken part is refused before anything runs
 **Points:** 2
+**Depends on:** UND-1 (refusal happens before `run` starts the app)
 
 **As an** automation author,
 **I want** mistakes in my part files caught at load with a clear message,
@@ -84,18 +98,20 @@ move onto.
 
 ## STORY-UND-4: Jev is required, and says so plainly
 **Points:** 1
+**Depends on:** none (first story: it creates the `understudy` command)
 
 **As an** automation author,
 **I want** a clear message when Jev can't be reached,
 **so that** I know immediately that the run needs my TypeSafe key.
 
 ### Acceptance Criteria
-1. `understudy run` with no TypeSafe key set exits 2 before starting the app, naming the
-   environment variable to set.
+1. `understudy run` with `TYPESAFE_API_KEY` unset or empty exits 2 before starting the app,
+   printing `understudy run needs a TypeSafe key: set TYPESAFE_API_KEY`.
 2. `understudy check` does not need the key.
 
 ## STORY-UND-5: An adapter is small and documented
 **Points:** 2
+**Depends on:** UND-1 and UND-2 (the two examples it documents)
 
 **As a** developer adding a new app,
 **I want** one documented adapter shape with two working examples to copy,
@@ -120,5 +136,4 @@ move onto.
 - Headed browser mode.
 
 ## Open Questions
-1. Name of the TypeSafe key variable - recard uses the SDK default; assumed the same
-   (`TYPESAFE_API_KEY`) until Morpheus confirms from the SDK.
+None. (Closed: the key variable is `TYPESAFE_API_KEY` — set in the owner's environment.)

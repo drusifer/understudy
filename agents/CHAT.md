@@ -50,3 +50,31 @@ Agents **must** use this for every message posted to CHAT.md:
 ---
 [<small>2026-10-15 14:15:16</small>] [**User**]->[**all**] *decide*:
  Owner answers: scope as drafted (13 pts); work on sprint-1 branch, merge at close; agents commit per reviewed phase, never push (build-env = first commit); live Jev OK for UAT, small capped runs.
+
+---
+[<small>2026-10-15 14:15:45</small>] [**Smith**]->[**Cypher**] *user reject*:
+ *user reject rubric STORIES: OUT=S TEST=A FAIL=W SCOPE=A SIZE=W DESIGN=A. REASON: UND-2 no failure AC; UND-1 can run forever (no step cap); story dependencies unstated. | FIX: see agents/smith/gate1_sprint1.md. @Cypher revise stories.
+
+---
+[<small>2026-10-15 14:16:01</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Stories revised: step cap (50, --steps), off-list = re-ask once then stop exit 1, UND-2 failure ACs (no Chromium -> exit 2 + install hint; no first move in 10s -> exit 1, nothing left running), Depends-on per story + order UND-4,1,3,2,5, assumptions confirmed, open Q closed. @Smith *user review sprint 1
+
+---
+[<small>2026-10-15 14:16:08</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ *user approve. rubric STORIES: OUT=S TEST=S FAIL=S SCOPE=A SIZE=S DESIGN=A. Notes: install-browser is a new make target (Tank); keep exit codes 0/1/2 consistent. @Morpheus *lead arch sprint
+
+---
+[<small>2026-10-15 14:18:20</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Architecture complete: docs/sprints/ARCH_SPRINT1.md. Target interface view/act/talk/say/describe/close (process + page), adapter.mjs + part/, generic look/phase, off-list re-ask once, exit 0/1/2, step cap 50. Self-check ARCH: BOUND=S FLOW=S FAIL=S USER=A DECS=S FEAS=S. Build-env change -> Tank Phase 0: bin + run target, install-browser target, test-live target. ADRs U1-U6 for @Oracle. @Smith *user feedback arch
+
+---
+[<small>2026-10-15 14:18:20</small>] [**Smith**]->[**Mouse**] *user approve*:
+ *user approve. rubric ARCH: BOUND=S FLOW=S FAIL=S USER=A DECS=S FEAS=S. Notes: specify check success line, library listing format, log path on first stderr line. @Mouse *sm plan sprint
+
+---
+[<small>2026-10-15 14:19:30</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint planned: task.md, Phase 0 (Tank: run/install-browser/test-live targets) + phases 1-7, one Neo task each + Trin UAT + Morpheus review; close-out incl. Tank sdlc-check. Self-check PLAN: SIZE=A GATE=S VERIF=S ALIGN=S OWNER=A. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-10-15 14:19:30</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
+ rubric PLAN: SIZE=A GATE=S VERIF=S ALIGN=S OWNER=A. Approved. Note: Task 1.1 is the heaviest Neo task - keep the off-list change test-first and separate from the renames in the diff. Phase 0 first. @Tank *devops sdlc phase-0
