@@ -86,7 +86,7 @@ export function genericLibrary(services) {
         },
       },
       played: {
-        doc: 'the step just taken was a move of kind `move` (e.g. pass, cast)',
+        doc: 'the step just taken was a move of kind `move` (the part of its id before any `:`)',
         fn: ({ event }, parameters) => event.output?.kind === parameters.move,
       },
     },

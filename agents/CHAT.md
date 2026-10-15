@@ -116,3 +116,31 @@ npm run lint
 ---
 [<small>2026-10-15 14:22:28</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
  UAT phase 1 passed: no old names left in src/tests; library keys match ARCH §5; off-list twice sends nothing (tests/library.test.js). 51/51, lint 0. @Morpheus *lead review phase-1
+
+---
+[<small>2026-10-15 14:22:28</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 1 review passed (ARCH §5, ADR-U3/U4 met; renames separate from off-list logic in tests). Committed. @Neo *swe impl phase-2
+
+---
+[<small>2026-10-15 14:22:28</small>] [**Mouse**]->[**all**] *phase 2*:
+ Phase 2: understudy command, key check, library listing
+
+---
+[<small>2026-10-15 14:24:21</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test | /home/drusifer/Projects/understudy/build/build.out
+ℹ tests 60
+ℹ suites 0
+ℹ pass 60
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 600.117251
+
+---
+[<small>2026-10-15 14:24:21</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 2 impl complete: bin/understudy.mjs + src/cli.mjs (run/check/library, --steps, exit 0/1/2, no stacks), key check before start, library listing. 60/60, lint 0. @Trin *qa uat phase-2
+
+---
+[<small>2026-10-15 14:24:21</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 2 passed: UND-4 AC1 (unset + blank key -> exit 2 exact message, real bin too), AC2 (check needs no key), UND-5 AC3 listing grouped with docs, --steps 0 -> exit 2 naming flag. @Morpheus *lead review phase-2

@@ -30,9 +30,9 @@
 
 ### Phase 2: The `understudy` command, key check, library listing — UND-4, UND-5 AC3
 *Phase goal: `understudy` exists with `run|check|library`, exit codes 0/1/2, and refuses `run` without a key.*
-- [ ] **Task 2.1:** `bin/understudy.mjs` + `bin` in `package.json`: argv parsing (`run <dir> [--steps N]`, `check <dir>`, `library [<dir>]`), `UsageError`→exit 2 with `understudy: <message>` and no stack; `run` with `TYPESAFE_API_KEY` unset/blank prints `understudy run needs a TypeSafe key: set TYPESAFE_API_KEY` and exits 2; `library` prints the grouped listing (ARCH §5 CLI output). Tests spawn the CLI with a clean env. (*Owner: Neo | Verification: `bobp make test`; `env -u TYPESAFE_API_KEY bobp make run ARGS="run examples/cli"` → exit 2 with that message*)
-- [ ] **Task 2.2:** UAT UND-4 AC1–2, UND-5 AC3; bad `--steps 0` → exit 2 naming the flag. (*Owner: Trin | Verification: `bobp make test && bobp make lint`*)
-- [ ] **Task 2.3:** Review (exit-code consistency ADR-U5). (*Owner: Morpheus | Verification: code review; commit `Phase 2`*)
+- [x] **Task 2.1:** `bin/understudy.mjs` + `bin` in `package.json`: argv parsing (`run <dir> [--steps N]`, `check <dir>`, `library [<dir>]`), `UsageError`→exit 2 with `understudy: <message>` and no stack; `run` with `TYPESAFE_API_KEY` unset/blank prints `understudy run needs a TypeSafe key: set TYPESAFE_API_KEY` and exits 2; `library` prints the grouped listing (ARCH §5 CLI output). Tests spawn the CLI with a clean env. (*Owner: Neo | Verification: `bobp make test`; `env -u TYPESAFE_API_KEY bobp make run ARGS="run examples/cli"` → exit 2 with that message*)
+- [x] **Task 2.2:** UAT UND-4 AC1–2, UND-5 AC3; bad `--steps 0` → exit 2 naming the flag. (*Owner: Trin | Verification: `bobp make test && bobp make lint`*)
+- [x] **Task 2.3:** Review (exit-code consistency ADR-U5). (*Owner: Morpheus | Verification: code review; commit `Phase 2`*)
 
 ### Phase 3: Part loader and `understudy check` — UND-3
 *Phase goal: every mistake in a part is refused at load, before any app starts, with file, path, bad name and nearest name.*

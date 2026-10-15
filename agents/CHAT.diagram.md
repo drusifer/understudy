@@ -56,4 +56,12 @@ sequenceDiagram
     Note right of Neo: "Phase 1 impl complete:<br/>vocabulary renamed (targ<br/>et/app/OBSERVE/changed/q<br/>uiet/ask), look+phase<br/>added, off-list re-ask<br/>(ADR-U4) with RunError,…"
     Trin->>Morpheus: "qa handoff"
     Note right of Trin: "UAT phase 1 passed: no<br/>old names left in<br/>src/tests, library keys<br/>match ARCH §5, off-list<br/>twice sends nothing<br/>(tests/library.test.js).<br/>51/51…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 1 review passed<br/>(ARCH §5, ADR-U3/U4 met,<br/>renames separate from<br/>off-list logic in<br/>tests). Committed. @Neo<br/>*swe impl phase-2"
+    Mouse->>All: "phase 2"
+    Note right of Mouse: "Phase 2: understudy<br/>command, key check,<br/>library listing"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 2 impl complete:<br/>bin/understudy.mjs +<br/>src/cli.mjs<br/>(run/check/library,<br/>--steps, exit 0/1/2, no<br/>stacks), key check<br/>before start, librar…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 2 passed:<br/>UND-4 AC1 (unset + blank<br/>key -> exit 2 exact<br/>message, real bin too),<br/>AC2 (check needs no<br/>key), UND-5 AC3 listing<br/>groupe…"
 ```

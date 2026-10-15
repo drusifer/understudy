@@ -4,12 +4,15 @@
   "description": "Stand-in players for apps under test: Jev-driven actors that play web and CLI/HTTP targets.",
   "type": "module",
   "license": "GPL-3.0-only",
+  "bin": {
+    "understudy": "bin/understudy.mjs"
+  },
   "engines": {
     "node": ">=24"
   },
   "scripts": {
     "test": "node --test tests/*.test.js",
-    "lint": "eslint --no-error-on-unmatched-pattern 'src/**/*.mjs' 'tests/**/*.js' 'tests/**/*.mjs'"
+    "lint": "eslint --no-error-on-unmatched-pattern 'src/**/*.mjs' 'bin/**/*.mjs' 'tests/**/*.js' 'tests/**/*.mjs'"
   },
   "dependencies": {
     "xstate": "^5.33.2",
