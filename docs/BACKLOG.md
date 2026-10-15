@@ -12,6 +12,11 @@ Done - see `CHANGELOG.md` (HTTP target; hookless pages with the generic page app
   `seed/recard/tools/mcp/harnessServer.mjs`. (`seed/` is kept untouched until then.)
 
 ## Later
+- Typing into text fields on pages (needs a source for the text). (Morpheus)
+- Auth headers / cookies for the HTTP target. (Morpheus)
+- Make the first-move and stall limits configurable (`--wait`). (Neo)
+- `npm test` with `--test-timeout`, so a hanging test fails instead of freezing the suite. (Trin)
+- `check` could warn when a generic-page part has no `showing` guard. (Smith)
 - Scenario file / multi-actor runs (only if useful for understudy itself).
 - A second Ctrl-C should say "stopped at once" instead of whatever error closing causes. (Neo)
 - `unexpected error:` should say how to get the stack (e.g. `UNDERSTUDY_DEBUG=1`). (Neo)

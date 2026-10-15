@@ -5,7 +5,7 @@
 *   **Total Points**: 12 (UND-6 5, UND-7 5, UND-8 2)
 *   **Branch**: `sprint-2`
 *   **Stories / Arch**: `docs/sprints/USER_STORIES_SPRINT2.md`, `docs/sprints/ARCH_SPRINT2.md` (sprint 1 board: `docs/sprints/TASKS_SPRINT1.md`)
-*   **Status**: Plan approved (Morpheus 3a) — executing
+*   **Status**: Complete — launched 2026-10-15; merge to main / push awaiting owner
 *   **Commits**: one local commit per phase after Morpheus's review (`Phase <N>: ...`); publishing only via `bobp make push` when the owner asks (SDLC §6). No back-compat (owner rule).
 
 ---
@@ -54,6 +54,6 @@
 
 - [x] **Task C.1:** SDLC conformance check. (*Owner: Tank | Verification: `bobp make distclean && bobp make install && bobp make check`; SDLC §10*)
 - [x] **Task C.2:** Groom, lessons, chat report `SPRINT_2`. (*Owner: Oracle | Verification: `bobp chat-report --moniker SPRINT_2`*)
-- [ ] **Task C.3:** End-to-end user test vs `docs/sprints/UAT_PLAN_SPRINT2.md`. (*Owner: Smith | Verification: `bobp chat "*user approve"`*)
-- [ ] **Task C.4:** Retro → backlog. (*Owner: All | Verification: retros in CHAT.md*)
-- [ ] **Task C.5:** Launch; merge to `main` / push / version only when the owner says (SDLC §6–7). (*Owner: Cypher | Verification: `bobp chat "*pm launch"`*)
+- [x] **Task C.3:** End-to-end user test vs `docs/sprints/UAT_PLAN_SPRINT2.md`. (*Owner: Smith | Verification: `bobp chat "*user approve"`*)
+- [x] **Task C.4:** Retro → backlog. (*Owner: All | Verification: retros in CHAT.md*)
+- [x] **Task C.5:** Launch; merge to `main` / push / version only when the owner says (SDLC §6–7). (*Owner: Cypher | Verification: `bobp chat "*pm launch"`*)
