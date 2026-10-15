@@ -53,8 +53,7 @@ repeating their commands. `make help` lists them.
 Standard targets deliberately absent:
 - `format` — no formatter chosen; eslint is the only style tool (same as recard).
 - `build` — nothing is bundled; recard consumes understudy as source via a git dependency.
-- `build` / `format` only, as above. (`run` exists; until `bin/understudy.mjs` lands in sprint 1
-  phase 2 it prints a one-line hint and exits 1. `bin` is added to `package.json` with that file.)
+- (`run` calls `bin/understudy.mjs`, which is also `bin.understudy` in `package.json`.)
 
 ## 4. Dependencies
 
@@ -64,9 +63,10 @@ Standard targets deliberately absent:
 - **Who:** Neo adds and bumps dependencies, in the story whose code first imports them. A
   different package manager, a Node version change or a new language is a mechanism change — Tank's.
 - Never hand-edit the lockfile; never mix lockfiles from two package managers.
-- Declare only what the code imports. Expected next, with recard's ranges:
-  `@typesafe-ai/sdk ^0.6.0` (Jev — required), `playwright ^1.62.1` (web target),
-  later `@modelcontextprotocol/sdk ^1.30.0`, `zod ^4.6.5`, `@xstate/graph ^3.0.4`.
+- Declare only what the code imports. Runtime today: `xstate`, `yaml`, `@typesafe-ai/sdk`
+  (Jev), `playwright` (page target; locked at 1.62.1 so its Chromium download is shared with
+  recard's). Expected later, with recard's ranges: `@modelcontextprotocol/sdk ^1.30.0`,
+  `zod ^4.6.5`, `@xstate/graph ^3.0.4`.
 
 ## 5. Quality gates
 
@@ -160,5 +160,5 @@ Run by Tank at sprint close (`*devops sdlc-check`):
 8. Nothing under `src/` or `tests/` imports from `seed/`.
 
 ---
-*Last verified: 2026-10-15 against 66ce717 + uncommitted build-env files by Tank
-(distclean → install → install → check, 46/46 tests). Branch/commit rules added 2026-10-15 (owner).*
+*Last verified: 2026-10-15 against sprint-1 at 2fba1d8 by Tank (sprint 1 close: distclean →
+install → install (lockfile unchanged) → check, 93/93 tests; make test-live green, both examples).*

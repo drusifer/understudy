@@ -113,3 +113,8 @@ test('understudy check: good exits 0 without a key; broken exits 2 with one line
   assert.equal(await main(['check', directory], { environment: {}, ...streams }), 2);
   assert.match(io.err, /^understudy: .*no actor "lok" - did you mean "look"\?\n$/);
 });
+
+test('a directory that does not exist, or a file, is named as such - not as a missing adapter', async () => {
+  assert.equal(await refusal('examples/nope'), 'examples/nope: no such directory');
+  assert.equal(await refusal('package.json'), 'package.json: not a directory - give the example directory, e.g. examples/cli');
+});

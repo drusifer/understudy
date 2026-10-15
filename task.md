@@ -68,8 +68,8 @@
 
 ## Stage 3: Sprint Closeout
 
-- [ ] **Task C.1:** SDLC conformance check. (*Owner: Tank | Verification: `bobp make distclean && bobp make install && bobp make check`; SDLC §10 list*)
-- [ ] **Task C.2:** Document grooming, ADRs U1–U6 recorded, lessons, chat report. (*Owner: Oracle | Verification: `bobp chat-report --moniker SPRINT_1`*)
+- [x] **Task C.1:** SDLC conformance check. (*Owner: Tank | Verification: `bobp make distclean && bobp make install && bobp make check`; SDLC §10 list*)
+- [x] **Task C.2:** Document grooming, ADRs U1–U6 recorded, lessons, chat report. (*Owner: Oracle | Verification: `bobp chat-report --moniker SPRINT_1`*)
 - [ ] **Task C.3:** End-to-end user usability testing against `docs/sprints/UAT_PLAN_SPRINT1.md` & lesson review. (*Owner: Smith | Verification: `bobp chat "*user approve"`*)
 - [ ] **Task C.4:** Sprint retrospective & backlog grooming. (*Owner: All personas | Verification: Retros posted in CHAT.md*)
 - [ ] **Task C.5:** Sprint launch; merge `sprint-1` → `main` and tag only when the owner says so (SDLC §6). (*Owner: Cypher | Verification: `bobp chat "*pm launch"`*)

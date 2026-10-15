@@ -47,6 +47,8 @@ function reportingFailures(judge) {
   };
 }
 
+const stepCount = (count) => `${count} step${count === 1 ? '' : 's'}`;
+
 function summaryLine(entry) {
   const confidence = typeof entry.confidence === 'number' ? ` (${entry.confidence})` : '';
   const offList = entry.offList ? ` - off-list ${JSON.stringify(entry.answer)} first` : '';
@@ -110,7 +112,7 @@ export async function runPart(directory, {
   const outcome = interrupts.isAsked() ? 'interrupted' : 'done';
   write({ final: true, outcome, steps: run.taken, state: run.seat.state });
   if (outcome === 'interrupted') {
-    throw new RunError(`stopped by Ctrl-C after ${run.taken} step${run.taken === 1 ? '' : 's'}, at a safe state`, { outcome });
+    throw new RunError(`stopped by Ctrl-C after ${stepCount(run.taken)}, at a safe state`, { outcome });
   }
 }
 
@@ -131,19 +133,26 @@ async function playUntilDone({ run, target, steps, firstMoveMs, clock, interrupt
       throw new RunError(`${target.describe()} exited with code ${exited.code} before the end state`, { outcome: 'app-exited' });
     }
     if (next === 'move') {
-      if (run.taken === steps) {
-        throw new RunError(`stopped after ${steps} steps without reaching the end state (last state: ${run.seat.state})`, { outcome: 'step-cap' });
-      }
-      run.taken += 1;
-      const record = await stepped(run.seat, run.taken);
-      const entry = { step: run.taken, ...record, state: run.seat.state };
-      write(entry);
-      stderr.write(`${summaryLine(entry)}\n`);
+      await takeStep({ run, steps, write, stderr });
     } else if (run.taken === 0 && clock() - started >= firstMoveMs) {
       const view = await target.view();
       throw new RunError(`no first move from ${target.describe()} within ${firstMoveMs / 1000} s - last view: ${JSON.stringify(view)}`, { outcome: 'no-first-move' });
     }
   }
+}
+
+/**
+ * One step within the cap, logged as it is taken.
+ */
+async function takeStep({ run, steps, write, stderr }) {
+  if (run.taken === steps) {
+    throw new RunError(`stopped after ${stepCount(steps)} without reaching the end state (last state: ${run.seat.state})`, { outcome: 'step-cap' });
+  }
+  run.taken += 1;
+  const record = await stepped(run.seat, run.taken);
+  const entry = { step: run.taken, ...record, state: run.seat.state };
+  write(entry);
+  stderr.write(`${summaryLine(entry)}\n`);
 }
 
 /**

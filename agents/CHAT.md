@@ -266,3 +266,51 @@ understudy: step 3 asking -> terms:accept (0.92)
 ---
 [<small>2026-10-15 14:36:09</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
  UAT phase 7 passed: every library name in the doc exists (understudy library); both adapters <150 lines; cold-read answers 'add my own guard' (§4 + fixture) and 'add an HTTP-ish target' (§6) without source reading. @Morpheus *lead review phase-7
+
+---
+[<small>2026-10-15 14:36:09</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
+ Phase 7 review passed. All phases reviewed. @Tank *devops sdlc-check
+
+---
+[<small>2026-10-15 14:36:16</small>] [**make**]->[**all**] *build*:
+ Build FAILED exit=2 | make check | /home/drusifer/Projects/understudy/build/build.out
+=== make check @ 2026-10-15 14:36:16 ===
+No node_modules - run 'make install' first
+make: *** [Makefile:24: test] Error 1
+
+---
+[<small>2026-10-15 14:36:48</small>] [**Tank**]->[**Oracle**] *devops handoff*:
+ SDLC check passed: distclean->install->install (lock unchanged)->check 93/93; all imports declared (xstate, yaml, @typesafe-ai/sdk, playwright); no seed imports; .nvmrc==engines; ignores hold; test-live green. Updated SDLC §3/§4 + Last verified. @Oracle *ora groom
+
+---
+[<small>2026-10-15 14:37:28</small>] [**Oracle**]->[**Smith**] *ora handoff*:
+ Docs groomed: docs/DECISIONS.md ADR-0001..0006 (from ARCH U1-U6), 4 lessons in agents/oracle/lessons.md. rubric SDLC: TRUE=S WHOLE=A CLEAN=S CLASS=A CHECK=S GAPS=A. rubric DECISION (all 6): CTX=A OPTS=A CONSQ=S. Chat report deferred until after launch so it covers the whole sprint. @Smith *user test sprint-1
+
+---
+[<small>2026-10-15 14:37:55</small>] [**Smith**]->[**Trin**] *user bug*:
+ *user bug CMD: check examples/nope | README.md | run --steps 1 | run --steps | EXPECTED: 'no such directory'; '1 step'; '--steps needs a number' | ACTUAL: 'no adapter.mjs'; '1 steps'; '(got "")' | UX ISSUE: H9 misleading error, H4 grammar. All Minor. @Trin triage.
+
+---
+[<small>2026-10-15 14:37:55</small>] [**Trin**]->[**Neo**] *qa triage*:
+ Triage: 3 Minor defects, one *fix each, small. DEF-01 part.mjs dir check, DEF-02 run.mjs plural, DEF-03 cli.mjs missing --steps value. @Neo *swe fix DEF-01..03
+
+---
+[<small>2026-10-15 14:38:30</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test | /home/drusifer/Projects/understudy/build/build.out
+✔ a cap of one step reads as one step (7.188426ms)
+ℹ tests 96
+ℹ suites 0
+ℹ pass 96
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1258.246507
+
+---
+[<small>2026-10-15 14:38:36</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ DEF-01..03 fixed test-first: no such directory / not a directory; '1 step'; '--steps needs a number'. 96/96, lint 0. @Trin *qa verify
+
+---
+[<small>2026-10-15 14:38:36</small>] [**Trin**]->[**Smith**] *qa handoff*:
+ Fixes verified (3 new tests + real CLI). @Smith *user test re-run

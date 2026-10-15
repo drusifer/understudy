@@ -44,6 +44,7 @@ function parse(argv) {
     const argument = rest[index];
     if (command === 'run' && (argument === '--steps' || argument.startsWith('--steps='))) {
       const value = argument === '--steps' ? rest[++index] : argument.slice('--steps='.length);
+      if (!value) throw new UsageError('--steps needs a number, e.g. --steps 20');
       if (!/^[1-9]\d*$/.test(value ?? '')) throw new UsageError(`--steps must be a positive whole number (got "${value ?? ''}")`);
       steps = Number(value);
     } else if (argument.startsWith('-')) {

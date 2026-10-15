@@ -8,7 +8,7 @@
 // Every mistake is refused HERE as a `UsageError` naming the file and the
 // path in it - never found halfway through a run (recard US-129 Gate 1).
 
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import YAML from 'yaml';
@@ -51,6 +51,8 @@ function readYaml(file) {
  * @returns {Promise<object>} the adapter (its default export)
  */
 export async function loadAdapter(directory) {
+  if (!existsSync(directory)) throw new UsageError(`${shown(directory)}: no such directory`);
+  if (!statSync(directory).isDirectory()) throw new UsageError(`${shown(directory)}: not a directory - give the example directory, e.g. examples/cli`);
   const file = requireFile(directory, 'adapter.mjs');
   let adapter;
   try {

@@ -57,6 +57,12 @@ test('run passes the directory and the step cap (default 50, --steps N or --step
   assert.deepEqual(calls, [['examples/cli', 50], ['examples/cli', 7], ['examples/web', 3]]);
 });
 
+test('--steps with no number says so', async () => {
+  const result = await cli(['run', 'examples/cli', '--steps'], { commands: { run: async () => {} } });
+  assert.equal(result.code, 2);
+  assert.equal(result.stderr, 'understudy: --steps needs a number, e.g. --steps 20\n');
+});
+
 test('a bad --steps is refused naming the flag and the value', async () => {
   for (const value of ['0', '-2', '1.5', 'many']) {
     const result = await cli(['run', 'examples/cli', '--steps', value], { commands: { run: async () => {} } });

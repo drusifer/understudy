@@ -178,3 +178,8 @@ test('Ctrl-C stops at the next safe state and says so', async () => {
   assert.equal(signals.listenerCount('SIGINT'), 0, 'its handler is removed');
   assert.equal(run.app.closed, true);
 });
+
+test('a cap of one step reads as one step', async () => {
+  const run = await play({ judge: judgeAnswering('cancel'), steps: 1 });
+  assert.equal(run.error.message, 'stopped after 1 step without reaching the end state (last state: choosing)');
+});

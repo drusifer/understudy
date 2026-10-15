@@ -15,7 +15,8 @@ sequenceDiagram
     participant Morpheus
     participant Neo
     participant Trin
-    Note over User,Trin: 📅 2026-10-15
+    participant Oracle
+    Note over User,Oracle: 📅 2026-10-15
     User->>All: "request"
     Note right of User: "make it so - plan<br/>Understudy sprint 1 from<br/>recard's extraction map<br/>(recard: agents/morpheus<br/>/understudy_extraction_m<br/>ap.md). Decisions: web<br/>+…"
     Mouse->>Tank: "handoff"
@@ -104,4 +105,18 @@ sequenceDiagram
     Note right of Neo: "Phase 7 impl complete:<br/>docs/ADAPTERS.md<br/>(adapter shape,<br/>process/page targets +<br/>views/actions, app<br/>hooks, part events/tags,<br/>questions + no-l…"
     Trin->>Morpheus: "qa handoff"
     Note right of Trin: "UAT phase 7 passed:<br/>every library name in<br/>the doc exists<br/>(understudy library),<br/>both adapters <150<br/>lines, cold-read answers<br/>'add my own guar…"
+    Morpheus->>Tank: "lead handoff"
+    Note right of Morpheus: "Phase 7 review passed.<br/>All phases reviewed.<br/>@Tank *devops sdlc-check"
+    Tank->>Oracle: "devops handoff"
+    Note right of Tank: "SDLC check passed: distc<br/>lean->install->install<br/>(lock unchanged)->check<br/>93/93, all imports<br/>declared (xstate, yaml,<br/>@typesafe-ai/sdk,<br/>playwri…"
+    Oracle->>Smith: "ora handoff"
+    Note right of Oracle: "Docs groomed:<br/>docs/DECISIONS.md<br/>ADR-0001..0006 (from<br/>ARCH U1-U6), 4 lessons<br/>in agents/oracle/lessons<br/>.md. rubric SDLC: TRUE=S<br/>WHOLE=A CLEAN=…"
+    Smith->>Trin: "user bug"
+    Note right of Smith: "*user bug CMD: check<br/>examples/nope |<br/>README.md | run --steps<br/>1 | run --steps |<br/>EXPECTED: 'no such<br/>directory', '1 step', '<br/>--steps needs a nu…"
+    Trin->>Neo: "qa triage"
+    Note right of Trin: "Triage: 3 Minor defects,<br/>one *fix each, small.<br/>DEF-01 part.mjs dir<br/>check, DEF-02 run.mjs<br/>plural, DEF-03 cli.mjs<br/>missing --steps value.<br/>@Neo…"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "DEF-01..03 fixed test-<br/>first: no such directory<br/>/ not a directory, '1<br/>step', '--steps needs a<br/>number'. 96/96, lint 0.<br/>@Trin *qa verify"
+    Trin->>Smith: "qa handoff"
+    Note right of Trin: "Fixes verified (3 new<br/>tests + real CLI).<br/>@Smith *user test re-run"
 ```
