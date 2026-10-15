@@ -1,18 +1,16 @@
 # Tank State
 
 ## Context
-- Build env done 2026-10-15 (uncommitted): package.json (npm, Node >=24, deps xstate+yaml only),
-  package-lock.json, Makefile (help/install/test/lint/secrets/hooks/check/clean/distclean),
-  eslint.config.js (recard rules minus browser bits), .nvmrc, .githooks/pre-commit, build/ ignored.
-- docs/SDLC.md written - source of truth. Verified: distclean -> install -> install (lockfile
-  unchanged) -> check green, 46/46 tests unchanged.
-- No `bin` yet: bin/understudy.mjs does not exist; added (with `make run`) by the story creating it.
-- Open questions for user (SDLC sec 6/7): branch convention, version-bump rule.
-- No README in repo, so "README setup = make commands" item is N/A for now.
+- docs/SDLC.md current; Last verified at sprint 1 close (2fba1d8): distclean->install x2
+  (lock unchanged)->check 93/93 (96 after Smith fixes), test-live green.
+- Make targets: help install install-browser test test-live lint secrets hooks check run clean distclean.
+- Deps: xstate, yaml, @typesafe-ai/sdk ^0.6.0, playwright ^1.62.1 (locked 1.62.1 to share
+  recard's Chromium in ~/.cache/ms-playwright).
+- Open SDLC questions for the owner: version bump rule (proposal: bump + tag at sprint close).
 
 ## Current Task
-*devops build-env - 100% complete, handed to Smith (Gate 1).
+None.
 
 ## Next Steps
-- At sprint close: *devops sdlc-check per docs/SDLC.md section 10.
-- When a story adds Jev/playwright/MCP deps: Neo adds them; no Tank action unless mechanism changes.
+- Next sprint close: *devops sdlc-check per SDLC §10.
+- If a sprint adds an HTTP target with a local server, check it needs no new make target.

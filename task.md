@@ -5,7 +5,7 @@
 *   **Total Points**: 13 (UND-1 5, UND-2 3, UND-3 2, UND-4 1, UND-5 2)
 *   **Branch**: `sprint-1`
 *   **Stories / Arch**: `docs/sprints/USER_STORIES_SPRINT1.md`, `docs/sprints/ARCH_SPRINT1.md`
-*   **Status**: Plan approved (Morpheus 3a) — executing
+*   **Status**: Complete — launched 2026-10-15; merge to main + tag awaiting owner
 *   **Commits**: one per phase, after Morpheus's review passes (`Phase <N>: <summary>`), never pushed (SDLC §6).
 
 ---
@@ -70,6 +70,6 @@
 
 - [x] **Task C.1:** SDLC conformance check. (*Owner: Tank | Verification: `bobp make distclean && bobp make install && bobp make check`; SDLC §10 list*)
 - [x] **Task C.2:** Document grooming, ADRs U1–U6 recorded, lessons, chat report. (*Owner: Oracle | Verification: `bobp chat-report --moniker SPRINT_1`*)
-- [ ] **Task C.3:** End-to-end user usability testing against `docs/sprints/UAT_PLAN_SPRINT1.md` & lesson review. (*Owner: Smith | Verification: `bobp chat "*user approve"`*)
-- [ ] **Task C.4:** Sprint retrospective & backlog grooming. (*Owner: All personas | Verification: Retros posted in CHAT.md*)
-- [ ] **Task C.5:** Sprint launch; merge `sprint-1` → `main` and tag only when the owner says so (SDLC §6). (*Owner: Cypher | Verification: `bobp chat "*pm launch"`*)
+- [x] **Task C.3:** End-to-end user usability testing against `docs/sprints/UAT_PLAN_SPRINT1.md` & lesson review. (*Owner: Smith | Verification: `bobp chat "*user approve"`*)
+- [x] **Task C.4:** Sprint retrospective & backlog grooming. (*Owner: All personas | Verification: Retros posted in CHAT.md*)
+- [x] **Task C.5:** Sprint launch; merge `sprint-1` → `main` and tag only when the owner says so (SDLC §6). (*Owner: Cypher | Verification: `bobp chat "*pm launch"`*)

@@ -1,41 +1,11 @@
-# Agent State
+# Bob State
 
 ## Context
-### Recent Decisions
-None yet
-
-### Key Findings
-None yet
-
-### Important Notes
-None yet
+- 2026-10-15: /init resumed Mouse's handoff (Tank build-env), then /sprint "mvp first run"
+  ran the full Tier 1 sprint loop to launch on branch sprint-1.
 
 ## Current Task
-**Status:** Not started
-**Assigned to:** N/A
-**Started:** N/A
-
-### Task Description
-No active task
-
-### Progress
-- [ ] Not started
-
-### Blockers
-None
-
-### Oracle Consultations
-None yet
+None - waiting for user direction.
 
 ## Next Steps
-### Immediate Next Action
-None planned
-
-### Waiting On
-None
-
-### Planned Work
-- [ ] No planned work
-
----
-*Last updated: [timestamp]*
+- Owner: merge/tag decision, then sprint 2 (docs/BACKLOG.md).
