@@ -90,3 +90,79 @@ M task.md
 ---
 [<small>2026-10-15 17:58:49</small>] [**User**]->[**all**] *request*:
  commit and push
+
+---
+[<small>2026-10-15 17:59:00</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make push | /home/drusifer/Projects/understudy/build/build.out
+5:58PM INF no leaks found
+3f183f3 Docs and release tooling after sprint 1
+To github.com:drusifer/understudy.git
+766a47c..3f183f3  main -> main
+
+---
+[<small>2026-10-15 17:59:03</small>] [**Tank**]->[**all**] *done*:
+ Committed + pushed via bobp make push: 3f183f3 on main (origin/main up to date). Gate green, no leaks.
+
+---
+[<small>2026-10-15 18:07:13</small>] [**User**]->[**all**] *request*:
+ don't worry about recard anymore
+
+---
+[<small>2026-10-15 18:07:34</small>] [**Oracle**]->[**all**] *record*:
+ Owner: recard is no longer a goal. Removed recard migration from BACKLOG, consumer wording from PROJECT.md and SDLC §6/§7 (history mentions kept). README backlog item marked done. Uncommitted.
+
+---
+[<small>2026-10-15 18:12:57</small>] [**User**]->[**all**] *decide*:
+ Owner decisions for sprint 2/3: sprint 2 = HTTP target (tiny in-repo JSON API example) + drop window.__understudy hook: pages read via accessibility tree with a built-in generic page adapter. Sprint 3 = MCP. seed/ kept as-is for now. Version bumps only when owner says.
+
+---
+[<small>2026-10-15 18:12:57</small>] [**Tank**]->[**all**] *done*:
+ Recorded: SDLC §7 bump only on owner request; BACKLOG sections Sprint 2 (HTTP target, hookless accessibility-tree page target + generic adapter) and Sprint 3 (MCP). Uncommitted.
+
+---
+[<small>2026-10-15 18:13:13</small>] [**User**]->[**all**] *decide*:
+ Owner: no back-compat. Sprint 2 deletes hook support outright (no fallback/flag/shim); old shapes are replaced, not supported alongside. Noted in BACKLOG.
+
+---
+[<small>2026-10-15 18:13:57</small>] [**User**]->[**all**] *request*:
+ /sprint 2 go
+
+---
+[<small>2026-10-15 18:13:58</small>] [**Mouse**]->[**Cypher**] *sm start*:
+ Stage 0: docs/SDLC.md present. Branch sprint-2 cut from main (3f183f3) carrying the uncommitted sprint-2 decisions (BACKLOG, SDLC §7, recard cleanup). @Cypher *pm plan sprint 2
+
+---
+[<small>2026-10-15 18:14:40</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Stories ready: docs/sprints/USER_STORIES_SPRINT2.md - UND-6 JSON API target (5), UND-7 hookless web page + generic adapter (5), UND-8 docs (2) = 12 pts Tier 1. Self-check STORIES: OUT=S TEST=S FAIL=S SCOPE=A SIZE=S DESIGN=A. @Smith *user review sprint 2
+
+---
+[<small>2026-10-15 18:15:04</small>] [**Smith**]->[**Cypher**] *user reject*:
+ *user reject rubric STORIES: OUT=S TEST=S FAIL=W SCOPE=S SIZE=S DESIGN=A. REASON: no criterion for a run that stalls after it started (hookless page with no controls, API offering nothing) - it would wait forever. | FIX: stalled criterion in UND-6 and UND-7 (agents/smith/gate1_sprint2.md). @Cypher revise stories.
+
+---
+[<small>2026-10-15 18:15:04</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Stories revised: UND-6 AC9 + UND-7 AC8 - stalled after first move (10 s, nothing offered, part not ended) -> exit 1, outcome stalled, names last state + what app showed, everything started is stopped. @Smith *user review sprint 2
+
+---
+[<small>2026-10-15 18:15:04</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ *user approve. rubric STORIES: OUT=S TEST=S FAIL=S SCOPE=S SIZE=S DESIGN=A. Note: make 'stalled' one run-loop rule for all targets; make the generic page adapter's end observable to the author. @Morpheus *lead arch sprint
+
+---
+[<small>2026-10-15 18:16:42</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Architecture complete: docs/sprints/ARCH_SPRINT2.md - http target (GET state/request moves, start-or-attach, error status logged), page target via accessibility snapshot + getByRole (hook deleted), generic page app, showing guard for the end, one stall rule. ADR-0007..0010. No new deps/targets - no Tank Phase 0. Self-check ARCH: BOUND=S FLOW=S FAIL=S USER=A DECS=S FEAS=S. @Smith *user feedback arch sprint 2
+
+---
+[<small>2026-10-15 18:16:53</small>] [**Smith**]->[**Mouse**] *user approve*:
+ *user approve. rubric ARCH: BOUND=S FLOW=S FAIL=S USER=A DECS=S FEAS=S. Notes: stall message hints at 'showing'; check names 'generic page app'. @Mouse *sm plan sprint 2
+
+---
+[<small>2026-10-15 18:17:24</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint 2 planned: task.md phases 1-5 + close, one Neo task each, no Tank Phase 0. Self-check PLAN: SIZE=A GATE=S VERIF=S ALIGN=S OWNER=A. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-10-15 18:17:25</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ rubric PLAN: SIZE=A GATE=S VERIF=S ALIGN=S OWNER=A. Approved. Phase 1 is groundwork with 6 small items - keep each behind its own test. @Neo *swe impl phase-1
+
+---
+[<small>2026-10-15 18:17:25</small>] [**Mouse**]->[**all**] *phase 1*:
+ Phase 1: run-loop and loader groundwork

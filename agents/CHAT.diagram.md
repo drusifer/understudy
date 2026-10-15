@@ -11,7 +11,12 @@ sequenceDiagram
     participant Oracle
     participant Bob
     participant Tank
-    Note over User,Tank: 📅 2026-10-15
+    participant Mouse
+    participant Cypher
+    participant Smith
+    participant Morpheus
+    participant Neo
+    Note over User,Neo: 📅 2026-10-15
     User->>All: "request"
     Note right of User: "/oracle groom docs: add<br/>README.md,<br/>USER_GUIDE.md, populate<br/>PROJECT.md, walkthrough<br/>of the examples"
     Oracle->>All: "progress"
@@ -36,4 +41,38 @@ sequenceDiagram
     Note right of Tank: "push orchestration done<br/>+ verified:<br/>scripts/push.sh (gate -><br/>stage -> gitleaks staged<br/>scan -> commit MSG -><br/>push current branch +<br/>tags). Sa…"
     User->>All: "request"
     Note right of User: "commit and push"
+    Tank->>All: "done"
+    Note right of Tank: "Committed + pushed via<br/>bobp make push: 3f183f3<br/>on main (origin/main up<br/>to date). Gate green, no<br/>leaks."
+    User->>All: "request"
+    Note right of User: "don't worry about recard<br/>anymore"
+    Oracle->>All: "record"
+    Note right of Oracle: "Owner: recard is no<br/>longer a goal. Removed<br/>recard migration from<br/>BACKLOG, consumer<br/>wording from PROJECT.md<br/>and SDLC §6/§7 (history<br/>mentions…"
+    User->>All: "decide"
+    Note right of User: "Owner decisions for<br/>sprint 2/3: sprint 2 =<br/>HTTP target (tiny in-<br/>repo JSON API example) +<br/>drop window.__understudy<br/>hook: pages read via<br/>acce…"
+    Tank->>All: "done"
+    Note right of Tank: "Recorded: SDLC §7 bump<br/>only on owner request,<br/>BACKLOG sections Sprint<br/>2 (HTTP target, hookless<br/>accessibility-tree page<br/>target + generic ada…"
+    User->>All: "decide"
+    Note right of User: "Owner: no back-compat.<br/>Sprint 2 deletes hook<br/>support outright (no<br/>fallback/flag/shim), old<br/>shapes are replaced, not<br/>supported alongside. No…"
+    User->>All: "request"
+    Note right of User: "/sprint 2 go"
+    Mouse->>Cypher: "sm start"
+    Note right of Mouse: "Stage 0: docs/SDLC.md<br/>present. Branch sprint-2<br/>cut from main (3f183f3)<br/>carrying the uncommitted<br/>sprint-2 decisions<br/>(BACKLOG, SDLC §7,<br/>recar…"
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Stories ready: docs/spri<br/>nts/USER_STORIES_SPRINT2<br/>.md - UND-6 JSON API<br/>target (5), UND-7<br/>hookless web page +<br/>generic adapter (5),<br/>UND-8 docs…"
+    Smith->>Cypher: "user reject"
+    Note right of Smith: "*user reject rubric<br/>STORIES: OUT=S TEST=S<br/>FAIL=W SCOPE=S SIZE=S<br/>DESIGN=A. REASON: no<br/>criterion for a run that<br/>stalls after it started<br/>(hook…"
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Stories revised: UND-6<br/>AC9 + UND-7 AC8 -<br/>stalled after first move<br/>(10 s, nothing offered,<br/>part not ended) -> exit<br/>1, outcome stalled,<br/>names…"
+    Smith->>Morpheus: "user approve"
+    Note right of Smith: "*user approve. rubric<br/>STORIES: OUT=S TEST=S<br/>FAIL=S SCOPE=S SIZE=S<br/>DESIGN=A. Note: make<br/>'stalled' one run-loop<br/>rule for all targets,<br/>make th…"
+    Morpheus->>Smith: "lead handoff"
+    Note right of Morpheus: "Architecture complete: d<br/>ocs/sprints/ARCH_SPRINT2<br/>.md - http target (GET<br/>state/request moves,<br/>start-or-attach, error<br/>status logged), page<br/>tar…"
+    Smith->>Mouse: "user approve"
+    Note right of Smith: "*user approve. rubric<br/>ARCH: BOUND=S FLOW=S<br/>FAIL=S USER=A DECS=S<br/>FEAS=S. Notes: stall<br/>message hints at<br/>'showing', check names<br/>'generic page…"
+    Mouse->>Morpheus: "sm handoff"
+    Note right of Mouse: "Sprint 2 planned:<br/>task.md phases 1-5 +<br/>close, one Neo task<br/>each, no Tank Phase 0.<br/>Self-check PLAN: SIZE=A<br/>GATE=S VERIF=S ALIGN=S<br/>OWNER=A. @…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "rubric PLAN: SIZE=A<br/>GATE=S VERIF=S ALIGN=S<br/>OWNER=A. Approved. Phase<br/>1 is groundwork with 6<br/>small items - keep each<br/>behind its own test.<br/>@Ne…"
+    Mouse->>All: "phase 1"
+    Note right of Mouse: "Phase 1: run-loop and<br/>loader groundwork"
 ```
