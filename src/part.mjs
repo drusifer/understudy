@@ -19,7 +19,8 @@ import { checkInstruction } from './strategyFile.mjs';
 
 const NEEDS = 'an example directory needs adapter.mjs, part/turn.yaml and part/questions.yaml';
 const QUESTION_TYPES = ['noul', 'choice', 'score'];
-const TARGET_KINDS = new Set(['process', 'page']);
+// The fields each kind of target takes; anything else is a mistake, named at load.
+const TARGET_FIELDS = { process: ['command', 'args'], page: ['root', 'page', 'hook'] };
 const APP_HOOKS = ['phase', 'project', 'options', 'act'];
 
 /**
@@ -63,18 +64,36 @@ export async function loadAdapter(directory) {
   const fail = (message) => { throw new UsageError(`${shown(file)}: ${message}`); };
   if (!adapter || typeof adapter !== 'object') fail('needs a default export - see docs/ADAPTERS.md');
   if (typeof adapter.name !== 'string' || adapter.name === '') fail('name must be a non-empty string - see docs/ADAPTERS.md');
-  if (!TARGET_KINDS.has(adapter.target?.kind)) fail(`target.kind must be "process" or "page" (got ${JSON.stringify(adapter.target?.kind ?? null)})`);
+  checkTarget(adapter.target, fail);
   for (const hook of APP_HOOKS) {
     if (typeof adapter.app?.[hook] !== 'function') fail(`app.${hook} must be a function - see docs/ADAPTERS.md`);
   }
-  const kinds = Object.entries(adapter.library ?? {});
+  checkLibrary(adapter.library ?? {}, fail);
+  return adapter;
+}
+
+/**
+ * A known kind, and only the fields that kind takes.
+ */
+function checkTarget(target, fail) {
+  const kinds = Object.keys(TARGET_FIELDS).map((kind) => JSON.stringify(kind)).join(' or ');
+  const known = TARGET_FIELDS[target?.kind];
+  if (!known) fail(`target.kind must be ${kinds} (got ${JSON.stringify(target?.kind ?? null)})`);
+  const extra = Object.keys(target).find((field) => field !== 'kind' && !known.includes(field));
+  if (extra) fail(`target.${extra} is not a ${target.kind} target field (known: ${known.join(', ')})`);
+}
+
+/**
+ * Every name an adapter adds says what it means.
+ */
+function checkLibrary(library, fail) {
+  const kinds = Object.entries(library);
   for (const [kind, names] of kinds) {
     const entries = Object.entries(names ?? {});
     for (const [name, entry] of entries) {
       if (typeof entry?.doc !== 'string' || entry.doc === '') fail(`library.${kind}.${name} needs a one-line doc`);
     }
   }
-  return adapter;
 }
 
 /**

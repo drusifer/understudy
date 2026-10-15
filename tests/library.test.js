@@ -45,7 +45,7 @@ const play = (library, context = {}) => library.actors.play.fn({ input: { contex
 
 test('the vocabulary uses app words, not card-table words', () => {
   const library = genericLibrary({});
-  assert.deepEqual(Object.keys(library.guards).toSorted((a, b) => a.localeCompare(b)), ['changed', 'counted', 'phase', 'played', 'quiet', 'verdict']);
+  assert.deepEqual(Object.keys(library.guards).toSorted((a, b) => a.localeCompare(b)), ['changed', 'counted', 'phase', 'played', 'quiet', 'showing', 'verdict']);
   assert.deepEqual(Object.keys(library.actors).toSorted((a, b) => a.localeCompare(b)), ['ask', 'judge', 'look', 'play']);
   for (const kind of ['guards', 'actions', 'actors']) {
     const entries = Object.entries(library[kind]);
@@ -58,9 +58,19 @@ test('the vocabulary uses app words, not card-table words', () => {
 test('look reports the phase the adapter reads off the view, and the phase guard tests it', async () => {
   const library = genericLibrary(servicesWith(judgeAnswering('order'), fakeTarget('checkout')));
   const output = await library.actors.look.fn({ input: { context: {}, event: {} } });
-  assert.deepEqual(output, { phase: 'checkout' });
+  assert.equal(output.phase, 'checkout');
   assert.equal(library.guards.phase.fn({ event: { output } }, { is: 'checkout' }), true);
   assert.equal(library.guards.phase.fn({ event: { output } }, { is: 'menu' }), false);
+});
+
+test('look also hands on the view it read, and showing finds text anywhere in it', async () => {
+  const library = genericLibrary(servicesWith(judgeAnswering('order'), fakeTarget('Welcome aboard!')));
+  const output = await library.actors.look.fn({ input: { context: {}, event: {} } });
+  assert.deepEqual(output.view, { screen: 'Welcome aboard!', seq: 1 });
+  assert.equal(library.guards.showing.fn({ event: { output } }, { text: 'Welcome aboard' }), true);
+  assert.equal(library.guards.showing.fn({ event: { output } }, { text: 'Goodbye' }), false);
+  const nested = { output: { view: { body: { items: [{ name: 'tea', state: 'dispensed' }] } } } };
+  assert.equal(library.guards.showing.fn({ event: nested }, { text: 'dispensed' }), true, 'nested strings count');
 });
 
 test('an offered pick is sent to the app and recorded', async () => {

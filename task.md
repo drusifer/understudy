@@ -20,9 +20,9 @@
 
 ### Phase 1: Run-loop and loader groundwork (ADR-0010, ARCH §3)
 *Phase goal: every target stops cleanly on a stall; targets are checked field by field; act results reach the log; program start/stop is shared.*
-- [ ] **Task 1.1:** `run.mjs` stall rule (`stallMs` 10 s after the first move, outcome `stalled`, message with the `showing` hint); `part.mjs` per-kind target field check (unknown field → `UsageError` naming known fields); `library.play` records the last non-empty act result as `response`; `look` also outputs `view`; new guard `showing { text }`; extract `src/targets/program.mjs` from `process.mjs`. TDD. (*Owner: Neo | Verification: `bobp make test` fail 0 (new tests: stalled, unknown field, response, showing); `bobp make lint` exit 0*)
-- [ ] **Task 1.2:** UAT: stall test names last state + hint; `check` on an adapter with `target.hook` → exit 2 naming known fields. (*Owner: Trin | Verification: `bobp make test && bobp make lint`*)
-- [ ] **Task 1.3:** Review vs ARCH §4 stall rule / §5 fields. (*Owner: Morpheus | Verification: review; commit `Phase 1`*)
+- [x] **Task 1.1:** `run.mjs` stall rule (`stallMs` 10 s after the first move, outcome `stalled`, message with the `showing` hint); `part.mjs` per-kind target field check (unknown field → `UsageError` naming known fields); `library.play` records the last non-empty act result as `response`; `look` also outputs `view`; new guard `showing { text }`; extract `src/targets/program.mjs` from `process.mjs`. TDD. (*Owner: Neo | Verification: `bobp make test` fail 0 (new tests: stalled, unknown field, response, showing); `bobp make lint` exit 0*)
+- [x] **Task 1.2:** UAT: stall test names last state + hint; `check` on an adapter with `target.hook` → exit 2 naming known fields. (*Owner: Trin | Verification: `bobp make test && bobp make lint`*)
+- [x] **Task 1.3:** Review vs ARCH §4 stall rule / §5 fields. (*Owner: Morpheus | Verification: review; commit `Phase 1`*)
 
 ### Phase 2: HTTP target and the vending-machine example — UND-6
 *Phase goal: a JSON API is played to its end state, started or attached, with error statuses logged.*

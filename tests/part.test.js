@@ -118,3 +118,8 @@ test('a directory that does not exist, or a file, is named as such - not as a mi
   assert.equal(await refusal('examples/nope'), 'examples/nope: no such directory');
   assert.equal(await refusal('package.json'), 'package.json: not a directory - give the example directory, e.g. examples/cli');
 });
+
+test('a target field the kind does not have is refused, naming the known ones', async () => {
+  const directory = brokenCopy('adapter.mjs', (text) => text.replace("args: ['app.mjs'] }", "args: ['app.mjs'], hook: '__understudy' }"));
+  assert.equal(await refusal(directory), `${shown(directory)}/adapter.mjs: target.hook is not a process target field (known: command, args)`);
+});

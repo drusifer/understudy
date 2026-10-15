@@ -16,7 +16,8 @@ sequenceDiagram
     participant Smith
     participant Morpheus
     participant Neo
-    Note over User,Neo: 📅 2026-10-15
+    participant Trin
+    Note over User,Trin: 📅 2026-10-15
     User->>All: "request"
     Note right of User: "/oracle groom docs: add<br/>README.md,<br/>USER_GUIDE.md, populate<br/>PROJECT.md, walkthrough<br/>of the examples"
     Oracle->>All: "progress"
@@ -75,4 +76,8 @@ sequenceDiagram
     Note right of Morpheus: "rubric PLAN: SIZE=A<br/>GATE=S VERIF=S ALIGN=S<br/>OWNER=A. Approved. Phase<br/>1 is groundwork with 6<br/>small items - keep each<br/>behind its own test.<br/>@Ne…"
     Mouse->>All: "phase 1"
     Note right of Mouse: "Phase 1: run-loop and<br/>loader groundwork"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 1 impl complete:<br/>stall rule (all targets,<br/>outcome stalled, showing<br/>hint), per-kind target<br/>field check, act results<br/>-> step 'response'…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 1 passed:<br/>stall test names last<br/>state + showing hint,<br/>check on adapter with<br/>target.hook -> exit 2<br/>'not a process target<br/>field (kn…"
 ```

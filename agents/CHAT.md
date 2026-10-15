@@ -166,3 +166,23 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-15 18:17:25</small>] [**Mouse**]->[**all**] *phase 1*:
  Phase 1: run-loop and loader groundwork
+
+---
+[<small>2026-10-15 18:24:47</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test | /home/drusifer/Projects/understudy/build/build.out
+ℹ tests 100
+ℹ suites 0
+ℹ pass 100
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1169.106272
+
+---
+[<small>2026-10-15 18:24:47</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 1 impl complete: stall rule (all targets, outcome stalled, showing hint), per-kind target field check, act results -> step 'response', look outputs view, guard 'showing', src/targets/program.mjs shared by process. 100/100, lint 0. @Trin *qa uat phase-1
+
+---
+[<small>2026-10-15 18:24:47</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 1 passed: stall test names last state + showing hint; check on adapter with target.hook -> exit 2 'not a process target field (known: command, args)'; process target tests unchanged after program.mjs extraction. @Morpheus *lead review phase-1

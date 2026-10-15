@@ -18,7 +18,7 @@ const GOOD = fileURLToPath(new URL('fixtures/parts/good', import.meta.url));
  * The fixture's app, in memory: on `menu` until a move is sent; `order`
  * ends it (`done`), `cancel` leaves it on the menu.
  */
-function fakeApp({ screen = 'menu', exitAfterMove = null, staleLooks = 0 } = {}) {
+function fakeApp({ screen = 'menu', exitAfterMove = null, staleLooks = 0, afterMove = null, answer } = {}) {
   const app = { screen, seq: 0, acted: [], closed: false, exit: null, stale: null };
   app.target = {
     describe: () => 'node app.mjs',
@@ -38,7 +38,9 @@ function fakeApp({ screen = 'menu', exitAfterMove = null, staleLooks = 0 } = {})
       app.acted.push(action);
       app.seq += 1;
       if (action.input === 'order') app.screen = 'done';
+      if (afterMove) app.screen = afterMove;
       if (exitAfterMove !== null) app.exit = { code: exitAfterMove };
+      return answer;
     },
     exited: () => app.exit,
     close: async () => { app.closed = true; },
@@ -64,7 +66,7 @@ function streams() {
   return { out, stdout: { write: (text) => { out.stdout += text; } }, stderr: { write: (text) => { out.stderr += text; } } };
 }
 
-async function play({ app = fakeApp(), judge = judgeAnswering('order'), steps = 50, firstMoveMs = 2000, signals = new EventEmitter() } = {}) { // eslint-disable-line unicorn/prefer-event-target -- stands in for `process`, an EventEmitter
+async function play({ app = fakeApp(), judge = judgeAnswering('order'), steps = 50, firstMoveMs = 2000, stallMs = 2000, signals = new EventEmitter() } = {}) { // eslint-disable-line unicorn/prefer-event-target -- stands in for `process`, an EventEmitter
   const logRoot = mkdtempSync(path.join(tmpdir(), 'understudy-runs-'));
   test.after(() => rmSync(logRoot, { recursive: true, force: true }));
   const io = streams();
@@ -72,7 +74,7 @@ async function play({ app = fakeApp(), judge = judgeAnswering('order'), steps = 
   try {
     await runPart(GOOD, {
       steps, stdout: io.stdout, stderr: io.stderr, environment: { TYPESAFE_API_KEY: 'test' },
-      makeJudge: () => judge, makeTarget: async () => app.target, logRoot, firstMoveMs, pollMs: 1, signals,
+      makeJudge: () => judge, makeTarget: async () => app.target, logRoot, firstMoveMs, stallMs, pollMs: 1, signals,
     });
   } catch (error_) {
     error = error_;
@@ -182,4 +184,19 @@ test('Ctrl-C stops at the next safe state and says so', async () => {
 test('a cap of one step reads as one step', async () => {
   const run = await play({ judge: judgeAnswering('cancel'), steps: 1 });
   assert.equal(run.error.message, 'stopped after 1 step without reaching the end state (last state: choosing)');
+});
+
+test('a run that stops being offered anything after it started is stalled, with a hint about ending it', async () => {
+  const run = await play({ app: fakeApp({ afterMove: 'brewing' }), judge: judgeAnswering('cancel'), stallMs: 30 });
+  assert.ok(run.error instanceof RunError);
+  assert.equal(run.error.message,
+    'stalled: nothing to do for 0.03 s after step 1 (last state: waiting) - the app showed: {"screen":"brewing","seq":1}'
+    + ' - if this is where the part should end, add a showing guard (docs/ADAPTERS.md)');
+  assert.deepEqual(run.final, { final: true, outcome: 'stalled', steps: 1, state: 'waiting' });
+  assert.equal(run.app.closed, true);
+});
+
+test('what the app answered a move with is kept in that step\'s log line', async () => {
+  const run = await play({ app: fakeApp({ answer: { status: 402 } }) });
+  assert.deepEqual(run.lines[0].response, { status: 402 });
 });
