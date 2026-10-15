@@ -104,4 +104,12 @@ sequenceDiagram
     Note right of Neo: "Phase 4 impl complete:<br/>src/apps/page.mjs<br/>generic page app<br/>(controls -> options<br/>'button:Free',<br/>'option:Size=Large'),<br/>part.mjs fills it for a…"
     Trin->>Morpheus: "qa handoff"
     Note right of Trin: "UAT phase 4 passed LIVE:<br/>run examples/web -> butt<br/>on:Free/Light/Accept,<br/>done, exit 0, page that<br/>still defines<br/>window.__understudy<br/>(trap hook…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 4 review passed<br/>(ADR-0009: end declared<br/>by the part, generic app<br/>used whole or not at<br/>all). Committed. @Neo<br/>*swe impl phase-5"
+    Mouse->>All: "phase 5"
+    Note right of Mouse: "Phase 5: docs for three<br/>targets and hookless<br/>pages"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 5 impl complete:<br/>ADAPTERS.md (3 targets,<br/>generic page app,<br/>showing, outcomes),<br/>USER_GUIDE (web needs no<br/>adapter code, http<br/>adapters,…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 5 passed:<br/>documented commands run<br/>as written (check<br/>http/web, hook-field<br/>refusal message<br/>matches), links clean.<br/>Deviation flagged…"
 ```

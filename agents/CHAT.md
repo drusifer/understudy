@@ -266,3 +266,24 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-15 18:31:08</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
  UAT phase 4 passed LIVE: run examples/web -> button:Free/Light/Accept, done, exit 0; page that still defines window.__understudy (trap hook) played identically, hook never called; part without showing -> stalled after 10 s with the hint; no Chromium left; test-live green for cli+http+web; make check green. @Morpheus *lead review phase-4
+
+---
+[<small>2026-10-15 18:31:09</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 4 review passed (ADR-0009: end declared by the part; generic app used whole or not at all). Committed. @Neo *swe impl phase-5
+
+---
+[<small>2026-10-15 18:31:09</small>] [**Mouse**]->[**all**] *phase 5*:
+ Phase 5: docs for three targets and hookless pages
+
+---
+[<small>2026-10-15 18:33:46</small>] [**make**]->[**all**] *build*:
+ Build FAILED exit=2 | make run | /home/drusifer/Projects/understudy/build/build.out
+make: *** [Makefile:34: run] Error 2
+
+---
+[<small>2026-10-15 18:33:56</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 5 impl complete: ADAPTERS.md (3 targets, generic page app, showing, outcomes), USER_GUIDE (web needs no adapter code, http adapters, new troubleshooting rows), WALKTHROUGH (hookless web + HTTP sections with real runs, 3-way table, break-it rows), README; ADR-0007..0010 recorded, ADR-0002 superseded; backlog sprint 2 marked done. @Trin *qa uat phase-5
+
+---
+[<small>2026-10-15 18:33:56</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 5 passed: documented commands run as written (check http/web, hook-field refusal message matches); links clean. Deviation flagged for Smith: UND-8 AC2 grep still hits history (sprint docs, ADR-0002 record, Sprint-2 story text) - user-facing docs/README/examples/src are clean; history kept on purpose. @Morpheus *lead review phase-5

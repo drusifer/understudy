@@ -8,10 +8,11 @@ offers, and makes that move — until its **part** says it is done. You write th
 small YAML statechart plus the questions Jev answers; a short **adapter** says what the app
 looks like and which moves it offers. No scripted inputs.
 
-It plays two kinds of app today, with the same part format:
+It plays three kinds of app, with the same part format:
 
 - **command-line programs** — reads the terminal output, types the answers;
-- **web pages** — served locally and played in headless Chromium.
+- **web pages** — unmodified: read the way a screen reader does, played in headless Chromium;
+- **JSON APIs** — a look is a GET of the app's state, a move is a request.
 
 ```text
 $ bobp make run ARGS="run examples/cli"
@@ -32,6 +33,7 @@ export TYPESAFE_API_KEY=...                    # Jev is required for a run
 bobp make run ARGS="run examples/cli"               # play the coffee-counter program
 bobp make install-browser                           # once, for web targets (skip if Chromium is installed)
 bobp make run ARGS="run examples/web"               # play the sign-up web page
+bobp make run ARGS="run examples/http"              # play the vending machine API
 bobp make run ARGS="check examples/cli"             # check a part without starting anything (no key needed)
 ```
 
@@ -43,7 +45,7 @@ Always go through `bobp make <target>` - it is the front door for people and age
 | Read | When you want to |
 |---|---|
 | [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | install, run, read the output, write your first part, fix errors |
-| [docs/WALKTHROUGH.md](docs/WALKTHROUGH.md) | see both examples taken apart, line by line, with a real run |
+| [docs/WALKTHROUGH.md](docs/WALKTHROUGH.md) | see the examples taken apart, line by line, with real runs |
 | [docs/ADAPTERS.md](docs/ADAPTERS.md) | the reference: adapter shape, targets, part files, library names, exit codes |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | why it is built this way (ADRs) |
 | [docs/SDLC.md](docs/SDLC.md) | how the project is built, tested, changed and released |
@@ -59,7 +61,8 @@ out of recard's game harness) and the sprint documents in
 bin/understudy.mjs     the command
 src/                   the core: run loop, part loader, statechart, seat, Jev decisions, targets/
 examples/cli/          a terminal coffee counter + its adapter and part
-examples/web/          a sign-up wizard page + its adapter and part
+examples/web/          a sign-up wizard page (unmodified) + a 4-line adapter and part
+examples/http/         a vending machine JSON API + its adapter and part
 tests/                 node:test suites (offline: a Jev double, no browser)
 docs/                  user and project documentation
 seed/                  recard files not yet generalized (not run, not linted)

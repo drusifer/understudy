@@ -44,9 +44,9 @@
 
 ### Phase 5: Docs — UND-8
 *Phase goal: the docs describe three targets and hookless pages only.*
-- [ ] **Task 5.1:** `docs/ADAPTERS.md`, `docs/USER_GUIDE.md`, `docs/WALKTHROUGH.md` (HTTP + hookless web with real runs), `README.md`; ADR-0007..0010 in `docs/DECISIONS.md`, ADR-0002 marked superseded. (*Owner: Neo | Verification: `grep -rn "__understudy" docs README.md examples src` empty*)
-- [ ] **Task 5.2:** UAT: cold-read "wire up my API" and "play my page" from the docs alone; every command in the docs runs. (*Owner: Trin | Verification: inspection + `bobp make run` of each documented command*)
-- [ ] **Task 5.3:** Review. (*Owner: Morpheus | Verification: review; commit `Phase 5`*)
+- [x] **Task 5.1:** `docs/ADAPTERS.md`, `docs/USER_GUIDE.md`, `docs/WALKTHROUGH.md` (HTTP + hookless web with real runs), `README.md`; ADR-0007..0010 in `docs/DECISIONS.md`, ADR-0002 marked superseded. (*Owner: Neo | Verification: `grep -rn "__understudy" docs README.md examples src` empty*)
+- [x] **Task 5.2:** UAT: cold-read "wire up my API" and "play my page" from the docs alone; every command in the docs runs. (*Owner: Trin | Verification: inspection + `bobp make run` of each documented command*)
+- [x] **Task 5.3:** Review. (*Owner: Morpheus | Verification: review; commit `Phase 5`*)
 
 ---
 

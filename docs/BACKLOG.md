@@ -4,14 +4,8 @@ Groomed by Cypher from the sprint 1 retro (2026-10-15). Owner, 2026-10-15: recar
 a goal - no migration work. README done in the post-sprint docs groom. Not yet sized or ordered beyond
 "Next" vs "Later".
 
-## Sprint 2 (owner, 2026-10-15)
-- **HTTP target** — `src/targets/http.mjs`: view = GET, act = request (method, path, body); starts the
-  example's server or attaches to a running URL. Example: a tiny JSON API in `examples/http/`. (ADR-0001)
-- **Drop the page hook** — no more `window.__understudy`: the page target reads the accessibility tree
-  (roles + names) and moves by clicking / filling elements by name. A built-in generic page adapter makes
-  the visible controls the options; a web app's own adapter becomes optional. Supersedes ADR-0002;
-  `examples/web` loses its hook. **No back-compat:** hook support is deleted outright - no fallback,
-  flag or shim; docs describe only the new model.
+## Sprint 2
+Done - see `CHANGELOG.md` (HTTP target; hookless pages with the generic page app).
 
 ## Sprint 3
 - **MCP server** — generic tools (start / look / act / stop) over all three targets. Starting point:
