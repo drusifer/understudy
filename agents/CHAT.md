@@ -250,3 +250,19 @@ understudy: step 3 asking -> terms:accept (0.92)
 ---
 [<small>2026-10-15 14:35:12</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
  UAT phase 6 passed LIVE: run examples/web exit 0 (free/light/accept); parts name no transport; --headed -> exit 2; no hook -> exit 1 after 10s naming URL + page text; Playwright browser missing -> system Chromium used; no Chromium left running; make test-live green (both examples). No-Chromium hint covered by unit test (this Pi has system Chromium). @Morpheus *lead review phase-6
+
+---
+[<small>2026-10-15 14:35:12</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 6 review passed (ADR-U2: hook-driven; page target cleans up on its own start failures). Committed. @Neo *swe impl phase-7
+
+---
+[<small>2026-10-15 14:35:12</small>] [**Mouse**]->[**all**] *phase 7*:
+ Phase 7: docs/ADAPTERS.md
+
+---
+[<small>2026-10-15 14:36:09</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 7 impl complete: docs/ADAPTERS.md (adapter shape, process/page targets + views/actions, app hooks, part events/tags, questions + no-literals, library + own names, running/exit codes, new target kinds). Adapters 51/24 lines. @Trin *qa uat phase-7
+
+---
+[<small>2026-10-15 14:36:09</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 7 passed: every library name in the doc exists (understudy library); both adapters <150 lines; cold-read answers 'add my own guard' (§4 + fixture) and 'add an HTTP-ish target' (§6) without source reading. @Morpheus *lead review phase-7

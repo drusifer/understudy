@@ -96,4 +96,12 @@ sequenceDiagram
     Note right of Neo: "Phase 6 impl complete:<br/>src/targets/page.mjs<br/>(127.0.0.1 static<br/>server, headless<br/>Chromium w/ system<br/>fallback, hook-driven<br/>view/act/talk/say,…"
     Trin->>Morpheus: "qa handoff"
     Note right of Trin: "UAT phase 6 passed LIVE:<br/>run examples/web exit 0<br/>(free/light/accept),<br/>parts name no transport,<br/>--headed -> exit 2, no<br/>hook -> exit 1 after…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 6 review passed<br/>(ADR-U2: hook-driven,<br/>page target cleans up on<br/>its own start failures).<br/>Committed. @Neo *swe<br/>impl phase-7"
+    Mouse->>All: "phase 7"
+    Note right of Mouse: "Phase 7:<br/>docs/ADAPTERS.md"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 7 impl complete:<br/>docs/ADAPTERS.md<br/>(adapter shape,<br/>process/page targets +<br/>views/actions, app<br/>hooks, part events/tags,<br/>questions + no-l…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 7 passed:<br/>every library name in<br/>the doc exists<br/>(understudy library),<br/>both adapters <150<br/>lines, cold-read answers<br/>'add my own guar…"
 ```

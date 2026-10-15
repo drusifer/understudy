@@ -60,9 +60,9 @@
 
 ### Phase 7: Adapter documentation — UND-5 AC1–2
 *Phase goal: a developer can wire up a new app from one document and two examples.*
-- [ ] **Task 7.1:** `docs/ADAPTERS.md`: adapter shape (target kinds, `app.phase/project/options/act`, optional `library`), target action shapes, part files and events, step log fields, exit codes; references both examples. (*Owner: Neo | Verification: `wc -l examples/*/adapter.mjs` each < 150; every name in the doc exists (`bobp make run ARGS="library"`)*)
-- [ ] **Task 7.2:** UAT: follow the doc cold to answer "how do I add an HTTP-ish target / my own guard" with no source reading. (*Owner: Trin | Verification: inspection checklist in UAT plan*)
-- [ ] **Task 7.3:** Review. (*Owner: Morpheus | Verification: code review; commit `Phase 7`*)
+- [x] **Task 7.1:** `docs/ADAPTERS.md`: adapter shape (target kinds, `app.phase/project/options/act`, optional `library`), target action shapes, part files and events, step log fields, exit codes; references both examples. (*Owner: Neo | Verification: `wc -l examples/*/adapter.mjs` each < 150; every name in the doc exists (`bobp make run ARGS="library"`)*)
+- [x] **Task 7.2:** UAT: follow the doc cold to answer "how do I add an HTTP-ish target / my own guard" with no source reading. (*Owner: Trin | Verification: inspection checklist in UAT plan*)
+- [x] **Task 7.3:** Review. (*Owner: Morpheus | Verification: code review; commit `Phase 7`*)
 
 ---
 
