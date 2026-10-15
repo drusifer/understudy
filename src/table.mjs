@@ -38,7 +38,7 @@ export function readAnswer(entry) {
  * a stored timestamp - compares a small int to a large one and is
  * never equal, so it "changes" every call. Found live (US-127 follow-
  * up): `lastStateChangeAt` was reset every poll tick because it was
- * being compared directly against `view.lastTouch.seq`.
+ * being compared directly against `view.seq`.
  */
 export function trackChange(seen, seq, now) {
   if (seq === undefined || seq === seen.seq) return seen;
@@ -53,17 +53,17 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
  * must listen on its own: a bot asks from the middle of a decision, so
  * nothing else is reading the talk log while it waits (US-128: the RtG
  * player's ask could never hear a reply for exactly that reason).
- * @param {{ peer: { talk: () => Promise<object[]>, say: (text: string) => Promise<void> },
+ * @param {{ target: { talk: () => Promise<object[]>, say: (text: string) => Promise<void> },
  *   name: string, question: string, timeoutMs?: number, pollMs?: number }} options
  * @returns {Promise<boolean|null>} the answer, or `null` when nobody settled it
  */
-export async function askPeer({ peer, name, question, timeoutMs = 20_000, pollMs = 500 }) {
-  const earlier = await peer.talk();
+export async function askChannel({ target, name, question, timeoutMs = 20_000, pollMs = 500 }) {
+  const earlier = await target.talk();
   const before = earlier.length;
-  await peer.say(question);
+  await target.say(question);
   const deadline = Date.now() + timeoutMs;
   for (;;) {
-    const talk = await peer.talk();
+    const talk = await target.talk();
     const since = talk.slice(before).filter((entry) => entry.name !== name);
     const answer = since.map((entry) => readAnswer(entry)).find((each) => each !== null);
     if (answer !== undefined) return answer;

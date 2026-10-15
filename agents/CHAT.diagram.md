@@ -13,7 +13,9 @@ sequenceDiagram
     participant Smith
     participant Cypher
     participant Morpheus
-    Note over User,Morpheus: 📅 2026-10-15
+    participant Neo
+    participant Trin
+    Note over User,Trin: 📅 2026-10-15
     User->>All: "request"
     Note right of User: "make it so - plan<br/>Understudy sprint 1 from<br/>recard's extraction map<br/>(recard: agents/morpheus<br/>/understudy_extraction_m<br/>ap.md). Decisions: web<br/>+…"
     Mouse->>Tank: "handoff"
@@ -46,4 +48,12 @@ sequenceDiagram
     Note right of Morpheus: "rubric PLAN: SIZE=A<br/>GATE=S VERIF=S ALIGN=S<br/>OWNER=A. Approved. Note:<br/>Task 1.1 is the heaviest<br/>Neo task - keep the off-<br/>list change test-first…"
     Mouse->>All: "phase 0"
     Note right of Mouse: "Phase 0: make targets<br/>run/install-<br/>browser/test-live + SDLC<br/>update"
+    Tank->>Neo: "devops handoff"
+    Note right of Tank: "Phase 0 done (commit).<br/>run/install-<br/>browser/test-live<br/>targets, SDLC<br/>§3/§5/§9/§10 updated,<br/>make check green. @Neo<br/>*swe impl phase-1"
+    Mouse->>All: "phase 1"
+    Note right of Mouse: "Phase 1: generic<br/>vocabulary + look/phase<br/>+ off-list re-ask"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 1 impl complete:<br/>vocabulary renamed (targ<br/>et/app/OBSERVE/changed/q<br/>uiet/ask), look+phase<br/>added, off-list re-ask<br/>(ADR-U4) with RunError,…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 1 passed: no<br/>old names left in<br/>src/tests, library keys<br/>match ARCH §5, off-list<br/>twice sends nothing<br/>(tests/library.test.js).<br/>51/51…"
 ```

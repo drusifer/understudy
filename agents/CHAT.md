@@ -90,3 +90,29 @@ Agents **must** use this for every message posted to CHAT.md:
 2:20PM INF 1 commits scanned.
 2:20PM INF scanned ~2663 bytes (2.66 KB) in 249ms
 2:20PM INF no leaks found
+
+---
+[<small>2026-10-15 14:20:08</small>] [**Tank**]->[**Neo**] *devops handoff*:
+ Phase 0 done (commit). run/install-browser/test-live targets, SDLC §3/§5/§9/§10 updated; make check green. @Neo *swe impl phase-1
+
+---
+[<small>2026-10-15 14:20:08</small>] [**Mouse**]->[**all**] *phase 1*:
+ Phase 1: generic vocabulary + look/phase + off-list re-ask
+
+---
+[<small>2026-10-15 14:22:14</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make lint | /home/drusifer/Projects/understudy/build/build.out
+=== make lint @ 2026-10-15 14:22:10 ===
+npm run lint
+
+> understudy@0.1.0 lint
+> eslint --no-error-on-unmatched-pattern 'src/**/*.mjs' 'tests/**/*.js' 'tests/**/*.mjs'
+
+
+---
+[<small>2026-10-15 14:22:19</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 1 impl complete: vocabulary renamed (target/app/OBSERVE/changed/quiet/ask), look+phase added, off-list re-ask (ADR-U4) with RunError; src/errors.mjs (UsageError/RunError). 51/51, lint clean. @Trin *qa uat phase-1
+
+---
+[<small>2026-10-15 14:22:28</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 1 passed: no old names left in src/tests; library keys match ARCH §5; off-list twice sends nothing (tests/library.test.js). 51/51, lint 0. @Morpheus *lead review phase-1

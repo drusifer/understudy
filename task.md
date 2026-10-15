@@ -20,13 +20,13 @@
 
 ### Phase 0: Build environment changes flagged by Morpheus (ARCH §7) — Mechanism class
 *Phase goal: the make targets the sprint needs exist before any Neo phase.*
-- [ ] **Task 0.2:** Add make targets `run` (`node bin/understudy.mjs $(ARGS)`, one-line hint while `bin/understudy.mjs` is missing), `install-browser` (`npx playwright install chromium`, network), `test-live` (runs `understudy run` on every `examples/*/` with `--steps 20`; passes trivially with no examples); update `docs/SDLC.md` §3/§5/§9 (second network target, browser outside the project, `make test` never calls Jev/Chromium). (*Owner: Tank | Verification: `bobp make help` lists run/install-browser/test-live; `bobp make check` exit 0*)
+- [x] **Task 0.2:** Add make targets `run` (`node bin/understudy.mjs $(ARGS)`, one-line hint while `bin/understudy.mjs` is missing), `install-browser` (`npx playwright install chromium`, network), `test-live` (runs `understudy run` on every `examples/*/` with `--steps 20`; passes trivially with no examples); update `docs/SDLC.md` §3/§5/§9 (second network target, browser outside the project, `make test` never calls Jev/Chromium). (*Owner: Tank | Verification: `bobp make help` lists run/install-browser/test-live; `bobp make check` exit 0*)
 
 ### Phase 1: Generic vocabulary (ARCH §5 "Library changes", ADR-U3) — UND-1/UND-2 foundation
 *Phase goal: the moved core speaks "app/target/observe", not "game/peer/table"; every existing test still passes.*
-- [ ] **Task 1.1:** Rename in `src/library.mjs`, `src/seat.mjs`, `src/machine.mjs` and their tests: `services.peer`→`services.target`, `services.game`→`services.app`, event `TABLE`→`OBSERVE`, guards `table_changed`→`changed`, `quiet_table`→`quiet`, actor `ask_table`→`ask`, `view.lastTouch.seq`→`view.seq`; add generic `look` actor + `phase` guard (from `adapter.app.phase`), and the off-list re-ask in `play` (ADR-U4, record `offList`/`answer`, `RunError` on the second). TDD: new tests for `look`, `phase`, off-list once/twice. (*Owner: Neo | Verification: `bobp make test` fail 0; `bobp make lint` exit 0*)
-- [ ] **Task 1.2:** UAT phase 1: renamed names appear in `genericLibrary({})` keys; off-list tests cover "nothing sent to the target". (*Owner: Trin | Verification: `bobp make test && bobp make lint`*)
-- [ ] **Task 1.3:** Review against ARCH §5 and ADR-U3/U4. (*Owner: Morpheus | Verification: code review; commit `Phase 1`*)
+- [x] **Task 1.1:** Rename in `src/library.mjs`, `src/seat.mjs`, `src/machine.mjs` and their tests: `services.peer`→`services.target`, `services.game`→`services.app`, event `TABLE`→`OBSERVE`, guards `table_changed`→`changed`, `quiet_table`→`quiet`, actor `ask_table`→`ask`, `view.lastTouch.seq`→`view.seq`; add generic `look` actor + `phase` guard (from `adapter.app.phase`), and the off-list re-ask in `play` (ADR-U4, record `offList`/`answer`, `RunError` on the second). TDD: new tests for `look`, `phase`, off-list once/twice. (*Owner: Neo | Verification: `bobp make test` fail 0; `bobp make lint` exit 0*)
+- [x] **Task 1.2:** UAT phase 1: renamed names appear in `genericLibrary({})` keys; off-list tests cover "nothing sent to the target". (*Owner: Trin | Verification: `bobp make test && bobp make lint`*)
+- [x] **Task 1.3:** Review against ARCH §5 and ADR-U3/U4. (*Owner: Morpheus | Verification: code review; commit `Phase 1`*)
 
 ### Phase 2: The `understudy` command, key check, library listing — UND-4, UND-5 AC3
 *Phase goal: `understudy` exists with `run|check|library`, exit codes 0/1/2, and refuses `run` without a key.*

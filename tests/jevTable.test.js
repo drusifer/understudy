@@ -3,7 +3,7 @@
 // ("attack", "untap") stay behind in `rtg/table.mjs`.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { shouldAskTable, readAnswer, trackChange, askPeer } from '../src/table.mjs';
+import { shouldAskTable, readAnswer, trackChange, askChannel } from '../src/table.mjs';
 
 const said = (name, text) => ({ name, text });
 
@@ -62,15 +62,15 @@ function tableThatAnswers(reply, speaker = 'Drew') {
 
 test('asking hears the answer given AFTER the question - the live bug was an ask that could never hear one', async () => {
   const peer = tableThatAnswers(() => "it's your turn, go ahead");
-  assert.equal(await askPeer({ peer, name: 'bot', question: 'Is it my turn now?', timeoutMs: 500, pollMs: 5 }), true);
+  assert.equal(await askChannel({ target: peer, name: 'bot', question: 'Is it my turn now?', timeoutMs: 500, pollMs: 5 }), true);
 });
 
 test('asking ignores what was said before the question, and the bot\'s own words', async () => {
   const peer = tableThatAnswers(() => null);
-  assert.equal(await askPeer({ peer, name: 'bot', question: 'yes?', timeoutMs: 50, pollMs: 5 }), null, 'silence, not the old "yes"');
+  assert.equal(await askChannel({ target: peer, name: 'bot', question: 'yes?', timeoutMs: 50, pollMs: 5 }), null, 'silence, not the old "yes"');
 });
 
 test('asking reads a refusal as a no', async () => {
   const peer = tableThatAnswers(() => 'no, not yet');
-  assert.equal(await askPeer({ peer, name: 'bot', question: 'Is it my turn now?', timeoutMs: 500, pollMs: 5 }), false);
+  assert.equal(await askChannel({ target: peer, name: 'bot', question: 'Is it my turn now?', timeoutMs: 500, pollMs: 5 }), false);
 });

@@ -1,15 +1,17 @@
-// US-129/D154: the names a turn file may use - the whole vocabulary
-// between the files and the code. Every entry says in one line what it
-// means (`doc`), and that line is what `make jev-library` lists and
-// `docs/JEV_LIBRARY.md` is generated from (Smith, Gate 1 C2).
+// US-129/D154: the names a part's turn file may use - the whole
+// vocabulary between the files and the code. Every entry says in one line
+// what it means (`doc`), and that line is what `understudy library` lists.
 //
-// Game-agnostic. A game plugs in through `services.game` hooks - how to
-// read its table into state, what is legal in a phase, what the rules
-// check, what a move does - and may add names of its own.
+// App-agnostic (sprint 1, ADR-U3). An app plugs in through its adapter's
+// `services.app` hooks - which phase the app is in, how to read its view
+// into state, which moves are offered, what the rules check, what a move
+// does - and may add names of its own. `services.target` is how the app
+// is seen and moved (a process, a page).
 
 import { decide } from './decide.mjs';
 import { verdictOf, askTable, floorFallback } from './escalate.mjs';
-import { askPeer } from './table.mjs';
+import { askChannel } from './table.mjs';
+import { RunError } from './errors.mjs';
 
 const verdictFromAnswer = (answer) => {
   if (answer === true) return 'yes';
@@ -39,38 +41,42 @@ function asked({ type, instructions, criteria, levels }) {
   return { type, instructions, ...(criteria && { criteria }), ...(levels && { levels }) };
 }
 
-function escalationFor({ player, peer, name, answerMs, answerPollMs }) {
-  if (player.escalation === 'ask_table') {
-    return askTable((question) => askPeer({ peer, name, question, timeoutMs: answerMs, pollMs: answerPollMs }));
+function escalationFor({ player, target, name, answerMs, answerPollMs }) {
+  if (player.escalation === 'ask') {
+    return askTable((question) => askChannel({ target, name, question, timeoutMs: answerMs, pollMs: answerPollMs }));
   }
   return floorFallback();
 }
 
 /**
- * @param {{ peer: object, judge: { systemOne: Function }, name: string,
- *   questions: Record<string, object>, player: { floor?: number, escalation?: string },
- *   game: { project: Function, options: Function, propose?: Function, act: Function },
- *   answerMs?: number, answerPollMs?: number, table?: { markSeen: Function },
+ * @param {{ target: object, judge: { systemOne: Function }, name: string,
+ *   questions: Record<string, object>, player?: { floor?: number, escalation?: string },
+ *   app: { phase: Function, project: Function, options: Function, propose?: Function, act: Function },
+ *   answerMs?: number, answerPollMs?: number, seat?: { markSeen: Function },
  *   onRecord?: (record: object) => void }} services
- *   `table` and `onRecord` are filled in by the seat after this is built.
+ *   `seat` and `onRecord` are filled in by the seat after this is built.
  */
 export function genericLibrary(services) {
   return {
     guards: {
       verdict: {
-        doc: 'the last judgment or table answer was `is` (yes | no | unsure) - or, with `of`, that answer to question `of` asked alongside it',
+        doc: 'the last judgment or talk-channel answer was `is` (yes | no | unsure) - or, with `of`, that answer to question `of` asked alongside it',
         fn: ({ event }, parameters) => {
           const reading = parameters.of === undefined ? event.output?.verdict : verdictOf(event.output?.checks?.[parameters.of] ?? 0);
           return reading === parameters.is;
         },
       },
-      table_changed: {
-        doc: 'the board or the talk moved since the last look (the bot\'s own lines excluded)',
+      changed: {
+        doc: 'the app\'s view or its talk moved since the last look (the understudy\'s own lines excluded)',
         fn: ({ event }) => event.changed === true,
       },
-      quiet_table: {
-        doc: 'the board changed and nobody has spoken for `ms` since',
+      quiet: {
+        doc: 'the view changed and nobody has spoken for `ms` since',
         fn: ({ event }, parameters) => (event.quietFor ?? 0) >= parameters.ms,
+      },
+      phase: {
+        doc: 'the last `look` found the app in phase `is`',
+        fn: ({ event }, parameters) => event.output?.phase === parameters.is,
       },
       counted: {
         doc: 'context `field` has reached `at_least` (a number, or another context field)',
@@ -99,19 +105,19 @@ export function genericLibrary(services) {
         assign: (_, parameters) => ({ ...parameters.to }),
       },
       say: {
-        doc: 'say `text` at the table',
-        fn: (_, parameters) => { services.peer.say(parameters.text); },
+        doc: 'say `text` on the app\'s talk channel (ignored by a target without one)',
+        fn: (_, parameters) => { services.target.say(parameters.text); },
       },
     },
 
     actors: {
       judge: {
-        doc: 'ask Jev `question` (a Noul) about the table and talk; output verdict yes | no | unsure',
+        doc: 'ask Jev `question` (a Noul) about the app\'s view and talk; output verdict yes | no | unsure',
         fn: async ({ input }) => {
-          const view = input.event.view ?? await services.peer.view();
-          const talk = input.event.talk ?? await services.peer.talk();
-          const projected = services.game.project(view, input.context, input.phase);
-          const state = { ...projected, table_talk: talk.map(({ name, text }) => ({ name, text })) };
+          const view = input.event.view ?? await services.target.view();
+          const talk = input.event.talk ?? await services.target.talk();
+          const projected = services.app.project(view, input.context, input.phase);
+          const state = { ...projected, talk: talk.map(({ name, text }) => ({ name, text })) };
           const names = [input.question, ...(input.also ?? [])];
           const questions = Object.fromEntries(names.map((each) => [each, asked(services.questions[each])]));
           const response = await services.judge.systemOne({ state, questions });
@@ -119,17 +125,24 @@ export function genericLibrary(services) {
           return { verdict: verdictOf(answers[input.question]?.noul ?? 0), checks: Object.fromEntries(names.map((each) => [each, answers[each]?.noul ?? null])) };
         },
       },
-      ask_table: {
-        doc: 'say ONE yes/no question (`say`) and wait for a person\'s answer; output verdict yes | no | unsure',
+      ask: {
+        doc: 'say ONE yes/no question (`say`) on the talk channel and wait for a person\'s answer; output verdict yes | no | unsure',
         fn: async ({ input }) => {
-          const { peer, name, answerMs, answerPollMs } = services;
-          const answer = await askPeer({ peer, name, question: input.say, timeoutMs: answerMs, pollMs: answerPollMs });
-          await services.table?.markSeen();
+          const { target, name, answerMs, answerPollMs } = services;
+          const answer = await askChannel({ target, name, question: input.say, timeoutMs: answerMs, pollMs: answerPollMs });
+          await services.seat?.markSeen();
           return { verdict: verdictFromAnswer(answer), answered: answer };
         },
       },
+      look: {
+        doc: 'read the app\'s view and find its phase (the adapter decides); output phase for the `phase` guard',
+        fn: async ({ input }) => {
+          const view = input.event?.view ?? await services.target.view();
+          return { phase: services.app.phase(view, input.context) };
+        },
+      },
       play: {
-        doc: 'one step in `phase`: Jev picks from the legal options (`question`), the rules check it, and the move is made and said',
+        doc: 'one step in `phase`: Jev picks from the offered moves (`question`), the rules check it, and the move is made',
         fn: async ({ input }) => play(services, input),
       },
     },
@@ -137,32 +150,54 @@ export function genericLibrary(services) {
 }
 
 async function play(services, { context, phase, question: questionName }) {
-  const { peer, judge, game, player } = services;
-  const view = await peer.view();
-  const state = game.project(view, context, phase);
-  const options = game.options(state, phase, context);
+  const { target, judge, app, player = {} } = services;
+  const view = await target.view();
+  const state = app.project(view, context, phase);
+  const options = app.options(state, phase, context);
   const question = services.questions[questionName];
+  const criteria = criteriaFor(question, options);
   const byId = (id) => options.find((option) => option.id === id);
-  const result = await decide({
+  const choose = () => decide({
     judge, state,
-    choice: { key: questionName, instructions: question.instructions, criteria: criteriaFor(question, options) },
+    choice: { key: questionName, instructions: question.instructions, criteria },
     unsure: services.unsure,
     floor: player.floor ?? 0,
     verify: (id) => verification(services, byId(id), state, context),
     escalation: escalationFor({ ...services, player }),
-    fallback: options.at(-1).id, // the last option is the one that is always safe (pass)
+    fallback: options.at(-1).id, // the last option is the one that is always safe
   });
+  // ADR-U4: a pick that was not offered is never sent. Ask once more; a
+  // second miss means the question or the options are broken - stop.
+  let result = await choose();
+  const offList = offListAnswer(result, criteria);
+  if (offList !== undefined) {
+    result = await choose();
+    const again = offListAnswer(result, criteria);
+    if (again !== undefined) {
+      throw new RunError(`in phase "${phase}" Jev answered off the list twice ("${offList}", then "${again}") - offered: ${Object.keys(criteria).join(', ')}`);
+    }
+  }
   const move = byId(result.option);
-  const { actions = [], say = null, tracks = {}, data } = game.act(move, state, view, context);
-  for (const action of actions) await peer.act(action);
-  if (say) await peer.say(say, data ?? { kind: 'bot-move', move: move.id });
+  const { actions = [], say = null, tracks = {}, data } = app.act(move, state, view, context);
+  for (const action of actions) await target.act(action);
+  if (say) await target.say(say, data ?? { kind: 'understudy-move', move: move.id });
   const record = {
     at: new Date().toISOString(), phase, options: options.map((option) => option.id), picked: result.picked,
     move: move.id, confidence: result.confidence, checks: result.checks, asked: result.asked,
+    ...(offList !== undefined && { offList: true, answer: offList }),
     ...(result.blocked && { blocked: { ...result.blocked, move: result.picked } }),
   };
   services.onRecord?.(record);
   return { record, move: move.id, kind: move.id.split(':', 1)[0], tracks };
+}
+
+/**
+ * What Jev chose when it was not one of the offered ids (`null` for no
+ * choice at all), or `undefined` when the choice was offered.
+ */
+function offListAnswer(result, criteria) {
+  const chosen = result.answers.choice?.choice ?? null;
+  return chosen !== null && Object.hasOwn(criteria, chosen) ? undefined : chosen;
 }
 
 /**
@@ -174,7 +209,7 @@ function verification(services, option, state, context) {
   const [kind] = option.id.split(':', 1);
   const rules = Object.entries(services.questions).filter(([, question]) => question.applies_to?.includes(kind));
   if (rules.length === 0) return null;
-  const proposed = services.game.propose?.(option, state, context) ?? { what: option.what, card: option.card ?? null };
+  const proposed = services.app.propose?.(option, state, context) ?? { what: option.what, card: option.card ?? null };
   const card = option.card ? ` with ${option.card}` : '';
   return {
     state: { ...state, proposed },
@@ -184,7 +219,7 @@ function verification(services, option, state, context) {
 }
 
 /**
- * Several libraries as one - a game's own names beside the generic ones.
+ * Several libraries as one - an adapter's own names beside the generic ones.
  * A name defined twice is a mistake, not an override.
  */
 export function mergeLibraries(...libraries) {

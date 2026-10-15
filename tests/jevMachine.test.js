@@ -22,7 +22,7 @@ states:
   waiting:
     tags: [safe]
     on:
-      TABLE: judging
+      OBSERVE: judging
   judging:
     invoke:
       src: judge
@@ -42,8 +42,8 @@ test('a correct turn file loads into a machine', () => {
 });
 
 test('a transition to a state that does not exist is refused, with the nearest name', () => {
-  assert.throws(() => load(GOOD.replace('TABLE: judging', 'TABLE: judgin')),
-    /games\/test\/turn\.yaml: states\.waiting\.on\.TABLE: no state "judgin" - did you mean "judging"\?/);
+  assert.throws(() => load(GOOD.replace('OBSERVE: judging', 'OBSERVE: judgin')),
+    /games\/test\/turn\.yaml: states\.waiting\.on\.OBSERVE: no state "judgin" - did you mean "judging"\?/);
 });
 
 test('an unknown guard, action or actor is refused, naming what the library does have', () => {
@@ -73,7 +73,7 @@ test('with no reachable safe state, the file is refused - a bot that cannot leav
 test('asked to leave, the machine leaves from a safe state and nowhere else', async () => {
   const { machine } = load(GOOD);
   const actor = createActor(machine).start();
-  actor.send({ type: 'TABLE' }); // -> judging -> mine (not safe)
+  actor.send({ type: 'OBSERVE' }); // -> judging -> mine (not safe)
   await waitFor(actor, (snapshot) => !snapshot.hasTag('busy'));
   actor.send({ type: 'QUIT' });
   assert.equal(actor.getSnapshot().value, 'mine', 'a move in progress is not abandoned');
@@ -87,7 +87,7 @@ test('`with` reaches the actor as input, alongside the machine context', async (
   const { machine } = parseTurn(GOOD.replace('initial: waiting', 'initial: waiting\ncontext: { steps: 3 }'),
     { file: 'x.yaml', library: spying, questions });
   const actor = createActor(machine).start();
-  actor.send({ type: 'TABLE' });
+  actor.send({ type: 'OBSERVE' });
   await waitFor(actor, (snapshot) => !snapshot.hasTag('busy'));
   assert.equal(seen[0].question, 'their_turn_is_over');
   assert.equal(seen[0].context.steps, 3);

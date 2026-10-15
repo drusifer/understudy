@@ -1,6 +1,6 @@
-// US-129/D154: one seat for every game - a statechart from a turn file,
-// driven by what the table shows. Tested on a made-up two-phase game so
-// nothing here leans on Gin or RtG.
+// US-129/D154: one seat for every part - a statechart from a turn file,
+// driven by what the app shows. Tested on a made-up two-phase app (with a
+// talk channel) so nothing here leans on any real app.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MachineSeat } from '../src/seat.mjs';
@@ -16,9 +16,9 @@ states:
   watching:
     tags: [safe]
     on:
-      TABLE:
-        - { target: judging, guard: table_changed }
-        - { target: asking, guard: { type: quiet_table, params: { ms: 8000 } } }
+      OBSERVE:
+        - { target: judging, guard: changed }
+        - { target: asking, guard: { type: quiet, params: { ms: 8000 } } }
   judging:
     invoke:
       src: judge
@@ -29,7 +29,7 @@ states:
         - { target: watching }
   asking:
     invoke:
-      src: ask_table
+      src: ask
       with: { say: Is it my turn now? }
       onDone:
         - { target: building, guard: { type: verdict, params: { is: 'yes' } } }
@@ -66,9 +66,9 @@ const GAME = {
 
 function fakeTable({ reply = () => null, blocks = 1 } = {}) {
   const table = { talk: [], acted: [], seq: 1, blocks };
-  table.peer = {
+  table.target = {
     myId: async () => 'ME',
-    view: async () => ({ lastTouch: { seq: table.seq }, blocks: table.blocks }),
+    view: async () => ({ seq: table.seq, blocks: table.blocks }),
     talk: async () => [...table.talk],
     act: async (action) => { table.acted.push(action); table.blocks -= 1; table.seq += 1; },
     say: async (text, data) => {
@@ -87,16 +87,18 @@ function judgeSaying({ over = 0.95, choice = 'build' } = {}) {
     async systemOne(request) {
       seen.push(request);
       if (request.questions.their_turn_is_over) return { answers: { their_turn_is_over: { noul: over } } };
-      return { answers: { step: { type: 'choice', choice, confidence: 0.9, probabilities: { [choice]: 0.9 } } } };
+      // Like Jev, it picks only from what is offered (`pass` once nothing else is).
+      const picked = Object.hasOwn(request.questions.step.criteria, choice) ? choice : 'pass';
+      return { answers: { step: { type: 'choice', choice: picked, confidence: 0.9, probabilities: { [picked]: 0.9 } } } };
     },
   };
 }
 
-const ASKS_THE_TABLE = { escalation: 'ask_table', floor: 0 };
+const ASKS_THE_TABLE = { escalation: 'ask', floor: 0 };
 
 function seatAt(table, judge, player = ASKS_THE_TABLE) {
   let now = 0;
-  const services = { peer: table.peer, judge, name: 'bot', questions: QUESTIONS, player, game: GAME, answerMs: 50, answerPollMs: 1 };
+  const services = { target: table.target, judge, name: 'bot', questions: QUESTIONS, player, app: GAME, answerMs: 50, answerPollMs: 1 };
   const { machine } = parseTurn(TURN, { file: 'toy/turn.yaml', library: genericLibrary(services), questions: Object.keys(QUESTIONS) });
   const seat = new MachineSeat({ machine, services, clock: () => now, pollMs: 0 });
   return { seat, at: (ms) => { now = ms; } };

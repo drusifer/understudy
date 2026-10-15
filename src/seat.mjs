@@ -1,13 +1,14 @@
-// US-129/D154: the one seat every game uses - its turn file, running.
+// US-129/D154: the one seat every part uses - its turn file, running.
 //
-// The runner (D153) asks a seat "is it my move?" and then "take one
-// step". This seat answers both from a statechart: it looks at the
-// table, tells the machine what changed as a `TABLE` event, waits until
-// no `busy` state is active, and reads the answer off the state's tags.
-// The table MEMORY lives here, not in any turn file: what changed since
-// the last look, how long the table has been quiet, and which talk lines
-// were the bot's own (its own words are never news - lessons, US-127 and
-// US-128). An author never writes bookkeeping.
+// The run loop asks a seat "is it my move?" and then "take one step".
+// This seat answers both from a statechart: it looks at the app through
+// its target, tells the machine what changed as an `OBSERVE` event, waits
+// until no `busy` state is active, and reads the answer off the state's
+// tags. The MEMORY of what was seen lives here, not in any turn file: what
+// changed since the last look, how long the talk channel has been quiet,
+// and which talk lines were the understudy's own (its own words are never
+// news - recard lessons, US-127 and US-128). An author never writes
+// bookkeeping.
 
 import { createActor, waitFor } from 'xstate';
 
@@ -24,14 +25,14 @@ export class MachineSeat {
   /**
    * @param {{ machine: import('xstate').AnyStateMachine, services: object, input?: object,
    *   clock?: () => number, pollMs?: number }} options
-   *   `services` is what the library's actors use (peer, judge, name,
-   *   questions, player, game); the seat adds `table` and `onRecord`.
+   *   `services` is what the library's actors use (target, judge, name,
+   *   questions, player, app); the seat adds `seat` and `onRecord`.
    */
   constructor({ machine, services, input = {}, clock = Date.now, pollMs = 1500 }) {
     this.#services = services;
     this.#clock = clock;
     this.#pollMs = pollMs;
-    services.table = { markSeen: () => this.#markSeen() };
+    services.seat = { markSeen: () => this.#markSeen() };
     services.onRecord = (record) => { this.lastRecord = record; };
     this.lastRecord = null;
     this.#actor = createActor(machine, { input }).start();
@@ -47,7 +48,7 @@ export class MachineSeat {
       this.#actor.send({ type: 'QUIT' });
     }
     if (this.#actor.getSnapshot().status === 'done') return 'done';
-    this.#actor.send({ type: 'TABLE', ...(await this.#look()) });
+    this.#actor.send({ type: 'OBSERVE', ...(await this.#look()) });
     const snapshot = await this.#settle();
     if (snapshot.status === 'done') return 'done';
     if (snapshot.hasTag('move')) return 'move';
@@ -63,8 +64,8 @@ export class MachineSeat {
     this.lastRecord = null;
     this.#actor.send({ type: 'STEP' });
     await this.#settle();
-    // What the bot just did is not news either: its own moves must not
-    // make it wonder whether its turn has come round again.
+    // What the understudy just did is not news either: its own moves must
+    // not make it wonder whether its turn has come round again.
     await this.#markSeen();
     return this.lastRecord;
   }
@@ -81,8 +82,8 @@ export class MachineSeat {
   }
 
   /**
-   * What the table shows now, and what is NEW since the last look. The
-   * first look only SEEDS - joining mid-game is not a sudden change -
+   * What the app shows now, and what is NEW since the last look. The
+   * first look only SEEDS - starting mid-way is not a sudden change -
    * but it still marks THIS MOMENT as the reference point a later quiet
    * check measures from. Without that, a table whose only relevant talk
    * (a dice roll, an announcement) landed before this seat's first look
@@ -90,15 +91,15 @@ export class MachineSeat {
    * (nothing it hasn't already seen), and `quietFor` never starts
    * counting because it has no "since when" to count from - the seat
    * would wait forever for a change it can, by definition, never see
-   * (D158, found running two bots against `tools/rtgTable.mjs`, whose
-   * facilitator setup all lands within the first second or two).
+   * (recard D158, found running two bots against a table whose setup
+   * all landed within the first second or two).
    */
   async #look() {
-    const { peer, name } = this.#services;
-    const view = await peer.view();
-    const talk = await peer.talk();
+    const { target, name } = this.#services;
+    const view = await target.view();
+    const talk = await target.talk();
     const now = this.#clock();
-    const seq = view.lastTouch?.seq ?? null;
+    const seq = view.seq ?? null;
     const seen = this.#seen;
     if (seen.talk === null) {
       // `lastTalkAt` stays null (nobody has spoken WHILE this seat was
@@ -117,15 +118,15 @@ export class MachineSeat {
   }
 
   /**
-   * After the bot asked the table something, the question and its
+   * After the understudy asked something, the question and its
    * answer are not news to judge again - that is how an unsure judgment
    * would ask forever (US-128).
    */
   async #markSeen() {
-    const talk = await this.#services.peer.talk();
-    const view = await this.#services.peer.view();
+    const talk = await this.#services.target.talk();
+    const view = await this.#services.target.view();
     this.#seen.talk = talk.length;
-    this.#seen.seq = view.lastTouch?.seq ?? null;
+    this.#seen.seq = view.seq ?? null;
     this.#seen.lastTalkAt = this.#clock();
   }
 }

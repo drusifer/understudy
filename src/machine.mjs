@@ -1,6 +1,6 @@
-// US-129/D154: a turn file becomes a running machine.
+// US-129/D154: a part's turn file becomes a running machine.
 //
-// A game's turn is an XState v5 statechart written in YAML: states,
+// A part's turn is an XState v5 statechart written in YAML: states,
 // the events and Jev verdicts that move between them, and names from
 // the library (guards, actions, actors) - never code. This file is the
 // only place that turns that data into behaviour, so it is also the one
@@ -8,8 +8,8 @@
 // is refused HERE, at load, naming the file, the path in it, the bad
 // name and the nearest good one (Smith, US-129 Gate 1 C1). Two pieces of
 // plumbing are never the author's to remember (Gate 2): a state that
-// invokes something is `busy`, and a state tagged `safe` is where a bot
-// asked to leave actually leaves.
+// invokes something is `busy`, and a state tagged `safe` is where an
+// understudy asked to stop (Ctrl-C) actually stops.
 
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -17,7 +17,7 @@ import YAML from 'yaml';
 import { setup, assign, fromPromise } from 'xstate';
 
 /**
- * The state a bot goes to when it leaves; reserved.
+ * The state an understudy goes to when it stops; reserved.
  */
 export const LEFT = 'left';
 
@@ -33,8 +33,8 @@ export const LEFT = 'left';
  * @param {{ library: Library, questions: string[] }} options
  */
 export function loadTurn(file, options) {
-  // Shown as the author knows it (games/<game>/turn.yaml), like every
-  // other game-file error.
+  // Shown as the author knows it (examples/<app>/part/turn.yaml), like
+  // every other part-file error.
   return parseTurn(readFileSync(file, 'utf8'), { ...options, file: path.relative(process.cwd(), file) });
 }
 
@@ -48,7 +48,7 @@ export function parseTurn(text, { file, library, questions }) {
   const config = YAML.parse(text);
   const fail = (where, message) => { throw new Error(`${file}: ${where}: ${message}`); };
   if (!config?.states || !config.initial) fail('(top)', 'a turn file needs `initial` and `states`');
-  if (Object.hasOwn(config.states, LEFT)) fail(`states.${LEFT}`, `"${LEFT}" is reserved for a bot that has left the table`);
+  if (Object.hasOwn(config.states, LEFT)) fail(`states.${LEFT}`, `"${LEFT}" is reserved for an understudy that has stopped`);
   if (!Object.hasOwn(config.states, config.initial)) fail('initial', unknown('state', config.initial, Object.keys(config.states)));
 
   const checker = { fail, library, questions: new Set(questions), states: Object.keys(config.states) };
@@ -107,7 +107,7 @@ function checkName(checker, where, kind, reference) {
 }
 
 /**
- * Any `question` / `questions` a file names must be in the game's questions file.
+ * Any `question` / `questions` a file names must be in the part's questions file.
  */
 function checkQuestions(checker, where, parameters) {
   if (!parameters) return;
@@ -180,7 +180,7 @@ function requireReachableSafeState(config, fail) {
     }
   }
   const isSafe = [...seen].some((name) => (config.states[name].tags ?? []).includes('safe'));
-  if (!isSafe) fail('states', 'no reachable state is tagged "safe", so a bot asked to leave never could - tag the states where leaving is harmless');
+  if (!isSafe) fail('states', 'no reachable state is tagged "safe", so a run asked to stop (Ctrl-C) never could - tag the states where stopping is harmless');
 }
 
 // ---- compiling ----
