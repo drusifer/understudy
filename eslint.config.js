@@ -44,6 +44,11 @@ export default [
     },
   },
   {
+    // The web example's own app code runs in the page.
+    files: ['examples/web/**/*.js'],
+    languageOptions: { globals: { document: 'readonly', globalThis: 'readonly' } },
+  },
+  {
     files: ['tests/**/*.js', 'tests/**/*.mjs'],
     rules: {
       'sonarjs/no-duplicate-string': 'off',

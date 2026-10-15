@@ -88,4 +88,12 @@ sequenceDiagram
     Note right of Neo: "Phase 5 impl complete:<br/>src/targets/process.mjs<br/>(terminal-like view with<br/>echoed input, sent<br/>count, exit),<br/>examples/cli coffee<br/>counter (adapt…"
     Trin->>Morpheus: "qa handoff"
     Note right of Trin: "UAT phase 5 passed LIVE:<br/>run examples/cli --steps<br/>20 -> 3 Jev steps<br/>(medium, whole, order),<br/>outcome done, exit 0.<br/>App killed after step 1<br/>-…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 5 review passed<br/>(ADR-U1 holds: process<br/>target is pure view/act,<br/>adapter needs no<br/>understudy internals).<br/>Committed. @Neo *swe<br/>impl pha…"
+    Mouse->>All: "phase 6"
+    Note right of Mouse: "Phase 6: page target +<br/>web example"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 6 impl complete:<br/>src/targets/page.mjs<br/>(127.0.0.1 static<br/>server, headless<br/>Chromium w/ system<br/>fallback, hook-driven<br/>view/act/talk/say,…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 6 passed LIVE:<br/>run examples/web exit 0<br/>(free/light/accept),<br/>parts name no transport,<br/>--headed -> exit 2, no<br/>hook -> exit 1 after…"
 ```

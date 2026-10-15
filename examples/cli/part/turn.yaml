@@ -25,7 +25,7 @@ states:
     tags: [move]
     on: { STEP: replying }
   replying:
-    description: "Jev picks an answer from the menu and it is typed in."
+    description: "Jev picks an answer from the menu and it is given to the counter."
     invoke: { src: play, with: { phase: asking, question: answer }, onDone: waiting }
   finished:
     description: "The order is placed; the run ends."

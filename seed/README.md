@@ -10,10 +10,9 @@ from here. When `seed/` is empty, delete it.
 
 | Seed file | Becomes |
 |---|---|
-| `tests/harness/multiplayer.mjs` | `startStaticServer`, `launchChromium`, a page target with a configurable hook name |
 | `tools/mcp/harnessServer.mjs` | generic MCP layer (later sprint) |
 | `tools/jev/tableFile.mjs`, `tableSetup.mjs` (+ tests) | scenario file (later sprint, multi-actor) |
 | `tools/jev/games.mjs`, `gameFiles.mjs` | reference for how a part's files are found and loaded |
 | `tools/turnRelay.mjs` | only if understudy owns WebRTC transport |
 
-Done: `tools/jev/runner.mjs` -> `src/run.mjs` (sprint 1 phase 4); `tools/botRequests.mjs` dropped (recard-only).
+Done: `tools/jev/runner.mjs` -> `src/run.mjs` (sprint 1 phase 4); `tools/botRequests.mjs` dropped (recard-only); `tests/harness/multiplayer.mjs` -> `src/targets/page.mjs` (phase 6).

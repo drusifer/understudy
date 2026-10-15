@@ -54,9 +54,9 @@
 
 ### Phase 6: Page target and the web example — UND-2
 *Phase goal: the same kind of part plays a web page in headless Chromium.*
-- [ ] **Task 6.1:** `src/targets/page.mjs` from `seed/recard/tests/harness/multiplayer.mjs` (`startStaticServer(root)`, `launchChromium`, hook-driven `view/act/talk/say`, `describe`=URL, Chromium-missing → `UsageError` with the install hint); `examples/web/` (`index.html`, `app.js` exposing `window.__understudy`, `adapter.mjs` <150 lines, `part/`); add `playwright ^1.62.1`. Delete `seed/recard/tests/harness/multiplayer.mjs`. (*Owner: Neo | Verification: `bobp make test` (server traversal 404, hook-missing timeout) fail 0*)
-- [ ] **Task 6.2:** UAT UND-2 AC1–6: live `run examples/web --steps 20` exit 0; parts name no transport (grep); no `--headed`; no Chromium → exit 2 + hint (`PLAYWRIGHT_BROWSERS_PATH=/nonexistent`); no browser/server process left after any outcome. (*Owner: Trin | Verification: live run + `bobp make test-live` + `bobp make check`*)
-- [ ] **Task 6.3:** Review. (*Owner: Morpheus | Verification: code review; commit `Phase 6`*)
+- [x] **Task 6.1:** `src/targets/page.mjs` from `seed/recard/tests/harness/multiplayer.mjs` (`startStaticServer(root)`, `launchChromium`, hook-driven `view/act/talk/say`, `describe`=URL, Chromium-missing → `UsageError` with the install hint); `examples/web/` (`index.html`, `app.js` exposing `window.__understudy`, `adapter.mjs` <150 lines, `part/`); add `playwright ^1.62.1`. Delete `seed/recard/tests/harness/multiplayer.mjs`. (*Owner: Neo | Verification: `bobp make test` (server traversal 404, hook-missing timeout) fail 0*)
+- [x] **Task 6.2:** UAT UND-2 AC1–6: live `run examples/web --steps 20` exit 0; parts name no transport (grep); no `--headed`; no Chromium → exit 2 + hint (`PLAYWRIGHT_BROWSERS_PATH=/nonexistent`); no browser/server process left after any outcome. (*Owner: Trin | Verification: live run + `bobp make test-live` + `bobp make check`*)
+- [x] **Task 6.3:** Review. (*Owner: Morpheus | Verification: code review; commit `Phase 6`*)
 
 ### Phase 7: Adapter documentation — UND-5 AC1–2
 *Phase goal: a developer can wire up a new app from one document and two examples.*

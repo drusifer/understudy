@@ -12,11 +12,11 @@ const QUESTIONS = [
   ['confirm', ['order', 'start over']],
 ];
 
-const answers = {};
-let index = 0;
+const order = { answers: {}, index: 0 };
+const { answers } = order;
 
 function ask() {
-  const [topic, choices] = QUESTIONS[index];
+  const [topic, choices] = QUESTIONS[order.index];
   if (topic === 'confirm') process.stdout.write(`Your order: a ${answers.size} coffee, milk: ${answers.milk}.\n`);
   process.stdout.write(`? ${topic} [${choices.join('|')}]\n> `);
 }
@@ -25,7 +25,7 @@ process.stdout.write('Welcome to the coffee counter.\n');
 ask();
 readline.createInterface({ input: process.stdin }).on('line', (line) => {
   const answer = line.trim();
-  const [topic, choices] = QUESTIONS[index];
+  const [topic, choices] = QUESTIONS[order.index];
   if (!choices.includes(answer)) {
     process.stdout.write(`! "${answer}" is not on the menu for ${topic}\n`);
     ask();
@@ -36,10 +36,10 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
     process.exit(0);
   }
   if (topic === 'confirm') {
-    index = 0;
+    order.index = 0;
   } else {
     answers[topic] = answer;
-    index += 1;
+    order.index += 1;
   }
   ask();
 });
