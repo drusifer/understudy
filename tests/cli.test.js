@@ -142,3 +142,13 @@ test('--pause reaches the run with --watch, and is refused without it', async ()
   assert.equal(lonely.code, 2);
   assert.equal(lonely.stderr, 'understudy: --pause needs --watch (the page is where you step it)\n');
 });
+
+test('watch takes one log (and --port); nothing else', async () => {
+  const calls = [];
+  const commands = { watch: async (file, options) => { calls.push([file, options.port]); } };
+  assert.equal((await cli(['watch', 'build/runs/x/1.jsonl', '--port', '4190'], { commands })).code, 0);
+  assert.deepEqual(calls, [['build/runs/x/1.jsonl', 4190]]);
+  assert.match((await cli(['watch'], { commands })).stderr, /watch needs a run log, e\.g\. understudy watch build\/runs\/coffee-cli\/<time>\.jsonl/);
+  assert.match((await cli(['watch', 'a', 'b'], { commands })).stderr, /watch takes one log \(got "a", "b"\)/);
+  assert.match((await cli(['watch', 'a', '--pause'], { commands })).stderr, /no option "--pause" for watch/);
+});

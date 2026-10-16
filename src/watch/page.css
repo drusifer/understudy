@@ -44,3 +44,7 @@ section { background: var(--panel); border: 1px solid var(--line); border-radius
 .answer.bad { color: var(--bad); }
 #ending { font-weight: 600; margin: 10px 0 0; }
 #ending.bad { color: var(--bad); }
+#steps li.future { opacity: .45; }
+#steps li.here { background: var(--picked); border-radius: 4px; }
+.status.replay { color: var(--muted); }
+#steps li[title] { cursor: pointer; }

@@ -1,8 +1,10 @@
 // Sprint 1 (UND-4, UND-5 AC3, ADR-U5): the `understudy` command.
 //
-//   understudy run <sketch> [--steps N]   play the sketch against its app (needs TYPESAFE_API_KEY)
+//   understudy run <sketch> [--steps N] [--watch [--port N] [--pause]]
+//                                         play the sketch against its app (needs TYPESAFE_API_KEY)
 //   understudy check <sketch>             load and check the sketch, start nothing
 //   understudy library [<sketch>]         every name a sketch may use, with its meaning
+//   understudy watch <log> [--port N]     replay a finished run on the watch page (sprint 4)
 //
 // <sketch> is a directory holding sketch.yaml, or the file itself (ADR-0011).
 //
@@ -22,6 +24,8 @@ const USAGE = `usage: understudy run <sketch> [--steps N] [--watch [--port N] [-
            check the sketch without starting anything
        understudy library [<sketch>]
            list every name a sketch may use, with its meaning
+       understudy watch <log.jsonl> [--port N]
+           replay a finished run's log on the watch page
 <sketch> is a directory holding sketch.yaml (e.g. examples/cli) or the file itself.
 `;
 /**
@@ -112,6 +116,16 @@ const defaultCommands = {
     const { sketchLibrary } = await loadModule('./sketch.mjs');
     return sketchLibrary(location);
   },
+  async watch(file, { port, stderr }) {
+    const { readLog } = await loadModule('./watch/replay.mjs');
+    const { startWatch, logSource } = await loadModule('./watch/server.mjs');
+    const lines = readLog(file);
+    const server = await startWatch({ port, mode: 'replay', source: logSource(lines) });
+    stderr.write(`understudy: replaying ${file} at ${server.url} - Ctrl-C to stop\n`);
+    // UND-16 AC5: serve until Ctrl-C, then stop cleanly (exit 0).
+    await new Promise((resolve) => process.once('SIGINT', resolve));
+    await server.close();
+  },
 };
 
 const HELP = new Set(['--help', '-h', 'help']);
@@ -133,6 +147,11 @@ const COMMANDS = {
     const location = oneSketch('library', positional, { isOptional: true });
     stdout.write(libraryListing(location ? await use.sketchLibrary(location) : null));
   },
+  async watch({ positional, port }, { use, stderr }) {
+    const quoted = positional.map((each) => JSON.stringify(each)).join(', ');
+    if (positional.length !== 1) throw new UsageError(positional.length === 0 ? 'watch needs a run log, e.g. understudy watch build/runs/coffee-cli/<time>.jsonl' : `watch takes one log (got ${quoted})`);
+    await use.watch(positional[0], { port, stderr });
+  },
 };
 
 /**
@@ -140,7 +159,7 @@ const COMMANDS = {
  * injectable so tests never start a real app or call Jev.
  * @param {string[]} argv
  * @param {{ environment?: object, stdout?: { write: Function }, stderr?: { write: Function },
- *   commands?: { run?: Function, check?: Function, sketchLibrary?: Function } }} [io]
+ *   commands?: { run?: Function, check?: Function, sketchLibrary?: Function, watch?: Function } }} [io]
  */
 export async function main(argv, { environment = process.env, stdout = process.stdout, stderr = process.stderr, commands = {} } = {}) {
   try {

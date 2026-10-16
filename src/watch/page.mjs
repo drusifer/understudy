@@ -13,7 +13,40 @@ const ANSWER_CHARS = 120;
  * An empty run, before its start line.
  */
 export function newModel() {
-  return { sketch: null, plays: '', mode: 'live', drawing: null, current: null, taken: null, steps: [], ended: null, final: null, paused: null, lost: false, lastAt: null };
+  return { sketch: null, plays: '', mode: 'live', drawing: null, current: null, taken: null, steps: [], ended: null, final: null, paused: null, lost: false, lastAt: null, isCut: false };
+}
+
+// ---- replay (UND-16) ----
+
+/**
+ * Where each replay frame ends in the log: one frame per line - the start,
+ * each state change, each step - so stepping through a replay walks the
+ * statechart as the run did. An `ended` line shares the final line's frame.
+ * @param {object[]} history every line of the log, in order
+ * @returns {number[]} the index of each frame's last line
+ */
+export function framesOf(history) {
+  return history.keys().filter((index) => history[index].event !== 'ended' || index === history.length - 1).toArray();
+}
+
+/**
+ * The frame that shows step `number` just made.
+ */
+export function frameOfStep(history, frames, number) {
+  return frames.findIndex((end) => history[end].step === number && !history[end].event);
+}
+
+/**
+ * The run as it was at the end of one frame. A log that stops without a
+ * final line says so on its last frame.
+ */
+export function modelAt(history, frames, frame) {
+  const model = newModel();
+  model.mode = 'replay';
+  const shown = history.slice(0, frames[frame] + 1);
+  for (const line of shown) apply(model, line);
+  model.isCut = frame === frames.length - 1 && history.every((line) => !line.final);
+  return model;
 }
 
 /**
@@ -50,6 +83,7 @@ export function decisionOf(line) {
  * How the run ended, in one line.
  */
 export function endingOf(model) {
+  if (model.isCut) return { text: 'log ends without a final line (the run was killed?)', isBad: true };
   if (model.final?.outcome === 'done') return { text: `done after ${model.final.steps} step${model.final.steps === 1 ? '' : 's'}`, isBad: false };
   if (model.final) return { text: model.ended?.message ? `${model.final.outcome}: ${model.ended.message}` : model.final.outcome, isBad: true };
   return null;
@@ -145,7 +179,27 @@ export function controlsOf(model) {
   return { pause: isLive && !model.paused, step: isLive && Boolean(model.paused), resume: isLive && Boolean(model.paused) };
 }
 
-function drawControls(model) {
+function button(label, { isEnabled, action, onClick }) {
+  const node = element('button', { type: 'button', 'data-action': action }, label);
+  node.disabled = !isEnabled;
+  node.addEventListener('click', onClick);
+  return node;
+}
+
+/**
+ * Replay's own controls: play / pause, step back, step forward.
+ */
+function drawReplayControls(replay) {
+  const last = replay.frames.length - 1;
+  return [
+    button(replay.isPlaying ? 'Pause' : 'Play', { isEnabled: replay.frame < last || replay.isPlaying, action: 'play', onClick: replay.onPlay }),
+    button('Step back', { isEnabled: replay.frame > 0, action: 'back', onClick: () => replay.onGo(replay.frame - 1) }),
+    button('Step forward', { isEnabled: replay.frame < last, action: 'forward', onClick: () => replay.onGo(replay.frame + 1) }),
+  ];
+}
+
+function drawControls(model, replay) {
+  if (replay) return drawReplayControls(replay);
   const enabled = controlsOf(model);
   const buttons = [['pause', 'Pause', enabled.pause], ['step', 'Step', enabled.step], ['resume', 'Resume', enabled.resume]].map(([action, label, isEnabled]) => {
     const button = element('button', { type: 'button', 'data-action': action }, label);
@@ -159,31 +213,47 @@ function drawControls(model) {
   return model.mode === 'live' ? buttons : [];
 }
 
-function statusOf(model) {
+function statusOf(model, replay) {
   if (model.lost) return { text: 'connection lost', className: 'lost' };
   const ending = endingOf(model);
-  if (ending) return { text: ending.isBad ? `ended: ${model.final.outcome}` : 'done', className: ending.isBad ? 'ended-bad' : 'ended' };
+  if (ending) return { text: ending.isBad ? `ended: ${model.final?.outcome ?? 'log cut short'}` : 'done', className: ending.isBad ? 'ended-bad' : 'ended' };
   if (model.paused) return { text: `paused before step ${model.paused.before_step}`, className: 'paused' };
-  if (model.mode === 'replay') return { text: 'replay', className: 'replay' };
+  if (replay) return { text: `replay - step ${model.steps.length} of ${replay.steps.length}`, className: 'replay' };
   return { text: model.sketch ? 'running' : 'connecting...', className: 'running' };
 }
 
 /**
- * Draws the whole page from the model.
+ * The feed: the steps so far; in a replay, every step, those still to come
+ * faded, each one a way to jump there.
  */
-export function render(model) {
+function drawFeed(model, replay) {
+  if (!replay) return model.steps.map((decision) => drawStep(decision));
+  return replay.steps.map((decision) => {
+    const item = drawStep(decision);
+    if (decision.step > model.steps.length) item.classList.add('future');
+    if (decision.step === model.steps.length) item.classList.add('here');
+    item.title = `show the run at step ${decision.step}`;
+    item.addEventListener('click', () => replay.onGo(replay.frameOfStep(decision.step)));
+    return item;
+  });
+}
+
+/**
+ * Draws the whole page from the model (and, in a replay, where it is).
+ */
+export function render(model, replay = null) {
   document.querySelector('#sketch').textContent = model.sketch ?? 'understudy';
   document.querySelector('#plays').textContent = model.plays ? `playing ${model.plays}` : '';
-  const status = statusOf(model);
+  const status = statusOf(model, replay);
   const badge = document.querySelector('#status');
   badge.textContent = status.text;
   badge.className = `status ${status.className}`;
-  document.querySelector('#controls').replaceChildren(...drawControls(model));
+  document.querySelector('#controls').replaceChildren(...drawControls(model, replay));
   if (model.drawing) document.querySelector('#diagram').replaceChildren(drawDiagram(model));
   const list = document.querySelector('#steps');
   const isAtBottom = list.parentElement.scrollTop + list.parentElement.clientHeight >= list.parentElement.scrollHeight - 30;
-  list.replaceChildren(...model.steps.map((decision) => drawStep(decision)));
-  if (isAtBottom) list.parentElement.scrollTop = list.parentElement.scrollHeight;
+  list.replaceChildren(...drawFeed(model, replay));
+  if (isAtBottom && !replay) list.parentElement.scrollTop = list.parentElement.scrollHeight;
   const ending = endingOf(model);
   const end = document.querySelector('#ending');
   end.hidden = !ending;
@@ -192,8 +262,47 @@ export function render(model) {
   document.title = `${status.text} - ${model.sketch ?? 'understudy'}`;
 }
 
+/**
+ * A replay: every line arrived; show it frame by frame.
+ */
+function replayLog(history) {
+  const frames = framesOf(history);
+  const everything = modelAt(history, frames, frames.length - 1);
+  const replay = {
+    frames, frame: 0, steps: everything.steps, isPlaying: false, timer: null,
+    frameOfStep: (number) => frameOfStep(history, frames, number),
+  };
+  const show = () => render(modelAt(history, frames, replay.frame), replay);
+  const stop = () => {
+    clearInterval(replay.timer);
+    replay.isPlaying = false;
+  };
+  replay.onGo = (frame) => {
+    stop();
+    replay.frame = Math.max(0, Math.min(frames.length - 1, frame));
+    show();
+  };
+  replay.onPlay = () => {
+    if (replay.isPlaying) {
+      stop();
+      show();
+      return;
+    }
+    if (replay.frame === frames.length - 1) replay.frame = 0;
+    replay.isPlaying = true;
+    replay.timer = setInterval(() => {
+      replay.frame += 1;
+      if (replay.frame === frames.length - 1) stop();
+      show();
+    }, 500);
+    show();
+  };
+  show();
+}
+
 function follow() {
   const model = newModel();
+  const history = [];
   let isQueued = false;
   const later = () => {
     if (isQueued) return;
@@ -206,13 +315,17 @@ function follow() {
   const source = new globalThis.EventSource('events');
   let isEnded = false;
   source.addEventListener('message', (message) => {
-    apply(model, JSON.parse(message.data));
-    later();
+    const line = JSON.parse(message.data);
+    // A replay keeps every line and shows them once all have arrived.
+    if (model.mode === 'replay' && line.event !== 'hello') history.push(line);
+    else apply(model, line);
+    if (model.mode !== 'replay') later();
   });
   source.addEventListener('end', () => {
     isEnded = true;
     source.close();
-    later();
+    if (model.mode === 'replay') replayLog(history);
+    else later();
   });
   source.addEventListener('error', () => {
     // No reconnect loop: the run is over, or the process has gone.

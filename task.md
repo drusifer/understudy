@@ -41,8 +41,8 @@
 
 ### Phase 5: Replay — UND-16
 *Phase goal: `understudy watch <log>` replays a finished run on the same page from the log alone.*
-- [ ] **Task 5.1:** `src/watch/replay.mjs` (read + check: start line, JSON per line, missing final), `cli.mjs` `watch <log> [--port N]`, page replay mode (play / pause / step back / step forward / click a step; ended or "log ends without a final line"). Tests: reader refusals, replay served. (*Owner: Neo | Verification: `bobp make test`*)
-- [ ] **Task 5.2:** UAT UND-16 AC1–5 (replay each example's live log in Chromium; click step 2; a sprint 3 log refused; Ctrl-C exit 0) then Morpheus review. (*Owner: Trin → Morpheus | Verification: `bobp make check`; commit `Phase 5`*)
+- [x] **Task 5.1:** `src/watch/replay.mjs` (read + check: start line, JSON per line, missing final), `cli.mjs` `watch <log> [--port N]`, page replay mode (play / pause / step back / step forward / click a step; ended or "log ends without a final line"). Tests: reader refusals, replay served. (*Owner: Neo | Verification: `bobp make test`*)
+- [x] **Task 5.2:** UAT UND-16 AC1–5 (replay each example's live log in Chromium; click step 2; a sprint 3 log refused; Ctrl-C exit 0) then Morpheus review. (*Owner: Trin → Morpheus | Verification: `bobp make check`; commit `Phase 5`*)
 
 ### Phase 6: Docs — UND-17
 *Phase goal: the guides show how to watch, replay and step, with a real screenshot.*
