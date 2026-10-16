@@ -112,3 +112,69 @@ test('a busy --port refuses the run before the judge or the app is started', asy
   }), (error) => error instanceof UsageError && error.message === `port ${port} is in use - choose another with --port`);
   assert.equal(isStarted, false);
 });
+
+/**
+ * A watched run whose page is this test: `act(page)` drives the gate
+ * through the server's control endpoint.
+ */
+async function pausedRun({ judge, act, stallMs = 60, signals = new EventEmitter() }) { // eslint-disable-line unicorn/prefer-event-target -- stands in for `process`
+  const logRoot = mkdtempSync(path.join(tmpdir(), 'understudy-pause-'));
+  test.after(() => rmSync(logRoot, { recursive: true, force: true }));
+  const out = { stdout: '', stderr: '' };
+  let driving;
+  const running = runSketch(GOOD, {
+    stdout: { write: (text) => { out.stdout += text; } },
+    stderr: {
+      write(text) {
+        out.stderr += text;
+        const url = /watch at (\S+)\n/.exec(text)?.[1];
+        if (url) driving = act((action) => fetch(`${url}control`, { method: 'POST', body: JSON.stringify({ action }) }));
+      },
+    },
+    makeJudge: () => judge, makeTarget: async () => fakeTarget().target, logRoot, pollMs: 5,
+    firstMoveMs: stallMs, stallMs, watch: { port: 0, paused: true }, signals,
+  });
+  let error = null;
+  try {
+    await running;
+  } catch (error_) {
+    error = error_;
+  }
+  await driving;
+  return { out, error, lines: out.stdout.trim().split('\n').map((line) => JSON.parse(line)) };
+}
+
+test('--pause: no Jev call while paused - longer than the idle limits - until Step', async () => {
+  let calls = 0;
+  const judge = answering('order', async () => { calls += 1; });
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const { out, error, lines } = await pausedRun({
+    judge, stallMs: 60,
+    async act(control) {
+      await sleep(250); // four times the 60 ms limit
+      assert.equal(calls, 0, 'Jev is not asked while paused');
+      assert.equal((await control('step')).status, 204);
+    },
+  });
+  assert.equal(error, null);
+  assert.equal(calls, 1);
+  assert.match(out.stderr, /understudy: paused - step or resume from the page, or Ctrl-C\n/);
+  assert.equal(lines.at(-1).outcome, 'done');
+});
+
+test('Ctrl-C while paused stops at once: interrupted, no move made', async () => {
+  const signals = new EventEmitter(); // eslint-disable-line unicorn/prefer-event-target -- stands in for `process`
+  let calls = 0;
+  const { error, lines } = await pausedRun({
+    judge: answering('order', async () => { calls += 1; }), signals,
+    async act() {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      signals.emit('SIGINT');
+    },
+  });
+  assert.equal(calls, 0);
+  assert.equal(error?.outcome, 'interrupted');
+  assert.equal(error.message, 'stopped by Ctrl-C while paused, after 0 steps');
+  assert.deepEqual(lines.at(-1), { final: true, outcome: 'interrupted', steps: 0, state: 'choosing' });
+  assert.equal(lines.at(-2).message, 'stopped by Ctrl-C while paused, after 0 steps');
+});

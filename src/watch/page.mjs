@@ -135,6 +135,30 @@ function drawStep(decision) {
   return item;
 }
 
+/**
+ * Which of Pause / Step / Resume apply now (UND-15 AC1): Pause while a
+ * live run is running, Step and Resume while it is paused, none once it
+ * has ended (or in a replay, which has its own controls).
+ */
+export function controlsOf(model) {
+  const isLive = model.mode === 'live' && model.sketch !== null && !model.final && !model.lost;
+  return { pause: isLive && !model.paused, step: isLive && Boolean(model.paused), resume: isLive && Boolean(model.paused) };
+}
+
+function drawControls(model) {
+  const enabled = controlsOf(model);
+  const buttons = [['pause', 'Pause', enabled.pause], ['step', 'Step', enabled.step], ['resume', 'Resume', enabled.resume]].map(([action, label, isEnabled]) => {
+    const button = element('button', { type: 'button', 'data-action': action }, label);
+    button.disabled = !isEnabled;
+    button.addEventListener('click', () => {
+      button.disabled = true;
+      fetch('control', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action }) });
+    });
+    return button;
+  });
+  return model.mode === 'live' ? buttons : [];
+}
+
 function statusOf(model) {
   if (model.lost) return { text: 'connection lost', className: 'lost' };
   const ending = endingOf(model);
@@ -154,6 +178,7 @@ export function render(model) {
   const badge = document.querySelector('#status');
   badge.textContent = status.text;
   badge.className = `status ${status.className}`;
+  document.querySelector('#controls').replaceChildren(...drawControls(model));
   if (model.drawing) document.querySelector('#diagram').replaceChildren(drawDiagram(model));
   const list = document.querySelector('#steps');
   const isAtBottom = list.parentElement.scrollTop + list.parentElement.clientHeight >= list.parentElement.scrollHeight - 30;

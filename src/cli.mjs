@@ -15,9 +15,9 @@ import { genericLibrary } from './library.mjs';
 
 const KEY = 'TYPESAFE_API_KEY';
 
-const USAGE = `usage: understudy run <sketch> [--steps N] [--watch [--port N]]
+const USAGE = `usage: understudy run <sketch> [--steps N] [--watch [--port N] [--pause]]
            play the sketch against its app (needs ${KEY});
-           --watch serves a live view of the run on 127.0.0.1
+           --watch serves a live view of the run on 127.0.0.1; --pause starts it paused
        understudy check <sketch>
            check the sketch without starting anything
        understudy library [<sketch>]
@@ -54,6 +54,7 @@ const OPTIONS = {
     return port;
   }, needs: 'a port number', example: '--port 4173' },
   watch: { commands: ['run'], read: null },
+  pause: { commands: ['run'], read: null },
 };
 
 /**
@@ -83,6 +84,7 @@ function parse(argv) {
     index += used;
   }
   if (command === 'run' && options.port !== undefined && !options.watch) throw new UsageError('--port needs --watch (it is the watch page\'s port)');
+  if (command === 'run' && options.pause && !options.watch) throw new UsageError('--pause needs --watch (the page is where you step it)');
   return { command, positional, ...options };
 }
 
@@ -119,10 +121,10 @@ const HELP = new Set(['--help', '-h', 'help']);
  * stdout; failures are thrown.
  */
 const COMMANDS = {
-  async run({ positional, steps, watch, port }, { use, environment, stdout, stderr }) {
+  async run({ positional, steps, watch, port, pause }, { use, environment, stdout, stderr }) {
     // UND-4: Jev is required, so a run without its key never starts.
     if (!environment[KEY]?.trim()) throw new UsageError(`understudy run needs a TypeSafe key: set ${KEY}`);
-    await use.run(oneSketch('run', positional), { steps, stdout, stderr, environment, watch: watch ? { port } : null });
+    await use.run(oneSketch('run', positional), { steps, stdout, stderr, environment, watch: watch ? { port, paused: pause === true } : null });
   },
   async check({ positional }, { use, stdout }) {
     stdout.write(`${await use.check(oneSketch('check', positional))}\n`);

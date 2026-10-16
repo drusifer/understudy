@@ -36,8 +36,8 @@
 
 ### Phase 4: Pause and step — UND-15
 *Phase goal: the page pauses a live run before its next move, steps it one move at a time, resumes it; no Jev call while paused.*
-- [ ] **Task 4.1:** `src/watch/gate.mjs`; run loop `beforeMove()` before `takeStep`, idle limits minus `pausedMs()`, Ctrl-C releases; `POST /control`; page controls (enabled per state, disabled after the end); `--pause`; `--pause`/`--port` without `--watch` refused. Tests: gate unit, run with a gate (no Jev call while paused, 15 s paused not stalled, Ctrl-C while paused → interrupted). (*Owner: Neo | Verification: `bobp make test`*)
-- [ ] **Task 4.2:** UAT UND-15 AC1–6 live (`run examples/http --watch --pause`, step ×2, resume; pause 15 s; Ctrl-C while paused) then Morpheus review. (*Owner: Trin → Morpheus | Verification: live + `bobp make check`; commit `Phase 4`*)
+- [x] **Task 4.1:** `src/watch/gate.mjs`; run loop `beforeMove()` before `takeStep`, idle limits minus `pausedMs()`, Ctrl-C releases; `POST /control`; page controls (enabled per state, disabled after the end); `--pause`; `--pause`/`--port` without `--watch` refused. Tests: gate unit, run with a gate (no Jev call while paused, 15 s paused not stalled, Ctrl-C while paused → interrupted). (*Owner: Neo | Verification: `bobp make test`*)
+- [x] **Task 4.2:** UAT UND-15 AC1–6 live (`run examples/http --watch --pause`, step ×2, resume; pause 15 s; Ctrl-C while paused) then Morpheus review. (*Owner: Trin → Morpheus | Verification: live + `bobp make check`; commit `Phase 4`*)
 
 ### Phase 5: Replay — UND-16
 *Phase goal: `understudy watch <log>` replays a finished run on the same page from the log alone.*

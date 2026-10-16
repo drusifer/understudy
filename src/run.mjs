@@ -16,6 +16,7 @@ import { loadSketch, shown } from './sketch.mjs';
 import { RunError, UsageError } from './errors.mjs';
 import { createStream } from './stream.mjs';
 import { startWatch } from './watch/server.mjs';
+import { createGate, OPEN_GATE } from './watch/gate.mjs';
 
 const KEY = 'TYPESAFE_API_KEY';
 export const DEFAULT_STEPS = 50;
@@ -61,11 +62,12 @@ function summaryLine(entry) {
 /**
  * Ctrl-C once: stop at the next safe state. Twice: stop now.
  */
-function watchInterrupts(signals, onSecond) {
+function watchInterrupts(signals, onSecond, onFirst = () => {}) {
   const state = { count: 0 };
   const handler = () => {
     state.count += 1;
-    if (state.count === 2) onSecond();
+    if (state.count === 1) onFirst();
+    else if (state.count === 2) onSecond();
   };
   signals.on('SIGINT', handler);
   return { isAsked: () => state.count > 0, stop: () => signals.off('SIGINT', handler) };
@@ -78,9 +80,9 @@ function watchInterrupts(signals, onSecond) {
  *   environment?: object, makeJudge?: (environment: object) => object|Promise<object>,
  *   makeTarget?: (spec: object, options: { directory: string, environment: object }) => Promise<object>,
  *   logRoot?: string, firstMoveMs?: number, stallMs?: number, pollMs?: number, signals?: import('node:events').EventEmitter,
- *   clock?: () => number, watch?: { port?: number }|null, makeWatch?: typeof startWatch }} [options]
+ *   clock?: () => number, watch?: { port?: number, paused?: boolean }|null, makeWatch?: typeof startWatch }} [options]
  *   `watch` serves the live view (`--watch`); the server starts before anything else, so a
- *   busy port refuses the run with nothing started.
+ *   busy port refuses the run with nothing started. `paused` starts it paused (`--pause`).
  * @throws {UsageError} before anything starts; {RunError} once it has.
  */
 export async function runSketch(location, {
@@ -94,33 +96,56 @@ export async function runSketch(location, {
   const logDirectory = path.join(logRoot, sketch.name);
   const logFile = path.join(logDirectory, `${new Date(clock()).toISOString().replaceAll(':', '-')}.jsonl`);
   const stream = createStream({ stdout, logFile });
-  const watcher = watch ? await makeWatch({ port: watch.port, mode: 'live', source: stream }) : null;
+  // The page's controls reach the run's gate once the run has made it.
+  const controls = { gate: OPEN_GATE };
+  const watcher = watch ? await makeWatch({ port: watch.port, mode: 'live', source: stream, control: (action) => controls.gate[action]() }) : null;
   if (watcher) stderr.write(`understudy: watch at ${watcher.url}\n`);
   try {
-    await playSketch({ sketch, limit, stream, logDirectory, logFile, stdout, stderr, environment, makeJudge, makeTarget, firstMoveMs, stallMs, pollMs, signals, clock });
+    await playSketch({ sketch, limit, stream, logDirectory, logFile, stdout, stderr, environment, makeJudge, makeTarget, firstMoveMs, stallMs, pollMs, signals, clock, watch, watcher, controls });
   } finally {
     await watcher?.close();
   }
 }
 
 /**
+ * The gate a watched run moves through: paused from the start with
+ * `--pause`; every change shown on the page, and a pause said on stderr.
+ */
+function pauseGate({ run, watch, watcher, stderr, clock }) {
+  let isSaid = false;
+  return createGate({
+    isPaused: watch.paused === true, clock,
+    onChange({ paused, waiting }) {
+      watcher.send({ event: 'control', paused, waiting, before_step: run.taken + 1 });
+      if (!paused) isSaid = false;
+      if (paused && waiting && !isSaid) {
+        isSaid = true;
+        stderr.write('understudy: paused - step or resume from the page, or Ctrl-C\n');
+      }
+    },
+  });
+}
+
+/**
  * The run itself, once anything that can refuse it has been checked.
  */
-async function playSketch({ sketch, limit, stream, logDirectory, logFile, stderr, environment, makeJudge, makeTarget, firstMoveMs, stallMs, pollMs, signals, clock }) {
+async function playSketch({ sketch, limit, stream, logDirectory, logFile, stderr, environment, makeJudge, makeTarget, firstMoveMs, stallMs, pollMs, signals, clock, watch, watcher, controls }) {
   const judge = reportingFailures(await makeJudge(environment));
   const target = await makeTarget(sketch.target, { directory: sketch.directory, environment });
   const write = (entry) => stream.emit(entry);
-  const run = { taken: 0, seat: null, lastMoveAt: null, app: sketch.app };
+  const run = { taken: 0, seat: null, lastMoveAt: null, pausedBefore: 0, app: sketch.app, isStoppedPaused: false };
+  const gate = watcher ? pauseGate({ run, watch, watcher, stderr, clock }) : OPEN_GATE;
+  controls.gate = gate;
   // A generic app may have something to say once (a tool it cannot offer).
   if (Object.hasOwn(sketch.app, 'notify')) sketch.app.notify = (line) => stderr.write(`understudy: ${line}\n`);
-  const interrupts = watchInterrupts(signals, () => target.close());
+  const interrupts = watchInterrupts(signals, () => target.close(), () => gate.stop());
   try {
     mkdirSync(logDirectory, { recursive: true });
     write({ event: 'start', sketch: sketch.name, plays: target.describe(), turn: sketch.turn, at: new Date(clock()).toISOString() });
     stderr.write(`understudy: playing ${sketch.name} (${target.describe()}) - log ${shown(logFile)}\n`);
     Object.assign(sketch.services, { target, judge, name: 'understudy', player: sketch.player, app: sketch.app });
     run.seat = new MachineSeat({ machine: sketch.machine, services: sketch.services, pollMs, clock });
-    await playUntilDone({ run, target, steps: limit, waits: { firstMoveMs, stallMs }, clock, interrupts, write, stderr });
+    await playUntilDone({ run, target, steps: limit, waits: { firstMoveMs, stallMs }, clock, interrupts, write, stderr, gate });
   } catch (error) {
     flushChanges(run, write);
     const outcome = interrupts.isAsked() ? 'interrupted' : error.outcome ?? 'error';
@@ -128,12 +153,15 @@ async function playSketch({ sketch, limit, stream, logDirectory, logFile, stderr
     write({ final: true, outcome, steps: run.taken, state: run.seat?.state ?? null });
     throw error;
   } finally {
+    gate.end();
     interrupts.stop();
     await target.close();
   }
   flushChanges(run, write);
   const outcome = interrupts.isAsked() ? 'interrupted' : 'done';
-  const stopped = `stopped by Ctrl-C after ${stepCount(run.taken)}, at a safe state`;
+  const stopped = run.isStoppedPaused
+    ? `stopped by Ctrl-C while paused, after ${stepCount(run.taken)}`
+    : `stopped by Ctrl-C after ${stepCount(run.taken)}, at a safe state`;
   if (outcome === 'interrupted') write({ event: 'ended', outcome, message: stopped });
   write({ final: true, outcome, steps: run.taken, state: run.seat.state });
   if (outcome === 'interrupted') throw new RunError(stopped, { outcome });
@@ -143,7 +171,7 @@ async function playSketch({ sketch, limit, stream, logDirectory, logFile, stderr
  * The loop: "is it my move?", then one step, until the seat is done -
  * stopping on the step cap, a dead app, no first move or a stall.
  */
-async function playUntilDone({ run, target, steps, waits, clock, interrupts, write, stderr }) {
+async function playUntilDone({ run, target, steps, waits, clock, interrupts, write, stderr, gate }) {
   const started = clock();
   for (;;) {
     const next = await run.seat.nextMove({ shouldStop: interrupts.isAsked });
@@ -157,10 +185,18 @@ async function playUntilDone({ run, target, steps, waits, clock, interrupts, wri
       throw new RunError(`${target.describe()} exited with code ${exited.code} before the end state`, { outcome: 'app-exited' });
     }
     if (next === 'move') {
+      // ADR-0016: a paused run waits here, before Jev is asked anything.
+      if (await gate.beforeMove() === 'stop') {
+        run.isStoppedPaused = true;
+        return;
+      }
       await takeStep({ run, steps, write, stderr });
       run.lastMoveAt = clock();
-    } else {
-      await checkIdle({ run, target, waits, idleFor: clock() - (run.lastMoveAt ?? started) });
+      run.pausedBefore = gate.pausedMs();
+    } else if (!gate.isPaused()) {
+      // Idle limits count running time only.
+      const idleFor = clock() - (run.lastMoveAt ?? started) - (gate.pausedMs() - run.pausedBefore);
+      await checkIdle({ run, target, waits, idleFor });
     }
   }
 }

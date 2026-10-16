@@ -47,3 +47,16 @@ test('how it ended: done after N steps, or the outcome and why', () => {
   assert.deepEqual(endingOf(stalled), { text: 'stalled: stalled: nothing to do for 10 s after step 3', isBad: true });
   assert.equal(endingOf(newModel()), null);
 });
+
+import { controlsOf } from '../src/watch/page.mjs';
+
+test('controls: Pause while running, Step and Resume while paused, none after the end or in a replay', () => {
+  const model = apply(newModel(), { event: 'start', sketch: 's', plays: 'p', turn: TURN });
+  assert.deepEqual(controlsOf(model), { pause: true, step: false, resume: false });
+  apply(model, { event: 'control', paused: true, waiting: true, before_step: 2 });
+  assert.deepEqual(controlsOf(model), { pause: false, step: true, resume: true });
+  apply(model, { final: true, outcome: 'done', steps: 2, state: 'finished' });
+  assert.deepEqual(controlsOf(model), { pause: false, step: false, resume: false });
+  const replay = apply(apply(newModel(), { event: 'hello', mode: 'replay' }), { event: 'start', sketch: 's', plays: 'p', turn: TURN });
+  assert.deepEqual(controlsOf(replay), { pause: false, step: false, resume: false });
+});
