@@ -12,6 +12,24 @@ Done - see `CHANGELOG.md` (one `sketch.yaml` per sketch; MCP target, local and r
 tool arguments). Decisions: ADR-0011..0013. Owner confirmed (2026-10-15): Jev chooses argument
 values, never writes them - understudy is constrained automation by design.
 
+## Sprint 4 (owner, 2026-10-15) - watch the understudy live
+- Owner: "a way to see what the understudy is doing - a UX that displays the state machine
+  diagram and shows the state changes and Jev decisions in real time."
+- **Browser page** (owner decided): `understudy run ... --watch` serves a local page on
+  127.0.0.1 that draws the turn's statechart, highlights the current state, and streams each
+  Jev decision (options, pick, confidence, chosen arguments, the app's answer).
+- **Live + replay** (owner decided): the same page follows a run live (`run --watch`) and
+  replays a finished one from its log (`understudy watch <log.jsonl>`); the log gains the state
+  changes it needs for that.
+- **Decision detail = pick + confidence** (owner decided): options offered, the pick, its
+  confidence, chosen arguments, the app's answer - what the log has today. No probability bars.
+- **Pause and step live** (owner decided): the page can pause a live run before its next move
+  and release it one step at a time, then resume. Replay has play / pause / step through the log.
+- Assumptions to confirm at story time: the diagram is drawn from the sketch's own `turn:` (no
+  hand-made picture); the page and its drawing library are served by understudy itself (works
+  offline, nothing fetched from the internet); 127.0.0.1 only, no login; while paused the
+  first-move/stall timers do not run; Ctrl-C still stops a paused run.
+
 ## Next (from the sprint 3 retro)
 - Scope `showing` to results for generic MCP sketches (today it also searches tool descriptions). (Morpheus)
 - "not offering ... yet" should not say "yet" for array/object arguments a result can never fill. (Smith)

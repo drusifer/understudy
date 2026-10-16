@@ -12,10 +12,11 @@
   `bobp make push MSG=...` when the owner asks.
 
 ## Current Task
-**Status:** Sprint 3 launched (2026-10-15) on branch `sprint-3` (last commit: sprint 3 launch).
-Merge to main / push / version await the owner.
+**Status:** Shaping sprint 4 (watch the understudy live) - owner answered all four questions
+(browser page; live + replay; pick + confidence; pause and step live). Recorded in
+docs/BACKLOG.md "Sprint 4". Waiting for the owner's go.
 
 ## Next Steps
-1. When the owner says so: merge `sprint-3` into main and `bobp make push MSG=...` (Tank).
-2. (answered) Owner confirmed Jev chooses, never writes - constrained automation by design.
-3. Sprint 4 candidates: docs/BACKLOG.md "Next" (`showing` scoped to MCP results, "yet" wording).
+1. On go: `/sprint 4` - cut `sprint-4` from main, archive task.md to docs/sprints/TASKS_SPRINT3.md,
+   Cypher writes docs/sprints/USER_STORIES_SPRINT4.md from BACKLOG "Sprint 4" (assumptions there
+   go into the stories' Assumptions section) -> Smith Gate 1.
