@@ -17,7 +17,5 @@ Merge to main / push / version await the owner.
 
 ## Next Steps
 1. When the owner says so: merge `sprint-3` into main and `bobp make push MSG=...` (Tank).
-2. Ask the owner (one question): is choosing argument values (not writing them) what "Jev fills
-   arguments" meant? If not, the BACKLOG "Next" item on a free-text value source becomes sprint 4.
-3. Sprint 4 candidates: docs/BACKLOG.md "Next" (free-text value source, `showing` scoped to MCP
-   results, "yet" wording).
+2. (answered) Owner confirmed Jev chooses, never writes - constrained automation by design.
+3. Sprint 4 candidates: docs/BACKLOG.md "Next" (`showing` scoped to MCP results, "yet" wording).

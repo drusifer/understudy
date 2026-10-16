@@ -22,3 +22,7 @@ Agents **must** use this for every message posted to CHAT.md:
 > **Previous sprint archived:** `agents/chat_archive/CHAT_SPRINT_3.md` (2026-10-15 22:02:15) — Sprint 3: owner shaped an MCP target (understudy as MCP client, SDK, mcpServers config inline or by reference, token headers) and one sketch.yaml as the only format; Cypher's stories rejected once by Smith (argument values, nothing-offerable), then approved with the architecture (ProgramTransport on program.mjs, generic MCP app, Jev chooses arguments). Plan revised once (loader + examples in one phase). Phases 1-4 passed UAT and review: sketch loader + converted examples, local MCP + box office (DEF-07: candidates from last non-error result), remote MCP + test-live (Tank), docs (SKETCHES.md, ADR-0011..0013). Close: SDLC check green, 3 lessons, Smith played a real server from .mcp.json and found DEF-09 (absolute config paths) - fixed. Launched; merge awaits owner.
 
 ---
+
+---
+[<small>2026-10-15 22:39:53</small>] [**User**]->[**all**] *decide*:
+ Owner agrees: Jev chooses argument values, never writes them - understudy is constrained automation by design. Asks for a good example doc for using MCP services.

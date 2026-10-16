@@ -9,12 +9,10 @@ Done - see `CHANGELOG.md` (HTTP target; hookless pages with the generic page app
 
 ## Sprint 3
 Done - see `CHANGELOG.md` (one `sketch.yaml` per sketch; MCP target, local and remote; Jev-chosen
-tool arguments). Decisions: ADR-0011..0013. Owner question still open: is choosing argument
-values (not writing them) what "Jev fills arguments" meant? (Cypher)
+tool arguments). Decisions: ADR-0011..0013. Owner confirmed (2026-10-15): Jev chooses argument
+values, never writes them - understudy is constrained automation by design.
 
 ## Next (from the sprint 3 retro)
-- A value source for free text - MCP string arguments and page text fields - so Jev's choices
-  can include text the sketch did not list. Needs an owner decision on where text comes from. (Cypher)
 - Scope `showing` to results for generic MCP sketches (today it also searches tool descriptions). (Morpheus)
 - "not offering ... yet" should not say "yet" for array/object arguments a result can never fill. (Smith)
 

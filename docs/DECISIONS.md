@@ -10,7 +10,7 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ## ADR-0013: Jev chooses argument values, it never writes them
 
-*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-15 · **Related**: UND-10 AC4-5
+*   **Status**: Accepted, confirmed by the owner after launch ("constrained automation") · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-15 · **Related**: UND-10 AC4-5
 *   **Context**: owner: a sketch may list fixed calls, and Jev fills the remaining arguments. Jev (TypeSafe) answers only choice, noul and score questions - it cannot produce free text.
 *   **Options**: (1) Jev chooses each open argument from a finite list - the sketch's `values`, the schema (enum, boolean, narrow integer range), or the last non-error result's leaves; (2) generate free text with another model; (3) offer only tools with no required arguments.
 *   **Decision**: (1), in a second request after the tool is picked, one Choice per argument; an off-list answer is re-asked once, then the run stops (ADR-0004). A tool whose required argument has no list is not offered, and the run says so once per tool. Candidates come from the last result that was **not an error** (Phase 2 finding: a refused call must not erase what the call before it offered).
