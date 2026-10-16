@@ -182,7 +182,7 @@ async function playUntilDone({ run, target, steps, waits, clock, interrupts, wri
       // Its last output can land between the look and the exit: one more
       // look decides whether it ended where the sketch ends.
       if (await run.seat.nextMove({ shouldStop: interrupts.isAsked }) === 'done') return;
-      throw new RunError(`${target.describe()} exited with code ${exited.code} before the end state`, { outcome: 'app-exited' });
+      throw new RunError(`${exited.who ?? target.describe()} exited with code ${exited.code} before the end state`, { outcome: 'app-exited' });
     }
     if (next === 'move') {
       // ADR-0016: a paused run waits here, before Jev is asked anything.

@@ -5,7 +5,7 @@
 *   **Total Points**: 29 (UND-18 3, UND-19 2, UND-20 5, UND-21 3, UND-22 5, UND-23 3, UND-24 3, UND-25 2, UND-26 3) - kept whole by the owner ("go big or go home")
 *   **Branch**: `sprint-5`
 *   **Stories / Arch**: `docs/sprints/USER_STORIES_SPRINT5.md`, `docs/sprints/ARCH_SPRINT5.md` (sprint 4 board: `docs/sprints/TASKS_SPRINT4.md`)
-*   **Status**: In progress - Phase 1 done; Phase 2 next
+*   **Status**: In progress - Phases 1-2 done; Phase 3 next. Note: `test-live` skips nothing - `examples/evening` has no sketch until Phase 7, so do not run test-live before then
 *   **Commits**: one local commit per phase after Morpheus's review (`Phase <N>: ...`); publishing only via `bobp make push` when the owner asks (SDLC §6). No back-compat (owner rule).
 
 ---
@@ -25,9 +25,9 @@
 
 ### Phase 2: The evening's servers - UND-18, UND-19
 *Phase goal: `examples/evening/boxoffice.mjs` and `ratings.mjs` answer everything the stories need, including the `BOX_STATE=full` case.*
-- [ ] **Task 2.0 (Phase 1 review note):** `run.mjs` "exited before the end state" uses `target.describe()`, which lists every server - name only the one that exited. (*Owner: Neo*)
-- [ ] **Task 2.1:** `boxoffice.mjs` (≥5 films with genres, nested showings with `starts`/`screen`, two screen widths, `seat_map` with `seat`/`row`/`number`/`together`/`centre` per ARCH §5 formula, `pick_seats(seat,count)` side-by-side hold or refusal naming the run, `pay`, `BOX_STATE=full`); `ratings.mjs` (`rating(title)` → tomato + 3-5 reviews, the four score cases, unknown title error). Tests drive both through the MCP client. (*Owner: Neo | Verification: `bobp make test`*)
-- [ ] **Task 2.2:** UAT UND-18 AC1-6, UND-19 AC1-4 (centre 0.33 at 3 off in width 10, 0.79 in width 30; the three seat-map cases; refusals) then Morpheus review. (*Owner: Trin → Morpheus | Verification: `bobp make check`; commit `Phase 2`*)
+- [x] **Task 2.0 (Phase 1 review note):** `run.mjs` "exited before the end state" uses `target.describe()`, which lists every server - name only the one that exited. (*Owner: Neo*)
+- [x] **Task 2.1:** `boxoffice.mjs` (≥5 films with genres, nested showings with `starts`/`screen`, two screen widths, `seat_map` with `seat`/`row`/`number`/`together`/`centre` per ARCH §5 formula, `pick_seats(seat,count)` side-by-side hold or refusal naming the run, `pay`, `BOX_STATE=full`); `ratings.mjs` (`rating(title)` → tomato + 3-5 reviews, the four score cases, unknown title error). Tests drive both through the MCP client. (*Owner: Neo | Verification: `bobp make test`*)
+- [x] **Task 2.2:** UAT UND-18 AC1-6, UND-19 AC1-4 (centre 0.33 at 3 off in width 10, 0.79 in width 30; the three seat-map cases; refusals) then Morpheus review. (*Owner: Trin → Morpheus | Verification: `bobp make check`; commit `Phase 2`*)
 
 ### Phase 3: Answer rows and gates - UND-21
 *Phase goal: decided arguments take candidates from remembered rows with joined facts; gates remove (with why) or hold back (with the missing fact); spent values are not re-offered.*

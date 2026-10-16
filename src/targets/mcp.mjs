@@ -166,7 +166,13 @@ export async function startTarget(spec, { directory, environment = process.env, 
   const byName = new Map(servers.map((server) => [server.name, server]));
   const state = { last: null, seq: 0, shown: undefined };
 
-  const exited = () => servers.map((server) => server.program?.exited()).find(Boolean) ?? null;
+  // The first server that exited, and who it was when there are several.
+  const exited = () => {
+    const server = servers.find((each) => each.program?.exited());
+    if (!server) return null;
+    const ended = server.program.exited();
+    return server.name === null ? ended : { ...ended, who: `server "${server.name}" (${server.describe()})` };
+  };
 
   async function toolsOf(server) {
     const tools = [];

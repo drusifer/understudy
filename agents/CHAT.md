@@ -276,3 +276,19 @@ To github.com:drusifer/understudy.git
 2:44PM INF 1 commits scanned.
 2:44PM INF scanned ~34457 bytes (34.46 KB) in 247ms
 2:44PM INF no leaks found
+
+---
+[<small>2026-10-16 14:44:29</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 1 review passed (ADR-0022 held: one-server ids/calls unchanged). Note → Task 2.0: run.mjs app-exited message names all servers. Committed Phase 1. @Neo *swe impl phase-2
+
+---
+[<small>2026-10-16 14:44:29</small>] [**Mouse**]->[**all**] *phase 2*:
+ The evening's servers - UND-18, UND-19
+
+---
+[<small>2026-10-16 14:49:07</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+2:49PM INF 1 commits scanned.
+2:49PM INF scanned ~3370 bytes (3.37 KB) in 239ms
+2:49PM INF no leaks found

@@ -2,7 +2,7 @@
 
 *   **Author**: Trin
 *   **Stories**: `docs/sprints/USER_STORIES_SPRINT5.md` (UND-18..26) · **Arch**: `docs/sprints/ARCH_SPRINT5.md`
-*   **Status**: In progress - Phase 1 verified
+*   **Status**: In progress - Phases 1-2 verified
 
 ## 1. Scope of Acceptance Testing
 
@@ -25,8 +25,8 @@ Smith at sprint close. Out of scope: the sprint 6 dashboard; real ratings data.
 | UAT-UND-20-03 | UND-20 AC4 | close a two-server target | every server stopped; a later look fails | `tests/mcpServers.test.js` "closing stops every server" | PASS (Phase 1) |
 | UAT-UND-20-04 | UND-20 AC5 | `build/uat/two`: servers `a` (box office) + `ratings` (`process.exit(3)`); `understudy run` | `understudy: server "ratings" did not start: node -e process.exit(3) exited with code 3 before the MCP handshake - it printed nothing on stderr`; no box office left running | CLI output; `ps` | PASS (Phase 1) |
 | UAT-UND-20-05 | UND-20 AC6 | check a sketch with `servers.ratings.type: sse`; both `server` and `servers` | refused naming `target.servers.ratings.type`; "give server: (one) or servers: (several), not both" | `tests/sketch.test.js`, `tests/mcpConfig.test.js` | PASS (Phase 1) |
-| UAT-UND-18-01..06 | UND-18 AC1-6 | drive `examples/evening/boxoffice.mjs` through the MCP client | genres, showings, two screen widths, centre 0.33 / 0.79, side-by-side hold, refusal naming the run, `BOX_STATE=full` | Phase 2 tests | pending |
-| UAT-UND-19-01..04 | UND-19 AC1-4 | drive `ratings.mjs` | tomato + 3-5 reviews; the four score cases; unknown title error | Phase 2 tests | pending |
+| UAT-UND-18-01..06 | UND-18 AC1-6 | drive `examples/evening/boxoffice.mjs` through the MCP client | genres, showings, two screen widths, centre 0.33 / 0.79, side-by-side hold, refusal naming the run, `BOX_STATE=full` | `tests/evening.test.js` (s4-F4 = together 4, centre 0.67; E2 0.22 of 10; 0.83 vs 0.44 at 2.5 off in 30 vs 10) | PASS (Phase 2) |
+| UAT-UND-19-01..04 | UND-19 AC1-4 | drive `ratings.mjs` | tomato + 3-5 reviews; the four score cases; unknown title error | `tests/evening.test.js` | PASS (Phase 2) |
 | UAT-UND-21-01..05 | UND-21 AC1-5 | owner's film gate over both servers with a Jev double | no afternoon / low-score film offered; >90 non-horror offered; held-back line; check refusals | Phase 3 tests | pending |
 | UAT-UND-22-01..06 | UND-22 AC1-6 | engine over seat rows | E/F/D 1, 0.67, 0.33 (w1) and 1, 0.44, 0.11 (w2); E edge 0.4 below F centre; table in log and page | Phase 4 tests + browser | pending |
 | UAT-UND-23-01..05 | UND-23 AC1-5 | score question over reviews | asked once per row; enthusiastic > bored (live) | Phase 5 tests + live | pending |
@@ -42,3 +42,4 @@ UND-23 AC5, UND-24 AC5-6 (check and input refusals).
 ## 5. Defect Summary & Gate Outcome
 
 - Phase 1: no defects. 213 unit tests pass, lint clean.
+- Phase 2: no defects. 220 unit tests pass, lint clean. Note: a big-screen seat map exceeds the 2000-character step text; the full answer stays in the view (rows read it in Phase 3).

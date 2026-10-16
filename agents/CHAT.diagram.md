@@ -113,4 +113,8 @@ sequenceDiagram
     Note right of Neo: "Phase 1 impl complete<br/>(UND-20): servers: in<br/>config/sketch, one<br/>client per server, ids<br/><server>/<tool> only<br/>with several, failed<br/>start names…"
     Trin->>Morpheus: "qa handoff"
     Note right of Trin: "UAT phase 1 passed: UAT-<br/>UND-20-01..05 (docs/spri<br/>nts/UAT_PLAN_SPRINT5.md,<br/>written this phase).<br/>Live two-server failure<br/>message checked via b…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 1 review passed<br/>(ADR-0022 held: one-<br/>server ids/calls<br/>unchanged). Note → Task<br/>2.0: run.mjs app-exited<br/>message names all<br/>servers. Commi…"
+    Mouse->>All: "phase 2"
+    Note right of Mouse: "The evening's servers -<br/>UND-18, UND-19"
 ```
