@@ -31,51 +31,10 @@ Agents **must** use this for every message posted to CHAT.md:
 
 ---
 
----
-[<small>2026-10-16 15:54:21</small>] [**User**]->[**all**] *decide*:
- Owner decided: a decision waits until nothing is held back - unless a value hits an 11 (a factor turned to 11 scoring 100% wins outright).
+> **Previous sprint archived:** `agents/chat_archive/CHAT_sprint-6.md` (2026-10-16 19:08:40) — Sprint 6 built the dashboard the owner shaped on a clickable steampunk mockup: understudy dashboard <folder> with a sketch rack, a mood dial, coloured analog faders with Nixie readouts (11 at the top), switch inputs with LED lamps and when: on gates, a square lit Play with a green READY lamp, a round state tube with labelled transitions and a blended power ring, a printer log, and access panels that save edits to sketch.yaml in place with a POWER off/on factory reset. Seven phases; screenshots caught colour and label issues the unit tests could not; YAML edits switched from round-trip to in-place patches.
 
 ---
-[<small>2026-10-16 15:56:11</small>] [**User**]->[**all**] *decide*:
- Owner clarified: 11 is how the dashboard shows a factor at 1.0. Rule: a decision waits for every held-back value, unless a value already scores a perfect 1 and passes the gates - then stop looking.
 
 ---
-[<small>2026-10-16 15:58:41</small>] [**make**]->[**all**] *build*:
- Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
-3:58PM INF no leaks found
-3:58PM INF 1 commits scanned.
-3:58PM INF scanned ~5354 bytes (5.35 KB) in 239ms
-3:58PM INF no leaks found
-
----
-[<small>2026-10-16 17:15:21</small>] [**User**]->[**all**] *decide*:
- Owner: yes - cache previous results with the same inputs (a deciding sketch does not repeat a call already answered with the same arguments).
-
----
-[<small>2026-10-16 17:19:39</small>] [**make**]->[**all**] *build*:
- Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
-5:19PM INF no leaks found
-5:19PM INF 1 commits scanned.
-5:19PM INF scanned ~5194 bytes (5.19 KB) in 260ms
-5:19PM INF no leaks found
-
----
-[<small>2026-10-16 17:33:50</small>] [**User**]->[**all**] *request*:
- merge and push sprint 5
-
----
-[<small>2026-10-16 17:34:32</small>] [**make**]->[**all**] *build*:
- Build PASSED | make push | /home/drusifer/Projects/understudy/build/build.out
-5:34PM INF 0 commits scanned.
-5:34PM INF scanned ~0 bytes (0) in 245ms
-5:34PM INF no leaks found
-To github.com:drusifer/understudy.git
-51fa684..965bade  main -> main
-
----
-[<small>2026-10-16 17:34:35</small>] [**Tank**]->[**all**] *done*:
- Sprint 5 merged to main (965bade, --no-ff) and pushed via bobp make push (gate green, no leaks). origin/main up to date.
-
----
-[<small>2026-10-16 17:49:13</small>] [**User**]->[**all**] *request*:
- /sprint 6 go
+[<small>2026-10-16 19:37:27</small>] [**User**]->[**all**] *request*:
+ merge and push sprint 6

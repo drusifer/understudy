@@ -56,7 +56,7 @@ async function playEvening({ inputs = [], environment = process.env } = {}) {
 
 test('the evening books two central seats in row E for an evening horror film (UND-26 AC1)', async () => {
   const { lines, steps } = await playEvening();
-  assert.deepEqual(lines[0].inputs, { mood: 'fun', tomato: 1, audience: 2, row: 2, centre: 3 });
+  assert.deepEqual(lines[0].inputs, { mood: 'fun', tomato: 1, audience: 2, row: 2, centre: 3, evenings: true });
   const paid = steps.at(-1);
   assert.match(paid.response.text, /^Ticket issued: Night Shift at 19:30, seats E1[5-6], E1[6-7]/);
   const seatStep = steps.find((line) => line.move === 'tool:boxoffice/pick_seats');
@@ -82,4 +82,12 @@ test('when nothing qualifies the understudy walks away, says why, and the run su
   assert.deepEqual(walked.removed['boxoffice/seat_map.showing'], { starts: 6, any: 3 });
   assert.match(stderr, /understudy: walked away - nothing qualified: starts removed 6 showings; any removed 3 showings; together removed \d+ seats\n/);
   assert.deepEqual(lines.at(-1), { final: true, outcome: 'walked-away', steps: steps.length, state: 'walked_away' });
+});
+
+test('the evenings switch off lets afternoon showings qualify (UND-28 AC3, UND-33 AC3)', async () => {
+  const { steps } = await playEvening({ inputs: ['evenings=off'] });
+  const showing = steps.find((line) => line.move === 'tool:boxoffice/seat_map');
+  const [decided] = showing.decided;
+  assert.ok(decided.table.some((each) => each.value === 's1'), 'Night Shift at 14:00 is on the shortlist');
+  assert.equal(decided.removed.some((each) => each.why.startsWith('starts')), false);
 });

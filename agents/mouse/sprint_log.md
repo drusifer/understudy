@@ -18,3 +18,7 @@ Phases: 1 event-stream log | 2 graph layout + watch server | 3 live page + run -
 Branch sprint-5 from 51fa684. 29 pts, 7 phases: 1 several servers (UND-20); 2 evening servers (UND-18/19);
 3 rows+gates (UND-21); 4 scores+shortlist (UND-22); 5 Jev Score+inputs+pick (UND-23/24); 6 walk away (UND-25);
 7 example+docs+test-live (UND-26, Tank 7.2). Close: Tank sdlc-check, Oracle groom, Smith test, retro, launch.
+
+## Sprint 6 - The dashboard (planned 2026-10-16)
+Branch sprint-6 from 965bade. 25 pts, 7 phases: 1 switch/when; 2 server+rack; 3 play/stop; 4 controls page;
+5 tube+printer; 6 access panels+save+factory; 7 docs+browser tests. Close as usual.

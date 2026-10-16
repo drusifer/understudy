@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Understudy operations console</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&amp;family=Spectral:ital,wght@0,400;0,600;1,400&amp;family=VT323&amp;family=DotGothic16&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#140e0a}
+a{color:#e0b25c}a:hover{color:#ffd88a}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid #ffd88a;outline-offset:3px}
+@keyframes flowdash{to{stroke-dashoffset:-40}}
+@keyframes flowbar{from{background-position:0 0}to{background-position:40px 0}}
+@keyframes feed{from{transform:translateY(22px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes pulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.25)}}
+@keyframes hum{0%,100%{opacity:.85}50%{opacity:1}}
+@keyframes drop{from{transform:scaleY(.2);opacity:0}to{transform:scaleY(1);opacity:1}}
+.fader{-webkit-appearance:none;appearance:none;width:100%;height:44px;background:transparent;margin:0}
+.fader::-webkit-slider-runnable-track{height:10px;border-radius:5px;background:linear-gradient(180deg,#050302,#24180f);border:2px solid #6b4a22;box-shadow:inset 0 2px 4px #000}
+.fader::-moz-range-track{height:10px;border-radius:5px;background:linear-gradient(180deg,#050302,#24180f);border:2px solid #6b4a22}
+.fader::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:40px;margin-top:-17px;border-radius:5px;border:2px solid #2b1b0b;background:linear-gradient(90deg,#6e4c1c 0%,#f3d48c 30%,#c9a15a 50%,#f3d48c 70%,#6e4c1c 100%);box-shadow:0 4px 8px rgba(0,0,0,.7),inset 0 0 0 4px rgba(43,27,11,.0)}
+.fader::-moz-range-thumb{width:24px;height:38px;border-radius:5px;border:2px solid #2b1b0b;background:linear-gradient(90deg,#6e4c1c 0%,#f3d48c 30%,#c9a15a 50%,#f3d48c 70%,#6e4c1c 100%)}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; padding: 28px 20px 48px; background: radial-gradient(ellipse at 50% 0%, #3a2618 0%, #1a110b 55%, #120c08 100%); font-family: 'Spectral', Georgia, serif; color: #ead9b8">
+<div style="max-width: 1320px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 28px; border-radius: 10px; background: linear-gradient(180deg, #c9a15a 0%, #9c7434 48%, #7a5524 100%); border: 2px solid #4a3216; box-shadow: inset 0 2px 0 rgba(255,236,190,.55), inset 0 -3px 0 rgba(0,0,0,.35), 0 10px 30px rgba(0,0,0,.6)">
+<div style="display: flex; align-items: center; gap: 18px">
+<svg width="54" height="54" viewBox="0 0 54 54" aria-hidden="true"><g fill="none" stroke="#2b1b0b" stroke-width="2.5"><circle cx="27" cy="27" r="11"></circle><circle cx="27" cy="27" r="4"></circle><path d="M27 4v8M27 42v8M4 27h8M42 27h8M10.7 10.7l5.7 5.7M37.6 37.6l5.7 5.7M10.7 43.3l5.7-5.7M37.6 16.4l5.7-5.7"></path></g></svg>
+<div>
+<h1 style="margin: 0; font-family: 'Cinzel', serif; font-weight: 900; font-size: 34px; letter-spacing: 4px; color: #24170a; text-shadow: 0 1px 0 rgba(255,236,190,.6)">UNDERSTUDY</h1>
+<div style="font-family: 'Cinzel', serif; font-weight: 700; font-size: 13px; letter-spacing: 5px; color: #3b2711">OPERATIONS CONSOLE · MARK VI</div>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 2px; color: #24170a; font-weight: 700">
+<span style="width: 16px; height: 16px; border-radius: 50%; border: 2px solid #3b2711; {{lamp}}"></span>
+<span>{{lampText}}</span>
+<button type="button" onClick="{{power}}" aria-pressed="{{powerPressed}}" aria-label="{{powerAria}}" style="display: flex; align-items: center; gap: 10px; min-height: 48px; margin-left: 8px; padding: 6px 14px 6px 8px; border-radius: 8px; border: 2px solid #3b2711; background: linear-gradient(180deg, #2b1d12, #1a110b); color: #e0b25c; font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 2px">
+<span style="position: relative; width: 26px; height: 40px; border-radius: 5px; background: #0c0805; border: 2px solid #8a6630"><span style="{{powerBat}}"></span></span>
+<span>POWER {{powerWord}}</span>
+</button>
+</div>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start">
+
+<nav aria-label="Sketches" style="flex: 1 1 220px; max-width: 260px; min-width: 200px; display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: 10px; background: linear-gradient(180deg, #2a1c12, #1d140d); border: 2px solid #5a3e1e; box-shadow: inset 0 0 0 1px rgba(224,178,92,.15), 0 8px 24px rgba(0,0,0,.5)">
+<div style="font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 3px; color: #c9a15a">SKETCH RACK</div>
+<div style="font-size: 13px; color: #a8957a; font-style: italic">examples/</div>
+<sc-for list="{{sketches}}" as="s" hint-placeholder-count="6">
+<button type="button" onClick="{{s.pick}}" aria-pressed="{{s.pressed}}" style="{{s.style}}">
+<span style="display: block; font-family: 'Cinzel', serif; font-weight: 700; font-size: 15px; letter-spacing: 1px">{{s.name}}</span>
+<span style="display: block; font-size: 12px; opacity: .8">{{s.about}}</span>
+</button>
+</sc-for>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 22px; transition: opacity .6s, filter .6s; {{dim}}">
+
+<section aria-label="Controls" style="padding: 22px 24px 26px; border-radius: 12px; background: linear-gradient(160deg, #3b2918 0%, #2a1c11 60%, #22170e 100%); border: 2px solid #6b4a22; box-shadow: inset 0 1px 0 rgba(255,220,160,.12), 0 10px 28px rgba(0,0,0,.55)">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 14px">
+<h2 style="margin: 0; font-family: 'Cinzel', serif; font-size: 22px; letter-spacing: 3px; color: #e0b25c">EVENING</h2>
+<div style="font-size: 14px; color: #bda887; font-style: italic">boxoffice + ratings · books two seats, or walks away</div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 28px; align-items: center">
+
+<div style="flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 4px">
+<div style="font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 3px; color: #c9a15a">MOOD</div>
+<div role="group" aria-label="Mood" style="position: relative; width: 250px; height: 200px">
+<div aria-hidden="true" style="position: absolute; left: 75px; top: 75px; width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #4a3520, #1a110a 75%); border: 3px solid #8a6630; box-shadow: inset 0 4px 10px rgba(0,0,0,.8), 0 4px 10px rgba(0,0,0,.5)"></div>
+<sc-for list="{{ticks}}" as="t" hint-placeholder-count="4">
+<div aria-hidden="true" style="{{t.style}}"></div>
+</sc-for>
+<div aria-hidden="true" style="position: absolute; left: 112px; top: 74px; width: 26px; height: 102px; transform-origin: 13px 51px; transform: rotate({{moodDeg}}deg); transition: transform .5s cubic-bezier(.3,1.5,.5,1)">
+<div style="position: absolute; left: 0; top: 0; width: 26px; height: 102px; border-radius: 13px 13px 13px 13px / 40px 40px 13px 13px; background: linear-gradient(90deg, #1c120a 0%, #4a3520 30%, #6a4c2c 50%, #3a2717 75%, #1c120a 100%); box-shadow: 0 6px 10px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,220,160,.25)"></div>
+<div style="position: absolute; left: 11px; top: 6px; width: 4px; height: 30px; border-radius: 2px; background: #f3e4c0; box-shadow: 0 0 6px rgba(255,236,190,.8)"></div>
+<div style="position: absolute; left: 6px; top: 44px; width: 14px; height: 14px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #f3d48c, #6e4c1c)"></div>
+</div>
+<sc-for list="{{moods}}" as="m" hint-placeholder-count="4">
+<button type="button" onClick="{{m.pick}}" aria-pressed="{{m.pressed}}" style="{{m.style}}">{{m.name}}</button>
+</sc-for>
+</div>
+<button type="button" onClick="{{moodToggle}}" aria-expanded="{{moodExpanded}}" aria-controls="drawer-mood" style="display: flex; align-items: center; gap: 8px; min-height: 32px; padding: 2px 10px 2px 6px; border-radius: 6px; border: 1px solid rgba(224,178,92,.25); background: rgba(0,0,0,.2); color: #bda887; font-size: 13px">
+<span style="display: inline-block; transition: transform .25s; transform: rotate({{moodCaret}}deg); color: #e0b25c">▸</span>{{moodWhat}}
+</button>
+<sc-if value="{{moodOpen}}" hint-placeholder-val="{{ false }}">
+<div id="drawer-mood" style="width: 250px; box-sizing: border-box; margin-top: 4px; padding: 12px 14px; border-radius: 8px; background: linear-gradient(180deg, #120c08, #1d140d); border: 2px solid #5a3e1e; box-shadow: inset 0 6px 10px rgba(0,0,0,.7); transform-origin: top; animation: drop .3s ease-out; display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{moodFields}}" as="o" hint-placeholder-count="4">
+<label style="display: flex; align-items: center; gap: 8px; font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 2px; color: #c9a15a">{{o.label}}
+<input type="text" value="{{o.value}}" onChange="{{o.change}}" style="flex: 1 1 auto; min-width: 0; min-height: 36px; box-sizing: border-box; padding: 4px 8px; border-radius: 5px; border: 2px solid #6b4a22; background: #f1e8cf; color: #2a2622; font-family: 'VT323', monospace; font-size: 20px">
+</label>
+</sc-for>
+<div style="display: flex; gap: 8px">
+<button type="button" onClick="{{moodAdd}}" style="flex: 1 1 0; min-height: 40px; border-radius: 6px; border: 2px solid #6b4a22; background: #2b1d12; color: #e0b25c; font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 1px">+ ADD</button>
+<button type="button" onClick="{{moodRemove}}" style="flex: 1 1 0; min-height: 40px; border-radius: 6px; border: 2px solid #6b4a22; background: #2b1d12; color: #e0b25c; font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 1px">− REMOVE LAST</button>
+</div>
+<label style="display: flex; align-items: center; gap: 8px; font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 2px; color: #c9a15a">DEFAULT
+<input type="text" value="{{moodDefault}}" onChange="{{moodDefaultChange}}" style="flex: 1 1 auto; min-width: 0; min-height: 36px; box-sizing: border-box; padding: 4px 8px; border-radius: 5px; border: 2px solid #6b4a22; background: #f1e8cf; color: #2a2622; font-family: 'VT323', monospace; font-size: 20px">
+</label>
+<div style="font-size: 12px; color: #8f7f66; font-style: italic; word-break: break-word">{{moodYaml}}</div>
+<div style="font-size: 12px; color: #a8957a">Saved to the sketch as you type; power off and on for the defaults.</div>
+</div>
+</sc-if>
+</div>
+
+<div style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 3px; color: #a8957a"><span>◂ LESS IMPORTANT</span><span>MORE IMPORTANT ▸</span></div>
+<sc-for list="{{faders}}" as="f" hint-placeholder-count="4">
+<div style="display: grid; grid-template-columns: 112px minmax(0, 1fr) 74px; align-items: center; gap: 14px">
+<label for="{{f.id}}" style="display: flex; align-items: center; gap: 8px; font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 2px; color: #ead9b8">
+<span style="{{f.chip}}"></span>{{f.label}}
+</label>
+<div style="position: relative">
+<div aria-hidden="true" style="position: absolute; left: 13px; right: 13px; top: 19px; height: 6px; border-radius: 3px; {{f.fill}}"></div>
+<div aria-hidden="true" style="position: absolute; left: 13px; right: 13px; top: 32px; height: 8px; background: repeating-linear-gradient(90deg, rgba(224,178,92,.5) 0 1px, transparent 1px 10%)"></div>
+<input id="{{f.id}}" class="fader" type="range" min="0" max="3" step="0.01" value="{{f.value}}" onChange="{{f.change}}" aria-valuetext="{{f.valueText}}" style="position: relative">
+</div>
+<div style="padding: 4px 6px; border-radius: 6px; background: #0e0a07; border: 2px solid #4a3216; text-align: center; font-family: 'VT323', monospace; font-size: 26px; line-height: 1; {{f.readout}}">{{f.shown}}</div>
+</div>
+<div style="margin: -4px 0 6px 126px">
+<button type="button" onClick="{{f.toggle}}" aria-expanded="{{f.expanded}}" aria-controls="{{f.drawerId}}" style="display: flex; align-items: center; gap: 8px; min-height: 32px; padding: 2px 10px 2px 6px; border-radius: 6px; border: 1px solid rgba(224,178,92,.25); background: rgba(0,0,0,.2); color: #bda887; font-size: 13px">
+<span style="display: inline-block; transition: transform .25s; transform: rotate({{f.caretDeg}}deg); color: #e0b25c">▸</span>{{f.what}}
+</button>
+<sc-if value="{{f.open}}" hint-placeholder-val="{{ false }}">
+<div id="{{f.drawerId}}" style="margin-top: 6px; padding: 12px 14px; border-radius: 8px; background: linear-gradient(180deg, #120c08, #1d140d); border: 2px solid #5a3e1e; box-shadow: inset 0 6px 10px rgba(0,0,0,.7); transform-origin: top; animation: drop .3s ease-out; display: flex; flex-wrap: wrap; gap: 12px 16px">
+<sc-for list="{{f.fields}}" as="p" hint-placeholder-count="3">
+<label style="display: flex; flex-direction: column; gap: 4px; font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 2px; color: #c9a15a">{{p.label}}
+<input type="text" value="{{p.value}}" onChange="{{p.change}}" style="width: {{p.width}}px; min-height: 36px; box-sizing: border-box; padding: 4px 8px; border-radius: 5px; border: 2px solid #6b4a22; background: #f1e8cf; color: #2a2622; font-family: 'VT323', monospace; font-size: 20px">
+</label>
+</sc-for>
+<div style="flex-basis: 100%; font-size: 12px; color: #8f7f66; font-style: italic">{{f.yaml}}</div>
+<div style="flex-basis: 100%; font-size: 12px; color: #a8957a">Saved to the sketch as you type. Power the console off and on to go back to its defaults.</div>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+
+</div>
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 22px; margin-top: 18px; padding-top: 20px; border-top: 2px groove rgba(224,178,92,.25)">
+<div role="group" aria-label="Switches" style="display: flex; flex-wrap: wrap; gap: 14px">
+<sc-for list="{{switches}}" as="w" hint-placeholder-count="2">
+<button type="button" onClick="{{w.flip}}" aria-pressed="{{w.pressed}}" style="display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 8px 18px 8px 12px; border-radius: 10px; border: 2px solid #6b4a22; background: #23180f; color: #ead9b8">
+<span style="position: relative; width: 34px; height: 34px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #d8b878, #6e4c1c); box-shadow: 0 3px 6px rgba(0,0,0,.6)">
+<span style="{{w.led}}"></span>
+</span>
+<span style="text-align: left">
+<span style="display: block; font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 1px; color: #e0b25c">{{w.label}}</span>
+<span style="display: block; font-family: 'VT323', monospace; font-size: 18px; {{w.textStyle}}">{{w.state}}</span>
+</span>
+</button>
+</sc-for>
+</div>
+
+<div style="display: flex; align-items: center; gap: 18px">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px">
+<div style="width: 46px; height: 46px; border-radius: 50%; background: radial-gradient(circle at 50% 50%, #c9a15a, #5a3e18 75%); box-shadow: 0 4px 8px rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center">
+<span role="img" aria-label="{{readyAria}}" style="width: 30px; height: 30px; border-radius: 50%; {{readyLamp}}"></span>
+</div>
+<div style="font-family: 'Cinzel', serif; font-weight: 700; font-size: 12px; letter-spacing: 3px; color: #e0b25c">{{goTitle}}</div>
+<div style="font-size: 12px; color: #bda887">{{goHint}}</div>
+</div>
+<div style="padding: 10px; border-radius: 20px; background: linear-gradient(160deg, #e0b25c, #9c7434 45%, #5a3e18); box-shadow: 0 8px 18px rgba(0,0,0,.7), inset 0 2px 0 rgba(255,236,190,.5), inset 0 -2px 0 rgba(0,0,0,.4)">
+<button type="button" onClick="{{go}}" aria-label="{{goAria}}" style="{{goStyle}}">
+<span style="display: block; font-family: 'Cinzel', serif; font-weight: 900; font-size: 20px; letter-spacing: 3px; color: #fff2e0; text-shadow: 0 0 8px rgba(255,200,170,.9)">{{goLabel}}</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+
+<section aria-label="State tube" style="display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px; border-radius: 12px; background: radial-gradient(ellipse at center, #241810, #160f0a 70%); border: 2px solid #5a3e1e">
+<div style="align-self: stretch; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 3px; color: #c9a15a"><span>STATE TUBE · POWER</span><span style="color: #bda887; letter-spacing: 1px; font-family: 'Spectral', serif; font-style: italic; font-size: 13px">{{tubeCaption}}</span></div>
+<div style="position: relative; width: 640px; max-width: 100%; aspect-ratio: 1 / 1; border-radius: 50%; background: radial-gradient(circle at 50% 50%, rgba(255,140,60,.12) 0%, rgba(30,14,6,.96) 60%, #0a0503 100%); border: 8px solid #3c3a37; box-shadow: inset 0 0 70px rgba(0,0,0,.92), inset 0 0 0 2px rgba(255,255,255,.06), 0 0 0 5px #8a6630, 0 0 0 9px #3b2711, 0 14px 40px rgba(0,0,0,.75); animation: hum 4s infinite">
+<div aria-hidden="true" style="position: absolute; left: 16%; top: 7%; width: 32%; height: 13%; border-radius: 50%; background: radial-gradient(ellipse, rgba(255,255,255,.14), transparent 70%); transform: rotate(-26deg)"></div>
+<svg viewBox="0 0 600 600" role="img" aria-label="{{tubeAria}}" style="position: absolute; inset: 0; width: 100%; height: 100%">
+<circle cx="300" cy="300" r="170" fill="none" stroke="rgba(255,150,70,.07)" stroke-width="1"></circle>
+<sc-for list="{{rings}}" as="g" hint-placeholder-count="4">
+<path d="{{g.track}}" fill="none" stroke="#1a0f08" stroke-width="16" stroke-linecap="round"></path>
+<path d="{{g.fill}}" fill="none" stroke="{{g.color}}" stroke-width="12" stroke-linecap="round" stroke-dasharray="10 5" style="{{g.anim}}"></path>
+</sc-for>
+<sc-for list="{{edges}}" as="e" hint-placeholder-count="6">
+<path d="{{e.d}}" fill="none" stroke="{{e.color}}" stroke-width="{{e.width}}" stroke-linecap="round" stroke-dasharray="7 5" style="{{e.anim}}"></path>
+</sc-for>
+<circle cx="300" cy="350" r="{{orbR}}" fill="{{blend}}" style="{{orbGlow}}"></circle>
+<circle cx="292" cy="340" r="9" fill="rgba(255,255,255,.55)"></circle>
+
+<sc-for list="{{nodes}}" as="n" hint-placeholder-count="6">
+<circle cx="{{n.x}}" cy="{{n.y}}" r="{{n.r}}" fill="{{n.fill}}" stroke="{{n.stroke}}" stroke-width="2.5" style="{{n.glow}}"></circle>
+<circle cx="{{n.x}}" cy="{{n.y}}" r="{{n.inner}}" fill="none" stroke="{{n.stroke}}" stroke-width="1.5"></circle>
+</sc-for>
+</svg>
+<div aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; font-family: 'VT323', monospace">
+<sc-for list="{{labels}}" as="b" hint-placeholder-count="20">
+<div style="{{b.style}}">{{b.text}}</div>
+</sc-for>
+</div>
+</div>
+<div style="font-size: 13px; color: #bda887; text-align: center; max-width: 640px">The outer ring is each weight's power in its own colour; the decision edge (choosing → acting) and the centre orb carry their blend.</div>
+</section>
+
+<section aria-label="Printer" style="border-radius: 14px; padding: 0 18px 18px; background: linear-gradient(180deg, #2f2c29, #1c1a18); border: 3px solid #121110; box-shadow: 0 12px 28px rgba(0,0,0,.6)">
+<div style="max-width: 760px; margin: 0 auto">
+<div style="position: relative; height: 380px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end">
+<div style="padding: 18px 46px 10px; background-color: #f1e8cf; background-image: radial-gradient(circle at 16px 12px, #1c1a18 5px, transparent 6px), radial-gradient(circle at calc(100% - 16px) 12px, #1c1a18 5px, transparent 6px), repeating-linear-gradient(180deg, transparent 0 46px, rgba(120,170,120,.22) 46px 92px); background-size: 100% 24px, 100% 24px, 100% 92px; box-shadow: inset 8px 0 0 -6px rgba(0,0,0,.08), inset -8px 0 0 -6px rgba(0,0,0,.08); font-family: 'DotGothic16', monospace; font-size: 15px; line-height: 23px; color: #2a2622">
+<sc-for list="{{lines}}" as="l" hint-placeholder-count="6">
+<div style="white-space: pre-wrap; word-break: break-word; animation: feed .45s ease-out; {{l.tone}}">{{l.text}}</div>
+</sc-for>
+<sc-if value="{{showTable}}" hint-placeholder-val="{{ false }}">
+<div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed #6b6255; animation: feed .45s ease-out; overflow-x: auto">
+<div>boxoffice/pick_seats.seat - shortlist</div>
+<div style="display: grid; grid-template-columns: 110px 70px 70px 70px; gap: 0 12px; min-width: 360px">
+<div>value</div><div>row</div><div>centre</div><div>total</div>
+<sc-for list="{{table}}" as="t" hint-placeholder-count="4">
+<div>{{t.value}}</div><div style="{{t.rowStyle}}">{{t.row}}</div><div style="{{t.centreStyle}}">{{t.centre}}</div><div>{{t.total}}</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+</div>
+</div>
+<div aria-hidden="true" style="height: 28px; border-radius: 0 0 8px 8px; background: linear-gradient(180deg, #0c0b0a, #3a3733 40%, #121110); box-shadow: 0 -4px 10px rgba(0,0,0,.5)"></div>
+<div style="margin-top: 8px; display: flex; justify-content: space-between; font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 3px; color: #8f8a83"><span>RUN LOG · PRINTER</span><span>{{printerState}}</span></div>
+</div>
+</section>
+
+</main>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1360,"height":1700}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { ...this.factory(), sketch: 'evening', on: true, open: {} };
+  }
+  // What the sketch shipped with: a power cycle (off, then on) brings it back.
+  factory() {
+    return {
+      mood: 'fun', running: false, shown: 0,
+      moods: ['fun', 'serious', 'dramatic', 'romantic'], moodDefault: 'fun',
+      weights: { tomato: 1, audience: 2, row: 2, centre: 3 },
+      switches: { together: true, evenings: true },
+      params: {
+        tomato: { from: '70', to: '100', def: '1' },
+        audience: { question: 'audience', looks: 'reviews', def: '2' },
+        row: { order: 'E, F, D', def: '2' },
+        centre: { from: '0.3', to: '1', def: '3' },
+      },
+    };
+  }
+  powerCycle() {
+    clearInterval(this.timer);
+    if (this.state.on) this.setState({ on: false, running: false, shown: 0 });
+    else this.setState({ ...this.factory(), on: true, open: {} });
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  script() {
+    const w = this.state.weights;
+    const sw = this.state.switches;
+    const f = (v) => v.toFixed(2);
+    return [
+      { text: '=== UNDERSTUDY RUN LOG ===  evening', tone: 'font-weight:bold' },
+      { text: 'inputs  mood=' + this.state.mood + '  tomato=' + f(w.tomato) + '  audience=' + f(w.audience) + '  row=' + f(w.row) + '  centre=' + f(w.centre) },
+      { text: 'gates   evenings ' + (sw.evenings ? 'ON' : 'off') + '  /  seats together ' + (sw.together ? 'ON' : 'off') },
+      { text: 'step 1  boxoffice/list_films' },
+      { text: '  hold  showing s2 - no "tomato" for "Night Shift" yet', tone: 'color:#7a4a12' },
+      { text: 'step 2  ratings/rating  title=Night Shift' },
+      { text: 'step 3-7  rated the other five films' },
+      { text: '  jev   audience: Night Shift = Loved it / Paper Boats = Mixed', tone: 'color:#24557a' },
+      { text: 'step 8  boxoffice/seat_map  showing=s2' },
+      { text: '  rules removed 71 seats: together 1 < 2 (64), row not in [E,F,D] (7)', tone: 'color:#5a544c' },
+      { text: 'step 9  boxoffice/pick_seats  seat=s2-E15 count=2  (mood ' + this.state.mood + ')' },
+      { text: 'step 10 boxoffice/pay  method=card hold=h1' },
+      { text: '*** TICKET ISSUED  Night Shift 19:30  E15, E16  24 paid ***', tone: 'font-weight:bold' },
+    ];
+  }
+  press() {
+    clearInterval(this.timer);
+    if (this.state.running) {
+      this.setState({ running: false, shown: 0 });
+      return;
+    }
+    this.setState({ running: true, shown: 0 });
+    const total = this.script().length;
+    this.timer = setInterval(() => {
+      const next = this.state.shown + 1;
+      this.setState({ shown: next });
+      if (next >= total) clearInterval(this.timer);
+    }, 650);
+  }
+  renderVals() {
+    const s = this.state;
+    const COLORS = { tomato: [255, 72, 56], audience: [176, 98, 255], row: [56, 196, 255], centre: [120, 236, 70] };
+    const rgb = (c) => 'rgb(' + c.map((v) => Math.round(v)).join(',') + ')';
+    const P = s.params;
+    const about = {
+      tomato: 'tomato from ' + P.tomato.from + ' to ' + P.tomato.to + ' · default ' + P.tomato.def,
+      audience: 'Jev asks "' + P.audience.question + '" about the ' + P.audience.looks + ' · default ' + P.audience.def,
+      row: 'rows ' + P.row.order + ', best first · default ' + P.row.def,
+      centre: 'centre from ' + P.centre.from + ' to ' + P.centre.to + ' · default ' + P.centre.def,
+    };
+    const yamlOf = {
+      tomato: 'tomato: { range: [' + P.tomato.from + ', ' + P.tomato.to + '], weight: tomato }   inputs.tomato.default: ' + P.tomato.def,
+      audience: 'audience: { ask: ' + P.audience.question + ', weight: audience }   looks_at: ' + P.audience.looks + '   inputs.audience.default: ' + P.audience.def,
+      row: 'row: { order: [' + P.row.order + '], weight: row }   inputs.row.default: ' + P.row.def,
+      centre: 'centre: { range: [' + P.centre.from + ', ' + P.centre.to + '], weight: centre }   inputs.centre.default: ' + P.centre.def,
+    };
+    const LABELS = { from: 'FROM', to: 'TO', def: 'DEFAULT', order: 'ORDER, BEST FIRST', question: 'QUESTION', looks: 'LOOKS AT' };
+    const WIDTHS = { from: 90, to: 90, def: 90, order: 170, question: 140, looks: 140 };
+
+    const sketchList = [
+      ['evening', 'two servers · decides like a person'], ['mcp', 'a box office over stdio'], ['mcp-remote', 'the box office over HTTP'],
+      ['cli', 'orders a coffee'], ['http', 'buys tea from an API'], ['web', 'clicks through a page'],
+    ];
+    const sketches = sketchList.map(([name, aboutIt]) => {
+      const on = name === s.sketch;
+      return {
+        name, about: aboutIt, pressed: on ? 'true' : 'false', pick: () => this.setState({ sketch: name }),
+        style: 'width:100%;min-height:52px;text-align:left;padding:10px 12px;border-radius:8px;border:2px solid ' + (on ? '#e0b25c' : '#4a3216') + ';background:' + (on ? 'linear-gradient(180deg,#d6ae62,#9c7434)' : '#24180f') + ';color:' + (on ? '#24170a' : '#d8c4a0'),
+      };
+    });
+
+    const moodNames = s.moods.length > 0 ? s.moods : ['fun'];
+    const angles = moodNames.map((_, index) => (moodNames.length === 1 ? 0 : -75 + (150 * index) / (moodNames.length - 1)));
+    const setMoods = (moods, mood = s.mood) => this.setState({ moods, mood: moods.includes(mood) ? mood : moods[0] });
+    const moodFields = moodNames.map((name, index) => ({
+      label: String(index + 1), value: name,
+      change: (event) => {
+        const moods = [...moodNames];
+        const was = moods[index];
+        moods[index] = event.target.value;
+        setMoods(moods, s.mood === was ? event.target.value : s.mood);
+      },
+    }));
+    const cx = 125;
+    const cy = 125;
+    const moods = moodNames.map((name, index) => {
+      const a = (angles[index] * Math.PI) / 180;
+      const x = cx + 100 * Math.sin(a);
+      const y = cy - 100 * Math.cos(a);
+      const on = name === s.mood;
+      return {
+        name, pressed: on ? 'true' : 'false', pick: () => this.setState({ mood: name }),
+        style: 'position:absolute;left:' + (x - 44) + 'px;top:' + (y - 22) + 'px;width:88px;min-height:44px;border:none;background:transparent;font-family:Cinzel,serif;font-size:12px;letter-spacing:1px;color:' + (on ? '#ffe9b0' : '#9c8a6c') + ';text-shadow:' + (on ? '0 0 8px rgba(255,200,110,.9)' : 'none'),
+      };
+    });
+    const ticks = angles.map((deg, index) => {
+      const a = (deg * Math.PI) / 180;
+      const x = cx + 62 * Math.sin(a);
+      const y = cy - 62 * Math.cos(a);
+      const on = moodNames[index] === s.mood;
+      return { style: 'position:absolute;left:' + (x - 4) + 'px;top:' + (y - 4) + 'px;width:8px;height:8px;border-radius:50%;background:' + (on ? '#ffd27a' : '#5a4128') + ';box-shadow:' + (on ? '0 0 8px #ffb04a' : 'none') };
+    });
+    const moodDeg = angles[Math.max(0, moodNames.indexOf(s.mood))];
+
+    const total = Object.values(s.weights).reduce((a, b) => a + b, 0);
+    const faders = Object.entries(s.weights).map(([name, v]) => {
+      const c = rgb(COLORS[name]);
+      return {
+        id: 'fader-' + name, label: name.toUpperCase(), what: about[name], value: v,
+        drawerId: 'drawer-' + name, open: Boolean(s.open[name]), expanded: s.open[name] ? 'true' : 'false', caretDeg: s.open[name] ? 90 : 0,
+        toggle: () => this.setState({ open: { ...s.open, [name]: !s.open[name] } }),
+        yaml: yamlOf[name],
+        fields: Object.entries(P[name]).map(([key, text]) => ({
+          label: LABELS[key], value: text, width: WIDTHS[key],
+          change: (event) => this.setState({ params: { ...s.params, [name]: { ...s.params[name], [key]: event.target.value } } }),
+        })),
+        valueText: v === 0 ? 'off' : v.toFixed(2),
+        shown: v === 0 ? 'OFF' : (v >= 3 ? '11' : v.toFixed(2)),
+        change: (event) => this.setState({ weights: { ...s.weights, [name]: Number(event.target.value) } }),
+        chip: 'width:14px;height:14px;border-radius:50%;background:' + c + ';box-shadow:0 0 8px ' + c,
+        fill: 'background:linear-gradient(90deg,transparent,' + c + ');opacity:.85;width:' + (v / 3) * 100 + '%;box-shadow:0 0 ' + (4 + v * 5) + 'px ' + c,
+        readout: 'color:' + c + ';text-shadow:0 0 8px ' + c,
+      };
+    });
+    const mix = [0, 1, 2].map((i) => (total === 0 ? 90 : Object.entries(s.weights).reduce((sum, [name, v]) => sum + COLORS[name][i] * v, 0) / total));
+    const blend = rgb(mix);
+    const C = 300;
+    const pt = (deg, r) => [C + r * Math.cos((deg * Math.PI) / 180), C + r * Math.sin((deg * Math.PI) / 180)];
+    const arc = (from, to, r) => {
+      const [x1, y1] = pt(from, r);
+      const [x2, y2] = pt(to, r);
+      return 'M ' + x1.toFixed(1) + ' ' + y1.toFixed(1) + ' A ' + r + ' ' + r + ' 0 ' + (to - from > 180 ? 1 : 0) + ' 1 ' + x2.toFixed(1) + ' ' + y2.toFixed(1);
+    };
+    const SPANS = { tomato: [-130, -50], audience: [-40, 40], row: [50, 130], centre: [140, 220] };
+    const rings = Object.entries(s.weights).map(([name, v]) => {
+      const [from, to] = SPANS[name];
+      const c = rgb(COLORS[name]);
+      const end = from + Math.max(0.5, ((to - from) * v) / 3);
+      const [lx, ly] = pt((from + to) / 2, 236);
+      return {
+        color: c, track: arc(from, to, 266), fill: arc(from, end, 266),
+        lx: lx.toFixed(1), ly: (ly + 5).toFixed(1),
+        text: name.toUpperCase() + ' ' + (v >= 3 ? '11' : v.toFixed(2)),
+        anim: (v === 0 ? 'opacity:.25' : 'animation:flowdash ' + (1.6 / v) + 's linear infinite;filter:drop-shadow(0 0 ' + (2 + v * 3) + 'px ' + c + ')'),
+      };
+    });
+    // A label over the tube, placed in its 600 x 600 drawing's units.
+    const place = (x, y, look) => 'position:absolute;left:' + (Number(x) / 6) + '%;top:' + (Number(y) / 6) + '%;transform:translate(-50%,-50%);white-space:nowrap;' + look;
+    const shareList = Object.entries(s.weights).map(([name, v]) => ({ name, color: rgb(COLORS[name]), share: total === 0 ? 0 : v / total }));
+    const shares = shareList.map((h, index) => ({ x: 222 + index * 52, color: h.color, text: Math.round(h.share * 100) + '%' }));
+    const switches = [['together', 'SEATS TOGETHER'], ['evenings', 'EVENINGS ONLY']].map(([key, label]) => {
+      const on = s.switches[key];
+      return {
+        label, state: on ? 'ON' : 'OFF', pressed: on ? 'true' : 'false',
+        flip: () => this.setState({ switches: { ...s.switches, [key]: !on } }),
+        led: 'position:absolute;inset:6px;border-radius:50%;' + (on ? 'background:radial-gradient(circle at 40% 35%,#fff6c8,#ffb020 45%,#a85a00);box-shadow:0 0 14px #ffb020,0 0 4px #fff' : 'background:radial-gradient(circle at 40% 35%,#6a4a2a,#2a1a0c);box-shadow:inset 0 2px 3px rgba(0,0,0,.8)'),
+        textStyle: on ? 'color:#ffb020;text-shadow:0 0 6px #ffb020' : 'color:#7a6a52',
+      };
+    });
+
+    const all = this.script();
+    const done = s.running && s.shown >= all.length;
+    const R = 170;
+    const LOOP = { waiting: 180, looking: 270, choosing: 360, acting: 90 };
+    const at = {};
+    for (const [name, deg] of Object.entries(LOOP)) {
+      const [x, y] = pt(deg, R);
+      at[name] = { x, y };
+    }
+    at.booked = { x: 222, y: 222 };
+    at['walked away'] = { x: 378, y: 222 };
+    const SUBS = { waiting: 'safe · OBSERVE', looking: 'invoke look', choosing: 'tag move', acting: 'invoke play', booked: 'final', 'walked away': 'final · walked-away' };
+    const cycle = ['waiting', 'looking', 'choosing', 'acting'];
+    const current = !s.running ? 'waiting' : (done ? 'booked' : cycle[s.shown % 4]);
+    const nodes = Object.keys(at).map((name) => {
+      const on = name === current;
+      const isFinal = name === 'booked' || name === 'walked away';
+      const below = name === 'acting' || isFinal;
+      const { x, y } = at[name];
+      return {
+        name, sub: SUBS[name], x: x.toFixed(1), y: y.toFixed(1), r: on ? 20 : 15, inner: isFinal ? (on ? 14 : 10) : 0,
+        ty: (below ? y + 38 : y - 30).toFixed(1), ty2: (below ? y + 54 : y - 46).toFixed(1),
+        fill: on ? '#ffb04a' : '#2a1608', stroke: on ? '#ffe2a8' : '#a86a32', text: on ? '#ffe2a8' : '#d39a5c',
+        glow: on ? 'filter:drop-shadow(0 0 10px #ff9a3c) drop-shadow(0 0 22px #ff7a1a)' : '',
+      };
+    });
+    const loopEdge = (from, to, label, sub) => {
+      const a1 = LOOP[from] + 12;
+      const a2 = (LOOP[to] < LOOP[from] ? LOOP[to] + 360 : LOOP[to]) - 12;
+      const [lx, ly] = pt((a1 + a2) / 2, R + 34);
+      return { from, to, d: arc(a1, a2, R), lx, ly, label, sub };
+    };
+    const chord = (from, to, label, sub, dx, dy) => ({
+      from, to, d: 'M ' + at[from].x.toFixed(1) + ' ' + (at[from].y + 16).toFixed(1) + ' L ' + at[to].x.toFixed(1) + ' ' + (at[to].y - 16).toFixed(1),
+      lx: (at[from].x + at[to].x) / 2 + dx, ly: (at[from].y + at[to].y) / 2 + dy, label, sub,
+    });
+    const EDGES = [
+      loopEdge('waiting', 'looking', 'OBSERVE', 'look again'),
+      loopEdge('looking', 'choosing', 'phase is asking', 'a move is offered'),
+      loopEdge('choosing', 'acting', 'STEP · decide', 'gates → scores → pick'),
+      loopEdge('acting', 'waiting', 'done', 'the call is made'),
+      chord('looking', 'booked', 'showing', '"Ticket issued"', -62, -6),
+      chord('looking', 'walked away', 'nothing_qualifies', 'all ruled out', 70, -6),
+    ];
+    const edges = EDGES.map((e) => {
+      const isDecision = e.from === 'choosing';
+      const isLive = s.running && (e.from === current || (done && e.to === 'booked'));
+      const power = isDecision ? total : 1;
+      const speed = s.running ? Math.max(0.3, 2.4 / (power || 0.5)) : 0;
+      return {
+        d: e.d, label: e.label, sub: e.sub, lx: e.lx.toFixed(1), ly: e.ly.toFixed(1), ly2: (e.ly + 15).toFixed(1),
+        color: isDecision ? blend : (isLive ? '#ffb04a' : '#b0602a'), width: isDecision ? 3 + total * 1.6 : (isLive ? 4 : 2.5),
+        textColor: isDecision ? blend : '#e0a868',
+        anim: (speed ? 'animation:flowdash ' + speed + 's linear infinite;' : '') + (isDecision ? 'filter:drop-shadow(0 0 ' + (3 + total * 2.5) + 'px ' + blend + ')' : (isLive ? 'filter:drop-shadow(0 0 6px #ff8a2a)' : 'opacity:.75')),
+      };
+    });
+    const lines = s.running ? all.slice(0, s.shown) : [
+      { text: '--- ready. ' + s.sketch + ' loaded: 4 faders, 2 switches, mood ' + s.mood + ' ---' },
+      { text: 'set the controls, then press the button.', tone: 'color:#5a544c' },
+    ];
+    const nix = (value) => (value === 1 ? '11' : value.toFixed(2));
+    const mark = (value) => (value === 1 ? 'font-weight:bold;text-decoration:underline' : '');
+    const rows = [['s2-E15', 1, 0.877], ['s2-E16', 1, 0.877], ['s2-E14', 1, 0.63], ['s4-F5', 0.444, 0.599]];
+    const table = rows.map(([value, row, centre]) => ({ value, row: nix(row), centre: nix(centre), total: (row * centre).toFixed(3), rowStyle: mark(row), centreStyle: mark(centre) }));
+
+    return {
+      sketches, moods, ticks, moodDeg, faders, rings, shares, blend, switches, nodes, edges, lines, table,
+      orbR: 24 + total * 3, orbGlow: 'filter:drop-shadow(0 0 ' + (8 + total * 4) + 'px ' + blend + ');animation:pulse 1.6s infinite',
+      labels: [
+        ...rings.map((g) => ({ text: g.text, style: place(g.lx, g.ly - 5, 'font-size:clamp(11px,2.4vw,17px);letter-spacing:1px;color:' + g.color + ';text-shadow:0 0 6px ' + g.color) })),
+        ...edges.map((e) => ({ text: e.label, style: place(e.lx, e.ly - 4, 'font-size:clamp(11px,2.3vw,17px);color:' + e.textColor + ';text-shadow:0 0 5px rgba(0,0,0,.9),0 0 8px ' + e.textColor) })),
+        ...edges.map((e) => ({ text: e.sub, style: place(e.lx, Number(e.ly2) - 2, 'font-size:clamp(10px,1.9vw,14px);color:' + e.textColor + ';opacity:.8;text-shadow:0 0 4px #000') })),
+        ...nodes.map((n) => ({ text: n.name, style: place(n.x, Number(n.ty) - 6, 'font-size:clamp(13px,2.8vw,21px);letter-spacing:1px;color:' + n.text + ';text-shadow:0 0 6px rgba(255,150,60,.7),0 0 3px #000') })),
+        ...nodes.map((n) => ({ text: n.sub, style: place(n.x, Number(n.ty2) - 4, 'font-size:clamp(10px,1.8vw,14px);color:' + n.text + ';opacity:.75;text-shadow:0 0 3px #000') })),
+        { text: 'DECISION POWER', style: place(300, 398, 'font-family:Cinzel,serif;font-size:clamp(9px,1.6vw,12px);letter-spacing:3px;color:#e8c890') },
+        ...shares.map((h) => ({ text: h.text, style: place(h.x, 420, 'font-size:clamp(11px,2.2vw,17px);color:' + h.color + ';text-shadow:0 0 6px ' + h.color) })),
+      ],
+      tubeCaption: s.running ? (done ? 'run complete' : 'running · ' + current) : 'idle · waiting',
+      tubeAria: 'Statechart: waiting -OBSERVE-> looking -phase is asking-> choosing -STEP-> acting -done-> waiting; looking -showing Ticket issued-> booked; looking -nothing_qualifies-> walked away. Now ' + current + '. Power: ' + shareList.map((h) => h.name + ' ' + Math.round(h.share * 100) + '%').join(', '),
+      showTable: s.running && s.shown >= 11,
+      printerState: s.running ? (done ? 'DONE · outcome done' : 'PRINTING') : 'IDLE',
+      lamp: !s.on ? 'background:#2a1a0c' : (s.running ? 'background:#7dff98;box-shadow:0 0 12px #7dff98' : 'background:#ff9a3c;box-shadow:0 0 8px #ff9a3c'),
+      lampText: !s.on ? 'DARK' : (s.running ? 'ON AIR' : 'STANDING BY'),
+      goTitle: s.running ? 'RUNNING' : 'READY', goHint: s.running ? 'press again to reset' : 'press to play the sketch',
+      goLabel: s.running ? 'STOP' : 'PLAY', goAria: s.running ? 'Stop and reset the run' : 'Play the sketch',
+      readyAria: s.running ? 'Running' : 'Ready',
+      readyLamp: s.running ? 'background:radial-gradient(circle at 40% 35%,#ffe2c8,#ff6a2a 45%,#8a1a04);box-shadow:0 0 14px #ff5a20,inset 0 -3px 5px rgba(0,0,0,.4)' : 'background:radial-gradient(circle at 40% 35%,#eaffee,#4dff7a 40%,#0a7a22 100%);box-shadow:0 0 16px #3dff6a,0 0 34px rgba(60,255,110,.55),inset 0 -3px 5px rgba(0,0,0,.35);animation:pulse 2s infinite',
+      goStyle: 'width:140px;height:140px;border-radius:14px;border:4px solid #3a0a04;cursor:pointer;background:radial-gradient(circle at 50% 42%,' + (s.running ? '#ffd0b8 0%,#ff5a3a 22%,#d0200c 55%,#6a0a02 100%' : '#ff9a80 0%,#e0301a 30%,#a01408 62%,#4a0502 100%') + ');box-shadow:inset 0 6px 12px rgba(255,220,200,.45),inset 0 -10px 18px rgba(0,0,0,.55),0 0 ' + (s.running ? '40px #ff4020' : '16px rgba(255,60,30,.55)') + ';' + (s.running ? 'animation:pulse 1.2s infinite' : ''),
+      go: () => this.press(),
+      moodOpen: Boolean(s.open.mood), moodExpanded: s.open.mood ? 'true' : 'false', moodCaret: s.open.mood ? 90 : 0,
+      moodToggle: () => this.setState({ open: { ...s.open, mood: !s.open.mood } }),
+      moodWhat: moodNames.length + ' moods · default ' + s.moodDefault,
+      moodFields, moodDefault: s.moodDefault,
+      moodDefaultChange: (event) => this.setState({ moodDefault: event.target.value }),
+      moodAdd: () => (moodNames.length < 6 ? setMoods([...moodNames, 'mood ' + (moodNames.length + 1)]) : null),
+      moodRemove: () => (moodNames.length > 2 ? setMoods(moodNames.slice(0, -1)) : null),
+      moodYaml: 'mood: { choose: [' + moodNames.join(', ') + '], default: ' + s.moodDefault + ' }',
+      power: () => this.powerCycle(), powerPressed: s.on ? 'true' : 'false', powerWord: s.on ? 'ON' : 'OFF',
+      powerAria: s.on ? 'Power off the console' : 'Power on the console (resets to the sketch defaults)',
+      powerBat: 'position:absolute;left:50%;width:8px;height:18px;margin-left:-4px;border-radius:3px;background:linear-gradient(90deg,#8f8a83,#e6e1d8,#8f8a83);transition:top .2s;top:' + (s.on ? '3px' : '17px'),
+      dim: s.on ? '' : 'opacity:.25;filter:grayscale(1) brightness(.6);pointer-events:none',
+    };
+  }
+}
+</script>
+</body>
+</html>

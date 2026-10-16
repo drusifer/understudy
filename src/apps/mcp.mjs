@@ -183,7 +183,7 @@ export function mcpApp({ calls = [], values = {}, decide = {}, pick = null, ques
    */
   function judged(entry, value, row) {
     const facts = rows.factsOf(row, entry.join);
-    const passed = gate(facts, entry.gates);
+    const passed = gate(facts, entry.gates, { inputs: app.inputs });
     if (!passed.pass) return { result: passed, reusing: 0 };
     const about = entry.join ? row[entry.join] : value;
     const answers = answersFor(entry.scores, about);

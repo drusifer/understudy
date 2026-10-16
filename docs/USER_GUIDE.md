@@ -19,6 +19,7 @@ TLDR:
 3. [Run an example](#3-run-an-example)
 4. [Read the output](#4-read-the-output)
 5. [Watch a run](#5-watch-a-run)
+   - [The dashboard](#the-dashboard)
 6. [Write a sketch for your own app](#6-write-a-sketch-for-your-own-app)
 7. [Troubleshooting](#7-troubleshooting)
 8. [Command reference](#8-command-reference)
@@ -201,6 +202,47 @@ understudy: watch at http://192.168.86.69:41207/w/kJ3m9xT2vQ8pLr1n/ or http://12
 With `--host`, anyone on that network who has the printed address can watch the run and pause
 it - the random part of the address is the only guard. Use it on a network you trust.
 
+### The dashboard
+
+For sketches with inputs - the evening example's mood, weights and switch - the dashboard is a
+console to play them from instead of a command line:
+
+```bash
+bobp make run ARGS="dashboard examples"      # understudy dashboard <folder> [--port N] [--host ADDR]
+```
+
+It prints `understudy: dashboard at http://127.0.0.1:<port>/d/<token>/`; open it. Like the watch
+page it is served by understudy alone (no internet), on 127.0.0.1 unless you give `--host`, behind
+an unguessable path. Ctrl-C stops it (and any run).
+
+![The dashboard with the evening sketch chosen](images/dashboard.png)
+
+- **Sketch rack** (left): every directory in the folder holding a `sketch.yaml`. One that fails
+  `check` is greyed out with its message.
+- **Controls**: each of the sketch's `inputs:` as a control - a `choose` input is a pointer dial,
+  a `weight` a fader (left = less important, right = more; each its own colour; the readout shows
+  `OFF` at 0 and `11` at the top), a `switch` a toggle with a lamp. They start at the defaults.
+- **Access panels**: the ▸ under a fader or the mood dial opens edit boxes for that factor's range
+  or order, its Jev question, its default, or the moods. Each change is checked and **saved to the
+  sketch's `sketch.yaml`** (only that value's text changes; comments stay). A change the checks
+  would refuse is not saved; the box turns red and says why.
+- **POWER**: off stops a run and dims the console; **off and on again puts every sketch you edited
+  back to how it was** before your first edit (the copies live in `<folder>/.factory/`, git-ignored).
+- **PLAY**: starts the sketch with the controls' values (as `--input`), logged like any run under
+  `build/runs/`; the READY lamp turns from green to orange and the button reads STOP (Ctrl-C for
+  that run). Settings are locked while it runs. A run that cannot start (no `TYPESAFE_API_KEY`, a
+  value out of range) prints why.
+
+![The state tube during a run](images/dashboard-tube.png)
+
+- **State tube**: the sketch's statechart on a circle, from its initial state; final states inside.
+  Every transition is labelled with its event and guard. The current state glows; the transition
+  just taken flows. Around the rim, one arc per weight in its colour; the transition into the
+  state that plays a move, and the orb in the middle, carry the weights' colours mixed in the
+  faders' ratio, with each weight's share.
+- **Printer**: the run log on tractor-feed paper - each step, what the rules removed, Jev's scores,
+  each score table (a perfect 1.0 prints as `11`), the ticket and the outcome.
+
 ## 6. Write a sketch for your own app
 
 The fastest route is to copy the example closest to your app and change it.
@@ -326,6 +368,8 @@ understudy check <sketch>             check the sketch without starting anything
 understudy library [<sketch>]         list every name a sketch may use, with its meaning
 understudy watch <log.jsonl> [--port N] [--host ADDR]
                                       replay a finished run's log on the watch page
+understudy dashboard <folder> [--port N] [--host ADDR]
+                                      the console: choose a sketch, set its inputs, press Play
 understudy --help
 ```
 

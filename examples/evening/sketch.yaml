@@ -6,8 +6,9 @@
 #             more, or anything above 90; two seats together in row E, F or D
 #   scores    what they like more: rows E, then F, then D; central seats; a
 #             higher tomato; what the audience thought (Jev reads the reviews)
-#   inputs    what they can turn up or down when they start: the mood, and
-#             how much the row and centre matter (--input centre=1)
+#   inputs    what they can turn up or down when they start: the mood, how
+#             much the row and centre matter (--input centre=1), and a switch
+#             for the evenings-only gate (--input evenings=off)
 #   pick      Jev chooses the final value from the shortlist, in the mood
 #
 # When nothing qualifies, the understudy walks away and the run succeeds.
@@ -34,6 +35,7 @@ inputs:
   audience: { weight: [0, 3], default: 2 }
   row: { weight: [0, 3], default: 2 }
   centre: { weight: [0, 3], default: 3 }
+  evenings: { switch: true, default: true }      # off: afternoon showings qualify too
 
 questions:
   next:
@@ -61,7 +63,7 @@ decide:
   boxoffice/seat_map.showing:
     join: title
     gates:
-      starts: { at_least: '17:00' }
+      starts: { at_least: '17:00', when: evenings }
       any:
         - { genre: horror, tomato: { at_least: 70 } }
         - { tomato: { at_least: 91 } }

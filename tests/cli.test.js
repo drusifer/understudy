@@ -178,3 +178,14 @@ test('--input is repeatable and reaches the run as name=value pairs; a bare word
   assert.equal(bad.code, 2);
   assert.equal(bad.stderr, 'understudy: --input needs name=value, e.g. --input mood=romantic (got "romantic")\n');
 });
+
+test('dashboard takes one folder and --port/--host; nothing else (UND-27)', async () => {
+  const calls = [];
+  const commands = { dashboard: async (folder, options) => { calls.push([folder, options.port, options.host]); } };
+  assert.equal((await cli(['dashboard', 'examples', '--port', '4180', '--host', '0.0.0.0'], { commands })).code, 0);
+  assert.deepEqual(calls, [['examples', 4180, '0.0.0.0']]);
+  const none = await cli(['dashboard'], { commands });
+  assert.equal(none.code, 2);
+  assert.equal(none.stderr, 'understudy: dashboard needs a folder of sketches, e.g. understudy dashboard examples\n');
+  assert.equal((await cli(['dashboard', 'examples', '--steps', '3'], { commands })).stderr, 'understudy: no option "--steps" for dashboard - see understudy --help\n');
+});

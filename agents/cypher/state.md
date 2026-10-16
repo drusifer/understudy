@@ -15,11 +15,12 @@
   `test-live` (real Jev, paid).
 
 ## Current Task
-Sprint 5 COMPLETE - launched 2026-10-16 on branch `sprint-5` (phase commits 3842e55..9966798 + close).
-- UND-18..26 delivered; 254 unit, 4 browser, 7/7 live; ADR-0017..0022; CHANGELOG; chat archived (CHAT_sprint-5).
-- Not merged/pushed: awaits the owner ("merge and push sprint 5" → Tank: bobp make push on main after --no-ff merge).
+Sprint 6 COMPLETE - launched 2026-10-16 on branch `sprint-6` (308c242..8795f8d). Dashboard: `understudy dashboard <folder>`.
+- 281 unit + 5 browser tests; ADR-0023..0026; CHANGELOG; chat archived (CHAT_sprint-6).
+- Deviation flagged to owner: evening has an "evenings only" switch, not "seats together" (box office holds side-by-side only).
+- Not merged/pushed: awaits the owner.
 
 ## Next Steps
-1. Ask the owner the open question (BACKLOG "Next"): should a decided argument wait until nothing is held back?
-2. On owner request: merge sprint-5 to main and push (Tank, `bobp make push`).
-3. Sprint 6 = the steampunk dashboard (BACKLOG "Sprint 6": knobs to 11, flux-capacitor edges) - shape with the owner one question at a time, short replies.
+1. On owner request: merge sprint-6 to main (--no-ff) and push via `bobp make push` (Tank).
+2. Backlog "Next (from the sprint 6 retro)": tube label crowding, together switch, "yet" wording, split page.mjs.
+3. Owner prefers short conversational replies, one question at a time; generic utilities from libraries.
