@@ -25,8 +25,8 @@
 
 ### Phase 2: Graph layout and the watch server — UND-14 (server side)
 *Phase goal: the statechart becomes SVG geometry, and a token-guarded local server streams a run's events over SSE.*
-- [ ] **Task 2.1:** `src/watch/turnGraph.mjs` (`turn:` → nodes/edges, all five examples), `src/watch/layout.mjs` (ranked columns, back-edge arcs, geometry); `src/watch/server.mjs` (127.0.0.1, token path, static files, SSE history-then-live with `end`, busy port → `UsageError`, 404s). Tests over real HTTP on a free port. (*Owner: Neo | Verification: `bobp make test`*)
-- [ ] **Task 2.2:** UAT (graph of each example has every state and transition; SSE late join gets history; wrong token 404; busy port refused) then Morpheus review. (*Owner: Trin → Morpheus | Verification: `bobp make check`; commit `Phase 2`*)
+- [x] **Task 2.1:** `src/watch/turnGraph.mjs` (`turn:` → nodes/edges, all five examples), `src/watch/layout.mjs` (ranked columns, back-edge arcs, geometry); `src/watch/server.mjs` (127.0.0.1, token path, static files, SSE history-then-live with `end`, busy port → `UsageError`, 404s). Tests over real HTTP on a free port. (*Owner: Neo | Verification: `bobp make test`*)
+- [x] **Task 2.2:** UAT (graph of each example has every state and transition; SSE late join gets history; wrong token 404; busy port refused) then Morpheus review. (*Owner: Trin → Morpheus | Verification: `bobp make check`; commit `Phase 2`*)
 
 ### Phase 3: The live page and `run --watch` — UND-14
 *Phase goal: `run <sketch> --watch` serves a page that draws the diagram, moves the highlight, and lists decisions live, for all four targets.*

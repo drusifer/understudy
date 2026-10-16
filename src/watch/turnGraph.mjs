@@ -28,6 +28,48 @@ export function transitionLabel(eventType, guard) {
   if (eventType === '' || eventType === undefined) on = 'always';
   else if (eventType.startsWith('xstate.done.')) on = 'done';
   else if (!EVENT_NAMES.has(eventType)) on = eventType;
+  return labelOf(on, guard);
+}
+
+/**
+ * `on`, then `: <guard>` when there is one.
+ */
+export function labelOf(on, guard) {
   const when = guardLabel(guard);
   return when ? `${on}: ${when}` : on;
+}
+
+/**
+ * One transition list as a turn writes it: a target name, `{ target,
+ * guard }`, or a list of those.
+ */
+function targetsOf(written) {
+  const list = Array.isArray(written) ? written : [written];
+  return list.filter((each) => each !== undefined && each !== null)
+    .map((each) => (typeof each === 'string' ? { target: each } : each))
+    .filter((each) => typeof each.target === 'string');
+}
+
+/**
+ * A turn as states and labelled transitions, in the order it is written.
+ * @param {{ initial: string, states: Record<string, object> }} turn the sketch's `turn:`
+ * @returns {{ initial: string, nodes: { id: string, tags: string[], final: boolean }[],
+ *   edges: { from: string, to: string, label: string }[] }}
+ */
+export function turnGraph(turn) {
+  const nodes = [];
+  const edges = [];
+  const states = Object.entries(turn.states ?? {});
+  for (const [id, state] of states) {
+    nodes.push({ id, tags: state?.tags ?? [], final: state?.type === 'final' });
+    const add = (on, written) => {
+      const targets = targetsOf(written);
+      for (const { target, guard } of targets) edges.push({ from: id, to: target, label: labelOf(on, guard) });
+    };
+    const events = Object.entries(state?.on ?? {});
+    for (const [event, written] of events) add(event, written);
+    if (state?.invoke?.onDone !== undefined) add('done', state.invoke.onDone);
+    if (state?.always !== undefined) add('always', state.always);
+  }
+  return { initial: turn.initial, nodes, edges };
 }
