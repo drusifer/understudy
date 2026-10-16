@@ -76,6 +76,31 @@ export function decisionOf(line) {
     retry: line.offList ? `first answered ${JSON.stringify(line.answer)} (not on offer), asked again` : null,
     args: Object.entries(chosen).map(([name, value]) => `${name}=${typeof value === 'string' ? value : JSON.stringify(value)}`).join(', '),
     answer: answerOf(line.response),
+    decided: (line.decided ?? []).map((each) => decidedOf(each)),
+  };
+}
+
+/**
+ * The first three of a list, and "..." when there are more.
+ */
+function listed(items) {
+  const more = items.length > 3 ? ', ...' : '';
+  return items.slice(0, 3).join(', ') + more;
+}
+
+/**
+ * One decided argument as the feed shows it (UND-22 AC5): the score
+ * table, how many values the gates and zero scores removed (the first
+ * few with why), and what is held back.
+ */
+export function decidedOf({ argument, table = null, removed = [], held = [] }) {
+  const factors = table?.[0] ? Object.keys(table[0].factors) : [];
+  return {
+    argument,
+    columns: ['value', ...factors, 'total'],
+    rows: (table ?? []).map((each) => [String(each.value), ...factors.map((name) => String(each.factors[name])), String(each.total)]),
+    removed: removed.length === 0 ? null : `removed ${removed.length}: ${listed(removed.map((each) => each.value + ' (' + each.why + ')'))}`,
+    held: held.length === 0 ? null : 'held back: ' + held.map((each) => `${each.value} (no ${each.missing})`).join(', '),
   };
 }
 
@@ -169,8 +194,31 @@ function drawStep(decision) {
   item.append(head, options);
   if (decision.retry) item.append(element('div', { class: 'retry' }, decision.retry));
   if (decision.args) item.append(element('div', { class: 'args' }, `arguments: ${decision.args}`));
+  // An argument with nothing ranked, removed or held (no rules) says nothing worth a line.
+  for (const decided of decision.decided) {
+    if (decided.rows.length > 0 || decided.removed || decided.held) item.append(drawDecided(decided));
+  }
   if (decision.answer) item.append(element('div', { class: `answer${decision.answer.isBad ? ' bad' : ''}` }, `answer: ${decision.answer.text}`));
   return item;
+}
+
+function drawDecided(decided) {
+  const box = element('div', { class: 'decided' }, decided.argument);
+  if (decided.rows.length > 0) {
+    const table = element('table', { class: 'scores' });
+    const head = element('tr', {});
+    head.append(...decided.columns.map((name) => element('th', {}, name)));
+    table.append(head);
+    for (const cells of decided.rows) {
+      const row = element('tr', {});
+      row.append(...cells.map((cell) => element('td', {}, cell)));
+      table.append(row);
+    }
+    box.append(table);
+  }
+  if (decided.removed) box.append(element('div', { class: 'removed' }, decided.removed));
+  if (decided.held) box.append(element('div', { class: 'held' }, decided.held));
+  return box;
 }
 
 /**

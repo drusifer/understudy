@@ -7,7 +7,8 @@ import assert from 'node:assert/strict';
 import { startTarget } from '../src/targets/mcp.mjs';
 import { RunError, UsageError } from '../src/errors.mjs';
 
-const BOX = { kind: 'mcp', entry: { command: 'node', args: ['server.mjs'] }, from: 'examples/mcp/sketch.yaml' };
+const BOX = { kind: 'mcp', servers: [{ name: null, entry: { command: 'node', args: ['server.mjs'] }, from: 'examples/mcp/sketch.yaml' }] };
+const withEntry = (entry) => ({ kind: 'mcp', servers: [{ ...BOX.servers[0], entry }] });
 
 async function started(spec = BOX, options = {}) {
   const target = await startTarget(spec, { directory: 'examples/mcp', environment: process.env, ...options });
@@ -53,7 +54,7 @@ test('a tool error and an unknown tool are the server\'s answers, not failures',
 });
 
 test('a server that exits before the handshake is named with its exit code and what it printed', async () => {
-  const spec = { ...BOX, entry: { command: 'node', args: ['-e', 'console.error("no database"); process.exit(3)'] } };
+  const spec = withEntry({ command: 'node', args: ['-e', 'console.error("no database"); process.exit(3)'] });
   const error = await failure(startTarget(spec, { directory: 'examples/mcp', environment: process.env }));
   assert.ok(error instanceof RunError);
   assert.equal(error.outcome, 'app-exited');
@@ -61,7 +62,7 @@ test('a server that exits before the handshake is named with its exit code and w
 });
 
 test('a server that never answers the handshake is stopped and named after the limit', async () => {
-  const spec = { ...BOX, entry: { command: 'node', args: ['-e', 'setInterval(() => {}, 1000)'] } };
+  const spec = withEntry({ command: 'node', args: ['-e', 'setInterval(() => {}, 1000)'] });
   const error = await failure(startTarget(spec, { directory: 'examples/mcp', environment: process.env, handshakeMs: 300 }));
   assert.equal(error.outcome, 'no-first-move');
   assert.match(error.message, /did not answer the MCP handshake within 0\.3 s - it printed nothing on stderr$/);
@@ -83,7 +84,7 @@ test('a server that dies mid-run stops the run, naming its exit code', async () 
 });
 
 test('an unset ${VAR} refuses before anything starts', async () => {
-  const spec = { ...BOX, entry: { command: 'node', args: ['${NO_SUCH_SERVER}'] } };
+  const spec = withEntry({ command: 'node', args: ['${NO_SUCH_SERVER}'] });
   const error = await failure(startTarget(spec, { directory: 'examples/mcp', environment: {} }));
   assert.ok(error instanceof UsageError);
   assert.match(error.message, /^examples\/mcp\/sketch\.yaml: \$\{NO_SUCH_SERVER\} is not set/);

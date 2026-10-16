@@ -7,8 +7,8 @@
   branch sprint-4; merge awaits the owner.
 
 ## Current Task
-None - waiting for user direction.
+None - waiting for the owner.
 
 ## Next Steps
-- On /init: Mode A unless the owner asks to merge sprint-3 (Tank, `bobp make push`) or starts
-  sprint 4; Cypher's open owner question is in agents/cypher/state.md.
+- On /init: Mode B - resume Cypher (agents/cypher/state.md): sprint 5 is shaped and waits for
+  the owner's `/sprint 5 go`.

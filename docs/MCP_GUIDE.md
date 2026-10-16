@@ -22,7 +22,8 @@ TLDR:
 6. [Say where it ends](#6-say-where-it-ends)
 7. [Read the log](#7-read-the-log)
 8. [A remote server with a token](#8-a-remote-server-with-a-token)
-9. [Troubleshooting](#9-troubleshooting)
+9. [Deciding like a person](#9-deciding-like-a-person)
+10. [Troubleshooting](#10-troubleshooting)
 
 ---
 
@@ -268,7 +269,94 @@ MCP_TOKEN=... bobp make run ARGS="run my-sketches/boxoffice --steps 5"
 `examples/mcp-remote` is a working copy of this, against the box office served locally over
 HTTP - [its README](../examples/mcp-remote/README.md) has the two commands.
 
-## 9. Troubleshooting
+## 9. Deciding like a person
+
+`values:` and `calls:` say what Jev may choose from. When the person you stand in for has
+preferences - "horror, evenings only, row E, F or D in that order, seats together, near the
+middle" - write them down as **gates** (never broken) and **scores** (what they like more), and
+let Jev choose only among what is left. `examples/evening` is this section, start to finish.
+
+**1. Play every server the decision needs.** A ratings service knows what the box office does
+not. Name both (SKETCHES.md, "Several servers"); facts about the same film are joined by
+`title`:
+
+```yaml
+target:
+  kind: mcp
+  servers:
+    boxoffice: { command: node, args: [boxoffice.mjs] }
+    ratings:   { command: node, args: [ratings.mjs] }
+```
+
+**2. Gate what is never accepted.** Under `decide:`, per argument:
+
+```yaml
+decide:
+  boxoffice/seat_map.showing:
+    join: title
+    gates:
+      starts: { at_least: '17:00' }
+      any: [{ genre: horror, tomato: { at_least: 70 } }, { tomato: { at_least: 91 } }]
+```
+
+A showing whose film has no score yet is held back, said once:
+
+```
+understudy: holding back showing s2 - no "tomato" for "Night Shift" yet
+```
+
+so the run asks the ratings server first - for every film: the showing is not chosen until
+nothing is held back, unless one already scores a perfect 1. Add `ratings/rating.title: {}` so every title the box
+office listed can be rated, each once.
+
+**3. Score what is liked more, and say how much.** Weights bend each factor's curve and the
+scores multiply, so the factor you weight most decides most:
+
+```yaml
+  boxoffice/pick_seats.seat:
+    gates: { together: { at_least: 2 }, row: { in: [E, F, D] } }
+    scores:
+      row:    { order: [E, F, D], weight: row }
+      centre: { range: [0.3, 1], weight: centre }
+```
+
+**4. Let Jev judge what numbers cannot.** A `type: score` question that `looks_at` the reviews
+becomes a factor with `ask:`. Jev reads each film's reviews once.
+
+**5. Let the person turn the knobs.** `inputs:` declares the mood and the weights; `pick:` tells
+the final Choice the mood:
+
+```bash
+bobp make run ARGS="run examples/evening --input mood=romantic --input centre=1"
+```
+
+**6. Leave when nothing qualifies.** Add a final state tagged `walked-away`, reached with
+`nothing_qualifies`, first among `looking`'s transitions:
+
+```yaml
+          - { target: walked_away, guard: { type: nothing_qualifies, params: { for: [boxoffice/seat_map.showing, boxoffice/pick_seats.seat] } } }
+```
+
+`BOX_STATE=full` makes the example's box office full in rows D-F every evening - the run ends
+`walked-away`, exit 0, and says what removed what.
+
+**Reading it.** Each step line's `decided` holds the shortlist's score table; the watch page
+shows it beside the step:
+
+```json
+"decided": [{ "argument": "boxoffice/pick_seats.seat",
+  "table": [{ "value": "s2-E15", "factors": { "row": 1, "centre": 0.877 }, "total": 0.877 }, ...],
+  "removed": [{ "value": "s2-A3", "why": "together 1 < 2" }, ...], "held": [] }]
+```
+
+In a deciding sketch Jev also sees what each other tool last said (`earlier`), so it does not
+list the films again after asking for a rating, and a call already answered with the same
+arguments is not made again (its answer is kept; the last 200 calls, least recently used
+forgotten first). Decide `pay.hold: {}` too, so only holds `pick_seats` answered are offered. A
+live run of the example lists the films, rates all six, reads one seat map, holds and pays - 10
+steps; walking away takes longer (it reads every showing that qualifies).
+
+## 10. Troubleshooting
 
 | You see | Exit | Means / do |
 |---|---|---|

@@ -27,95 +27,38 @@ Agents **must** use this for every message posted to CHAT.md:
 
 ---
 
----
-[<small>2026-10-16 00:29:46</small>] [**User**]->[**all**] *request*:
- I need to bind to the nic to test (owner, after /remote-control): the watch page must be reachable from another device.
+> **Previous sprint archived:** `agents/chat_archive/CHAT_sprint-5.md` (2026-10-16 15:21:50) — Sprint 5 turned the owner's cinema preferences into a decision engine. Shaping moved from all-hard-rules to gates + weight-shaped scores multiplied + a Jev Score factor + a shortlist the final Jev Choice picks from in a mood, with inputs set by --input and a walk-away end (exit 0). Seven phases: several MCP servers, evening box office and ratings servers, answer rows and gates, scores and shortlist, Jev Score/inputs/pick, walk away, the evening example with docs and outcome-checked test-live. A live run exposed Jev re-listing films (24 steps); showing earlier answers cut it to 7. Owner question pending: should a decision wait while values are held back.
 
 ---
-[<small>2026-10-16 00:31:09</small>] [**make**]->[**all**] *build*:
- Build PASSED | make lint | /home/drusifer/Projects/understudy/build/build.out
-
-> understudy@0.1.0 lint
-> eslint --no-error-on-unmatched-pattern 'src/**/*.mjs' 'bin/**/*.mjs' 'examples/**/*.mjs' 'examples/**/*.js' 'tests/**/*.js' 'tests/**/*.mjs'
-
 
 ---
-[<small>2026-10-16 00:31:37</small>] [**User**]->[**all**] *decide*:
- Owner: stop one-off verifications - use tests. From now on checks are committed tests; scratch Playwright/ad-hoc runs are not evidence.
+[<small>2026-10-16 15:54:21</small>] [**User**]->[**all**] *decide*:
+ Owner decided: a decision waits until nothing is held back - unless a value hits an 11 (a factor turned to 11 scoring 100% wins outright).
 
 ---
-[<small>2026-10-16 00:31:54</small>] [**make**]->[**all**] *build*:
+[<small>2026-10-16 15:56:11</small>] [**User**]->[**all**] *decide*:
+ Owner clarified: 11 is how the dashboard shows a factor at 1.0. Rule: a decision waits for every held-back value, unless a value already scores a perfect 1 and passes the gates - then stop looking.
+
+---
+[<small>2026-10-16 15:58:41</small>] [**make**]->[**all**] *build*:
  Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
-12:31AM INF no leaks found
-12:31AM INF 1 commits scanned.
-12:31AM INF scanned ~7991 bytes (7.99 KB) in 248ms
-12:31AM INF no leaks found
+3:58PM INF no leaks found
+3:58PM INF 1 commits scanned.
+3:58PM INF scanned ~5354 bytes (5.35 KB) in 239ms
+3:58PM INF no leaks found
 
 ---
-[<small>2026-10-16 00:32:08</small>] [**Bob**]->[**all**] *note*:
- Correction: 'no one-off verifications' is already AGENTS.md principle 1 (Automation First, no uncaptured shell) and the impl/bloop CAPTURE/REGRESS rubrics - sprint 4 UAT broke it with scratch Playwright scripts. Follow-up: turn them into committed browser tests behind a make target (Tank).
+[<small>2026-10-16 17:15:21</small>] [**User**]->[**all**] *decide*:
+ Owner: yes - cache previous results with the same inputs (a deciding sketch does not repeat a call already answered with the same arguments).
 
 ---
-[<small>2026-10-16 00:33:07</small>] [**User**]->[**all**] *request*:
- now please - turn sprint 4's scratch browser checks into committed tests behind a make target
-
----
-[<small>2026-10-16 00:33:07</small>] [**Mouse**]->[**all**] *plan*:
- Follow-up on sprint-4 (owner-approved): Tank adds make test-browser (npm run test:browser over tests/browser/, Chromium, no Jev); Trin writes the watch-page browser tests from the UAT scripts with a Jev double; layout legibility becomes a geometry test in make test.
-
----
-[<small>2026-10-16 00:35:43</small>] [**make**]->[**all**] *build*:
+[<small>2026-10-16 17:19:39</small>] [**make**]->[**all**] *build*:
  Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
-12:35AM INF no leaks found
-12:35AM INF 1 commits scanned.
-12:35AM INF scanned ~6482 bytes (6.48 KB) in 245ms
-12:35AM INF no leaks found
+5:19PM INF no leaks found
+5:19PM INF 1 commits scanned.
+5:19PM INF scanned ~5194 bytes (5.19 KB) in 260ms
+5:19PM INF no leaks found
 
 ---
-[<small>2026-10-16 00:35:43</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
- Trin: tests/browser/watchPage.test.js (4 tests, headless Chromium, Jev double) replaces the sprint 4 scratch UAT scripts; layout legibility is a geometry test in make test. Tank: make test-browser + npm test:browser + eslint block, SDLC updated. make check green 204, make test-browser 4/4. @Morpheus *lead review
-
----
-[<small>2026-10-16 00:35:43</small>] [**Morpheus**]->[**all**] *lead approve*:
- Review passed: browser tests drive the real page against real example runs, no Jev/key; make test stays browser-free (ADR-0006). Committing on sprint-4.
-
----
-[<small>2026-10-16 00:37:54</small>] [**make**]->[**all**] *build*:
- Build PASSED | make run | /home/drusifer/Projects/understudy/build/build.out
-{"final":true,"outcome":"done","steps":3,"state":"finished"}
-
----
-[<small>2026-10-16 00:41:19</small>] [**User**]->[**all**] *request*:
- Owner: add more logic to the box office - prefers horror films, evenings, only if row E, F or D is available (in that order), seats together, not too far from the centre.
-
----
-[<small>2026-10-16 00:41:40</small>] [**User**]->[**all**] *decide*:
- Owner decided: all preferences are hard rules in sketch.yaml (filters + orderings on the values Jev may choose), not Jev's judgment.
-
----
-[<small>2026-10-16 00:43:23</small>] [**User**]->[**all**] *decide*:
- Owner decided: rules filter (orderings keep the best available); Jev picks among what is left.
-
----
-[<small>2026-10-16 00:45:04</small>] [**User**]->[**all**] *decide*:
- Owner: bring in more MCP servers for enrichment (a sketch plays several servers); wants the Rotten Tomatoes score. Noted: no open RT API; OMDb returns it (free key) - unverified, web search was unavailable.
-
----
-[<small>2026-10-16 00:45:50</small>] [**Cypher**]->[**all**] *checkpoint*:
- Owner decided: fake ratings only (in-repo ratings MCP server, made-up scores). Checkpoint: Cypher state has the open shaping questions (rule form, nothing-passes behaviour). Usage limit reached - pausing.
-
----
-[<small>2026-10-16 07:55:43</small>] [**User**]->[**all**] *decide*:
- Owner: follow the MCP pattern - the ratings service is its own MCP server, named like the box office (mcpServers entry); enrichment is tool calls to it.
-
----
-[<small>2026-10-16 07:56:22</small>] [**User**]->[**all**] *decide*:
- Owner decided: rules are code-free YAML on answers - a rule tests fields of the answer object a value came from, from any server (is, in, at_least, at_most, order).
-
----
-[<small>2026-10-16 07:56:47</small>] [**User**]->[**all**] *decide*:
- Owner decided: nothing passes -> the understudy walks away and the run succeeds (an end state for leaving, exit 0, the log says what was ruled out). Sprint 5 shaping complete; assumptions in BACKLOG.
-
----
-[<small>2026-10-16 08:15:20</small>] [**User**]->[**all**] *request*:
- merge and push sprint 4
+[<small>2026-10-16 17:33:50</small>] [**User**]->[**all**] *request*:
+ merge and push sprint 5

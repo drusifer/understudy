@@ -110,7 +110,7 @@ once per tool, that a tool is `not offering ... yet` and why.
 | `response` | how the app answered: `{ status }` for an API; `{ call: { tool, arguments }, isError, text }` for an MCP server |
 | `state` | where the turn's statechart is after the step |
 | `event` lines | the run's story for the watch page and replays - the first line (`start`: the sketch and its statechart), each state change (`state`), and why a run that failed ended (`ended`); tools that only want steps skip any line with an `event` field ([SKETCHES.md §7](SKETCHES.md#7-running)) |
-| `final` line | always last: `outcome` is `done`, `step-cap`, `stalled`, `app-exited`, `connection-lost`, `refused`, `control-gone`, `off-list`, `no-first-move`, `jev-error`, `interrupted` or `error` |
+| `final` line | always last: `outcome` is `done`, `step-cap`, `stalled`, `app-exited`, `connection-lost`, `refused`, `control-gone`, `off-list`, `no-first-move`, `jev-error`, `interrupted` or `error` - or `walked-away` (exit 0) when a deciding sketch found nothing the person would accept |
 
 **Exit code**: `0` the sketch reached its end state; `1` the run started but could not finish
 (the final line says why); `2` refused before anything started (the message says what to fix).
@@ -318,8 +318,9 @@ Every error is one line starting `understudy:`. The common ones:
 ## 8. Command reference
 
 ```text
-understudy run <sketch> [--steps N] [--watch [--port N] [--host ADDR] [--pause]]
+understudy run <sketch> [--steps N] [--input name=value]... [--watch [--port N] [--host ADDR] [--pause]]
                                       play the sketch against its app (needs TYPESAFE_API_KEY);
+                                      --input sets one of the sketch's inputs (e.g. --input mood=romantic);
                                       --watch serves the live page, --pause starts it paused
 understudy check <sketch>             check the sketch without starting anything
 understudy library [<sketch>]         list every name a sketch may use, with its meaning
@@ -336,7 +337,7 @@ them as `bobp make run ARGS="<command> ..."`.
 | `install` | install dependencies (network) |
 | `install-browser` | download Chromium for web targets (network) |
 | `run` | `ARGS="run|check|library ..."` |
-| `test-live` | play every example with real Jev, 20-step cap (serves the box office over HTTP for `mcp-remote`) |
+| `test-live` | play every example with real Jev, 30-step cap, each outcome checked; `examples/evening` again with `BOX_STATE=full` (walks away); serves the box office over HTTP for `mcp-remote` |
 | `test` / `lint` / `check` | unit tests / eslint / the full gate |
 | `test-browser` | the watch page in headless Chromium (needs `install-browser`; no key) |
 | `clean` | remove `build/` (logs included) |

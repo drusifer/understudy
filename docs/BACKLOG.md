@@ -16,36 +16,72 @@ values, never writes them - understudy is constrained automation by design.
 Done - see `CHANGELOG.md` (live watch page, pause/step, replay, the log as an event stream).
 Decisions: ADR-0014..0016.
 
-## Sprint 5 (owner, 2026-10-16) - preferences as hard rules
-- Owner: "I prefer horror films, and I want to go in the evenings but only if row E, F, or D is
-  available (in that order), seats together but not too far from the center."
-- **All hard rules** (owner decided): every preference becomes a rule in `sketch.yaml` (filters
-  and orderings on the values Jev may choose) - not left to Jev's judgment. Needs a rule
-  language in the sketch format, and a richer box office (genres, showtimes, a seat map).
-- **Ties go to Jev** (owner decided): rules filter (an ordering keeps only the best available);
-  Jev chooses among what is left, as now. A rule is never broken.
-- **Enrichment from more MCP servers** (owner, 2026-10-16): a sketch may play several MCP
-  servers at once - e.g. the box office plus a ratings service - so rules can use facts another
-  server answers (a film's Rotten Tomatoes score). Owner asked for the tomato score: Rotten
-  Tomatoes has no open public API; OMDb (omdbapi.com, free key, daily limit) returns it in
-  `Ratings` for most titles (to verify when web search is back).
-- **Fake ratings only** (owner decided): an in-repo ratings MCP server with made-up scores for the
-  box office's made-up films - no key, no network, repeatable.
-- **Follow the MCP pattern** (owner): the ratings service is its own MCP server, named in the
-  sketch the same way as the box office (an `mcpServers` entry, inline or in `servers.json`);
-  enrichment is tool calls to it, nothing baked into the box office.
-- **Rules are YAML on answers** (owner decided): code-free. A rule names a tool's argument and
-  tests fields of the answer object its value came from, from any of the sketch's servers
-  (`where: { genre: horror, starts: { at_least: '17:00' }, tomato: { at_least: 70 } }`); words
-  `is`, `in`, `at_least`, `at_most`, `order`.
-- **Nothing passes -> walk away, run succeeds** (owner decided): leaving empty-handed is a
-  legitimate end - the sketch's turn has an end state for it and the run exits 0; the log says
-  which rules ruled out what.
-- Assumptions for the stories: the box office grows genres, evening/afternoon showings and a seat
-  map (each seat's row, `together` run length, `from_centre`); a separate in-repo ratings MCP
-  server answers a film's made-up tomato score; facts about the same film from different servers
-  are joined by the film's title (or id) for `where:`; `order` keeps only the best value still
-  available. Sprint 5 branches from main after sprint-4 is merged.
+## Sprint 5 (owner, 2026-10-16) - a decision engine: gates, scores, Jev - DONE (launched 2026-10-16)
+Owner: "I prefer horror films, and I want to go in the evenings but only if row E, F, or D is
+available (in that order), seats together but not too far from the center." Shaped in chat on
+2026-10-16; the general case is a **filter over JSON rows** - constraints and scores pick the
+subset worth a closer look, and Jev makes the qualitative calls. Owner decisions:
+
+- **Several MCP servers per sketch** (mcpServers entries, inline or `servers.json`). Facts about
+  one film are joined across servers by its title.
+- **Fake ratings server** in the repo: a made-up tomato score and made-up audience reviews per
+  film; no key, no network. (Rotten Tomatoes has no open API; OMDb has the score - not used.)
+- **Gates** are hard pass/fail tests on an answer row's fields, code-free YAML: `is`, `in`,
+  `at_least`, `at_most` (numbers, and `HH:MM` times), and `any` (one of several groups passes).
+  Example: horror scoring 70+, **or** any film above 90 - the "automatic yes" decides the film
+  only; evening and seat rules still apply.
+- **Scores** rank what passes the gates. Each factor maps one field to 0..1 - `range: [from, to]`
+  (linear, either direction, clamped) or `order: [E, F, D]` - and its **weight shapes the
+  curve**: score = position ^ weight (rows E/F/D at weight 1: 1, 0.67, 0.33; at weight 2: 1,
+  0.44, 0.11). The option wanted most has the biggest bearing.
+- **Factors multiply** into the total (a weighted geometric mean), so a higher weight counts for
+  more, and a zero anywhere (the bottom of a range) drops the value.
+- **Walk away**: if nothing passes the gates or every total is zero, the understudy leaves - an
+  end state, exit 0, the log says what ruled out what.
+- **Centreness scales with the theatre**: the box office answers each seat's `centre` from 0 (end
+  of row) to 1 (middle), scaled by that screen's row width; closer is better (a scored factor).
+- **Jev's qualitative part is a Score question in the YAML**: what it looks at (e.g. the film's
+  reviews), the instructions and the levels ("bored" ... "loved it"); its 0..1 answer is a
+  weighted factor like any other.
+- **Shortlist, then Jev picks**: the top totals form a shortlist; Jev makes the final Choice among
+  them, coloured by a **mood** (fun, serious, dramatic, romantic).
+- **Preferences are inputs**: the sketch declares them - the mood (a choice) and each weight
+  within a range, with defaults - and the run sets them from the command line in sprint 5.
+- Out for now: Jev choosing weights (it would be writing numbers; maybe later as levels it
+  chooses); scoring a showing by its best seats (picks are made one move at a time).
+- Superseded: "all preferences are hard rules" and `order` keeping only the best available - an
+  order is now a scored curve; only gates are hard.
+- **Shortlist = everything that qualifies** (owner): every value with a total above zero, unless
+  the sketch bounds it with the same words, e.g. `shortlist: { at_most: 5 }` (the top 5 totals)
+  or `{ total: { at_least: 0.3 } }`.
+- **Example defaults** (proposed by Cypher, owner OK'd proposing; tweak later): every weight an
+  input in `[0, 3]`; row `order: [E, F, D]` weight 2; `centre` `range: [0.3, 1]` weight 3;
+  `tomato` `range: [70, 100]` weight 1; Jev's audience Score weight 2; mood default `fun`;
+  shortlist unbounded.
+- Sprint 5 branches from main (51fa684); the first story draft (`USER_STORIES_SPRINT5.md`,
+  hard rules only) is to be rewritten from this.
+
+## Sprint 6 (owner, 2026-10-16) - the dashboard, with atmosphere
+- A **steampunk operations dashboard** for understudy: knobs, toggles and chunky sliders to set a
+  sketch's declared inputs (mood, weights within their ranges), and the statechart, scores and
+  decisions shown in an embedded terminal-like panel. The owner wants understudy to have
+  atmosphere. Builds on the sprint 4 watch page and the sprint 5 inputs.
+- **Knobs that go to 11** (owner idea, queued 2026-10-16): a weight knob has a setting past its
+  range, `11`: a value scoring 100% on that factor wins outright - no other factor matters (gates
+  still apply). Needs a small engine rule alongside the knob.
+- **Power through the graph** (owner idea, queued 2026-10-16): in the logic display, the edge for
+  each factor carries more visible power as its weight rises - a flux-capacitor glow and flow,
+  strongest at 11.
+
+## Next (from the sprint 5 retro)
+- DONE on sprint-5: **Wait for every fact, unless it scores a perfect 1** (owner decided, 2026-10-16; "11" is how the dashboard shows 1.0): a decided argument
+  offers nothing while any value is held back - except when a value scores 100% on a factor
+  turned to 11, which wins outright at once (see Sprint 6 "Knobs that go to 11"). (Morpheus)
+- Extract the decision path (`decided`, scores, standing) from `src/apps/mcp.mjs` into its own module. (Neo)
+- Watch page: group a step's removed values by reason ("together 1 < 2: 64 seats"). (Smith)
+- `test-live`: a step budget per example, so a run that wanders fails. (Trin)
+- A short "Deciding" cheat-sheet in USER_GUIDE. (Oracle)
+- Debt: spent values never come back if the app changes (ADR-0017).
 
 ## Next (from the sprint 3 and 4 retros)
 - Scope `showing` to results for generic MCP sketches (today it also searches tool descriptions). (Morpheus)

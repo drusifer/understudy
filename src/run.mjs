@@ -12,6 +12,7 @@
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { MachineSeat } from './seat.mjs';
+import { resolveInputs } from './inputs.mjs';
 import { loadSketch, shown } from './sketch.mjs';
 import { RunError, UsageError } from './errors.mjs';
 import { createStream } from './stream.mjs';
@@ -86,12 +87,14 @@ function watchInterrupts(signals, onSecond, onFirst = () => {}) {
  * @throws {UsageError} before anything starts; {RunError} once it has.
  */
 export async function runSketch(location, {
-  steps, stdout = process.stdout, stderr = process.stderr, environment = process.env,
+  steps, inputs = [], stdout = process.stdout, stderr = process.stderr, environment = process.env,
   makeJudge = typesafeJudge, makeTarget = startTarget, logRoot = path.join('build', 'runs'),
   firstMoveMs = 10_000, stallMs = 10_000, pollMs = 250, signals = process, clock = Date.now,
   watch = null, makeWatch = startWatch,
 } = {}) {
   const sketch = await loadSketch(location);
+  // UND-24: inputs out of their range or list refuse the run before it starts.
+  const values = resolveInputs(sketch.inputs, inputs);
   const limit = steps ?? sketch.steps ?? DEFAULT_STEPS;
   const logDirectory = path.join(logRoot, sketch.name);
   const logFile = path.join(logDirectory, `${new Date(clock()).toISOString().replaceAll(':', '-')}.jsonl`);
@@ -101,7 +104,7 @@ export async function runSketch(location, {
   const watcher = watch ? await makeWatch({ port: watch.port, host: watch.host, mode: 'live', source: stream, control: (action) => controls.gate[action]() }) : null;
   if (watcher) stderr.write(`understudy: watch at ${(watcher.urls ?? [watcher.url]).join(' or ')}\n`);
   try {
-    await playSketch({ sketch, limit, stream, logDirectory, logFile, stdout, stderr, environment, makeJudge, makeTarget, firstMoveMs, stallMs, pollMs, signals, clock, watch, watcher, controls });
+    await playSketch({ sketch, inputs: values, limit, stream, logDirectory, logFile, stdout, stderr, environment, makeJudge, makeTarget, firstMoveMs, stallMs, pollMs, signals, clock, watch, watcher, controls });
   } finally {
     await watcher?.close();
   }
@@ -129,7 +132,7 @@ function pauseGate({ run, watch, watcher, stderr, clock }) {
 /**
  * The run itself, once anything that can refuse it has been checked.
  */
-async function playSketch({ sketch, limit, stream, logDirectory, logFile, stderr, environment, makeJudge, makeTarget, firstMoveMs, stallMs, pollMs, signals, clock, watch, watcher, controls }) {
+async function playSketch({ sketch, inputs, limit, stream, logDirectory, logFile, stderr, environment, makeJudge, makeTarget, firstMoveMs, stallMs, pollMs, signals, clock, watch, watcher, controls }) {
   const judge = reportingFailures(await makeJudge(environment));
   const target = await makeTarget(sketch.target, { directory: sketch.directory, environment });
   const write = (entry) => stream.emit(entry);
@@ -138,10 +141,12 @@ async function playSketch({ sketch, limit, stream, logDirectory, logFile, stderr
   controls.gate = gate;
   // A generic app may have something to say once (a tool it cannot offer).
   if (Object.hasOwn(sketch.app, 'notify')) sketch.app.notify = (line) => stderr.write(`understudy: ${line}\n`);
+  if (Object.hasOwn(sketch.app, 'inputs')) sketch.app.inputs = inputs;
   const interrupts = watchInterrupts(signals, () => target.close(), () => gate.stop());
   try {
     mkdirSync(logDirectory, { recursive: true });
-    write({ event: 'start', sketch: sketch.name, plays: target.describe(), turn: sketch.turn, at: new Date(clock()).toISOString() });
+    const declared = Object.keys(inputs).length > 0 ? { inputs } : {};
+    write({ event: 'start', sketch: sketch.name, plays: target.describe(), ...declared, turn: sketch.turn, at: new Date(clock()).toISOString() });
     stderr.write(`understudy: playing ${sketch.name} (${target.describe()}) - log ${shown(logFile)}\n`);
     Object.assign(sketch.services, { target, judge, name: 'understudy', player: sketch.player, app: sketch.app });
     run.seat = new MachineSeat({ machine: sketch.machine, services: sketch.services, pollMs, clock });
@@ -158,6 +163,14 @@ async function playSketch({ sketch, limit, stream, logDirectory, logFile, stderr
     await target.close();
   }
   flushChanges(run, write);
+  if (!interrupts.isAsked() && run.seat.hasTag('walked-away')) {
+    // UND-25: leaving empty-handed is a result, not a failure.
+    const { removed, sentence } = sketch.app.leaving?.() ?? { removed: {}, sentence: 'walked away' };
+    write({ event: 'walked-away', removed });
+    stderr.write(`understudy: ${sentence}\n`);
+    write({ final: true, outcome: 'walked-away', steps: run.taken, state: run.seat.state });
+    return;
+  }
   const outcome = interrupts.isAsked() ? 'interrupted' : 'done';
   const stopped = run.isStoppedPaused
     ? `stopped by Ctrl-C while paused, after ${stepCount(run.taken)}`
@@ -182,7 +195,7 @@ async function playUntilDone({ run, target, steps, waits, clock, interrupts, wri
       // Its last output can land between the look and the exit: one more
       // look decides whether it ended where the sketch ends.
       if (await run.seat.nextMove({ shouldStop: interrupts.isAsked }) === 'done') return;
-      throw new RunError(`${target.describe()} exited with code ${exited.code} before the end state`, { outcome: 'app-exited' });
+      throw new RunError(`${exited.who ?? target.describe()} exited with code ${exited.code} before the end state`, { outcome: 'app-exited' });
     }
     if (next === 'move') {
       // ADR-0016: a paused run waits here, before Jev is asked anything.

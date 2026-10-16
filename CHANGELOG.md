@@ -1,5 +1,27 @@
 # Changelog
 
+## Sprint 5 — decide like a person (2026-10-16, branch `sprint-5`, not yet merged)
+
+- **Several MCP servers in one sketch**: `target.servers` (inline or names in `servers.json`);
+  tools are `<server>/<tool>` when there are several. One-server sketches are unchanged.
+- **Deciding** (`decide:`): for a named tool argument, each value keeps its answer row (joined
+  across servers by a key). **Gates** (`is`, `in`, `at_least`, `at_most` with numbers or HH:MM,
+  `any`) remove or hold back; **scores** (`range`, `order`, `ask`) with weights that bend the
+  curve multiply into a total; Jev makes the final Choice from the **shortlist**. Step lines and
+  the watch page show the score table, what was removed and why, what is held back. A decision
+  waits until nothing is held back, unless a value already scores a perfect 1. A deciding sketch
+  does not repeat a call already answered with the same arguments (an LRU cache of 200, `lru-cache`).
+- **Jev judges what numbers cannot**: a `type: score` question (`looks_at`, `levels`) is a
+  factor - asked once per row, in one request per look.
+- **Inputs**: `inputs:` declares choices and weights; `understudy run <sketch> --input
+  mood=romantic --input centre=1`; `pick:` tells the final Choice the mood.
+- **Walk away**: guard `nothing_qualifies` + a final state tagged `walked-away` - outcome
+  `walked-away`, exit 0, and a sentence saying what removed what.
+- **`examples/evening`**: the owner's night out against a box office and a ratings server
+  (made-up films, scores, reviews); `BOX_STATE=full` walks away. `make test-live` checks every
+  run's outcome. Docs: SKETCHES "Several servers" and "Deciding", MCP_GUIDE "Deciding like a
+  person"; ADR-0017..0022.
+
 ## Sprint 4 — watch the understudy live (2026-10-15, branch `sprint-4`, not yet merged)
 
 - **Live view**: `understudy run <sketch> --watch [--port N]` serves a page on 127.0.0.1 that

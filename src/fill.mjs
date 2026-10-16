@@ -84,11 +84,12 @@ const keyFor = (name) => `argument_${name}`;
  */
 export function argumentQuestions({ instructions, tool, open }) {
   const questions = {};
-  for (const { name, schema, candidates } of open) {
+  for (const { name, schema, candidates, instructions: own } of open) {
     const about = schema?.description ? ` (${schema.description})` : '';
+    // A decided argument's final pick has the sketch's pick instructions (UND-24).
     questions[keyFor(name)] = {
       type: 'choice',
-      instructions: `${instructions} You are calling \`${tool}\`: choose the value of its argument \`${name}\`${about}.`,
+      instructions: `${own ?? instructions} You are calling \`${tool}\`: choose the value of its argument \`${name}\`${about}.`,
       criteria: Object.fromEntries(candidates.map((value, index) => [`v${index + 1}`, `\`${JSON.stringify(value)}\``])),
     };
   }

@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { resolveServer, expandEntry } from '../src/mcpConfig.mjs';
+import { resolveServer, resolveServers, expandEntry } from '../src/mcpConfig.mjs';
 import { shown } from '../src/sketch.mjs';
 import { UsageError } from '../src/errors.mjs';
 
@@ -80,4 +80,22 @@ test('a config path may be absolute - a project\'s own .mcp.json, say (DEF-09)',
   assert.deepEqual(entry, { command: 'via', args: ['mcp'] });
   assert.equal(from, shown(config));
   assert.equal(refusal(() => resolve({ kind: 'mcp', config: '/no/such/.mcp.json', server: 'via' })), 'sketch.yaml: target.config: /no/such/.mcp.json not found');
+});
+
+test('servers: several inline entries, each named and checked (UND-20)', () => {
+  const servers = resolveServers({ kind: 'mcp', servers: { boxoffice: { command: 'node', args: ['b.mjs'] }, ratings: { command: 'node', args: ['r.mjs'] } } },
+    { directory: directoryWith({}), shownFile: 'sketch.yaml', shown });
+  assert.deepEqual(servers.map((server) => server.name), ['boxoffice', 'ratings']);
+  assert.equal(refusal(() => resolveServers({ kind: 'mcp', servers: { ratings: { args: [] } } }, { directory: directoryWith({}), shownFile: 'sketch.yaml', shown })),
+    'sketch.yaml: target.servers.ratings.command: required for a local server (the program to start, e.g. node)');
+});
+
+test('servers: names in a config file; both server and servers, or a missing name, are refused', () => {
+  const directory = directoryWith({ 'servers.json': '{"mcpServers":{"box":{"command":"node"},"rate":{"command":"node"}}}' });
+  const where = { directory, shownFile: 'sketch.yaml', shown };
+  assert.deepEqual(resolveServers({ kind: 'mcp', config: 'servers.json', servers: ['box', 'rate'] }, where).map((server) => server.name), ['box', 'rate']);
+  assert.equal(refusal(() => resolveServers({ kind: 'mcp', config: 'servers.json', servers: ['box', 'nope'] }, where)),
+    'sketch.yaml: target.server: no server "nope" in servers.json (it has: box, rate)');
+  assert.equal(refusal(() => resolveServers({ kind: 'mcp', server: { command: 'node' }, servers: {} }, where)),
+    'sketch.yaml: target.servers: give server: (one) or servers: (several), not both');
 });

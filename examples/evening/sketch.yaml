@@ -1,0 +1,115 @@
+# The evening example's sketch (docs/MCP_GUIDE.md "Deciding like a person"):
+# the owner's night at the cinema, played against two servers - a box office
+# and a ratings service - with the owner's preferences written down:
+#
+#   gates     what they never accept: evening only; horror scoring 70 or
+#             more, or anything above 90; two seats together in row E, F or D
+#   scores    what they like more: rows E, then F, then D; central seats; a
+#             higher tomato; what the audience thought (Jev reads the reviews)
+#   inputs    what they can turn up or down when they start: the mood, and
+#             how much the row and centre matter (--input centre=1)
+#   pick      Jev chooses the final value from the shortlist, in the mood
+#
+# When nothing qualifies, the understudy walks away and the run succeeds.
+# BOX_STATE=full takes rows D-F at every evening showing, to see that.
+name: evening
+description: >-
+  An understudy books two cinema seats for the owner: an evening horror film
+  scoring 70 or more (or anything above 90), seats together in row E, F or D,
+  as central as they come - or walks away when nothing qualifies.
+target:
+  kind: mcp
+  servers:
+    boxoffice: { command: node, args: [boxoffice.mjs], env: { BOX_STATE: '${BOX_STATE:-normal}' } }
+    ratings: { command: node, args: [ratings.mjs] }
+
+calls:
+  - { tool: boxoffice/pay, arguments: { method: card } }
+values:
+  boxoffice/pick_seats: { count: [2] }
+
+inputs:
+  mood: { choose: [fun, serious, dramatic, romantic], default: fun }
+  tomato: { weight: [0, 3], default: 1 }
+  audience: { weight: [0, 3], default: 2 }
+  row: { weight: [0, 3], default: 2 }
+  centre: { weight: [0, 3], default: 3 }
+
+questions:
+  next:
+    type: choice
+    instructions: >-
+      You are booking a night at the cinema for yourself and a friend. `tools` are what the box
+      office and the ratings service let you do, and `last_call` is what was last said. Find out
+      what is on and how good it is, look at the seats of a showing worth seeing, hold two seats
+      and pay for them.
+  audience:
+    type: score
+    looks_at: reviews
+    instructions: >-
+      Judging by these audience reviews, how much would someone who loves horror films enjoy
+      this one?
+    levels:
+      - Bored, or walked out
+      - Mixed, a few good moments
+      - Solid fun, would recommend
+      - Loved it, the best of the year
+
+decide:
+  ratings/rating.title: {}
+  boxoffice/pay.hold: {}                # only holds pick_seats answered, never other text
+  boxoffice/seat_map.showing:
+    join: title
+    gates:
+      starts: { at_least: '17:00' }
+      any:
+        - { genre: horror, tomato: { at_least: 70 } }
+        - { tomato: { at_least: 91 } }
+    scores:
+      tomato: { range: [70, 100], weight: tomato }
+      audience: { ask: audience, weight: audience }
+  boxoffice/pick_seats.seat:
+    gates:
+      together: { at_least: 2 }
+      row: { in: [E, F, D] }
+    scores:
+      row: { order: [E, F, D], weight: row }
+      centre: { range: [0.3, 1], weight: centre }
+    shortlist: { at_most: 5 }
+
+pick:
+  instructions: >-
+    You are choosing for yourself and a friend tonight, in the mood for something `inputs.mood`.
+    Every option here already suits you; choose the one you would enjoy most.
+  with: [mood]
+
+turn:
+  initial: waiting
+  states:
+    waiting:
+      description: "Looks again. Safe to stop."
+      tags: [safe]
+      on: { OBSERVE: looking }
+    looking:
+      description: "Reads what the servers offer and what they last said."
+      invoke:
+        src: look
+        onDone:
+          - { target: booked, guard: { type: showing, params: { text: Ticket issued } } }
+          - { target: walked_away, guard: { type: nothing_qualifies, params: { for: [boxoffice/seat_map.showing, boxoffice/pick_seats.seat] } } }
+          - { target: choosing, guard: { type: phase, params: { is: asking } } }
+          - { target: waiting }
+    choosing:
+      description: "Something can be done."
+      tags: [move]
+      on: { STEP: acting }
+    acting:
+      description: "Jev picks a tool and its arguments - decided ones from their shortlist - and the call is made."
+      invoke: { src: play, with: { phase: asking, question: next }, onDone: waiting }
+    booked:
+      description: "A ticket was issued; the run ends."
+      type: final
+    walked_away:
+      description: "Nothing the owner would accept is left; the understudy leaves and the run succeeds."
+      type: final
+      tags: [walked-away]

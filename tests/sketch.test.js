@@ -115,7 +115,7 @@ test('bad YAML is refused naming the file and the line', async () => {
 test('an unknown top-level key is refused naming the known ones', async () => {
   const directory = sketchChanged((text) => `${text}adapter: adapter.mjs\n`);
   assert.equal(await refusal(directory),
-    `${shown(directory)}/sketch.yaml: adapter: not a sketch key (known: name, description, target, app, player, steps, questions, turn, calls, values)`);
+    `${shown(directory)}/sketch.yaml: adapter: not a sketch key (known: name, description, target, app, player, steps, questions, turn, calls, values, decide, inputs, pick)`);
 });
 
 test('a missing name, questions or turn is refused naming the key', async () => {
@@ -214,15 +214,50 @@ function mcpSketch(target, extra = '', files = {}) {
 test('an MCP sketch needs no code: the generic MCP app plays it, and check says so', async () => {
   const directory = mcpSketch('{ kind: mcp, server: { command: node, args: [server.mjs] } }');
   const sketch = await loadSketch(directory);
-  assert.deepEqual(sketch.target, { kind: 'mcp', entry: { command: 'node', args: ['server.mjs'] }, server: null, from: `${shown(directory)}/sketch.yaml` });
+  assert.deepEqual(sketch.target, { kind: 'mcp', servers: [{ name: null, entry: { command: 'node', args: ['server.mjs'] }, from: `${shown(directory)}/sketch.yaml` }] });
   assert.equal(typeof sketch.app.idle, 'function');
   assert.equal(await checkSketch(directory), `${shown(directory)}: sketch OK - fixture-good (mcp, generic app) - 5 states, 1 question`);
+});
+
+test('an MCP sketch can name several servers; each is checked and named (UND-20)', async () => {
+  const directory = mcpSketch('{ kind: mcp, servers: { boxoffice: { command: node, args: [b.mjs] }, ratings: { command: node, args: [r.mjs] } } }');
+  const sketch = await loadSketch(directory);
+  assert.deepEqual(sketch.target.servers.map((server) => server.name), ['boxoffice', 'ratings']);
+  const bad = mcpSketch('{ kind: mcp, servers: { boxoffice: { command: node }, ratings: { type: sse, url: x } } }');
+  await assert.rejects(checkSketch(bad), /sketch\.yaml: target\.servers\.ratings\.type: sse servers are not supported/);
+});
+
+test('decide: gates are checked at load, naming the file, the gate and the word (UND-21 AC5)', async () => {
+  const good = mcpSketch('{ kind: mcp, server: { command: node } }', "decide:\n  seat_map.showing: { join: title, gates: { starts: { at_least: '17:00' } } }\n");
+  assert.ok((await loadSketch(good)).app);
+  const bad = mcpSketch('{ kind: mcp, server: { command: node } }', 'decide:\n  seat_map.showing: { gates: { row: { among: [E] } } }\n');
+  await assert.rejects(checkSketch(bad), { message: `${shown(bad)}/sketch.yaml: decide.seat_map.showing.gates.row: unknown word "among" - use is, in, at_least, at_most, any` });
+  const misnamed = mcpSketch('{ kind: mcp, server: { command: node } }', 'decide:\n  seat_map: { gates: {} }\n');
+  await assert.rejects(checkSketch(misnamed), /decide\.seat_map: name a tool argument as <tool>\.<argument>/);
+  const notMcp = mcpSketch('{ kind: process, command: node }', 'app: hooks.mjs\ndecide: {}\n');
+  await assert.rejects(checkSketch(notMcp), /decide: only for an mcp target/);
+});
+
+test('inputs, ask factors and pick are checked against what the sketch declares (UND-23 AC5, UND-24 AC6)', async () => {
+  const target = '{ kind: mcp, server: { command: node } }';
+  const inputs = 'inputs:\n  mood: { choose: [fun, serious], default: fun }\n  centre: { weight: [0, 3], default: 3 }\n';
+  const score = 'decide:\n  seat_map.showing: { scores: { audience: { ask: next, weight: 2 }, centre: { range: [0.3, 1], weight: centre } } }\n';
+  const asksChoice = mcpSketch(target, inputs + score);
+  await assert.rejects(checkSketch(asksChoice), /decide\.seat_map\.showing\.scores\.audience\.ask: names "next" - it must be a type: score question under questions:/);
+  const undeclared = mcpSketch(target, 'decide:\n  pick_seats.seat: { scores: { centre: { range: [0.3, 1], weight: centre } } }\n');
+  await assert.rejects(checkSketch(undeclared), /decide\.pick_seats\.seat\.scores\.centre\.weight: names input "centre" - declare it under inputs: as \{ weight: \[low, high\], default \}/);
+  const pickUnknown = mcpSketch(target, `${inputs}pick: { instructions: Choose one you would enjoy., with: [centre] }\n`);
+  await assert.rejects(checkSketch(pickUnknown), /pick\.with: "centre" is not a choice input declared under inputs:/);
+  const badDefault = mcpSketch(target, 'inputs:\n  centre: { weight: [0, 3], default: 5 }\n');
+  await assert.rejects(checkSketch(badDefault), /inputs\.centre\.default: must be between 0 and 3, got 5/);
+  const good = mcpSketch(target, `${inputs}pick: { instructions: Choose one you would enjoy., with: [mood] }\n`);
+  assert.deepEqual((await loadSketch(good)).inputs.mood.default, 'fun');
 });
 
 test('an MCP sketch by reference reads the mcpServers file; a missing name is refused naming the ones there', async () => {
   const files = { 'servers.json': '{"mcpServers":{"box":{"type":"http","url":"http://127.0.0.1:1/mcp"}}}' };
   const good = mcpSketch('{ kind: mcp, config: servers.json, server: box }', '', files);
-  assert.equal((await loadSketch(good)).target.entry.type, 'http');
+  assert.equal((await loadSketch(good)).target.servers[0].entry.type, 'http');
   const wrong = mcpSketch('{ kind: mcp, config: servers.json, server: bx }', '', files);
   assert.equal(await refusal(wrong), `${shown(wrong)}/sketch.yaml: target.server: no server "bx" in servers.json (it has: box)`);
 });

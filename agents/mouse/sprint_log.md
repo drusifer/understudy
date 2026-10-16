@@ -13,3 +13,8 @@ Phases: 1 sketch loader + examples converted | 2 local MCP target, generic MCP a
 
 ## Sprint 4 — watch the understudy live (branch sprint-4, started 2026-10-15)
 Phases: 1 event-stream log | 2 graph layout + watch server | 3 live page + run --watch (+ Tank eslint block) | 4 pause/step | 5 replay | 6 docs | close. 16 pts. No Tank Phase 0.
+
+## Sprint 5 - A decision engine (planned 2026-10-16)
+Branch sprint-5 from 51fa684. 29 pts, 7 phases: 1 several servers (UND-20); 2 evening servers (UND-18/19);
+3 rows+gates (UND-21); 4 scores+shortlist (UND-22); 5 Jev Score+inputs+pick (UND-23/24); 6 walk away (UND-25);
+7 example+docs+test-live (UND-26, Tank 7.2). Close: Tank sdlc-check, Oracle groom, Smith test, retro, launch.

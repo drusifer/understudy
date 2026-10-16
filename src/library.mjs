@@ -91,6 +91,13 @@ export function genericLibrary(services) {
           return context[parameters.field] >= limit;
         },
       },
+      nothing_qualifies: {
+        doc: 'the last `look` saw values for the decided arguments `for` and none of them has anything shortlisted or held back - nothing the person would accept is left (walk away)',
+        fn: ({ event }, parameters) => {
+          const standing = (parameters.for ?? []).map((key) => event.output?.decisions?.[key]).filter(Boolean);
+          return standing.some((each) => each.seen > 0) && standing.every((each) => each.shortlisted === 0 && each.held === 0);
+        },
+      },
       played: {
         doc: 'the step just taken was a move of kind `move` (the part of its id before any `:`)',
         fn: ({ event }, parameters) => event.output?.kind === parameters.move,
@@ -144,7 +151,11 @@ export function genericLibrary(services) {
         doc: 'read the app\'s view and find its phase (the app hooks decide); output phase and view for the `phase` and `showing` guards',
         fn: async ({ input }) => {
           const view = input.event?.view ?? await services.target.view();
-          return { phase: services.app.phase(view, input.context), view };
+          // UND-23: an app may need Jev before it can say what it offers.
+          await services.app.prepare?.(view, services.judge);
+          const phase = services.app.phase(view, input.context);
+          // UND-25: where each decided argument stands, for nothing_qualifies.
+          return { phase, view, ...(services.app.decisions && { decisions: services.app.decisions() }) };
         },
       },
       play: {
@@ -195,6 +206,7 @@ async function play(services, { context, phase, question: questionName }) {
     at: new Date().toISOString(), phase, options: options.map((option) => option.id), picked: result.picked,
     move: move.id, confidence: result.confidence, checks: result.checks, asked: result.asked,
     ...(offList !== undefined && { offList: true, answer: offList }),
+    ...(move.decided && { decided: move.decided }),
     ...(response !== undefined && { response }),
     ...(result.blocked && { blocked: { ...result.blocked, move: result.picked } }),
   };
@@ -207,18 +219,22 @@ async function play(services, { context, phase, question: questionName }) {
  * answer that was not offered is asked once more; twice stops the run
  * (ADR-0004).
  */
-async function fillArguments({ judge, state, question, move, phase }) {
-  const { questions, read } = argumentQuestions({ instructions: question.instructions, tool: move.call.tool, open: move.open });
-  const asked = { ...state, chosen: move.id };
+export async function fillArguments({ judge, state, question, move, phase }) {
+  // UND-24 AC4: a decided argument with a shortlist of one is taken as it is.
+  const taken = Object.fromEntries(move.open.filter((each) => each.isDecided && each.candidates.length === 1).map((each) => [each.name, each.candidates[0]]));
+  const open = move.open.filter((each) => !Object.hasOwn(taken, each.name));
+  if (open.length === 0) return taken;
+  const { questions, read } = argumentQuestions({ instructions: question.instructions, tool: move.call.tool, open });
+  const asked = { ...state, chosen: move.id, ...(move.told && { inputs: move.told }) };
   const ask = async () => {
     const response = await judge.systemOne({ state: asked, questions });
     return read(response.answers);
   };
   let reading = await ask();
-  if (!reading.offList) return reading.filled;
+  if (!reading.offList) return { ...taken, ...reading.filled };
   const first = reading.offList;
   reading = await ask();
-  if (!reading.offList) return reading.filled;
+  if (!reading.offList) return { ...taken, ...reading.filled };
   const { name, answer } = reading.offList;
   const offered = move.open.find((each) => each.name === name).candidates.map((value) => JSON.stringify(value)).join(', ');
   throw new RunError(`in phase "${phase}" Jev answered off the list twice for argument "${name}" of ${move.call.tool}`

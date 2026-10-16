@@ -113,6 +113,14 @@ export class MachineSeat {
   }
 
   /**
+   * Whether the state the machine is in has `tag` (a final state tagged
+   * `walked-away` ends the run as walked-away, UND-25).
+   */
+  hasTag(tag) {
+    return this.#actor.getSnapshot().hasTag(tag);
+  }
+
+  /**
    * Which state the machine is in - for logs and tests.
    */
   get state() {

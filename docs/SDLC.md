@@ -41,7 +41,7 @@ repeating their commands. `make help` lists them.
 | `install-browser` | `npx playwright install chromium` | needed only for web targets; touches the network; see §9 |
 | `test` | `npm test -- $(ARGS)` → `node --test tests/*.test.js` | e.g. `ARGS="--test-name-pattern=seat"` |
 | `test-browser` | `npm run test:browser` → `node --test tests/browser/*.test.js` (one file at a time) | the watch page driven in headless Chromium against real runs of the examples with a Jev double - no key, no cost; needs Chromium (`make install-browser`); `make test` stays browser-free (ADR-0006) |
-| `test-live` | `understudy run <sketch> --steps 20` for every `examples/*/`; serves the box office over HTTP with a throwaway token (`MCP_TOKEN`, `BOX_PORT`, default 8765) for `examples/mcp-remote` and stops it after | live Jev (paid) and, for web examples, Chromium; UAT only |
+| `test-live` | `understudy run <sketch> --steps 30` for every `examples/*/`, each run's final `outcome` checked (`done`), then `examples/evening` again with `BOX_STATE=full` (`walked-away`); serves the box office over HTTP with a throwaway token (`MCP_TOKEN`, `BOX_PORT`, default 8765) for `examples/mcp-remote` and stops it after | live Jev (paid) and, for web examples, Chromium; UAT only |
 | `run` | `node bin/understudy.mjs $(ARGS)` | e.g. `ARGS="check examples/cli"` |
 | `lint` | `npm run lint` → eslint over `src/**/*.mjs`, `tests/**` | config `eslint.config.js` (recommended + unicorn + sonarjs, as in recard) |
 | `secrets` | `gitleaks git` over history + uncommitted tracked changes | needs `gitleaks` installed |
@@ -68,7 +68,8 @@ Standard targets deliberately absent:
 - Declare only what the code imports. Runtime today: `xstate`, `yaml`, `@typesafe-ai/sdk`
   (Jev), `playwright` (page target; locked at 1.62.1 so its Chromium download is shared with
   recard's), `@modelcontextprotocol/sdk` (mcp target client; the example server) and `zod` (the
-  example server's tool schemas; the SDK's peer) - both added in sprint 3. Expected later:
+  example server's tool schemas; the SDK's peer) - both added in sprint 3; `lru-cache` (a deciding sketch's answered calls,
+  fixed size, least recently used forgotten) - added in sprint 5. Expected later:
   `@xstate/graph ^3.0.4`.
 
 ## 5. Quality gates
@@ -168,7 +169,7 @@ Run by Tank at sprint close (`*devops sdlc-check`):
 8. Nothing under `src/` or `tests/` imports from `seed/`.
 
 ---
-*Last verified: 2026-10-16 by Tank (owner-approved mechanism change on sprint-4: new target
-`test-browser` and npm script `test:browser`; eslint browser-globals block for `tests/browser/`.
-Sprint 4 close before it: distclean → install (manifest and lockfile unchanged) → check, 200/200,
-lint, gitleaks clean).*
+*Last verified: 2026-10-16 by Tank (mechanism change on sprint-5, owner-approved as UND-26 AC4:
+`test-live` caps runs at 30 steps, checks each final `outcome`, and plays `examples/evening` again
+with `BOX_STATE=full` expecting `walked-away`. Sprint 4: target `test-browser`, npm script
+`test:browser`, eslint browser-globals block for `tests/browser/`).*
