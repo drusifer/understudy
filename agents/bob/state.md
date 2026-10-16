@@ -1,11 +1,11 @@
 # Bob State
 
 ## Context
-- 2026-10-15: /init resumed Mouse's handoff (Tank build-env), then /sprint "mvp first run"
-  ran the full Tier 1 sprint loop to launch on branch sprint-1.
+- 2026-10-15 session: init, sprint 1 (MVP), docs groom, make push orchestration, sprint 2 (HTTP +
+  hookless pages), merged and pushed. Context cleared after sprint 3 shaping began.
 
 ## Current Task
 None - waiting for user direction.
 
 ## Next Steps
-- Owner: merge/tag decision, then sprint 2 (docs/BACKLOG.md).
+- On /init: resume Cypher (agents/cypher/state.md, "Next Steps") - sprint 3 shaping questions.
