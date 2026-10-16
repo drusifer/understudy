@@ -41,7 +41,7 @@ test('check refuses a bad declaration or a default outside its own range (UND-24
   assert.equal(check(DECLARED), null);
   assert.equal(check({ centre: { weight: [0, 3], default: 5 } }), 'inputs.centre.default: must be between 0 and 3, got 5');
   assert.equal(check({ mood: { choose: ['fun'], default: 'sad' } }), 'inputs.mood.default: must be one of fun, got "sad"');
-  assert.equal(check({ mood: { choose: ['fun'], weight: [0, 1], default: 'fun' } }), 'inputs.mood: must be { choose: [...], default }, { weight: [low, high], default } or { switch: true, default: true|false }');
+  assert.equal(check({ mood: { choose: ['fun'], weight: [0, 1], default: 'fun' } }), 'inputs.mood: must be { choose: [...], default }, { weight: [low, high], default }, { count: [low, high], default } or { switch: true, default: true|false }');
   assert.equal(check({ centre: { weight: [3, 0], default: 1 } }), 'inputs.centre.weight: must be [low, high], two numbers, e.g. [0, 3]');
 });
 
@@ -55,4 +55,14 @@ test('a switch is on or off; --input takes on/off/true/false (UND-28 AC3-4)', ()
   assert.equal(check(declared), null);
   assert.equal(check({ together: { switch: true, default: 'yes' } }), 'inputs.together.default: must be on or off, got "yes"');
   assert.equal(check({ together: { switch: 'on', default: true } }), 'inputs.together.switch: must be true - a switch is { switch: true, default: true|false }');
+});
+
+test('a count is a whole number in its range (UND-34 AC1)', () => {
+  const declared = { tickets: { count: [1, 4], default: 2 } };
+  assert.deepEqual(resolveInputs(declared, ['tickets=3']), { tickets: 3 });
+  assert.equal(refusal(() => resolveInputs(declared, ['tickets=9'])), 'input "tickets" must be a whole number from 1 to 4, got 9');
+  assert.equal(refusal(() => resolveInputs(declared, ['tickets=2.5'])), 'input "tickets" must be a whole number from 1 to 4, got 2.5');
+  const check = (inputs) => refusal(() => checkInputs(inputs, (at, message) => { throw new Error(`${at}: ${message}`); }));
+  assert.equal(check(declared), null);
+  assert.equal(check({ tickets: { count: [1, 2.5], default: 2 } }), 'inputs.tickets.count: must be [low, high], two whole numbers, e.g. [1, 4]');
 });

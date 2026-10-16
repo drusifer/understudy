@@ -27,7 +27,7 @@ target:
 calls:
   - { tool: boxoffice/pay, arguments: { method: card } }
 values:
-  boxoffice/pick_seats: { count: [2] }
+  boxoffice/pick_seats: { count: { input: tickets } }
 
 inputs:
   mood: { choose: [fun, serious, dramatic, romantic], default: fun }
@@ -36,6 +36,7 @@ inputs:
   row: { weight: [0, 3], default: 2 }
   centre: { weight: [0, 3], default: 3 }
   evenings: { switch: true, default: true }      # off: afternoon showings qualify too
+  tickets: { count: [1, 4], default: 2 }         # how many seats, all together (--input tickets=3)
 
 questions:
   next:
@@ -72,7 +73,7 @@ decide:
       audience: { ask: audience, weight: audience }
   boxoffice/pick_seats.seat:
     gates:
-      together: { at_least: 2 }
+      together: { at_least: { input: tickets } }
       row: { in: [E, F, D] }
     scores:
       row: { order: [E, F, D], weight: row }

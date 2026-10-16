@@ -254,6 +254,13 @@ test('inputs, ask factors and pick are checked against what the sketch declares 
   assert.deepEqual((await loadSketch(good)).inputs.mood.default, 'fun');
 });
 
+test('{ input: } in values: must name a declared input (UND-34 AC2)', async () => {
+  const bad = mcpSketch('{ kind: mcp, server: { command: node } }', 'values:\n  pick_seats: { count: { input: tickets } }\n');
+  await assert.rejects(checkSketch(bad), /values\.pick_seats\.count: names input "tickets" - declare it under inputs:/);
+  const good = mcpSketch('{ kind: mcp, server: { command: node } }', 'inputs:\n  tickets: { count: [1, 4], default: 2 }\nvalues:\n  pick_seats: { count: { input: tickets } }\n');
+  assert.ok(await loadSketch(good));
+});
+
 test('an MCP sketch by reference reads the mcpServers file; a missing name is refused naming the ones there', async () => {
   const files = { 'servers.json': '{"mcpServers":{"box":{"type":"http","url":"http://127.0.0.1:1/mcp"}}}' };
   const good = mcpSketch('{ kind: mcp, config: servers.json, server: box }', '', files);

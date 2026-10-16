@@ -8,6 +8,7 @@
 import { candidatesFor, MAX_CANDIDATES } from '../fill.mjs';
 import { answerRows } from '../rows.mjs';
 import { LRUCache } from 'lru-cache';
+import { isInputReference } from '../inputs.mjs';
 import { gate, score, shortlist } from '../engine.mjs';
 
 const RESULT_CHARS = 2000;
@@ -34,7 +35,7 @@ function idOf(tool, fixed) {
  * the tool itself. Each open argument carries its candidates; a required
  * one with none makes the move unavailable, with the reason.
  */
-function movesFor(tool, { calls, values, last, decided, pick }) {
+function movesFor(tool, { calls, values, last, decided, pick, inputs }) {
   const properties = tool.inputSchema?.properties ?? {};
   const required = new Set(tool.inputSchema?.required);
   const listed = values[nameOf(tool)] ?? {};
@@ -47,7 +48,8 @@ function movesFor(tool, { calls, values, last, decided, pick }) {
       const isOpen = decision || required.has(name) || Object.hasOwn(listed, name);
       if (!isOpen || Object.hasOwn(fixed, name)) continue;
       if (decision) decisions.push(decision.record);
-      const argument = decision ? decidedArgument(name, schema, decision, pick) : listedArgument(name, schema, listed[name], last);
+      const list = listedFor(listed[name], inputs);
+      const argument = decision ? decidedArgument(name, schema, decision, pick) : listedArgument(name, schema, list, last);
       if (argument.why) return { id: idOf(tool, fixed), why: argument.why };
       open.push(argument);
     }
@@ -58,6 +60,9 @@ function movesFor(tool, { calls, values, last, decided, pick }) {
     return { ...move, decided: decisions, ...(pick?.told && { told: pick.told }) };
   });
 }
+
+// A listed value may be one of the run's inputs (`{ input: tickets }`, sprint 7).
+const listedFor = (listed, inputs) => (isInputReference(listed) ? [inputs[listed.input]] : listed);
 
 /**
  * A decided argument as a move's open argument (its shortlist), or why not.
@@ -259,7 +264,7 @@ export function mcpApp({ calls = [], values = {}, decide = {}, pick = null, ques
       // A refused call spends nothing.
       if (spending.length > 0 && view.last?.isError) for (const [key, value] of spending) spent.get(key).delete(value);
       spending = [];
-      const found = view.tools.flatMap((tool) => movesFor(tool, { calls, values, last: answered, decided: (key, argument) => decided(key, argument, options), pick: pick && { ...pick, told: told() } }));
+      const found = view.tools.flatMap((tool) => movesFor(tool, { calls, values, last: answered, decided: (key, argument) => decided(key, argument, options), pick: pick && { ...pick, told: told() }, inputs: app.inputs }));
       // Owner, 2026-10-16: a deciding sketch keeps every answer, so a call
       // already answered with the same arguments is not made again.
       const all = found.map((move) => (move.open?.length === 0 && answeredCalls.get(callKey(move.call))

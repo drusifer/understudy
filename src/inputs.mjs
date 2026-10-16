@@ -7,11 +7,12 @@
 //     mood:   { choose: [fun, serious, dramatic, romantic], default: fun }
 //     centre: { weight: [0, 3], default: 3 }
 //     together: { switch: true, default: true }      (sprint 6: turns a gate on or off, `when:`)
+//     tickets: { count: [1, 4], default: 2 }         (sprint 7: a whole number; `{ input: tickets }`)
 
 import { UsageError } from './errors.mjs';
 
-const KINDS = ['choose', 'weight', 'switch'];
-const SHAPES = '{ choose: [...], default }, { weight: [low, high], default } or { switch: true, default: true|false }';
+const KINDS = ['choose', 'weight', 'switch', 'count'];
+const SHAPES = '{ choose: [...], default }, { weight: [low, high], default }, { count: [low, high], default } or { switch: true, default: true|false }';
 const SWITCH_WORDS = new Map([['on', true], ['true', true], ['off', false], ['false', false]]);
 const isMapping = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 const isBounds = (range) => Array.isArray(range) && range.length === 2 && range.every((each) => typeof each === 'number') && range[0] < range[1];
@@ -34,6 +35,7 @@ function checkInput(name, input, fail) {
     fail(`${at}.choose`, 'must be a list of words, e.g. [fun, serious, dramatic, romantic]');
   }
   if (input.weight !== undefined && !isBounds(input.weight)) fail(`${at}.weight`, 'must be [low, high], two numbers, e.g. [0, 3]');
+  if (input.count !== undefined && !(isBounds(input.count) && input.count.every((each) => Number.isSafeInteger(each)))) fail(`${at}.count`, 'must be [low, high], two whole numbers, e.g. [1, 4]');
   if (input.switch !== undefined && input.switch !== true) fail(`${at}.switch`, 'must be true - a switch is { switch: true, default: true|false }');
   const problem = problemWith(name, input, input.default);
   if (problem) fail(`${at}.default`, problem.replace(`input "${name}" `, ''));
@@ -44,6 +46,10 @@ function checkInput(name, input, fail) {
  */
 function problemWith(name, input, value) {
   if (input.switch) return typeof value === 'boolean' ? null : `input "${name}" must be on or off, got ${JSON.stringify(value)}`;
+  if (input.count) {
+    const [low, high] = input.count;
+    return Number.isSafeInteger(value) && value >= low && value <= high ? null : `input "${name}" must be a whole number from ${low} to ${high}, got ${value}`;
+  }
   if (input.choose) {
     return input.choose.includes(value) ? null : `input "${name}" must be one of ${input.choose.join(', ')}, got ${JSON.stringify(value)}`;
   }
@@ -79,10 +85,24 @@ export function resolveInputs(declared = {}, given = []) {
  * a boolean for a switch (on/off, true/false), else the text.
  */
 function valueOf(input, text) {
-  if (input.weight && /^-?\d+(\.\d+)?$/.test(text)) return Number(text);
+  if ((input.weight || input.count) && /^-?\d+(\.\d+)?$/.test(text)) return Number(text);
   if (input.switch && SWITCH_WORDS.has(text)) return SWITCH_WORDS.get(text);
   return text;
 }
+
+/**
+ * The names of the inputs that hold a number (weights and counts), for
+ * checking `{ input: <name> }` where a number is needed.
+ */
+export function numberInputs(declared = {}) {
+  return Object.keys(declared).filter((name) => declared[name].weight || declared[name].count);
+}
+
+/**
+ * `{ input: <name> }` - a value the run's inputs fill in (sprint 7).
+ */
+export const isInputReference = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+  && Object.keys(value).length === 1 && typeof value.input === 'string';
 
 /**
  * The names of the switch inputs, for checking `when: <name>`.

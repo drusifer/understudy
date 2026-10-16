@@ -20,7 +20,7 @@ import { pageApp } from './apps/page.mjs';
 import { mcpApp } from './apps/mcp.mjs';
 import { resolveServers } from './mcpConfig.mjs';
 import { checkGates, checkScores, checkShortlist } from './engine.mjs';
-import { checkInputs, switchInputs, weightInputs } from './inputs.mjs';
+import { checkInputs, isInputReference, numberInputs, switchInputs, weightInputs } from './inputs.mjs';
 
 const SKETCH = 'sketch.yaml';
 const GUIDE = 'see docs/SKETCHES.md';
@@ -129,9 +129,9 @@ function checkCalls(sketch, fail) {
     if (sketch[key] !== undefined && sketch.target.kind !== 'mcp') fail(key, 'only for an mcp target');
   }
   checkCallList(sketch.calls ?? [], fail);
-  checkValues(sketch.values ?? {}, fail);
   if (sketch.inputs !== undefined) checkInputs(sketch.inputs, fail);
-  checkDecide(sketch.decide ?? {}, { weights: weightInputs(sketch.inputs), switches: switchInputs(sketch.inputs), questions: sketch.questions ?? {} }, fail);
+  checkValues(sketch.values ?? {}, Object.keys(sketch.inputs ?? {}), fail);
+  checkDecide(sketch.decide ?? {}, { weights: weightInputs(sketch.inputs), switches: switchInputs(sketch.inputs), numbers: numberInputs(sketch.inputs), questions: sketch.questions ?? {} }, fail);
   if (sketch.pick !== undefined) checkPick(sketch.pick, sketch.inputs ?? {}, fail);
 }
 
@@ -191,7 +191,7 @@ function checkDecided(key, entry, known, fail) {
   for (const field of ['field', 'join']) {
     if (entry[field] !== undefined && (typeof entry[field] !== 'string' || entry[field] === '')) fail(`${at}.${field}`, 'must name a field of the answers, e.g. title');
   }
-  if (entry.gates !== undefined) checkGates(entry.gates, `${at}.gates`, fail, known.switches);
+  if (entry.gates !== undefined) checkGates(entry.gates, `${at}.gates`, fail, known.switches, known.numbers);
   if (entry.scores !== undefined) {
     checkScores(entry.scores, `${at}.scores`, fail);
     checkFactorNames(entry.scores, `${at}.scores`, known, fail);
@@ -210,14 +210,21 @@ function checkCallList(calls, fail) {
   }
 }
 
-function checkValues(values, fail) {
+function checkValues(values, inputs, fail) {
   if (!isMapping(values)) fail('values', 'must map each tool to { <argument>: [values...] }');
   for (const [tool, arguments_] of Object.entries(values)) {
     if (!isMapping(arguments_)) fail(`values.${tool}`, 'must map each argument to a list of values');
-    for (const [name, list] of Object.entries(arguments_)) {
-      if (!Array.isArray(list) || list.length === 0) fail(`values.${tool}.${name}`, 'must be a non-empty list of values to choose from');
-    }
+    for (const [name, list] of Object.entries(arguments_)) checkValueList(list, inputs, `values.${tool}.${name}`, fail);
   }
+}
+
+// A list of values, or one of the run's inputs (`{ input: tickets }`, sprint 7).
+function checkValueList(list, inputs, at, fail) {
+  if (isInputReference(list)) {
+    if (!inputs.includes(list.input)) fail(at, `names input "${list.input}" - declare it under inputs:`);
+    return;
+  }
+  if (!Array.isArray(list) || list.length === 0) fail(at, 'must be a non-empty list of values to choose from, or { input: <name> }');
 }
 
 /**
