@@ -31,9 +31,21 @@ Decisions: ADR-0014..0016.
   `Ratings` for most titles (to verify when web search is back).
 - **Fake ratings only** (owner decided): an in-repo ratings MCP server with made-up scores for the
   box office's made-up films - no key, no network, repeatable.
-- Open: how rules name data that is not an
-  argument (a film's genre, a showing's time, a seat's distance from the centre); what happens
-  when nothing passes (walk away).
+- **Follow the MCP pattern** (owner): the ratings service is its own MCP server, named in the
+  sketch the same way as the box office (an `mcpServers` entry, inline or in `servers.json`);
+  enrichment is tool calls to it, nothing baked into the box office.
+- **Rules are YAML on answers** (owner decided): code-free. A rule names a tool's argument and
+  tests fields of the answer object its value came from, from any of the sketch's servers
+  (`where: { genre: horror, starts: { at_least: '17:00' }, tomato: { at_least: 70 } }`); words
+  `is`, `in`, `at_least`, `at_most`, `order`.
+- **Nothing passes -> walk away, run succeeds** (owner decided): leaving empty-handed is a
+  legitimate end - the sketch's turn has an end state for it and the run exits 0; the log says
+  which rules ruled out what.
+- Assumptions for the stories: the box office grows genres, evening/afternoon showings and a seat
+  map (each seat's row, `together` run length, `from_centre`); a separate in-repo ratings MCP
+  server answers a film's made-up tomato score; facts about the same film from different servers
+  are joined by the film's title (or id) for `where:`; `order` keeps only the best value still
+  available. Sprint 5 branches from main after sprint-4 is merged.
 
 ## Next (from the sprint 3 and 4 retros)
 - Scope `showing` to results for generic MCP sketches (today it also searches tool descriptions). (Morpheus)

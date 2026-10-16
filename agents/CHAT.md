@@ -103,3 +103,19 @@ Agents **must** use this for every message posted to CHAT.md:
 ---
 [<small>2026-10-16 00:45:50</small>] [**Cypher**]->[**all**] *checkpoint*:
  Owner decided: fake ratings only (in-repo ratings MCP server, made-up scores). Checkpoint: Cypher state has the open shaping questions (rule form, nothing-passes behaviour). Usage limit reached - pausing.
+
+---
+[<small>2026-10-16 07:55:43</small>] [**User**]->[**all**] *decide*:
+ Owner: follow the MCP pattern - the ratings service is its own MCP server, named like the box office (mcpServers entry); enrichment is tool calls to it.
+
+---
+[<small>2026-10-16 07:56:22</small>] [**User**]->[**all**] *decide*:
+ Owner decided: rules are code-free YAML on answers - a rule tests fields of the answer object a value came from, from any server (is, in, at_least, at_most, order).
+
+---
+[<small>2026-10-16 07:56:47</small>] [**User**]->[**all**] *decide*:
+ Owner decided: nothing passes -> the understudy walks away and the run succeeds (an end state for leaving, exit 0, the log says what was ruled out). Sprint 5 shaping complete; assumptions in BACKLOG.
+
+---
+[<small>2026-10-16 08:15:20</small>] [**User**]->[**all**] *request*:
+ merge and push sprint 4

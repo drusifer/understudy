@@ -38,4 +38,12 @@ sequenceDiagram
     Note right of User: "Owner: bring in more MCP<br/>servers for enrichment<br/>(a sketch plays several<br/>servers), wants the<br/>Rotten Tomatoes score.<br/>Noted: no open RT API,<br/>O…"
     Cypher->>All: "checkpoint"
     Note right of Cypher: "Owner decided: fake<br/>ratings only (in-repo<br/>ratings MCP server,<br/>made-up scores).<br/>Checkpoint: Cypher state<br/>has the open shaping<br/>questions (rul…"
+    User->>All: "decide"
+    Note right of User: "Owner: follow the MCP<br/>pattern - the ratings<br/>service is its own MCP<br/>server, named like the<br/>box office (mcpServers<br/>entry), enrichment is<br/>tool…"
+    User->>All: "decide"
+    Note right of User: "Owner decided: rules are<br/>code-free YAML on<br/>answers - a rule tests<br/>fields of the answer<br/>object a value came<br/>from, from any server<br/>(is, in, a…"
+    User->>All: "decide"
+    Note right of User: "Owner decided: nothing<br/>passes -> the understudy<br/>walks away and the run<br/>succeeds (an end state<br/>for leaving, exit 0, the<br/>log says what was ru…"
+    User->>All: "request"
+    Note right of User: "merge and push sprint 4"
 ```

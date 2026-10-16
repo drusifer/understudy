@@ -18,8 +18,7 @@ Decisions so far in docs/BACKLOG.md "Sprint 5": all hard rules; ties go to Jev; 
 servers per sketch for enrichment; fake in-repo ratings server.
 
 ## Next Steps
-1. Ask the owner (one at a time): rule form - YAML conditions on the answer object a value came
-   from (recommended; works across servers) vs JS in hooks.mjs (owner redirected to enrichment
-   instead of answering); then what happens when nothing passes (walk away = new 'leave' move?).
-2. Then: merge sprint-4 when the owner says, cut sprint-5, write stories (richer box office:
-   genres, showtimes, seat map with from_centre; ratings server; multi-server sketch; rules).
+1. Shaping done (BACKLOG "Sprint 5": hard rules as YAML on answers, ties to Jev, ratings as its
+   own MCP server with fake scores, walk away = success). Wait for the owner's go.
+2. On go: merge sprint-4 into main first (owner's say), cut sprint-5, write
+   docs/sprints/USER_STORIES_SPRINT5.md from BACKLOG (assumptions listed there) -> Smith Gate 1.
