@@ -3,7 +3,8 @@
 ## Context
 - 2026-10-15 sessions: init, sprint 1 (MVP), docs groom, make push orchestration, sprint 2 (HTTP +
   hookless pages), merged and pushed. Sprint 3 (sketch.yaml only format + MCP target) shaped,
-  run end to end and launched on branch sprint-3; merge awaits the owner.
+  run end to end, merged and pushed. Sprint 4 (live watch page, pause/step, replay) launched on
+  branch sprint-4; merge awaits the owner.
 
 ## Current Task
 None - waiting for user direction.

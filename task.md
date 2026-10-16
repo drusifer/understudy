@@ -5,7 +5,7 @@
 *   **Total Points**: 16 (UND-13 3, UND-14 5, UND-15 3, UND-16 3, UND-17 2)
 *   **Branch**: `sprint-4`
 *   **Stories / Arch**: `docs/sprints/USER_STORIES_SPRINT4.md`, `docs/sprints/ARCH_SPRINT4.md` (sprint 3 board: `docs/sprints/TASKS_SPRINT3.md`)
-*   **Status**: Approved (Morpheus plan review) — Phase 1 in progress
+*   **Status**: Complete — launched 2026-10-15; merge to main / push awaiting owner
 *   **Commits**: one local commit per phase after Morpheus's review (`Phase <N>: ...`); publishing only via `bobp make push` when the owner asks (SDLC §6). No back-compat (owner rule).
 
 ---
@@ -53,8 +53,8 @@
 
 ## Stage 3: Sprint Closeout
 
-- [ ] **Task C.1:** SDLC conformance check. (*Owner: Tank | Verification: `bobp make distclean && bobp make install && bobp make check`*)
-- [ ] **Task C.2:** Groom, lessons, UAT plan `docs/sprints/UAT_PLAN_SPRINT4.md`, chat report `SPRINT_4`. (*Owner: Oracle*)
-- [ ] **Task C.3:** End-to-end user test vs the UAT plan. (*Owner: Smith*)
-- [ ] **Task C.4:** Retro → backlog. (*Owner: All*)
-- [ ] **Task C.5:** Launch; merge / push / version only when the owner says. (*Owner: Cypher*)
+- [x] **Task C.1:** SDLC conformance check. (*Owner: Tank | Verification: `bobp make distclean && bobp make install && bobp make check`*)
+- [x] **Task C.2:** Groom, lessons, UAT plan `docs/sprints/UAT_PLAN_SPRINT4.md`, chat report `SPRINT_4`. (*Owner: Oracle*)
+- [x] **Task C.3:** End-to-end user test vs the UAT plan. (*Owner: Smith*)
+- [x] **Task C.4:** Retro → backlog. (*Owner: All*)
+- [x] **Task C.5:** Launch; merge / push / version only when the owner says. (*Owner: Cypher*)

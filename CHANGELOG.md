@@ -1,5 +1,22 @@
 # Changelog
 
+## Sprint 4 — watch the understudy live (2026-10-15, branch `sprint-4`, not yet merged)
+
+- **Live view**: `understudy run <sketch> --watch [--port N]` serves a page on 127.0.0.1 that
+  draws the sketch's statechart, highlights the current state and the transition just taken,
+  and lists each Jev decision - options, pick and confidence, chosen MCP arguments, the app's
+  answer - as it is made. Opening late or reloading shows everything so far. No internet needed,
+  no new dependency; watching changes nothing about the run.
+- **Pause and step**: Pause stops a watched run before its next move, Step lets one move
+  through, Resume lets it run; `--pause` starts paused. No Jev call while paused; the idle
+  limits count running time only; Ctrl-C stops a paused run at once.
+- **Replay**: `understudy watch <log.jsonl>` replays any finished run from its log alone - play,
+  pause, step through each state change, click a decision to jump to it.
+- **The log is the whole story**: a `start` line (sketch, what it plays, its statechart), a
+  `state` line per transition (idle looks folded into `idle_looks`), and an `ended` line saying
+  why a failed run stopped. Step and final lines are unchanged; skip lines with `event`.
+- Docs: USER_GUIDE "Watch a run" with a screenshot, SKETCHES §7 event lines; ADR-0014..0016.
+
 ## Sprint 3 — one sketch file, and any MCP server as an app (2026-10-15, branch `sprint-3`, not yet merged)
 
 - **`sketch.yaml` is the only format**: one file holds a stand-in's name, target, player

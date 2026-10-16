@@ -12,11 +12,10 @@
   `bobp make push MSG=...` when the owner asks.
 
 ## Current Task
-**Status:** Shaping sprint 4 (watch the understudy live) - owner answered all four questions
-(browser page; live + replay; pick + confidence; pause and step live). Recorded in
-docs/BACKLOG.md "Sprint 4". Waiting for the owner's go.
+**Status:** Sprint 4 (watch the understudy live) launched 2026-10-15 on branch `sprint-4`.
+Merge to main / push / version await the owner.
 
 ## Next Steps
-1. On go: `/sprint 4` - cut `sprint-4` from main, archive task.md to docs/sprints/TASKS_SPRINT3.md,
-   Cypher writes docs/sprints/USER_STORIES_SPRINT4.md from BACKLOG "Sprint 4" (assumptions there
-   go into the stories' Assumptions section) -> Smith Gate 1.
+1. When the owner says so: merge `sprint-4` into main and `bobp make push MSG=...` (Tank).
+2. Sprint 5 candidates: docs/BACKLOG.md "Next" (watch-page polish, Playwright UAT script,
+   `showing` scoped to MCP results, "yet" wording).
