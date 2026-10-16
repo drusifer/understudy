@@ -5,6 +5,8 @@
 //   understudy check <sketch>             load and check the sketch, start nothing
 //   understudy library [<sketch>]         every name a sketch may use, with its meaning
 //   understudy watch <log> [--port N]     replay a finished run on the watch page (sprint 4)
+//   understudy dashboard <folder> [--port N] [--host ADDR]
+//                                         the console over a folder of sketches (sprint 6)
 //
 // <sketch> is a directory holding sketch.yaml, or the file itself (ADR-0011).
 //
@@ -28,6 +30,8 @@ const USAGE = `usage: understudy run <sketch> [--steps N] [--input name=value]..
            list every name a sketch may use, with its meaning
        understudy watch <log.jsonl> [--port N] [--host ADDR]
            replay a finished run's log on the watch page
+       understudy dashboard <folder> [--port N] [--host ADDR]
+           the console: choose a sketch from the folder, set its inputs, press Play
 <sketch> is a directory holding sketch.yaml (e.g. examples/cli) or the file itself.
 `;
 /**
@@ -54,12 +58,12 @@ const OPTIONS = {
     if (!/^[1-9]\d*$/.test(value)) throw new UsageError(`--steps must be a positive whole number (got "${value}")`);
     return Number(value);
   }, needs: 'a number', example: '--steps 20' },
-  port: { commands: ['run', 'watch'], read: (value) => {
+  port: { commands: ['run', 'watch', 'dashboard'], read: (value) => {
     const port = Number(value);
     if (!/^\d+$/.test(value) || port < 1 || port > 65_535) throw new UsageError(`--port must be a port number from 1 to 65535 (got "${value}")`);
     return port;
   }, needs: 'a port number', example: '--port 4173' },
-  host: { commands: ['run', 'watch'], read: (value) => value, needs: 'an address', example: '--host 0.0.0.0' },
+  host: { commands: ['run', 'watch', 'dashboard'], read: (value) => value, needs: 'an address', example: '--host 0.0.0.0' },
   input: { commands: ['run'], read: (value) => {
     if (!/^[\w-]+=./s.test(value)) throw new UsageError(`--input needs name=value, e.g. --input mood=romantic (got "${value}")`);
     return value;
@@ -134,6 +138,15 @@ const defaultCommands = {
     await new Promise((resolve) => process.once('SIGINT', resolve));
     await server.close();
   },
+  async dashboard(folder, { port, host, environment, stderr }) {
+    const { serveDashboard } = await loadModule('./dashboard/console.mjs');
+    const dashboard = await serveDashboard({ folder, port, host, environment, stderr });
+    stderr.write(`understudy: dashboard at ${dashboard.urls.join(' or ')} - Ctrl-C to stop\n`);
+    // UND-27 AC5: serve until Ctrl-C, then stop any run and close (exit 0).
+    await new Promise((resolve) => process.once('SIGINT', resolve));
+    await dashboard.close();
+    stderr.write('understudy: dashboard stopped\n');
+  },
 };
 
 const HELP = new Set(['--help', '-h', 'help']);
@@ -159,6 +172,11 @@ const COMMANDS = {
     const quoted = positional.map((each) => JSON.stringify(each)).join(', ');
     if (positional.length !== 1) throw new UsageError(positional.length === 0 ? 'watch needs a run log, e.g. understudy watch build/runs/coffee-cli/<time>.jsonl' : `watch takes one log (got ${quoted})`);
     await use.watch(positional[0], { port, host, stderr });
+  },
+  async dashboard({ positional, port, host }, { use, environment, stderr }) {
+    const quoted = positional.map((each) => JSON.stringify(each)).join(', ');
+    if (positional.length !== 1) throw new UsageError(positional.length === 0 ? 'dashboard needs a folder of sketches, e.g. understudy dashboard examples' : `dashboard takes one folder (got ${quoted})`);
+    await use.dashboard(positional[0], { port, host, environment, stderr });
   },
 };
 

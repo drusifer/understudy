@@ -61,4 +61,8 @@ sequenceDiagram
     Note right of Morpheus: "Sprint plan approved.<br/>rubric PLAN: SIZE=A<br/>GATE=S VERIF=A ALIGN=S<br/>OWNER=S. @Neo *swe impl<br/>phase-1"
     Mouse->>All: "phase 1"
     Note right of Mouse: "Switch inputs and when:<br/>- UND-28"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 1 done: switch<br/>inputs (on/off), when:<br/>on gate tests, check<br/>refuses when: naming a<br/>non-switch, 259 tests,<br/>committed. Phase 2:<br/>dashboar…"
+    Mouse->>All: "phase 2"
+    Note right of Mouse: "The dashboard server and<br/>the rack - UND-27"
 ```

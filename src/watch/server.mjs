@@ -30,13 +30,16 @@ function sendTo(response, line) {
 }
 const MAX_BODY = 1024;
 
-function readBody(request) {
+/**
+ * A request's body as text, refused past `max` characters.
+ */
+export function readBody(request, max = MAX_BODY) {
   return new Promise((resolve, reject) => {
     let body = '';
     request.setEncoding('utf8');
     request.on('data', (chunk) => {
       body += chunk;
-      if (body.length > MAX_BODY) reject(new Error('too large'));
+      if (body.length > max) reject(new Error('too large'));
     });
     request.on('end', () => resolve(body));
     request.on('error', reject);
@@ -104,15 +107,7 @@ export async function startWatch({ port = 0, host = '127.0.0.1', mode, source, c
     }
   });
 
-  await new Promise((resolve, reject) => {
-    server.once('error', (error) => {
-      if (error.code === 'EADDRINUSE') reject(new UsageError(`port ${port} is in use - choose another with --port`));
-      else if (error.code === 'EADDRNOTAVAIL' || error.code === 'ENOTFOUND') reject(new UsageError(`cannot listen on ${host} - give an address this machine has (e.g. 0.0.0.0 for every interface)`));
-      else reject(error);
-    });
-    server.listen(port, host, resolve);
-  });
-  const urls = addressesFor(host).map((address) => `http://${address}:${server.address().port}${base}`);
+  const urls = await listenOn(server, { port, host, base });
 
   return {
     url: urls[0],
@@ -133,10 +128,26 @@ export async function startWatch({ port = 0, host = '127.0.0.1', mode, source, c
 }
 
 /**
+ * Starts `server` listening; a busy port or an address this machine does
+ * not have is a UsageError. Resolves every URL `base` can be opened at.
+ */
+export async function listenOn(server, { port, host, base }) {
+  await new Promise((resolve, reject) => {
+    server.once('error', (error) => {
+      if (error.code === 'EADDRINUSE') reject(new UsageError(`port ${port} is in use - choose another with --port`));
+      else if (error.code === 'EADDRNOTAVAIL' || error.code === 'ENOTFOUND') reject(new UsageError(`cannot listen on ${host} - give an address this machine has (e.g. 0.0.0.0 for every interface)`));
+      else reject(error);
+    });
+    server.listen(port, host, resolve);
+  });
+  return addressesFor(host).map((address) => `http://${address}:${server.address().port}${base}`);
+}
+
+/**
  * Where a page can reach a server listening on `host`: the host itself, or
  * for 0.0.0.0 (every interface) each IPv4 address this machine has.
  */
-function addressesFor(host) {
+export function addressesFor(host) {
   if (host !== '0.0.0.0') return [host.includes(':') ? `[${host}]` : host];
   const interfaces = Object.values(os.networkInterfaces()).flat();
   const external = interfaces.filter((each) => each.family === 'IPv4' && !each.internal).map((each) => each.address);

@@ -1,0 +1,123 @@
+// Sprint 6 UND-27 (ARCH §3, §5, ADR-0023): the dashboard's server - built
+// like the watch page's (plain node:http, an unguessable token path, every
+// file served locally, Server-Sent Events), plus a small JSON API: the rack,
+// one sketch's controls, and - through `actions` - play, stop, edit, power.
+// It only ever reads sketches by the names the folder's listing gives.
+
+import http from 'node:http';
+import { randomBytes } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+import { UsageError } from '../errors.mjs';
+import { listenOn, readBody } from '../watch/server.mjs';
+import { describeSketch, listSketches } from './rack.mjs';
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const WATCH = path.join(HERE, '..', 'watch');
+const MAX_BODY = 16 * 1024;
+// The page's own files, and the watch page's pure modules it shares.
+const FILES = {
+  '': [path.join(HERE, 'page.html'), 'text/html; charset=utf-8'],
+  'page.mjs': [path.join(HERE, 'page.mjs'), 'text/javascript; charset=utf-8'],
+  'page.css': [path.join(HERE, 'page.css'), 'text/css; charset=utf-8'],
+  'tube.mjs': [path.join(HERE, 'tube.mjs'), 'text/javascript; charset=utf-8'],
+  'turnGraph.mjs': [path.join(WATCH, 'turnGraph.mjs'), 'text/javascript; charset=utf-8'],
+  'watchPage.mjs': [path.join(WATCH, 'page.mjs'), 'text/javascript; charset=utf-8'],
+};
+
+const json = (response, status, value) => response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }).end(JSON.stringify(value));
+const refuse = (response, status, problem) => json(response, status, { problem });
+
+/**
+ * Lines for every open page: the current run's so far, then each new one.
+ */
+export function createHub() {
+  const clients = new Set();
+  let history = [];
+  return {
+    // A new run starts: pages that join later see it from its start.
+    reset() {
+      history = [];
+    },
+    send(line) {
+      history.push(line);
+      for (const response of clients) response.write(`data: ${JSON.stringify(line)}\n\n`);
+    },
+    join(request, response) {
+      response.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
+      response.write(`data: ${JSON.stringify({ event: 'hello' })}\n\n`);
+      for (const line of history) response.write(`data: ${JSON.stringify(line)}\n\n`);
+      clients.add(response);
+      request.on('close', () => clients.delete(response));
+    },
+    close() {
+      for (const response of clients) response.end();
+    },
+  };
+}
+
+/**
+ * Starts the dashboard for `folder`.
+ * @param {{ folder: string, port?: number, host?: string, hub?: ReturnType<typeof createHub>,
+ *   actions?: Record<string, (body: object) => Promise<{ status: number, value?: object }>> }} options
+ *   `actions`: the POST endpoints (play, stop, edit, power), each given the parsed body.
+ * @returns {Promise<{ url: string, urls: string[], hub: object, close: () => Promise<void> }>}
+ */
+export async function startDashboard({ folder, port = 0, host = '127.0.0.1', hub = createHub(), actions = {} }) {
+  await listSketches(folder); // refuses a folder with no sketches before anything listens
+  const token = randomBytes(12).toString('base64url');
+  const base = `/d/${token}/`;
+
+  const api = async (request, response, rest) => {
+    const isGet = request.method === 'GET';
+    if (rest === 'api/sketches' && isGet) return json(response, 200, await listSketches(folder));
+    if (isGet && rest.startsWith('api/sketch/')) {
+      const name = decodeURIComponent(rest.slice('api/sketch/'.length));
+      try {
+        return json(response, 200, await describeSketch(folder, name));
+      } catch (error) {
+        if (error instanceof UsageError) return refuse(response, 404, error.message);
+        throw error;
+      }
+    }
+    const verb = rest.slice('api/'.length);
+    const action = request.method === 'POST' && Object.hasOwn(actions, verb) ? actions[verb] : undefined;
+    if (!action) return refuse(response, 404, 'not found');
+    let body;
+    try {
+      body = JSON.parse((await readBody(request, MAX_BODY)) || '{}');
+    } catch {
+      return refuse(response, 400, 'the request was not readable JSON (16 KB at most)');
+    }
+    const { status, value = {} } = await action(body);
+    return json(response, status, value);
+  };
+
+  const server = http.createServer(async (request, response) => {
+    const { pathname } = new URL(request.url, 'http://localhost');
+    if (!pathname.startsWith(base)) return response.writeHead(404).end('not found');
+    const rest = pathname.slice(base.length);
+    try {
+      if (rest === 'events' && request.method === 'GET') return hub.join(request, response);
+      if (rest.startsWith('api/')) return await api(request, response, rest);
+      const file = request.method === 'GET' ? FILES[rest] : undefined;
+      if (!file) return response.writeHead(404).end('not found');
+      const body = await readFile(file[0]);
+      return response.writeHead(200, { 'Content-Type': file[1], 'Cache-Control': 'no-store' }).end(body);
+    } catch (error) {
+      if (response.headersSent) return response.end();
+      return refuse(response, 500, `the dashboard could not do that: ${error.message}`);
+    }
+  });
+
+  const urls = await listenOn(server, { port, host, base });
+  return {
+    url: urls[0], urls, hub,
+    close: () => new Promise((resolve) => {
+      hub.close();
+      server.closeAllConnections();
+      server.close(() => resolve());
+    }),
+  };
+}

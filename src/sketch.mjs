@@ -321,6 +321,7 @@ export async function loadSketch(location) {
   return {
     directory, file, name: sketch.name, target, player: sketch.player ?? {}, steps: sketch.steps ?? null,
     app, library: own, hooks, questions: sketch.questions, inputs: sketch.inputs ?? {}, turn: sketch.turn, machine: compiled.machine, services,
+    description: sketch.description ?? '', decide: sketch.decide ?? {},
     states: Object.keys(compiled.config.states).length - 1, // not the reserved stop state
   };
 }

@@ -15,7 +15,7 @@ Every acceptance criterion of UND-27..33, per phase, then end to end by Smith at
 | Case | Story / AC | Evidence | Result |
 |---|---|---|---|
 | UAT-UND-28-03/04 | switch input, `when:`, `--input together=off` | `tests/inputs.test.js`, `tests/engine.test.js` | PASS (Phase 1) |
-| UAT-UND-27-01..05 | rack, greyed sketches, refusals, port/host/token | Phase 2 | pending |
+| UAT-UND-27-01..05 | rack, greyed sketches, refusals, port/host/token | `tests/dashboard.test.js`, `tests/cli.test.js`; CLI smoke: URL printed, wrong path 404, Ctrl-C exit 0, non-folder exit 2 | PASS (Phase 2) |
 | UAT-UND-29-01..05 | play, stop, refusals, logs | Phase 3 (server), Phase 4 (page) | pending |
 | UAT-UND-28-01/02/05 | dial, faders, keyboard | Phase 4 | pending |
 | UAT-UND-30-01..04 | tube | Phase 5 | pending |

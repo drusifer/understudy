@@ -155,3 +155,23 @@ To github.com:drusifer/understudy.git
 6:34PM INF 1 commits scanned.
 6:34PM INF scanned ~6586 bytes (6.59 KB) in 256ms
 6:34PM INF no leaks found
+
+---
+[<small>2026-10-16 18:34:33</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 1 done: switch inputs (on/off), when: on gate tests, check refuses when: naming a non-switch; 259 tests; committed. Phase 2: dashboard server + rack.
+
+---
+[<small>2026-10-16 18:34:33</small>] [**Mouse**]->[**all**] *phase 2*:
+ The dashboard server and the rack - UND-27
+
+---
+[<small>2026-10-16 18:39:08</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test | /home/drusifer/Projects/understudy/build/build.out
+ℹ tests 265
+ℹ suites 0
+ℹ pass 265
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17005.640337
