@@ -511,5 +511,5 @@ Copy an example to a scratch folder and change one thing at a time
 | run `examples/mcp-remote` with no `MCP_TOKEN` set | `bobp make run ARGS="run examples/mcp-remote"` | `examples/mcp-remote/servers.json: ${MCP_TOKEN} is not set - set MCP_TOKEN in the environment (or give a default: ${MCP_TOKEN:-value})` (2) - nothing started |
 
 Every failure after a run starts still writes the final log line (with its `outcome`) and
-closes the program, browser or server it started. Next: [USER_GUIDE.md §5](USER_GUIDE.md#5-write-a-sketch-for-your-own-app)
+closes the program, browser or server it started. Next: [USER_GUIDE.md §6](USER_GUIDE.md#6-write-a-sketch-for-your-own-app)
 to write a sketch for your own app, and [SKETCHES.md](SKETCHES.md) for the full reference.

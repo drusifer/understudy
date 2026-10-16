@@ -46,8 +46,8 @@
 
 ### Phase 6: Docs — UND-17
 *Phase goal: the guides show how to watch, replay and step, with a real screenshot.*
-- [ ] **Task 6.1:** USER_GUIDE "Watch a run", SKETCHES §7 log lines, README opening + screenshot (`docs/images/watch.png` from a real run, taken with Playwright), ADR-0014..0016 (Oracle). (*Owner: Neo + Oracle | Verification: every documented command runs*)
-- [ ] **Task 6.2:** UAT cold read then Morpheus review. (*Owner: Trin → Morpheus | Verification: inspection; commit `Phase 6`*)
+- [x] **Task 6.1:** USER_GUIDE "Watch a run", SKETCHES §7 log lines, README opening + screenshot (`docs/images/watch.png` from a real run, taken with Playwright), ADR-0014..0016 (Oracle). (*Owner: Neo + Oracle | Verification: every documented command runs*)
+- [x] **Task 6.2:** UAT cold read then Morpheus review. (*Owner: Trin → Morpheus | Verification: inspection; commit `Phase 6`*)
 
 ---
 
