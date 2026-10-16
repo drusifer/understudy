@@ -154,3 +154,78 @@ real output into the design and the tests. Record the library version with it.
 ### References
 - **Commit:** 761ea11
 - **Files:** `tests/aria.test.js`, `src/targets/aria.mjs`, `docs/sprints/ARCH_SPRINT2.md`
+
+## [2026-10-15] Read what the model can answer before promising what it will do
+
+> **Tags:** #stories #typesafe #Cypher #Morpheus
+
+### Context
+Sprint 3 shaping: the owner chose "sketch supplies calls + Jev fills the arguments" for MCP tools.
+
+### The Issue
+"Jev fills arguments" reads as free-text generation. TypeSafe's `systemOne` answers only
+`noul`, `choice` and `score` questions (`node_modules/@typesafe-ai/sdk/dist/index.d.mts`), so Jev
+cannot write a value at all.
+
+### The Solution
+Before the stories were written, the SDK's question types were read. The stories turned
+"fills" into "chooses from a finite list" (schema, sketch values, last result), said so as an
+owner-visible assumption and an open question, and the architecture made it ADR-0013.
+
+### The Rule (The "Lesson")
+Before a story promises what a model or library will do, read its declared types or a probe of
+its output, and state any narrowing of the owner's words as an assumption the owner can overturn.
+
+### References
+- **Files:** `docs/sprints/USER_STORIES_SPRINT3.md` (Assumptions, Open Questions), `docs/DECISIONS.md` ADR-0013
+
+## [2026-10-15] Put an error between the producer and the consumer in the end-to-end test
+
+> **Tags:** #testing #mcp #Neo #Trin
+
+### Context
+Sprint 3 Phase 2: tool arguments are chosen from values in "the last result" (a film id from
+`list_films` feeds `pick_seats`; a hold from `pick_seats` feeds `pay`).
+
+### The Issue
+The happy-path live run passed. The end-to-end test with a refused payment (`cash`) between
+`pick_seats` and the second `pay` failed: the error answer became "the last result", the hold
+vanished from the candidates, and `pay` could no longer be offered - Jev's next pick was off the
+list twice.
+
+### The Solution
+Candidates come from the last result that was **not an error**; the stories, the architecture and
+ADR-0013 were amended, and a unit test pins it (`tests/mcpApp.test.js`).
+
+### The Rule (The "Lesson")
+When state is derived from "the last answer", test a run where an error answer lands between the
+answer that produces the state and the move that uses it.
+
+### References
+- **Commit:** b7ddba1
+- **Files:** `src/apps/mcp.mjs`, `tests/examples.test.js`, `tests/mcpApp.test.js`
+
+## [2026-10-15] An "absence grep" criterion must list its required exceptions up front
+
+> **Tags:** #stories #docs #Cypher #Smith
+
+### Context
+Sprint 3 UND-12 AC3: `grep` for `adapter.mjs|part/turn|part/questions` must find nothing. Sprint 2
+UND-8 AC2 had the same shape for `__understudy`.
+
+### The Issue
+Both sprints, the grep could never be empty: UND-9 AC6 *requires* the refusal message to name
+`adapter.mjs` and `part/`, and the migration note must name them too. The criterion was amended
+during UAT - the second sprint running.
+
+### The Solution
+UND-12 AC3 now names its exceptions (the old-layout refusal, its troubleshooting row, the
+migration paragraph, history files).
+
+### The Rule (The "Lesson")
+When an acceptance criterion says "the old name appears nowhere", list at story time every place
+another criterion requires it to stay (refusal messages, migration notes, history), so the test is
+a yes/no from the start.
+
+### References
+- **Files:** `docs/sprints/USER_STORIES_SPRINT3.md` UND-9 AC6, UND-12 AC3; `docs/sprints/USER_STORIES_SPRINT2.md` UND-8 AC2

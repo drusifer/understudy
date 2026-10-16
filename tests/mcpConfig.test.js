@@ -72,3 +72,12 @@ test('an unset ${VAR} with no default refuses, naming the variable and the file'
   assert.equal(refusal(() => expandEntry({ type: 'http', url: 'u', headers: { Authorization: 'Bearer ${MCP_TOKEN}' } }, {}, 'examples/mcp-remote/servers.json')),
     'examples/mcp-remote/servers.json: ${MCP_TOKEN} is not set - set MCP_TOKEN in the environment (or give a default: ${MCP_TOKEN:-value})');
 });
+
+test('a config path may be absolute - a project\'s own .mcp.json, say (DEF-09)', () => {
+  const elsewhere = directoryWith({ '.mcp.json': '{"mcpServers":{"via":{"command":"via","args":["mcp"]}}}' });
+  const config = path.join(elsewhere, '.mcp.json');
+  const { entry, from } = resolve({ kind: 'mcp', config, server: 'via' });
+  assert.deepEqual(entry, { command: 'via', args: ['mcp'] });
+  assert.equal(from, shown(config));
+  assert.equal(refusal(() => resolve({ kind: 'mcp', config: '/no/such/.mcp.json', server: 'via' })), 'sketch.yaml: target.config: /no/such/.mcp.json not found');
+});

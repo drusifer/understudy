@@ -165,7 +165,7 @@ async function loadApp(sketch, { file, directory }, fail) {
     return { app: generic(sketch), library: {}, hooks: null };
   }
   if (typeof sketch.app !== 'string' || sketch.app === '') fail('app', 'must name a module next to the sketch, e.g. hooks.mjs');
-  const hooksFile = path.join(directory, sketch.app);
+  const hooksFile = path.resolve(directory, sketch.app);
   if (!existsSync(hooksFile)) fail('app', `${sketch.app} not found next to ${path.basename(file)}`);
   let module;
   try {

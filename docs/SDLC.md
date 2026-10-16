@@ -167,6 +167,7 @@ Run by Tank at sprint close (`*devops sdlc-check`):
 8. Nothing under `src/` or `tests/` imports from `seed/`.
 
 ---
-*Last verified: 2026-10-15 against sprint-3 Phase 3 by Tank (test-live recipe now serves the
-box office over HTTP for examples/mcp-remote; make test-live green for cli, http, mcp,
-mcp-remote and web; no server left running). Full from-clean check at sprint 3 close.*
+*Last verified: 2026-10-15 against sprint-3 at 018d053 by Tank (sprint 3 close: distclean →
+install (lockfile unchanged) → check, 162/162 tests, lint, gitleaks clean; every imported package
+declared; make test-live green for cli, http, mcp, mcp-remote and web in Phase 3, with no
+server left running).*

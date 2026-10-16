@@ -65,10 +65,13 @@ export function resolveServer(target, { directory, shownFile, shown }) {
     checkEntry(target.server, 'target.server', fail);
     return { entry: target.server, name: null, from: shownFile };
   }
-  if (typeof target.config !== 'string' || target.config === '') fail('target.config', 'must name an mcpServers file next to the sketch, e.g. servers.json');
+  if (typeof target.config !== 'string' || target.config === '') fail('target.config', 'must name an mcpServers file, e.g. servers.json next to the sketch or /path/to/.mcp.json');
   if (typeof target.server !== 'string' || target.server === '') fail('target.server', `names the server in ${target.config} (with config:, server is a name)`);
-  const file = path.join(directory, target.config);
-  if (!existsSync(file)) fail('target.config', `${target.config} not found next to ${path.basename(shownFile)}`);
+  // Relative to the sketch, or absolute - e.g. a project's own .mcp.json.
+  const file = path.resolve(directory, target.config);
+  if (!existsSync(file)) {
+    fail('target.config', path.isAbsolute(target.config) ? `${target.config} not found` : `${target.config} not found next to ${path.basename(shownFile)}`);
+  }
   let config;
   try {
     config = YAML.parse(readFileSync(file, 'utf8'));
