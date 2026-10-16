@@ -194,7 +194,10 @@ function drawStep(decision) {
   item.append(head, options);
   if (decision.retry) item.append(element('div', { class: 'retry' }, decision.retry));
   if (decision.args) item.append(element('div', { class: 'args' }, `arguments: ${decision.args}`));
-  for (const decided of decision.decided) item.append(drawDecided(decided));
+  // An argument with nothing ranked, removed or held (no rules) says nothing worth a line.
+  for (const decided of decision.decided) {
+    if (decided.rows.length > 0 || decided.removed || decided.held) item.append(drawDecided(decided));
+  }
   if (decision.answer) item.append(element('div', { class: `answer${decision.answer.isBad ? ' bad' : ''}` }, `answer: ${decision.answer.text}`));
   return item;
 }

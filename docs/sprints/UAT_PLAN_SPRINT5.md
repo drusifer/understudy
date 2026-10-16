@@ -2,7 +2,7 @@
 
 *   **Author**: Trin
 *   **Stories**: `docs/sprints/USER_STORIES_SPRINT5.md` (UND-18..26) · **Arch**: `docs/sprints/ARCH_SPRINT5.md`
-*   **Status**: In progress - All phases verified - awaiting Smith end-to-end
+*   **Status**: In progress - Complete - Smith end-to-end passed 2026-10-16
 
 ## 1. Scope of Acceptance Testing
 

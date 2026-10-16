@@ -16,7 +16,7 @@ values, never writes them - understudy is constrained automation by design.
 Done - see `CHANGELOG.md` (live watch page, pause/step, replay, the log as an event stream).
 Decisions: ADR-0014..0016.
 
-## Sprint 5 (owner, 2026-10-16) - a decision engine: gates, scores, Jev
+## Sprint 5 (owner, 2026-10-16) - a decision engine: gates, scores, Jev - DONE (launched 2026-10-16)
 Owner: "I prefer horror films, and I want to go in the evenings but only if row E, F, or D is
 available (in that order), seats together but not too far from the center." Shaped in chat on
 2026-10-16; the general case is a **filter over JSON rows** - constraints and scores pick the
@@ -72,6 +72,15 @@ subset worth a closer look, and Jev makes the qualitative calls. Owner decisions
 - **Power through the graph** (owner idea, queued 2026-10-16): in the logic display, the edge for
   each factor carries more visible power as its weight rises - a flux-capacitor glow and flow,
   strongest at 11.
+
+## Next (from the sprint 5 retro)
+- **Owner question**: a decision can pick a showing while other films are still held back
+  (waiting for their score). Should a decided argument offer nothing until nothing is held? (Morpheus)
+- Extract the decision path (`decided`, scores, standing) from `src/apps/mcp.mjs` into its own module. (Neo)
+- Watch page: group a step's removed values by reason ("together 1 < 2: 64 seats"). (Smith)
+- `test-live`: a step budget per example, so a run that wanders fails. (Trin)
+- A short "Deciding" cheat-sheet in USER_GUIDE. (Oracle)
+- Debt: spent values never come back if the app changes (ADR-0017).
 
 ## Next (from the sprint 3 and 4 retros)
 - Scope `showing` to results for generic MCP sketches (today it also searches tool descriptions). (Morpheus)

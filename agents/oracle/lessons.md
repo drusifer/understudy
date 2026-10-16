@@ -302,3 +302,50 @@ place, and give the wait its own exit if they do not.
 ### References
 - **Commit:** 86d9c8c
 - **Files:** `src/watch/gate.mjs`, `src/run.mjs`, `tests/watchRun.test.js`
+
+## [2026-10-16] Jev sees only what the view shows - a multi-call plan needs its memory in view
+
+### Context
+Sprint 5 Phase 7: the first live run of `examples/evening` (two servers, a decision that needs a
+film list, ratings and a seat map before it can act).
+
+### The Issue
+It booked correctly but took 24 steps: after each rating call, Jev's view held only that answer
+(`last_call`), so it listed the films again before every next rating. The unit tests with a Jev
+double never showed it - the double was scripted to prefer the right tool.
+
+### The Solution
+In a deciding sketch, Jev's view also carries what each other tool last said (`earlier`, 1000
+characters each). The same live run took 7 steps.
+
+### The Rule (The "Lesson")
+When a task needs facts from several calls, put what was already learned in the model's view -
+and check the step count of a live run, not only its outcome: a double that knows the plan hides
+a model that cannot see it.
+
+### References
+- **Commit:** 9966798
+- **Files:** `src/apps/mcp.mjs`, `tests/decideApp.test.js`, `docs/MCP_GUIDE.md` §9
+
+## [2026-10-16] A test helper that skips the look hides state the app builds while looking
+
+### Context
+Sprint 5 Phases 3 and 5: app tests drove the evening servers with `target.act` and then asked
+the app for moves.
+
+### The Issue
+The app remembers answers (rows), counts steps (spent values, reused Scores) and asks Jev in
+`moves`, `act` and `prepare` - the calls a run makes on every look. Tests that called
+`target.act` directly skipped them: answers went unremembered and step counts stayed at 0, so
+assertions failed for reasons a run never has.
+
+### The Solution
+Test helpers do what a run does: `app.act(move)` to make the action, `target.act`, then a look
+(`prepare`, then `moves`).
+
+### The Rule (The "Lesson")
+When an object keeps state across a loop, drive it in tests through the same sequence of calls
+the loop makes; a shortcut tests a sequence that never happens.
+
+### References
+- **Files:** `tests/decideApp.test.js`, `tests/jevScore.test.js`

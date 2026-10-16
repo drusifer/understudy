@@ -5,7 +5,7 @@
 *   **Total Points**: 29 (UND-18 3, UND-19 2, UND-20 5, UND-21 3, UND-22 5, UND-23 3, UND-24 3, UND-25 2, UND-26 3) - kept whole by the owner ("go big or go home")
 *   **Branch**: `sprint-5`
 *   **Stories / Arch**: `docs/sprints/USER_STORIES_SPRINT5.md`, `docs/sprints/ARCH_SPRINT5.md` (sprint 4 board: `docs/sprints/TASKS_SPRINT4.md`)
-*   **Status**: In progress - All phases done; sprint close next
+*   **Status**: Complete - launched 2026-10-16; merge to main / push awaiting owner
 *   **Commits**: one local commit per phase after Morpheus's review (`Phase <N>: ...`); publishing only via `bobp make push` when the owner asks (SDLC §6). No back-compat (owner rule).
 
 ---
@@ -59,7 +59,7 @@
 
 ## Sprint Close
 
-- [ ] **Task C.1:** `*devops sdlc-check` - from-clean rebuild, targets as documented, Last verified line. (*Owner: Tank*)
-- [ ] **Task C.2:** `*ora groom` - ADR-0017..0022 into `docs/DECISIONS.md`, lessons, `*ora report sprint-5`. (*Owner: Oracle*)
-- [ ] **Task C.3:** `*user test` against `docs/sprints/UAT_PLAN_SPRINT5.md` (Trin writes it in Phase 1). (*Owner: Smith*)
-- [ ] **Task C.4:** retro, then `*pm launch sprint-5`. (*Owner: All → Cypher*)
+- [x] **Task C.1:** `*devops sdlc-check` - from-clean rebuild, targets as documented, Last verified line. (*Owner: Tank*)
+- [x] **Task C.2:** `*ora groom` - ADR-0017..0022 into `docs/DECISIONS.md`, lessons, `*ora report sprint-5`. (*Owner: Oracle*)
+- [x] **Task C.3:** `*user test` against `docs/sprints/UAT_PLAN_SPRINT5.md` (Trin writes it in Phase 1). (*Owner: Smith*)
+- [x] **Task C.4:** retro, then `*pm launch sprint-5`. (*Owner: All → Cypher*)

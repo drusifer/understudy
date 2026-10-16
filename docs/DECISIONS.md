@@ -3,11 +3,60 @@
 Newest first. Each record follows `agents/templates/_template_DECISION.md`, kept short.
 Sprint 1 records were made by Morpheus in `docs/sprints/ARCH_SPRINT1.md` §8, sprint 2
 records in `docs/sprints/ARCH_SPRINT2.md` §8 and sprint 3 records in
-`docs/sprints/ARCH_SPRINT3.md` §8 and sprint 4 records in `docs/sprints/ARCH_SPRINT4.md` §8
-(all approved at Smith Gate 2, 2026-10-15). Records before
+`docs/sprints/ARCH_SPRINT3.md` §8, sprint 4 records in `docs/sprints/ARCH_SPRINT4.md` §8
+(all approved at Smith Gate 2, 2026-10-15) and sprint 5 records in `docs/sprints/ARCH_SPRINT5.md` §8
+(approved at Smith Gate 2, 2026-10-16). Records before
 ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `sketch.yaml`.
 
 ---
+
+## ADR-0022: Several servers in one MCP target
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-20
+*   **Context**: owner: enrichment from more MCP servers (a ratings service beside the box office), each named the MCP way.
+*   **Options**: (1) one target holding several clients; (2) one target per server with the run switching between them; (3) a proxy server merging tools.
+*   **Decision**: (1). `servers:` (inline, or names in a `servers.json`); tools are `<server>/<tool>` only when there are several, so one-server sketches, ids and logs are unchanged. A server that will not start stops the others and is named.
+*   **Consequences**: + a sketch plays any mix of local and remote servers. − with several, ids are longer; a failure anywhere ends the run.
+
+## ADR-0021: Walking away is a guard plus a tagged final state
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-25
+*   **Context**: owner: when nothing passes, the understudy leaves and the run succeeds.
+*   **Options**: (1) guard `nothing_qualifies` + a final state tagged `walked-away`; (2) the run detects it and ends by itself; (3) treat it as `stalled`.
+*   **Decision**: (1). The turn decides where leaving goes; outcome `walked-away`, exit 0, a `walked-away` line and a sentence. Smith Gate 2: an argument that never saw a value (no seat map read because every showing was gated out) does not block leaving; a held-back value always does.
+*   **Consequences**: + "nothing tonight" is a testable result. − a sketch without the state stalls instead (with the same explanation).
+
+## ADR-0020: Jev at the edges - a Score per row and the final Choice; never weights
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-23, UND-24
+*   **Context**: owner: constraints for what can be measured, Jev for the qualitative (audience reaction) and the final pick coloured by mood. Jev chooses, never writes.
+*   **Options**: (1) Score questions as factors + a final Choice with inputs; (2) Jev sets the weights from prose; (3) Jev ranks the whole list.
+*   **Decision**: (1). A `type: score` question `looks_at` a row field; asked once per row per run, every waiting row in one request on the next look; its 0..1 answer is a weighted factor. The final Choice gets `pick.instructions` and the inputs in `pick.with`; a shortlist of one is taken without asking. (2) deferred - it would be writing numbers.
+*   **Consequences**: + Jev's judgment is one more knob, reused, cheap. − a value waits a look for its Score.
+
+## ADR-0019: Scoring lives in the app, not in the statechart
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-21, UND-22
+*   **Context**: owner asked whether the rule logic belongs in xstate or new primitives.
+*   **Options**: (1) the generic MCP app filters and ranks the values of one move; (2) per-factor xstate guards.
+*   **Decision**: (1). Guards are booleans choosing transitions; ranking values within one move is a different job. The turn sees one outcome, `nothing_qualifies`. The engine (`src/engine.mjs`) is pure over JSON rows.
+*   **Consequences**: + reusable beyond MCP (a later `understudy rank`). − the statechart diagram does not show the rules; the step's score table does.
+
+## ADR-0018: Gates, then weighted curves multiplied
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-21, UND-22
+*   **Context**: owner: what is never accepted vs what is liked more; "the option I want the most has the biggest bearing"; a zero should drop a value.
+*   **Options**: (1) hard gates, then score = position^weight per factor, multiplied (weighted geometric mean); (2) a weighted sum; (3) everything as hard rules.
+*   **Decision**: (1). Gates remove (with why) or hold back (missing fact). `range`/`order`/`ask` place a field 0..1; weight 0 turns a factor off; a 0 anywhere removes the value; the shortlist is every total above 0, bounded by `at_most`/`total.at_least`.
+*   **Consequences**: + a great tomato cannot hide an end seat. − authors must set range floors deliberately: the bottom of a range removes.
+
+## ADR-0017: Values carry their answer row; facts join by a named key
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-21
+*   **Context**: rules test facts about a value (a showing's genre lives a level up; a film's score on another server). Sprint 3 offered flat leaf values of the last answer only.
+*   **Options**: (1) rows: objects with inherited scalars, values from rows that own the field, across all remembered answers, joined by `join`; (2) look facts up by value equality.
+*   **Decision**: (1). Lists of plain values (reviews) count as facts. A decided value used in a call that answered is spent. At most 500 rows kept.
+*   **Consequences**: + facts from any server meet. − spent values never come back even if the app changes; one join key, exact match.
 
 ## ADR-0016: Pause is a gate before each move; no Jev call while paused
 
