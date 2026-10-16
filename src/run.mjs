@@ -9,11 +9,12 @@
 // stderr; every outcome ends with one final line, and the target is
 // closed however the run ends.
 
-import { appendFileSync, mkdirSync } from 'node:fs';
+import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { MachineSeat } from './seat.mjs';
 import { loadSketch, shown } from './sketch.mjs';
 import { RunError, UsageError } from './errors.mjs';
+import { createStream } from './stream.mjs';
 
 const KEY = 'TYPESAFE_API_KEY';
 export const DEFAULT_STEPS = 50;
@@ -90,28 +91,28 @@ export async function runSketch(location, {
   const target = await makeTarget(sketch.target, { directory: sketch.directory, environment });
   const logDirectory = path.join(logRoot, sketch.name);
   const logFile = path.join(logDirectory, `${new Date(clock()).toISOString().replaceAll(':', '-')}.jsonl`);
-  const write = (entry) => {
-    const line = `${JSON.stringify(entry)}\n`;
-    stdout.write(line);
-    appendFileSync(logFile, line);
-  };
+  const stream = createStream({ stdout, logFile });
+  const write = (entry) => stream.emit(entry);
   const run = { taken: 0, seat: null, lastMoveAt: null, app: sketch.app };
   // A generic app may have something to say once (a tool it cannot offer).
   if (Object.hasOwn(sketch.app, 'notify')) sketch.app.notify = (line) => stderr.write(`understudy: ${line}\n`);
   const interrupts = watchInterrupts(signals, () => target.close());
   try {
     mkdirSync(logDirectory, { recursive: true });
+    write({ event: 'start', sketch: sketch.name, plays: target.describe(), turn: sketch.turn, at: new Date(clock()).toISOString() });
     stderr.write(`understudy: playing ${sketch.name} (${target.describe()}) - log ${shown(logFile)}\n`);
     Object.assign(sketch.services, { target, judge, name: 'understudy', player: sketch.player, app: sketch.app });
     run.seat = new MachineSeat({ machine: sketch.machine, services: sketch.services, pollMs, clock });
     await playUntilDone({ run, target, steps: limit, waits: { firstMoveMs, stallMs }, clock, interrupts, write, stderr });
   } catch (error) {
+    flushChanges(run, write);
     write({ final: true, outcome: interrupts.isAsked() ? 'interrupted' : error.outcome ?? 'error', steps: run.taken, state: run.seat?.state ?? null });
     throw error;
   } finally {
     interrupts.stop();
     await target.close();
   }
+  flushChanges(run, write);
   const outcome = interrupts.isAsked() ? 'interrupted' : 'done';
   write({ final: true, outcome, steps: run.taken, state: run.seat.state });
   if (outcome === 'interrupted') {
@@ -127,6 +128,7 @@ async function playUntilDone({ run, target, steps, waits, clock, interrupts, wri
   const started = clock();
   for (;;) {
     const next = await run.seat.nextMove({ shouldStop: interrupts.isAsked });
+    flushChanges(run, write);
     if (next === 'done') return;
     const exited = target.exited?.();
     if (exited) {
@@ -165,6 +167,15 @@ async function checkIdle({ run, target, waits, idleFor }) {
 }
 
 /**
+ * The seat's state changes since the last flush, one `state` line each
+ * (ADR-0014).
+ */
+function flushChanges(run, write) {
+  const changes = run.seat?.drainChanges() ?? [];
+  for (const change of changes) write({ event: 'state', ...change });
+}
+
+/**
  * One step within the cap, logged as it is taken.
  */
 async function takeStep({ run, steps, write, stderr }) {
@@ -173,6 +184,7 @@ async function takeStep({ run, steps, write, stderr }) {
   }
   run.taken += 1;
   const record = await stepped(run.seat, run.taken);
+  flushChanges(run, write);
   const entry = { step: run.taken, ...record, state: run.seat.state };
   write(entry);
   stderr.write(`${summaryLine(entry)}\n`);

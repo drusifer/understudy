@@ -20,8 +20,8 @@
 
 ### Phase 1: The log tells the whole story — UND-13
 *Phase goal: every run's stdout and log start with a `start` line and carry `state` lines, idle looks folded; step and final lines unchanged.*
-- [ ] **Task 1.1:** `src/watch/turnGraph.mjs` label function (shared); `seat.mjs` XState `inspect` → changes, idle-look folding, `drainChanges()`; `src/stream.mjs` (`emit` to stdout + log + listeners); `run.mjs` writes `start`, flushes state lines after looks and steps. Tests: folding (idle looks counted, a moving look listed), labels, run lines order, step/final fields unchanged. TDD. (*Owner: Neo | Verification: `bobp make test`; `bobp make lint`*)
-- [ ] **Task 1.2:** UAT UND-13 AC1–5 (`bobp make test-live` green ×5; each log starts with `start`, ≥1 `state` line per step, an idle wait is one `idle_looks` number) then Morpheus review vs ADR-0014. (*Owner: Trin → Morpheus | Verification: `bobp make test-live` + `bobp make check`; commit `Phase 1`*)
+- [x] **Task 1.1:** `src/watch/turnGraph.mjs` label function (shared); `seat.mjs` XState `inspect` → changes, idle-look folding, `drainChanges()`; `src/stream.mjs` (`emit` to stdout + log + listeners); `run.mjs` writes `start`, flushes state lines after looks and steps. Tests: folding (idle looks counted, a moving look listed), labels, run lines order, step/final fields unchanged. TDD. (*Owner: Neo | Verification: `bobp make test`; `bobp make lint`*)
+- [x] **Task 1.2:** UAT UND-13 AC1–5 (`bobp make test-live` green ×5; each log starts with `start`, ≥1 `state` line per step, an idle wait is one `idle_looks` number) then Morpheus review vs ADR-0014. (*Owner: Trin → Morpheus | Verification: `bobp make test-live` + `bobp make check`; commit `Phase 1`*)
 
 ### Phase 2: Graph layout and the watch server — UND-14 (server side)
 *Phase goal: the statechart becomes SVG geometry, and a token-guarded local server streams a run's events over SSE.*

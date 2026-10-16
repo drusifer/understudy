@@ -109,7 +109,7 @@ test('examples/mcp-remote is played end to end by reference; the token is in no 
     environment: { MCP_TOKEN: TOKEN, BOX_PORT: String(port) }, makeJudge: () => judge, logRoot, pollMs: 20,
     signals: new EventEmitter(), // eslint-disable-line unicorn/prefer-event-target -- stands in for `process`
   });
-  const lines = out.stdout.trim().split('\n').map((line) => JSON.parse(line));
+  const lines = out.stdout.trim().split('\n').map((line) => JSON.parse(line)).filter((line) => !line.event);
   assert.deepEqual(lines.filter((line) => !line.final).map((line) => line.response.call), [
     { tool: 'list_films', arguments: {} },
     { tool: 'pick_seats', arguments: { film: 'f1', count: 2 } },

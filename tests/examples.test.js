@@ -47,7 +47,11 @@ async function playExample(directory, prefer, judge = judgePreferring(prefer)) {
     makeJudge: () => judge, logRoot, pollMs: 20, steps: 20,
     signals: new EventEmitter(), // eslint-disable-line unicorn/prefer-event-target -- stands in for `process`
   });
-  return stdout.trim().split('\n').map((line) => JSON.parse(line));
+  const all = stdout.trim().split('\n').map((line) => JSON.parse(line));
+  // Step and final lines; the `start` and `state` lines (ADR-0014) ride along as `.events`.
+  const lines = all.filter((line) => !line.event);
+  lines.events = all.filter((line) => line.event);
+  return lines;
 }
 
 test('the CLI example is played to its end state through the real program', async () => {

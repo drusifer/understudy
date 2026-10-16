@@ -81,8 +81,9 @@ async function play({ sketch = GOOD, app = fakeApp(), judge = judgeAnswering('or
   }
   const folder = path.join(logRoot, 'fixture-good');
   const [file] = readdirSync(folder);
-  const lines = io.out.stdout.trim().split('\n').map((line) => JSON.parse(line));
-  return { app, judge, error, lines, final: lines.at(-1), log: readFileSync(path.join(folder, file), 'utf8'), file: path.join(folder, file), ...io.out };
+  const all = io.out.stdout.trim().split('\n').map((line) => JSON.parse(line));
+  const lines = all.filter((line) => !line.event);
+  return { app, judge, error, lines, events: all.filter((line) => line.event), final: lines.at(-1), log: readFileSync(path.join(folder, file), 'utf8'), file: path.join(folder, file), ...io.out };
 }
 
 test('a run plays to the end state: one JSON line per step, a final line, the same lines in the log', async () => {
@@ -213,4 +214,42 @@ test('a run that stops being offered anything after it started is stalled, with 
 test('what the app answered a move with is kept in that step\'s log line', async () => {
   const run = await play({ app: fakeApp({ answer: { status: 402 } }) });
   assert.deepEqual(run.lines[0].response, { status: 402 });
+});
+
+test('the log tells the whole story: a start line, then state lines around each step (UND-13)', async () => {
+  const run = await play();
+  const [start, ...changes] = run.events;
+  assert.deepEqual(Object.keys(start), ['event', 'sketch', 'plays', 'turn', 'at']);
+  assert.equal(start.event, 'start');
+  assert.equal(start.sketch, 'fixture-good');
+  assert.equal(start.plays, 'node app.mjs');
+  assert.equal(start.turn.initial, 'waiting');
+  assert.deepEqual(changes.map(({ from, to, on }) => `${from} -${on}-> ${to}`), [
+    'waiting -OBSERVE-> looking',
+    'looking -done: phase is menu-> choosing',
+    'choosing -STEP-> stepping',
+    'stepping -done-> waiting',
+    'waiting -OBSERVE-> looking',
+    'looking -done: phase is done-> finished',
+  ]);
+  const order = run.stdout.trim().split('\n').map((line) => JSON.parse(line)).map((line) => line.event ?? (line.final ? 'final' : 'step'));
+  assert.deepEqual(order, ['start', 'state', 'state', 'state', 'state', 'step', 'state', 'state', 'final']);
+});
+
+test('step and final lines keep exactly their sprint 3 fields', async () => {
+  const run = await play();
+  assert.deepEqual(Object.keys(run.lines[0]), ['step', 'at', 'phase', 'options', 'picked', 'move', 'confidence', 'checks', 'asked', 'state']);
+  assert.deepEqual(Object.keys(run.final), ['final', 'outcome', 'steps', 'state']);
+});
+
+test('looks that change nothing are counted, not listed: the next state line carries idle_looks', async () => {
+  // The app shows `brewing` (not a move phase) for a while, then the menu.
+  const app = fakeApp({ screen: 'brewing' });
+  setTimeout(() => { app.screen = 'menu'; }, 60);
+  const run = await play({ app });
+  const changes = run.events.filter((line) => line.event === 'state');
+  const idle = changes.find((line) => line.idle_looks !== undefined);
+  assert.ok(idle.idle_looks >= 3, `idle looks folded: ${idle.idle_looks}`);
+  assert.deepEqual([idle.from, idle.to], ['waiting', 'looking']);
+  assert.equal(changes.filter((line) => line.from === 'looking' && line.to === 'waiting').length, 0, 'no idle look is listed');
 });

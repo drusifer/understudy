@@ -11,6 +11,7 @@
 // bookkeeping.
 
 import { createActor, waitFor } from 'xstate';
+import { transitionLabel } from './watch/turnGraph.mjs';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -21,6 +22,10 @@ export class MachineSeat {
   #pollMs;
   #isQuitSent = false;
   #seen = { talk: null, seq: undefined, changedAt: null, lastTalkAt: null };
+  // Sprint 4 (ADR-0014): the state changes since they were last drained,
+  // and how many looks changed nothing (folded into one number).
+  #changes = [];
+  #idleLooks = 0;
 
   /**
    * @param {{ machine: import('xstate').AnyStateMachine, services: object, input?: object,
@@ -35,7 +40,7 @@ export class MachineSeat {
     services.seat = { markSeen: () => this.#markSeen() };
     services.onRecord = (record) => { this.lastRecord = record; };
     this.lastRecord = null;
-    this.#actor = createActor(machine, { input }).start();
+    this.#actor = createActor(machine, { input, inspect: (event) => this.#record(event) }).start();
   }
 
   /**
@@ -48,12 +53,49 @@ export class MachineSeat {
       this.#actor.send({ type: 'QUIT' });
     }
     if (this.#actor.getSnapshot().status === 'done') return 'done';
+    const before = { value: this.state, changes: this.#changes.length };
     this.#actor.send({ type: 'OBSERVE', ...(await this.#look()) });
     const snapshot = await this.#settle();
     if (snapshot.status === 'done') return 'done';
     if (snapshot.hasTag('move')) return 'move';
+    if (this.state === before.value) {
+      // A look that ended where it began: counted, not listed.
+      this.#changes.length = before.changes;
+      this.#idleLooks += 1;
+    }
     await sleep(this.#pollMs);
     return 'wait';
+  }
+
+  /**
+   * The state changes since the last call, oldest first; the first one
+   * carries how many idle looks came before it.
+   * @returns {{ from: string, to: string, on: string, at: string, idle_looks?: number }[]}
+   */
+  drainChanges() {
+    const changes = this.#changes;
+    this.#changes = [];
+    if (changes.length > 0 && this.#idleLooks > 0) {
+      changes[0] = { ...changes[0], idle_looks: this.#idleLooks };
+      this.#idleLooks = 0;
+    }
+    return changes;
+  }
+
+  /**
+   * XState's inspection: each transition that moved to a state.
+   */
+  #record(event) {
+    if (event.type !== '@xstate.microstep') return;
+    const transitions = event._transitions ?? [];
+    for (const transition of transitions) {
+      const target = transition.target?.[0];
+      if (!target) continue;
+      this.#changes.push({
+        from: transition.source.key, to: target.key,
+        on: transitionLabel(transition.eventType, transition.guard), at: new Date(this.#clock()).toISOString(),
+      });
+    }
   }
 
   /**
