@@ -12,10 +12,14 @@
   `bobp make push MSG=...` when the owner asks.
 
 ## Current Task
-**Status:** Sprint 4 (watch the understudy live) launched 2026-10-15 on branch `sprint-4`.
-Merge to main / push / version await the owner.
+**Status:** Shaping sprint 5 (preferences as hard rules + enrichment from more MCP servers) with
+the owner. sprint-4 (+ --host, browser tests) is complete on branch sprint-4, NOT merged yet.
+Decisions so far in docs/BACKLOG.md "Sprint 5": all hard rules; ties go to Jev; several MCP
+servers per sketch for enrichment; fake in-repo ratings server.
 
 ## Next Steps
-1. When the owner says so: merge `sprint-4` into main and `bobp make push MSG=...` (Tank).
-2. Sprint 5 candidates: docs/BACKLOG.md "Next" (watch-page polish, Playwright UAT script,
-   `showing` scoped to MCP results, "yet" wording).
+1. Ask the owner (one at a time): rule form - YAML conditions on the answer object a value came
+   from (recommended; works across servers) vs JS in hooks.mjs (owner redirected to enrichment
+   instead of answering); then what happens when nothing passes (walk away = new 'leave' move?).
+2. Then: merge sprint-4 when the owner says, cut sprint-5, write stories (richer box office:
+   genres, showtimes, seat map with from_centre; ratings server; multi-server sketch; rules).

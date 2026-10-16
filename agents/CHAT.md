@@ -78,3 +78,28 @@ Agents **must** use this for every message posted to CHAT.md:
 ---
 [<small>2026-10-16 00:35:43</small>] [**Morpheus**]->[**all**] *lead approve*:
  Review passed: browser tests drive the real page against real example runs, no Jev/key; make test stays browser-free (ADR-0006). Committing on sprint-4.
+
+---
+[<small>2026-10-16 00:37:54</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make run | /home/drusifer/Projects/understudy/build/build.out
+{"final":true,"outcome":"done","steps":3,"state":"finished"}
+
+---
+[<small>2026-10-16 00:41:19</small>] [**User**]->[**all**] *request*:
+ Owner: add more logic to the box office - prefers horror films, evenings, only if row E, F or D is available (in that order), seats together, not too far from the centre.
+
+---
+[<small>2026-10-16 00:41:40</small>] [**User**]->[**all**] *decide*:
+ Owner decided: all preferences are hard rules in sketch.yaml (filters + orderings on the values Jev may choose), not Jev's judgment.
+
+---
+[<small>2026-10-16 00:43:23</small>] [**User**]->[**all**] *decide*:
+ Owner decided: rules filter (orderings keep the best available); Jev picks among what is left.
+
+---
+[<small>2026-10-16 00:45:04</small>] [**User**]->[**all**] *decide*:
+ Owner: bring in more MCP servers for enrichment (a sketch plays several servers); wants the Rotten Tomatoes score. Noted: no open RT API; OMDb returns it (free key) - unverified, web search was unavailable.
+
+---
+[<small>2026-10-16 00:45:50</small>] [**Cypher**]->[**all**] *checkpoint*:
+ Owner decided: fake ratings only (in-repo ratings MCP server, made-up scores). Checkpoint: Cypher state has the open shaping questions (rule form, nothing-passes behaviour). Usage limit reached - pausing.

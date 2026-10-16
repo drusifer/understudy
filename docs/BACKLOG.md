@@ -16,6 +16,25 @@ values, never writes them - understudy is constrained automation by design.
 Done - see `CHANGELOG.md` (live watch page, pause/step, replay, the log as an event stream).
 Decisions: ADR-0014..0016.
 
+## Sprint 5 (owner, 2026-10-16) - preferences as hard rules
+- Owner: "I prefer horror films, and I want to go in the evenings but only if row E, F, or D is
+  available (in that order), seats together but not too far from the center."
+- **All hard rules** (owner decided): every preference becomes a rule in `sketch.yaml` (filters
+  and orderings on the values Jev may choose) - not left to Jev's judgment. Needs a rule
+  language in the sketch format, and a richer box office (genres, showtimes, a seat map).
+- **Ties go to Jev** (owner decided): rules filter (an ordering keeps only the best available);
+  Jev chooses among what is left, as now. A rule is never broken.
+- **Enrichment from more MCP servers** (owner, 2026-10-16): a sketch may play several MCP
+  servers at once - e.g. the box office plus a ratings service - so rules can use facts another
+  server answers (a film's Rotten Tomatoes score). Owner asked for the tomato score: Rotten
+  Tomatoes has no open public API; OMDb (omdbapi.com, free key, daily limit) returns it in
+  `Ratings` for most titles (to verify when web search is back).
+- **Fake ratings only** (owner decided): an in-repo ratings MCP server with made-up scores for the
+  box office's made-up films - no key, no network, repeatable.
+- Open: how rules name data that is not an
+  argument (a film's genre, a showing's time, a seat's distance from the centre); what happens
+  when nothing passes (walk away).
+
 ## Next (from the sprint 3 and 4 retros)
 - Scope `showing` to results for generic MCP sketches (today it also searches tool descriptions). (Morpheus)
 - "not offering ... yet" should not say "yet" for array/object arguments a result can never fill. (Smith)

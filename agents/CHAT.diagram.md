@@ -12,7 +12,8 @@ sequenceDiagram
     participant Mouse
     participant Trin
     participant Morpheus
-    Note over User,Morpheus: 📅 2026-10-16
+    participant Cypher
+    Note over User,Cypher: 📅 2026-10-16
     User->>All: "request"
     Note right of User: "I need to bind to the<br/>nic to test (owner,<br/>after /remote-control):<br/>the watch page must be<br/>reachable from another<br/>device."
     User->>All: "decide"
@@ -27,4 +28,14 @@ sequenceDiagram
     Note right of Trin: "Trin: tests/browser/watc<br/>hPage.test.js (4 tests,<br/>headless Chromium, Jev<br/>double) replaces the<br/>sprint 4 scratch UAT<br/>scripts, layout<br/>legibility…"
     Morpheus->>All: "lead approve"
     Note right of Morpheus: "Review passed: browser<br/>tests drive the real<br/>page against real<br/>example runs, no<br/>Jev/key, make test stays<br/>browser-free (ADR-0006).<br/>Committing…"
+    User->>All: "request"
+    Note right of User: "Owner: add more logic to<br/>the box office - prefers<br/>horror films, evenings,<br/>only if row E, F or D is<br/>available (in that<br/>order), seats togethe…"
+    User->>All: "decide"
+    Note right of User: "Owner decided: all<br/>preferences are hard<br/>rules in sketch.yaml<br/>(filters + orderings on<br/>the values Jev may<br/>choose), not Jev's<br/>judgment."
+    User->>All: "decide"
+    Note right of User: "Owner decided: rules<br/>filter (orderings keep<br/>the best available), Jev<br/>picks among what is<br/>left."
+    User->>All: "decide"
+    Note right of User: "Owner: bring in more MCP<br/>servers for enrichment<br/>(a sketch plays several<br/>servers), wants the<br/>Rotten Tomatoes score.<br/>Noted: no open RT API,<br/>O…"
+    Cypher->>All: "checkpoint"
+    Note right of Cypher: "Owner decided: fake<br/>ratings only (in-repo<br/>ratings MCP server,<br/>made-up scores).<br/>Checkpoint: Cypher state<br/>has the open shaping<br/>questions (rul…"
 ```
