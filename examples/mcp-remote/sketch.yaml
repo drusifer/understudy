@@ -1,0 +1,50 @@
+# The remote MCP example's sketch (docs/SKETCHES.md, README.md here): the
+# same box office, already running behind a URL and a token. The server is
+# named by reference to servers.json - Claude Code's mcpServers shape - and
+# the sketch fixes how to pay and how many seats to hold; Jev chooses the
+# rest. understudy does not start the server, and leaves it running.
+name: boxoffice-remote
+description: >-
+  An understudy buys cinema tickets from a box office server: it looks at
+  what is on, holds seats for a film it would enjoy and pays, until a ticket
+  is issued.
+target: { kind: mcp, config: servers.json, server: boxoffice }
+
+calls:
+  - { tool: pay, arguments: { method: card } }
+values:
+  pick_seats: { count: [2] }
+
+questions:
+  next:
+    type: choice
+    instructions: >-
+      You are someone buying cinema tickets for yourself and a friend tonight. `tools` are
+      what the box office lets you do and `last_call` is what it last told you. Choose what
+      to do next to end up with tickets for a film you would both enjoy, paying what it costs.
+
+turn:
+  initial: waiting
+  states:
+    waiting:
+      description: "Looks at the box office again. Safe to stop."
+      tags: [safe]
+      on: { OBSERVE: looking }
+    looking:
+      description: "Reads what the box office offers and what it last said."
+      invoke:
+        src: look
+        onDone:
+          - { target: finished, guard: { type: showing, params: { text: Ticket issued } } }
+          - { target: choosing, guard: { type: phase, params: { is: asking } } }
+          - { target: waiting }
+    choosing:
+      description: "Something can be done at the box office."
+      tags: [move]
+      on: { STEP: acting }
+    acting:
+      description: "Jev picks a tool and its arguments, and the call is made."
+      invoke: { src: play, with: { phase: asking, question: next }, onDone: waiting }
+    finished:
+      description: "A ticket was issued; the run ends."
+      type: final

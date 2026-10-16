@@ -32,9 +32,9 @@
 
 ### Phase 3: Remote MCP over HTTP — UND-11
 *Phase goal: a running box office behind a URL and a token is played and left running.*
-- [ ] **Task 3.1:** `mcp.mjs` HTTP path (streamable HTTP + headers, 10 s connect retry, refused status, client-only close); `examples/mcp-remote/` (`sketch.yaml` by reference, `servers.json`, `README.md`); token-never-printed test. (*Owner: Neo | Verification: `bobp make test`*)
-- [ ] **Task 3.2:** `make test-live` starts the example server in HTTP mode with a throwaway token for `examples/mcp-remote`, stops it after; SDLC Last verified updated. (*Owner: Tank | Verification: `bobp make test-live` green, 5 examples*)
-- [ ] **Task 3.3:** UAT UND-11 AC1–5 (wrong token → exit 1 with 401, no token in output; nothing at URL → exit 1 ≤ 10 s; server left running) then Morpheus review. (*Owner: Trin → Morpheus | Verification: live + `bobp make check`; commit `Phase 3`*)
+- [x] **Task 3.1:** `mcp.mjs` HTTP path (streamable HTTP + headers, 10 s connect retry, refused status, client-only close); `examples/mcp-remote/` (`sketch.yaml` by reference, `servers.json`, `README.md`); token-never-printed test. (*Owner: Neo | Verification: `bobp make test`*)
+- [x] **Task 3.2:** `make test-live` starts the example server in HTTP mode with a throwaway token for `examples/mcp-remote`, stops it after; SDLC Last verified updated. (*Owner: Tank | Verification: `bobp make test-live` green, 5 examples*)
+- [x] **Task 3.3:** UAT UND-11 AC1–5 (wrong token → exit 1 with 401, no token in output; nothing at URL → exit 1 ≤ 10 s; server left running) then Morpheus review. (*Owner: Trin → Morpheus | Verification: live + `bobp make check`; commit `Phase 3`*)
 
 ### Phase 4: Docs — UND-12
 *Phase goal: the docs teach sketches and four targets only.*

@@ -10,6 +10,7 @@
 // left running.
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StreamableHTTPClientTransport, StreamableHTTPError } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
 import { RunError } from '../errors.mjs';
 import { expandEntry } from '../mcpConfig.mjs';
@@ -17,7 +18,16 @@ import { startProgram } from './program.mjs';
 import { ProgramTransport } from './mcpTransport.mjs';
 
 const HANDSHAKE_MS = 10_000;
+const RETRY_MS = 250;
 const RESULT_CHARS = 2000;
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const newClient = () => new Client({ name: 'understudy', version: '0.1.0' });
+
+async function closeQuietly(client) {
+  try {
+    await client.close();
+  } catch { /* already gone */ }
+}
 
 /**
  * A result's text content, joined.
@@ -36,7 +46,7 @@ const stderrOf = (program) => {
  */
 async function startLocal(entry, { directory, environment, handshakeMs }) {
   const program = await startProgram(entry, { directory, environment: { ...environment, ...entry.env } });
-  const client = new Client({ name: 'understudy', version: '0.1.0' });
+  const client = newClient();
   let timer;
   const exited = (async () => {
     await program.ended;
@@ -63,13 +73,50 @@ async function startLocal(entry, { directory, environment, handshakeMs }) {
 }
 
 /**
- * Connects to the server named by `spec.entry` (`${VAR}` filled first).
- * @param {{ kind: 'mcp', entry: object, from: string }} spec
- * @param {{ directory: string, environment?: object, handshakeMs?: number }} options
+ * Connects to a running server at `entry.url` with its headers, trying
+ * again while nothing answers, for up to `handshakeMs`. A server that
+ * answers with an HTTP error has refused: that is final. The URL is
+ * shown filled in; header values (tokens) are never shown.
  */
-export async function startTarget(spec, { directory, environment = process.env, handshakeMs = HANDSHAKE_MS }) {
+async function startRemote(entry, { shownUrl, handshakeMs, retryMs }) {
+  let url;
+  try {
+    url = new URL(entry.url);
+  } catch {
+    throw new RunError(`${shownUrl} is not a URL`, { outcome: 'no-first-move' });
+  }
+  const deadline = Date.now() + handshakeMs;
+  for (;;) {
+    const client = newClient();
+    const transport = new StreamableHTTPClientTransport(url, { requestInit: { headers: entry.headers ?? {} } });
+    try {
+      await client.connect(transport, { timeout: Math.max(100, deadline - Date.now()) });
+      return { client, describe: () => shownUrl };
+    } catch (error) {
+      await closeQuietly(client);
+      if (error instanceof StreamableHTTPError && error.code >= 400) {
+        throw new RunError(`the MCP server at ${shownUrl} refused the connection (HTTP ${error.code})`, { outcome: 'refused' });
+      }
+      if (Date.now() >= deadline) {
+        const why = error.cause?.code ?? error.message;
+        throw new RunError(`no first move from ${shownUrl}: nothing answered within ${handshakeMs / 1000} s (${why})`, { outcome: 'no-first-move' });
+      }
+      await sleep(retryMs);
+    }
+  }
+}
+
+/**
+ * Connects to the server named by `spec.entry` (`${VAR}` filled first):
+ * starts a local one, or reaches a remote one (`type: http`).
+ * @param {{ kind: 'mcp', entry: object, from: string }} spec
+ * @param {{ directory: string, environment?: object, handshakeMs?: number, retryMs?: number }} options
+ */
+export async function startTarget(spec, { directory, environment = process.env, handshakeMs = HANDSHAKE_MS, retryMs = RETRY_MS }) {
   const entry = expandEntry(spec.entry, environment, spec.from);
-  const { client, program = null, describe } = await startLocal(entry, { directory, environment, handshakeMs });
+  const { client, program = null, describe } = entry.type === 'http'
+    ? await startRemote(entry, { shownUrl: entry.url, handshakeMs, retryMs })
+    : await startLocal(entry, { directory, environment, handshakeMs });
   const state = { last: null, seq: 0, shown: undefined };
 
   /**
@@ -119,9 +166,7 @@ export async function startTarget(spec, { directory, environment = process.env, 
     async say() {},
     exited: () => program?.exited() ?? null,
     async close() {
-      try {
-        await client.close();
-      } catch { /* already gone */ }
+      await closeQuietly(client);
       await program?.close();
     },
   };

@@ -140,7 +140,8 @@ use its tools as an agent would,
    - Claude Code's shape. The token is never written to stdout, stderr or the log.
 3. A wrong token: the run exits 1 saying the server refused the connection (with the status, e.g.
    401) and naming the URL - not the token.
-4. Nothing answering at the URL: the run exits 1 within 10 seconds naming the URL.
+4. Nothing answering at the URL: after trying for 10 seconds the run exits 1 naming the URL (the
+   10 seconds count from the first connection attempt, as for the other targets - Phase 3 UAT).
 5. `make test-live` plays `examples/mcp-remote` too, starting and stopping the server itself.
 
 ## STORY-UND-12: The docs teach sketches and the MCP target
