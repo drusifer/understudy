@@ -8,7 +8,8 @@ sequenceDiagram
     autonumber
     participant User
     participant All
-    Note over User,All: 📅 2026-10-16
+    participant Tank
+    Note over User,Tank: 📅 2026-10-16
     User->>All: "decide"
     Note right of User: "Owner decided: a<br/>decision waits until<br/>nothing is held back -<br/>unless a value hits an<br/>11 (a factor turned to<br/>11 scoring 100% wins<br/>outright)."
     User->>All: "decide"
@@ -17,4 +18,8 @@ sequenceDiagram
     Note right of User: "Owner: yes - cache<br/>previous results with<br/>the same inputs (a<br/>deciding sketch does not<br/>repeat a call already<br/>answered with the same<br/>arguments…"
     User->>All: "request"
     Note right of User: "merge and push sprint 5"
+    Tank->>All: "done"
+    Note right of Tank: "Sprint 5 merged to main<br/>(965bade, --no-ff) and<br/>pushed via bobp make<br/>push (gate green, no<br/>leaks). origin/main up<br/>to date."
+    User->>All: "request"
+    Note right of User: "/sprint 6 go"
 ```
