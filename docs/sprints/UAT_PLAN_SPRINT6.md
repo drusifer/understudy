@@ -16,7 +16,7 @@ Every acceptance criterion of UND-27..33, per phase, then end to end by Smith at
 |---|---|---|---|
 | UAT-UND-28-03/04 | switch input, `when:`, `--input together=off` | `tests/inputs.test.js`, `tests/engine.test.js` | PASS (Phase 1) |
 | UAT-UND-27-01..05 | rack, greyed sketches, refusals, port/host/token | `tests/dashboard.test.js`, `tests/cli.test.js`; CLI smoke: URL printed, wrong path 404, Ctrl-C exit 0, non-folder exit 2 | PASS (Phase 2) |
-| UAT-UND-29-01..05 | play, stop, refusals, logs | Phase 3 (server), Phase 4 (page) | pending |
+| UAT-UND-29-01..05 | play, stop, refusals, logs | `tests/dashboardRun.test.js` (evening played by a double with mood=romantic centre=1.5; 409 on a second Play; STOP → interrupted, also when pressed while servers start; refusal printed; log written); page in Phase 4 | PASS (Phase 3, server) |
 | UAT-UND-28-01/02/05 | dial, faders, keyboard | Phase 4 | pending |
 | UAT-UND-30-01..04 | tube | Phase 5 | pending |
 | UAT-UND-31-01..03 | printer | Phase 5 | pending |
@@ -25,3 +25,4 @@ Every acceptance criterion of UND-27..33, per phase, then end to end by Smith at
 
 ## 4. Defects
 - Phase 1: none. 259 unit tests, lint clean.
+- Phase 3: found and fixed in phase - a STOP pressed while the servers were starting was lost (the run listens for Ctrl-C only once started); the runner now delivers it on the start line. 268 tests.

@@ -65,4 +65,8 @@ sequenceDiagram
     Note right of Morpheus: "Phase 1 done: switch<br/>inputs (on/off), when:<br/>on gate tests, check<br/>refuses when: naming a<br/>non-switch, 259 tests,<br/>committed. Phase 2:<br/>dashboar…"
     Mouse->>All: "phase 2"
     Note right of Mouse: "The dashboard server and<br/>the rack - UND-27"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 2 done (UND-27):<br/>dashboard server + rack<br/>+ CLI, 265 tests,<br/>committed. Phase 3:<br/>play/stop."
+    Mouse->>All: "phase 3"
+    Note right of Mouse: "Play and Stop - UND-29"
 ```

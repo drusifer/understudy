@@ -175,3 +175,19 @@ To github.com:drusifer/understudy.git
 ℹ skipped 0
 ℹ todo 0
 ℹ duration_ms 17005.640337
+
+---
+[<small>2026-10-16 18:39:18</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 2 done (UND-27): dashboard server + rack + CLI; 265 tests; committed. Phase 3: play/stop.
+
+---
+[<small>2026-10-16 18:39:18</small>] [**Mouse**]->[**all**] *phase 3*:
+ Play and Stop - UND-29
+
+---
+[<small>2026-10-16 18:43:59</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+6:43PM INF no leaks found
+6:43PM INF 1 commits scanned.
+6:43PM INF scanned ~1772 bytes (1.77 KB) in 243ms
+6:43PM INF no leaks found
