@@ -20,7 +20,7 @@ Every acceptance criterion of UND-27..33, per phase, then end to end by Smith at
 | UAT-UND-28-01/02/05 | dial, faders, keyboard | `tests/dashboardPage.test.js`; headless Chromium screenshots (build/uat/dash-1.png): evening dial, 4 coloured faders with Nixies (11 at top), READY green, square PLAY; CLI sketch played and printed; native buttons/range inputs with labels | PASS (Phase 4) |
 | UAT-UND-30-01..04 | tube | `tests/tube.test.js`; screenshot build/uat/dash-tube.png: every evening state and edge labelled (OBSERVE, done + guards, STEP), finals inside, booked glowing at the end, colour ring + blended decision edge + orb with shares | PASS (Phase 5) |
 | UAT-UND-31-01..03 | printer | `tests/dashboardPage.test.js`; screenshot build/uat/dash-printer.png: steps, removals, score tables with 11, ticket, outcome; paper scrolls back | PASS (Phase 5) |
-| UAT-UND-32-01..05 | panels, saving, factory reset | Phase 6 | pending |
+| UAT-UND-32-01..05 | panels, saving, factory reset | `tests/settings.test.js` (only edited lines change, comments kept, check passes; refusals write nothing; allow-list; factory copy before first edit, restore), `tests/dashboardRun.test.js` (409 while running, power off stops); browser (build/uat/panels.png): range saved, invalid marked with reason, mood rename + default, power cycle restored | PASS (Phase 6) |
 | UAT-UND-33-01..03 | docs, browser test, evening switch | Phase 7 | pending |
 
 ## 4. Defects

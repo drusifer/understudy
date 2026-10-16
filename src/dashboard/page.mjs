@@ -106,6 +106,35 @@ function factorAbout(factor) {
   return `${factor.field} ${placing}`;
 }
 
+// A range end as typed: an HH:MM time stays text, anything else is a number.
+function asNumber(text) {
+  return /^\d\d?:\d\d$/.test(text.trim()) ? text.trim() : Number(text);
+}
+
+function panelButton(text, isEnabled, act) {
+  const button = element('button', { type: 'button', class: 'panel-button' }, text);
+  button.disabled = !isEnabled;
+  button.addEventListener('click', act);
+  return button;
+}
+
+// The edit boxes for one factor a fader drives.
+function factorFields(factor) {
+  const at = ['decide', factor.argument, 'scores', factor.field];
+  if (factor.ask) return [{ label: 'QUESTION', value: factor.question, width: 140, path: [...at, 'ask'] }, { label: 'LOOKS AT', value: factor.looks_at, width: 140, path: ['questions', factor.question, 'looks_at'] }];
+  if (factor.order) return [{ label: 'ORDER, BEST FIRST', value: factor.order.join(', '), width: 170, path: [...at, 'order'], parse: (text) => text.split(',').map((each) => each.trim()).filter(Boolean) }];
+  return [
+    { label: 'FROM', value: factor.range[0], width: 90, path: [...at, 'range'], parse: (text) => [asNumber(text), factor.range[1]] },
+    { label: 'TO', value: factor.range[1], width: 90, path: [...at, 'range'], parse: (text) => [factor.range[0], asNumber(text)] },
+  ];
+}
+
+function factorYaml(factor) {
+  if (factor.ask) return `${factor.field}: { ask: ${factor.question}, weight: ${factor.weight} }   looks_at: ${factor.looks_at}`;
+  const placing = factor.order ? `order: [${factor.order.join(', ')}]` : `range: [${factor.range.join(', ')}]`;
+  return `${factor.field}: { ${placing}, weight: ${factor.weight} }`;
+}
+
 function lampClassOf(on, running) {
   if (!on) return 'lamp dark';
   return running ? 'lamp on-air' : 'lamp standby';
@@ -219,7 +248,7 @@ async function api(path, body) {
  * The console's state, and what draws it.
  */
 function boot() {
-  const state = { rack: [], sketch: null, values: {}, running: false, on: true, current: null, liveEdge: null };
+  const state = { rack: [], sketch: null, values: {}, running: false, on: true, current: null, liveEdge: null, open: new Set() };
 
   function drawRack() {
     const rack = $('rack');
@@ -261,7 +290,7 @@ function boot() {
     });
     dial.append(...ticks, pointer, ...options);
     update();
-    return element('div', { class: 'dial-block' }, element('div', { class: 'plate-label' }, input.name.toUpperCase()), dial);
+    return element('div', { class: 'dial-block' }, element('div', { class: 'plate-label' }, input.name.toUpperCase()), dial, moodPanel(input));
   }
 
   function drawFader(input, index) {
@@ -284,7 +313,9 @@ function boot() {
     const about = input.factors.map((factor) => factorAbout(factor)).join(' · ');
     const row = element('div', { class: 'fader-row' }, label, slot, nixie);
     update();
-    return [row, element('div', { class: 'fader-about' }, about || 'not used by any factor')];
+    const fields = [...input.factors.flatMap((factor) => factorFields(factor)), { label: 'DEFAULT', value: input.default, width: 90, path: ['inputs', input.name, 'default'], parse: Number }];
+    const yaml = [...input.factors.map((factor) => factorYaml(factor)), `inputs.${input.name}: { weight: [${input.range.join(', ')}], default: ${input.default} }`].join(' · ');
+    return [row, element('div', { class: 'fader-about' }, accessPanel(`fader-${input.name}`, about || 'not used by any factor', fields, yaml))];
   }
 
   function drawSwitch(input) {
@@ -334,6 +365,79 @@ function boot() {
       ...drawStates(svg, layout.nodes, state.current),
     ];
     $('tube').replaceChildren(svg, element('div', { class: 'labels', 'aria-hidden': 'true' }, ...labels));
+  }
+
+  // UND-32: a ▸ button that slides down a panel of edit boxes; each box saves on change.
+  function accessPanel(id, title, fields, yaml, extra = []) {
+    const drawerId = `drawer-${id}`;
+    const isOpen = state.open.has(id);
+    const toggle = element('button', { type: 'button', class: 'access', 'aria-expanded': String(isOpen), 'aria-controls': drawerId },
+      element('span', { class: 'caret', 'aria-hidden': 'true' }, '▸'), title);
+    const problem = element('div', { class: 'problem', role: 'status' });
+    const boxes = fields.map((field) => {
+      const box = element('input', { type: 'text', value: String(field.value ?? ''), style: { width: `${field.width}px` } });
+      box.addEventListener('change', async () => {
+        const saved = await save([{ path: field.path, value: field.parse ? field.parse(box.value) : box.value }]);
+        box.setAttribute('aria-invalid', String(!saved.ok));
+        problem.textContent = saved.ok ? '' : saved.value.problem;
+      });
+      return element('label', { class: 'field' }, field.label, box);
+    });
+    const drawer = element('div', { id: drawerId, class: 'drawer' }, ...boxes, ...extra, element('div', { class: 'yaml' }, yaml),
+      element('div', { class: 'hint' }, 'Saved to the sketch as you change it. Power the console off and on for its defaults.'), problem);
+    drawer.hidden = !isOpen;
+    toggle.addEventListener('click', () => {
+      if (state.open.has(id)) state.open.delete(id);
+      else state.open.add(id);
+      drawer.hidden = !state.open.has(id);
+      toggle.setAttribute('aria-expanded', String(state.open.has(id)));
+    });
+    return element('div', { class: 'access-block' }, toggle, drawer);
+  }
+
+  function moodPanel(input) {
+    const at = ['inputs', input.name];
+    const fields = input.options.map((option, index) => ({ label: String(index + 1), value: option, width: 150, path: [...at, 'choose'], parse: (text) => input.options.map((each, other) => (other === index ? text : each)) }));
+    // Renaming the default renames it as the default too: one edit, both changes.
+    for (const field of fields) {
+      const { parse } = field;
+      field.parse = (text) => parse(text);
+      field.extra = (text) => (input.options[Number(field.label) - 1] === input.default ? [{ path: [...at, 'default'], value: text }] : []);
+    }
+    const panel = accessPanel(`mood-${input.name}`, `${input.options.length} ${input.name}s · default ${input.default}`, [], `${input.name}: { choose: [${input.options.join(', ')}], default: ${input.default} }`, [
+      ...fields.map((field) => moodBox(field)),
+      element('div', { class: 'row' }, panelButton('+ ADD', input.options.length < 6, () => save([{ path: [...at, 'choose'], value: [...input.options, `${input.name} ${input.options.length + 1}`] }])),
+        panelButton('− REMOVE LAST', input.options.length > 2, () => save([{ path: [...at, 'choose'], value: input.options.slice(0, -1) }, ...(input.options.at(-1) === input.default ? [{ path: [...at, 'default'], value: input.options[0] }] : [])]))),
+      moodBox({ label: 'DEFAULT', value: input.default, width: 150, path: [...at, 'default'] }),
+    ]);
+    return panel;
+  }
+
+  function moodBox(field) {
+    const box = element('input', { type: 'text', value: String(field.value), style: { width: `${field.width}px` } });
+    box.addEventListener('change', async () => {
+      const value = field.parse ? field.parse(box.value) : box.value;
+      const saved = await save([{ path: field.path, value }, ...(field.extra ? field.extra(box.value) : [])]);
+      box.setAttribute('aria-invalid', String(!saved.ok));
+      box.title = saved.ok ? '' : saved.value.problem;
+    });
+    return element('label', { class: 'field' }, field.label, box);
+  }
+
+  // Saves an edit, then redraws from the saved sketch (keeping the controls' values).
+  async function save(changes) {
+    const saved = await api('edit', { sketch: state.sketch.name, changes });
+    if (saved.ok) {
+      const { value } = await api(`sketch/${encodeURIComponent(state.sketch.name)}`);
+      const kept = state.values;
+      state.sketch = value;
+      state.values = { ...startingValues(value.inputs), ...Object.fromEntries(Object.entries(kept).filter(([name, current]) => value.inputs.find((input) => input.name === name)?.options?.includes?.(current) ?? true)) };
+      drawControls();
+      drawTube();
+    } else {
+      print({ event: 'dashboard', refused: saved.value.problem });
+    }
+    return saved;
   }
 
   function drawStatus() {

@@ -91,6 +91,20 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .fader::-moz-range-thumb { width: 24px; height: 38px; border-radius: 5px; border: 2px solid #2b1b0b; background: linear-gradient(90deg, #6e4c1c 0%, #f3d48c 30%, #c9a15a 50%, #f3d48c 70%, #6e4c1c 100%); }
 .nixie { padding: 4px 6px; border-radius: 6px; background: #0e0a07; border: 2px solid var(--brass-deep); text-align: center; font-family: VT323, monospace; font-size: 26px; line-height: 1; color: var(--colour, var(--amber)); text-shadow: 0 0 8px var(--colour, var(--amber)); }
 .fader-about { margin: -4px 0 6px 126px; font-size: 12px; color: #a8957a; }
+.access { display: flex; align-items: center; gap: 8px; min-height: 32px; padding: 2px 10px 2px 6px; border-radius: 6px; border: 1px solid rgba(224,178,92,.25); background: rgba(0,0,0,.2); color: var(--muted); font-size: 13px; text-align: left; }
+.access .caret { color: #e0b25c; transition: transform .25s; }
+.access[aria-expanded="true"] .caret { transform: rotate(90deg); }
+.drawer { margin-top: 6px; padding: 12px 14px; border-radius: 8px; background: linear-gradient(180deg, #120c08, #1d140d); border: 2px solid #5a3e1e; box-shadow: inset 0 6px 10px rgba(0,0,0,.7); transform-origin: top; animation: drop .3s ease-out; display: flex; flex-wrap: wrap; gap: 12px 16px; max-width: 520px; }
+.drawer .field { display: flex; flex-direction: column; gap: 4px; font-family: Cinzel, serif; font-size: 11px; letter-spacing: 2px; color: var(--brass); }
+.drawer input { min-height: 36px; max-width: 100%; padding: 4px 8px; border-radius: 5px; border: 2px solid #6b4a22; background: var(--paper); color: var(--ink); font-family: VT323, monospace; font-size: 20px; }
+.drawer input[aria-invalid="true"] { border-color: #d0200c; box-shadow: 0 0 8px #ff4020; }
+.drawer .yaml, .drawer .hint { flex-basis: 100%; font-size: 12px; color: #8f7f66; }
+.drawer .yaml { font-style: italic; word-break: break-word; }
+.drawer .problem { flex-basis: 100%; font-size: 13px; color: #ff8a6a; }
+.drawer .row { flex-basis: 100%; display: flex; gap: 8px; }
+.panel-button { flex: 1 1 0; min-height: 40px; border-radius: 6px; border: 2px solid #6b4a22; background: #2b1d12; color: #e0b25c; font-family: Cinzel, serif; font-size: 11px; letter-spacing: 1px; }
+.panel-button:disabled { opacity: .4; cursor: not-allowed; }
+.dial-block .access-block { width: 250px; }
 .controls-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 22px; margin-top: 18px; padding-top: 20px; border-top: 2px groove rgba(224,178,92,.25); }
 .switches { display: flex; flex-wrap: wrap; gap: 14px; }
 .switch { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 8px 18px 8px 12px; border-radius: 10px; border: 2px solid #6b4a22; background: #23180f; color: var(--cream); text-align: left; }

@@ -81,8 +81,9 @@ back as `{ event: "dashboard", refused: "<message>" }` and is printed.
    (or `["inputs","mood","choose"]`, `["inputs","centre","default"]`).
 2. Paths are allow-listed: `inputs.<name>.{default,choose}`, `decide.<key>.scores.<field>.{range,order,ask}`,
    `questions.<name>.looks_at`. Anything else is a 400.
-3. Parse the file as a YAML Document, `setIn`, write the text to a temp directory beside it and
-   `loadSketch` it - a `UsageError` is returned as the refusal, nothing written.
+3. Replace only the edited value's text, found through `yaml.parseDocument` source ranges (a full
+   re-serialise reflowed lines - Phase 6 review), write the result into a temp copy of the sketch
+   directory and `loadSketch` it - a `UsageError` is returned as the refusal, nothing written.
 4. First edit of a sketch: copy the original to `<folder>/.factory/<name>.yaml`. Then write.
 5. Power on: for each `.factory/<name>.yaml`, write it back over the sketch and delete it.
 

@@ -77,4 +77,8 @@ sequenceDiagram
     Note right of Morpheus: "Phase 4 done: console<br/>page (rack, dial,<br/>coloured faders,<br/>switches, Play/STOP,<br/>READY, POWER dim,<br/>printer v1), fonts via<br/>@fontsource, screens…"
     Mouse->>All: "phase 5"
     Note right of Mouse: "The state tube and the<br/>printer - UND-30, UND-31"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 5 done<br/>(UND-30/31): state tube<br/>+ printer, screenshots<br/>checked, 275 tests,<br/>committed. Phase 6:<br/>access panels, saving,<br/>factory reset."
+    Mouse->>All: "phase 6"
+    Note right of Mouse: "Access panels, saving,<br/>factory reset - UND-32"
 ```

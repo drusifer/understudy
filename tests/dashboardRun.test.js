@@ -88,3 +88,16 @@ test('a run that cannot start says why and leaves nothing running (UND-29 AC4)',
   assert.equal(dashboard.runner.isRunning(), false);
   assert.equal((await post('play', { sketch: '../src' })).status, 404);
 });
+
+test('edits are refused while a run goes; POWER off stops the run (UND-32 AC4-5)', async () => {
+  const { dashboard, lines, post } = await console_({ delayMs: 150 });
+  await post('play', { sketch: 'evening' });
+  const edit = await post('edit', { sketch: 'evening', changes: [{ path: ['inputs', 'centre', 'default'], value: 2 }] });
+  assert.equal(edit.status, 409);
+  assert.deepEqual(await edit.json(), { problem: 'stop the run before changing the settings' });
+  const off = await post('power', { on: false });
+  assert.deepEqual(await off.json(), { on: false });
+  assert.equal(dashboard.runner.isRunning(), false);
+  assert.equal(lines.at(-1).outcome, 'interrupted');
+  assert.deepEqual(await (await post('power', { on: true })).json(), { on: true, restored: [] });
+});
