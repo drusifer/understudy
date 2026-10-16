@@ -144,6 +144,8 @@ export function genericLibrary(services) {
         doc: 'read the app\'s view and find its phase (the app hooks decide); output phase and view for the `phase` and `showing` guards',
         fn: async ({ input }) => {
           const view = input.event?.view ?? await services.target.view();
+          // UND-23: an app may need Jev before it can say what it offers.
+          await services.app.prepare?.(view, services.judge);
           return { phase: services.app.phase(view, input.context), view };
         },
       },
@@ -208,18 +210,22 @@ async function play(services, { context, phase, question: questionName }) {
  * answer that was not offered is asked once more; twice stops the run
  * (ADR-0004).
  */
-async function fillArguments({ judge, state, question, move, phase }) {
-  const { questions, read } = argumentQuestions({ instructions: question.instructions, tool: move.call.tool, open: move.open });
-  const asked = { ...state, chosen: move.id };
+export async function fillArguments({ judge, state, question, move, phase }) {
+  // UND-24 AC4: a decided argument with a shortlist of one is taken as it is.
+  const taken = Object.fromEntries(move.open.filter((each) => each.isDecided && each.candidates.length === 1).map((each) => [each.name, each.candidates[0]]));
+  const open = move.open.filter((each) => !Object.hasOwn(taken, each.name));
+  if (open.length === 0) return taken;
+  const { questions, read } = argumentQuestions({ instructions: question.instructions, tool: move.call.tool, open });
+  const asked = { ...state, chosen: move.id, ...(move.told && { inputs: move.told }) };
   const ask = async () => {
     const response = await judge.systemOne({ state: asked, questions });
     return read(response.answers);
   };
   let reading = await ask();
-  if (!reading.offList) return reading.filled;
+  if (!reading.offList) return { ...taken, ...reading.filled };
   const first = reading.offList;
   reading = await ask();
-  if (!reading.offList) return reading.filled;
+  if (!reading.offList) return { ...taken, ...reading.filled };
   const { name, answer } = reading.offList;
   const offered = move.open.find((each) => each.name === name).candidates.map((value) => JSON.stringify(value)).join(', ');
   throw new RunError(`in phase "${phase}" Jev answered off the list twice for argument "${name}" of ${move.call.tool}`

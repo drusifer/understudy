@@ -3,14 +3,16 @@
 //
 // Every answer that was not an error (its structured content, or its text
 // when that is JSON) is kept for the run. A row is any JSON object inside
-// an answer; its fields are its own scalars plus the scalars of the
-// objects around it, the nearest winning - so a showing nested in a film
+// an answer; its fields are its own scalars (and lists of them) plus
+// those of the objects around it, the nearest winning - so a showing nested in a film
 // carries the film's title and genre. A value's facts are its row joined
 // with the rows of other answers that share its `join` field.
 
 export const MAX_ROWS = 500;
 
 const isScalar = (value) => ['string', 'number', 'boolean'].includes(typeof value);
+// A list of plain values (a film's reviews) is a fact too; a list of objects is more rows.
+const isFact = (value) => isScalar(value) || (Array.isArray(value) && value.length > 0 && value.every((each) => isScalar(each)));
 const isMapping = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
 /**
@@ -32,7 +34,7 @@ function contentOf(answer) {
 function rowsIn(value, inherited = {}) {
   if (Array.isArray(value)) return value.flatMap((each) => rowsIn(each, inherited));
   if (!isMapping(value)) return [];
-  const own = Object.fromEntries(Object.entries(value).filter(([, each]) => isScalar(each)));
+  const own = Object.fromEntries(Object.entries(value).filter(([, each]) => isFact(each)));
   const row = { ...inherited, ...own };
   return [{ fields: row, own: new Set(Object.keys(own)) }, ...Object.values(value).flatMap((each) => rowsIn(each, row))];
 }

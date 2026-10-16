@@ -20,10 +20,11 @@ import { pageApp } from './apps/page.mjs';
 import { mcpApp } from './apps/mcp.mjs';
 import { resolveServers } from './mcpConfig.mjs';
 import { checkGates, checkScores, checkShortlist } from './engine.mjs';
+import { checkInputs, weightInputs } from './inputs.mjs';
 
 const SKETCH = 'sketch.yaml';
 const GUIDE = 'see docs/SKETCHES.md';
-const KEYS = ['name', 'description', 'target', 'app', 'player', 'steps', 'questions', 'turn', 'calls', 'values', 'decide'];
+const KEYS = ['name', 'description', 'target', 'app', 'player', 'steps', 'questions', 'turn', 'calls', 'values', 'decide', 'inputs', 'pick'];
 const QUESTION_TYPES = ['noul', 'choice', 'score'];
 // The fields a kind cannot do without, with what each one is for.
 const REQUIRED = {
@@ -34,7 +35,7 @@ const REQUIRED = {
 const TARGET_FIELDS = { process: ['command', 'args'], page: ['root', 'page'], http: ['command', 'args', 'url', 'state'], mcp: ['server', 'servers', 'config'] };
 // Kinds with a built-in app, made for each sketch; the others read their
 // app through hooks.mjs. An MCP server is only ever played by its own.
-const GENERIC_APPS = { page: () => pageApp, mcp: (sketch) => mcpApp({ calls: sketch.calls, values: sketch.values, decide: sketch.decide }) };
+const GENERIC_APPS = { page: () => pageApp, mcp: (sketch) => mcpApp({ calls: sketch.calls, values: sketch.values, decide: sketch.decide, pick: sketch.pick, questions: sketch.questions }) };
 const ONLY_GENERIC = new Set(['mcp']);
 const APP_HOOKS = ['phase', 'project', 'options', 'act'];
 
@@ -124,12 +125,30 @@ function resolvedTarget(target, { file, directory }) {
  * `calls:` and `values:` - the generic MCP app's settings, nothing else's.
  */
 function checkCalls(sketch, fail) {
-  for (const key of ['calls', 'values', 'decide']) {
+  for (const key of ['calls', 'values', 'decide', 'pick']) {
     if (sketch[key] !== undefined && sketch.target.kind !== 'mcp') fail(key, 'only for an mcp target');
   }
   checkCallList(sketch.calls ?? [], fail);
   checkValues(sketch.values ?? {}, fail);
-  checkDecide(sketch.decide ?? {}, fail);
+  if (sketch.inputs !== undefined) checkInputs(sketch.inputs, fail);
+  checkDecide(sketch.decide ?? {}, { weights: weightInputs(sketch.inputs), questions: sketch.questions ?? {} }, fail);
+  if (sketch.pick !== undefined) checkPick(sketch.pick, sketch.inputs ?? {}, fail);
+}
+
+/**
+ * `pick:` - the final Choice among a shortlist: its instructions, and the
+ * choice inputs Jev is told (UND-24).
+ */
+function checkPick(pick, inputs, fail) {
+  if (!isMapping(pick) || typeof pick.instructions !== 'string') fail('pick', 'needs instructions: <how the person chooses among the shortlist>');
+  const extra = Object.keys(pick).find((key) => key !== 'instructions' && key !== 'with');
+  if (extra) fail(`pick.${extra}`, 'not a pick field (known: instructions, with)');
+  const complaint = checkInstruction(pick.instructions);
+  if (complaint) fail('pick.instructions', complaint);
+  if (pick.with === undefined) return;
+  if (!Array.isArray(pick.with)) fail('pick.with', 'must be a list of choice inputs, e.g. [mood]');
+  const unknownInput = pick.with.find((name) => !inputs[name]?.choose);
+  if (unknownInput !== undefined) fail('pick.with', `"${unknownInput}" is not a choice input declared under inputs:`);
 }
 
 const DECIDED = /^(?:[\w-]+\/)?[\w-]+\.[\w-]+$/;
@@ -140,12 +159,30 @@ const DECIDE_FIELDS = ['field', 'join', 'gates', 'scores', 'shortlist'];
  * several servers): where its values come from and the gates they pass
  * (ARCH §5, UND-21).
  */
-function checkDecide(decide, fail) {
+function checkDecide(decide, known, fail) {
   if (!isMapping(decide)) fail('decide', 'must map each <tool>.<argument> to { gates, ... }, e.g. pick_seats.seat');
-  for (const [key, entry] of Object.entries(decide)) checkDecided(key, entry, fail);
+  for (const [key, entry] of Object.entries(decide)) checkDecided(key, entry, known, fail);
 }
 
-function checkDecided(key, entry, fail) {
+/**
+ * What a factor's weight and `ask` name must exist: a weight input, and
+ * a score question with what it looks at and its levels (UND-23, UND-24).
+ */
+function checkFactorNames(factors, at, { weights, questions }, fail) {
+  for (const [field, factor] of Object.entries(factors)) {
+    if (typeof factor.weight === 'string' && !weights.includes(factor.weight)) {
+      fail(`${at}.${field}.weight`, `names input "${factor.weight}" - declare it under inputs: as { weight: [low, high], default }`);
+    }
+    if (factor.ask === undefined) continue;
+    const question = questions[factor.ask];
+    if (question?.type !== 'score') fail(`${at}.${field}.ask`, `names "${factor.ask}" - it must be a type: score question under questions:`);
+    if (typeof question.looks_at !== 'string' || !Array.isArray(question.levels) || question.levels.length < 2) {
+      fail(`questions.${factor.ask}`, 'a score question used by ask: needs looks_at: <field> and two or more levels, worst first');
+    }
+  }
+}
+
+function checkDecided(key, entry, known, fail) {
   const at = `decide.${key}`;
   if (!DECIDED.test(key)) fail(at, 'name a tool argument as <tool>.<argument> (or <server>/<tool>.<argument>), e.g. pick_seats.seat');
   if (!isMapping(entry)) fail(at, `must be { ${DECIDE_FIELDS.join(', ')} }`);
@@ -155,7 +192,10 @@ function checkDecided(key, entry, fail) {
     if (entry[field] !== undefined && (typeof entry[field] !== 'string' || entry[field] === '')) fail(`${at}.${field}`, 'must name a field of the answers, e.g. title');
   }
   if (entry.gates !== undefined) checkGates(entry.gates, `${at}.gates`, fail);
-  if (entry.scores !== undefined) checkScores(entry.scores, `${at}.scores`, fail);
+  if (entry.scores !== undefined) {
+    checkScores(entry.scores, `${at}.scores`, fail);
+    checkFactorNames(entry.scores, `${at}.scores`, known, fail);
+  }
   if (entry.shortlist !== undefined) checkShortlist(entry.shortlist, `${at}.shortlist`, fail);
 }
 
@@ -280,7 +320,7 @@ export async function loadSketch(location) {
   }
   return {
     directory, file, name: sketch.name, target, player: sketch.player ?? {}, steps: sketch.steps ?? null,
-    app, library: own, hooks, questions: sketch.questions, turn: sketch.turn, machine: compiled.machine, services,
+    app, library: own, hooks, questions: sketch.questions, inputs: sketch.inputs ?? {}, turn: sketch.turn, machine: compiled.machine, services,
     states: Object.keys(compiled.config.states).length - 1, // not the reserved stop state
   };
 }

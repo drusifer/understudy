@@ -1,6 +1,6 @@
 // Sprint 1 (UND-4, UND-5 AC3, ADR-U5): the `understudy` command.
 //
-//   understudy run <sketch> [--steps N] [--watch [--port N] [--pause]]
+//   understudy run <sketch> [--steps N] [--input name=value]... [--watch [--port N] [--pause]]
 //                                         play the sketch against its app (needs TYPESAFE_API_KEY)
 //   understudy check <sketch>             load and check the sketch, start nothing
 //   understudy library [<sketch>]         every name a sketch may use, with its meaning
@@ -17,8 +17,9 @@ import { genericLibrary } from './library.mjs';
 
 const KEY = 'TYPESAFE_API_KEY';
 
-const USAGE = `usage: understudy run <sketch> [--steps N] [--watch [--port N] [--host ADDR] [--pause]]
+const USAGE = `usage: understudy run <sketch> [--steps N] [--input name=value]... [--watch [--port N] [--host ADDR] [--pause]]
            play the sketch against its app (needs ${KEY});
+           --input sets one of the sketch's inputs (repeatable), e.g. --input mood=romantic;
            --watch serves a live view of the run on 127.0.0.1 (--host 0.0.0.0: every interface);
            --pause starts it paused
        understudy check <sketch>
@@ -59,6 +60,10 @@ const OPTIONS = {
     return port;
   }, needs: 'a port number', example: '--port 4173' },
   host: { commands: ['run', 'watch'], read: (value) => value, needs: 'an address', example: '--host 0.0.0.0' },
+  input: { commands: ['run'], read: (value) => {
+    if (!/^[\w-]+=./s.test(value)) throw new UsageError(`--input needs name=value, e.g. --input mood=romantic (got "${value}")`);
+    return value;
+  }, needs: 'name=value', example: '--input mood=romantic', isRepeated: true },
   watch: { commands: ['run'], read: null },
   pause: { commands: ['run'], read: null },
 };
@@ -73,7 +78,7 @@ function option(command, rest, index) {
   if (known.read === null) return { name: flag, value: true, used: 0 };
   const value = inline ?? rest[index + 1];
   if (!value) throw new UsageError(`--${flag} needs ${known.needs}, e.g. ${known.example}`);
-  return { name: flag, value: known.read(value), used: inline === undefined ? 1 : 0 };
+  return { name: flag, value: known.read(value), used: inline === undefined ? 1 : 0, isRepeated: known.isRepeated === true };
 }
 
 function parse(argv) {
@@ -85,8 +90,8 @@ function parse(argv) {
       positional.push(rest[index]);
       continue;
     }
-    const { name, value, used } = option(command, rest, index);
-    options[name] = value;
+    const { name, value, used, isRepeated } = option(command, rest, index);
+    options[name] = isRepeated ? [...options[name] ?? [], value] : value;
     index += used;
   }
   if (command === 'run' && options.port !== undefined && !options.watch) throw new UsageError('--port needs --watch (it is the watch page\'s port)');
@@ -138,10 +143,10 @@ const HELP = new Set(['--help', '-h', 'help']);
  * stdout; failures are thrown.
  */
 const COMMANDS = {
-  async run({ positional, steps, watch, port, host, pause }, { use, environment, stdout, stderr }) {
+  async run({ positional, steps, input = [], watch, port, host, pause }, { use, environment, stdout, stderr }) {
     // UND-4: Jev is required, so a run without its key never starts.
     if (!environment[KEY]?.trim()) throw new UsageError(`understudy run needs a TypeSafe key: set ${KEY}`);
-    await use.run(oneSketch('run', positional), { steps, stdout, stderr, environment, watch: watch ? { port, host, paused: pause === true } : null });
+    await use.run(oneSketch('run', positional), { steps, inputs: input, stdout, stderr, environment, watch: watch ? { port, host, paused: pause === true } : null });
   },
   async check({ positional }, { use, stdout }) {
     stdout.write(`${await use.check(oneSketch('check', positional))}\n`);

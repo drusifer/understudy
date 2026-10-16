@@ -115,7 +115,7 @@ test('bad YAML is refused naming the file and the line', async () => {
 test('an unknown top-level key is refused naming the known ones', async () => {
   const directory = sketchChanged((text) => `${text}adapter: adapter.mjs\n`);
   assert.equal(await refusal(directory),
-    `${shown(directory)}/sketch.yaml: adapter: not a sketch key (known: name, description, target, app, player, steps, questions, turn, calls, values, decide)`);
+    `${shown(directory)}/sketch.yaml: adapter: not a sketch key (known: name, description, target, app, player, steps, questions, turn, calls, values, decide, inputs, pick)`);
 });
 
 test('a missing name, questions or turn is refused naming the key', async () => {
@@ -236,6 +236,22 @@ test('decide: gates are checked at load, naming the file, the gate and the word 
   await assert.rejects(checkSketch(misnamed), /decide\.seat_map: name a tool argument as <tool>\.<argument>/);
   const notMcp = mcpSketch('{ kind: process, command: node }', 'app: hooks.mjs\ndecide: {}\n');
   await assert.rejects(checkSketch(notMcp), /decide: only for an mcp target/);
+});
+
+test('inputs, ask factors and pick are checked against what the sketch declares (UND-23 AC5, UND-24 AC6)', async () => {
+  const target = '{ kind: mcp, server: { command: node } }';
+  const inputs = 'inputs:\n  mood: { choose: [fun, serious], default: fun }\n  centre: { weight: [0, 3], default: 3 }\n';
+  const score = 'decide:\n  seat_map.showing: { scores: { audience: { ask: next, weight: 2 }, centre: { range: [0.3, 1], weight: centre } } }\n';
+  const asksChoice = mcpSketch(target, inputs + score);
+  await assert.rejects(checkSketch(asksChoice), /decide\.seat_map\.showing\.scores\.audience\.ask: names "next" - it must be a type: score question under questions:/);
+  const undeclared = mcpSketch(target, 'decide:\n  pick_seats.seat: { scores: { centre: { range: [0.3, 1], weight: centre } } }\n');
+  await assert.rejects(checkSketch(undeclared), /decide\.pick_seats\.seat\.scores\.centre\.weight: names input "centre" - declare it under inputs: as \{ weight: \[low, high\], default \}/);
+  const pickUnknown = mcpSketch(target, `${inputs}pick: { instructions: Choose one you would enjoy., with: [centre] }\n`);
+  await assert.rejects(checkSketch(pickUnknown), /pick\.with: "centre" is not a choice input declared under inputs:/);
+  const badDefault = mcpSketch(target, 'inputs:\n  centre: { weight: [0, 3], default: 5 }\n');
+  await assert.rejects(checkSketch(badDefault), /inputs\.centre\.default: must be between 0 and 3, got 5/);
+  const good = mcpSketch(target, `${inputs}pick: { instructions: Choose one you would enjoy., with: [mood] }\n`);
+  assert.deepEqual((await loadSketch(good)).inputs.mood.default, 'fun');
 });
 
 test('an MCP sketch by reference reads the mcpServers file; a missing name is refused naming the ones there', async () => {

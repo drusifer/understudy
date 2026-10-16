@@ -5,7 +5,7 @@
 *   **Total Points**: 29 (UND-18 3, UND-19 2, UND-20 5, UND-21 3, UND-22 5, UND-23 3, UND-24 3, UND-25 2, UND-26 3) - kept whole by the owner ("go big or go home")
 *   **Branch**: `sprint-5`
 *   **Stories / Arch**: `docs/sprints/USER_STORIES_SPRINT5.md`, `docs/sprints/ARCH_SPRINT5.md` (sprint 4 board: `docs/sprints/TASKS_SPRINT4.md`)
-*   **Status**: In progress - Phases 1-4 done; Phase 5 next. Note: `test-live` skips nothing - `examples/evening` has no sketch until Phase 7, so do not run test-live before then
+*   **Status**: In progress - Phases 1-5 done; Phase 6 next. Note: `test-live` skips nothing - `examples/evening` has no sketch until Phase 7, so do not run test-live before then
 *   **Commits**: one local commit per phase after Morpheus's review (`Phase <N>: ...`); publishing only via `bobp make push` when the owner asks (SDLC §6). No back-compat (owner rule).
 
 ---
@@ -41,8 +41,8 @@
 
 ### Phase 5: Jev's Score, inputs and the final pick - UND-23, UND-24
 *Phase goal: a `type: score` question with `looks_at`/`levels` is a factor (asked once per row, batched); inputs from `--input` set weights and colour the final Choice; a shortlist of one skips Jev.*
-- [ ] **Task 5.1:** `sketch.mjs` score questions (`looks_at`, ≥2 `levels`), `ask:` factors, `inputs:` and `pick:` checks (unknown input, default out of range); `src/inputs.mjs` + `cli.mjs --input` refusals; start line `inputs`; Score batch per look with run cache (log notes reuse); `fill.mjs` final Choice with pick instructions + `with` inputs; shortlist of one taken without Jev. Tests with a double Jev (Score answers, request count, mood in state only). TDD. (*Owner: Neo | Verification: `bobp make test`; `bobp make lint`*)
-- [ ] **Task 5.2:** UAT UND-23 AC1-5, UND-24 AC1-6 then Morpheus review vs ADR-0020. (*Owner: Trin → Morpheus | Verification: `bobp make check`; commit `Phase 5`*)
+- [x] **Task 5.1:** `sketch.mjs` score questions (`looks_at`, ≥2 `levels`), `ask:` factors, `inputs:` and `pick:` checks (unknown input, default out of range); `src/inputs.mjs` + `cli.mjs --input` refusals; start line `inputs`; Score batch per look with run cache (log notes reuse); `fill.mjs` final Choice with pick instructions + `with` inputs; shortlist of one taken without Jev. Tests with a double Jev (Score answers, request count, mood in state only). TDD. (*Owner: Neo | Verification: `bobp make test`; `bobp make lint`*)
+- [x] **Task 5.2:** UAT UND-23 AC1-5, UND-24 AC1-6 then Morpheus review vs ADR-0020. (*Owner: Trin → Morpheus | Verification: `bobp make check`; commit `Phase 5`*)
 
 ### Phase 6: Walk away - UND-25
 *Phase goal: `nothing_qualifies` + a `walked-away` final state end the run with exit 0 and an explanation; without it, `stalled` says what was removed.*

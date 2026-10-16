@@ -107,8 +107,16 @@ test('check refuses a bad range, order, weight or shortlist - naming the factor 
   assert.equal(refusal(checkScores, { centre: { range: [0.3, 1], weight: 3 }, row: { order: ['E'] } }), null);
   assert.equal(refusal(checkScores, { centre: { range: [0.3] } }), 'decide.x.y.scores.centre.range: must be two different numbers or HH:MM times, e.g. [0.3, 1]');
   assert.equal(refusal(checkScores, { row: { order: 'E' } }), 'decide.x.y.scores.row.order: must be a list, best first, e.g. [E, F, D]');
-  assert.equal(refusal(checkScores, { row: { order: ['E'], weight: -1 } }), 'decide.x.y.scores.row.weight: must be a number of 0 or more (got -1)');
-  assert.equal(refusal(checkScores, { row: { weight: 2 } }), 'decide.x.y.scores.row: needs one of range: [from, to] or order: [best, ...]');
-  assert.equal(refusal(checkScores, { row: { order: ['E'], curve: 2 } }), 'decide.x.y.scores.row: unknown word "curve" - use range, order, weight');
+  assert.equal(refusal(checkScores, { row: { order: ['E'], weight: -1 } }), 'decide.x.y.scores.row.weight: must be a number of 0 or more, or an input\'s name (got -1)');
+  assert.equal(refusal(checkScores, { row: { weight: 2 } }), 'decide.x.y.scores.row: needs one of range: [from, to], order: [best, ...] or ask: <score question>');
+  assert.equal(refusal(checkScores, { row: { order: ['E'], curve: 2 } }), 'decide.x.y.scores.row: unknown word "curve" - use range, order, ask, weight');
   assert.equal(refusal(checkShortlist, { at_most: 0 }), 'decide.x.y.scores: must be { at_most: N } and/or { total: { at_least: X } }');
+});
+
+test('a weight may name an input; an ask factor uses Jev\'s answer for the value (UND-23, UND-24)', () => {
+  const factors = { centre: { range: [0.3, 1], weight: 'centre' }, audience: { ask: 'audience', weight: 2 } };
+  assert.deepEqual(score({ centre: 0.65 }, factors, { inputs: { centre: 1 } }), { missing: 'audience', ask: 'audience' });
+  assert.deepEqual(score({ centre: 0.65 }, factors, { inputs: { centre: 1 }, answers: { audience: 0.5 } }), { factors: { centre: 0.5, audience: 0.25 }, total: 0.125 });
+  assert.deepEqual(score({ centre: 0.65 }, factors, { inputs: { centre: 0 }, answers: { audience: 1 } }), { factors: { centre: 1, audience: 1 }, total: 1 });
+  assert.deepEqual(score({ centre: 0.65 }, factors, { inputs: { centre: 1 }, answers: { audience: 0 } }).removed, 'audience 0 scores 0');
 });

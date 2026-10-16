@@ -104,7 +104,8 @@ export function checkGates(gates, at, fail) {
   }
 }
 
-export const FACTOR_WORDS = ['range', 'order', 'weight'];
+export const FACTOR_WORDS = ['range', 'order', 'ask', 'weight'];
+const PLACINGS = ['range', 'order', 'ask'];
 const round = (value) => Math.round(value * 1000) / 1000;
 
 /**
@@ -122,28 +123,41 @@ function positionOf(fact, factor) {
 }
 
 /**
- * A value's factor scores and their product.
- * @param {object} facts
- * @param {Record<string, { range?: unknown[], order?: unknown[], weight?: number }>} factors
- * @returns {{ factors: Record<string, number>, total: number }|{ missing: string }|{ removed: string, factors: object, total: 0 }}
+ * A factor's position for a value: from its fact, or from Jev's answer
+ * for an `ask` factor; what is missing when neither is there yet.
  */
-export function score(facts, factors = {}) {
+function placing(field, factor, facts, answers) {
+  if (factor.ask) return Object.hasOwn(answers, field) ? { position: answers[field] } : { missing: field, ask: factor.ask };
+  return Object.hasOwn(facts, field) ? { position: positionOf(facts[field], factor) } : { missing: field };
+}
+
+/**
+ * A value's factor scores and their product. A weight may name an input
+ * (`weight: centre`); an `ask` factor's position is Jev's Score answer for
+ * this value, from `answers` (UND-23).
+ * @param {object} facts
+ * @param {Record<string, { range?: unknown[], order?: unknown[], ask?: string, weight?: number|string }>} factors
+ * @param {{ inputs?: Record<string, unknown>, answers?: Record<string, number> }} [given]
+ * @returns {{ factors: Record<string, number>, total: number }|{ missing: string, ask?: string }|{ removed: string, factors: object, total: 0 }}
+ */
+export function score(facts, factors = {}, { inputs = {}, answers = {} } = {}) {
   const scores = {};
   let total = 1;
   let zero = null;
   for (const [field, factor] of Object.entries(factors)) {
-    const weight = factor.weight ?? 1;
+    const weight = typeof factor.weight === 'string' ? inputs[factor.weight] : factor.weight ?? 1;
     if (weight === 0) {
       scores[field] = 1;
       continue;
     }
-    if (!Object.hasOwn(facts, field)) return { missing: field };
-    const raw = (positionOf(facts[field], factor) ?? 0) ** weight;
+    const placed = placing(field, factor, facts, answers);
+    if (placed.missing) return placed;
+    const raw = (placed.position ?? 0) ** weight;
     scores[field] = round(raw);
     total *= raw;
     zero ??= raw === 0 ? field : null;
   }
-  if (zero) return { removed: `${zero} ${shown(facts[zero])} scores 0`, factors: scores, total: 0 };
+  if (zero) return { removed: `${zero} ${shown(facts[zero] ?? answers[zero])} scores 0`, factors: scores, total: 0 };
   return { factors: scores, total: round(total) };
 }
 
@@ -163,13 +177,14 @@ const isRange = (range) => Array.isArray(range) && range.length === 2
   && range.every((each) => comparable(each) !== null) && comparable(range[0]) !== comparable(range[1]);
 
 function checkFactor(factor, where, fail) {
-  if (!isMapping(factor)) fail(where, 'must be { range: [from, to] } or { order: [best, ...] }, with a weight');
+  if (!isMapping(factor)) fail(where, 'must be { range: [from, to] }, { order: [best, ...] } or { ask: <score question> }, with a weight');
   const extra = Object.keys(factor).find((word) => !FACTOR_WORDS.includes(word));
   if (extra) fail(where, `unknown word "${extra}" - use ${FACTOR_WORDS.join(', ')}`);
-  if (Object.hasOwn(factor, 'range') === Object.hasOwn(factor, 'order')) fail(where, 'needs one of range: [from, to] or order: [best, ...]');
+  if (PLACINGS.filter((word) => Object.hasOwn(factor, word)).length !== 1) fail(where, 'needs one of range: [from, to], order: [best, ...] or ask: <score question>');
   if (factor.range !== undefined && !isRange(factor.range)) fail(`${where}.range`, 'must be two different numbers or HH:MM times, e.g. [0.3, 1]');
   if (factor.order !== undefined && (!Array.isArray(factor.order) || factor.order.length === 0)) fail(`${where}.order`, 'must be a list, best first, e.g. [E, F, D]');
-  if (factor.weight !== undefined && !(typeof factor.weight === 'number' && factor.weight >= 0)) fail(`${where}.weight`, `must be a number of 0 or more (got ${shown(factor.weight)})`);
+  const isWeight = (typeof factor.weight === 'string' && factor.weight !== '') || (typeof factor.weight === 'number' && factor.weight >= 0);
+  if (!isWeight && factor.weight !== undefined) fail(`${where}.weight`, `must be a number of 0 or more, or an input's name (got ${shown(factor.weight)})`);
 }
 
 /**

@@ -30,7 +30,7 @@ function idOf(tool, fixed) {
  * the tool itself. Each open argument carries its candidates; a required
  * one with none makes the move unavailable, with the reason.
  */
-function movesFor(tool, { calls, values, last, decided }) {
+function movesFor(tool, { calls, values, last, decided, pick }) {
   const properties = tool.inputSchema?.properties ?? {};
   const required = new Set(tool.inputSchema?.required);
   const listed = values[nameOf(tool)] ?? {};
@@ -42,24 +42,40 @@ function movesFor(tool, { calls, values, last, decided }) {
       const decision = decided(`${nameOf(tool)}.${name}`, name);
       const isOpen = decision || required.has(name) || Object.hasOwn(listed, name);
       if (!isOpen || Object.hasOwn(fixed, name)) continue;
-      if (decision) {
-        decisions.push(decision.record);
-        if (decision.candidates.length === 0) return { id: idOf(tool, fixed), why: `argument "${name}" ${decision.why}` };
-        open.push({ name, schema, candidates: decision.candidates });
-        continue;
-      }
-      const candidates = candidatesFor(schema, { listed: listed[name], last });
-      if (candidates.length === 0) {
-        return { id: idOf(tool, fixed), why: `argument "${name}" (${schema.type ?? 'any'}) has nothing to choose from; list values for it in sketch.yaml` };
-      }
-      open.push({ name, schema, candidates });
+      if (decision) decisions.push(decision.record);
+      const argument = decision ? decidedArgument(name, schema, decision, pick) : listedArgument(name, schema, listed[name], last);
+      if (argument.why) return { id: idOf(tool, fixed), why: argument.why };
+      open.push(argument);
     }
     const about = tool.description ? ` - ${tool.description}` : '';
     const fixing = Object.keys(fixed).length > 0 ? ` with ${JSON.stringify(fixed)}` : '';
     const move = { id: idOf(tool, fixed), what: `call ${nameOf(tool)}${fixing}${about}`, call: { ...(tool.server && { server: tool.server }), tool: tool.name, arguments: fixed }, open };
-    return decisions.length > 0 ? { ...move, decided: decisions } : move;
+    if (decisions.length === 0) return move;
+    return { ...move, decided: decisions, ...(pick?.told && { told: pick.told }) };
   });
 }
+
+/**
+ * A decided argument as a move's open argument (its shortlist), or why not.
+ */
+function decidedArgument(name, schema, decision, pick) {
+  if (decision.candidates.length === 0) return { why: `argument "${name}" ${decision.why}` };
+  return { name, schema, candidates: decision.candidates, isDecided: true, ...(pick && { instructions: pick.instructions }) };
+}
+
+/**
+ * Any other open argument: what the sketch lists, the schema allows or the
+ * last answer offers (ADR-0013), or why not.
+ */
+function listedArgument(name, schema, listed, last) {
+  const candidates = candidatesFor(schema, { listed, last });
+  if (candidates.length > 0) return { name, schema, candidates };
+  return { why: `argument "${name}" (${schema.type ?? 'any'}) has nothing to choose from; list values for it in sketch.yaml` };
+}
+
+const hasAsk = (entry) => Object.values(entry.scores ?? {}).some((factor) => factor.ask);
+const isAsked = (entry, field) => Boolean(entry.scores?.[field]?.ask);
+const valuesOf = (answers) => Object.fromEntries(Object.entries(answers).map(([field, answer]) => [field, answer.value]));
 
 /**
  * Why a decided argument offers nothing: waiting, all removed, or no rows yet.
@@ -87,8 +103,14 @@ function described(tool) {
  * @param {{ calls?: { tool: string, arguments?: object }[], values?: Record<string, Record<string, unknown[]>>,
  *   decide?: Record<string, { field?: string, join?: string, gates?: object, scores?: object, shortlist?: object }> }} sketch
  */
-export function mcpApp({ calls = [], values = {}, decide = {} } = {}) {
+export function mcpApp({ calls = [], values = {}, decide = {}, pick = null, questions = {} } = {}) {
   const warned = new Set();
+  // UND-23: Jev's Score answers, once per row per run - `${question}|${row}`
+  // to { value 0..1, step it was asked at }. Rows waiting for one are asked
+  // together on the next look.
+  const scored = new Map();
+  let waitingScores = new Map();
+  let step = 0;
   const rows = answerRows({ notify: (line) => app.notify?.(line) });
   // ADR-0017: a decided value used in a call that answered is spent - the
   // answer is remembered, so asking again gains nothing.
@@ -113,28 +135,89 @@ export function mcpApp({ calls = [], values = {}, decide = {} } = {}) {
    * spent, through its gates - the ones left, and what was removed or
    * held back and why.
    */
-  function decided(key, argument) {
+  function decided(key, argument, { isQuiet = false } = {}) {
     const entry = decide[key];
     if (!entry) return null;
-    const scored = [];
+    const ranked = [];
+    let reused = 0;
     const removed = [];
     const waiting = [];
     const fresh = rows.valuesOf(entry.field ?? argument).filter(({ value }) => !spent.get(key).has(value));
     for (const { value, row } of fresh) {
-      const facts = rows.factsOf(row, entry.join);
-      const passed = gate(facts, entry.gates);
-      const result = passed.pass ? score(facts, entry.scores) : passed;
+      const { result, reusing } = judged(entry, value, row);
+      reused += reusing;
       if (result.removed) removed.push({ value, why: result.removed });
       else if (result.missing) waiting.push({ value, missing: result.missing, ...(entry.join && { about: row[entry.join] }) });
-      else scored.push({ value, factors: result.factors, total: result.total });
+      else ranked.push({ value, factors: result.factors, total: result.total });
     }
-    sayHeld(key, argument, waiting);
+    if (!isQuiet) sayHeld(key, argument, waiting.filter((each) => !isAsked(entry, each.missing)));
     const heldBack = waiting.map(({ value, missing, about }) => ({ value, missing: about === undefined ? missing : `${missing} for ${about}` }));
     // UND-22: with scores, Jev chooses from the shortlist, best first.
-    const table = entry.scores ? shortlist(scored, entry.shortlist).slice(0, MAX_CANDIDATES) : null;
-    const candidates = (table ?? scored.slice(0, MAX_CANDIDATES)).map((each) => each.value);
-    const record = { argument: key, ...(table && { table }), removed, held: heldBack };
+    const table = entry.scores ? shortlist(ranked, entry.shortlist).slice(0, MAX_CANDIDATES) : null;
+    const candidates = (table ?? ranked.slice(0, MAX_CANDIDATES)).map((each) => each.value);
+    const jev = hasAsk(entry) ? { jev: { asked: scored.values().filter((each) => each.step === step).toArray().length, reused } } : {};
+    const record = { argument: key, ...(table && { table }), removed, held: heldBack, ...jev };
     return { candidates, why: whyNone(heldBack, removed), record };
+  }
+
+  /**
+   * One value through its gates and scores, and how many Jev answers it
+   * reused; a Score it waits for is queued for the next look.
+   */
+  function judged(entry, value, row) {
+    const facts = rows.factsOf(row, entry.join);
+    const passed = gate(facts, entry.gates);
+    if (!passed.pass) return { result: passed, reusing: 0 };
+    const about = entry.join ? row[entry.join] : value;
+    const answers = answersFor(entry.scores, about);
+    const result = score(facts, entry.scores, { inputs: app.inputs, answers: valuesOf(answers) });
+    if (result.ask) waitingScores.set(`${result.ask}|${about}`, { ask: result.ask, about, facts });
+    return { result, reusing: Object.values(answers).filter((each) => each.step < step).length };
+  }
+
+  /**
+   * The inputs the final pick is told (`pick.with`), or null.
+   */
+  function told() {
+    if (!pick?.with) return null;
+    return Object.fromEntries(pick.with.map((name) => [name, app.inputs[name]]));
+  }
+
+  /**
+   * The Score answers known for a row, by factor.
+   */
+  function answersFor(factors = {}, about) {
+    const answers = {};
+    for (const [field, factor] of Object.entries(factors)) {
+      const known = factor.ask && scored.get(`${factor.ask}|${about}`);
+      if (known) answers[field] = known;
+    }
+    return answers;
+  }
+
+  /**
+   * Asks Jev every Score the decided arguments are waiting for, in one
+   * request: each row's `looks_at` field in the state, one question per
+   * row (ADR-0020). Answers are kept for the run.
+   */
+  async function askScores(judge) {
+    if (waitingScores.size === 0) return;
+    const waiting = waitingScores.values().toArray();
+    waitingScores = new Map();
+    const state = { rows: {} };
+    const asked = {};
+    for (const [index, { ask, facts }] of waiting.entries()) {
+      const id = `r${index + 1}`;
+      const question = questions[ask];
+      state.rows[id] = { [question.looks_at]: facts[question.looks_at] ?? null };
+      asked[id] = { type: 'score', instructions: `About \`rows.${id}.${question.looks_at}\`: ${question.instructions}`, criteria: question.levels };
+    }
+    const response = await judge.systemOne({ state, questions: asked });
+    for (const [index, { ask, about }] of waiting.entries()) {
+      const answer = response.answers?.[`r${index + 1}`];
+      const top = questions[ask].levels.length - 1;
+      if (typeof answer?.score === 'number') scored.set(`${ask}|${about}`, { value: Math.min(1, Math.max(0, answer.score / top)), step });
+    }
   }
   let looked = { tools: [], last: null };
   // Values come from the last answer that was not an error: a refused
@@ -143,17 +226,19 @@ export function mcpApp({ calls = [], values = {}, decide = {} } = {}) {
   const app = {
     // Set by the run: one stderr line, e.g. a tool not offered.
     notify: null,
+    // Set by the run: the person's inputs (UND-24), e.g. { mood: 'fun', centre: 3 }.
+    inputs: {},
 
     /**
      * The moves a view offers, and the ones it cannot, with why.
      */
-    moves(view) {
+    moves(view, options = {}) {
       if (view.last && !view.last.isError) answered = view.last;
       rows.remember(view.last);
       // A refused call spends nothing.
       if (spending.length > 0 && view.last?.isError) for (const [key, value] of spending) spent.get(key).delete(value);
       spending = [];
-      const all = view.tools.flatMap((tool) => movesFor(tool, { calls, values, last: answered, decided }));
+      const all = view.tools.flatMap((tool) => movesFor(tool, { calls, values, last: answered, decided: (key, argument) => decided(key, argument, options), pick: pick && { ...pick, told: told() } }));
       const blocked = all.filter((move) => move.why);
       for (const { id, why } of blocked) {
         if (warned.has(id)) continue;
@@ -163,6 +248,15 @@ export function mcpApp({ calls = [], values = {}, decide = {} } = {}) {
       return { offered: all.filter((move) => !move.why), blocked };
     },
     phase: (view) => (app.moves(view).offered.length > 0 ? 'asking' : 'waiting'),
+    /**
+     * Before the phase is read: the Scores decided values wait for are
+     * asked (a look that finds nothing new asks nothing).
+     */
+    async prepare(view, judge) {
+      if (Object.values(decide).every((entry) => !hasAsk(entry))) return;
+      app.moves(view, { isQuiet: true });
+      await askScores(judge);
+    },
     project(view) {
       // `options` offers the moves of the view projected last (play
       // projects, then asks for options, from one look).
@@ -175,6 +269,7 @@ export function mcpApp({ calls = [], values = {}, decide = {} } = {}) {
     },
     options: () => app.moves(looked).offered,
     act(move) {
+      step += 1;
       spending = Object.entries(move.filled ?? {}).map(([name, value]) => [`${nameOf({ server: move.call.server, name: move.call.tool })}.${name}`, value]).filter(([key]) => spent.has(key));
       for (const [key, value] of spending) spent.get(key).add(value);
       return { actions: [{ ...move.call, arguments: { ...move.call.arguments, ...move.filled } }] };

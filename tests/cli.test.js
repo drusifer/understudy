@@ -167,3 +167,14 @@ test('--host reaches the run and the replay; on run it needs --watch', async () 
   const lonely = await cli(['run', 'examples/cli', '--host', '0.0.0.0'], { commands });
   assert.equal(lonely.stderr, 'understudy: --host needs --watch (it is where the watch page listens)\n');
 });
+
+test('--input is repeatable and reaches the run as name=value pairs; a bare word is refused (UND-24 AC2)', async () => {
+  const calls = [];
+  const commands = { run: async (directory, options) => { calls.push(options.inputs); } };
+  assert.equal((await cli(['run', 'examples/evening', '--input', 'mood=romantic', '--input=centre=1'], { commands })).code, 0);
+  assert.equal((await cli(['run', 'examples/evening'], { commands })).code, 0);
+  assert.deepEqual(calls, [['mood=romantic', 'centre=1'], []]);
+  const bad = await cli(['run', 'examples/evening', '--input', 'romantic'], { commands });
+  assert.equal(bad.code, 2);
+  assert.equal(bad.stderr, 'understudy: --input needs name=value, e.g. --input mood=romantic (got "romantic")\n');
+});
