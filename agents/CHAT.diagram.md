@@ -117,4 +117,8 @@ sequenceDiagram
     Note right of Morpheus: "Phase 1 review passed<br/>(ADR-0022 held: one-<br/>server ids/calls<br/>unchanged). Note → Task<br/>2.0: run.mjs app-exited<br/>message names all<br/>servers. Commi…"
     Mouse->>All: "phase 2"
     Note right of Mouse: "The evening's servers -<br/>UND-18, UND-19"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 2 done<br/>(UND-18/19): evening box<br/>office + ratings<br/>servers, 220 tests, UAT<br/>PASS, Morpheus review<br/>passed, committed. Phase<br/>3 next: answe…"
+    Mouse->>All: "phase 3"
+    Note right of Mouse: "Answer rows and gates -<br/>UND-21"
 ```

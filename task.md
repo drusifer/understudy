@@ -5,7 +5,7 @@
 *   **Total Points**: 29 (UND-18 3, UND-19 2, UND-20 5, UND-21 3, UND-22 5, UND-23 3, UND-24 3, UND-25 2, UND-26 3) - kept whole by the owner ("go big or go home")
 *   **Branch**: `sprint-5`
 *   **Stories / Arch**: `docs/sprints/USER_STORIES_SPRINT5.md`, `docs/sprints/ARCH_SPRINT5.md` (sprint 4 board: `docs/sprints/TASKS_SPRINT4.md`)
-*   **Status**: In progress - Phases 1-2 done; Phase 3 next. Note: `test-live` skips nothing - `examples/evening` has no sketch until Phase 7, so do not run test-live before then
+*   **Status**: In progress - Phases 1-3 done; Phase 4 next. Note: `test-live` skips nothing - `examples/evening` has no sketch until Phase 7, so do not run test-live before then
 *   **Commits**: one local commit per phase after Morpheus's review (`Phase <N>: ...`); publishing only via `bobp make push` when the owner asks (SDLC §6). No back-compat (owner rule).
 
 ---
@@ -31,8 +31,8 @@
 
 ### Phase 3: Answer rows and gates - UND-21
 *Phase goal: decided arguments take candidates from remembered rows with joined facts; gates remove (with why) or hold back (with the missing fact); spent values are not re-offered.*
-- [ ] **Task 3.1:** `src/rows.mjs` (remember non-error answers, rows with inherited scalars, `rowsFor(field)`, join by key, 500-row bound); `src/engine.mjs` gates (`is`/bare, `in`, `at_least`, `at_most` numbers and `HH:MM`, `any`) → passing/removed/held; `apps/mcp.mjs` decided path + spent values; `sketch.mjs` loads/checks `decide.*.gates`, `join`, `field`; step line `decided.removed/held`; `held` event once. Unit tests for rows and gates; app tests over a fake view. TDD. (*Owner: Neo | Verification: `bobp make test`; `bobp make lint`*)
-- [ ] **Task 3.2:** UAT UND-21 AC1-5 (owner's film gate over the evening servers via a double Jev; held-back message; check refusals name file, gate, word) then Morpheus review vs ADR-0017. (*Owner: Trin → Morpheus | Verification: `bobp make check`; commit `Phase 3`*)
+- [x] **Task 3.1:** `src/rows.mjs` (remember non-error answers, rows with inherited scalars, `rowsFor(field)`, join by key, 500-row bound); `src/engine.mjs` gates (`is`/bare, `in`, `at_least`, `at_most` numbers and `HH:MM`, `any`) → passing/removed/held; `apps/mcp.mjs` decided path + spent values; `sketch.mjs` loads/checks `decide.*.gates`, `join`, `field`; step line `decided.removed/held`; `held` event once. Unit tests for rows and gates; app tests over a fake view. TDD. (*Owner: Neo | Verification: `bobp make test`; `bobp make lint`*)
+- [x] **Task 3.2:** UAT UND-21 AC1-5 (owner's film gate over the evening servers via a double Jev; held-back message; check refusals name file, gate, word) then Morpheus review vs ADR-0017. (*Owner: Trin → Morpheus | Verification: `bobp make check`; commit `Phase 3`*)
 
 ### Phase 4: Scores and the shortlist - UND-22
 *Phase goal: weighted curves multiplied rank what passes; zero drops; shortlist bounds; the score table is in the log and on the watch page.*

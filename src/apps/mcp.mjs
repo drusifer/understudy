@@ -5,7 +5,9 @@
 // is left out, said once, and offered as soon as a result supplies values.
 // Where the run ends is the sketch's to say, with the `showing` guard.
 
-import { candidatesFor } from '../fill.mjs';
+import { candidatesFor, MAX_CANDIDATES } from '../fill.mjs';
+import { answerRows } from '../rows.mjs';
+import { gate } from '../engine.mjs';
 
 const RESULT_CHARS = 2000;
 
@@ -28,15 +30,24 @@ function idOf(tool, fixed) {
  * the tool itself. Each open argument carries its candidates; a required
  * one with none makes the move unavailable, with the reason.
  */
-function movesFor(tool, { calls, values, last }) {
+function movesFor(tool, { calls, values, last, decided }) {
   const properties = tool.inputSchema?.properties ?? {};
   const required = new Set(tool.inputSchema?.required);
   const listed = values[nameOf(tool)] ?? {};
   const fixedCalls = calls.filter((call) => call.tool === nameOf(tool)).map((call) => call.arguments ?? {});
   return (fixedCalls.length > 0 ? fixedCalls : [{}]).map((fixed) => {
     const open = [];
+    const decisions = [];
     for (const [name, schema] of Object.entries(properties)) {
-      if (Object.hasOwn(fixed, name) || !(required.has(name) || Object.hasOwn(listed, name))) continue;
+      const decision = decided(`${nameOf(tool)}.${name}`, name);
+      const isOpen = decision || required.has(name) || Object.hasOwn(listed, name);
+      if (!isOpen || Object.hasOwn(fixed, name)) continue;
+      if (decision) {
+        decisions.push(decision.record);
+        if (decision.candidates.length === 0) return { id: idOf(tool, fixed), why: `argument "${name}" ${decision.why}` };
+        open.push({ name, schema, candidates: decision.candidates });
+        continue;
+      }
       const candidates = candidatesFor(schema, { listed: listed[name], last });
       if (candidates.length === 0) {
         return { id: idOf(tool, fixed), why: `argument "${name}" (${schema.type ?? 'any'}) has nothing to choose from; list values for it in sketch.yaml` };
@@ -45,8 +56,18 @@ function movesFor(tool, { calls, values, last }) {
     }
     const about = tool.description ? ` - ${tool.description}` : '';
     const fixing = Object.keys(fixed).length > 0 ? ` with ${JSON.stringify(fixed)}` : '';
-    return { id: idOf(tool, fixed), what: `call ${nameOf(tool)}${fixing}${about}`, call: { ...(tool.server && { server: tool.server }), tool: tool.name, arguments: fixed }, open };
+    const move = { id: idOf(tool, fixed), what: `call ${nameOf(tool)}${fixing}${about}`, call: { ...(tool.server && { server: tool.server }), tool: tool.name, arguments: fixed }, open };
+    return decisions.length > 0 ? { ...move, decided: decisions } : move;
   });
+}
+
+/**
+ * Why a decided argument offers nothing: waiting, all removed, or no rows yet.
+ */
+function whyNone(heldBack, removed) {
+  if (heldBack.length > 0) return `is waiting for ${heldBack.map((each) => each.missing).join(', ')}`;
+  if (removed.length > 0) return `has nothing that passes its gates (${removed.length} removed)`;
+  return 'has nothing to choose from yet';
 }
 
 /**
@@ -63,10 +84,52 @@ function described(tool) {
 
 /**
  * The generic MCP app for one sketch.
- * @param {{ calls?: { tool: string, arguments?: object }[], values?: Record<string, Record<string, unknown[]>> }} sketch
+ * @param {{ calls?: { tool: string, arguments?: object }[], values?: Record<string, Record<string, unknown[]>>,
+ *   decide?: Record<string, { field?: string, join?: string, gates?: object }> }} sketch
  */
-export function mcpApp({ calls = [], values = {} } = {}) {
+export function mcpApp({ calls = [], values = {}, decide = {} } = {}) {
   const warned = new Set();
+  const rows = answerRows({ notify: (line) => app.notify?.(line) });
+  // ADR-0017: a decided value used in a call that answered is spent - the
+  // answer is remembered, so asking again gains nothing.
+  const spent = new Map(Object.keys(decide).map((key) => [key, new Set()]));
+  let spending = [];
+  const held = new Set();
+
+  /**
+   * Says once per value that it is held back, and what for.
+   */
+  function sayHeld(key, argument, waiting) {
+    for (const { value, missing, about } of waiting) {
+      if (held.has(`${key}=${value}`)) continue;
+      held.add(`${key}=${value}`);
+      const film = about === undefined ? '' : ` for "${about}"`;
+      app.notify?.(`holding back ${argument} ${value} - no "${missing}"${film} yet`);
+    }
+  }
+
+  /**
+   * A decided argument's values (UND-21): from the remembered rows, not
+   * spent, through its gates - the ones left, and what was removed or
+   * held back and why.
+   */
+  function decided(key, argument) {
+    const entry = decide[key];
+    if (!entry) return null;
+    const candidates = [];
+    const removed = [];
+    const waiting = [];
+    const fresh = rows.valuesOf(entry.field ?? argument).filter(({ value }) => !spent.get(key).has(value));
+    for (const { value, row } of fresh) {
+      const result = gate(rows.factsOf(row, entry.join), entry.gates);
+      if (result.removed) removed.push({ value, why: result.removed });
+      else if (result.missing) waiting.push({ value, missing: result.missing, ...(entry.join && { about: row[entry.join] }) });
+      else candidates.push(value);
+    }
+    sayHeld(key, argument, waiting);
+    const heldBack = waiting.map(({ value, missing, about }) => ({ value, missing: about === undefined ? missing : `${missing} for ${about}` }));
+    return { candidates: candidates.slice(0, MAX_CANDIDATES), why: whyNone(heldBack, removed), record: { argument: key, removed, held: heldBack } };
+  }
   let looked = { tools: [], last: null };
   // Values come from the last answer that was not an error: a refused
   // call must not take away what the one before it offered.
@@ -80,7 +143,11 @@ export function mcpApp({ calls = [], values = {} } = {}) {
      */
     moves(view) {
       if (view.last && !view.last.isError) answered = view.last;
-      const all = view.tools.flatMap((tool) => movesFor(tool, { calls, values, last: answered }));
+      rows.remember(view.last);
+      // A refused call spends nothing.
+      if (spending.length > 0 && view.last?.isError) for (const [key, value] of spending) spent.get(key).delete(value);
+      spending = [];
+      const all = view.tools.flatMap((tool) => movesFor(tool, { calls, values, last: answered, decided }));
       const blocked = all.filter((move) => move.why);
       for (const { id, why } of blocked) {
         if (warned.has(id)) continue;
@@ -102,6 +169,8 @@ export function mcpApp({ calls = [], values = {} } = {}) {
     },
     options: () => app.moves(looked).offered,
     act(move) {
+      spending = Object.entries(move.filled ?? {}).map(([name, value]) => [`${nameOf({ server: move.call.server, name: move.call.tool })}.${name}`, value]).filter(([key]) => spent.has(key));
+      for (const [key, value] of spending) spent.get(key).add(value);
       return { actions: [{ ...move.call, arguments: { ...move.call.arguments, ...move.filled } }] };
     },
     /**

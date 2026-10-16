@@ -115,7 +115,7 @@ test('bad YAML is refused naming the file and the line', async () => {
 test('an unknown top-level key is refused naming the known ones', async () => {
   const directory = sketchChanged((text) => `${text}adapter: adapter.mjs\n`);
   assert.equal(await refusal(directory),
-    `${shown(directory)}/sketch.yaml: adapter: not a sketch key (known: name, description, target, app, player, steps, questions, turn, calls, values)`);
+    `${shown(directory)}/sketch.yaml: adapter: not a sketch key (known: name, description, target, app, player, steps, questions, turn, calls, values, decide)`);
 });
 
 test('a missing name, questions or turn is refused naming the key', async () => {
@@ -225,6 +225,17 @@ test('an MCP sketch can name several servers; each is checked and named (UND-20)
   assert.deepEqual(sketch.target.servers.map((server) => server.name), ['boxoffice', 'ratings']);
   const bad = mcpSketch('{ kind: mcp, servers: { boxoffice: { command: node }, ratings: { type: sse, url: x } } }');
   await assert.rejects(checkSketch(bad), /sketch\.yaml: target\.servers\.ratings\.type: sse servers are not supported/);
+});
+
+test('decide: gates are checked at load, naming the file, the gate and the word (UND-21 AC5)', async () => {
+  const good = mcpSketch('{ kind: mcp, server: { command: node } }', "decide:\n  seat_map.showing: { join: title, gates: { starts: { at_least: '17:00' } } }\n");
+  assert.ok((await loadSketch(good)).app);
+  const bad = mcpSketch('{ kind: mcp, server: { command: node } }', 'decide:\n  seat_map.showing: { gates: { row: { among: [E] } } }\n');
+  await assert.rejects(checkSketch(bad), { message: `${shown(bad)}/sketch.yaml: decide.seat_map.showing.gates.row: unknown word "among" - use is, in, at_least, at_most, any` });
+  const misnamed = mcpSketch('{ kind: mcp, server: { command: node } }', 'decide:\n  seat_map: { gates: {} }\n');
+  await assert.rejects(checkSketch(misnamed), /decide\.seat_map: name a tool argument as <tool>\.<argument>/);
+  const notMcp = mcpSketch('{ kind: process, command: node }', 'app: hooks.mjs\ndecide: {}\n');
+  await assert.rejects(checkSketch(notMcp), /decide: only for an mcp target/);
 });
 
 test('an MCP sketch by reference reads the mcpServers file; a missing name is refused naming the ones there', async () => {

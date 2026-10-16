@@ -19,10 +19,11 @@ import { checkInstruction } from './strategyFile.mjs';
 import { pageApp } from './apps/page.mjs';
 import { mcpApp } from './apps/mcp.mjs';
 import { resolveServers } from './mcpConfig.mjs';
+import { checkGates } from './engine.mjs';
 
 const SKETCH = 'sketch.yaml';
 const GUIDE = 'see docs/SKETCHES.md';
-const KEYS = ['name', 'description', 'target', 'app', 'player', 'steps', 'questions', 'turn', 'calls', 'values'];
+const KEYS = ['name', 'description', 'target', 'app', 'player', 'steps', 'questions', 'turn', 'calls', 'values', 'decide'];
 const QUESTION_TYPES = ['noul', 'choice', 'score'];
 // The fields a kind cannot do without, with what each one is for.
 const REQUIRED = {
@@ -33,7 +34,7 @@ const REQUIRED = {
 const TARGET_FIELDS = { process: ['command', 'args'], page: ['root', 'page'], http: ['command', 'args', 'url', 'state'], mcp: ['server', 'servers', 'config'] };
 // Kinds with a built-in app, made for each sketch; the others read their
 // app through hooks.mjs. An MCP server is only ever played by its own.
-const GENERIC_APPS = { page: () => pageApp, mcp: (sketch) => mcpApp({ calls: sketch.calls, values: sketch.values }) };
+const GENERIC_APPS = { page: () => pageApp, mcp: (sketch) => mcpApp({ calls: sketch.calls, values: sketch.values, decide: sketch.decide }) };
 const ONLY_GENERIC = new Set(['mcp']);
 const APP_HOOKS = ['phase', 'project', 'options', 'act'];
 
@@ -123,11 +124,37 @@ function resolvedTarget(target, { file, directory }) {
  * `calls:` and `values:` - the generic MCP app's settings, nothing else's.
  */
 function checkCalls(sketch, fail) {
-  for (const key of ['calls', 'values']) {
+  for (const key of ['calls', 'values', 'decide']) {
     if (sketch[key] !== undefined && sketch.target.kind !== 'mcp') fail(key, 'only for an mcp target');
   }
   checkCallList(sketch.calls ?? [], fail);
   checkValues(sketch.values ?? {}, fail);
+  checkDecide(sketch.decide ?? {}, fail);
+}
+
+const DECIDED = /^(?:[\w-]+\/)?[\w-]+\.[\w-]+$/;
+const DECIDE_FIELDS = ['field', 'join', 'gates'];
+
+/**
+ * `decide:` - per `<tool>.<argument>` (`<server>/<tool>.<argument>` with
+ * several servers): where its values come from and the gates they pass
+ * (ARCH §5, UND-21).
+ */
+function checkDecide(decide, fail) {
+  if (!isMapping(decide)) fail('decide', 'must map each <tool>.<argument> to { gates, ... }, e.g. pick_seats.seat');
+  for (const [key, entry] of Object.entries(decide)) checkDecided(key, entry, fail);
+}
+
+function checkDecided(key, entry, fail) {
+  const at = `decide.${key}`;
+  if (!DECIDED.test(key)) fail(at, 'name a tool argument as <tool>.<argument> (or <server>/<tool>.<argument>), e.g. pick_seats.seat');
+  if (!isMapping(entry)) fail(at, `must be { ${DECIDE_FIELDS.join(', ')} }`);
+  const extra = Object.keys(entry).find((field) => !DECIDE_FIELDS.includes(field));
+  if (extra) fail(`${at}.${extra}`, `not a decide field (known: ${DECIDE_FIELDS.join(', ')})`);
+  for (const field of ['field', 'join']) {
+    if (entry[field] !== undefined && (typeof entry[field] !== 'string' || entry[field] === '')) fail(`${at}.${field}`, 'must name a field of the answers, e.g. title');
+  }
+  if (entry.gates !== undefined) checkGates(entry.gates, `${at}.gates`, fail);
 }
 
 function checkCallList(calls, fail) {

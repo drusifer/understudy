@@ -203,7 +203,7 @@ pick:                                        # the final Choice for every decide
   table: [{ value: "E7", factors: { row: 1, centre: 0.58 }, total: 0.58 }], removed: [{ value: "D1",
   why: "row D1 not in [E, F, D]" }], held: [{ value: "s4", missing: "tomato for Night Shift" }] }`.
   `table` holds the shortlist plus at most 10 removed-by-zero values, so lines stay bounded.
-- `{"event":"held","argument":...,"value":...,"missing":...}` once per held value (stderr says it once).
+- held values: stderr says each once (`holding back showing s2 - no "tomato" for "Night Shift" yet`) and every step line carries them in `decided[].held` - no separate event line (Phase 3 review). `decided` is a list, one entry per decided argument of the move.
 - final line outcome `walked-away` (exit 0).
 
 ### Box office and ratings (examples/evening)

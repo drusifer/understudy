@@ -195,6 +195,7 @@ async function play(services, { context, phase, question: questionName }) {
     at: new Date().toISOString(), phase, options: options.map((option) => option.id), picked: result.picked,
     move: move.id, confidence: result.confidence, checks: result.checks, asked: result.asked,
     ...(offList !== undefined && { offList: true, answer: offList }),
+    ...(move.decided && { decided: move.decided }),
     ...(response !== undefined && { response }),
     ...(result.blocked && { blocked: { ...result.blocked, move: result.picked } }),
   };
