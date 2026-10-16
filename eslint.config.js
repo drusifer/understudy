@@ -3,7 +3,8 @@ import unicorn from 'eslint-plugin-unicorn';
 import sonarjs from 'eslint-plugin-sonarjs';
 
 // Mirrors recard's config (the code came from there) minus its browser-only
-// sections. Understudy is Node-only until a web target lands.
+// sections. Two files run in a browser: the web example's app and the
+// watch page's script.
 export default [
   {
     ignores: ['node_modules/**', 'build/**', 'seed/**'],
@@ -47,6 +48,11 @@ export default [
   {
     // The web example's own app code runs in the page.
     files: ['examples/web/**/*.js'],
+    languageOptions: { globals: { document: 'readonly', globalThis: 'readonly' } },
+  },
+  {
+    // The watch page's script runs in the browser (sprint 4, ARCH_SPRINT4 §7).
+    files: ['src/watch/page.mjs'],
     languageOptions: { globals: { document: 'readonly', globalThis: 'readonly' } },
   },
   {

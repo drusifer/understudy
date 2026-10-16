@@ -30,9 +30,9 @@
 
 ### Phase 3: The live page and `run --watch` — UND-14
 *Phase goal: `run <sketch> --watch` serves a page that draws the diagram, moves the highlight, and lists decisions live, for all four targets.*
-- [ ] **Task 3.1:** `src/watch/page.html|page.mjs|page.css` (SVG diagram, highlight + last transition, status, decision feed: options, pick + confidence, off-list, MCP args, answer; ended state; no reconnect loop); `cli.mjs` `--watch [--port N]`; `run.mjs` starts the server before the target and prints the URL. (*Owner: Neo | Verification: `bobp make test`; manual page check*)
-- [ ] **Task 3.2:** `eslint.config.js` browser-globals block for `src/watch/page.mjs`. (*Owner: Tank | Verification: `bobp make lint` exit 0*)
-- [ ] **Task 3.3:** UAT UND-14 AC1–9 live: drive the page with Playwright's Chromium during `run examples/cli --watch` and `examples/mcp --watch` (highlight moves ≤1 s, feed rows, reload mid-run, ended text); `--watch` output identical to a plain run; then Morpheus review. (*Owner: Trin → Morpheus | Verification: live + `bobp make check`; commit `Phase 3`*)
+- [x] **Task 3.1:** `src/watch/page.html|page.mjs|page.css` (SVG diagram, highlight + last transition, status, decision feed: options, pick + confidence, off-list, MCP args, answer; ended state; no reconnect loop); `cli.mjs` `--watch [--port N]`; `run.mjs` starts the server before the target and prints the URL. (*Owner: Neo | Verification: `bobp make test`; manual page check*)
+- [x] **Task 3.2:** `eslint.config.js` browser-globals block for `src/watch/page.mjs`. (*Owner: Tank | Verification: `bobp make lint` exit 0*)
+- [x] **Task 3.3:** UAT UND-14 AC1–9 live: drive the page with Playwright's Chromium during `run examples/cli --watch` and `examples/mcp --watch` (highlight moves ≤1 s, feed rows, reload mid-run, ended text); `--watch` output identical to a plain run; then Morpheus review. (*Owner: Trin → Morpheus | Verification: live + `bobp make check`; commit `Phase 3`*)
 
 ### Phase 4: Pause and step — UND-15
 *Phase goal: the page pauses a live run before its next move, steps it one move at a time, resumes it; no Jev call while paused.*

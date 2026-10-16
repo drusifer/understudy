@@ -112,6 +112,9 @@ Step back/forward and clicking a step recompute the view at that point from the 
 * **Log lines (stdout and file, in order):**
   * `{"event":"start","sketch":"coffee-cli","plays":"node app.mjs","turn":{...as written...},"at":"..."}`
   * `{"event":"state","from":"looking","to":"answering","on":"done: phase is asking","at":"...","idle_looks":12}` (`idle_looks` only when non-zero)
+  * `{"event":"ended","outcome":"stalled","message":"stalled: nothing to do for 10 s ..."}` - just
+    before the final line of a run that did not end `done` (Phase 3 amendment: the page and a
+    replay must say *why* a run ended, and the final line's fields are frozen by UND-13 AC4).
   * step lines and the final line: unchanged fields.
   * Live only (not in the log): `{"event":"control","paused":true,"before_step":3}`.
 * **Labels:** `OBSERVE`, `STEP`, `QUIT`; an invoke's completion is `done`, followed by its guard as

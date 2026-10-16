@@ -15,6 +15,7 @@ import { MachineSeat } from './seat.mjs';
 import { loadSketch, shown } from './sketch.mjs';
 import { RunError, UsageError } from './errors.mjs';
 import { createStream } from './stream.mjs';
+import { startWatch } from './watch/server.mjs';
 
 const KEY = 'TYPESAFE_API_KEY';
 export const DEFAULT_STEPS = 50;
@@ -77,21 +78,37 @@ function watchInterrupts(signals, onSecond) {
  *   environment?: object, makeJudge?: (environment: object) => object|Promise<object>,
  *   makeTarget?: (spec: object, options: { directory: string, environment: object }) => Promise<object>,
  *   logRoot?: string, firstMoveMs?: number, stallMs?: number, pollMs?: number, signals?: import('node:events').EventEmitter,
- *   clock?: () => number }} [options]
+ *   clock?: () => number, watch?: { port?: number }|null, makeWatch?: typeof startWatch }} [options]
+ *   `watch` serves the live view (`--watch`); the server starts before anything else, so a
+ *   busy port refuses the run with nothing started.
  * @throws {UsageError} before anything starts; {RunError} once it has.
  */
 export async function runSketch(location, {
   steps, stdout = process.stdout, stderr = process.stderr, environment = process.env,
   makeJudge = typesafeJudge, makeTarget = startTarget, logRoot = path.join('build', 'runs'),
   firstMoveMs = 10_000, stallMs = 10_000, pollMs = 250, signals = process, clock = Date.now,
+  watch = null, makeWatch = startWatch,
 } = {}) {
   const sketch = await loadSketch(location);
   const limit = steps ?? sketch.steps ?? DEFAULT_STEPS;
-  const judge = reportingFailures(await makeJudge(environment));
-  const target = await makeTarget(sketch.target, { directory: sketch.directory, environment });
   const logDirectory = path.join(logRoot, sketch.name);
   const logFile = path.join(logDirectory, `${new Date(clock()).toISOString().replaceAll(':', '-')}.jsonl`);
   const stream = createStream({ stdout, logFile });
+  const watcher = watch ? await makeWatch({ port: watch.port, mode: 'live', source: stream }) : null;
+  if (watcher) stderr.write(`understudy: watch at ${watcher.url}\n`);
+  try {
+    await playSketch({ sketch, limit, stream, logDirectory, logFile, stdout, stderr, environment, makeJudge, makeTarget, firstMoveMs, stallMs, pollMs, signals, clock });
+  } finally {
+    await watcher?.close();
+  }
+}
+
+/**
+ * The run itself, once anything that can refuse it has been checked.
+ */
+async function playSketch({ sketch, limit, stream, logDirectory, logFile, stderr, environment, makeJudge, makeTarget, firstMoveMs, stallMs, pollMs, signals, clock }) {
+  const judge = reportingFailures(await makeJudge(environment));
+  const target = await makeTarget(sketch.target, { directory: sketch.directory, environment });
   const write = (entry) => stream.emit(entry);
   const run = { taken: 0, seat: null, lastMoveAt: null, app: sketch.app };
   // A generic app may have something to say once (a tool it cannot offer).
@@ -106,7 +123,9 @@ export async function runSketch(location, {
     await playUntilDone({ run, target, steps: limit, waits: { firstMoveMs, stallMs }, clock, interrupts, write, stderr });
   } catch (error) {
     flushChanges(run, write);
-    write({ final: true, outcome: interrupts.isAsked() ? 'interrupted' : error.outcome ?? 'error', steps: run.taken, state: run.seat?.state ?? null });
+    const outcome = interrupts.isAsked() ? 'interrupted' : error.outcome ?? 'error';
+    write({ event: 'ended', outcome, message: error.message });
+    write({ final: true, outcome, steps: run.taken, state: run.seat?.state ?? null });
     throw error;
   } finally {
     interrupts.stop();
@@ -114,10 +133,10 @@ export async function runSketch(location, {
   }
   flushChanges(run, write);
   const outcome = interrupts.isAsked() ? 'interrupted' : 'done';
+  const stopped = `stopped by Ctrl-C after ${stepCount(run.taken)}, at a safe state`;
+  if (outcome === 'interrupted') write({ event: 'ended', outcome, message: stopped });
   write({ final: true, outcome, steps: run.taken, state: run.seat.state });
-  if (outcome === 'interrupted') {
-    throw new RunError(`stopped by Ctrl-C after ${stepCount(run.taken)}, at a safe state`, { outcome });
-  }
+  if (outcome === 'interrupted') throw new RunError(stopped, { outcome });
 }
 
 /**

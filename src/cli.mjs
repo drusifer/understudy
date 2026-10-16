@@ -15,12 +15,15 @@ import { genericLibrary } from './library.mjs';
 
 const KEY = 'TYPESAFE_API_KEY';
 
-const USAGE = `usage: understudy run <sketch> [--steps N]   play the sketch against its app (needs ${KEY})
-       understudy check <sketch>             check the sketch without starting anything
-       understudy library [<sketch>]         list every name a sketch may use, with its meaning
+const USAGE = `usage: understudy run <sketch> [--steps N] [--watch [--port N]]
+           play the sketch against its app (needs ${KEY});
+           --watch serves a live view of the run on 127.0.0.1
+       understudy check <sketch>
+           check the sketch without starting anything
+       understudy library [<sketch>]
+           list every name a sketch may use, with its meaning
 <sketch> is a directory holding sketch.yaml (e.g. examples/cli) or the file itself.
 `;
-
 /**
  * The listing `understudy library` prints: kinds in order, one
  * `  name - doc` line per name. `extra` is the names a sketch's hooks add.
@@ -38,24 +41,49 @@ export function libraryListing(extra = null) {
   return `${lines.join('\n')}\n`;
 }
 
+// Each option: the commands that take it, and how its value is read
+// (`null` for a flag).
+const OPTIONS = {
+  steps: { commands: ['run'], read: (value) => {
+    if (!/^[1-9]\d*$/.test(value)) throw new UsageError(`--steps must be a positive whole number (got "${value}")`);
+    return Number(value);
+  }, needs: 'a number', example: '--steps 20' },
+  port: { commands: ['run', 'watch'], read: (value) => {
+    const port = Number(value);
+    if (!/^\d+$/.test(value) || port < 1 || port > 65_535) throw new UsageError(`--port must be a port number from 1 to 65535 (got "${value}")`);
+    return port;
+  }, needs: 'a port number', example: '--port 4173' },
+  watch: { commands: ['run'], read: null },
+};
+
+/**
+ * One `--name` or `--name=value` (or `--name value`): its name and value.
+ */
+function option(command, rest, index) {
+  const [flag, inline] = rest[index].slice(2).split(/=(.*)/s, 2);
+  const known = OPTIONS[flag];
+  if (!known?.commands.includes(command)) throw new UsageError(`no option "--${flag}" for ${command} - see understudy --help`);
+  if (known.read === null) return { name: flag, value: true, used: 0 };
+  const value = inline ?? rest[index + 1];
+  if (!value) throw new UsageError(`--${flag} needs ${known.needs}, e.g. ${known.example}`);
+  return { name: flag, value: known.read(value), used: inline === undefined ? 1 : 0 };
+}
+
 function parse(argv) {
   const [command, ...rest] = argv;
   const positional = [];
-  let steps;
+  const options = {};
   for (let index = 0; index < rest.length; index++) {
-    const argument = rest[index];
-    if (command === 'run' && (argument === '--steps' || argument.startsWith('--steps='))) {
-      const value = argument === '--steps' ? rest[++index] : argument.slice('--steps='.length);
-      if (!value) throw new UsageError('--steps needs a number, e.g. --steps 20');
-      if (!/^[1-9]\d*$/.test(value ?? '')) throw new UsageError(`--steps must be a positive whole number (got "${value ?? ''}")`);
-      steps = Number(value);
-    } else if (argument.startsWith('-')) {
-      throw new UsageError(`no option "${argument}" for ${command} - see understudy --help`);
-    } else {
-      positional.push(argument);
+    if (!rest[index].startsWith('-')) {
+      positional.push(rest[index]);
+      continue;
     }
+    const { name, value, used } = option(command, rest, index);
+    options[name] = value;
+    index += used;
   }
-  return { command, positional, steps };
+  if (command === 'run' && options.port !== undefined && !options.watch) throw new UsageError('--port needs --watch (it is the watch page\'s port)');
+  return { command, positional, ...options };
 }
 
 function oneSketch(command, positional, { isOptional = false } = {}) {
@@ -87,6 +115,25 @@ const defaultCommands = {
 const HELP = new Set(['--help', '-h', 'help']);
 
 /**
+ * Each command: what it does with the parsed command line. Writes to
+ * stdout; failures are thrown.
+ */
+const COMMANDS = {
+  async run({ positional, steps, watch, port }, { use, environment, stdout, stderr }) {
+    // UND-4: Jev is required, so a run without its key never starts.
+    if (!environment[KEY]?.trim()) throw new UsageError(`understudy run needs a TypeSafe key: set ${KEY}`);
+    await use.run(oneSketch('run', positional), { steps, stdout, stderr, environment, watch: watch ? { port } : null });
+  },
+  async check({ positional }, { use, stdout }) {
+    stdout.write(`${await use.check(oneSketch('check', positional))}\n`);
+  },
+  async library({ positional }, { use, stdout }) {
+    const location = oneSketch('library', positional, { isOptional: true });
+    stdout.write(libraryListing(location ? await use.sketchLibrary(location) : null));
+  },
+};
+
+/**
  * Runs one command line; resolves the exit code. Streams and commands are
  * injectable so tests never start a real app or call Jev.
  * @param {string[]} argv
@@ -100,24 +147,11 @@ export async function main(argv, { environment = process.env, stdout = process.s
       return 0;
     }
     if (argv.length === 0) throw new UsageError(USAGE.trimEnd());
-    const { command, positional, steps } = parse(argv);
-    const use = { ...defaultCommands, ...commands };
-    if (command === 'run') {
-      // UND-4: Jev is required, so a run without its key never starts.
-      if (!environment[KEY]?.trim()) throw new UsageError(`understudy run needs a TypeSafe key: set ${KEY}`);
-      await use.run(oneSketch(command, positional), { steps, stdout, stderr, environment });
-      return 0;
-    }
-    if (command === 'check') {
-      stdout.write(`${await use.check(oneSketch(command, positional))}\n`);
-      return 0;
-    }
-    if (command === 'library') {
-      const location = oneSketch(command, positional, { isOptional: true });
-      stdout.write(libraryListing(location ? await use.sketchLibrary(location) : null));
-      return 0;
-    }
-    throw new UsageError(`no command "${command}" - commands: run, check, library (see understudy --help)`);
+    const parsed = parse(argv);
+    const command = COMMANDS[parsed.command];
+    if (!command) throw new UsageError(`no command "${parsed.command}" - commands: ${Object.keys(COMMANDS).join(', ')} (see understudy --help)`);
+    await command(parsed, { use: { ...defaultCommands, ...commands }, environment, stdout, stderr });
+    return 0;
   } catch (error) {
     if (error instanceof UsageError) {
       stderr.write(`understudy: ${error.message}\n`);

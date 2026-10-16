@@ -116,3 +116,19 @@ test('library lists every generic name grouped by kind, one line each with its m
   assert.ok(lines.some((line) => /^ {2}look - /.test(line)));
   assert.ok(lines.some((line) => /^ {2}play - /.test(line)));
 });
+
+test('--watch and --port reach the run; --port without --watch, or a bad port, is refused', async () => {
+  const calls = [];
+  const commands = { run: async (location, options) => { calls.push(options.watch); } };
+  assert.equal((await cli(['run', 'examples/cli', '--watch'], { commands })).code, 0);
+  assert.equal((await cli(['run', 'examples/cli', '--watch', '--port', '4180'], { commands })).code, 0);
+  assert.equal((await cli(['run', 'examples/cli', '--port=4181', '--watch'], { commands })).code, 0);
+  assert.equal((await cli(['run', 'examples/cli'], { commands })).code, 0);
+  assert.deepEqual(calls, [{ port: undefined }, { port: 4180 }, { port: 4181 }, null]);
+  const lonely = await cli(['run', 'examples/cli', '--port', '4180'], { commands });
+  assert.equal(lonely.code, 2);
+  assert.equal(lonely.stderr, 'understudy: --port needs --watch (it is the watch page\'s port)\n');
+  const bad = await cli(['run', 'examples/cli', '--watch', '--port', '99999'], { commands });
+  assert.equal(bad.stderr, 'understudy: --port must be a port number from 1 to 65535 (got "99999")\n');
+  assert.match((await cli(['check', 'examples/cli', '--watch'], { commands })).stderr, /no option "--watch" for check/);
+});
