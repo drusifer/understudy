@@ -7,8 +7,9 @@
 - Tag v0.1.0 still points at 66ce717 - owner's call.
 
 ## Current Task
-None - sprint 4 launched on branch `sprint-4` (merge awaits owner).
+None - sprint 4 merged and pushed (51fa684). Sprint 5 shaped (docs/BACKLOG.md), not started.
 
 ## Next Steps
-1. Next `/sprint <N> go`: Stage 0, cut `sprint-<N>` from main after sprint-4 is merged, archive
-   task.md to docs/sprints/TASKS_SPRINT4.md first.
+1. On `/sprint 5 go`: Stage 0, cut `sprint-5` from main, archive task.md to
+   docs/sprints/TASKS_SPRINT4.md before writing the new board; keep loader/format changes and
+   the examples they break in one phase.

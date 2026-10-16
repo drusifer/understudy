@@ -107,67 +107,114 @@ async function startRemote(entry, { shownUrl, handshakeMs, retryMs }) {
 }
 
 /**
- * Connects to the server named by `spec.entry` (`${VAR}` filled first):
- * starts a local one, or reaches a remote one (`type: http`).
- * @param {{ kind: 'mcp', entry: object, from: string }} spec
+ * Connects to one server (`${VAR}` filled first): starts a local one, or
+ * reaches a remote one (`type: http`).
+ */
+async function connect({ entry: written, from }, { directory, environment, handshakeMs, retryMs }) {
+  const entry = expandEntry(written, environment, from);
+  return entry.type === 'http'
+    ? await startRemote(entry, { shownUrl: entry.url, handshakeMs, retryMs })
+    : await startLocal(entry, { directory, environment, handshakeMs });
+}
+
+/**
+ * Connects to every server, in order. One that fails stops the ones
+ * already started; with several, the error names the server (UND-20 AC5).
+ */
+async function connectAll(servers, options) {
+  const connected = [];
+  for (const server of servers) {
+    try {
+      const link = await connect(server, options);
+      connected.push({ name: server.name, ...link });
+    } catch (error) {
+      await Promise.all(connected.map((each) => closeServer(each)));
+      if (server.name === null || !(error instanceof RunError)) throw error;
+      throw new RunError(`server "${server.name}" did not start: ${error.message}`, { outcome: error.outcome, cause: error });
+    }
+  }
+  return connected;
+}
+
+const named = (server, text) => (server.name === null ? text : `server "${server.name}": ${text}`);
+const isAnswer = (server, error) => error instanceof McpError && error.code !== ErrorCode.ConnectionClosed && error.code !== ErrorCode.RequestTimeout && !server.program?.exited();
+
+/**
+ * A failure that is not the server's answer: the server is gone.
+ */
+function lost(server, error) {
+  const { program, describe } = server;
+  const ended = program?.exited();
+  if (ended) return new RunError(named(server, `${describe()} exited with code ${ended.code ?? ended.signal} before the end state${stderrOf(program)}`), { outcome: 'app-exited', cause: error });
+  return new RunError(named(server, `lost the connection to ${describe()}: ${error.message}`), { outcome: 'connection-lost', cause: error });
+}
+
+async function closeServer({ client, program }) {
+  await closeQuietly(client);
+  await program?.close();
+}
+
+/**
+ * The MCP target over every server the sketch names (ADR-0012, ADR-0022).
+ * A look lists every server's tools, each with its `server` (null when
+ * there is only one); a move calls the tool on its server.
+ * @param {{ kind: 'mcp', servers: { name: string|null, entry: object, from: string }[] }} spec
  * @param {{ directory: string, environment?: object, handshakeMs?: number, retryMs?: number }} options
  */
 export async function startTarget(spec, { directory, environment = process.env, handshakeMs = HANDSHAKE_MS, retryMs = RETRY_MS }) {
-  const entry = expandEntry(spec.entry, environment, spec.from);
-  const { client, program = null, describe } = entry.type === 'http'
-    ? await startRemote(entry, { shownUrl: entry.url, handshakeMs, retryMs })
-    : await startLocal(entry, { directory, environment, handshakeMs });
+  const servers = await connectAll(spec.servers, { directory, environment, handshakeMs, retryMs });
+  const byName = new Map(servers.map((server) => [server.name, server]));
   const state = { last: null, seq: 0, shown: undefined };
 
-  /**
-   * A failure that is not the server's answer: the server is gone.
-   */
-  const lost = (error) => {
-    const ended = program?.exited();
-    if (ended) return new RunError(`${describe()} exited with code ${ended.code ?? ended.signal} before the end state${stderrOf(program)}`, { outcome: 'app-exited', cause: error });
-    return new RunError(`lost the connection to ${describe()}: ${error.message}`, { outcome: 'connection-lost', cause: error });
-  };
-  const isAnswer = (error) => error instanceof McpError && error.code !== ErrorCode.ConnectionClosed && error.code !== ErrorCode.RequestTimeout && !program?.exited();
+  const exited = () => servers.map((server) => server.program?.exited()).find(Boolean) ?? null;
+
+  async function toolsOf(server) {
+    const tools = [];
+    try {
+      let cursor;
+      do {
+        const page = await server.client.listTools(cursor ? { cursor } : undefined);
+        tools.push(...page.tools.map(({ name, description, inputSchema }) => ({ server: server.name, name, description, inputSchema })));
+        cursor = page.nextCursor;
+      } while (cursor);
+    } catch (error) {
+      throw lost(server, error);
+    }
+    return tools;
+  }
 
   return {
-    describe,
+    describe: () => servers.map((server) => (server.name === null ? server.describe() : `${server.name} (${server.describe()})`)).join(', '),
     async view() {
-      const tools = [];
-      try {
-        let cursor;
-        do {
-          const page = await client.listTools(cursor ? { cursor } : undefined);
-          tools.push(...page.tools.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })));
-          cursor = page.nextCursor;
-        } while (cursor);
-      } catch (error) {
-        throw lost(error);
-      }
+      const lists = await Promise.all(servers.map((server) => toolsOf(server)));
+      const tools = lists.flat();
       const shown = JSON.stringify([tools, state.last]);
       if (shown !== state.shown) {
         state.shown = shown;
         state.seq += 1;
       }
-      return { tools, last: state.last, seq: state.seq, exited: program?.exited() ?? null };
+      return { tools, last: state.last, seq: state.seq, exited: exited() };
     },
-    async act({ tool, arguments: arguments_ = {} }) {
+    async act({ server: name = null, tool, arguments: arguments_ = {} }) {
+      const server = byName.get(name);
+      if (!server) throw new Error(`no server "${name}" in this sketch`);
+      const call = { ...(name !== null && { server: name }), tool, arguments: arguments_ };
       let answer;
       try {
-        const result = await client.callTool({ name: tool, arguments: arguments_ });
+        const result = await server.client.callTool({ name: tool, arguments: arguments_ });
         answer = { isError: result.isError === true, text: textOf(result), ...(result.structuredContent && { structured: result.structuredContent }) };
       } catch (error) {
-        if (!isAnswer(error)) throw lost(error);
+        if (!isAnswer(server, error)) throw lost(server, error);
         answer = { isError: true, text: error.message };
       }
-      state.last = { tool, arguments: arguments_, ...answer };
-      return { call: { tool, arguments: arguments_ }, isError: answer.isError, text: answer.text.slice(0, RESULT_CHARS) };
+      state.last = { ...call, ...answer };
+      return { call, isError: answer.isError, text: answer.text.slice(0, RESULT_CHARS) };
     },
     talk: async () => [],
     async say() {},
-    exited: () => program?.exited() ?? null,
+    exited,
     async close() {
-      await closeQuietly(client);
-      await program?.close();
+      await Promise.all(servers.map((server) => closeServer(server)));
     },
   };
 }

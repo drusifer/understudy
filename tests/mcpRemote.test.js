@@ -38,8 +38,8 @@ async function boxOffice() {
 }
 
 const spec = (port, token = '${MCP_TOKEN}') => ({
-  kind: 'mcp', from: 'servers.json',
-  entry: { type: 'http', url: `http://127.0.0.1:${port}/mcp`, headers: { Authorization: `Bearer ${token}` } },
+  kind: 'mcp',
+  servers: [{ name: null, from: 'servers.json', entry: { type: 'http', url: `http://127.0.0.1:${port}/mcp`, headers: { Authorization: `Bearer ${token}` } } }],
 });
 
 async function failure(promise) {

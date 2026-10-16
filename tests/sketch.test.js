@@ -214,15 +214,23 @@ function mcpSketch(target, extra = '', files = {}) {
 test('an MCP sketch needs no code: the generic MCP app plays it, and check says so', async () => {
   const directory = mcpSketch('{ kind: mcp, server: { command: node, args: [server.mjs] } }');
   const sketch = await loadSketch(directory);
-  assert.deepEqual(sketch.target, { kind: 'mcp', entry: { command: 'node', args: ['server.mjs'] }, server: null, from: `${shown(directory)}/sketch.yaml` });
+  assert.deepEqual(sketch.target, { kind: 'mcp', servers: [{ name: null, entry: { command: 'node', args: ['server.mjs'] }, from: `${shown(directory)}/sketch.yaml` }] });
   assert.equal(typeof sketch.app.idle, 'function');
   assert.equal(await checkSketch(directory), `${shown(directory)}: sketch OK - fixture-good (mcp, generic app) - 5 states, 1 question`);
+});
+
+test('an MCP sketch can name several servers; each is checked and named (UND-20)', async () => {
+  const directory = mcpSketch('{ kind: mcp, servers: { boxoffice: { command: node, args: [b.mjs] }, ratings: { command: node, args: [r.mjs] } } }');
+  const sketch = await loadSketch(directory);
+  assert.deepEqual(sketch.target.servers.map((server) => server.name), ['boxoffice', 'ratings']);
+  const bad = mcpSketch('{ kind: mcp, servers: { boxoffice: { command: node }, ratings: { type: sse, url: x } } }');
+  await assert.rejects(checkSketch(bad), /sketch\.yaml: target\.servers\.ratings\.type: sse servers are not supported/);
 });
 
 test('an MCP sketch by reference reads the mcpServers file; a missing name is refused naming the ones there', async () => {
   const files = { 'servers.json': '{"mcpServers":{"box":{"type":"http","url":"http://127.0.0.1:1/mcp"}}}' };
   const good = mcpSketch('{ kind: mcp, config: servers.json, server: box }', '', files);
-  assert.equal((await loadSketch(good)).target.entry.type, 'http');
+  assert.equal((await loadSketch(good)).target.servers[0].entry.type, 'http');
   const wrong = mcpSketch('{ kind: mcp, config: servers.json, server: bx }', '', files);
   assert.equal(await refusal(wrong), `${shown(wrong)}/sketch.yaml: target.server: no server "bx" in servers.json (it has: box)`);
 });

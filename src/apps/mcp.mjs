@@ -10,11 +10,17 @@ import { candidatesFor } from '../fill.mjs';
 const RESULT_CHARS = 2000;
 
 /**
+ * A tool's name as the moves say it: `<server>/<tool>` when the sketch
+ * plays several servers, so same-named tools never mix (ADR-0022).
+ */
+const nameOf = (tool) => (tool.server ? `${tool.server}/${tool.name}` : tool.name);
+
+/**
  * A fixed call's id: its tool and the arguments it fixes.
  */
 function idOf(tool, fixed) {
   const given = Object.entries(fixed).map(([name, value]) => name + '=' + (typeof value === 'string' ? value : JSON.stringify(value)));
-  return given.length === 0 ? `tool:${tool}` : `tool:${tool}(${given.join(',')})`;
+  return given.length === 0 ? `tool:${nameOf(tool)}` : `tool:${nameOf(tool)}(${given.join(',')})`;
 }
 
 /**
@@ -25,21 +31,21 @@ function idOf(tool, fixed) {
 function movesFor(tool, { calls, values, last }) {
   const properties = tool.inputSchema?.properties ?? {};
   const required = new Set(tool.inputSchema?.required);
-  const listed = values[tool.name] ?? {};
-  const fixedCalls = calls.filter((call) => call.tool === tool.name).map((call) => call.arguments ?? {});
+  const listed = values[nameOf(tool)] ?? {};
+  const fixedCalls = calls.filter((call) => call.tool === nameOf(tool)).map((call) => call.arguments ?? {});
   return (fixedCalls.length > 0 ? fixedCalls : [{}]).map((fixed) => {
     const open = [];
     for (const [name, schema] of Object.entries(properties)) {
       if (Object.hasOwn(fixed, name) || !(required.has(name) || Object.hasOwn(listed, name))) continue;
       const candidates = candidatesFor(schema, { listed: listed[name], last });
       if (candidates.length === 0) {
-        return { id: idOf(tool.name, fixed), why: `argument "${name}" (${schema.type ?? 'any'}) has nothing to choose from; list values for it in sketch.yaml` };
+        return { id: idOf(tool, fixed), why: `argument "${name}" (${schema.type ?? 'any'}) has nothing to choose from; list values for it in sketch.yaml` };
       }
       open.push({ name, schema, candidates });
     }
     const about = tool.description ? ` - ${tool.description}` : '';
     const fixing = Object.keys(fixed).length > 0 ? ` with ${JSON.stringify(fixed)}` : '';
-    return { id: idOf(tool.name, fixed), what: `call ${tool.name}${fixing}${about}`, call: { tool: tool.name, arguments: fixed }, open };
+    return { id: idOf(tool, fixed), what: `call ${nameOf(tool)}${fixing}${about}`, call: { ...(tool.server && { server: tool.server }), tool: tool.name, arguments: fixed }, open };
   });
 }
 
@@ -52,7 +58,7 @@ function described(tool) {
   const arguments_ = Object.fromEntries(Object.entries(properties).map(([name, schema]) => [
     name, [schema.type, schema.description, required.has(name) ? null : 'optional'].filter(Boolean).join(' - '),
   ]));
-  return { name: tool.name, does: tool.description ?? '', arguments: arguments_ };
+  return { name: nameOf(tool), does: tool.description ?? '', arguments: arguments_ };
 }
 
 /**
@@ -91,12 +97,12 @@ export function mcpApp({ calls = [], values = {} } = {}) {
       const { last } = view;
       return {
         tools: view.tools.map((tool) => described(tool)),
-        last_call: last ? { tool: last.tool, arguments: last.arguments, failed: last.isError, said: last.text.slice(0, RESULT_CHARS) } : null,
+        last_call: last ? { tool: nameOf({ server: last.server, name: last.tool }), arguments: last.arguments, failed: last.isError, said: last.text.slice(0, RESULT_CHARS) } : null,
       };
     },
     options: () => app.moves(looked).offered,
     act(move) {
-      return { actions: [{ tool: move.call.tool, arguments: { ...move.call.arguments, ...move.filled } }] };
+      return { actions: [{ ...move.call, arguments: { ...move.call.arguments, ...move.filled } }] };
     },
     /**
      * Why nothing is offered - for the run's no-first-move / stalled line.

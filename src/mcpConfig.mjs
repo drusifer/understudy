@@ -51,6 +51,31 @@ function checkLocal(entry, where, fail) {
 }
 
 /**
+ * Every server a sketch's `target` names, checked: `server:` (one, as
+ * resolveServer) or `servers:` (several, ADR-0022) - a mapping of name to
+ * entry inline, or with `config:` a list of names in that file.
+ * @returns {{ entry: object, name: string|null, from: string }[]}
+ */
+export function resolveServers(target, where) {
+  if (target.servers === undefined) return [resolveServer(target, where)];
+  const fail = (at, message) => { throw new UsageError(`${where.shownFile}: ${at}: ${message}`); };
+  if (target.server !== undefined) fail('target.servers', 'give server: (one) or servers: (several), not both');
+  if (target.config === undefined) {
+    if (!isMapping(target.servers) || Object.keys(target.servers).length === 0) {
+      fail('target.servers', 'must map each server name to its entry, e.g. { boxoffice: { command: node, args: [boxoffice.mjs] } }');
+    }
+    return Object.entries(target.servers).map(([name, entry]) => {
+      checkEntry(entry, `target.servers.${name}`, fail);
+      return { entry, name, from: where.shownFile };
+    });
+  }
+  if (!isStrings(target.servers) || target.servers.length === 0) fail('target.servers', `with config:, servers is a list of names in ${target.config}`);
+  const names = new Set(target.servers);
+  if (names.size !== target.servers.length) fail('target.servers', 'names a server twice');
+  return target.servers.map((name) => resolveServer({ config: target.config, server: name }, where));
+}
+
+/**
  * The server entry a sketch's `target` names, checked.
  * @param {{ server?: object|string, config?: string }} target
  * @param {{ directory: string, shownFile: string, shown: (file: string) => string }} where

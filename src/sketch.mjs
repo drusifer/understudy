@@ -18,7 +18,7 @@ import { genericLibrary, mergeLibraries } from './library.mjs';
 import { checkInstruction } from './strategyFile.mjs';
 import { pageApp } from './apps/page.mjs';
 import { mcpApp } from './apps/mcp.mjs';
-import { resolveServer } from './mcpConfig.mjs';
+import { resolveServers } from './mcpConfig.mjs';
 
 const SKETCH = 'sketch.yaml';
 const GUIDE = 'see docs/SKETCHES.md';
@@ -30,7 +30,7 @@ const REQUIRED = {
   http: { url: 'where the API is, e.g. http://127.0.0.1:{port}', state: 'the path a look GETs, e.g. /status' },
 };
 // The fields each kind of target takes; anything else is a mistake, named at load.
-const TARGET_FIELDS = { process: ['command', 'args'], page: ['root', 'page'], http: ['command', 'args', 'url', 'state'], mcp: ['server', 'config'] };
+const TARGET_FIELDS = { process: ['command', 'args'], page: ['root', 'page'], http: ['command', 'args', 'url', 'state'], mcp: ['server', 'servers', 'config'] };
 // Kinds with a built-in app, made for each sketch; the others read their
 // app through hooks.mjs. An MCP server is only ever played by its own.
 const GENERIC_APPS = { page: () => pageApp, mcp: (sketch) => mcpApp({ calls: sketch.calls, values: sketch.values }) };
@@ -109,13 +109,14 @@ function checkTarget(target, fail) {
 }
 
 /**
- * The target as the run starts it: an MCP one carries its server entry,
- * resolved from the sketch or the file it names.
+ * The target as the run starts it: an MCP one carries its servers'
+ * entries, resolved from the sketch or the file it names. One server
+ * keeps no name in play (ids stay `tool:<name>`); several are named.
  */
 function resolvedTarget(target, { file, directory }) {
   if (target.kind !== 'mcp') return target;
-  const { entry, name, from } = resolveServer(target, { directory, shownFile: shown(file), shown });
-  return { kind: 'mcp', entry, server: name, from };
+  const servers = resolveServers(target, { directory, shownFile: shown(file), shown });
+  return { kind: 'mcp', servers: servers.length === 1 ? [{ ...servers[0], name: null }] : servers };
 }
 
 /**
