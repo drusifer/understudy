@@ -305,7 +305,8 @@ A showing whose film has no score yet is held back, said once:
 understudy: holding back showing s2 - no "tomato" for "Night Shift" yet
 ```
 
-so the run asks the ratings server first. Add `ratings/rating.title: {}` so every title the box
+so the run asks the ratings server first - for every film: the showing is not chosen until
+nothing is held back, unless one already scores a perfect 1. Add `ratings/rating.title: {}` so every title the box
 office listed can be rated, each once.
 
 **3. Score what is liked more, and say how much.** Weights bend each factor's curve and the
@@ -349,8 +350,8 @@ shows it beside the step:
 ```
 
 In a deciding sketch Jev also sees what each other tool last said (`earlier`), so it does not
-list the films again after asking for a rating. A live run of the example books in about 7
-steps; walking away takes longer (it reads every showing that qualifies).
+list the films again after asking for a rating. A live run of the example rates every film,
+then books - 10 to 15 steps; walking away takes longer (it reads every showing that qualifies).
 
 ## 10. Troubleshooting
 

@@ -5,5 +5,12 @@ Auto-generated from `agents/CHAT.md` by `bobp chat-diagram`. Do not edit by hand
 ```mermaid
 %%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
 sequenceDiagram
-    Note over Team: No conversation entries yet.
+    autonumber
+    participant User
+    participant All
+    Note over User,All: 📅 2026-10-16
+    User->>All: "decide"
+    Note right of User: "Owner decided: a<br/>decision waits until<br/>nothing is held back -<br/>unless a value hits an<br/>11 (a factor turned to<br/>11 scoring 100% wins<br/>outright)."
+    User->>All: "decide"
+    Note right of User: "Owner clarified: 11 is<br/>how the dashboard shows<br/>a factor at 1.0. Rule: a<br/>decision waits for every<br/>held-back value, unless<br/>a value already sc…"
 ```

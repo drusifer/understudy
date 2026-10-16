@@ -74,8 +74,9 @@ subset worth a closer look, and Jev makes the qualitative calls. Owner decisions
   strongest at 11.
 
 ## Next (from the sprint 5 retro)
-- **Owner question**: a decision can pick a showing while other films are still held back
-  (waiting for their score). Should a decided argument offer nothing until nothing is held? (Morpheus)
+- DONE on sprint-5: **Wait for every fact, unless it scores a perfect 1** (owner decided, 2026-10-16; "11" is how the dashboard shows 1.0): a decided argument
+  offers nothing while any value is held back - except when a value scores 100% on a factor
+  turned to 11, which wins outright at once (see Sprint 6 "Knobs that go to 11"). (Morpheus)
 - Extract the decision path (`decided`, scores, standing) from `src/apps/mcp.mjs` into its own module. (Neo)
 - Watch page: group a step's removed values by reason ("together 1 < 2: 64 seats"). (Smith)
 - `test-live`: a step budget per example, so a run that wanders fails. (Trin)

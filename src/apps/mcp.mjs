@@ -160,7 +160,11 @@ export function mcpApp({ calls = [], values = {}, decide = {}, pick = null, ques
     const heldBack = waiting.map(({ value, missing, about }) => ({ value, missing: about === undefined ? missing : `${missing} for ${about}` }));
     // UND-22: with scores, Jev chooses from the shortlist, best first.
     const table = entry.scores ? shortlist(ranked, entry.shortlist).slice(0, MAX_CANDIDATES) : null;
-    const candidates = (table ?? ranked.slice(0, MAX_CANDIDATES)).map((each) => each.value);
+    // Owner, 2026-10-16: decide only once every value's facts are in -
+    // unless one already scores a perfect 1 (nothing can beat it).
+    const isPerfect = table?.[0]?.total === 1;
+    const isWaiting = heldBack.length > 0 && !isPerfect;
+    const candidates = isWaiting ? [] : (table ?? ranked.slice(0, MAX_CANDIDATES)).map((each) => each.value);
     const jev = hasAsk(entry) ? { jev: { asked: scored.values().filter((each) => each.step === step).toArray().length, reused } } : {};
     const record = { argument: key, ...(table && { table }), removed, held: heldBack, ...jev };
     standing.set(key, { seen: rows.valuesOf(entry.field ?? argument).length, shortlisted: candidates.length, held: heldBack.length, removed });

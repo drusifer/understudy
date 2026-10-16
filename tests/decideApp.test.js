@@ -15,6 +15,7 @@ const SPEC = {
     { name: 'ratings', from, entry: { command: 'node', args: ['ratings.mjs'] } },
   ],
 };
+const TITLES = ['Night Shift', 'The Hollow Wood', 'Paper Boats', 'Orbit', 'Crimson Static', 'Sunday Lunch'];
 const DECIDE = {
   'boxoffice/seat_map.showing': {
     join: 'title',
@@ -46,7 +47,7 @@ test('showings wait for their film\'s score, then only those passing the gate ar
   assert.ok(notes.includes('holding back showing s2 - no "tomato" for "Night Shift" yet'));
   assert.ok(notes.every((line) => !line.includes('showing s1 ')), 'an afternoon showing is removed, not held');
 
-  for (const title of ['Night Shift', 'The Hollow Wood', 'Paper Boats', 'Orbit', 'Crimson Static', 'Sunday Lunch']) {
+  for (const title of TITLES) {
     await call({ server: 'ratings', tool: 'rating', arguments: { title } });
   }
   const move = await moveFor('tool:boxoffice/seat_map');
@@ -62,13 +63,13 @@ test('showings wait for their film\'s score, then only those passing the gate ar
 test('a showing used in a call that answered is spent', async () => {
   const { app, moveFor, call } = await setUp();
   await call({ server: 'boxoffice', tool: 'list_films', arguments: {} });
-  await call({ server: 'ratings', tool: 'rating', arguments: { title: 'Night Shift' } });
+  for (const title of TITLES) await call({ server: 'ratings', tool: 'rating', arguments: { title } });
   let move = await moveFor('tool:boxoffice/seat_map');
-  assert.deepEqual(move.open[0].candidates, ['s2', 's13']);
+  assert.deepEqual(move.open[0].candidates, ['s2', 's13', 's8', 's4']);
   const { actions } = app.act({ ...move, filled: { showing: 's2' } });
   for (const action of actions) await call(action);
   move = await moveFor('tool:boxoffice/seat_map');
-  assert.deepEqual(move.open[0].candidates, ['s13']);
+  assert.deepEqual(move.open[0].candidates, ['s13', 's8', 's4']);
 });
 
 test('seats are scored and shortlisted best first; the table is in the move for the step line (UND-22 AC3-5)', async () => {
@@ -112,4 +113,24 @@ test('in a deciding sketch Jev also sees what each other tool last said (sprint 
   assert.deepEqual(Object.keys(projected.earlier), ['boxoffice/list_films']);
   assert.match(projected.earlier['boxoffice/list_films'], /^\[\{"film":"f1","title":"Night Shift"/);
   assert.equal(mcpApp().project({ tools: [], last: null }).earlier, undefined, 'not in a sketch without decide');
+});
+
+test('a decision waits while any value is held back - unless one already scores a perfect 1 (owner, 2026-10-16)', async () => {
+  const target = await startTarget(SPEC, { directory: 'examples/evening', environment: process.env });
+  test.after(() => target.close());
+  const deciding = (range) => mcpApp({ decide: { 'boxoffice/seat_map.showing': { ...DECIDE['boxoffice/seat_map.showing'], scores: { tomato: { range } } } } });
+  const patient = deciding([70, 100]);
+  const perfect = deciding([70, 82]);
+  // Both apps look at the list, then at the rating, as a run would.
+  await target.act({ server: 'boxoffice', tool: 'list_films', arguments: {} });
+  const films = await target.view();
+  for (const app of [patient, perfect]) app.moves(films);
+  await target.act({ server: 'ratings', tool: 'rating', arguments: { title: 'Night Shift' } });
+  const rated = await target.view();
+  const waiting = patient.moves(rated).blocked.find((move) => move.id === 'tool:boxoffice/seat_map');
+  assert.match(waiting.why, /^argument "showing" is waiting for tomato for The Hollow Wood/);
+  // Night Shift's 82 is the top of [70, 82]: a perfect 1 cannot be beaten, so stop looking.
+  const offered = perfect.moves(rated).offered.find((move) => move.id === 'tool:boxoffice/seat_map');
+  assert.deepEqual(offered.open[0].candidates, ['s2', 's13']);
+  assert.equal(offered.decided[0].table[0].total, 1);
 });

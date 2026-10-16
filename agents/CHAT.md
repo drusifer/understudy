@@ -30,3 +30,19 @@ Agents **must** use this for every message posted to CHAT.md:
 > **Previous sprint archived:** `agents/chat_archive/CHAT_sprint-5.md` (2026-10-16 15:21:50) — Sprint 5 turned the owner's cinema preferences into a decision engine. Shaping moved from all-hard-rules to gates + weight-shaped scores multiplied + a Jev Score factor + a shortlist the final Jev Choice picks from in a mood, with inputs set by --input and a walk-away end (exit 0). Seven phases: several MCP servers, evening box office and ratings servers, answer rows and gates, scores and shortlist, Jev Score/inputs/pick, walk away, the evening example with docs and outcome-checked test-live. A live run exposed Jev re-listing films (24 steps); showing earlier answers cut it to 7. Owner question pending: should a decision wait while values are held back.
 
 ---
+
+---
+[<small>2026-10-16 15:54:21</small>] [**User**]->[**all**] *decide*:
+ Owner decided: a decision waits until nothing is held back - unless a value hits an 11 (a factor turned to 11 scoring 100% wins outright).
+
+---
+[<small>2026-10-16 15:56:11</small>] [**User**]->[**all**] *decide*:
+ Owner clarified: 11 is how the dashboard shows a factor at 1.0. Rule: a decision waits for every held-back value, unless a value already scores a perfect 1 and passes the gates - then stop looking.
+
+---
+[<small>2026-10-16 15:58:41</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+3:58PM INF no leaks found
+3:58PM INF 1 commits scanned.
+3:58PM INF scanned ~5354 bytes (5.35 KB) in 239ms
+3:58PM INF no leaks found

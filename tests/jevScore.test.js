@@ -13,6 +13,7 @@ const SPEC = { kind: 'mcp', servers: [
   { name: 'boxoffice', from, entry: { command: 'node', args: ['boxoffice.mjs'] } },
   { name: 'ratings', from, entry: { command: 'node', args: ['ratings.mjs'] } },
 ] };
+const TITLES = ['Night Shift', 'The Hollow Wood', 'Paper Boats', 'Orbit', 'Crimson Static', 'Sunday Lunch'];
 const LEVELS = ['Bored or walked out', 'Mixed - a few good scares', 'Solid fun - would recommend', 'Loved it - best of the year'];
 const QUESTIONS = { audience: { type: 'score', looks_at: 'reviews', instructions: 'How much would someone who loves horror enjoy this film?', levels: LEVELS } };
 const DECIDE = {
@@ -66,8 +67,8 @@ async function evening() {
 test('Jev scores the passing rows once, in one request; enthusiastic reviews rank first (UND-23 AC2-4)', async () => {
   const { judge, call } = await evening();
   await call({ server: 'boxoffice', tool: 'list_films', arguments: {} });
-  for (const title of ['Night Shift', 'Paper Boats', 'Crimson Static']) await call({ server: 'ratings', tool: 'rating', arguments: { title } });
-  // Night Shift was asked as soon as it passed; Paper Boats and Crimson Static together after.
+  for (const title of TITLES) await call({ server: 'ratings', tool: 'rating', arguments: { title } });
+  // Each film that passes its gates is asked about as soon as it is rated; the others never.
   const asked = judge.requests.map((request) => Object.keys(request.questions).length);
   assert.deepEqual(asked, [1, 1, 1]);
   assert.equal(judge.requests[0].questions.r1.type, 'score');
@@ -89,7 +90,8 @@ test('Jev scores the passing rows once, in one request; enthusiastic reviews ran
 test('the final pick carries the pick instructions and the inputs it is told (UND-24 AC3)', async () => {
   const { call } = await evening();
   await call({ server: 'boxoffice', tool: 'list_films', arguments: {} });
-  const moves = await call({ server: 'ratings', tool: 'rating', arguments: { title: 'Night Shift' } });
+  let moves;
+  for (const title of TITLES) moves = await call({ server: 'ratings', tool: 'rating', arguments: { title } });
   const move = moves.offered.find((each) => each.id === 'tool:boxoffice/seat_map');
   assert.deepEqual(move.told, { mood: 'fun' });
   const requests = [];

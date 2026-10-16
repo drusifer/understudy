@@ -267,7 +267,9 @@ answers that share its `join` field. Then:
    **product** of its scores, so the factor weighted most counts most, and a 0 anywhere removes
    the value.
 3. **Shortlist** - every total above 0, best first; Jev makes the final Choice among it (a
-   shortlist of one is taken without asking).
+   shortlist of one is taken without asking). While any value is still held back, the argument
+   offers nothing - every fact comes in before deciding - unless a value already scores a
+   perfect 1 (shown as 11 on the dashboard): nothing can beat it, so the understudy stops looking.
 
 ```yaml
 decide:

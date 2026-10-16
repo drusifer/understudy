@@ -47,7 +47,7 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 *   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-21, UND-22
 *   **Context**: owner: what is never accepted vs what is liked more; "the option I want the most has the biggest bearing"; a zero should drop a value.
 *   **Options**: (1) hard gates, then score = position^weight per factor, multiplied (weighted geometric mean); (2) a weighted sum; (3) everything as hard rules.
-*   **Decision**: (1). Gates remove (with why) or hold back (missing fact). `range`/`order`/`ask` place a field 0..1; weight 0 turns a factor off; a 0 anywhere removes the value; the shortlist is every total above 0, bounded by `at_most`/`total.at_least`.
+*   **Decision**: (1). Gates remove (with why) or hold back (missing fact); while anything is held back the argument offers nothing, unless a value already totals a perfect 1 (owner, 2026-10-16). `range`/`order`/`ask` place a field 0..1; weight 0 turns a factor off; a 0 anywhere removes the value; the shortlist is every total above 0, bounded by `at_most`/`total.at_least`.
 *   **Consequences**: + a great tomato cannot hide an end seat. − authors must set range floors deliberately: the bottom of a range removes.
 
 ## ADR-0017: Values carry their answer row; facts join by a named key
