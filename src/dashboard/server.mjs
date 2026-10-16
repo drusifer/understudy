@@ -15,6 +15,8 @@ import { describeSketch, listSketches } from './rack.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const WATCH = path.join(HERE, '..', 'watch');
+const FONTS = path.join(HERE, '..', '..', 'node_modules', '@fontsource');
+const font = (file) => [path.join(FONTS, file.split('-', 1)[0], 'files', file), 'font/woff2'];
 const MAX_BODY = 16 * 1024;
 // The page's own files, and the watch page's pure modules it shares.
 const FILES = {
@@ -24,6 +26,13 @@ const FILES = {
   'tube.mjs': [path.join(HERE, 'tube.mjs'), 'text/javascript; charset=utf-8'],
   'turnGraph.mjs': [path.join(WATCH, 'turnGraph.mjs'), 'text/javascript; charset=utf-8'],
   'watchPage.mjs': [path.join(WATCH, 'page.mjs'), 'text/javascript; charset=utf-8'],
+  // The design's fonts, from the @fontsource packages (OFL), as page.css names them.
+  'fonts/cinzel-700.woff2': font('cinzel-latin-700-normal.woff2'),
+  'fonts/cinzel-900.woff2': font('cinzel-latin-900-normal.woff2'),
+  'fonts/spectral-400.woff2': font('spectral-latin-400-normal.woff2'),
+  'fonts/spectral-400-italic.woff2': font('spectral-latin-400-italic.woff2'),
+  'fonts/vt323-400.woff2': font('vt323-latin-400-normal.woff2'),
+  'fonts/dotgothic16-400.woff2': font('dotgothic16-latin-400-normal.woff2'),
 };
 
 const json = (response, status, value) => response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }).end(JSON.stringify(value));

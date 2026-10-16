@@ -25,7 +25,16 @@ export function sketchNames(folder) {
   return names;
 }
 
-const firstLine = (text) => (text ?? '').trim().split(/(?<=[.!?])\s|\n/, 1)[0];
+const SHORT = 70;
+
+/**
+ * A description's first clause - up to its first colon, full stop or line
+ * end - kept short for a rack tab.
+ */
+function firstLine(text) {
+  const [first] = (text ?? '').trim().split(/[:.\n]/, 1);
+  return first.length > SHORT ? `${first.slice(0, SHORT - 1).trimEnd()}…` : first;
+}
 
 /**
  * The rack: each sketch's name and first line, or why it cannot be played.

@@ -191,3 +191,19 @@ To github.com:drusifer/understudy.git
 6:43PM INF 1 commits scanned.
 6:43PM INF scanned ~1772 bytes (1.77 KB) in 243ms
 6:43PM INF no leaks found
+
+---
+[<small>2026-10-16 18:44:08</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 3 done (UND-29 server): runner play/stop/refusals, 268 tests; committed. Phase 4: the console page (controls).
+
+---
+[<small>2026-10-16 18:44:08</small>] [**Mouse**]->[**all**] *phase 4*:
+ The console's controls - UND-28, UND-29 (page)
+
+---
+[<small>2026-10-16 18:51:42</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+6:51PM INF no leaks found
+6:51PM INF 1 commits scanned.
+6:51PM INF scanned ~6993 bytes (6.99 KB) in 246ms
+6:51PM INF no leaks found

@@ -17,7 +17,7 @@ Every acceptance criterion of UND-27..33, per phase, then end to end by Smith at
 | UAT-UND-28-03/04 | switch input, `when:`, `--input together=off` | `tests/inputs.test.js`, `tests/engine.test.js` | PASS (Phase 1) |
 | UAT-UND-27-01..05 | rack, greyed sketches, refusals, port/host/token | `tests/dashboard.test.js`, `tests/cli.test.js`; CLI smoke: URL printed, wrong path 404, Ctrl-C exit 0, non-folder exit 2 | PASS (Phase 2) |
 | UAT-UND-29-01..05 | play, stop, refusals, logs | `tests/dashboardRun.test.js` (evening played by a double with mood=romantic centre=1.5; 409 on a second Play; STOP → interrupted, also when pressed while servers start; refusal printed; log written); page in Phase 4 | PASS (Phase 3, server) |
-| UAT-UND-28-01/02/05 | dial, faders, keyboard | Phase 4 | pending |
+| UAT-UND-28-01/02/05 | dial, faders, keyboard | `tests/dashboardPage.test.js`; headless Chromium screenshots (build/uat/dash-1.png): evening dial, 4 coloured faders with Nixies (11 at top), READY green, square PLAY; CLI sketch played and printed; native buttons/range inputs with labels | PASS (Phase 4) |
 | UAT-UND-30-01..04 | tube | Phase 5 | pending |
 | UAT-UND-31-01..03 | printer | Phase 5 | pending |
 | UAT-UND-32-01..05 | panels, saving, factory reset | Phase 6 | pending |

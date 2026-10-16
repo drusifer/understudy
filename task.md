@@ -5,7 +5,7 @@
 *   **Total Points**: 25 (UND-27 3, UND-28 5, UND-29 3, UND-30 5, UND-31 2, UND-32 5, UND-33 2)
 *   **Branch**: `sprint-6`
 *   **Stories / Arch / Design**: `docs/sprints/USER_STORIES_SPRINT6.md`, `docs/sprints/ARCH_SPRINT6.md`, `docs/design/DASHBOARD.md` (sprint 5 board: `docs/sprints/TASKS_SPRINT5.md`)
-*   **Status**: In progress - Phase 4
+*   **Status**: In progress - Phase 5
 *   **Commits**: one local commit per phase after Morpheus's review (`Phase <N>: ...`); publishing only via `bobp make push` when the owner asks (SDLC §6).
 
 ---
@@ -31,9 +31,9 @@
 - [x] **Task 3.2:** UAT UND-29 AC1-5 (server) + review. (*Owner: Trin → Morpheus | commit `Phase 3`*)
 
 ### Phase 4: The console's controls - UND-28, UND-29 (page)
-- [ ] **Task 4.1:** `page.html/mjs/css` from the approved design: rack, mood dial, faders, switches, Play/STOP, READY, POWER (dim); fonts from `@fontsource/*`; keyboard + accessible names. (*Owner: Neo | Verification: `bobp make test`, manual page check*)
-- [ ] **Task 4.2:** eslint browser-globals for `src/dashboard/page.mjs`. (*Owner: Tank | Verification: `bobp make lint`*)
-- [ ] **Task 4.3:** UAT + review. (*Owner: Trin → Morpheus | commit `Phase 4`*)
+- [x] **Task 4.1:** `page.html/mjs/css` from the approved design: rack, mood dial, faders, switches, Play/STOP, READY, POWER (dim); fonts from `@fontsource/*`; keyboard + accessible names. (*Owner: Neo | Verification: `bobp make test`, manual page check*)
+- [x] **Task 4.2:** eslint browser-globals for `src/dashboard/page.mjs`. (*Owner: Tank | Verification: `bobp make lint`*)
+- [x] **Task 4.3:** UAT + review. (*Owner: Trin → Morpheus | commit `Phase 4`*)
 
 ### Phase 5: The state tube and the printer - UND-30, UND-31
 - [ ] **Task 5.1:** `tube.mjs` (circle layout, finals inside, labels, ring arcs, blend), live highlight + flowing edge; printer feed (steps, held, removed, Jev, table with `11`, outcome). Unit tests for `tube.mjs`. (*Owner: Neo | Verification: `bobp make test`*)

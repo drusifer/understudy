@@ -1,0 +1,39 @@
+// Sprint 6 UND-28, UND-31 (docs/design/DASHBOARD.md): the console page's
+// pure parts - weight colours and their blend, readouts, dial geometry,
+// starting values and what the printer prints.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { blendOf, COLOURS, dialAngles, printed, readoutOf, scoreText, startingValues } from '../src/dashboard/page.mjs';
+
+test('the blend mixes the weight colours in the ratio of their values; all zero is grey (UND-30 AC3)', () => {
+  assert.deepEqual(blendOf([{ value: 1, colour: COLOURS[0] }, { value: 0, colour: COLOURS[1] }]), COLOURS[0]);
+  assert.deepEqual(blendOf([{ value: 1, colour: [200, 0, 0] }, { value: 3, colour: [0, 0, 200] }]), [50, 0, 150]);
+  assert.deepEqual(blendOf([{ value: 0, colour: COLOURS[0] }]), [90, 90, 90]);
+});
+
+test('a fader reads OFF at 0, 11 at the top, else two places (UND-28 AC2)', () => {
+  assert.equal(readoutOf(0, [0, 3]), 'OFF');
+  assert.equal(readoutOf(3, [0, 3]), '11');
+  assert.equal(readoutOf(1.5, [0, 3]), '1.50');
+  assert.equal(scoreText(1), '11');
+  assert.equal(scoreText(0.877), '0.877');
+});
+
+test('dial options spread over 150 degrees; controls start at the defaults (UND-28 AC1, AC4)', () => {
+  assert.deepEqual(dialAngles(4), [-75, -25, 25, 75]);
+  assert.deepEqual(dialAngles(2), [-75, 75]);
+  assert.deepEqual(startingValues([{ name: 'mood', default: 'fun' }, { name: 'together', default: true }]), { mood: 'fun', together: true });
+});
+
+test('the printer prints the start, each step with what the rules did, and the end (UND-31 AC1-2)', () => {
+  assert.deepEqual(printed({ event: 'start', sketch: 'evening', inputs: { mood: 'fun', together: false } }),
+    [{ text: '=== UNDERSTUDY RUN LOG ===  evening', tone: 'bold' }, { text: 'inputs  mood=fun  together=off' }]);
+  const step = printed({ step: 9, move: 'tool:boxoffice/pick_seats', confidence: 0.9, response: { call: { tool: 'pick_seats', arguments: { seat: 's2-E15', count: 2 } } },
+    decided: [{ argument: 'boxoffice/pick_seats.seat', table: [{ value: 's2-E15', factors: { row: 1, centre: 0.877 }, total: 0.877 }], removed: [{ value: 'a', why: 'x' }, { value: 'b', why: 'y' }, { value: 'c', why: 'z' }], held: [] }] });
+  assert.equal(step[0].text, 'step 9  boxoffice/pick_seats  seat=s2-E15 count=2  (0.90)');
+  assert.deepEqual(step[1], { text: '  rules removed 3: a (x), b (y), ...', tone: 'note' });
+  assert.equal(step[2].table.argument, 'boxoffice/pick_seats.seat');
+  assert.deepEqual(printed({ event: 'dashboard', stderr: 'holding back showing s2 - no "tomato" yet' }), [{ text: '  hold  showing s2 - no "tomato" yet', tone: 'held' }]);
+  assert.deepEqual(printed({ final: true, outcome: 'walked-away', steps: 11 }), [{ text: '=== WALKED-AWAY after 11 steps ===', tone: 'bold' }]);
+  assert.equal(printed({ event: 'state' }), null);
+});

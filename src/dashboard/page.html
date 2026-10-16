@@ -4,8 +4,75 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Understudy operations console</title>
+<link rel="stylesheet" href="page.css">
+<script type="module" src="page.mjs"></script>
 </head>
 <body>
-<main id="console">Understudy operations console</main>
+<div class="room">
+<header class="plate">
+  <div class="brand">
+    <svg width="54" height="54" viewBox="0 0 54 54" aria-hidden="true"><g fill="none" stroke="#2b1b0b" stroke-width="2.5"><circle cx="27" cy="27" r="11"/><circle cx="27" cy="27" r="4"/><path d="M27 4v8M27 42v8M4 27h8M42 27h8M10.7 10.7l5.7 5.7M37.6 37.6l5.7 5.7M10.7 43.3l5.7-5.7M37.6 16.4l5.7-5.7"/></g></svg>
+    <div>
+      <h1>UNDERSTUDY</h1>
+      <div class="subtitle">OPERATIONS CONSOLE</div>
+    </div>
+  </div>
+  <div class="status">
+    <span id="status-lamp" class="lamp standby" aria-hidden="true"></span>
+    <span id="status-text">STANDING BY</span>
+    <button type="button" id="power" class="power" aria-pressed="true" aria-label="Power off the console">
+      <span class="bat-slot"><span class="bat"></span></span>
+      <span>POWER <span id="power-word">ON</span></span>
+    </button>
+  </div>
+</header>
+
+<div class="deck">
+  <nav class="rack" aria-label="Sketches">
+    <div class="plate-label">SKETCH RACK</div>
+    <div class="folder" id="folder"></div>
+    <div id="rack" class="rack-list"></div>
+  </nav>
+
+  <main id="console" class="console">
+    <section class="controls" aria-labelledby="sketch-title">
+      <div class="controls-head">
+        <h2 id="sketch-title">…</h2>
+        <div id="sketch-about" class="about"></div>
+      </div>
+      <div class="controls-body">
+        <div id="dials" class="dials"></div>
+        <div id="faders" class="faders"></div>
+      </div>
+      <div id="nothing-to-tune" class="about" hidden>This sketch has no inputs - nothing to tune. Press Play.</div>
+      <div class="controls-foot">
+        <div id="switches" class="switches" role="group" aria-label="Switches"></div>
+        <div class="play-area">
+          <div class="ready">
+            <div class="ready-bezel"><span id="ready-lamp" class="ready-lamp" role="img" aria-label="Ready"></span></div>
+            <div id="ready-text" class="ready-text">READY</div>
+            <div id="ready-hint" class="about">press to play the sketch</div>
+          </div>
+          <div class="play-bezel"><button type="button" id="play" class="play" aria-label="Play the sketch"><span id="play-word">PLAY</span></button></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tube-panel" aria-label="State tube">
+      <div class="panel-head"><span>STATE TUBE · POWER</span><span id="tube-caption" class="about">idle</span></div>
+      <div id="tube" class="tube"></div>
+      <div class="about centred">The outer ring is each weight's power in its own colour; the decision edge and the centre orb carry their blend.</div>
+    </section>
+
+    <section class="printer" aria-label="Printer">
+      <div class="paper-window" id="paper-window">
+        <div id="paper" class="paper" aria-live="polite"></div>
+      </div>
+      <div class="roller" aria-hidden="true"></div>
+      <div class="printer-foot"><span>RUN LOG · PRINTER</span><span id="printer-state">IDLE</span></div>
+    </section>
+  </main>
+</div>
+</div>
 </body>
 </html>

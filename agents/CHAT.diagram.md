@@ -69,4 +69,8 @@ sequenceDiagram
     Note right of Morpheus: "Phase 2 done (UND-27):<br/>dashboard server + rack<br/>+ CLI, 265 tests,<br/>committed. Phase 3:<br/>play/stop."
     Mouse->>All: "phase 3"
     Note right of Mouse: "Play and Stop - UND-29"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 3 done (UND-29<br/>server): runner<br/>play/stop/refusals, 268<br/>tests, committed. Phase<br/>4: the console page<br/>(controls)."
+    Mouse->>All: "phase 4"
+    Note right of Mouse: "The console's controls -<br/>UND-28, UND-29 (page)"
 ```
