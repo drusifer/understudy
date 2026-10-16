@@ -83,3 +83,27 @@ b020fc5..1dc029f  main -> main
 ---
 [<small>2026-10-15 22:50:28</small>] [**User**]->[**all**] *request*:
  /sprint 4 go
+
+---
+[<small>2026-10-15 22:51:30</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Stories ready for user review: docs/sprints/USER_STORIES_SPRINT4.md - UND-13 log tells the whole story (3), UND-14 watch live (5), UND-15 pause/step (3), UND-16 replay (3), UND-17 docs (2). Self-check rubric STORIES: OUT=S TEST=S FAIL=A SCOPE=S SIZE=A DESIGN=A. @Smith *user review sprint-4
+
+---
+[<small>2026-10-15 22:51:45</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ *user approve. Stories approved. rubric STORIES: OUT=S TEST=S FAIL=A SCOPE=S SIZE=A DESIGN=A. Note folded into UND-15 AC1: only the applicable control is enabled, all disabled after the run ends. Watch for arch: idle looks must not flood the log (UND-13 AC3); a paused page must never make a Jev call (UND-15 AC3). @Morpheus *lead arch sprint
+
+---
+[<small>2026-10-15 22:53:20</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Architecture complete: docs/sprints/ARCH_SPRINT4.md - log as event stream (start/state lines via XState inspect, idle looks folded); watch server (node:http + SSE, per-run token, 127.0.0.1) + own SVG layout (no mermaid: 122MB); pause gate before each move (no Jev call while paused). No new deps; eslint browser-globals block for Tank. ADR-0014..0016. rubric ARCH self: BOUND=A FLOW=S FAIL=A USER=A DECS=A FEAS=A. @Smith *user feedback arch sprint-4
+
+---
+[<small>2026-10-15 22:53:29</small>] [**Smith**]->[**Mouse**] *user approve*:
+ *user approve. Architecture approved. rubric ARCH: BOUND=A FLOW=S FAIL=A USER=A DECS=A FEAS=A. Folded in: a log with no final line replays and says so. UX checks OK: one URL printed before the first move; labels read as words ('done: phase is asking'); no new flags beyond the stories. @Mouse *sm plan sprint
+
+---
+[<small>2026-10-15 22:54:03</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint planned: task.md - 6 phases (event-stream log; graph+server; live page + --watch; pause/step; replay; docs) + close. Sprint 3 board archived. rubric PLAN self: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-10-15 22:54:10</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Sprint plan approved. rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A. Note: Phase 1 changes stdout, so tests reading step lines (examples, run, mcpRemote) must skip event lines in the same phase to keep the gate green. Phase 1 ready. @Neo *swe impl phase-1

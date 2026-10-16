@@ -11,7 +11,11 @@ sequenceDiagram
     participant Oracle
     participant Tank
     participant Cypher
-    Note over User,Cypher: 📅 2026-10-15
+    participant Smith
+    participant Morpheus
+    participant Mouse
+    participant Neo
+    Note over User,Neo: 📅 2026-10-15
     User->>All: "decide"
     Note right of User: "Owner agrees: Jev<br/>chooses argument values,<br/>never writes them -<br/>understudy is<br/>constrained automation<br/>by design. Asks for a<br/>good example doc…"
     Oracle->>All: "done"
@@ -34,4 +38,16 @@ sequenceDiagram
     Note right of User: "Owner decided: pause and<br/>step live from the page<br/>(plus play/pause/step in<br/>replay). Shaping<br/>questions done,<br/>assumptions listed in<br/>BACKLOG Sp…"
     User->>All: "request"
     Note right of User: "/sprint 4 go"
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Stories ready for user<br/>review: docs/sprints/USE<br/>R_STORIES_SPRINT4.md -<br/>UND-13 log tells the<br/>whole story (3), UND-14<br/>watch live (5), UND-15<br/>p…"
+    Smith->>Morpheus: "user approve"
+    Note right of Smith: "*user approve. Stories<br/>approved. rubric<br/>STORIES: OUT=S TEST=S<br/>FAIL=A SCOPE=S SIZE=A<br/>DESIGN=A. Note folded<br/>into UND-15 AC1: only<br/>the applica…"
+    Morpheus->>Smith: "lead handoff"
+    Note right of Morpheus: "Architecture complete: d<br/>ocs/sprints/ARCH_SPRINT4<br/>.md - log as event<br/>stream (start/state<br/>lines via XState<br/>inspect, idle looks<br/>folded), watch…"
+    Smith->>Mouse: "user approve"
+    Note right of Smith: "*user approve.<br/>Architecture approved.<br/>rubric ARCH: BOUND=A<br/>FLOW=S FAIL=A USER=A<br/>DECS=A FEAS=A. Folded<br/>in: a log with no final<br/>line replays…"
+    Mouse->>Morpheus: "sm handoff"
+    Note right of Mouse: "Sprint planned: task.md<br/>- 6 phases (event-stream<br/>log, graph+server, live<br/>page + --watch,<br/>pause/step, replay,<br/>docs) + close. Sprint 3<br/>board…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Sprint plan approved.<br/>rubric PLAN: SIZE=A<br/>GATE=A VERIF=A ALIGN=A<br/>OWNER=A. Note: Phase 1<br/>changes stdout, so tests<br/>reading step lines<br/>(exampl…"
 ```

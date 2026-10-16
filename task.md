@@ -1,52 +1,60 @@
-# Sprint 3 Task Board: One sketch file, and any MCP server as an app
+# Sprint 4 Task Board: Watch the understudy live
 
-*   **Goal**: every example is one `sketch.yaml` (code only in `hooks.mjs` where needed), and `understudy run examples/mcp` / `examples/mcp-remote` play an MCP server over stdio and over HTTP with a token, choosing tool arguments with Jev.
+*   **Goal**: `understudy run <sketch> --watch` shows the statechart, the current state and each Jev decision live in a browser page, with pause/step/resume; `understudy watch <log>` replays a finished run; the log carries everything needed.
 *   **Tier**: Tier 1 (Major)
-*   **Total Points**: 15 (UND-9 5, UND-10 5, UND-11 3, UND-12 2)
-*   **Branch**: `sprint-3`
-*   **Stories / Arch**: `docs/sprints/USER_STORIES_SPRINT3.md`, `docs/sprints/ARCH_SPRINT3.md` (sprint 2 board: `docs/sprints/TASKS_SPRINT2.md`)
-*   **Status**: Complete — launched 2026-10-15; merge to main / push awaiting owner
+*   **Total Points**: 16 (UND-13 3, UND-14 5, UND-15 3, UND-16 3, UND-17 2)
+*   **Branch**: `sprint-4`
+*   **Stories / Arch**: `docs/sprints/USER_STORIES_SPRINT4.md`, `docs/sprints/ARCH_SPRINT4.md` (sprint 3 board: `docs/sprints/TASKS_SPRINT3.md`)
+*   **Status**: Approved (Morpheus plan review) — Phase 1 in progress
 *   **Commits**: one local commit per phase after Morpheus's review (`Phase <N>: ...`); publishing only via `bobp make push` when the owner asks (SDLC §6). No back-compat (owner rule).
 
 ---
 
 ## Stage 0: SDLC Gate (Blocker)
 
-- [x] **Task 0.1:** `docs/SDLC.md` present; `sprint-3` cut from `main` (0b52a7e). No Tank Phase 0: ARCH §7 adds only ordinary dependencies (SDLC §4, Neo). The `test-live` recipe edit is Tank's, in Phase 3. (*Owner: Mouse*)
+- [x] **Task 0.1:** `docs/SDLC.md` present; `sprint-4` cut from `main` (a3f7633). No Tank Phase 0: ARCH §7 adds no dependency, language or make target. The `eslint.config.js` browser-globals block is Tank's, in Phase 3. (*Owner: Mouse*)
 
 ---
 
 ## Sprint Execution Phases
 
-### Phase 1: Sketch loader and the three examples converted — UND-9
-*Phase goal: `sketch.yaml` is loaded and checked as a whole; check/library/run take a sketch; the old layout is refused; cli, web and http are sketches and play live as in sprint 2. (Loader and conversion share a phase so the gate is green at the commit - Morpheus plan review.)*
-- [x] **Task 1.1:** `src/sketch.mjs` replaces `part.mjs` (find dir-or-file, top-level keys, target fields per kind, `app: hooks.mjs` loading + hook checks, `steps`, `player`, questions under `questions.`, old-layout refusal); `parseTurn(config, ...)` with `turn.` paths; `cli.mjs`/`run.mjs` wording, `steps` precedence, log dir by sketch name. Tests ported from `part.test.js` to `sketch.test.js` on fixture sketches. TDD. (*Owner: Neo | Verification: `bobp make test ARGS="tests/sketch.test.js"` green*)
-- [x] **Task 1.2:** `examples/{cli,web,http}/sketch.yaml` (+ `hooks.mjs` for cli/http); delete `adapter.mjs` and `part/`; `tests/examples.test.js` on sketches. (*Owner: Neo | Verification: `bobp make test` fail 0; `bobp make lint`; `check examples/<each>` exit 0*)
-- [x] **Task 1.3:** UAT UND-9 AC1–7 (each refusal exit 2; check line for dir and file; `--steps` beats `steps:`; `bobp make test-live` green on 3 examples, same log fields) then Morpheus review vs ARCH §3/§5. (*Owner: Trin → Morpheus | Verification: `bobp make test-live` + `bobp make check`; commit `Phase 1`*)
+### Phase 1: The log tells the whole story — UND-13
+*Phase goal: every run's stdout and log start with a `start` line and carry `state` lines, idle looks folded; step and final lines unchanged.*
+- [ ] **Task 1.1:** `src/watch/turnGraph.mjs` label function (shared); `seat.mjs` XState `inspect` → changes, idle-look folding, `drainChanges()`; `src/stream.mjs` (`emit` to stdout + log + listeners); `run.mjs` writes `start`, flushes state lines after looks and steps. Tests: folding (idle looks counted, a moving look listed), labels, run lines order, step/final fields unchanged. TDD. (*Owner: Neo | Verification: `bobp make test`; `bobp make lint`*)
+- [ ] **Task 1.2:** UAT UND-13 AC1–5 (`bobp make test-live` green ×5; each log starts with `start`, ≥1 `state` line per step, an idle wait is one `idle_looks` number) then Morpheus review vs ADR-0014. (*Owner: Trin → Morpheus | Verification: `bobp make test-live` + `bobp make check`; commit `Phase 1`*)
 
-### Phase 2: Local MCP target, generic MCP app, argument filling, box office — UND-10
-*Phase goal: `understudy run examples/mcp` plays the box office over stdio to a ticket with no understudy code in the example.*
-- [x] **Task 2.1:** `npm install @modelcontextprotocol/sdk zod` (SDLC §4); confirm `shared/stdio.js` exports (ARCH §9 risk); `src/mcpConfig.mjs` (inline / `config:`+`server:`, shape checks, `${VAR}`/`${VAR:-d}`), `program.mjs` stderr tail, `src/targets/mcpTransport.mjs`, `src/targets/mcp.mjs` (stdio path: handshake 10 s, view, act, errors as answers, close). Tests against the example server over stdio. (*Owner: Neo | Verification: `bobp make test`*)
-- [x] **Task 2.2:** `src/fill.mjs`, `src/apps/mcp.mjs` (calls/values, not-offered line once, `idle`), `library.play` second request + off-list rule, `run.checkIdle` uses `app.idle`; `examples/mcp/` (`server.mjs` stdio + `--http`, `sketch.yaml` inline, test that the end text is in no tool description). Tests with a Jev double. (*Owner: Neo | Verification: `bobp make test`; `bobp make run ARGS="check examples/mcp"` exit 0*)
-- [x] **Task 2.3:** UAT UND-10 AC1–9 (live `run examples/mcp --steps 20` exit 0; not-offered line; tool error logged; server exits early → exit 1 with code; unset `${VAR}` → exit 2) then Morpheus review vs ADR-0012/0013. (*Owner: Trin → Morpheus | Verification: live run + `bobp make check`; commit `Phase 2`*)
+### Phase 2: Graph layout and the watch server — UND-14 (server side)
+*Phase goal: the statechart becomes SVG geometry, and a token-guarded local server streams a run's events over SSE.*
+- [ ] **Task 2.1:** `src/watch/turnGraph.mjs` (`turn:` → nodes/edges, all five examples), `src/watch/layout.mjs` (ranked columns, back-edge arcs, geometry); `src/watch/server.mjs` (127.0.0.1, token path, static files, SSE history-then-live with `end`, busy port → `UsageError`, 404s). Tests over real HTTP on a free port. (*Owner: Neo | Verification: `bobp make test`*)
+- [ ] **Task 2.2:** UAT (graph of each example has every state and transition; SSE late join gets history; wrong token 404; busy port refused) then Morpheus review. (*Owner: Trin → Morpheus | Verification: `bobp make check`; commit `Phase 2`*)
 
-### Phase 3: Remote MCP over HTTP — UND-11
-*Phase goal: a running box office behind a URL and a token is played and left running.*
-- [x] **Task 3.1:** `mcp.mjs` HTTP path (streamable HTTP + headers, 10 s connect retry, refused status, client-only close); `examples/mcp-remote/` (`sketch.yaml` by reference, `servers.json`, `README.md`); token-never-printed test. (*Owner: Neo | Verification: `bobp make test`*)
-- [x] **Task 3.2:** `make test-live` starts the example server in HTTP mode with a throwaway token for `examples/mcp-remote`, stops it after; SDLC Last verified updated. (*Owner: Tank | Verification: `bobp make test-live` green, 5 examples*)
-- [x] **Task 3.3:** UAT UND-11 AC1–5 (wrong token → exit 1 with 401, no token in output; nothing at URL → exit 1 ≤ 10 s; server left running) then Morpheus review. (*Owner: Trin → Morpheus | Verification: live + `bobp make check`; commit `Phase 3`*)
+### Phase 3: The live page and `run --watch` — UND-14
+*Phase goal: `run <sketch> --watch` serves a page that draws the diagram, moves the highlight, and lists decisions live, for all four targets.*
+- [ ] **Task 3.1:** `src/watch/page.html|page.mjs|page.css` (SVG diagram, highlight + last transition, status, decision feed: options, pick + confidence, off-list, MCP args, answer; ended state; no reconnect loop); `cli.mjs` `--watch [--port N]`; `run.mjs` starts the server before the target and prints the URL. (*Owner: Neo | Verification: `bobp make test`; manual page check*)
+- [ ] **Task 3.2:** `eslint.config.js` browser-globals block for `src/watch/page.mjs`. (*Owner: Tank | Verification: `bobp make lint` exit 0*)
+- [ ] **Task 3.3:** UAT UND-14 AC1–9 live: drive the page with Playwright's Chromium during `run examples/cli --watch` and `examples/mcp --watch` (highlight moves ≤1 s, feed rows, reload mid-run, ended text); `--watch` output identical to a plain run; then Morpheus review. (*Owner: Trin → Morpheus | Verification: live + `bobp make check`; commit `Phase 3`*)
 
-### Phase 4: Docs — UND-12
-*Phase goal: the docs teach sketches and four targets only.*
-- [x] **Task 4.1:** `docs/SKETCHES.md` replaces `docs/ADAPTERS.md`; `README.md`, `docs/USER_GUIDE.md`, `docs/WALKTHROUGH.md` (MCP with real output); ADR-0011..0013 (Oracle records; supersede notes). (*Owner: Neo + Oracle | Verification: UND-12 AC3 grep empty*)
-- [x] **Task 4.2:** UAT: cold-read "write a sketch for my MCP server" from docs alone; every documented command runs; then Morpheus review. (*Owner: Trin → Morpheus | Verification: inspection + each command; commit `Phase 4`*)
+### Phase 4: Pause and step — UND-15
+*Phase goal: the page pauses a live run before its next move, steps it one move at a time, resumes it; no Jev call while paused.*
+- [ ] **Task 4.1:** `src/watch/gate.mjs`; run loop `beforeMove()` before `takeStep`, idle limits minus `pausedMs()`, Ctrl-C releases; `POST /control`; page controls (enabled per state, disabled after the end); `--pause`; `--pause`/`--port` without `--watch` refused. Tests: gate unit, run with a gate (no Jev call while paused, 15 s paused not stalled, Ctrl-C while paused → interrupted). (*Owner: Neo | Verification: `bobp make test`*)
+- [ ] **Task 4.2:** UAT UND-15 AC1–6 live (`run examples/http --watch --pause`, step ×2, resume; pause 15 s; Ctrl-C while paused) then Morpheus review. (*Owner: Trin → Morpheus | Verification: live + `bobp make check`; commit `Phase 4`*)
+
+### Phase 5: Replay — UND-16
+*Phase goal: `understudy watch <log>` replays a finished run on the same page from the log alone.*
+- [ ] **Task 5.1:** `src/watch/replay.mjs` (read + check: start line, JSON per line, missing final), `cli.mjs` `watch <log> [--port N]`, page replay mode (play / pause / step back / step forward / click a step; ended or "log ends without a final line"). Tests: reader refusals, replay served. (*Owner: Neo | Verification: `bobp make test`*)
+- [ ] **Task 5.2:** UAT UND-16 AC1–5 (replay each example's live log in Chromium; click step 2; a sprint 3 log refused; Ctrl-C exit 0) then Morpheus review. (*Owner: Trin → Morpheus | Verification: `bobp make check`; commit `Phase 5`*)
+
+### Phase 6: Docs — UND-17
+*Phase goal: the guides show how to watch, replay and step, with a real screenshot.*
+- [ ] **Task 6.1:** USER_GUIDE "Watch a run", SKETCHES §7 log lines, README opening + screenshot (`docs/images/watch.png` from a real run, taken with Playwright), ADR-0014..0016 (Oracle). (*Owner: Neo + Oracle | Verification: every documented command runs*)
+- [ ] **Task 6.2:** UAT cold read then Morpheus review. (*Owner: Trin → Morpheus | Verification: inspection; commit `Phase 6`*)
 
 ---
 
 ## Stage 3: Sprint Closeout
 
-- [x] **Task C.1:** SDLC conformance check. (*Owner: Tank | Verification: `bobp make distclean && bobp make install && bobp make check`*)
-- [x] **Task C.2:** Groom, lessons, UAT plan `docs/sprints/UAT_PLAN_SPRINT3.md`, chat report `SPRINT_3`. (*Owner: Oracle | Verification: `bobp chat-report --moniker SPRINT_3`*)
-- [x] **Task C.3:** End-to-end user test vs the UAT plan. (*Owner: Smith | Verification: `bobp chat "*user approve"`*)
-- [x] **Task C.4:** Retro → backlog. (*Owner: All | Verification: retros in CHAT.md*)
-- [x] **Task C.5:** Launch; merge / push / version only when the owner says. (*Owner: Cypher | Verification: `bobp chat "*pm launch"`*)
+- [ ] **Task C.1:** SDLC conformance check. (*Owner: Tank | Verification: `bobp make distclean && bobp make install && bobp make check`*)
+- [ ] **Task C.2:** Groom, lessons, UAT plan `docs/sprints/UAT_PLAN_SPRINT4.md`, chat report `SPRINT_4`. (*Owner: Oracle*)
+- [ ] **Task C.3:** End-to-end user test vs the UAT plan. (*Owner: Smith*)
+- [ ] **Task C.4:** Retro → backlog. (*Owner: All*)
+- [ ] **Task C.5:** Launch; merge / push / version only when the owner says. (*Owner: Cypher*)

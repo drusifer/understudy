@@ -10,3 +10,6 @@ Phases: 1 groundwork (stall, fields, response, showing, program.mjs) | 2 http + 
 
 ## Sprint 3 — one sketch file + MCP target (branch sprint-3, started 2026-10-15)
 Phases: 1 sketch loader + examples converted | 2 local MCP target, generic MCP app, Jev-chosen args, box office | 3 remote MCP over HTTP + Tank test-live | 4 docs | close (DEF-09). 15 pts. No Tank Phase 0 (ordinary deps). One plan revision.
+
+## Sprint 4 — watch the understudy live (branch sprint-4, started 2026-10-15)
+Phases: 1 event-stream log | 2 graph layout + watch server | 3 live page + run --watch (+ Tank eslint block) | 4 pause/step | 5 replay | 6 docs | close. 16 pts. No Tank Phase 0.
