@@ -1,12 +1,12 @@
-// Sprint 2 UND-7 (ARCH §4 "Generic page app"): what a web adapter gets when
-// it gives no app hooks - the controls a person could choose are the moves.
+// Sprint 2 UND-7 (ARCH §4 "Generic page app"): what a page sketch gets when
+// it names no hooks - the controls a person could choose are the moves.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { pageApp } from '../src/apps/page.mjs';
-import { loadPart, checkPart } from '../src/part.mjs';
+import { loadSketch, checkSketch } from '../src/sketch.mjs';
 
 const VIEW = {
   path: '/index.html', title: 'Sign up', seq: 7,
@@ -39,44 +39,45 @@ test('each control is an option named by kind and visible label, and acting uses
 });
 
 /**
- * An example directory with this adapter source and a minimal good part.
+ * A sketch directory: a page sketch with these extra top-level lines, and
+ * `hooks.mjs` when its source is given.
  */
-function exampleWith(adapterSource) {
+function sketchWith(extra, hooksSource = null) {
   const directory = mkdtempSync(path.join(tmpdir(), 'understudy-page-app-'));
   test.after(() => rmSync(directory, { recursive: true, force: true }));
-  mkdirSync(path.join(directory, 'part'));
-  writeFileSync(path.join(directory, 'adapter.mjs'), adapterSource);
-  writeFileSync(path.join(directory, 'part', 'questions.yaml'), 'answer:\n  type: choice\n  instructions: Pick what to press on `page`.\n');
-  writeFileSync(path.join(directory, 'part', 'turn.yaml'), `initial: waiting
-states:
-  waiting: { tags: [safe], on: { OBSERVE: looking } }
-  looking:
-    invoke:
-      src: look
-      onDone:
-        - { target: finished, guard: { type: showing, params: { text: Welcome } } }
-        - { target: answering, guard: { type: phase, params: { is: asking } } }
-        - { target: waiting }
-  answering: { tags: [move], on: { STEP: replying } }
-  replying: { invoke: { src: play, with: { phase: asking, question: answer }, onDone: waiting } }
-  finished: { type: final }
+  if (hooksSource) writeFileSync(path.join(directory, 'hooks.mjs'), hooksSource);
+  writeFileSync(path.join(directory, 'sketch.yaml'), `${extra}
+questions:
+  answer: { type: choice, instructions: Pick what to press on \`page\`. }
+turn:
+  initial: waiting
+  states:
+    waiting: { tags: [safe], on: { OBSERVE: looking } }
+    looking:
+      invoke:
+        src: look
+        onDone:
+          - { target: finished, guard: { type: showing, params: { text: Welcome } } }
+          - { target: answering, guard: { type: phase, params: { is: asking } } }
+          - { target: waiting }
+    answering: { tags: [move], on: { STEP: replying } }
+    replying: { invoke: { src: play, with: { phase: asking, question: answer }, onDone: waiting } }
+    finished: { type: final }
 `);
   return directory;
 }
 
-test('a page adapter with only a name and a target gets the generic page app, and check says so', async () => {
-  const directory = exampleWith("export default { name: 'plain', target: { kind: 'page', page: 'index.html' } };\n");
-  const part = await loadPart(directory);
-  assert.equal(part.adapter.app, pageApp);
-  assert.match(await checkPart(directory), /adapter plain \(page, generic page app\)$/);
+test('a page sketch with no hooks gets the generic page app, and check says so', async () => {
+  const directory = sketchWith('name: plain\ntarget: { kind: page, page: index.html }');
+  const sketch = await loadSketch(directory);
+  assert.equal(sketch.app, pageApp);
+  assert.match(await checkSketch(directory), /: sketch OK - plain \(page, generic app\) - 5 states, 1 question$/);
 });
 
-test('an adapter that gives its own app hooks uses them whole', async () => {
-  const directory = exampleWith(`export default {
-  name: 'own', target: { kind: 'page' },
-  app: { phase: () => 'asking', project: () => ({}), options: () => [], act: () => ({ actions: [] }) },
-};\n`);
-  const part = await loadPart(directory);
-  assert.notEqual(part.adapter.app, pageApp);
-  assert.match(await checkPart(directory), /adapter own \(page\)$/);
+test('a page sketch that names its own hooks uses them whole', async () => {
+  const directory = sketchWith('name: own\ntarget: { kind: page }\napp: hooks.mjs',
+    "export default { phase: () => 'asking', project: () => ({}), options: () => [], act: () => ({ actions: [] }) };\n");
+  const sketch = await loadSketch(directory);
+  assert.notEqual(sketch.app, pageApp);
+  assert.match(await checkSketch(directory), /: sketch OK - own \(page, hooks\.mjs\)/);
 });

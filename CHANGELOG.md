@@ -1,5 +1,24 @@
 # Changelog
 
+## Sprint 3 — one sketch file, and any MCP server as an app (2026-10-15, branch `sprint-3`, not yet merged)
+
+- **`sketch.yaml` is the only format**: one file holds a stand-in's name, target, player
+  settings, step cap (`steps:`), questions and turn (statechart). Code only where an app needs
+  reading - `hooks.mjs` for programs and JSON APIs. `adapter.mjs` and `part/` are no longer read
+  (no back-compat): such a directory is refused, saying what replaced them. The three examples
+  were converted; `examples/web` has no code at all. Commands take a sketch directory or the file.
+- **MCP target** (`kind: mcp`): understudy is an MCP client (`@modelcontextprotocol/sdk`) and
+  plays any MCP server - local over stdio, or remote over streamable HTTP with token headers.
+  The server is named in Claude's `mcpServers` shape, inline or by reference to a file
+  (`config: servers.json`, or a project's own `.mcp.json`); `${VAR}` / `${VAR:-default}` come
+  from the environment. Tool errors are logged as the server's answer.
+- **Generic MCP app**: each tool is a move; Jev **chooses** each open argument from the sketch's
+  `values:`, the tool's schema, or the last successful answer (it never writes text). `calls:`
+  fixes whole calls. Tools that cannot be filled are left out, and the run says why.
+- Examples: `examples/mcp` (a cinema box office over stdio) and `examples/mcp-remote` (the same
+  box office by URL and token). `make test-live` serves the remote one itself.
+- Docs: `docs/SKETCHES.md` replaces `docs/ADAPTERS.md`; ADR-0011..0013.
+
 ## Sprint 2 — a JSON API, and web pages without changing them (2026-10-15, branch `sprint-2`, not yet merged)
 
 - **HTTP target** (`kind: 'http'`): plays a JSON API - a look is a GET of its state, a move is a

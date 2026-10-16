@@ -1,38 +1,26 @@
 # Backlog
 
-Groomed by Cypher from the sprint 1 retro (2026-10-15). Owner, 2026-10-15: recard is no longer
+Groomed by Cypher from the sprint 1-3 retros (2026-10-15). Owner, 2026-10-15: recard is no longer
 a goal - no migration work. README done in the post-sprint docs groom. Not yet sized or ordered beyond
 "Next" vs "Later".
 
 ## Sprint 2
 Done - see `CHANGELOG.md` (HTTP target; hookless pages with the generic page app).
 
-## Sprint 3 (owner, 2026-10-15) - MCP target for sketches
-- **MCP target** (`kind: 'mcp'`) - understudy is an MCP *client* and plays any MCP server: a look
-  lists its tools/resources (plus the last call's result), a move is a tool call; a tool error is
-  the app's answer. Built on the off-the-shelf `@modelcontextprotocol/sdk` client (stdio and
-  streamable HTTP transports). **Both** local (stdio command) and remote (HTTP url) servers.
-- **MCP config = the de facto `mcpServers` shape** (Claude Desktop / Claude Code `.mcp.json`):
-  local `command`/`args`/`env`, remote `type: http` + `url`/`headers` (Claude Code's variant).
-  Two ways to name the server, both supported: a **file reference**
-  (`target: { kind: mcp, config: .mcp.json, server: via }`) or the **same entry inline** in YAML.
-  Secrets as `${VAR}` from the environment.
-- **Tool arguments** (owner decided, 2026-10-15): a sketch may list fixed calls (tool + args) as
-  moves; any tool not listed, or listed with open args, gets its arguments filled by Jev from the
-  tool's JSON input schema.
-- **Remote auth** (owner decided, 2026-10-15): token headers only - `headers:` in the mcpServers
-  entry with `${VAR}` from the environment. OAuth is out of scope (see Later).
-- **One YAML per sketch** (owner asked, 2026-10-15): a single `sketch.yaml` holding name, target
-  (incl. the MCP server inline or by `config:` reference), player params, default steps, `turn:`
-  (statechart) and `questions:`. Targets with generic apps (page, mcp) need no code; others name a
-  hooks module (`app: hooks.mjs`). **Owner decided (2026-10-15):** `sketch.yaml` is the ONLY
-  format - sprint 3 converts examples/cli, web, http and removes the old part + `adapter.mjs` layout
-  (no back-compat).
-- Not an MCP *server* for understudy (owner, 2026-10-15). `seed/recard/tools/mcp/harnessServer.mjs`
-  is therefore not a starting point.
+## Sprint 3
+Done - see `CHANGELOG.md` (one `sketch.yaml` per sketch; MCP target, local and remote; Jev-chosen
+tool arguments). Decisions: ADR-0011..0013. Owner confirmed (2026-10-15): Jev chooses argument
+values, never writes them - understudy is constrained automation by design.
+
+## Next (from the sprint 3 retro)
+- Scope `showing` to results for generic MCP sketches (today it also searches tool descriptions). (Morpheus)
+- "not offering ... yet" should not say "yet" for array/object arguments a result can never fill. (Smith)
 
 ## Later
 - OAuth for remote MCP servers (sprint 3 does token headers only). (Morpheus)
+- MCP resources, prompts and notifications in the view; cache the tool list until `list_changed`. (Morpheus, Neo)
+- A test that drops a remote MCP server mid-run (`connection-lost` is unit-tested only). (Trin)
+- `check` could warn about `calls:`/`values:` naming a tool the server does not have (needs the server running). (Smith)
 - Typing into text fields on pages (needs a source for the text). (Morpheus)
 - Auth headers / cookies for the HTTP target. (Morpheus)
 - Make the first-move and stall limits configurable (`--wait`). (Neo)

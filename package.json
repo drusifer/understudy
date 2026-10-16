@@ -15,10 +15,12 @@
     "lint": "eslint --no-error-on-unmatched-pattern 'src/**/*.mjs' 'bin/**/*.mjs' 'examples/**/*.mjs' 'examples/**/*.js' 'tests/**/*.js' 'tests/**/*.mjs'"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
     "@typesafe-ai/sdk": "^0.6.0",
     "playwright": "^1.62.1",
     "xstate": "^5.33.2",
-    "yaml": "^2.9.0"
+    "yaml": "^2.9.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

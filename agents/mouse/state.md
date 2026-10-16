@@ -1,15 +1,16 @@
 # Mouse State
 
 ## Context
-- Sprints 1 and 2 COMPLETE, merged and pushed to main (b020fc5). Boards: docs/sprints/TASKS_SPRINT1.md,
-  task.md (sprint 2, all checked). Chat archives: agents/chat_archive/CHAT_SPRINT_{1,2}.md.
-- Local branches sprint-1, sprint-2 fully merged (owner may delete). Tag v0.1.0 still points at
-  66ce717 (initial commit) - owner's force-push to move it; not urgent (recard not a goal).
+- Sprints 1 and 2 merged and pushed to main (b020fc5). Sprint 3 COMPLETE on branch `sprint-3`
+  (launched 2026-10-15; merge awaits owner). Boards: docs/sprints/TASKS_SPRINT{1,2}.md, task.md
+  (sprint 3, all checked). Chat archives: agents/chat_archive/CHAT_SPRINT_{1,2,3}.md.
+- Tag v0.1.0 still points at 66ce717 - owner's call.
 
 ## Current Task
-None - sprint 3 being shaped by Cypher with the owner (see agents/cypher/state.md).
+None - sprint 3 launched; waiting for the owner (merge, or sprint 4).
 
 ## Next Steps
-1. On `/sprint 3 go`: Stage 0 check docs/SDLC.md, cut `sprint-3` from main, archive task.md to
-   docs/sprints/TASKS_SPRINT2.md before writing the sprint 3 board (lesson: never chain a commit
-   onto a write that may be refused).
+1. On the next `/sprint <N> go`: Stage 0 check docs/SDLC.md, cut `sprint-<N>` from main (after
+   sprint-3 is merged), archive task.md to docs/sprints/TASKS_SPRINT3.md before writing the new
+   board.
+2. Keep loader/format changes and the examples they break in ONE phase (sprint 3 plan review).

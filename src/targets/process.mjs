@@ -23,7 +23,6 @@ export async function startTarget(spec, { directory }) {
     state.partial = pieces.pop();
     state.complete.push(...pieces);
   });
-  program.child.stderr.resume();
 
   return {
     describe: () => program.description,

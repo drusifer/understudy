@@ -4,15 +4,17 @@ Stand-ins that play your app the way a person would.
 
 An **understudy** looks at a running app, works out whether something is being asked of it,
 lets Jev (the TypeSafe judgment model) pick one of the moves the app
-offers, and makes that move — until its **part** says it is done. You write the part as a
-small YAML statechart plus the questions Jev answers; a short **adapter** says what the app
-looks like and which moves it offers. No scripted inputs.
+offers, and makes that move — until its **sketch** says it is done. A sketch is one
+`sketch.yaml`: what to play, a small statechart, and the questions Jev answers. Code only
+where an app needs reading that no built-in app does (`hooks.mjs`). No scripted inputs.
 
-It plays three kinds of app, with the same part format:
+It plays four kinds of app, with the same sketch format:
 
 - **command-line programs** — reads the terminal output, types the answers;
 - **web pages** — unmodified: read the way a screen reader does, played in headless Chromium;
-- **JSON APIs** — a look is a GET of the app's state, a move is a request.
+- **JSON APIs** — a look is a GET of the app's state, a move is a request;
+- **MCP servers** — local (stdio) or remote (HTTP, token headers), named the way Claude names
+  them; the tools are the moves and Jev chooses their arguments. No code.
 
 ```text
 $ bobp make run ARGS="run examples/cli"
@@ -34,7 +36,8 @@ bobp make run ARGS="run examples/cli"               # play the coffee-counter pr
 bobp make install-browser                           # once, for web targets (skip if Chromium is installed)
 bobp make run ARGS="run examples/web"               # play the sign-up web page
 bobp make run ARGS="run examples/http"              # play the vending machine API
-bobp make run ARGS="check examples/cli"             # check a part without starting anything (no key needed)
+bobp make run ARGS="run examples/mcp"               # play the box office MCP server
+bobp make run ARGS="check examples/cli"             # check a sketch without starting anything (no key needed)
 ```
 
 Always go through `bobp make <target>` - it is the front door for people and agents alike.
@@ -44,9 +47,10 @@ Always go through `bobp make <target>` - it is the front door for people and age
 
 | Read | When you want to |
 |---|---|
-| [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | install, run, read the output, write your first part, fix errors |
+| [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | install, run, read the output, write your first sketch, fix errors |
 | [docs/WALKTHROUGH.md](docs/WALKTHROUGH.md) | see the examples taken apart, line by line, with real runs |
-| [docs/ADAPTERS.md](docs/ADAPTERS.md) | the reference: adapter shape, targets, part files, library names, exit codes |
+| [docs/MCP_GUIDE.md](docs/MCP_GUIDE.md) | point understudy at an MCP server you already have (yours, or one configured for Claude) |
+| [docs/SKETCHES.md](docs/SKETCHES.md) | the reference: `sketch.yaml`, the four targets, hooks, library names, exit codes |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | why it is built this way (ADRs) |
 | [docs/SDLC.md](docs/SDLC.md) | how the project is built, tested, changed and released |
 | [CHANGELOG.md](CHANGELOG.md) · [docs/BACKLOG.md](docs/BACKLOG.md) | what shipped · what is next |
@@ -59,10 +63,12 @@ out of recard's game harness) and the sprint documents in
 
 ```text
 bin/understudy.mjs     the command
-src/                   the core: run loop, part loader, statechart, seat, Jev decisions, targets/
-examples/cli/          a terminal coffee counter + its adapter and part
-examples/web/          a sign-up wizard page (unmodified) + a 4-line adapter and part
-examples/http/         a vending machine JSON API + its adapter and part
+src/                   the core: run loop, sketch loader, statechart, seat, Jev decisions, targets/, apps/
+examples/cli/          a terminal coffee counter + its sketch and hooks
+examples/web/          a sign-up wizard page (unmodified) + its sketch (no code)
+examples/http/         a vending machine JSON API + its sketch and hooks
+examples/mcp/          a cinema box office MCP server + its sketch (no code)
+examples/mcp-remote/   the same box office by URL and token, named in servers.json
 tests/                 node:test suites (offline: a Jev double, no browser)
 docs/                  user and project documentation
 seed/                  recard files not yet generalized (not run, not linted)

@@ -1,0 +1,32 @@
+name: fixture-good
+target: { kind: process, command: node, args: [app.mjs] }
+app: hooks.mjs
+
+questions:
+  next:
+    type: choice
+    instructions: Pick the next step for the order on `screen`.
+    criteria:
+      order: place the order as it stands
+      cancel: stop without ordering
+
+turn:
+  initial: waiting
+  states:
+    waiting:
+      tags: [safe]
+      on: { OBSERVE: looking }
+    looking:
+      invoke:
+        src: look
+        onDone:
+          - { target: choosing, guard: { type: phase, params: { is: menu } } }
+          - { target: finished, guard: { type: phase, params: { is: done } } }
+          - { target: waiting }
+    choosing:
+      tags: [move]
+      on: { STEP: stepping }
+    stepping:
+      invoke: { src: play, with: { phase: menu, question: next }, onDone: waiting }
+    finished:
+      type: final

@@ -1,10 +1,36 @@
 # Decisions
 
 Newest first. Each record follows `agents/templates/_template_DECISION.md`, kept short.
-Sprint 1 records were made by Morpheus in `docs/sprints/ARCH_SPRINT1.md` §8 and sprint 2
-records in `docs/sprints/ARCH_SPRINT2.md` §8 (both approved at Smith Gate 2, 2026-10-15).
+Sprint 1 records were made by Morpheus in `docs/sprints/ARCH_SPRINT1.md` §8, sprint 2
+records in `docs/sprints/ARCH_SPRINT2.md` §8 and sprint 3 records in
+`docs/sprints/ARCH_SPRINT3.md` §8 (all approved at Smith Gate 2, 2026-10-15). Records before
+ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `sketch.yaml`.
 
 ---
+
+## ADR-0013: Jev chooses argument values, it never writes them
+
+*   **Status**: Accepted, confirmed by the owner after launch ("constrained automation") · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-15 · **Related**: UND-10 AC4-5
+*   **Context**: owner: a sketch may list fixed calls, and Jev fills the remaining arguments. Jev (TypeSafe) answers only choice, noul and score questions - it cannot produce free text.
+*   **Options**: (1) Jev chooses each open argument from a finite list - the sketch's `values`, the schema (enum, boolean, narrow integer range), or the last non-error result's leaves; (2) generate free text with another model; (3) offer only tools with no required arguments.
+*   **Decision**: (1), in a second request after the tool is picked, one Choice per argument; an off-list answer is re-asked once, then the run stops (ADR-0004). A tool whose required argument has no list is not offered, and the run says so once per tool. Candidates come from the last result that was **not an error** (Phase 2 finding: a refused call must not erase what the call before it offered).
+*   **Consequences**: + every value sent was offered and is in the log; tools chain naturally (ids from one answer feed the next call). − free-text arguments need listed values; noisy results give long lists (capped at 20).
+
+## ADR-0012: MCP target - SDK client, understudy's own stdio transport, the `mcpServers` shape
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus · **Date**: 2026-10-15 · **Related**: UND-10, UND-11
+*   **Context**: owner: understudy plays any MCP server as its client (not an MCP server itself), on the off-the-shelf `@modelcontextprotocol/sdk`, local and remote, configured the way Claude Desktop/Code configure servers.
+*   **Options**: (1) SDK `Client`; local servers over a small `ProgramTransport` on `program.mjs` (using the SDK's `ReadBuffer`/`serializeMessage`), remote over the SDK's `StreamableHTTPClientTransport`; (2) the SDK's `StdioClientTransport` for local servers; (3) a hand-written JSON-RPC client.
+*   **Decision**: (1). The server is one `mcpServers` entry, inline (`server: {...}`) or by reference (`config: servers.json, server: <name>`); `${VAR}`/`${VAR:-default}` filled at run start only; remote auth is token headers only (no OAuth, no SSE). A look lists tools + the last result; a move is one tool call; tool errors (isError or JSON-RPC) are the server's answer. A remote server that answers the connection with an HTTP error is `refused`, named by URL and status, never by header.
+*   **Consequences**: + a local server is started, watched (exit code, stderr tail) and stopped like every other program; check needs no secrets. − `ProgramTransport` leans on two SDK exports (checked in Phase 2); resources, prompts and notifications are not read.
+
+## ADR-0011: One `sketch.yaml` per sketch; code only in `hooks.mjs`
+
+*   **Status**: Accepted (replaces the adapter/part layout of sprints 1-2) · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-15 · **Related**: UND-9
+*   **Context**: owner: one YAML file per sketch with all configs and params, and it is the only format (no back-compat). Sprints 1-2 split a stand-in over `adapter.mjs`, `part/turn.yaml` and `part/questions.yaml`.
+*   **Options**: (1) `sketch.yaml` (name, description, target, app, player, steps, questions, turn, and for MCP calls/values) + `hooks.mjs` only where the target has no generic app; (2) keep the three files and add a YAML adapter beside the JS one.
+*   **Decision**: (1). `src/sketch.mjs` replaces `part.mjs`; `parseTurn` takes the parsed `turn:`; every error names `sketch.yaml` and the path in it (`turn.states...`, `questions.answer...`); `--steps` beats `steps:`; a directory with `adapter.mjs` or `part/` and no `sketch.yaml` is refused, saying what replaced them.
+*   **Consequences**: + one file to read; pages and MCP servers need no code; logs go to `build/runs/<sketch name>/`. − hooks still need JavaScript for programs and APIs; the old layout must be converted by hand (docs/SKETCHES.md §1 maps it).
 
 ## ADR-0010: One stall rule in the run loop, for every target
 

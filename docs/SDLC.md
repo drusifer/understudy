@@ -40,7 +40,7 @@ repeating their commands. `make help` lists them.
 | `install` | `npm ci` | exact lockfile install; idempotent; touches the network |
 | `install-browser` | `npx playwright install chromium` | needed only for web targets; touches the network; see §9 |
 | `test` | `npm test -- $(ARGS)` → `node --test tests/*.test.js` | e.g. `ARGS="--test-name-pattern=seat"` |
-| `test-live` | `understudy run <dir> --steps 20` for every `examples/*/` | live Jev (paid) and, for web examples, Chromium; UAT only |
+| `test-live` | `understudy run <sketch> --steps 20` for every `examples/*/`; serves the box office over HTTP with a throwaway token (`MCP_TOKEN`, `BOX_PORT`, default 8765) for `examples/mcp-remote` and stops it after | live Jev (paid) and, for web examples, Chromium; UAT only |
 | `run` | `node bin/understudy.mjs $(ARGS)` | e.g. `ARGS="check examples/cli"` |
 | `lint` | `npm run lint` → eslint over `src/**/*.mjs`, `tests/**` | config `eslint.config.js` (recommended + unicorn + sonarjs, as in recard) |
 | `secrets` | `gitleaks git` over history + uncommitted tracked changes | needs `gitleaks` installed |
@@ -66,8 +66,9 @@ Standard targets deliberately absent:
 - Never hand-edit the lockfile; never mix lockfiles from two package managers.
 - Declare only what the code imports. Runtime today: `xstate`, `yaml`, `@typesafe-ai/sdk`
   (Jev), `playwright` (page target; locked at 1.62.1 so its Chromium download is shared with
-  recard's). Expected later, with recard's ranges: `@modelcontextprotocol/sdk ^1.30.0`,
-  `zod ^4.6.5`, `@xstate/graph ^3.0.4`.
+  recard's), `@modelcontextprotocol/sdk` (mcp target client; the example server) and `zod` (the
+  example server's tool schemas; the SDK's peer) - both added in sprint 3. Expected later:
+  `@xstate/graph ^3.0.4`.
 
 ## 5. Quality gates
 
@@ -166,6 +167,7 @@ Run by Tank at sprint close (`*devops sdlc-check`):
 8. Nothing under `src/` or `tests/` imports from `seed/`.
 
 ---
-*Last verified: 2026-10-15 against sprint-2 at cff915e by Tank (sprint 2 close: distclean →
-install → install (lockfile unchanged) → check, 118/118 tests; make test-live green for cli, web
-and http).*
+*Last verified: 2026-10-15 against sprint-3 at 018d053 by Tank (sprint 3 close: distclean →
+install (lockfile unchanged) → check, 162/162 tests, lint, gitleaks clean; every imported package
+declared; make test-live green for cli, http, mcp, mcp-remote and web in Phase 3, with no
+server left running).*

@@ -4,15 +4,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
-import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { appendFileSync, cpSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { runPart } from '../src/run.mjs';
+import { runSketch, DEFAULT_STEPS } from '../src/run.mjs';
 import { RunError } from '../src/errors.mjs';
-import { shown } from '../src/part.mjs';
+import { shown } from '../src/sketch.mjs';
 
-const GOOD = fileURLToPath(new URL('fixtures/parts/good', import.meta.url));
+const GOOD = fileURLToPath(new URL('fixtures/sketches/good', import.meta.url));
 
 /**
  * The fixture's app, in memory: on `menu` until a move is sent; `order`
@@ -66,13 +66,13 @@ function streams() {
   return { out, stdout: { write: (text) => { out.stdout += text; } }, stderr: { write: (text) => { out.stderr += text; } } };
 }
 
-async function play({ app = fakeApp(), judge = judgeAnswering('order'), steps = 50, firstMoveMs = 2000, stallMs = 2000, signals = new EventEmitter() } = {}) { // eslint-disable-line unicorn/prefer-event-target -- stands in for `process`, an EventEmitter
+async function play({ sketch = GOOD, app = fakeApp(), judge = judgeAnswering('order'), steps, firstMoveMs = 2000, stallMs = 2000, signals = new EventEmitter() } = {}) { // eslint-disable-line unicorn/prefer-event-target -- stands in for `process`, an EventEmitter
   const logRoot = mkdtempSync(path.join(tmpdir(), 'understudy-runs-'));
   test.after(() => rmSync(logRoot, { recursive: true, force: true }));
   const io = streams();
   let error = null;
   try {
-    await runPart(GOOD, {
+    await runSketch(sketch, {
       steps, stdout: io.stdout, stderr: io.stderr, environment: { TYPESAFE_API_KEY: 'test' },
       makeJudge: () => judge, makeTarget: async () => app.target, logRoot, firstMoveMs, stallMs, pollMs: 1, signals,
     });
@@ -100,6 +100,20 @@ test('a run plays to the end state: one JSON line per step, a final line, the sa
   assert.deepEqual(run.final, { final: true, outcome: 'done', steps: 1, state: 'finished' });
   assert.equal(run.log, run.stdout, 'the log holds exactly the stdout lines');
   assert.equal(run.app.closed, true);
+});
+
+test('the sketch\'s steps: sets the cap; --steps wins over it; neither means 50', async () => {
+  const directory = mkdtempSync(path.join(tmpdir(), 'understudy-steps-'));
+  test.after(() => rmSync(directory, { recursive: true, force: true }));
+  cpSync(GOOD, directory, { recursive: true });
+  appendFileSync(path.join(directory, 'sketch.yaml'), 'steps: 2\n');
+  const fromSketch = await play({ sketch: directory, judge: judgeAnswering('cancel') });
+  assert.deepEqual(fromSketch.final, { final: true, outcome: 'step-cap', steps: 2, state: 'choosing' });
+  const fromFlag = await play({ sketch: directory, judge: judgeAnswering('cancel'), steps: 4 });
+  assert.equal(fromFlag.final.steps, 4);
+  const byDefault = await play({ judge: judgeAnswering('cancel', 'cancel', 'order') });
+  assert.equal(byDefault.final.outcome, 'done', 'the fixture has no steps:, so the default cap of 50 applies');
+  assert.equal(DEFAULT_STEPS, 50);
 });
 
 test('stderr starts with what is played and where the log goes, then one readable line per step', async () => {
@@ -191,7 +205,7 @@ test('a run that stops being offered anything after it started is stalled, with 
   assert.ok(run.error instanceof RunError);
   assert.equal(run.error.message,
     'stalled: nothing to do for 0.03 s after step 1 (last state: waiting) - the app showed: {"screen":"brewing","seq":1}'
-    + ' - if this is where the part should end, add a showing guard (docs/ADAPTERS.md)');
+    + ' - if this is where the sketch should end, add a showing guard (docs/SKETCHES.md)');
   assert.deepEqual(run.final, { final: true, outcome: 'stalled', steps: 1, state: 'waiting' });
   assert.equal(run.app.closed, true);
 });

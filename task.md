@@ -1,10 +1,10 @@
-# Sprint 2 Task Board: Play a JSON API, and any web page without changing it
+# Sprint 3 Task Board: One sketch file, and any MCP server as an app
 
-*   **Goal**: `understudy run examples/http` plays a JSON API, and `understudy run examples/web` plays an unmodified page through its accessibility snapshot with a name-and-target adapter. Every target stops cleanly when a run stalls.
+*   **Goal**: every example is one `sketch.yaml` (code only in `hooks.mjs` where needed), and `understudy run examples/mcp` / `examples/mcp-remote` play an MCP server over stdio and over HTTP with a token, choosing tool arguments with Jev.
 *   **Tier**: Tier 1 (Major)
-*   **Total Points**: 12 (UND-6 5, UND-7 5, UND-8 2)
-*   **Branch**: `sprint-2`
-*   **Stories / Arch**: `docs/sprints/USER_STORIES_SPRINT2.md`, `docs/sprints/ARCH_SPRINT2.md` (sprint 1 board: `docs/sprints/TASKS_SPRINT1.md`)
+*   **Total Points**: 15 (UND-9 5, UND-10 5, UND-11 3, UND-12 2)
+*   **Branch**: `sprint-3`
+*   **Stories / Arch**: `docs/sprints/USER_STORIES_SPRINT3.md`, `docs/sprints/ARCH_SPRINT3.md` (sprint 2 board: `docs/sprints/TASKS_SPRINT2.md`)
 *   **Status**: Complete — launched 2026-10-15; merge to main / push awaiting owner
 *   **Commits**: one local commit per phase after Morpheus's review (`Phase <N>: ...`); publishing only via `bobp make push` when the owner asks (SDLC §6). No back-compat (owner rule).
 
@@ -12,48 +12,41 @@
 
 ## Stage 0: SDLC Gate (Blocker)
 
-- [x] **Task 0.1:** `docs/SDLC.md` present (verified 2026-10-15). No Tank Phase 0: ARCH §7 adds no dependency, language or make target. (*Owner: Mouse*)
+- [x] **Task 0.1:** `docs/SDLC.md` present; `sprint-3` cut from `main` (0b52a7e). No Tank Phase 0: ARCH §7 adds only ordinary dependencies (SDLC §4, Neo). The `test-live` recipe edit is Tank's, in Phase 3. (*Owner: Mouse*)
 
 ---
 
 ## Sprint Execution Phases
 
-### Phase 1: Run-loop and loader groundwork (ADR-0010, ARCH §3)
-*Phase goal: every target stops cleanly on a stall; targets are checked field by field; act results reach the log; program start/stop is shared.*
-- [x] **Task 1.1:** `run.mjs` stall rule (`stallMs` 10 s after the first move, outcome `stalled`, message with the `showing` hint); `part.mjs` per-kind target field check (unknown field → `UsageError` naming known fields); `library.play` records the last non-empty act result as `response`; `look` also outputs `view`; new guard `showing { text }`; extract `src/targets/program.mjs` from `process.mjs`. TDD. (*Owner: Neo | Verification: `bobp make test` fail 0 (new tests: stalled, unknown field, response, showing); `bobp make lint` exit 0*)
-- [x] **Task 1.2:** UAT: stall test names last state + hint; `check` on an adapter with `target.hook` → exit 2 naming known fields. (*Owner: Trin | Verification: `bobp make test && bobp make lint`*)
-- [x] **Task 1.3:** Review vs ARCH §4 stall rule / §5 fields. (*Owner: Morpheus | Verification: review; commit `Phase 1`*)
+### Phase 1: Sketch loader and the three examples converted — UND-9
+*Phase goal: `sketch.yaml` is loaded and checked as a whole; check/library/run take a sketch; the old layout is refused; cli, web and http are sketches and play live as in sprint 2. (Loader and conversion share a phase so the gate is green at the commit - Morpheus plan review.)*
+- [x] **Task 1.1:** `src/sketch.mjs` replaces `part.mjs` (find dir-or-file, top-level keys, target fields per kind, `app: hooks.mjs` loading + hook checks, `steps`, `player`, questions under `questions.`, old-layout refusal); `parseTurn(config, ...)` with `turn.` paths; `cli.mjs`/`run.mjs` wording, `steps` precedence, log dir by sketch name. Tests ported from `part.test.js` to `sketch.test.js` on fixture sketches. TDD. (*Owner: Neo | Verification: `bobp make test ARGS="tests/sketch.test.js"` green*)
+- [x] **Task 1.2:** `examples/{cli,web,http}/sketch.yaml` (+ `hooks.mjs` for cli/http); delete `adapter.mjs` and `part/`; `tests/examples.test.js` on sketches. (*Owner: Neo | Verification: `bobp make test` fail 0; `bobp make lint`; `check examples/<each>` exit 0*)
+- [x] **Task 1.3:** UAT UND-9 AC1–7 (each refusal exit 2; check line for dir and file; `--steps` beats `steps:`; `bobp make test-live` green on 3 examples, same log fields) then Morpheus review vs ARCH §3/§5. (*Owner: Trin → Morpheus | Verification: `bobp make test-live` + `bobp make check`; commit `Phase 1`*)
 
-### Phase 2: HTTP target and the vending-machine example — UND-6
-*Phase goal: a JSON API is played to its end state, started or attached, with error statuses logged.*
-- [x] **Task 2.1:** `src/targets/http.mjs` (free port + `{port}`, start via `program.mjs`, ready-wait 10 s, GET-state view, request act returning `{ status }`, connection-lost `RunError`, attach mode); `examples/http/` (`server.mjs`, adapter < 150 lines, part with no transport words). Tests against an in-process `node:http` server + the example end to end with a Jev double. (*Owner: Neo | Verification: `bobp make test`; `bobp make run ARGS="check examples/http"` exit 0*)
-- [x] **Task 2.2:** UAT UND-6 AC1–9: live `bobp make run ARGS="run examples/http --steps 20"` exit 0; attach mode against a hand-started server (left running); error status in a step line; kill server mid-run → exit 1. (*Owner: Trin | Verification: live run (capped) + `bobp make test && bobp make lint`*)
-- [x] **Task 2.3:** Review vs ADR-0008. (*Owner: Morpheus | Verification: review; commit `Phase 2`*)
+### Phase 2: Local MCP target, generic MCP app, argument filling, box office — UND-10
+*Phase goal: `understudy run examples/mcp` plays the box office over stdio to a ticket with no understudy code in the example.*
+- [x] **Task 2.1:** `npm install @modelcontextprotocol/sdk zod` (SDLC §4); confirm `shared/stdio.js` exports (ARCH §9 risk); `src/mcpConfig.mjs` (inline / `config:`+`server:`, shape checks, `${VAR}`/`${VAR:-d}`), `program.mjs` stderr tail, `src/targets/mcpTransport.mjs`, `src/targets/mcp.mjs` (stdio path: handshake 10 s, view, act, errors as answers, close). Tests against the example server over stdio. (*Owner: Neo | Verification: `bobp make test`*)
+- [x] **Task 2.2:** `src/fill.mjs`, `src/apps/mcp.mjs` (calls/values, not-offered line once, `idle`), `library.play` second request + off-list rule, `run.checkIdle` uses `app.idle`; `examples/mcp/` (`server.mjs` stdio + `--http`, `sketch.yaml` inline, test that the end text is in no tool description). Tests with a Jev double. (*Owner: Neo | Verification: `bobp make test`; `bobp make run ARGS="check examples/mcp"` exit 0*)
+- [x] **Task 2.3:** UAT UND-10 AC1–9 (live `run examples/mcp --steps 20` exit 0; not-offered line; tool error logged; server exits early → exit 1 with code; unset `${VAR}` → exit 2) then Morpheus review vs ADR-0012/0013. (*Owner: Trin → Morpheus | Verification: live run + `bobp make check`; commit `Phase 2`*)
 
-### Phase 3: Hookless page target — UND-7 AC3–6
-*Phase goal: the page target reads the accessibility snapshot and acts by role + name; all hook code is gone.*
-- [x] **Task 3.1:** `src/targets/aria.mjs` (snapshot text → title/text/controls; hidden absent, disabled dropped, options carry their list); `page.mjs`: view from `ariaSnapshot()`, act by `getByRole` (click/check/selectOption, 5 s, "no longer on the page" `RunError`), hook wait and `callHook` deleted. Tests: aria parser on recorded snapshots; actions on a fake page. (*Owner: Neo | Verification: `bobp make test`; `grep -rn __understudy src` empty*)
-- [x] **Task 3.2:** UAT: parser cases (disabled, hidden, combobox options, links); no hook code left. (*Owner: Trin | Verification: `bobp make test && bobp make lint`*)
-- [x] **Task 3.3:** Review vs ADR-0007. (*Owner: Morpheus | Verification: review; commit `Phase 3`*)
+### Phase 3: Remote MCP over HTTP — UND-11
+*Phase goal: a running box office behind a URL and a token is played and left running.*
+- [x] **Task 3.1:** `mcp.mjs` HTTP path (streamable HTTP + headers, 10 s connect retry, refused status, client-only close); `examples/mcp-remote/` (`sketch.yaml` by reference, `servers.json`, `README.md`); token-never-printed test. (*Owner: Neo | Verification: `bobp make test`*)
+- [x] **Task 3.2:** `make test-live` starts the example server in HTTP mode with a throwaway token for `examples/mcp-remote`, stops it after; SDLC Last verified updated. (*Owner: Tank | Verification: `bobp make test-live` green, 5 examples*)
+- [x] **Task 3.3:** UAT UND-11 AC1–5 (wrong token → exit 1 with 401, no token in output; nothing at URL → exit 1 ≤ 10 s; server left running) then Morpheus review. (*Owner: Trin → Morpheus | Verification: live + `bobp make check`; commit `Phase 3`*)
 
-### Phase 4: Generic page app and the unmodified web example — UND-7 AC1–2, 7–8
-*Phase goal: `examples/web` is a plain page with a name-and-target adapter, played live to "Welcome aboard".*
-- [x] **Task 4.1:** `src/apps/page.mjs` (phase/project/options/act per ARCH §4); `part.mjs` fills it in for a `page` adapter without `app`, `check` says `(page, generic page app)`; `examples/web`: hook removed from `app.js`, adapter = name + target (≤ 10 lines), part ends with `showing`. (*Owner: Neo | Verification: `bobp make test`; `bobp make run ARGS="check examples/web"` exit 0*)
-- [x] **Task 4.2:** UAT UND-7 AC1–8 live: `run examples/web --steps 20` exit 0 with `button:...` ids; page with `window.__understudy` played identically; remove the `showing` guard → stalled with the hint; no Chromium left running; `bobp make test-live` green (3 examples). (*Owner: Trin | Verification: live runs + `bobp make check`*)
-- [x] **Task 4.3:** Review. (*Owner: Morpheus | Verification: review; commit `Phase 4`*)
-
-### Phase 5: Docs — UND-8
-*Phase goal: the docs describe three targets and hookless pages only.*
-- [x] **Task 5.1:** `docs/ADAPTERS.md`, `docs/USER_GUIDE.md`, `docs/WALKTHROUGH.md` (HTTP + hookless web with real runs), `README.md`; ADR-0007..0010 in `docs/DECISIONS.md`, ADR-0002 marked superseded. (*Owner: Neo | Verification: `grep -rn "__understudy" docs README.md examples src` empty*)
-- [x] **Task 5.2:** UAT: cold-read "wire up my API" and "play my page" from the docs alone; every command in the docs runs. (*Owner: Trin | Verification: inspection + `bobp make run` of each documented command*)
-- [x] **Task 5.3:** Review. (*Owner: Morpheus | Verification: review; commit `Phase 5`*)
+### Phase 4: Docs — UND-12
+*Phase goal: the docs teach sketches and four targets only.*
+- [x] **Task 4.1:** `docs/SKETCHES.md` replaces `docs/ADAPTERS.md`; `README.md`, `docs/USER_GUIDE.md`, `docs/WALKTHROUGH.md` (MCP with real output); ADR-0011..0013 (Oracle records; supersede notes). (*Owner: Neo + Oracle | Verification: UND-12 AC3 grep empty*)
+- [x] **Task 4.2:** UAT: cold-read "write a sketch for my MCP server" from docs alone; every documented command runs; then Morpheus review. (*Owner: Trin → Morpheus | Verification: inspection + each command; commit `Phase 4`*)
 
 ---
 
 ## Stage 3: Sprint Closeout
 
-- [x] **Task C.1:** SDLC conformance check. (*Owner: Tank | Verification: `bobp make distclean && bobp make install && bobp make check`; SDLC §10*)
-- [x] **Task C.2:** Groom, lessons, chat report `SPRINT_2`. (*Owner: Oracle | Verification: `bobp chat-report --moniker SPRINT_2`*)
-- [x] **Task C.3:** End-to-end user test vs `docs/sprints/UAT_PLAN_SPRINT2.md`. (*Owner: Smith | Verification: `bobp chat "*user approve"`*)
+- [x] **Task C.1:** SDLC conformance check. (*Owner: Tank | Verification: `bobp make distclean && bobp make install && bobp make check`*)
+- [x] **Task C.2:** Groom, lessons, UAT plan `docs/sprints/UAT_PLAN_SPRINT3.md`, chat report `SPRINT_3`. (*Owner: Oracle | Verification: `bobp chat-report --moniker SPRINT_3`*)
+- [x] **Task C.3:** End-to-end user test vs the UAT plan. (*Owner: Smith | Verification: `bobp chat "*user approve"`*)
 - [x] **Task C.4:** Retro → backlog. (*Owner: All | Verification: retros in CHAT.md*)
-- [x] **Task C.5:** Launch; merge to `main` / push / version only when the owner says (SDLC §6–7). (*Owner: Cypher | Verification: `bobp chat "*pm launch"`*)
+- [x] **Task C.5:** Launch; merge / push / version only when the owner says. (*Owner: Cypher | Verification: `bobp chat "*pm launch"`*)

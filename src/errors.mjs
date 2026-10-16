@@ -2,7 +2,7 @@
 // `understudy: <message>` with no stack trace; only the exit code differs.
 
 /**
- * Refused before anything started - bad arguments, a broken part, no
+ * Refused before anything started - bad arguments, a broken sketch, no
  * key, no browser. Exit 2.
  */
 export class UsageError extends Error {}

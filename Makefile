@@ -24,11 +24,15 @@ test: ## Run the unit tests (node:test); ARGS="--test-name-pattern=x" to filter
 	$(NEED_INSTALL)
 	npm test -- $(ARGS)
 
-test-live: ## Live runs: every examples/*/ played with real Jev (paid; needs TYPESAFE_API_KEY), capped at 20 steps
+test-live: ## Live runs: every examples/*/ played with real Jev (paid; needs TYPESAFE_API_KEY), capped at 20 steps; serves the box office over HTTP (throwaway token) for examples/mcp-remote
 	$(NEED_INSTALL)
-	@for dir in examples/*/; do [ -d "$$dir" ] || continue; echo "== $$dir"; node bin/understudy.mjs run "$$dir" --steps 20 >/dev/null || exit 1; done
+	@token="live-$$$$-$$(date +%s)"; port=$${BOX_PORT:-8765}; \
+	node examples/mcp/server.mjs --http --port "$$port" --token "$$token" 2>/dev/null & server=$$!; \
+	trap 'kill $$server 2>/dev/null' EXIT; \
+	for dir in examples/*/; do [ -d "$$dir" ] || continue; echo "== $$dir"; \
+	MCP_TOKEN="$$token" BOX_PORT="$$port" node bin/understudy.mjs run "$$dir" --steps 20 >/dev/null || exit 1; done
 
-run: ## Run the understudy command: ARGS="run examples/cli" | "check <dir>" | "library"
+run: ## Run the understudy command: ARGS="run examples/cli" | "check <sketch>" | "library [<sketch>]"
 	$(NEED_INSTALL)
 	@test -f bin/understudy.mjs || { echo "bin/understudy.mjs does not exist yet (sprint 1, phase 2)"; exit 1; }
 	node bin/understudy.mjs $(ARGS)
