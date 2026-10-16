@@ -145,6 +145,8 @@ log line as `response: { status }`, and the run goes on. Needs `hooks.mjs`.
 
 ### `kind: mcp` — an MCP server, with understudy as its client
 
+(A step-by-step guide, from an existing `.mcp.json` to a finished run: [MCP_GUIDE.md](MCP_GUIDE.md).)
+
 The moves are the server's **tools**; understudy never needs code for it. Name the server
 the way Claude Desktop and Claude Code do, in the `mcpServers` shape, either **inline**:
 

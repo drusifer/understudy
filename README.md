@@ -49,6 +49,7 @@ Always go through `bobp make <target>` - it is the front door for people and age
 |---|---|
 | [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | install, run, read the output, write your first sketch, fix errors |
 | [docs/WALKTHROUGH.md](docs/WALKTHROUGH.md) | see the examples taken apart, line by line, with real runs |
+| [docs/MCP_GUIDE.md](docs/MCP_GUIDE.md) | point understudy at an MCP server you already have (yours, or one configured for Claude) |
 | [docs/SKETCHES.md](docs/SKETCHES.md) | the reference: `sketch.yaml`, the four targets, hooks, library names, exit codes |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | why it is built this way (ADRs) |
 | [docs/SDLC.md](docs/SDLC.md) | how the project is built, tested, changed and released |

@@ -9,7 +9,7 @@ TLDR:
     Output: one JSON line per step on stdout and in build/runs/<sketch name>/; exit 0 / 1 / 2.
     Your own app: copy an example directory, edit its sketch.yaml (and hooks.mjs if it has one), `check` until OK.
     Web pages and MCP servers need no code at all: their generic apps play them.
-    Reference: docs/SKETCHES.md. Worked example: docs/WALKTHROUGH.md.
+    Reference: docs/SKETCHES.md. Worked example: docs/WALKTHROUGH.md. MCP servers: docs/MCP_GUIDE.md.
 
 ## Contents
 
@@ -145,7 +145,8 @@ MCP app offers every tool and lets Jev choose its arguments. Skip to step 4, and
 with a `showing` guard (text your last screen or last tool answer shows) - see
 `examples/web/sketch.yaml` or `examples/mcp/sketch.yaml`.
 
-For an MCP server, the arguments Jev may choose come from the tool's schema (enums, booleans,
+For an MCP server, [MCP_GUIDE.md](MCP_GUIDE.md) walks through this step by step. In short: the
+arguments Jev may choose come from the tool's schema (enums, booleans,
 small number ranges) or the last answer; for anything else - free text especially - list
 values in the sketch, and fix whole calls if you like:
 
