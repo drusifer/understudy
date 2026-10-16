@@ -28,13 +28,16 @@ test-browser: ## Browser tests: the watch page driven in headless Chromium again
 	$(NEED_INSTALL)
 	npm run test:browser
 
-test-live: ## Live runs: every examples/*/ played with real Jev (paid; needs TYPESAFE_API_KEY), capped at 20 steps; serves the box office over HTTP (throwaway token) for examples/mcp-remote
+test-live: ## Live runs: every examples/*/ played with real Jev (paid; needs TYPESAFE_API_KEY), capped at 30 steps, each final outcome checked (done; examples/evening also with BOX_STATE=full: walked-away); serves the box office over HTTP (throwaway token) for examples/mcp-remote
 	$(NEED_INSTALL)
 	@token="live-$$$$-$$(date +%s)"; port=$${BOX_PORT:-8765}; \
 	node examples/mcp/server.mjs --http --port "$$port" --token "$$token" 2>/dev/null & server=$$!; \
 	trap 'kill $$server 2>/dev/null' EXIT; \
-	for dir in examples/*/; do [ -d "$$dir" ] || continue; echo "== $$dir"; \
-	MCP_TOKEN="$$token" BOX_PORT="$$port" node bin/understudy.mjs run "$$dir" --steps 20 >/dev/null || exit 1; done
+	live() { want="$$1"; shift; echo "== $$* (want $$want)"; \
+	  last=$$(MCP_TOKEN="$$token" BOX_PORT="$$port" node bin/understudy.mjs run "$$@" --steps 30 | tail -n 1) || exit 1; \
+	  echo "$$last" | grep -q "\"outcome\":\"$$want\"" || { echo "unexpected end: $$last"; exit 1; }; }; \
+	for dir in examples/*/; do [ -d "$$dir" ] || continue; live done "$$dir"; done; \
+	export BOX_STATE=full; live walked-away examples/evening/
 
 run: ## Run the understudy command: ARGS="run examples/cli" | "check <sketch>" | "library [<sketch>]"
 	$(NEED_INSTALL)

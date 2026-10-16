@@ -133,4 +133,8 @@ sequenceDiagram
     Note right of Morpheus: "Phase 5 done<br/>(UND-23/24): Jev Score<br/>factor (batched,<br/>cached), --input, pick +<br/>told inputs, shortlist-<br/>of-one, 248 tests, UAT<br/>PASS (live in P…"
     Mouse->>All: "phase 6"
     Note right of Mouse: "Walk away - UND-25"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 6 done (UND-25):<br/>nothing_qualifies +<br/>walked-away outcome,<br/>evening sketch played<br/>end to end by a double<br/>(books s2 row E,<br/>BOX_STATE=ful…"
+    Mouse->>All: "phase 7"
+    Note right of Mouse: "The owner's evening -<br/>UND-26"
 ```

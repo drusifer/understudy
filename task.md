@@ -5,7 +5,7 @@
 *   **Total Points**: 29 (UND-18 3, UND-19 2, UND-20 5, UND-21 3, UND-22 5, UND-23 3, UND-24 3, UND-25 2, UND-26 3) - kept whole by the owner ("go big or go home")
 *   **Branch**: `sprint-5`
 *   **Stories / Arch**: `docs/sprints/USER_STORIES_SPRINT5.md`, `docs/sprints/ARCH_SPRINT5.md` (sprint 4 board: `docs/sprints/TASKS_SPRINT4.md`)
-*   **Status**: In progress - Phases 1-6 done; Phase 7 next (`examples/evening/sketch.yaml` already written in Phase 6)
+*   **Status**: In progress - All phases done; sprint close next
 *   **Commits**: one local commit per phase after Morpheus's review (`Phase <N>: ...`); publishing only via `bobp make push` when the owner asks (SDLC §6). No back-compat (owner rule).
 
 ---
@@ -51,9 +51,9 @@
 
 ### Phase 7: The owner's evening - UND-26
 *Phase goal: `examples/evening` buys the owner's seats live, walks away when full, and the docs teach decide/inputs/several servers.*
-- [ ] **Task 7.1:** `examples/evening/sketch.yaml` (ARCH §5 with the example defaults); `docs/SKETCHES.md`, `docs/MCP_GUIDE.md` "Deciding like a person", `docs/USER_GUIDE.md` (`--input`, `walked-away`). (*Owner: Neo, Oracle for docs | Verification: `bobp make check`; a live run by hand*)
-- [ ] **Task 7.2:** `test-live` gains the evening buy run and the `BOX_STATE=full` walk-away run and checks each final `outcome` (Mechanism change, SDLC §6). (*Owner: Tank | Verification: `bobp make test-live`*)
-- [ ] **Task 7.3:** UAT UND-26 AC1-5 (`--input centre=0` changes the table) then Morpheus review. (*Owner: Trin → Morpheus | Verification: `bobp make test-live` + `bobp make check`; commit `Phase 7`*)
+- [x] **Task 7.1:** `examples/evening/sketch.yaml` (ARCH §5 with the example defaults); `docs/SKETCHES.md`, `docs/MCP_GUIDE.md` "Deciding like a person", `docs/USER_GUIDE.md` (`--input`, `walked-away`). (*Owner: Neo, Oracle for docs | Verification: `bobp make check`; a live run by hand*)
+- [x] **Task 7.2:** `test-live` gains the evening buy run and the `BOX_STATE=full` walk-away run and checks each final `outcome` (Mechanism change, SDLC §6). (*Owner: Tank | Verification: `bobp make test-live`*)
+- [x] **Task 7.3:** UAT UND-26 AC1-5 (`--input centre=0` changes the table) then Morpheus review. (*Owner: Trin → Morpheus | Verification: `bobp make test-live` + `bobp make check`; commit `Phase 7`*)
 
 ---
 

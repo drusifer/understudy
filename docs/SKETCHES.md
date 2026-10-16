@@ -47,6 +47,9 @@ player: { floor: 0.4 }                 # optional; section 5
 steps: 30                              # optional step cap; --steps wins; default 50
 calls: [...]                           # mcp only; section 2
 values: {...}                          # mcp only; section 2
+decide: {...}                          # mcp only; section 2, "Deciding"
+inputs: {...}                          # optional; section 2, "Deciding" - set with --input
+pick: {...}                            # mcp only; section 2, "Deciding"
 questions: { ... }                     # required; section 5
 turn: { initial: waiting, states: { ... } }   # required; section 4
 ```
@@ -227,6 +230,120 @@ calls:
 Where the run ends is the turn's to say, with `showing` on text **only a result says**:
 `showing` searches the whole view, tool descriptions included, so pick an end text that no
 tool description contains (the box office ends on `Ticket issued`).
+
+### Several servers
+
+A sketch can play more than one MCP server at once - a box office and a ratings service, say.
+Name them under `servers:`, inline or by reference, in the same `mcpServers` shape:
+
+```yaml
+target:
+  kind: mcp
+  servers:
+    boxoffice: { command: node, args: [boxoffice.mjs], env: { BOX_STATE: '${BOX_STATE:-normal}' } }
+    ratings:   { command: node, args: [ratings.mjs] }
+# or: { kind: mcp, config: servers.json, servers: [boxoffice, ratings] }
+```
+
+Every server's tools are on offer, named `<server>/<tool>` (`tool:boxoffice/pick_seats`), so two
+servers with a tool of the same name never mix; `calls:`, `values:` and `decide:` use the same
+names. Step lines carry `response.call.server`. All local servers start before the first move
+and stop at the end; one that will not start refuses the run naming it
+(`understudy: server "ratings" did not start: ...`) and stops the others. With one server
+(`server:`) nothing changes: ids stay `tool:<name>`.
+
+### Deciding: `decide:`, `inputs:`, `pick:`
+
+For an argument the sketch names under `decide:`, understudy does not just offer every value an
+answer holds: it decides like a person (ADR-0017..0021). Each value keeps the **answer row** it
+came from - the JSON object holding it, plus the plain fields of the objects around it (a
+showing nested in a film carries the film's `title` and `genre`) - joined with rows from other
+answers that share its `join` field. Then:
+
+1. **Gates** - what the person never accepts. A value that fails one is removed (and the log says
+   why); a value whose gate needs a fact nobody has answered yet is **held back** until it is.
+2. **Scores** - what the person likes more. Each factor puts one field at a position from 0 to 1
+   and its **weight bends the curve**: score = position ^ weight. A value's total is the
+   **product** of its scores, so the factor weighted most counts most, and a 0 anywhere removes
+   the value.
+3. **Shortlist** - every total above 0, best first; Jev makes the final Choice among it (a
+   shortlist of one is taken without asking).
+
+```yaml
+decide:
+  boxoffice/seat_map.showing:          # <tool>.<argument> (<server>/<tool>.<argument> with several servers)
+    join: title                        # facts about the same film from any server
+    gates:
+      starts: { at_least: '17:00' }
+      any:                             # passes if any one group passes
+        - { genre: horror, tomato: { at_least: 70 } }
+        - { tomato: { at_least: 91 } }
+    scores:
+      tomato:   { range: [70, 100], weight: tomato }     # a weight may name an input
+      audience: { ask: audience, weight: 2 }             # Jev's Score, as a factor
+  boxoffice/pick_seats.seat:
+    gates: { together: { at_least: 2 }, row: { in: [E, F, D] } }
+    scores:
+      row:    { order: [E, F, D], weight: 2 }
+      centre: { range: [0.3, 1], weight: 3 }
+    shortlist: { at_most: 5 }          # and/or { total: { at_least: 0.3 } }
+  ratings/rating.title: {}             # no rules: values from every answer, each asked once
+```
+
+| Word | Where | Means |
+|---|---|---|
+| a bare value, `is` | gate | the field equals it |
+| `in: [...]` | gate | the field is one of these |
+| `at_least`, `at_most` | gate | numbers as numbers, `HH:MM` as times |
+| `any: [group, ...]` | gate | passes if one group of gates passes |
+| `range: [from, to]` | score | position runs straight from 0 at `from` to 1 at `to`, either way, clamped |
+| `order: [best, ..., worst]` | score | item i of n at (n - i) / n (E, F, D: 1, 0.67, 0.33); unlisted 0 |
+| `ask: <question>` | score | position is Jev's answer to a `type: score` question about the row |
+| `weight` | score | a number from 0 (factor off) up, or an input's name; default 1 |
+| `field`, `join` | decided argument | the answer field the values come from (default: the argument's name); the field that joins rows across answers |
+| `shortlist` | decided argument | `at_most: N`, `total: { at_least: X }` |
+
+At weight 1 rows E, F, D score 1, 0.67, 0.33; at weight 2, 1, 0.44, 0.11 - the row you want most
+has the biggest bearing. A decided value used in a call that answered is **spent**: it is not
+offered again (its answer is remembered). A score question used by `ask:` says what it
+`looks_at` and its `levels`, worst first; Jev is asked about each new row once per run, every
+row it is waiting for in one request:
+
+```yaml
+questions:
+  audience:
+    type: score
+    looks_at: reviews
+    instructions: Judging by these audience reviews, how much would someone who loves horror films enjoy this one?
+    levels: [Bored, or walked out, Mixed, Solid fun, Loved it]
+```
+
+**Inputs** are what the person sets when the run starts - a choice, or a weight in a range -
+with `understudy run <sketch> --input mood=romantic --input centre=1`; the start line lists
+them, and a value out of range refuses the run:
+
+```yaml
+inputs:
+  mood:   { choose: [fun, serious, dramatic, romantic], default: fun }
+  centre: { weight: [0, 3], default: 3 }
+pick:                                  # the final Choice among a shortlist
+  instructions: You are choosing for yourself and a friend, in the mood for something `inputs.mood`.
+  with: [mood]                         # the choice inputs Jev is told
+```
+
+**Walking away.** Guard `nothing_qualifies` (`params: { for: [<decided argument>, ...] }`) is
+true when values were seen for the listed arguments and none is shortlisted or held back. A
+final state tagged `walked-away` then ends the run with outcome `walked-away`, exit 0, a
+`{"event":"walked-away","removed":{...}}` line and a sentence on stderr:
+
+```
+understudy: walked away - nothing qualified: starts removed 6 showings; any removed 3 showings; together removed 104 seats
+```
+
+Each step line has `decided: [{ argument, table, removed, held, jev }]` - the shortlist's score
+table (each value, each factor's score, the total), what was removed and why, what is held back
+and for what, and how many Jev Scores were asked or reused; the watch page shows the same.
+The whole example: `examples/evening`.
 
 ## 3. `hooks.mjs` — what the view means (program and JSON API)
 

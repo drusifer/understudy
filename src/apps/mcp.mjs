@@ -10,6 +10,7 @@ import { answerRows } from '../rows.mjs';
 import { gate, score, shortlist } from '../engine.mjs';
 
 const RESULT_CHARS = 2000;
+const EARLIER_CHARS = 1000;
 
 /**
  * A tool's name as the moves say it: `<server>/<tool>` when the sketch
@@ -112,6 +113,8 @@ export function mcpApp({ calls = [], values = {}, decide = {}, pick = null, ques
   const scored = new Map();
   let waitingScores = new Map();
   let step = 0;
+  // What each tool last answered (a deciding sketch only), for Jev's view.
+  const saidBy = new Map();
   // UND-25: where each decided argument stood at the last look.
   const standing = new Map();
   const rows = answerRows({ notify: (line) => app.notify?.(line) });
@@ -239,6 +242,9 @@ export function mcpApp({ calls = [], values = {}, decide = {}, pick = null, ques
     moves(view, options = {}) {
       if (view.last && !view.last.isError) answered = view.last;
       rows.remember(view.last);
+      if (Object.keys(decide).length > 0 && view.last && !view.last.isError) {
+        saidBy.set(nameOf({ server: view.last.server, name: view.last.tool }), view.last.text.slice(0, EARLIER_CHARS));
+      }
       // A refused call spends nothing.
       if (spending.length > 0 && view.last?.isError) for (const [key, value] of spending) spent.get(key).delete(value);
       spending = [];
@@ -288,9 +294,14 @@ export function mcpApp({ calls = [], values = {}, decide = {}, pick = null, ques
       // projects, then asks for options, from one look).
       looked = view;
       const { last } = view;
+      const lastTool = last ? nameOf({ server: last.server, name: last.tool }) : null;
+      // A deciding sketch plays several calls before it acts: Jev sees what
+      // each other tool last said too, so it need not ask again (sprint 5 live run).
+      const others = Object.entries(Object.fromEntries(saidBy)).filter(([tool]) => tool !== lastTool);
       return {
         tools: view.tools.map((tool) => described(tool)),
-        last_call: last ? { tool: nameOf({ server: last.server, name: last.tool }), arguments: last.arguments, failed: last.isError, said: last.text.slice(0, RESULT_CHARS) } : null,
+        last_call: last ? { tool: lastTool, arguments: last.arguments, failed: last.isError, said: last.text.slice(0, RESULT_CHARS) } : null,
+        ...(others.length > 0 && { earlier: Object.fromEntries(others) }),
       };
     },
     options: () => app.moves(looked).offered,

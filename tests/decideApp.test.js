@@ -103,3 +103,13 @@ test('with nothing left and no leaving state, the stall reason says the gates re
   assert.match(app.idle(view), /tool:boxoffice\/seat_map - argument "showing" has nothing that passes its gates \(13 removed\)/);
   assert.deepEqual(app.decisions()['boxoffice/seat_map.showing'], { seen: 13, shortlisted: 0, held: 0 });
 });
+
+test('in a deciding sketch Jev also sees what each other tool last said (sprint 5 live run)', async () => {
+  const { app, call } = await setUp();
+  await call({ server: 'boxoffice', tool: 'list_films', arguments: {} });
+  await call({ server: 'ratings', tool: 'rating', arguments: { title: 'Night Shift' } });
+  const projected = app.project({ tools: [], last: { server: 'ratings', tool: 'rating', arguments: {}, isError: false, text: '{"title":"Night Shift"}' } });
+  assert.deepEqual(Object.keys(projected.earlier), ['boxoffice/list_films']);
+  assert.match(projected.earlier['boxoffice/list_films'], /^\[\{"film":"f1","title":"Night Shift"/);
+  assert.equal(mcpApp().project({ tools: [], last: null }).earlier, undefined, 'not in a sketch without decide');
+});

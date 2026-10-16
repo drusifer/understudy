@@ -2,7 +2,7 @@
 
 *   **Author**: Trin
 *   **Stories**: `docs/sprints/USER_STORIES_SPRINT5.md` (UND-18..26) · **Arch**: `docs/sprints/ARCH_SPRINT5.md`
-*   **Status**: In progress - Phases 1-6 verified
+*   **Status**: In progress - All phases verified - awaiting Smith end-to-end
 
 ## 1. Scope of Acceptance Testing
 
@@ -29,10 +29,10 @@ Smith at sprint close. Out of scope: the sprint 6 dashboard; real ratings data.
 | UAT-UND-19-01..04 | UND-19 AC1-4 | drive `ratings.mjs` | tomato + 3-5 reviews; the four score cases; unknown title error | `tests/evening.test.js` | PASS (Phase 2) |
 | UAT-UND-21-01..05 | UND-21 AC1-5 | owner's film gate over both servers with a Jev double | no afternoon / low-score film offered; >90 non-horror offered; held-back line; check refusals | `tests/engine.test.js`, `tests/rows.test.js`, `tests/decideApp.test.js` (real evening servers: s2, s13, s8, s4 offered; s1/s6 removed with why; held said once; spent), `tests/sketch.test.js` | PASS (Phase 3) |
 | UAT-UND-22-01..06 | UND-22 AC1-6 | engine over seat rows | E/F/D 1, 0.67, 0.33 (w1) and 1, 0.44, 0.11 (w2); E edge 0.4 below F centre; table in log and page | `tests/engine.test.js` (curves, product, zero, bounds, checks), `tests/decideApp.test.js` (s4 seats: F5, F6, F4; edge E removed), `tests/watchPage.test.js`; `make test-browser` 4/4 | PASS (Phase 4) |
-| UAT-UND-23-01..05 | UND-23 AC1-5 | score question over reviews | asked once per row; enthusiastic > bored (live) | `tests/jevScore.test.js` with a scoring double (one request per look, nothing re-asked, `jev: { asked, reused }`, screaming reviews rank first), `tests/sketch.test.js`; live in Phase 7 | PASS (Phase 5, live pending) |
-| UAT-UND-24-01..06 | UND-24 AC1-6 | `--input mood=romantic --input centre=1` | start line inputs; mood only in state; shortlist of one skips Jev; refusals | `tests/inputs.test.js`, `tests/jevScore.test.js`, `tests/cli.test.js`, `tests/sketch.test.js`; start-line `inputs` checked in Phase 7 | PASS (Phase 5) |
+| UAT-UND-23-01..05 | UND-23 AC1-5 | score question over reviews | asked once per row; enthusiastic > bored (live) | `tests/jevScore.test.js` with a scoring double (one request per look, nothing re-asked, `jev: { asked, reused }`, screaming reviews rank first), `tests/sketch.test.js`; live: Night Shift (screaming reviews) scored top, Paper Boats low | PASS (Phases 5, 7) |
+| UAT-UND-24-01..06 | UND-24 AC1-6 | `--input mood=romantic --input centre=1` | start line inputs; mood only in state; shortlist of one skips Jev; refusals | `tests/inputs.test.js`, `tests/jevScore.test.js`, `tests/cli.test.js`, `tests/sketch.test.js`; start line `inputs` seen live and in `tests/evening.run.test.js` | PASS (Phases 5, 7) |
 | UAT-UND-25-01..06 | UND-25 AC1-6 | everything gated out; a held film | `walked-away` exit 0 + sentence; no call after; `stalled` without the state; held never walks | `tests/evening.run.test.js` (BOX_STATE=full: 11 steps, no hold, `walked-away` line + sentence), `tests/library.test.js` (guard incl. Gate 2 case and held), `tests/decideApp.test.js` (stall reason) | PASS (Phase 6) |
-| UAT-UND-26-01..05 | UND-26 AC1-5 | `examples/evening` live, normal and `BOX_STATE=full` | buys per the rules; `--input centre=0` changes the table; walks away; docs | `bobp make test-live` | pending |
+| UAT-UND-26-01..05 | UND-26 AC1-5 | `examples/evening` live, normal and `BOX_STATE=full` | buys per the rules; `--input centre=0` changes the table; walks away; docs | `bobp make test-live` 7/7 (evening live: 7 steps, Night Shift 19:30 E13-E14; full: `walked-away` in 22 steps with the sentence); `tests/evening.run.test.js` (centre=0 table); docs in SKETCHES/MCP_GUIDE/USER_GUIDE | PASS (Phase 7) |
 
 ## 4. Negative & Error Handling Test Cases
 
@@ -47,3 +47,4 @@ UND-23 AC5, UND-24 AC5-6 (check and input refusals).
 - Phase 4: no defects. 239 unit tests, 4 browser tests pass, lint clean.
 - Phase 5: no defects. 248 unit tests pass, lint clean. Rows now keep lists of plain values (a film's reviews) as facts, so `looks_at` can read them.
 - Phase 6: no defects. 253 unit tests pass, lint clean. The evening sketch landed here (Phase 7 needs it for the double-played runs); live runs remain for Phase 7.
+- Phase 7: one finding fixed in phase - the first live run took 24 steps because Jev saw only the last call and listed films after every rating; deciding sketches now show Jev what each other tool last said (`earlier`): 7 steps. 254 unit tests, 7/7 live runs.
