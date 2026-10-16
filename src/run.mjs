@@ -1,21 +1,22 @@
-// Sprint 1 UND-1 (ARCH §4): `understudy run <dir>` - one understudy
-// plays one app until its part reaches the end state.
+// Sprint 1 UND-1 (ARCH §4): `understudy run <sketch>` - one understudy
+// plays one app until its sketch's turn reaches the end state.
 //
 // Generalized from recard's tools/jev/runner.mjs: everything that is not
 // the app lives here - the step cap, the first-move timeout, noticing the
-// app died, Ctrl-C, the step log - so no part or adapter can be missing
-// it. Every step is one JSON line on stdout and in
-// build/runs/<adapter>/<timestamp>.jsonl, plus one readable line on
+// app died, Ctrl-C, the step log - so no sketch can be missing it.
+// Every step is one JSON line on stdout and in
+// build/runs/<sketch>/<timestamp>.jsonl, plus one readable line on
 // stderr; every outcome ends with one final line, and the target is
 // closed however the run ends.
 
 import { appendFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { MachineSeat } from './seat.mjs';
-import { loadPart, shown } from './part.mjs';
+import { loadSketch, shown } from './sketch.mjs';
 import { RunError, UsageError } from './errors.mjs';
 
 const KEY = 'TYPESAFE_API_KEY';
+export const DEFAULT_STEPS = 50;
 
 async function typesafeJudge(environment) {
   const { TypeSafeClient } = await import('@typesafe-ai/sdk');
@@ -69,8 +70,8 @@ function watchInterrupts(signals, onSecond) {
 }
 
 /**
- * Plays `<directory>`'s part against its app.
- * @param {string} directory
+ * Plays a sketch against its app.
+ * @param {string} location a directory holding sketch.yaml, or the file
  * @param {{ steps?: number, stdout?: { write: Function }, stderr?: { write: Function },
  *   environment?: object, makeJudge?: (environment: object) => object|Promise<object>,
  *   makeTarget?: (spec: object, options: { directory: string }) => Promise<object>,
@@ -78,16 +79,16 @@ function watchInterrupts(signals, onSecond) {
  *   clock?: () => number }} [options]
  * @throws {UsageError} before anything starts; {RunError} once it has.
  */
-export async function runPart(directory, {
-  steps = 50, stdout = process.stdout, stderr = process.stderr, environment = process.env,
+export async function runSketch(location, {
+  steps, stdout = process.stdout, stderr = process.stderr, environment = process.env,
   makeJudge = typesafeJudge, makeTarget = startTarget, logRoot = path.join('build', 'runs'),
   firstMoveMs = 10_000, stallMs = 10_000, pollMs = 250, signals = process, clock = Date.now,
 } = {}) {
-  const part = await loadPart(directory);
-  const { adapter } = part;
+  const sketch = await loadSketch(location);
+  const limit = steps ?? sketch.steps ?? DEFAULT_STEPS;
   const judge = reportingFailures(await makeJudge(environment));
-  const target = await makeTarget(adapter.target, { directory });
-  const logDirectory = path.join(logRoot, adapter.name);
+  const target = await makeTarget(sketch.target, { directory: sketch.directory });
+  const logDirectory = path.join(logRoot, sketch.name);
   const logFile = path.join(logDirectory, `${new Date(clock()).toISOString().replaceAll(':', '-')}.jsonl`);
   const write = (entry) => {
     const line = `${JSON.stringify(entry)}\n`;
@@ -98,10 +99,10 @@ export async function runPart(directory, {
   const interrupts = watchInterrupts(signals, () => target.close());
   try {
     mkdirSync(logDirectory, { recursive: true });
-    stderr.write(`understudy: playing ${adapter.name} (${target.describe()}) - log ${shown(logFile)}\n`);
-    Object.assign(part.services, { target, judge, name: 'understudy', player: adapter.player ?? {}, app: adapter.app });
-    run.seat = new MachineSeat({ machine: part.machine, services: part.services, pollMs, clock });
-    await playUntilDone({ run, target, steps, waits: { firstMoveMs, stallMs }, clock, interrupts, write, stderr });
+    stderr.write(`understudy: playing ${sketch.name} (${target.describe()}) - log ${shown(logFile)}\n`);
+    Object.assign(sketch.services, { target, judge, name: 'understudy', player: sketch.player, app: sketch.app });
+    run.seat = new MachineSeat({ machine: sketch.machine, services: sketch.services, pollMs, clock });
+    await playUntilDone({ run, target, steps: limit, waits: { firstMoveMs, stallMs }, clock, interrupts, write, stderr });
   } catch (error) {
     write({ final: true, outcome: interrupts.isAsked() ? 'interrupted' : error.outcome ?? 'error', steps: run.taken, state: run.seat?.state ?? null });
     throw error;
@@ -128,7 +129,7 @@ async function playUntilDone({ run, target, steps, waits, clock, interrupts, wri
     const exited = target.exited?.();
     if (exited) {
       // Its last output can land between the look and the exit: one more
-      // look decides whether it ended where the part ends.
+      // look decides whether it ended where the sketch ends.
       if (await run.seat.nextMove({ shouldStop: interrupts.isAsked }) === 'done') return;
       throw new RunError(`${target.describe()} exited with code ${exited.code} before the end state`, { outcome: 'app-exited' });
     }
@@ -153,7 +154,7 @@ async function checkIdle({ run, target, waits, idleFor }) {
     throw new RunError(`no first move from ${target.describe()} within ${limit / 1000} s - last view: ${view}`, { outcome: 'no-first-move' });
   }
   throw new RunError(`stalled: nothing to do for ${limit / 1000} s after step ${run.taken} (last state: ${run.seat.state})`
-    + ` - the app showed: ${view.slice(0, 200)} - if this is where the part should end, add a showing guard (docs/ADAPTERS.md)`, { outcome: 'stalled' });
+    + ` - the app showed: ${view.slice(0, 200)} - if this is where the sketch should end, add a showing guard (docs/SKETCHES.md)`, { outcome: 'stalled' });
 }
 
 /**

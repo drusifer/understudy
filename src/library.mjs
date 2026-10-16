@@ -1,8 +1,8 @@
-// US-129/D154: the names a part's turn file may use - the whole
+// US-129/D154: the names a sketch's turn may use - the whole
 // vocabulary between the files and the code. Every entry says in one line
 // what it means (`doc`), and that line is what `understudy library` lists.
 //
-// App-agnostic (sprint 1, ADR-U3). An app plugs in through its adapter's
+// App-agnostic (sprint 1, ADR-U3). An app plugs in through its sketch's
 // `services.app` hooks - which phase the app is in, how to read its view
 // into state, which moves are offered, what the rules check, what a move
 // does - and may add names of its own. `services.target` is how the app
@@ -80,7 +80,7 @@ export function genericLibrary(services) {
         fn: ({ event }, parameters) => event.output?.phase === parameters.is,
       },
       showing: {
-        doc: 'the view the last `look` read shows `text` somewhere (how a part says what its end looks like)',
+        doc: 'the view the last `look` read shows `text` somewhere (how a sketch says what its end looks like)',
         fn: ({ event }, parameters) => stringsIn(event.output?.view).some((each) => each.includes(parameters.text)),
       },
       counted: {
@@ -140,7 +140,7 @@ export function genericLibrary(services) {
         },
       },
       look: {
-        doc: 'read the app\'s view and find its phase (the adapter decides); output phase and view for the `phase` and `showing` guards',
+        doc: 'read the app\'s view and find its phase (the app hooks decide); output phase and view for the `phase` and `showing` guards',
         fn: async ({ input }) => {
           const view = input.event?.view ?? await services.target.view();
           return { phase: services.app.phase(view, input.context), view };
@@ -236,7 +236,7 @@ function verification(services, option, state, context) {
 }
 
 /**
- * Several libraries as one - an adapter's own names beside the generic ones.
+ * Several libraries as one - a sketch's hooks' names beside the generic ones.
  * A name defined twice is a mistake, not an override.
  */
 export function mergeLibraries(...libraries) {

@@ -1,0 +1,48 @@
+# The vending machine sketch (docs/SKETCHES.md): the same shape as the
+# other examples - look, make a move when there is something to do, stop
+# once a drink is out.
+name: vending-http
+description: >-
+  An understudy buys a drink from a vending machine: it puts in coins and
+  chooses a drink as a thirsty customer would, until the machine gives one out.
+target: { kind: http, command: node, args: [server.mjs], url: 'http://127.0.0.1:{port}', state: /machine }
+app: hooks.mjs
+
+questions:
+  next:
+    type: choice
+    instructions: >-
+      You are a thirsty customer at a vending machine with a few coins in your pocket. The
+      machine shows your `credit`, its `items` with their price and how many are `left`, and
+      `machine_says` is what it last told you. Choose your next action to get a drink you
+      would like, paying what it costs.
+    criteria:
+      coin: put this coin into the machine
+      buy: choose this drink
+      refund: give up and ask for the credit back
+
+turn:
+  initial: waiting
+  states:
+    waiting:
+      description: "Looks at the machine again. Safe to stop."
+      tags: [safe]
+      on: { OBSERVE: looking }
+    looking:
+      description: "Reads what the machine shows to find the phase."
+      invoke:
+        src: look
+        onDone:
+          - { target: finished, guard: { type: phase, params: { is: done } } }
+          - { target: choosing, guard: { type: phase, params: { is: asking } } }
+          - { target: waiting }
+    choosing:
+      description: "Something can be done at the machine."
+      tags: [move]
+      on: { STEP: acting }
+    acting:
+      description: "Jev picks the next thing to do and it is done at the machine."
+      invoke: { src: play, with: { phase: asking, question: next }, onDone: waiting }
+    finished:
+      description: "A drink came out; the run ends."
+      type: final

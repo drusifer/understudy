@@ -7,7 +7,7 @@ import { EventEmitter } from 'node:events';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { runPart } from '../src/run.mjs';
+import { runSketch } from '../src/run.mjs';
 
 /**
  * Picks the offered option that `prefer` likes, else the first offered.
@@ -42,7 +42,7 @@ async function playExample(directory, prefer, judge = judgePreferring(prefer)) {
   const logRoot = mkdtempSync(path.join(tmpdir(), 'understudy-example-'));
   test.after(() => rmSync(logRoot, { recursive: true, force: true }));
   let stdout = '';
-  await runPart(directory, {
+  await runSketch(directory, {
     stdout: { write: (text) => { stdout += text; } }, stderr: { write: () => {} },
     makeJudge: () => judge, logRoot, pollMs: 20, steps: 20,
     signals: new EventEmitter(), // eslint-disable-line unicorn/prefer-event-target -- stands in for `process`

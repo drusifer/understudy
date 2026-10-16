@@ -5,6 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MachineSeat } from '../src/seat.mjs';
 import { genericLibrary } from '../src/library.mjs';
+import YAML from 'yaml';
 import { parseTurn } from '../src/machine.mjs';
 
 // ---- a toy game: my turn is judged; on it I "build" until I pass ----
@@ -99,7 +100,7 @@ const ASKS_THE_TABLE = { escalation: 'ask', floor: 0 };
 function seatAt(table, judge, player = ASKS_THE_TABLE) {
   let now = 0;
   const services = { target: table.target, judge, name: 'bot', questions: QUESTIONS, player, app: GAME, answerMs: 50, answerPollMs: 1 };
-  const { machine } = parseTurn(TURN, { file: 'toy/turn.yaml', library: genericLibrary(services), questions: Object.keys(QUESTIONS) });
+  const { machine } = parseTurn(YAML.parse(TURN), { file: 'toy/turn.yaml', library: genericLibrary(services), questions: Object.keys(QUESTIONS) });
   const seat = new MachineSeat({ machine, services, clock: () => now, pollMs: 0 });
   return { seat, at: (ms) => { now = ms; } };
 }

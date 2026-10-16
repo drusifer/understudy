@@ -1,4 +1,4 @@
-// Sprint 2 UND-7 (ARCH §4, ADR-0009): the app hooks a web adapter gets when
+// Sprint 2 UND-7 (ARCH §4, ADR-0009): the app hooks a page sketch gets when
 // it gives none. The page target's view is what a person sees (`aria.mjs`);
 // here the controls a person could choose become the moves on offer, named
 // by kind and visible label (`button:Pro (paid monthly)`). Where the part

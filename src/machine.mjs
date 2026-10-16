@@ -1,19 +1,16 @@
-// US-129/D154: a part's turn file becomes a running machine.
+// US-129/D154, sprint 3 ADR-0011: a sketch's `turn:` becomes a running machine.
 //
-// A part's turn is an XState v5 statechart written in YAML: states,
+// A sketch's turn is an XState v5 statechart written in YAML: states,
 // the events and Jev verdicts that move between them, and names from
 // the library (guards, actions, actors) - never code. This file is the
 // only place that turns that data into behaviour, so it is also the one
-// place that checks it: every mistake an author can make in a turn file
+// place that checks it: every mistake an author can make in a turn
 // is refused HERE, at load, naming the file, the path in it, the bad
 // name and the nearest good one (Smith, US-129 Gate 1 C1). Two pieces of
 // plumbing are never the author's to remember (Gate 2): a state that
 // invokes something is `busy`, and a state tagged `safe` is where an
 // understudy asked to stop (Ctrl-C) actually stops.
 
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
-import YAML from 'yaml';
 import { setup, assign, fromPromise } from 'xstate';
 
 /**
@@ -28,26 +25,19 @@ export const LEFT = 'left';
  */
 
 /**
- * Loads a turn file from disk. See `parseTurn`.
- * @param {string} file
- * @param {{ library: Library, questions: string[] }} options
- */
-export function loadTurn(file, options) {
-  // Shown as the author knows it (examples/<app>/part/turn.yaml), like
-  // every other part-file error.
-  return parseTurn(readFileSync(file, 'utf8'), { ...options, file: path.relative(process.cwd(), file) });
-}
-
-/**
- * Checks and compiles a turn file's text.
- * @param {string} text YAML
+ * Checks and compiles a sketch's `turn:` - the statechart, already parsed.
+ * Every mistake names the sketch file and the path from `turn.` down.
+ * @param {object} config the `turn:` mapping
  * @param {{ file: string, library: Library, questions: string[] }} options
  * @returns {{ config: object, machine: import('xstate').AnyStateMachine }}
  */
-export function parseTurn(text, { file, library, questions }) {
-  const config = YAML.parse(text);
-  const fail = (where, message) => { throw new Error(`${file}: ${where}: ${message}`); };
-  if (!config?.states || !config.initial) fail('(top)', 'a turn file needs `initial` and `states`');
+export function parseTurn(config, { file, library, questions }) {
+  const fail = (where, message) => {
+    const at = where === '(top)' ? 'turn' : 'turn.' + where;
+    throw new Error(`${file}: ${at}: ${message}`);
+  };
+  if (!config || typeof config !== 'object' || Array.isArray(config)) fail('(top)', 'needs a mapping with `initial` and `states`');
+  if (!config.states || !config.initial) fail('(top)', 'needs `initial` and `states`');
   if (Object.hasOwn(config.states, LEFT)) fail(`states.${LEFT}`, `"${LEFT}" is reserved for an understudy that has stopped`);
   if (!Object.hasOwn(config.states, config.initial)) fail('initial', unknown('state', config.initial, Object.keys(config.states)));
 
@@ -107,7 +97,7 @@ function checkName(checker, where, kind, reference) {
 }
 
 /**
- * Any `question` / `questions` a file names must be in the part's questions file.
+ * Any `question` / `questions` a file names must be in the sketch's questions.
  */
 function checkQuestions(checker, where, parameters) {
   if (!parameters) return;
@@ -141,7 +131,7 @@ function checkTransitions(checker, where, transitions) {
 }
 
 function checkState(checker, where, state) {
-  if (state?.states) checker.fail(where, 'nested states are not supported in a turn file - keep phases flat');
+  if (state?.states) checker.fail(where, 'nested states are not supported in a turn - keep phases flat');
   const events = Object.entries(state?.on ?? {});
   for (const [event, transitions] of events) checkTransitions(checker, `${where}.on.${event}`, transitions);
   const delays = Object.entries(state?.after ?? {});

@@ -1,8 +1,10 @@
 // Sprint 1 (UND-4, UND-5 AC3, ADR-U5): the `understudy` command.
 //
-//   understudy run <dir> [--steps N]   play <dir>'s part against its app (needs TYPESAFE_API_KEY)
-//   understudy check <dir>             load and check <dir>'s adapter and part, start nothing
-//   understudy library [<dir>]         every name a part may use, with its meaning
+//   understudy run <sketch> [--steps N]   play the sketch against its app (needs TYPESAFE_API_KEY)
+//   understudy check <sketch>             load and check the sketch, start nothing
+//   understudy library [<sketch>]         every name a sketch may use, with its meaning
+//
+// <sketch> is a directory holding sketch.yaml, or the file itself (ADR-0011).
 //
 // Exit codes are the same for every command: 0 done, 1 the run failed
 // after starting, 2 refused before starting. Every failure is one
@@ -11,17 +13,17 @@
 import { UsageError, RunError } from './errors.mjs';
 import { genericLibrary } from './library.mjs';
 
-export const DEFAULT_STEPS = 50;
 const KEY = 'TYPESAFE_API_KEY';
 
-const USAGE = `usage: understudy run <dir> [--steps N]   play <dir>'s part against its app (needs ${KEY})
-       understudy check <dir>             check <dir>'s adapter and part without starting anything
-       understudy library [<dir>]         list every name a part may use, with its meaning
+const USAGE = `usage: understudy run <sketch> [--steps N]   play the sketch against its app (needs ${KEY})
+       understudy check <sketch>             check the sketch without starting anything
+       understudy library [<sketch>]         list every name a sketch may use, with its meaning
+<sketch> is a directory holding sketch.yaml (e.g. examples/cli) or the file itself.
 `;
 
 /**
  * The listing `understudy library` prints: kinds in order, one
- * `  name - doc` line per name. `extra` is an adapter's own names.
+ * `  name - doc` line per name. `extra` is the names a sketch's hooks add.
  */
 export function libraryListing(extra = null) {
   const lines = [];
@@ -39,7 +41,7 @@ export function libraryListing(extra = null) {
 function parse(argv) {
   const [command, ...rest] = argv;
   const positional = [];
-  let steps = DEFAULT_STEPS;
+  let steps;
   for (let index = 0; index < rest.length; index++) {
     const argument = rest[index];
     if (command === 'run' && (argument === '--steps' || argument.startsWith('--steps='))) {
@@ -56,10 +58,10 @@ function parse(argv) {
   return { command, positional, steps };
 }
 
-function oneDirectory(command, positional, { isOptional = false } = {}) {
+function oneSketch(command, positional, { isOptional = false } = {}) {
   const quoted = positional.map((each) => JSON.stringify(each)).join(', ');
-  if (positional.length > 1) throw new UsageError(`${command} takes one directory (got ${quoted})`);
-  if (!isOptional && positional.length === 0) throw new UsageError(`${command} needs an example directory, e.g. understudy ${command} examples/cli`);
+  if (positional.length > 1) throw new UsageError(`${command} takes one sketch (got ${quoted})`);
+  if (!isOptional && positional.length === 0) throw new UsageError(`${command} needs a sketch, e.g. understudy ${command} examples/cli`);
   return positional[0];
 }
 
@@ -68,17 +70,17 @@ async function loadModule(name) {
 }
 
 const defaultCommands = {
-  async run(directory, options) {
-    const { runPart } = await loadModule('./run.mjs');
-    return runPart(directory, options);
+  async run(location, options) {
+    const { runSketch } = await loadModule('./run.mjs');
+    return runSketch(location, options);
   },
-  async check(directory) {
-    const { checkPart } = await loadModule('./part.mjs');
-    return checkPart(directory);
+  async check(location) {
+    const { checkSketch } = await loadModule('./sketch.mjs');
+    return checkSketch(location);
   },
-  async adapterLibrary(directory) {
-    const { adapterLibrary } = await loadModule('./part.mjs');
-    return adapterLibrary(directory);
+  async sketchLibrary(location) {
+    const { sketchLibrary } = await loadModule('./sketch.mjs');
+    return sketchLibrary(location);
   },
 };
 
@@ -89,7 +91,7 @@ const HELP = new Set(['--help', '-h', 'help']);
  * injectable so tests never start a real app or call Jev.
  * @param {string[]} argv
  * @param {{ environment?: object, stdout?: { write: Function }, stderr?: { write: Function },
- *   commands?: { run?: Function, check?: Function, adapterLibrary?: Function } }} [io]
+ *   commands?: { run?: Function, check?: Function, sketchLibrary?: Function } }} [io]
  */
 export async function main(argv, { environment = process.env, stdout = process.stdout, stderr = process.stderr, commands = {} } = {}) {
   try {
@@ -103,16 +105,16 @@ export async function main(argv, { environment = process.env, stdout = process.s
     if (command === 'run') {
       // UND-4: Jev is required, so a run without its key never starts.
       if (!environment[KEY]?.trim()) throw new UsageError(`understudy run needs a TypeSafe key: set ${KEY}`);
-      await use.run(oneDirectory(command, positional), { steps, stdout, stderr, environment });
+      await use.run(oneSketch(command, positional), { steps, stdout, stderr, environment });
       return 0;
     }
     if (command === 'check') {
-      stdout.write(`${await use.check(oneDirectory(command, positional))}\n`);
+      stdout.write(`${await use.check(oneSketch(command, positional))}\n`);
       return 0;
     }
     if (command === 'library') {
-      const directory = oneDirectory(command, positional, { isOptional: true });
-      stdout.write(libraryListing(directory ? await use.adapterLibrary(directory) : null));
+      const location = oneSketch(command, positional, { isOptional: true });
+      stdout.write(libraryListing(location ? await use.sketchLibrary(location) : null));
       return 0;
     }
     throw new UsageError(`no command "${command}" - commands: run, check, library (see understudy --help)`);

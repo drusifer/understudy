@@ -5,6 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createActor, waitFor } from 'xstate';
+import YAML from 'yaml';
 import { parseTurn } from '../src/machine.mjs';
 
 const noop = { doc: 'test entry', fn: () => {} };
@@ -14,7 +15,7 @@ const library = {
   actors: { judge: { doc: 'asks a question', fn: async ({ input }) => input.answer ?? 'yes' } },
 };
 const questions = ['their_turn_is_over', 'step'];
-const load = (text) => parseTurn(text, { file: 'games/test/turn.yaml', library, questions });
+const load = (text) => parseTurn(YAML.parse(text), { file: 'games/test/turn.yaml', library, questions });
 
 const GOOD = `
 initial: waiting
@@ -43,7 +44,7 @@ test('a correct turn file loads into a machine', () => {
 
 test('a transition to a state that does not exist is refused, with the nearest name', () => {
   assert.throws(() => load(GOOD.replace('OBSERVE: judging', 'OBSERVE: judgin')),
-    /games\/test\/turn\.yaml: states\.waiting\.on\.OBSERVE: no state "judgin" - did you mean "judging"\?/);
+    /games\/test\/turn\.yaml: turn\.states\.waiting\.on\.OBSERVE: no state "judgin" - did you mean "judging"\?/);
 });
 
 test('an unknown guard, action or actor is refused, naming what the library does have', () => {
@@ -84,7 +85,7 @@ test('asked to leave, the machine leaves from a safe state and nowhere else', as
 test('`with` reaches the actor as input, alongside the machine context', async () => {
   const seen = [];
   const spying = { ...library, actors: { judge: { doc: 'spy', fn: async ({ input }) => { seen.push(input); return 'no'; } } } };
-  const { machine } = parseTurn(GOOD.replace('initial: waiting', 'initial: waiting\ncontext: { steps: 3 }'),
+  const { machine } = parseTurn(YAML.parse(GOOD.replace('initial: waiting', 'initial: waiting\ncontext: { steps: 3 }')),
     { file: 'x.yaml', library: spying, questions });
   const actor = createActor(machine).start();
   actor.send({ type: 'OBSERVE' });

@@ -42,19 +42,19 @@ test('the real command refuses a keyless run the same way, with no stack trace',
 
 test('check does not need the key', async () => {
   const seen = [];
-  const result = await cli(['check', 'examples/cli'], { environment: {}, commands: { check: async (directory) => { seen.push(directory); return 'examples/cli: part OK'; } } });
+  const result = await cli(['check', 'examples/cli'], { environment: {}, commands: { check: async (directory) => { seen.push(directory); return 'examples/cli: sketch OK'; } } });
   assert.equal(result.code, 0);
   assert.deepEqual(seen, ['examples/cli']);
-  assert.equal(result.stdout, 'examples/cli: part OK\n');
+  assert.equal(result.stdout, 'examples/cli: sketch OK\n');
 });
 
-test('run passes the directory and the step cap (default 50, --steps N or --steps=N)', async () => {
+test('run passes the sketch and --steps N / --steps=N; without it the sketch or the default decides', async () => {
   const calls = [];
   const commands = { run: async (directory, options) => { calls.push([directory, options.steps]); } };
   assert.equal((await cli(['run', 'examples/cli'], { commands })).code, 0);
   assert.equal((await cli(['run', 'examples/cli', '--steps', '7'], { commands })).code, 0);
   assert.equal((await cli(['run', '--steps=3', 'examples/web'], { commands })).code, 0);
-  assert.deepEqual(calls, [['examples/cli', 50], ['examples/cli', 7], ['examples/web', 3]]);
+  assert.deepEqual(calls, [['examples/cli', undefined], ['examples/cli', 7], ['examples/web', 3]]);
 });
 
 test('--steps with no number says so', async () => {
@@ -73,10 +73,10 @@ test('a bad --steps is refused naming the flag and the value', async () => {
 
 test('mistakes in the command line are refused with what to type instead', async () => {
   const cases = [
-    [[], /usage: understudy run <dir>/],
+    [[], /usage: understudy run <sketch>/],
     [['dance'], /no command "dance" - commands: run, check, library/],
-    [['run'], /run needs an example directory, e.g. understudy run examples\/cli/],
-    [['run', 'a', 'b'], /run takes one directory \(got "a", "b"\)/],
+    [['run'], /run needs a sketch, e.g. understudy run examples\/cli/],
+    [['run', 'a', 'b'], /run takes one sketch \(got "a", "b"\)/],
     [['run', 'examples/cli', '--headed'], /no option "--headed" for run/],
   ];
   for (const [argv, message] of cases) {
@@ -90,9 +90,10 @@ test('mistakes in the command line are refused with what to type instead', async
 test('--help prints the usage on stdout and exits 0', async () => {
   const result = await cli(['--help']);
   assert.equal(result.code, 0);
-  assert.match(result.stdout, /usage: understudy run <dir> \[--steps N\]/);
-  assert.match(result.stdout, /understudy check <dir>/);
-  assert.match(result.stdout, /understudy library \[<dir>\]/);
+  assert.match(result.stdout, /usage: understudy run <sketch> \[--steps N\]/);
+  assert.match(result.stdout, /understudy check <sketch>/);
+  assert.match(result.stdout, /understudy library \[<sketch>\]/);
+  assert.match(result.stdout, /<sketch> is a directory holding sketch\.yaml/);
 });
 
 test('a run that fails after starting exits 1 with its message; anything unexpected exits 1 too', async () => {
