@@ -86,6 +86,7 @@ agents/                the Bob Protocol team (personas, state, chat) - see AGENT
 
 ```sh
 bobp make test        # unit tests - never calls Jev or launches a browser
+bobp make test-browser  # the watch page in headless Chromium, with a Jev double (no key, no cost)
 bobp make lint        # eslint
 bobp make check       # test + lint + gitleaks secret scan (the gate)
 bobp make test-live   # plays every example with real Jev (costs API calls)

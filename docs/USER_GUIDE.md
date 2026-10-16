@@ -338,4 +338,5 @@ them as `bobp make run ARGS="<command> ..."`.
 | `run` | `ARGS="run|check|library ..."` |
 | `test-live` | play every example with real Jev, 20-step cap (serves the box office over HTTP for `mcp-remote`) |
 | `test` / `lint` / `check` | unit tests / eslint / the full gate |
+| `test-browser` | the watch page in headless Chromium (needs `install-browser`; no key) |
 | `clean` | remove `build/` (logs included) |

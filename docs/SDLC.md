@@ -40,6 +40,7 @@ repeating their commands. `make help` lists them.
 | `install` | `npm ci` | exact lockfile install; idempotent; touches the network |
 | `install-browser` | `npx playwright install chromium` | needed only for web targets; touches the network; see §9 |
 | `test` | `npm test -- $(ARGS)` → `node --test tests/*.test.js` | e.g. `ARGS="--test-name-pattern=seat"` |
+| `test-browser` | `npm run test:browser` → `node --test tests/browser/*.test.js` (one file at a time) | the watch page driven in headless Chromium against real runs of the examples with a Jev double - no key, no cost; needs Chromium (`make install-browser`); `make test` stays browser-free (ADR-0006) |
 | `test-live` | `understudy run <sketch> --steps 20` for every `examples/*/`; serves the box office over HTTP with a throwaway token (`MCP_TOKEN`, `BOX_PORT`, default 8765) for `examples/mcp-remote` and stops it after | live Jev (paid) and, for web examples, Chromium; UAT only |
 | `run` | `node bin/understudy.mjs $(ARGS)` | e.g. `ARGS="check examples/cli"` |
 | `lint` | `npm run lint` → eslint over `src/**/*.mjs`, `tests/**` | config `eslint.config.js` (recommended + unicorn + sonarjs, as in recard) |
@@ -167,8 +168,7 @@ Run by Tank at sprint close (`*devops sdlc-check`):
 8. Nothing under `src/` or `tests/` imports from `seed/`.
 
 ---
-*Last verified: 2026-10-15 against sprint-4 at d3a2708 by Tank (sprint 4 close: distclean →
-install (manifest and lockfile unchanged - no dependency added) → check, 200/200 tests, lint,
-gitleaks clean; eslint.config.js gained a browser-globals block for src/watch/page.mjs in
-Phase 3, the same shape as the examples/web block - no gate changed; make test-live green for
-all five examples in Phase 1).*
+*Last verified: 2026-10-16 by Tank (owner-approved mechanism change on sprint-4: new target
+`test-browser` and npm script `test:browser`; eslint browser-globals block for `tests/browser/`.
+Sprint 4 close before it: distclean → install (manifest and lockfile unchanged) → check, 200/200,
+lint, gitleaks clean).*

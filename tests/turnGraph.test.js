@@ -63,3 +63,21 @@ test('a state nothing reaches still gets a place, after the rest', () => {
   const drawn = layout(turnGraph({ initial: 'a', states: { a: { on: { GO: 'b' } }, b: {}, orphan: {} } }));
   assert.deepEqual(drawn.nodes.map((node) => [node.id, node.column]), [['a', 0], ['b', 1], ['orphan', 2]]);
 });
+
+test('labels are legible: none covers a state or another label, in every example (sprint 4 Phase 2 finding)', () => {
+  // A label's box, as the page draws it (12 px text, ~6.6 px a character, centred on labelX, baseline labelY).
+  const labelBox = (edge) => {
+    const w = edge.label.length * 6.6;
+    return { id: edge.label, x: edge.labelX - (w / 2), y: edge.labelY - 11, w, h: 14 };
+  };
+  const isOverlapping = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+  for (const example of ['cli', 'web', 'http', 'mcp', 'mcp-remote']) {
+    const drawn = layout(turnGraph(turnOf(example)));
+    const labels = drawn.edges.map((edge) => labelBox(edge));
+    for (const [index, label] of labels.entries()) {
+      for (const node of drawn.nodes) assert.ok(!isOverlapping(label, node), `${example}: label "${label.id}" covers state ${node.id}`);
+      const others = labels.slice(index + 1);
+      for (const other of others) assert.ok(!isOverlapping(label, other), `${example}: labels "${label.id}" and "${other.id}" collide`);
+    }
+  }
+});

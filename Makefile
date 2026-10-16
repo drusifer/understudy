@@ -6,7 +6,7 @@
 #
 # Adding a task: add the npm script first, then a one-line target here.
 
-.PHONY: help install install-browser test test-live lint check secrets hooks push run clean distclean
+.PHONY: help install install-browser test test-browser test-live lint check secrets hooks push run clean distclean
 
 NEED_INSTALL = @test -d node_modules || { echo "No node_modules - run 'make install' first"; exit 1; }
 
@@ -23,6 +23,10 @@ install-browser: ## Download Playwright's Chromium for the web target (network; 
 test: ## Run the unit tests (node:test); ARGS="--test-name-pattern=x" to filter
 	$(NEED_INSTALL)
 	npm test -- $(ARGS)
+
+test-browser: ## Browser tests: the watch page driven in headless Chromium against real runs with a Jev double (no key, no cost); needs Chromium (make install-browser)
+	$(NEED_INSTALL)
+	npm run test:browser
 
 test-live: ## Live runs: every examples/*/ played with real Jev (paid; needs TYPESAFE_API_KEY), capped at 20 steps; serves the box office over HTTP (throwaway token) for examples/mcp-remote
 	$(NEED_INSTALL)

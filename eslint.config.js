@@ -56,6 +56,11 @@ export default [
     languageOptions: { globals: { document: 'readonly', globalThis: 'readonly' } },
   },
   {
+    // Browser tests pass functions to page.evaluate(); those run in the page.
+    files: ['tests/browser/**/*.js'],
+    languageOptions: { globals: { document: 'readonly' } },
+  },
+  {
     files: ['tests/**/*.js', 'tests/**/*.mjs'],
     rules: {
       'sonarjs/no-duplicate-string': 'off',

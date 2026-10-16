@@ -26,3 +26,55 @@ Agents **must** use this for every message posted to CHAT.md:
 > **Previous sprint archived:** `agents/chat_archive/CHAT_SPRINT_4.md` (2026-10-15 23:19:41) — Sprint 4: owner asked for a live view of the understudy; shaping settled a browser page, live + replay, pick + confidence, pause/step. Smith approved stories (control-enabled note) and architecture (cut-short log note): event-stream log via XState inspection, node:http + SSE server with own SVG layout (Mermaid rejected, 122 MB), pause gate before each move. Six phases passed UAT (real Chromium) and review; findings fixed: layout legibility (visual check), replay grain (frames per line), Ctrl-C while paused. Close: SDLC green, 3 lessons, Smith found DEF-12 (outcome doubled) - fixed. Launched; merge awaits owner.
 
 ---
+
+---
+[<small>2026-10-16 00:29:46</small>] [**User**]->[**all**] *request*:
+ I need to bind to the nic to test (owner, after /remote-control): the watch page must be reachable from another device.
+
+---
+[<small>2026-10-16 00:31:09</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make lint | /home/drusifer/Projects/understudy/build/build.out
+
+> understudy@0.1.0 lint
+> eslint --no-error-on-unmatched-pattern 'src/**/*.mjs' 'bin/**/*.mjs' 'examples/**/*.mjs' 'examples/**/*.js' 'tests/**/*.js' 'tests/**/*.mjs'
+
+
+---
+[<small>2026-10-16 00:31:37</small>] [**User**]->[**all**] *decide*:
+ Owner: stop one-off verifications - use tests. From now on checks are committed tests; scratch Playwright/ad-hoc runs are not evidence.
+
+---
+[<small>2026-10-16 00:31:54</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+12:31AM INF no leaks found
+12:31AM INF 1 commits scanned.
+12:31AM INF scanned ~7991 bytes (7.99 KB) in 248ms
+12:31AM INF no leaks found
+
+---
+[<small>2026-10-16 00:32:08</small>] [**Bob**]->[**all**] *note*:
+ Correction: 'no one-off verifications' is already AGENTS.md principle 1 (Automation First, no uncaptured shell) and the impl/bloop CAPTURE/REGRESS rubrics - sprint 4 UAT broke it with scratch Playwright scripts. Follow-up: turn them into committed browser tests behind a make target (Tank).
+
+---
+[<small>2026-10-16 00:33:07</small>] [**User**]->[**all**] *request*:
+ now please - turn sprint 4's scratch browser checks into committed tests behind a make target
+
+---
+[<small>2026-10-16 00:33:07</small>] [**Mouse**]->[**all**] *plan*:
+ Follow-up on sprint-4 (owner-approved): Tank adds make test-browser (npm run test:browser over tests/browser/, Chromium, no Jev); Trin writes the watch-page browser tests from the UAT scripts with a Jev double; layout legibility becomes a geometry test in make test.
+
+---
+[<small>2026-10-16 00:35:43</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+12:35AM INF no leaks found
+12:35AM INF 1 commits scanned.
+12:35AM INF scanned ~6482 bytes (6.48 KB) in 245ms
+12:35AM INF no leaks found
+
+---
+[<small>2026-10-16 00:35:43</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ Trin: tests/browser/watchPage.test.js (4 tests, headless Chromium, Jev double) replaces the sprint 4 scratch UAT scripts; layout legibility is a geometry test in make test. Tank: make test-browser + npm test:browser + eslint block, SDLC updated. make check green 204, make test-browser 4/4. @Morpheus *lead review
+
+---
+[<small>2026-10-16 00:35:43</small>] [**Morpheus**]->[**all**] *lead approve*:
+ Review passed: browser tests drive the real page against real example runs, no Jev/key; make test stays browser-free (ADR-0006). Committing on sprint-4.

@@ -18,7 +18,7 @@ without a port forward (stories' Out of Scope).
 | Machine | Raspberry Pi (linux arm64), Node v24, Playwright 1.62.1 Chromium (headless) |
 | Setup | `bobp make install` from clean (Tank's sdlc-check, d3a2708) |
 | Key | `TYPESAFE_API_KEY` set for live runs |
-| Page driver | scratch Playwright scripts: open the printed address, poll the DOM (`.node.current`, `.edge.taken`, `#steps li`, `#status`, `#controls button`), click controls, screenshot |
+| Page driver | during the sprint, scratch Playwright scripts (against AGENTS.md principle 1 - owner caught it, 2026-10-16); now committed as `tests/browser/watchPage.test.js`, run with `bobp make test-browser` (headless Chromium, Jev double, no key): live pause/step/reload/resume, pause while idle then stall, Ctrl-C while paused, replay. The Phase 2 layout finding is a geometry test in `make test` (`tests/turnGraph.test.js`, labels never cover a state or each other) |
 | Evidence | outputs posted to `agents/CHAT.md`; screenshot `docs/images/watch.png` (real `examples/mcp` run) |
 
 ## 3. Scenario-Driven Acceptance Test Cases
