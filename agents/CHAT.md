@@ -74,3 +74,43 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-15 21:29:32</small>] [**User**]->[**all**] *request*:
  /sprint 3 go
+
+---
+[<small>2026-10-15 21:31:29</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Stories ready for user review: docs/sprints/USER_STORIES_SPRINT3.md - UND-9 sketch.yaml only format (5), UND-10 local MCP (5), UND-11 remote MCP (3), UND-12 docs (2). Self-check: rubric STORIES: OUT=S TEST=A FAIL=A SCOPE=S SIZE=A DESIGN=A. @Smith *user review sprint-3
+
+---
+[<small>2026-10-15 21:31:38</small>] [**Smith**]->[**Cypher**] *user reject*:
+ *user reject. rubric STORIES: OUT=S TEST=W FAIL=W SCOPE=S SIZE=A DESIGN=A. TEST: UND-10 AC4 'values in the last result' has no pass condition; range of 20 only in Assumptions. FAIL: no criterion when NO tool can be offered (run would idle). FIX: concrete AC4 (e.g. film ids from list_films' result); add AC: nothing offerable -> exit 1 in 10 s naming each tool and why. @Cypher revise stories.
+
+---
+[<small>2026-10-15 21:31:53</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Stories revised per Smith: UND-10 AC4 now lists the exact value sets with a list_films->pick_seats example; new AC5 covers not-offered tools and nothing-offerable (exit 1 in 10 s, no-first-move/stalled). @Smith *user review sprint-3
+
+---
+[<small>2026-10-15 21:31:53</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ *user approve. Stories approved. rubric STORIES: OUT=S TEST=S FAIL=S SCOPE=S SIZE=A DESIGN=A. Note for arch: UND-11 AC5 changes make test-live (Tank's call if mechanism). @Morpheus *lead arch sprint
+
+---
+[<small>2026-10-15 21:34:23</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Architecture complete: docs/sprints/ARCH_SPRINT3.md - sketch.mjs replaces part.mjs; mcp target (SDK Client; own stdio transport on program.mjs; streamable HTTP + headers); generic MCP app; fill.mjs = Jev picks arg values in a 2nd request. ADR-0011..0013. Deps ordinary (no Tank Phase 0); test-live recipe edit is Tank's. rubric ARCH self: BOUND=A FLOW=S FAIL=S USER=A DECS=A FEAS=A. @Smith *user feedback arch sprint-3
+
+---
+[<small>2026-10-15 21:34:33</small>] [**Smith**]->[**Mouse**] *user approve*:
+ *user approve. Architecture approved with notes (folded in): 'not offering ... yet' since results can supply values later; showing also sees tool descriptions - document it and test the example's end text is not in any. rubric ARCH: BOUND=A FLOW=S FAIL=S USER=A DECS=A FEAS=A. @Mouse *sm plan sprint
+
+---
+[<small>2026-10-15 21:35:06</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint planned: task.md - 5 phases (sketch loader; convert examples; local MCP + fill + box office; remote MCP + Tank test-live; docs) + close. Sprint 2 board archived to docs/sprints/TASKS_SPRINT2.md. rubric PLAN self: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-10-15 21:35:20</small>] [**Morpheus**]->[**Mouse**] *lead reject*:
+ Plan review FAILED. rubric PLAN: SIZE=A GATE=W VERIF=A ALIGN=A OWNER=A. GATE: Phase 1 removes part.mjs while examples still use adapter.mjs -> examples.test.js red at the Phase 1 commit. FIX: one phase does loader + example conversion (3 tasks), renumber. @Mouse revise
+
+---
+[<small>2026-10-15 21:35:25</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Plan revised: loader + example conversion in one phase (Phase 1), 4 phases total. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-10-15 21:35:26</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Sprint plan approved. rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A. Phase 1 ready. @Neo *swe impl phase-1
