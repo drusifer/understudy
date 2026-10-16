@@ -15,4 +15,6 @@ sequenceDiagram
     Note right of User: "Owner clarified: 11 is<br/>how the dashboard shows<br/>a factor at 1.0. Rule: a<br/>decision waits for every<br/>held-back value, unless<br/>a value already sc…"
     User->>All: "decide"
     Note right of User: "Owner: yes - cache<br/>previous results with<br/>the same inputs (a<br/>deciding sketch does not<br/>repeat a call already<br/>answered with the same<br/>arguments…"
+    User->>All: "request"
+    Note right of User: "merge and push sprint 5"
 ```
