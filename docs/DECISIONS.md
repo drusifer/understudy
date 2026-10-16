@@ -56,7 +56,7 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 *   **Context**: rules test facts about a value (a showing's genre lives a level up; a film's score on another server). Sprint 3 offered flat leaf values of the last answer only.
 *   **Options**: (1) rows: objects with inherited scalars, values from rows that own the field, across all remembered answers, joined by `join`; (2) look facts up by value equality.
 *   **Decision**: (1). Lists of plain values (reviews) count as facts. A decided value used in a call that answered is spent. At most 500 rows kept.
-*   **Consequences**: + facts from any server meet. − spent values never come back even if the app changes; one join key, exact match.
+*   **Consequences**: + facts from any server meet; a call already answered with the same arguments is not repeated (owner: an LRU cache, `lru-cache`, 200 calls). − spent values never come back even if the app changes; one join key, exact match.
 
 ## ADR-0016: Pause is a gate before each move; no Jev call while paused
 

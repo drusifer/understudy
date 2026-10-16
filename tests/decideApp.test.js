@@ -134,3 +134,22 @@ test('a decision waits while any value is held back - unless one already scores 
   assert.deepEqual(offered.open[0].candidates, ['s2', 's13']);
   assert.equal(offered.decided[0].table[0].total, 1);
 });
+
+test('in a deciding sketch a call already answered with the same arguments is not made again (owner, 2026-10-16)', async () => {
+  const { call } = await setUp();
+  const listed = await call({ server: 'boxoffice', tool: 'list_films', arguments: {} });
+  assert.deepEqual(listed.blocked.find((move) => move.id === 'tool:boxoffice/list_films'),
+    { id: 'tool:boxoffice/list_films', why: 'already answered with these arguments - its answer is kept' });
+  assert.equal(mcpApp().moves({ tools: [{ name: 'list_films', inputSchema: { type: 'object' } }], last: { tool: 'list_films', arguments: {}, isError: false, text: '[]' } }).offered.length, 1, 'not without decide');
+});
+
+test('the answered calls are a fixed-size cache: the least recently used is forgotten and may be made again', async () => {
+  const { ANSWERED_CALLS } = await import('../src/apps/mcp.mjs');
+  const app = mcpApp({ decide: { 'pick.x': {} } });
+  const tool = { name: 'list_films', inputSchema: { type: 'object' } };
+  const answer = (index) => ({ tool: `t${index}`, arguments: {}, isError: false, text: '[]' });
+  app.moves({ tools: [tool], last: { tool: 'list_films', arguments: {}, isError: false, text: '[]' } });
+  assert.equal(app.moves({ tools: [tool], last: null }).offered.length, 0);
+  for (let index = 0; index < ANSWERED_CALLS; index++) app.moves({ tools: [], last: answer(index) });
+  assert.equal(app.moves({ tools: [tool], last: null }).offered.length, 1, 'forgotten after ANSWERED_CALLS others');
+});

@@ -46,3 +46,15 @@ Agents **must** use this for every message posted to CHAT.md:
 3:58PM INF 1 commits scanned.
 3:58PM INF scanned ~5354 bytes (5.35 KB) in 239ms
 3:58PM INF no leaks found
+
+---
+[<small>2026-10-16 17:15:21</small>] [**User**]->[**all**] *decide*:
+ Owner: yes - cache previous results with the same inputs (a deciding sketch does not repeat a call already answered with the same arguments).
+
+---
+[<small>2026-10-16 17:19:39</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+5:19PM INF no leaks found
+5:19PM INF 1 commits scanned.
+5:19PM INF scanned ~5194 bytes (5.19 KB) in 260ms
+5:19PM INF no leaks found

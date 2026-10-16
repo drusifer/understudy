@@ -9,7 +9,8 @@
   `any`) remove or hold back; **scores** (`range`, `order`, `ask`) with weights that bend the
   curve multiply into a total; Jev makes the final Choice from the **shortlist**. Step lines and
   the watch page show the score table, what was removed and why, what is held back. A decision
-  waits until nothing is held back, unless a value already scores a perfect 1.
+  waits until nothing is held back, unless a value already scores a perfect 1. A deciding sketch
+  does not repeat a call already answered with the same arguments (an LRU cache of 200, `lru-cache`).
 - **Jev judges what numbers cannot**: a `type: score` question (`looks_at`, `levels`) is a
   factor - asked once per row, in one request per look.
 - **Inputs**: `inputs:` declares choices and weights; `understudy run <sketch> --input

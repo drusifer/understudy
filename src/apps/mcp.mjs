@@ -7,10 +7,13 @@
 
 import { candidatesFor, MAX_CANDIDATES } from '../fill.mjs';
 import { answerRows } from '../rows.mjs';
+import { LRUCache } from 'lru-cache';
 import { gate, score, shortlist } from '../engine.mjs';
 
 const RESULT_CHARS = 2000;
 const EARLIER_CHARS = 1000;
+// How many answered calls a deciding sketch remembers (least recently used forgotten first).
+export const ANSWERED_CALLS = 200;
 
 /**
  * A tool's name as the moves say it: `<server>/<tool>` when the sketch
@@ -75,6 +78,7 @@ function listedArgument(name, schema, listed, last) {
   return { why: `argument "${name}" (${schema.type ?? 'any'}) has nothing to choose from; list values for it in sketch.yaml` };
 }
 
+const callKey = ({ server = null, tool, arguments: arguments_ = {} }) => JSON.stringify([server ?? null, tool, arguments_]);
 const hasAsk = (entry) => Object.values(entry.scores ?? {}).some((factor) => factor.ask);
 const isAsked = (entry, field) => Boolean(entry.scores?.[field]?.ask);
 const valuesOf = (answers) => Object.fromEntries(Object.entries(answers).map(([field, answer]) => [field, answer.value]));
@@ -113,8 +117,10 @@ export function mcpApp({ calls = [], values = {}, decide = {}, pick = null, ques
   const scored = new Map();
   let waitingScores = new Map();
   let step = 0;
-  // What each tool last answered (a deciding sketch only), for Jev's view.
+  // What each tool last answered (a deciding sketch only), for Jev's view,
+  // and every call that answered, by tool and arguments.
   const saidBy = new Map();
+  const answeredCalls = new LRUCache({ max: ANSWERED_CALLS });
   // UND-25: where each decided argument stood at the last look.
   const standing = new Map();
   const rows = answerRows({ notify: (line) => app.notify?.(line) });
@@ -248,11 +254,17 @@ export function mcpApp({ calls = [], values = {}, decide = {}, pick = null, ques
       rows.remember(view.last);
       if (Object.keys(decide).length > 0 && view.last && !view.last.isError) {
         saidBy.set(nameOf({ server: view.last.server, name: view.last.tool }), view.last.text.slice(0, EARLIER_CHARS));
+        answeredCalls.set(callKey(view.last), true);
       }
       // A refused call spends nothing.
       if (spending.length > 0 && view.last?.isError) for (const [key, value] of spending) spent.get(key).delete(value);
       spending = [];
-      const all = view.tools.flatMap((tool) => movesFor(tool, { calls, values, last: answered, decided: (key, argument) => decided(key, argument, options), pick: pick && { ...pick, told: told() } }));
+      const found = view.tools.flatMap((tool) => movesFor(tool, { calls, values, last: answered, decided: (key, argument) => decided(key, argument, options), pick: pick && { ...pick, told: told() } }));
+      // Owner, 2026-10-16: a deciding sketch keeps every answer, so a call
+      // already answered with the same arguments is not made again.
+      const all = found.map((move) => (move.open?.length === 0 && answeredCalls.get(callKey(move.call))
+        ? { id: move.id, why: 'already answered with these arguments - its answer is kept' }
+        : move));
       const blocked = all.filter((move) => move.why);
       for (const { id, why } of blocked) {
         if (warned.has(id)) continue;

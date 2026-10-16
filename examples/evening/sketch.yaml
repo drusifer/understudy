@@ -57,6 +57,7 @@ questions:
 
 decide:
   ratings/rating.title: {}
+  boxoffice/pay.hold: {}                # only holds pick_seats answered, never other text
   boxoffice/seat_map.showing:
     join: title
     gates:

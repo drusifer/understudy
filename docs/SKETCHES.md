@@ -307,7 +307,10 @@ decide:
 
 At weight 1 rows E, F, D score 1, 0.67, 0.33; at weight 2, 1, 0.44, 0.11 - the row you want most
 has the biggest bearing. A decided value used in a call that answered is **spent**: it is not
-offered again (its answer is remembered). A score question used by `ask:` says what it
+offered again (its answer is remembered). Likewise, in a sketch with `decide:`, a call already
+answered with the same arguments is not made again - a fixed-size cache of the last 200 calls
+(`lru-cache`), the least recently used forgotten first - and Jev's view carries what each tool
+last said (`earlier`). A score question used by `ask:` says what it
 `looks_at` and its `levels`, worst first; Jev is asked about each new row once per run, every
 row it is waiting for in one request:
 

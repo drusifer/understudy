@@ -68,7 +68,8 @@ Standard targets deliberately absent:
 - Declare only what the code imports. Runtime today: `xstate`, `yaml`, `@typesafe-ai/sdk`
   (Jev), `playwright` (page target; locked at 1.62.1 so its Chromium download is shared with
   recard's), `@modelcontextprotocol/sdk` (mcp target client; the example server) and `zod` (the
-  example server's tool schemas; the SDK's peer) - both added in sprint 3. Expected later:
+  example server's tool schemas; the SDK's peer) - both added in sprint 3; `lru-cache` (a deciding sketch's answered calls,
+  fixed size, least recently used forgotten) - added in sprint 5. Expected later:
   `@xstate/graph ^3.0.4`.
 
 ## 5. Quality gates

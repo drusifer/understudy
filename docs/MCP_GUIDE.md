@@ -350,8 +350,11 @@ shows it beside the step:
 ```
 
 In a deciding sketch Jev also sees what each other tool last said (`earlier`), so it does not
-list the films again after asking for a rating. A live run of the example rates every film,
-then books - 10 to 15 steps; walking away takes longer (it reads every showing that qualifies).
+list the films again after asking for a rating, and a call already answered with the same
+arguments is not made again (its answer is kept; the last 200 calls, least recently used
+forgotten first). Decide `pay.hold: {}` too, so only holds `pick_seats` answered are offered. A
+live run of the example lists the films, rates all six, reads one seat map, holds and pays - 10
+steps; walking away takes longer (it reads every showing that qualifies).
 
 ## 10. Troubleshooting
 
