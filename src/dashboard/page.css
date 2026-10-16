@@ -120,6 +120,11 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .tube svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .tube .labels { position: absolute; inset: 0; pointer-events: none; font-family: VT323, monospace; }
 .tube .label { position: absolute; transform: translate(-50%, -50%); white-space: nowrap; }
+.tube .flowing { animation: flowdash 1s linear infinite; }
+.tube .faint { opacity: .25; }
+.tube .still { opacity: .8; }
+.tube .orb { animation: pulse 1.6s infinite; }
+.tube .now { filter: drop-shadow(0 0 10px #ff9a3c) drop-shadow(0 0 22px #ff7a1a); }
 
 /* Printer */
 .printer { border-radius: 14px; padding: 0 18px 18px; background: linear-gradient(180deg, #2f2c29, #1c1a18); border: 3px solid #121110; box-shadow: 0 12px 28px rgba(0,0,0,.6); }

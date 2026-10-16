@@ -207,3 +207,19 @@ To github.com:drusifer/understudy.git
 6:51PM INF 1 commits scanned.
 6:51PM INF scanned ~6993 bytes (6.99 KB) in 246ms
 6:51PM INF no leaks found
+
+---
+[<small>2026-10-16 18:51:51</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 4 done: console page (rack, dial, coloured faders, switches, Play/STOP, READY, POWER dim, printer v1), fonts via @fontsource; screenshots OK; 272 tests; committed. Phase 5: tube + printer.
+
+---
+[<small>2026-10-16 18:51:51</small>] [**Mouse**]->[**all**] *phase 5*:
+ The state tube and the printer - UND-30, UND-31
+
+---
+[<small>2026-10-16 18:57:04</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+6:57PM INF no leaks found
+6:57PM INF 1 commits scanned.
+6:57PM INF scanned ~7464 bytes (7.46 KB) in 240ms
+6:57PM INF no leaks found

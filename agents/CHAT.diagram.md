@@ -73,4 +73,8 @@ sequenceDiagram
     Note right of Morpheus: "Phase 3 done (UND-29<br/>server): runner<br/>play/stop/refusals, 268<br/>tests, committed. Phase<br/>4: the console page<br/>(controls)."
     Mouse->>All: "phase 4"
     Note right of Mouse: "The console's controls -<br/>UND-28, UND-29 (page)"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 4 done: console<br/>page (rack, dial,<br/>coloured faders,<br/>switches, Play/STOP,<br/>READY, POWER dim,<br/>printer v1), fonts via<br/>@fontsource, screens…"
+    Mouse->>All: "phase 5"
+    Note right of Mouse: "The state tube and the<br/>printer - UND-30, UND-31"
 ```

@@ -3,6 +3,8 @@
 // the printer's lines) run in Node too, for tests; the DOM wiring below them
 // runs only in a page.
 
+import { ringOf, SIZE, tubeLayout } from './tube.mjs';
+
 // Each weight's own colour, in the order the sketch declares them.
 export const COLOURS = [[255, 72, 56], [176, 98, 255], [56, 196, 255], [120, 236, 70], [255, 176, 32], [255, 110, 190]];
 
@@ -129,6 +131,81 @@ function element(tag, attributes = {}, ...children) {
   return node;
 }
 
+const SVG = 'http://www.w3.org/2000/svg';
+
+function svgElement(tag, attributes = {}) {
+  const node = document.createElementNS(SVG, tag);
+  for (const [name, value] of Object.entries(attributes)) node.setAttribute(name, String(value));
+  return node;
+}
+
+// A label over the tube, placed in its 600 x 600 drawing's units.
+function label(x, y, text, look) {
+  const style = { left: `${(x / SIZE) * 100}%`, top: `${(y / SIZE) * 100}%` };
+  return element('div', { class: 'label', style: { ...style, ...look } }, text);
+}
+
+function tubeAria(layout, current) {
+  const edges = layout.edges.map((edge) => `${edge.from} -${edge.label}${edge.sub ? ' (' + edge.sub + ')' : ''}-> ${edge.to}`).join('; ');
+  return `Statechart: ${edges}. Now: ${current ?? 'not running'}.`;
+}
+
+// ------------------------------------------------------------ the tube --
+
+function drawRing(svg, weights) {
+  const arcs = ringOf(weights.map((each) => ({ ...each, colour: rgb(each.colour) })));
+  return arcs.map((arc, index) => {
+    const glow = `filter: drop-shadow(0 0 ${2 + arc.value * 3}px ${arc.colour})`;
+    svg.append(svgElement('path', { d: arc.track, fill: 'none', stroke: '#1a0f08', 'stroke-width': 16, 'stroke-linecap': 'round' }),
+      svgElement('path', { d: arc.fill, fill: 'none', stroke: arc.colour, 'stroke-width': 12, 'stroke-linecap': 'round', 'stroke-dasharray': '10 5', class: arc.value > 0 ? 'flowing' : 'faint', style: glow }));
+    const text = `${arc.name.toUpperCase()} ${readoutOf(arc.value, weights[index].range)}`;
+    return label(arc.lx, arc.ly, text, { color: arc.colour, fontSize: 'clamp(11px,2.4vw,17px)', textShadow: `0 0 6px ${arc.colour}` });
+  });
+}
+
+// How one edge is drawn: the decision edge carries the blend; the one just taken glows.
+function edgeLook(edge, power, isLive) {
+  const isPowered = edge.isDecision && power.weights.length > 0;
+  if (isPowered) return { colour: power.blend, width: 3 + power.total * 1.6, tone: power.blend, glow: `filter: drop-shadow(0 0 ${3 + power.total * 2.5}px ${power.blend})` };
+  if (isLive) return { colour: '#ffb04a', width: 4, tone: '#e0a868', glow: 'filter: drop-shadow(0 0 6px #ff8a2a)' };
+  return { colour: '#b0602a', width: 2.5, tone: '#e0a868', glow: '' };
+}
+
+function drawEdges(svg, edges, power, { isRunning, liveEdge }) {
+  const labels = [];
+  for (const edge of edges) {
+    const isLive = isRunning && edge.index === liveEdge;
+    const look = edgeLook(edge, power, isLive);
+    const isFlowing = isRunning && (isLive || edge.isDecision);
+    svg.append(svgElement('path', { d: edge.d, fill: 'none', stroke: look.colour, 'stroke-width': look.width, 'stroke-linecap': 'round', 'stroke-dasharray': '7 5', class: isFlowing ? 'flowing' : 'still', style: look.glow }));
+    labels.push(label(edge.lx, edge.ly - 6, edge.label, { color: look.tone, fontSize: 'clamp(11px,2.3vw,17px)', textShadow: `0 0 5px rgba(0,0,0,.9), 0 0 8px ${look.tone}` }));
+    if (edge.sub) labels.push(label(edge.lx, edge.ly + 10, edge.sub, { color: look.tone, fontSize: 'clamp(9px,1.7vw,13px)', opacity: '.8', textShadow: '0 0 4px #000' }));
+  }
+  return labels;
+}
+
+function drawOrb(svg, { weights, total, blend }) {
+  if (weights.length === 0) return [];
+  svg.append(svgElement('circle', { cx: 300, cy: 318, r: 14 + total * 2, fill: blend, class: 'orb', style: `filter: drop-shadow(0 0 ${8 + total * 4}px ${blend})` }));
+  const shares = weights.map((weight, index) => {
+    const share = total === 0 ? 0 : Math.round((weight.value / total) * 100);
+    const colour = rgb(weight.colour);
+    return label(300 + (index - (weights.length - 1) / 2) * 46, 380, `${share}%`, { color: colour, fontSize: 'clamp(11px,2.2vw,17px)', textShadow: `0 0 6px ${colour}` });
+  });
+  return [label(300, 362, 'DECISION POWER', { fontFamily: 'Cinzel, serif', fontSize: 'clamp(9px,1.6vw,12px)', letterSpacing: '3px', color: '#e8c890' }), ...shares];
+}
+
+function drawStates(svg, nodes, current) {
+  return nodes.map((node) => {
+    const isNow = node.id === current;
+    const edge = isNow ? '#ffe2a8' : '#a86a32';
+    svg.append(svgElement('circle', { cx: node.x, cy: node.y, r: isNow ? 20 : 15, fill: isNow ? '#ffb04a' : '#2a1608', stroke: edge, 'stroke-width': 2.5, class: isNow ? 'now' : '' }));
+    if (node.final) svg.append(svgElement('circle', { cx: node.x, cy: node.y, r: isNow ? 14 : 10, fill: 'none', stroke: edge, 'stroke-width': 1.5 }));
+    const tone = isNow ? '#ffe2a8' : '#d39a5c';
+    return label(node.lx, node.ly, node.id.replaceAll('_', ' '), { color: tone, fontSize: 'clamp(13px,2.8vw,21px)', textShadow: '0 0 6px rgba(255,150,60,.7), 0 0 3px #000' });
+  });
+}
+
 async function api(path, body) {
   const response = await fetch(`api/${path}`, body === undefined ? {} : { method: 'POST', body: JSON.stringify(body) });
   let value = {};
@@ -142,7 +219,7 @@ async function api(path, body) {
  * The console's state, and what draws it.
  */
 function boot() {
-  const state = { rack: [], sketch: null, values: {}, running: false, on: true, tube: null };
+  const state = { rack: [], sketch: null, values: {}, running: false, on: true, current: null, liveEdge: null };
 
   function drawRack() {
     const rack = $('rack');
@@ -239,9 +316,24 @@ function boot() {
     $('nothing-to-tune').hidden = sketch.inputs.length > 0;
   }
 
-  // The tube is drawn in Phase 5 (tube.mjs); until then, its caption only.
+  // UND-30: the statechart in the tube, the weights' ring and their blend.
   function drawTube() {
-    $('tube-caption').textContent = state.running ? 'running' : 'idle';
+    const { sketch } = state;
+    $('tube-caption').textContent = state.running ? `running · ${state.current ?? ''}` : 'idle';
+    if (!sketch) return;
+    const weights = sketch.inputs.filter((input) => input.kind === 'weight').map((input, index) => ({
+      name: input.name, value: state.values[input.name], range: input.range, colour: COLOURS[index % COLOURS.length],
+    }));
+    const power = { weights, total: weights.reduce((sum, each) => sum + each.value, 0), blend: rgb(blendOf(weights)) };
+    const layout = tubeLayout(sketch.graph, sketch.decision);
+    const svg = svgElement('svg', { viewBox: `0 0 ${SIZE} ${SIZE}`, role: 'img', 'aria-label': tubeAria(layout, state.current) });
+    const labels = [
+      ...drawRing(svg, weights),
+      ...drawEdges(svg, layout.edges, power, { isRunning: state.running, liveEdge: state.liveEdge }),
+      ...drawOrb(svg, power),
+      ...drawStates(svg, layout.nodes, state.current),
+    ];
+    $('tube').replaceChildren(svg, element('div', { class: 'labels', 'aria-hidden': 'true' }, ...labels));
   }
 
   function drawStatus() {
@@ -292,6 +384,8 @@ function boot() {
     if (!ok) return;
     state.sketch = value;
     state.values = startingValues(value.inputs);
+    state.current = value.graph.initial;
+    state.liveEdge = null;
     drawRack();
     drawControls();
     drawTube();
@@ -322,6 +416,12 @@ function boot() {
     if (line.event === 'dashboard' && line.running !== undefined) {
       state.running = line.running;
       drawStatus();
+      drawTube();
+    }
+    // UND-30 AC2: the state the run is in glows; the transition just taken flows.
+    if (line.event === 'state' && state.sketch) {
+      state.current = line.to;
+      state.liveEdge = state.sketch.graph.edges.findIndex((edge) => edge.from === line.from && edge.to === line.to);
       drawTube();
     }
     print(line);
