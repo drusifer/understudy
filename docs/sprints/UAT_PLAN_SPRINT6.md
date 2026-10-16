@@ -21,8 +21,9 @@ Every acceptance criterion of UND-27..33, per phase, then end to end by Smith at
 | UAT-UND-30-01..04 | tube | `tests/tube.test.js`; screenshot build/uat/dash-tube.png: every evening state and edge labelled (OBSERVE, done + guards, STEP), finals inside, booked glowing at the end, colour ring + blended decision edge + orb with shares | PASS (Phase 5) |
 | UAT-UND-31-01..03 | printer | `tests/dashboardPage.test.js`; screenshot build/uat/dash-printer.png: steps, removals, score tables with 11, ticket, outcome; paper scrolls back | PASS (Phase 5) |
 | UAT-UND-32-01..05 | panels, saving, factory reset | `tests/settings.test.js` (only edited lines change, comments kept, check passes; refusals write nothing; allow-list; factory copy before first edit, restore), `tests/dashboardRun.test.js` (409 while running, power off stops); browser (build/uat/panels.png): range saved, invalid marked with reason, mood rename + default, power cycle restored | PASS (Phase 6) |
-| UAT-UND-33-01..03 | docs, browser test, evening switch | Phase 7 | pending |
+| UAT-UND-33-01..03 | docs, browser test, evening switch | USER_GUIDE "The dashboard" + 2 screenshots, SKETCHES switches/`when:`; `tests/browser/dashboard.test.js` (5/5 browser); evening gains an **evenings** switch (see deviation) + `tests/evening.run.test.js` | PASS (Phase 7) |
 
 ## 4. Defects
 - Phase 1: none. 259 unit tests, lint clean.
 - Phase 3: found and fixed in phase - a STOP pressed while the servers were starting was lost (the run listens for Ctrl-C only once started); the runner now delivers it on the start line. 268 tests.
+- Phase 7 deviation (for the owner): UND-33 AC3 asked for a `together` switch. The evening's box office only holds side-by-side seats, so turning "together" off would get every hold refused; the evening has an **evenings only** switch instead (the mockup showed both).

@@ -323,18 +323,24 @@ questions:
     levels: [Bored, or walked out, Mixed, Solid fun, Loved it]
 ```
 
-**Inputs** are what the person sets when the run starts - a choice, or a weight in a range -
+**Inputs** are what the person sets when the run starts - a choice, a weight in a range, or a
+switch -
 with `understudy run <sketch> --input mood=romantic --input centre=1`; the start line lists
 them, and a value out of range refuses the run:
 
 ```yaml
 inputs:
-  mood:   { choose: [fun, serious, dramatic, romantic], default: fun }
-  centre: { weight: [0, 3], default: 3 }
+  mood:     { choose: [fun, serious, dramatic, romantic], default: fun }
+  centre:   { weight: [0, 3], default: 3 }
+  evenings: { switch: true, default: true }      # --input evenings=off (on/off, true/false)
 pick:                                  # the final Choice among a shortlist
   instructions: You are choosing for yourself and a friend, in the mood for something `inputs.mood`.
   with: [mood]                         # the choice inputs Jev is told
 ```
+
+**Switches turn gates on and off.** A gate test with `when: <switch>` applies only while that
+switch is on: `starts: { at_least: '17:00', when: evenings }`. `check` refuses a `when:` that names
+anything but a switch. On the dashboard (USER_GUIDE "The dashboard") a switch is a toggle with a lamp.
 
 **Walking away.** Guard `nothing_qualifies` (`params: { for: [<decided argument>, ...] }`) is
 true when values were seen for the listed arguments and none is shortlisted or held back. A

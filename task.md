@@ -5,7 +5,7 @@
 *   **Total Points**: 25 (UND-27 3, UND-28 5, UND-29 3, UND-30 5, UND-31 2, UND-32 5, UND-33 2)
 *   **Branch**: `sprint-6`
 *   **Stories / Arch / Design**: `docs/sprints/USER_STORIES_SPRINT6.md`, `docs/sprints/ARCH_SPRINT6.md`, `docs/design/DASHBOARD.md` (sprint 5 board: `docs/sprints/TASKS_SPRINT5.md`)
-*   **Status**: In progress - Phase 7
+*   **Status**: In progress - sprint close
 *   **Commits**: one local commit per phase after Morpheus's review (`Phase <N>: ...`); publishing only via `bobp make push` when the owner asks (SDLC §6).
 
 ---
@@ -44,9 +44,9 @@
 - [x] **Task 6.2:** UAT UND-32 + review vs ADR-0024/0025. (*Owner: Trin → Morpheus | commit `Phase 6`*)
 
 ### Phase 7: Docs, browser tests, the evening's switch - UND-33
-- [ ] **Task 7.1:** `examples/evening` `together` switch; USER_GUIDE "The dashboard" + screenshot; SKETCHES switches/`when:`. (*Owner: Neo, Oracle*)
-- [ ] **Task 7.2:** browser test driving the dashboard with a Jev double. (*Owner: Trin | Verification: `bobp make test-browser`*)
-- [ ] **Task 7.3:** review. (*Owner: Morpheus | commit `Phase 7`*)
+- [x] **Task 7.1:** `examples/evening` `together` switch; USER_GUIDE "The dashboard" + screenshot; SKETCHES switches/`when:`. (*Owner: Neo, Oracle*)
+- [x] **Task 7.2:** browser test driving the dashboard with a Jev double. (*Owner: Trin | Verification: `bobp make test-browser`*)
+- [x] **Task 7.3:** review. (*Owner: Morpheus | commit `Phase 7`*)
 
 ---
 

@@ -81,4 +81,8 @@ sequenceDiagram
     Note right of Morpheus: "Phase 5 done<br/>(UND-30/31): state tube<br/>+ printer, screenshots<br/>checked, 275 tests,<br/>committed. Phase 6:<br/>access panels, saving,<br/>factory reset."
     Mouse->>All: "phase 6"
     Note right of Mouse: "Access panels, saving,<br/>factory reset - UND-32"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 6 done (UND-32):<br/>panels save in place<br/>(YAML ranges), refusals,<br/>factory copies + power-<br/>cycle restore, browser-<br/>verified, 280 tests,<br/>com…"
+    Mouse->>All: "phase 7"
+    Note right of Mouse: "Docs, browser tests, the<br/>evening's switch -<br/>UND-33"
 ```
