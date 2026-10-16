@@ -61,7 +61,7 @@ test('an ended line shares the final line\'s frame', () => {
   const failed = [START, step(1), { event: 'ended', outcome: 'stalled', message: 'stalled: x' }, { final: true, outcome: 'stalled', steps: 1, state: 'waiting' }];
   const frames = framesOf(failed);
   assert.deepEqual(frames, [0, 1, 3]);
-  assert.deepEqual(endingOf(modelAt(failed, frames, 2)), { text: 'stalled: stalled: x', isBad: true });
+  assert.deepEqual(endingOf(modelAt(failed, frames, 2)), { text: 'stalled: x', isBad: true });
 });
 
 test('a log cut short (no final line) replays as far as it goes, and says so at the end', () => {

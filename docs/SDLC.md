@@ -167,7 +167,8 @@ Run by Tank at sprint close (`*devops sdlc-check`):
 8. Nothing under `src/` or `tests/` imports from `seed/`.
 
 ---
-*Last verified: 2026-10-15 against sprint-3 at 018d053 by Tank (sprint 3 close: distclean →
-install (lockfile unchanged) → check, 162/162 tests, lint, gitleaks clean; every imported package
-declared; make test-live green for cli, http, mcp, mcp-remote and web in Phase 3, with no
-server left running).*
+*Last verified: 2026-10-15 against sprint-4 at d3a2708 by Tank (sprint 4 close: distclean →
+install (manifest and lockfile unchanged - no dependency added) → check, 200/200 tests, lint,
+gitleaks clean; eslint.config.js gained a browser-globals block for src/watch/page.mjs in
+Phase 3, the same shape as the examples/web block - no gate changed; make test-live green for
+all five examples in Phase 1).*

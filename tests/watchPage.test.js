@@ -44,7 +44,11 @@ test('how it ended: done after N steps, or the outcome and why', () => {
   const stalled = newModel();
   apply(stalled, { event: 'ended', outcome: 'stalled', message: 'stalled: nothing to do for 10 s after step 3' });
   apply(stalled, { final: true, outcome: 'stalled', steps: 3, state: 'waiting' });
-  assert.deepEqual(endingOf(stalled), { text: 'stalled: stalled: nothing to do for 10 s after step 3', isBad: true });
+  assert.deepEqual(endingOf(stalled), { text: 'stalled: nothing to do for 10 s after step 3', isBad: true }, 'the outcome is said once (DEF-12)');
+  const stopped = newModel();
+  apply(stopped, { event: 'ended', outcome: 'interrupted', message: 'stopped by Ctrl-C while paused, after 0 steps' });
+  apply(stopped, { final: true, outcome: 'interrupted', steps: 0, state: 'choosing' });
+  assert.equal(endingOf(stopped).text, 'interrupted: stopped by Ctrl-C while paused, after 0 steps');
   assert.equal(endingOf(newModel()), null);
 });
 

@@ -85,8 +85,12 @@ export function decisionOf(line) {
 export function endingOf(model) {
   if (model.isCut) return { text: 'log ends without a final line (the run was killed?)', isBad: true };
   if (model.final?.outcome === 'done') return { text: `done after ${model.final.steps} step${model.final.steps === 1 ? '' : 's'}`, isBad: false };
-  if (model.final) return { text: model.ended?.message ? `${model.final.outcome}: ${model.ended.message}` : model.final.outcome, isBad: true };
-  return null;
+  if (!model.final) return null;
+  const { outcome } = model.final;
+  const message = model.ended?.message;
+  // Some messages already start with their outcome (`stalled: ...`): say it once (DEF-12).
+  if (!message) return { text: outcome, isBad: true };
+  return { text: message.startsWith(`${outcome}:`) ? message : `${outcome}: ${message}`, isBad: true };
 }
 
 /**
