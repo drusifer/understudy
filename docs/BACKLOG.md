@@ -61,7 +61,7 @@ subset worth a closer look, and Jev makes the qualitative calls. Owner decisions
 - Sprint 5 branches from main (51fa684); the first story draft (`USER_STORIES_SPRINT5.md`,
   hard rules only) is to be rewritten from this.
 
-## Sprint 6 (owner, 2026-10-16) - the dashboard, with atmosphere
+## Sprint 6 (owner, 2026-10-16) - the dashboard, with atmosphere - DONE (launched 2026-10-16)
 Design approved on a clickable mockup - **`docs/design/DASHBOARD.md`** is the brief. Owner decisions:
 - `understudy dashboard <folder>`: a folder of sketches to choose from; each sketch's inputs define
   its controls. Knobs are set **before** a run; Play starts it (not live tuning).
@@ -69,6 +69,14 @@ Design approved on a clickable mockup - **`docs/design/DASHBOARD.md`** is the br
 - Access panels edit factor parameters and the moods; edits are **saved to the sketch**; turning
   POWER off and on resets the sketch to its **factory defaults**.
 - "11" is how a perfect 1.0 is shown. Square lit Play button; green glowing READY lamp.
+
+## Next (from the sprint 6 retro)
+- Tube labels still crowd when a state has several guarded exits (evening's "looking"); try label
+  leader lines or a label-collision pass. (Smith)
+- A "seats together" switch needs a box office that can hold seats apart (or a count that follows
+  the switch). (Cypher)
+- `not offering ... yet - already answered` should not say "yet". (Smith)
+- `src/dashboard/page.mjs` is ~550 lines: split the tube drawing and the panels into modules. (Neo)
 
 ## Next (from the sprint 5 retro)
 - DONE on sprint-5: **Wait for every fact, unless it scores a perfect 1** (owner decided, 2026-10-16; "11" is how the dashboard shows 1.0): a decided argument

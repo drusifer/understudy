@@ -297,7 +297,7 @@ function boot() {
     const colour = rgb(COLOURS[index % COLOURS.length]);
     const [low, high] = input.range;
     const id = `fader-${input.name}`;
-    const fader = element('input', { id, class: 'fader', type: 'range', min: String(low), max: String(high), step: '0.01', value: String(state.values[input.name]) });
+    const fader = element('input', { id, class: 'fader', type: 'range', min: String(low), max: String(high), step: '0.05', value: String(state.values[input.name]) });
     const slot = element('div', { class: 'slot', style: { '--colour': colour } }, element('div', { class: 'glow', 'aria-hidden': 'true' }), element('div', { class: 'ticks', 'aria-hidden': 'true' }), fader);
     const nixie = element('div', { class: 'nixie', style: { '--colour': colour } });
     const update = () => {

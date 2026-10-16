@@ -5,7 +5,7 @@
 *   **Total Points**: 25 (UND-27 3, UND-28 5, UND-29 3, UND-30 5, UND-31 2, UND-32 5, UND-33 2)
 *   **Branch**: `sprint-6`
 *   **Stories / Arch / Design**: `docs/sprints/USER_STORIES_SPRINT6.md`, `docs/sprints/ARCH_SPRINT6.md`, `docs/design/DASHBOARD.md` (sprint 5 board: `docs/sprints/TASKS_SPRINT5.md`)
-*   **Status**: In progress - sprint close
+*   **Status**: Complete - launched 2026-10-16; merge to main / push awaiting owner
 *   **Commits**: one local commit per phase after Morpheus's review (`Phase <N>: ...`); publishing only via `bobp make push` when the owner asks (SDLC §6).
 
 ---
@@ -51,7 +51,7 @@
 ---
 
 ## Sprint Close
-- [ ] **Task C.1:** `*devops sdlc-check`. (*Owner: Tank*)
-- [ ] **Task C.2:** `*ora groom` - ADR-0023..0026, lessons, changelog, chat report. (*Owner: Oracle*)
-- [ ] **Task C.3:** `*user test` against `docs/sprints/UAT_PLAN_SPRINT6.md`. (*Owner: Smith*)
-- [ ] **Task C.4:** retro, `*pm launch sprint-6`. (*Owner: All → Cypher*)
+- [x] **Task C.1:** `*devops sdlc-check`. (*Owner: Tank*)
+- [x] **Task C.2:** `*ora groom` - ADR-0023..0026, lessons, changelog, chat report. (*Owner: Oracle*)
+- [x] **Task C.3:** `*user test` against `docs/sprints/UAT_PLAN_SPRINT6.md`. (*Owner: Smith*)
+- [x] **Task C.4:** retro, `*pm launch sprint-6`. (*Owner: All → Cypher*)

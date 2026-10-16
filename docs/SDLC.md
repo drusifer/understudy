@@ -69,7 +69,9 @@ Standard targets deliberately absent:
   (Jev), `playwright` (page target; locked at 1.62.1 so its Chromium download is shared with
   recard's), `@modelcontextprotocol/sdk` (mcp target client; the example server) and `zod` (the
   example server's tool schemas; the SDK's peer) - both added in sprint 3; `lru-cache` (a deciding sketch's answered calls,
-  fixed size, least recently used forgotten) - added in sprint 5. Expected later:
+  fixed size, least recently used forgotten) - added in sprint 5. `@fontsource/cinzel`, `@fontsource/spectral`,
+  `@fontsource/vt323`, `@fontsource/dotgothic16` (the dashboard's fonts, OFL, served locally so the
+  page fetches nothing from the internet) - added in sprint 6. Expected later:
   `@xstate/graph ^3.0.4`.
 
 ## 5. Quality gates
@@ -169,7 +171,7 @@ Run by Tank at sprint close (`*devops sdlc-check`):
 8. Nothing under `src/` or `tests/` imports from `seed/`.
 
 ---
-*Last verified: 2026-10-16 by Tank (mechanism change on sprint-5, owner-approved as UND-26 AC4:
-`test-live` caps runs at 30 steps, checks each final `outcome`, and plays `examples/evening` again
-with `BOX_STATE=full` expecting `walked-away`. Sprint 4: target `test-browser`, npm script
-`test:browser`, eslint browser-globals block for `tests/browser/`).*
+*Last verified: 2026-10-16 by Tank (sprint-6 close: clean → check, browser tests 5/5. Routine
+dependencies added per §4 (`@fontsource/*` fonts); eslint browser-globals block now also covers
+`src/dashboard/page.mjs` (Mechanism, small, owner-approved with the sprint plan); `.factory/`
+git-ignored. Sprint 5: `test-live` outcome checks and the full-house walk-away run).*

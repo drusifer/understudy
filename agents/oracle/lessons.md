@@ -349,3 +349,47 @@ the loop makes; a shortcut tests a sequence that never happens.
 
 ### References
 - **Files:** `tests/decideApp.test.js`, `tests/jevScore.test.js`
+
+## [2026-10-16] Look at the page you built, not only its tests
+
+### Context
+Sprint 6 Phases 4-5: the dashboard page, built from an approved mockup.
+
+### The Issue
+Unit tests passed while the page was wrong in ways only a picture shows: the weight colours did
+not appear (CSS custom properties set through `Object.assign(style, ...)` are silently dropped),
+and the tube's edge labels piled on top of each other.
+
+### The Solution
+A throwaway Playwright script screenshotted the real console after each change; the colours were
+fixed with `style.setProperty`, the tube relaid (neighbours along the loop, finals beside their
+source), and a committed browser test now plays the evening from the console.
+
+### The Rule (The "Lesson")
+For anything visual, look at it rendered after every change - a screenshot is a test only a person
+(or a model reading it) can run; keep a committed browser test for what must keep working.
+
+### References
+- **Commit:** a6ebcb9, 1108493
+- **Files:** `src/dashboard/page.mjs`, `src/dashboard/tube.mjs`, `tests/browser/dashboard.test.js`
+
+## [2026-10-16] Round-tripping a hand-written file through a parser rewrites it
+
+### Context
+Sprint 6 Phase 6: access-panel edits saved to `sketch.yaml`.
+
+### The Issue
+Editing the YAML Document and re-serialising kept comments but reflowed long lines and re-spaced
+every flow list - 16 lines of a 116-line file changed for a one-value edit.
+
+### The Solution
+Find the value's source range through the parser and replace only that text; check the result by
+loading a copy before writing.
+
+### The Rule (The "Lesson")
+When a tool writes into a file people maintain by hand, change only the bytes of the value - and
+test that every other line is identical.
+
+### References
+- **Commit:** 88287b1
+- **Files:** `src/dashboard/settings.mjs`, `tests/settings.test.js`

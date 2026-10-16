@@ -1,5 +1,21 @@
 # Changelog
 
+## Sprint 6 — the dashboard, with atmosphere (2026-10-16, branch `sprint-6`, not yet merged)
+
+- **`understudy dashboard <folder>`**: a steampunk operations console (design approved on a
+  clickable mockup, `docs/design/DASHBOARD.md`): a rack of the folder's sketches; each sketch's
+  inputs as a pointer dial, coloured analog faders with Nixie readouts (`11` at the top) and
+  switches with lamps; a square lit PLAY/STOP with a green READY lamp; POWER.
+- **State tube**: any sketch's statechart on a round tube screen, every state and transition
+  labelled; the current state glows; a power ring of the weights, and their blended colour on the
+  decision edge and the centre orb.
+- **Printer**: the run log printed on tractor-feed paper, score tables with 1.0 as `11`.
+- **Access panels**: edit a factor's range/order, its Jev question, defaults and the moods - saved
+  to `sketch.yaml` in place (comments and layout kept), checked first; POWER off and on restores the
+  factory settings.
+- **Switch inputs** and `when:` on gates; `examples/evening` has an evenings-only switch.
+- Fonts from `@fontsource/*` (local). ADR-0023..0026.
+
 ## Sprint 5 — decide like a person (2026-10-16, branch `sprint-5`, not yet merged)
 
 - **Several MCP servers in one sketch**: `target.servers` (inline or names in `servers.json`);

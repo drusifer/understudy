@@ -156,6 +156,10 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .printer-foot { max-width: 760px; margin: 8px auto 0; display: flex; justify-content: space-between; font-family: Cinzel, serif; font-size: 11px; letter-spacing: 3px; color: #8f8a83; }
 
 @media (max-width: 640px) {
+  .plate { padding: 14px 16px; }
+  .plate h1 { font-size: 24px; letter-spacing: 2px; }
+  .subtitle { font-size: 10px; letter-spacing: 3px; }
+  .brand svg { width: 40px; height: 40px; }
   .fader-row { grid-template-columns: 1fr; }
   .fader-about { margin-left: 0; }
   .play { width: 112px; height: 112px; }

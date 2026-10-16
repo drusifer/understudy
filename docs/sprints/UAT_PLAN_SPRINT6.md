@@ -2,7 +2,7 @@
 
 *   **Author**: Trin
 *   **Stories**: `docs/sprints/USER_STORIES_SPRINT6.md` (UND-27..33) · **Arch**: `docs/sprints/ARCH_SPRINT6.md` · **Design**: `docs/design/DASHBOARD.md`
-*   **Status**: In progress
+*   **Status**: Complete - Smith end-to-end passed 2026-10-16
 
 ## 1. Scope
 Every acceptance criterion of UND-27..33, per phase, then end to end by Smith at close. Live Jev runs are optional (the dashboard runs sketches through the same `runSketch`); browser tests use a Jev double.
@@ -27,3 +27,4 @@ Every acceptance criterion of UND-27..33, per phase, then end to end by Smith at
 - Phase 1: none. 259 unit tests, lint clean.
 - Phase 3: found and fixed in phase - a STOP pressed while the servers were starting was lost (the run listens for Ctrl-C only once started); the runner now delivers it on the start line. 268 tests.
 - Phase 7 deviation (for the owner): UND-33 AC3 asked for a `together` switch. The evening's box office only holds side-by-side seats, so turning "together" off would get every hold refused; the evening has an **evenings only** switch instead (the mockup showed both).
+- Sprint close (Smith): fixed in place - the header plate overflowed a 390 px screen (now fits, no sideways scroll); fader arrow keys stepped 0.01 (now 0.05). Keyboard focus visible; POWER off dims to DARK.

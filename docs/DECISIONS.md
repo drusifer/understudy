@@ -4,11 +4,43 @@ Newest first. Each record follows `agents/templates/_template_DECISION.md`, kept
 Sprint 1 records were made by Morpheus in `docs/sprints/ARCH_SPRINT1.md` §8, sprint 2
 records in `docs/sprints/ARCH_SPRINT2.md` §8 and sprint 3 records in
 `docs/sprints/ARCH_SPRINT3.md` §8, sprint 4 records in `docs/sprints/ARCH_SPRINT4.md` §8
-(all approved at Smith Gate 2, 2026-10-15) and sprint 5 records in `docs/sprints/ARCH_SPRINT5.md` §8
-(approved at Smith Gate 2, 2026-10-16). Records before
+(all approved at Smith Gate 2, 2026-10-15) sprint 5 records in `docs/sprints/ARCH_SPRINT5.md` §8
+and sprint 6 records in `docs/sprints/ARCH_SPRINT6.md` §8 (approved at Smith Gate 2, 2026-10-16). Records before
 ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `sketch.yaml`.
 
 ---
+
+## ADR-0026: Switch inputs turn gates on and off (`when:`)
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-28
+*   **Context**: owner: toggles on the console; a switch should turn a rule on or off.
+*   **Options**: (1) a `switch` input and a `when: <switch>` word on a gate test; (2) switches that pick between whole gate sets; (3) a rule language with conditions.
+*   **Decision**: (1). A test whose switch is off passes and needs no fact. `check` refuses `when:` naming anything but a switch. `--input name=on|off|true|false`.
+*   **Consequences**: + no new language, one word. − a switch can only turn individual tests off, not swap rules.
+
+## ADR-0025: Factory defaults are a copy kept at the first edit; POWER off-on restores
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-32
+*   **Context**: owner: edits are saved to the sketch, with a reset to defaults - "turn it off and then back on".
+*   **Options**: (1) copy `sketch.yaml` to `<folder>/.factory/<name>.yaml` before its first edit, restore all on POWER on; (2) git checkout; (3) keep edits only in memory.
+*   **Decision**: (1). The copy is git-ignored and removed once restored.
+*   **Consequences**: + works without git, one gesture undoes all. − a sketch edited by hand while the console has a copy is overwritten by the reset.
+
+## ADR-0024: Panel edits replace only the edited value's text, checked on a copy first
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-32
+*   **Context**: saving must keep a hand-written `sketch.yaml` readable, and never write a sketch that fails its checks.
+*   **Options**: (1) find the value through `yaml.parseDocument` source ranges and replace just that text, then `loadSketch` a temp copy of the sketch directory; (2) edit the YAML Document and re-serialise; (3) write and roll back on failure.
+*   **Decision**: (1). (2) was tried in Phase 6 and reflowed long lines and padded every flow list. Only allow-listed paths (inputs' defaults and choices, factor range/order/ask, a question's `looks_at`) can change.
+*   **Consequences**: + byte-for-byte the rest of the file; nothing invalid is written. − a key the file does not have yet falls back to (2).
+
+## ADR-0023: The dashboard is its own server beside the watch page; runs go through runSketch
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-27, UND-29
+*   **Context**: owner: a steampunk console over a folder of sketches - set inputs, press Play, watch.
+*   **Options**: (1) a second local server built like the watch page (token path, local files, SSE) with a small JSON API, running sketches in-process through `runSketch` and reading their stdout lines; (2) extend the per-run watch server; (3) spawn `understudy run` processes.
+*   **Decision**: (1). `listenOn`/`readBody` are shared with the watch server; the watch page's `turnGraph` is reused. A STOP pressed while a run's servers start is held and delivered on its start line.
+*   **Consequences**: + the CLI and the console run sketches the same way. − one run at a time; two browsers share it.
 
 ## ADR-0022: Several servers in one MCP target
 
