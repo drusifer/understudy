@@ -26,3 +26,19 @@ Agents **must** use this for every message posted to CHAT.md:
 ---
 [<small>2026-10-15 22:39:53</small>] [**User**]->[**all**] *decide*:
  Owner agrees: Jev chooses argument values, never writes them - understudy is constrained automation by design. Asks for a good example doc for using MCP services.
+
+---
+[<small>2026-10-15 22:42:15</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+10:42PM INF no leaks found
+10:42PM INF 1 commits scanned.
+10:42PM INF scanned ~825 bytes (825 bytes) in 235ms
+10:42PM INF no leaks found
+
+---
+[<small>2026-10-15 22:42:20</small>] [**Oracle**]->[**all**] *done*:
+ Added docs/MCP_GUIDE.md (owner request): existing .mcp.json -> finished run, via as the worked example; linked from README, USER_GUIDE, SKETCHES. Sketch in the guide verified with check. Committed on sprint-3.
+
+---
+[<small>2026-10-15 22:43:21</small>] [**User**]->[**all**] *request*:
+ push main

@@ -8,7 +8,12 @@ sequenceDiagram
     autonumber
     participant User
     participant All
-    Note over User,All: 📅 2026-10-15
+    participant Oracle
+    Note over User,Oracle: 📅 2026-10-15
     User->>All: "decide"
     Note right of User: "Owner agrees: Jev<br/>chooses argument values,<br/>never writes them -<br/>understudy is<br/>constrained automation<br/>by design. Asks for a<br/>good example doc…"
+    Oracle->>All: "done"
+    Note right of Oracle: "Added docs/MCP_GUIDE.md<br/>(owner request):<br/>existing .mcp.json -><br/>finished run, via as the<br/>worked example, linked<br/>from README, USER_GUIDE,<br/>SKE…"
+    User->>All: "request"
+    Note right of User: "push main"
 ```
