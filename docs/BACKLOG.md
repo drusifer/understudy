@@ -62,16 +62,13 @@ subset worth a closer look, and Jev makes the qualitative calls. Owner decisions
   hard rules only) is to be rewritten from this.
 
 ## Sprint 6 (owner, 2026-10-16) - the dashboard, with atmosphere
-- A **steampunk operations dashboard** for understudy: knobs, toggles and chunky sliders to set a
-  sketch's declared inputs (mood, weights within their ranges), and the statechart, scores and
-  decisions shown in an embedded terminal-like panel. The owner wants understudy to have
-  atmosphere. Builds on the sprint 4 watch page and the sprint 5 inputs.
-- **Knobs that go to 11** (owner idea, queued 2026-10-16): a weight knob has a setting past its
-  range, `11`: a value scoring 100% on that factor wins outright - no other factor matters (gates
-  still apply). Needs a small engine rule alongside the knob.
-- **Power through the graph** (owner idea, queued 2026-10-16): in the logic display, the edge for
-  each factor carries more visible power as its weight rises - a flux-capacitor glow and flow,
-  strongest at 11.
+Design approved on a clickable mockup - **`docs/design/DASHBOARD.md`** is the brief. Owner decisions:
+- `understudy dashboard <folder>`: a folder of sketches to choose from; each sketch's inputs define
+  its controls. Knobs are set **before** a run; Play starts it (not live tuning).
+- A new **switch** input (on/off) turns a gate on or off with `when: <switch>`.
+- Access panels edit factor parameters and the moods; edits are **saved to the sketch**; turning
+  POWER off and on resets the sketch to its **factory defaults**.
+- "11" is how a perfect 1.0 is shown. Square lit Play button; green glowing READY lamp.
 
 ## Next (from the sprint 5 retro)
 - DONE on sprint-5: **Wait for every fact, unless it scores a perfect 1** (owner decided, 2026-10-16; "11" is how the dashboard shows 1.0): a decided argument

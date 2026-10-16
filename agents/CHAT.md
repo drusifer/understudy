@@ -79,3 +79,39 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-16 17:49:13</small>] [**User**]->[**all**] *request*:
  /sprint 6 go
+
+---
+[<small>2026-10-16 17:52:14</small>] [**User**]->[**all**] *decide*:
+ Owner: knobs set inputs before a run; the dashboard starts it (a Go lever). Not live tuning.
+
+---
+[<small>2026-10-16 17:53:45</small>] [**User**]->[**all**] *decide*:
+ Owner: the dashboard opens a folder of sketches to choose from; each sketch's declared inputs define its knobs and switches.
+
+---
+[<small>2026-10-16 17:55:13</small>] [**User**]->[**all**] *decide*:
+ Owner: a new switch input (on/off) turns a gate on or off via when: <switch>.
+
+---
+[<small>2026-10-16 17:57:21</small>] [**Cypher**]->[**all**] *update*:
+ Dashboard mockup published for owner review: https://claude.ai/artifact/KDDBABtgUpn5NbnKT9h1TQ (brass panel, sketch rack, mood selector, weight knobs with Nixie readouts, switches, Go lever, glowing power wires, CRT terminal with score table; 1.0 shows as 11).
+
+---
+[<small>2026-10-16 18:13:47</small>] [**User**]->[**all**] *feedback*:
+ Owner mockup feedback: physical knobs; mood = rotary pointer dial (oblong, smaller centre) with options around it; LED lamps for switches; analog sliders for weights (right = more important); big red lit button instead of the lever; each weight its own colour, blended by ratio in the power diagram; a round vacuum-tube display of the statechart with edges flowing by weight; the log feeds out like a printer spool.
+
+---
+[<small>2026-10-16 18:16:43</small>] [**User**]->[**all**] *feedback*:
+ Owner: under each weight slider, a slide-down panel with simple edit boxes to change that factor's defaults (range, order, question, default weight). Added to the mockup.
+
+---
+[<small>2026-10-16 18:20:30</small>] [**User**]->[**all**] *decide*:
+ Owner: drawer edits are saved to the sketch, with a reset to defaults - reset by turning the console off and back on (power cycle).
+
+---
+[<small>2026-10-16 18:21:07</small>] [**Cypher**]->[**all**] *update*:
+ Mockup v6: bigger state tube with labelled transitions (events, guards) and the power ring + blended orb inside it; POWER switch (off then on resets to the sketch defaults; drawer edits save to the sketch); square lit PLAY button; green glowing READY lamp.
+
+---
+[<small>2026-10-16 18:22:12</small>] [**User**]->[**all**] *feedback*:
+ Owner: an access panel under the mood dial to edit the moods (rename, add, remove) and the default. Added to the mockup (v7); the dial spreads however many moods there are.
