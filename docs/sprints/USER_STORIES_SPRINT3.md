@@ -158,7 +158,10 @@ use its tools as an agent would,
 2. `README.md`, `docs/USER_GUIDE.md` and `docs/WALKTHROUGH.md` use `sketch.yaml` throughout and
    cover the MCP example with real run output.
 3. `grep -rnE "adapter\.mjs|part/turn|part/questions" README.md docs/*.md examples src` finds
-   nothing (sprint records under `docs/sprints/` and `docs/DECISIONS.md` history excepted).
+   nothing (sprint records under `docs/sprints/` and `docs/DECISIONS.md` history excepted) - and,
+   amended in Phase 4 because UND-9 AC6 requires them, the old-layout refusal (`src/sketch.mjs`,
+   its line in the USER_GUIDE troubleshooting table), the SKETCHES.md paragraph that maps the old
+   pieces to the new ones, and `docs/BACKLOG.md`'s record of the decision.
 4. The decisions (one sketch file; MCP target and its config) are recorded in `docs/DECISIONS.md`,
    superseding the ones they replace.
 

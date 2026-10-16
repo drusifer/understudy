@@ -32,7 +32,7 @@ test-live: ## Live runs: every examples/*/ played with real Jev (paid; needs TYP
 	for dir in examples/*/; do [ -d "$$dir" ] || continue; echo "== $$dir"; \
 	MCP_TOKEN="$$token" BOX_PORT="$$port" node bin/understudy.mjs run "$$dir" --steps 20 >/dev/null || exit 1; done
 
-run: ## Run the understudy command: ARGS="run examples/cli" | "check <dir>" | "library"
+run: ## Run the understudy command: ARGS="run examples/cli" | "check <sketch>" | "library [<sketch>]"
 	$(NEED_INSTALL)
 	@test -f bin/understudy.mjs || { echo "bin/understudy.mjs does not exist yet (sprint 1, phase 2)"; exit 1; }
 	node bin/understudy.mjs $(ARGS)

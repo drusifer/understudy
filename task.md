@@ -38,8 +38,8 @@
 
 ### Phase 4: Docs — UND-12
 *Phase goal: the docs teach sketches and four targets only.*
-- [ ] **Task 4.1:** `docs/SKETCHES.md` replaces `docs/ADAPTERS.md`; `README.md`, `docs/USER_GUIDE.md`, `docs/WALKTHROUGH.md` (MCP with real output); ADR-0011..0013 (Oracle records; supersede notes). (*Owner: Neo + Oracle | Verification: UND-12 AC3 grep empty*)
-- [ ] **Task 4.2:** UAT: cold-read "write a sketch for my MCP server" from docs alone; every documented command runs; then Morpheus review. (*Owner: Trin → Morpheus | Verification: inspection + each command; commit `Phase 4`*)
+- [x] **Task 4.1:** `docs/SKETCHES.md` replaces `docs/ADAPTERS.md`; `README.md`, `docs/USER_GUIDE.md`, `docs/WALKTHROUGH.md` (MCP with real output); ADR-0011..0013 (Oracle records; supersede notes). (*Owner: Neo + Oracle | Verification: UND-12 AC3 grep empty*)
+- [x] **Task 4.2:** UAT: cold-read "write a sketch for my MCP server" from docs alone; every documented command runs; then Morpheus review. (*Owner: Trin → Morpheus | Verification: inspection + each command; commit `Phase 4`*)
 
 ---
 
