@@ -70,3 +70,26 @@ test('a showing used in a call that answered is spent', async () => {
   move = await moveFor('tool:boxoffice/seat_map');
   assert.deepEqual(move.open[0].candidates, ['s13']);
 });
+
+test('seats are scored and shortlisted best first; the table is in the move for the step line (UND-22 AC3-5)', async () => {
+  const target = await startTarget(SPEC, { directory: 'examples/evening', environment: process.env });
+  test.after(() => target.close());
+  const app = mcpApp({ decide: {
+    'boxoffice/pick_seats.seat': {
+      gates: { together: { at_least: 2 }, row: { in: ['E', 'F', 'D'] } },
+      scores: { row: { order: ['E', 'F', 'D'], weight: 2 }, centre: { range: [0.3, 1], weight: 3 } },
+      shortlist: { at_most: 3 },
+    },
+  } });
+  await target.act({ server: 'boxoffice', tool: 'seat_map', arguments: { showing: 's4' } });
+  const move = app.moves(await target.view()).offered.find((each) => each.id === 'tool:boxoffice/pick_seats');
+  const [{ table, removed }] = move.decided;
+  // s4: E has only edge pairs (centre 0 and 0.22 - at or under 0.3, so 0), F has a central run.
+  assert.deepEqual(move.open.find((each) => each.name === 'seat').candidates, table.map((each) => each.value));
+  // F5 and F6 are 0.89 central (a tie keeps seat order), F4 0.67; F7 has no pair.
+  assert.deepEqual(table.map((each) => each.value), ['s4-F5', 's4-F6', 's4-F4']);
+  assert.deepEqual(table[0], { value: 's4-F5', factors: { row: 0.444, centre: 0.599 }, total: 0.266 });
+  assert.equal(table[2].total, 0.066);
+  assert.ok(removed.some((each) => each.value === 's4-E1' && each.why === 'centre 0 scores 0'));
+  assert.ok(removed.some((each) => /^(row|together) /.test(each.why)), 'gated seats are removed before scoring');
+});

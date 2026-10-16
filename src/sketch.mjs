@@ -19,7 +19,7 @@ import { checkInstruction } from './strategyFile.mjs';
 import { pageApp } from './apps/page.mjs';
 import { mcpApp } from './apps/mcp.mjs';
 import { resolveServers } from './mcpConfig.mjs';
-import { checkGates } from './engine.mjs';
+import { checkGates, checkScores, checkShortlist } from './engine.mjs';
 
 const SKETCH = 'sketch.yaml';
 const GUIDE = 'see docs/SKETCHES.md';
@@ -133,7 +133,7 @@ function checkCalls(sketch, fail) {
 }
 
 const DECIDED = /^(?:[\w-]+\/)?[\w-]+\.[\w-]+$/;
-const DECIDE_FIELDS = ['field', 'join', 'gates'];
+const DECIDE_FIELDS = ['field', 'join', 'gates', 'scores', 'shortlist'];
 
 /**
  * `decide:` - per `<tool>.<argument>` (`<server>/<tool>.<argument>` with
@@ -155,6 +155,8 @@ function checkDecided(key, entry, fail) {
     if (entry[field] !== undefined && (typeof entry[field] !== 'string' || entry[field] === '')) fail(`${at}.${field}`, 'must name a field of the answers, e.g. title');
   }
   if (entry.gates !== undefined) checkGates(entry.gates, `${at}.gates`, fail);
+  if (entry.scores !== undefined) checkScores(entry.scores, `${at}.scores`, fail);
+  if (entry.shortlist !== undefined) checkShortlist(entry.shortlist, `${at}.shortlist`, fail);
 }
 
 function checkCallList(calls, fail) {

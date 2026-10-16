@@ -25,7 +25,7 @@ test('a step becomes a decision: options, pick with confidence, off-list retry, 
   });
   assert.deepEqual(decision, {
     step: 2, phase: 'asking', options: ['tool:list_films', 'tool:pick_seats'], move: 'tool:pick_seats', picked: 'tool:pick_seats (1)',
-    retry: 'first answered "v9" (not on offer), asked again', args: 'film=f1, count=2', answer: { text: '{"hold":"h1"}', isBad: false },
+    retry: 'first answered "v9" (not on offer), asked again', args: 'film=f1, count=2', answer: { text: '{"hold":"h1"}', isBad: false }, decided: [],
   });
   assert.equal(decisionOf({ step: 1, options: [], move: 'size:medium', confidence: 0.95 }).picked, 'size:medium (0.95)');
 });
@@ -63,4 +63,21 @@ test('controls: Pause while running, Step and Resume while paused, none after th
   assert.deepEqual(controlsOf(model), { pause: false, step: false, resume: false });
   const replay = apply(apply(newModel(), { event: 'hello', mode: 'replay' }), { event: 'start', sketch: 's', plays: 'p', turn: TURN });
   assert.deepEqual(controlsOf(replay), { pause: false, step: false, resume: false });
+});
+
+test('a decided argument shows its score table, what was removed and what is held (UND-22 AC5)', () => {
+  const decision = decisionOf({ step: 3, options: [], move: 'tool:boxoffice/pick_seats', decided: [{
+    argument: 'boxoffice/pick_seats.seat',
+    table: [{ value: 's4-F5', factors: { row: 0.444, centre: 0.599 }, total: 0.266 }, { value: 's4-F4', factors: { row: 0.444, centre: 0.148 }, total: 0.066 }],
+    removed: [{ value: 's4-E1', why: 'centre 0 scores 0' }, { value: 's4-A2', why: 'row A not in [E, F, D]' }],
+    held: [],
+  }] });
+  assert.deepEqual(decision.decided, [{
+    argument: 'boxoffice/pick_seats.seat',
+    columns: ['value', 'row', 'centre', 'total'],
+    rows: [['s4-F5', '0.444', '0.599', '0.266'], ['s4-F4', '0.444', '0.148', '0.066']],
+    removed: 'removed 2: s4-E1 (centre 0 scores 0), s4-A2 (row A not in [E, F, D])',
+    held: null,
+  }]);
+  assert.deepEqual(decisionOf({ step: 1, options: [], move: 'x' }).decided, []);
 });

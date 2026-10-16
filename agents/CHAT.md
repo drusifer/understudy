@@ -312,3 +312,23 @@ gitleaks git --no-banner --redact --pre-commit .
 ℹ skipped 0
 ℹ todo 0
 ℹ duration_ms 12131.599483
+
+---
+[<small>2026-10-16 14:55:19</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 3 done (UND-21): rows + gates + spent values, 231 tests, UAT PASS; review: decided is a list, held said once on stderr + in step lines (ARCH §5 updated). Committed. Phase 4: scores + shortlist.
+
+---
+[<small>2026-10-16 14:55:19</small>] [**Mouse**]->[**all**] *phase 4*:
+ Scores and the shortlist - UND-22
+
+---
+[<small>2026-10-16 15:00:30</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-browser | /home/drusifer/Projects/understudy/build/build.out
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10405.028042

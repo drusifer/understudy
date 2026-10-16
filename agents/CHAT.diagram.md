@@ -121,4 +121,8 @@ sequenceDiagram
     Note right of Morpheus: "Phase 2 done<br/>(UND-18/19): evening box<br/>office + ratings<br/>servers, 220 tests, UAT<br/>PASS, Morpheus review<br/>passed, committed. Phase<br/>3 next: answe…"
     Mouse->>All: "phase 3"
     Note right of Mouse: "Answer rows and gates -<br/>UND-21"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 3 done (UND-21):<br/>rows + gates + spent<br/>values, 231 tests, UAT<br/>PASS, review: decided is<br/>a list, held said once<br/>on stderr + in step<br/>line…"
+    Mouse->>All: "phase 4"
+    Note right of Mouse: "Scores and the shortlist<br/>- UND-22"
 ```

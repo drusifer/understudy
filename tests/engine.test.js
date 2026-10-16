@@ -54,3 +54,61 @@ test('check refuses unknown words, a non-list in or any, and an incomparable bou
   assert.equal(refusal({ any: { genre: 'horror' } }), 'decide.x.y.gates.any: must be a list of gate groups, e.g. [{ genre: horror }, { tomato: { at_least: 91 } }]');
   assert.equal(refusal({ starts: { at_least: 'evening' } }), 'decide.x.y.gates.starts.at_least: must be a number or an HH:MM time (got evening)');
 });
+
+import { score, shortlist, checkScores, checkShortlist } from '../src/engine.mjs';
+
+const ROWS = { order: ['E', 'F', 'D'] };
+
+test('an order\'s weight bends its curve: E/F/D at weight 1 and 2 (UND-22 AC1)', () => {
+  const rowScore = (row, weight) => score({ row }, { row: { ...ROWS, weight } }).factors.row;
+  assert.deepEqual(['E', 'F', 'D'].map((row) => rowScore(row, 1)), [1, 0.667, 0.333]);
+  assert.deepEqual(['E', 'F', 'D'].map((row) => rowScore(row, 2)), [1, 0.444, 0.111]);
+});
+
+test('a range is straight between its ends, either way, clamped; HH:MM works', () => {
+  const at = (fact, range) => score({ x: fact }, { x: { range } }).factors?.x;
+  assert.equal(at(0.65, [0.3, 1]), 0.5);
+  assert.equal(at(2, [0.3, 1]), 1);
+  assert.equal(at(14, [20, 10]), 0.6);
+  assert.equal(at('19:00', ['17:00', '21:00']), 0.5);
+});
+
+test('weight 0 turns a factor off - it scores 1 even at the bottom of its range (Smith, Gate 1)', () => {
+  assert.deepEqual(score({ centre: 0.1 }, { centre: { range: [0.3, 1], weight: 0 } }), { factors: { centre: 1 }, total: 1 });
+});
+
+test('the total is the product; a zero anywhere removes the value with why (UND-22 AC2)', () => {
+  const factors = { row: { ...ROWS, weight: 2 }, centre: { range: [0.3, 1], weight: 3 } };
+  const edgeE = score({ row: 'E', centre: 0.4 }, factors);
+  const centreF = score({ row: 'F', centre: 1 }, factors);
+  assert.ok(edgeE.total > 0 && edgeE.total < 0.01);
+  assert.equal(centreF.total, 0.444);
+  assert.ok(edgeE.total < centreF.total, 'an edge seat in E ranks below a central one in F (UND-22 AC4)');
+  assert.deepEqual(score({ row: 'E', centre: 0.3 }, factors), { removed: 'centre 0.3 scores 0', factors: { row: 1, centre: 0 }, total: 0 });
+  assert.deepEqual(score({ row: 'E' }, factors), { missing: 'centre' });
+});
+
+test('the shortlist is every total above zero, best first, bounded by at_most and total.at_least (UND-22 AC3)', () => {
+  const scored = [{ value: 'a', total: 0.2 }, { value: 'b', total: 0.9 }, { value: 'c', total: 0 }, { value: 'd', total: 0.5 }, { value: 'e', total: 0.5 }];
+  assert.deepEqual(shortlist(scored).map((each) => each.value), ['b', 'd', 'e', 'a']);
+  assert.deepEqual(shortlist(scored, { at_most: 2 }).map((each) => each.value), ['b', 'd']);
+  assert.deepEqual(shortlist(scored, { total: { at_least: 0.5 } }).map((each) => each.value), ['b', 'd', 'e']);
+});
+
+test('check refuses a bad range, order, weight or shortlist - naming the factor (UND-22 AC6)', () => {
+  const refusal = (check, value) => {
+    try {
+      check(value, 'decide.x.y.scores', (at, message) => { throw new Error(`${at}: ${message}`); });
+    } catch (error) {
+      return error.message;
+    }
+    return null;
+  };
+  assert.equal(refusal(checkScores, { centre: { range: [0.3, 1], weight: 3 }, row: { order: ['E'] } }), null);
+  assert.equal(refusal(checkScores, { centre: { range: [0.3] } }), 'decide.x.y.scores.centre.range: must be two different numbers or HH:MM times, e.g. [0.3, 1]');
+  assert.equal(refusal(checkScores, { row: { order: 'E' } }), 'decide.x.y.scores.row.order: must be a list, best first, e.g. [E, F, D]');
+  assert.equal(refusal(checkScores, { row: { order: ['E'], weight: -1 } }), 'decide.x.y.scores.row.weight: must be a number of 0 or more (got -1)');
+  assert.equal(refusal(checkScores, { row: { weight: 2 } }), 'decide.x.y.scores.row: needs one of range: [from, to] or order: [best, ...]');
+  assert.equal(refusal(checkScores, { row: { order: ['E'], curve: 2 } }), 'decide.x.y.scores.row: unknown word "curve" - use range, order, weight');
+  assert.equal(refusal(checkShortlist, { at_most: 0 }), 'decide.x.y.scores: must be { at_most: N } and/or { total: { at_least: X } }');
+});

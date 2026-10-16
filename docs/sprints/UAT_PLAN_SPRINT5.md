@@ -2,7 +2,7 @@
 
 *   **Author**: Trin
 *   **Stories**: `docs/sprints/USER_STORIES_SPRINT5.md` (UND-18..26) · **Arch**: `docs/sprints/ARCH_SPRINT5.md`
-*   **Status**: In progress - Phases 1-3 verified
+*   **Status**: In progress - Phases 1-4 verified
 
 ## 1. Scope of Acceptance Testing
 
@@ -28,7 +28,7 @@ Smith at sprint close. Out of scope: the sprint 6 dashboard; real ratings data.
 | UAT-UND-18-01..06 | UND-18 AC1-6 | drive `examples/evening/boxoffice.mjs` through the MCP client | genres, showings, two screen widths, centre 0.33 / 0.79, side-by-side hold, refusal naming the run, `BOX_STATE=full` | `tests/evening.test.js` (s4-F4 = together 4, centre 0.67; E2 0.22 of 10; 0.83 vs 0.44 at 2.5 off in 30 vs 10) | PASS (Phase 2) |
 | UAT-UND-19-01..04 | UND-19 AC1-4 | drive `ratings.mjs` | tomato + 3-5 reviews; the four score cases; unknown title error | `tests/evening.test.js` | PASS (Phase 2) |
 | UAT-UND-21-01..05 | UND-21 AC1-5 | owner's film gate over both servers with a Jev double | no afternoon / low-score film offered; >90 non-horror offered; held-back line; check refusals | `tests/engine.test.js`, `tests/rows.test.js`, `tests/decideApp.test.js` (real evening servers: s2, s13, s8, s4 offered; s1/s6 removed with why; held said once; spent), `tests/sketch.test.js` | PASS (Phase 3) |
-| UAT-UND-22-01..06 | UND-22 AC1-6 | engine over seat rows | E/F/D 1, 0.67, 0.33 (w1) and 1, 0.44, 0.11 (w2); E edge 0.4 below F centre; table in log and page | Phase 4 tests + browser | pending |
+| UAT-UND-22-01..06 | UND-22 AC1-6 | engine over seat rows | E/F/D 1, 0.67, 0.33 (w1) and 1, 0.44, 0.11 (w2); E edge 0.4 below F centre; table in log and page | `tests/engine.test.js` (curves, product, zero, bounds, checks), `tests/decideApp.test.js` (s4 seats: F5, F6, F4; edge E removed), `tests/watchPage.test.js`; `make test-browser` 4/4 | PASS (Phase 4) |
 | UAT-UND-23-01..05 | UND-23 AC1-5 | score question over reviews | asked once per row; enthusiastic > bored (live) | Phase 5 tests + live | pending |
 | UAT-UND-24-01..06 | UND-24 AC1-6 | `--input mood=romantic --input centre=1` | start line inputs; mood only in state; shortlist of one skips Jev; refusals | Phase 5 tests | pending |
 | UAT-UND-25-01..06 | UND-25 AC1-6 | everything gated out; a held film | `walked-away` exit 0 + sentence; no call after; `stalled` without the state; held never walks | Phase 6 tests | pending |
@@ -44,3 +44,4 @@ UND-23 AC5, UND-24 AC5-6 (check and input refusals).
 - Phase 1: no defects. 213 unit tests pass, lint clean.
 - Phase 2: no defects. 220 unit tests pass, lint clean. Note: a big-screen seat map exceeds the 2000-character step text; the full answer stays in the view (rows read it in Phase 3).
 - Phase 3: no defects. 231 unit tests pass, lint clean.
+- Phase 4: no defects. 239 unit tests, 4 browser tests pass, lint clean.

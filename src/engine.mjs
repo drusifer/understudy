@@ -8,6 +8,15 @@
 //   test:    a bare value (is) | { is, in, at_least, at_most }
 //
 // `at_least`/`at_most` compare numbers as numbers and HH:MM as times.
+//
+// Scores rank what passes (UND-22, ADR-0018). Each factor puts one field
+// at a position 0..1 - `range: [from, to]` (straight, either way, clamped)
+// or `order: [best, ..., worst]` (item i of n at (n - i) / n, unlisted 0) -
+// and its weight bends it: score = position ^ weight, weight 0 = off. A
+// value's total is the product of its scores, so the factor weighted most
+// counts most and a zero anywhere removes the value. The shortlist is
+// every total above zero, best first, bounded by `at_most` and/or
+// `total: { at_least }`.
 
 export const GATE_WORDS = ['is', 'in', 'at_least', 'at_most'];
 const TIME = /^([01]?\d|2[0-3]):([0-5]\d)$/;
@@ -93,4 +102,91 @@ export function checkGates(gates, at, fail) {
     if (!Array.isArray(test) || test.length === 0) fail(`${at}.any`, 'must be a list of gate groups, e.g. [{ genre: horror }, { tomato: { at_least: 91 } }]');
     for (const [index, group] of test.entries()) checkGates(group, `${at}.any[${index}]`, fail);
   }
+}
+
+export const FACTOR_WORDS = ['range', 'order', 'weight'];
+const round = (value) => Math.round(value * 1000) / 1000;
+
+/**
+ * Where a fact sits along a factor, 0..1 (null when it cannot be placed).
+ */
+function positionOf(fact, factor) {
+  if (factor.order) {
+    const index = factor.order.indexOf(fact);
+    return index === -1 ? 0 : (factor.order.length - index) / factor.order.length;
+  }
+  const [from, to] = factor.range.map((each) => comparable(each));
+  const have = comparable(fact);
+  if (have === null) return null;
+  return Math.min(1, Math.max(0, (have - from) / (to - from)));
+}
+
+/**
+ * A value's factor scores and their product.
+ * @param {object} facts
+ * @param {Record<string, { range?: unknown[], order?: unknown[], weight?: number }>} factors
+ * @returns {{ factors: Record<string, number>, total: number }|{ missing: string }|{ removed: string, factors: object, total: 0 }}
+ */
+export function score(facts, factors = {}) {
+  const scores = {};
+  let total = 1;
+  let zero = null;
+  for (const [field, factor] of Object.entries(factors)) {
+    const weight = factor.weight ?? 1;
+    if (weight === 0) {
+      scores[field] = 1;
+      continue;
+    }
+    if (!Object.hasOwn(facts, field)) return { missing: field };
+    const raw = (positionOf(facts[field], factor) ?? 0) ** weight;
+    scores[field] = round(raw);
+    total *= raw;
+    zero ??= raw === 0 ? field : null;
+  }
+  if (zero) return { removed: `${zero} ${shown(facts[zero])} scores 0`, factors: scores, total: 0 };
+  return { factors: scores, total: round(total) };
+}
+
+/**
+ * The scored values worth Jev's pick: best first (ties keep their order),
+ * bounded by `at_most` and `total.at_least`.
+ * @param {{ value: unknown, total: number }[]} scored
+ * @param {{ at_most?: number, total?: { at_least?: number } }} [bounds]
+ */
+export function shortlist(scored, bounds = {}) {
+  const floor = bounds.total?.at_least ?? 0;
+  const ranked = scored.filter((each) => each.total > 0 && each.total >= floor).toSorted((a, b) => b.total - a.total);
+  return bounds.at_most === undefined ? ranked : ranked.slice(0, bounds.at_most);
+}
+
+const isRange = (range) => Array.isArray(range) && range.length === 2
+  && range.every((each) => comparable(each) !== null) && comparable(range[0]) !== comparable(range[1]);
+
+function checkFactor(factor, where, fail) {
+  if (!isMapping(factor)) fail(where, 'must be { range: [from, to] } or { order: [best, ...] }, with a weight');
+  const extra = Object.keys(factor).find((word) => !FACTOR_WORDS.includes(word));
+  if (extra) fail(where, `unknown word "${extra}" - use ${FACTOR_WORDS.join(', ')}`);
+  if (Object.hasOwn(factor, 'range') === Object.hasOwn(factor, 'order')) fail(where, 'needs one of range: [from, to] or order: [best, ...]');
+  if (factor.range !== undefined && !isRange(factor.range)) fail(`${where}.range`, 'must be two different numbers or HH:MM times, e.g. [0.3, 1]');
+  if (factor.order !== undefined && (!Array.isArray(factor.order) || factor.order.length === 0)) fail(`${where}.order`, 'must be a list, best first, e.g. [E, F, D]');
+  if (factor.weight !== undefined && !(typeof factor.weight === 'number' && factor.weight >= 0)) fail(`${where}.weight`, `must be a number of 0 or more (got ${shown(factor.weight)})`);
+}
+
+/**
+ * Checks a scores mapping as written.
+ */
+export function checkScores(factors, at, fail) {
+  if (!isMapping(factors)) fail(at, 'must map each field to a factor, e.g. { centre: { range: [0.3, 1], weight: 3 } }');
+  for (const [field, factor] of Object.entries(factors)) checkFactor(factor, `${at}.${field}`, fail);
+}
+
+/**
+ * Checks a shortlist bound as written.
+ */
+export function checkShortlist(bounds, at, fail) {
+  const isGood = isMapping(bounds)
+    && Object.keys(bounds).every((word) => word === 'at_most' || word === 'total')
+    && (bounds.at_most === undefined || (Number.isSafeInteger(bounds.at_most) && bounds.at_most > 0))
+    && (bounds.total === undefined || (isMapping(bounds.total) && typeof bounds.total.at_least === 'number'));
+  if (!isGood) fail(at, 'must be { at_most: N } and/or { total: { at_least: X } }');
 }

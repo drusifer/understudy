@@ -7,7 +7,7 @@
 
 import { candidatesFor, MAX_CANDIDATES } from '../fill.mjs';
 import { answerRows } from '../rows.mjs';
-import { gate } from '../engine.mjs';
+import { gate, score, shortlist } from '../engine.mjs';
 
 const RESULT_CHARS = 2000;
 
@@ -85,7 +85,7 @@ function described(tool) {
 /**
  * The generic MCP app for one sketch.
  * @param {{ calls?: { tool: string, arguments?: object }[], values?: Record<string, Record<string, unknown[]>>,
- *   decide?: Record<string, { field?: string, join?: string, gates?: object }> }} sketch
+ *   decide?: Record<string, { field?: string, join?: string, gates?: object, scores?: object, shortlist?: object }> }} sketch
  */
 export function mcpApp({ calls = [], values = {}, decide = {} } = {}) {
   const warned = new Set();
@@ -116,19 +116,25 @@ export function mcpApp({ calls = [], values = {}, decide = {} } = {}) {
   function decided(key, argument) {
     const entry = decide[key];
     if (!entry) return null;
-    const candidates = [];
+    const scored = [];
     const removed = [];
     const waiting = [];
     const fresh = rows.valuesOf(entry.field ?? argument).filter(({ value }) => !spent.get(key).has(value));
     for (const { value, row } of fresh) {
-      const result = gate(rows.factsOf(row, entry.join), entry.gates);
+      const facts = rows.factsOf(row, entry.join);
+      const passed = gate(facts, entry.gates);
+      const result = passed.pass ? score(facts, entry.scores) : passed;
       if (result.removed) removed.push({ value, why: result.removed });
       else if (result.missing) waiting.push({ value, missing: result.missing, ...(entry.join && { about: row[entry.join] }) });
-      else candidates.push(value);
+      else scored.push({ value, factors: result.factors, total: result.total });
     }
     sayHeld(key, argument, waiting);
     const heldBack = waiting.map(({ value, missing, about }) => ({ value, missing: about === undefined ? missing : `${missing} for ${about}` }));
-    return { candidates: candidates.slice(0, MAX_CANDIDATES), why: whyNone(heldBack, removed), record: { argument: key, removed, held: heldBack } };
+    // UND-22: with scores, Jev chooses from the shortlist, best first.
+    const table = entry.scores ? shortlist(scored, entry.shortlist).slice(0, MAX_CANDIDATES) : null;
+    const candidates = (table ?? scored.slice(0, MAX_CANDIDATES)).map((each) => each.value);
+    const record = { argument: key, ...(table && { table }), removed, held: heldBack };
+    return { candidates, why: whyNone(heldBack, removed), record };
   }
   let looked = { tools: [], last: null };
   // Values come from the last answer that was not an error: a refused

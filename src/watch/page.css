@@ -42,6 +42,11 @@ section { background: var(--panel); border: 1px solid var(--line); border-radius
 .options .picked { color: var(--fg); background: var(--picked); border-radius: 3px; padding: 0 3px; font-weight: 600; }
 .args, .answer, .retry { font-size: 12px; margin-top: 2px; }
 .answer.bad { color: var(--bad); }
+.decided { font-size: 12px; margin-top: 4px; }
+.decided .scores { border-collapse: collapse; margin: 2px 0; }
+.decided .scores th, .decided .scores td { padding: 1px 6px; text-align: right; border-bottom: 1px solid var(--line, #8884); }
+.decided .scores th:first-child, .decided .scores td:first-child { text-align: left; }
+.decided .removed, .decided .held { opacity: 0.8; }
 #ending { font-weight: 600; margin: 10px 0 0; }
 #ending.bad { color: var(--bad); }
 #steps li.future { opacity: .45; }
