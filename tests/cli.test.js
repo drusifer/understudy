@@ -124,7 +124,7 @@ test('--watch and --port reach the run; --port without --watch, or a bad port, i
   assert.equal((await cli(['run', 'examples/cli', '--watch', '--port', '4180'], { commands })).code, 0);
   assert.equal((await cli(['run', 'examples/cli', '--port=4181', '--watch'], { commands })).code, 0);
   assert.equal((await cli(['run', 'examples/cli'], { commands })).code, 0);
-  assert.deepEqual(calls, [{ port: undefined, paused: false }, { port: 4180, paused: false }, { port: 4181, paused: false }, null]);
+  assert.deepEqual(calls, [{ port: undefined, host: undefined, paused: false }, { port: 4180, host: undefined, paused: false }, { port: 4181, host: undefined, paused: false }, null]);
   const lonely = await cli(['run', 'examples/cli', '--port', '4180'], { commands });
   assert.equal(lonely.code, 2);
   assert.equal(lonely.stderr, 'understudy: --port needs --watch (it is the watch page\'s port)\n');
@@ -137,7 +137,7 @@ test('--pause reaches the run with --watch, and is refused without it', async ()
   const calls = [];
   const commands = { run: async (location, options) => { calls.push(options.watch); } };
   assert.equal((await cli(['run', 'examples/cli', '--watch', '--pause'], { commands })).code, 0);
-  assert.deepEqual(calls, [{ port: undefined, paused: true }]);
+  assert.deepEqual(calls, [{ port: undefined, host: undefined, paused: true }]);
   const lonely = await cli(['run', 'examples/cli', '--pause'], { commands });
   assert.equal(lonely.code, 2);
   assert.equal(lonely.stderr, 'understudy: --pause needs --watch (the page is where you step it)\n');
@@ -145,10 +145,25 @@ test('--pause reaches the run with --watch, and is refused without it', async ()
 
 test('watch takes one log (and --port); nothing else', async () => {
   const calls = [];
-  const commands = { watch: async (file, options) => { calls.push([file, options.port]); } };
+  const commands = { watch: async (file, options) => { calls.push([file, options.port, options.host]); } };
   assert.equal((await cli(['watch', 'build/runs/x/1.jsonl', '--port', '4190'], { commands })).code, 0);
-  assert.deepEqual(calls, [['build/runs/x/1.jsonl', 4190]]);
+  assert.deepEqual(calls, [['build/runs/x/1.jsonl', 4190, undefined]]);
   assert.match((await cli(['watch'], { commands })).stderr, /watch needs a run log, e\.g\. understudy watch build\/runs\/coffee-cli\/<time>\.jsonl/);
   assert.match((await cli(['watch', 'a', 'b'], { commands })).stderr, /watch takes one log \(got "a", "b"\)/);
   assert.match((await cli(['watch', 'a', '--pause'], { commands })).stderr, /no option "--pause" for watch/);
+});
+
+test('--host reaches the run and the replay; on run it needs --watch', async () => {
+  const runs = [];
+  const watches = [];
+  const commands = {
+    run: async (location, options) => { runs.push(options.watch); },
+    watch: async (file, options) => { watches.push(options.host); },
+  };
+  assert.equal((await cli(['run', 'examples/cli', '--watch', '--host', '0.0.0.0'], { commands })).code, 0);
+  assert.deepEqual(runs, [{ port: undefined, host: '0.0.0.0', paused: false }]);
+  assert.equal((await cli(['watch', 'x.jsonl', '--host=localhost'], { commands })).code, 0);
+  assert.deepEqual(watches, ['localhost']);
+  const lonely = await cli(['run', 'examples/cli', '--host', '0.0.0.0'], { commands });
+  assert.equal(lonely.stderr, 'understudy: --host needs --watch (it is where the watch page listens)\n');
 });

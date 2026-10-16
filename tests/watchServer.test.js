@@ -105,3 +105,15 @@ test('a busy port is refused before anything starts', async () => {
   await assert.rejects(startWatch({ port, mode: 'live', source: liveStream() }),
     (error) => error instanceof UsageError && error.message === `port ${port} is in use - choose another with --port`);
 });
+
+test('--host 0.0.0.0 listens on every interface and names an address per interface, loopback last', async () => {
+  const watch = await started({ mode: 'live', source: liveStream(), host: '0.0.0.0' });
+  assert.ok(watch.urls.length > 0);
+  assert.match(watch.urls.at(-1), /^http:\/\/127\.0\.0\.1:\d+\/w\//);
+  for (const url of watch.urls) assert.equal((await fetch(`${url}layout.mjs`)).status, 200, url);
+});
+
+test('an address this machine does not have is refused, saying what to give', async () => {
+  await assert.rejects(startWatch({ mode: 'live', source: liveStream(), host: '203.0.113.7' }),
+    (error) => error instanceof UsageError && error.message === 'cannot listen on 203.0.113.7 - give an address this machine has (e.g. 0.0.0.0 for every interface)');
+});

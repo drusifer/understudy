@@ -179,14 +179,27 @@ understudy: replaying build/runs/boxoffice-mcp/2026-10-16T03-05-39.092Z.jsonl at
 time; click a decision to jump to it (decisions still to come are faded). Ctrl-C stops the
 server. Logs written before sprint 4 have no `start` line and are refused.
 
-**From another machine.** The page listens on `127.0.0.1` only. If understudy runs on a
-machine without a screen (a Raspberry Pi, a server), forward the port over SSH and open the
-printed address on your own machine:
+**From another machine.** The page listens on `127.0.0.1` only, unless you say otherwise. If
+understudy runs on a machine without a screen (a Raspberry Pi, a server), either forward the
+port over SSH and open the printed address on your own machine:
 
 ```sh
 ssh -L 4173:127.0.0.1:4173 pi@raspberrypi      # then, on the Pi:
 bobp make run ARGS="run examples/cli --watch --port 4173"
 ```
+
+or listen on the machine's network address with `--host` (works for `watch <log>` too):
+
+```sh
+bobp make run ARGS="run examples/cli --watch --host 0.0.0.0"     # every interface
+```
+
+```text
+understudy: watch at http://192.168.86.69:41207/w/kJ3m9xT2vQ8pLr1n/ or http://127.0.0.1:41207/w/kJ3m9xT2vQ8pLr1n/
+```
+
+With `--host`, anyone on that network who has the printed address can watch the run and pause
+it - the random part of the address is the only guard. Use it on a network you trust.
 
 ## 6. Write a sketch for your own app
 
@@ -284,7 +297,8 @@ Every error is one line starting `understudy:`. The common ones:
 | `.../servers.json: ${MCP_TOKEN} is not set` | 2 | `export MCP_TOKEN=...`, or give a default `${MCP_TOKEN:-value}` |
 | `--steps must be a positive whole number` | 2 | `--steps 20` |
 | `port 4173 is in use - choose another with --port` | 2 | another watch page (or program) has it: pick another, or leave `--port` out for a free one |
-| `--pause needs --watch` / `--port needs --watch` | 2 | add `--watch` - the page is where you pause and step |
+| `cannot listen on <addr> - give an address this machine has` | 2 | `--host` named an address this machine does not have; use `0.0.0.0` or one `ip addr` lists |
+| `--pause needs --watch` / `--port needs --watch` / `--host needs --watch` | 2 | add `--watch` - the page is where you pause and step |
 | `<log>: no start line - replay needs a log written by understudy run (sprint 4 or later)` | 2 | the log is older than the watch page; replay a new run's log |
 | `<log>: line N is not JSON - this is not a run log` | 2 | give a `.jsonl` file from `build/runs/<sketch>/` |
 | `stopped by Ctrl-C while paused, after N steps` | 1 | you stopped a paused run; nothing was cut short mid-move |
@@ -304,12 +318,12 @@ Every error is one line starting `understudy:`. The common ones:
 ## 8. Command reference
 
 ```text
-understudy run <sketch> [--steps N] [--watch [--port N] [--pause]]
+understudy run <sketch> [--steps N] [--watch [--port N] [--host ADDR] [--pause]]
                                       play the sketch against its app (needs TYPESAFE_API_KEY);
                                       --watch serves the live page, --pause starts it paused
 understudy check <sketch>             check the sketch without starting anything
 understudy library [<sketch>]         list every name a sketch may use, with its meaning
-understudy watch <log.jsonl> [--port N]
+understudy watch <log.jsonl> [--port N] [--host ADDR]
                                       replay a finished run's log on the watch page
 understudy --help
 ```

@@ -23,6 +23,7 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 *   **Context**: owner: a browser page showing the statechart, state changes and Jev decisions live, plus replay. Must work offline and on the Pi.
 *   **Options**: (1) node:http + Server-Sent Events + a small layered SVG layout of our own; (2) Mermaid for the diagram (122 MB unpacked, re-render to highlight); (3) a WebSocket library; (4) a terminal UI.
 *   **Decision**: (1). The server binds 127.0.0.1 with a per-run token path, serves only the page's own files, streams history then live lines then `end`; `/control` in live mode only. Live and replay are the same page fed the same events; replay frames are one per log line, so stepping walks the statechart (Phase 5 finding: per-step frames hid the move state).
+*   **Amendment (owner, 2026-10-16)**: `--host ADDR` binds the page to another address (e.g. `0.0.0.0`) to watch from another device; 127.0.0.1 stays the default, and the per-run token is then the only guard (documented).
 *   **Consequences**: + no new dependency, nothing fetched from the internet. − the layout is ours to maintain (columns by distance from the start, gaps sized to labels, back edges arced above - a visual check in Phase 2 drove both).
 
 ## ADR-0014: The run log is an event stream

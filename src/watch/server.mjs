@@ -1,11 +1,12 @@
 // Sprint 4 UND-14/16 (ARCH §3, §5, ADR-0015): the watch page's server -
-// plain node:http on 127.0.0.1, every path under an unguessable per-run
-// token. It serves the page's own files (nothing from the internet) and
+// plain node:http on 127.0.0.1 (or the address `--host` names, to watch
+// from another device), every path under an unguessable per-run token. It serves the page's own files (nothing from the internet) and
 // streams the run's lines as Server-Sent Events: everything so far, then
 // each new line, then `end` after the final line. In a live run it also
 // takes the page's pause / step / resume.
 
 import http from 'node:http';
+import os from 'node:os';
 import { randomBytes } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -44,13 +45,15 @@ function readBody(request) {
 
 /**
  * Starts the server.
- * @param {{ port?: number, mode: 'live'|'replay', source: { listen: (fn: (line: object) => void) => () => void },
+ * @param {{ port?: number, host?: string, mode: 'live'|'replay', source: { listen: (fn: (line: object) => void) => () => void },
  *   control?: (action: string) => boolean }} options
+ *   `host` is the address to listen on (default 127.0.0.1; 0.0.0.0 for every interface).
  *   `source` is the run's stream (or a log, for replay); `control` applies a
  *   page action and says whether it applied.
- * @returns {Promise<{ url: string, send: (line: object) => void, close: () => Promise<void> }>}
+ * @returns {Promise<{ url: string, urls: string[], send: (line: object) => void, close: () => Promise<void> }>}
+ *   `urls`: every address the page can be opened at (one per interface for 0.0.0.0).
  */
-export async function startWatch({ port = 0, mode, source, control = null }) {
+export async function startWatch({ port = 0, host = '127.0.0.1', mode, source, control = null }) {
   const token = randomBytes(12).toString('base64url');
   const base = `/w/${token}/`;
   const clients = new Set();
@@ -103,13 +106,17 @@ export async function startWatch({ port = 0, mode, source, control = null }) {
 
   await new Promise((resolve, reject) => {
     server.once('error', (error) => {
-      reject(error.code === 'EADDRINUSE' ? new UsageError(`port ${port} is in use - choose another with --port`) : error);
+      if (error.code === 'EADDRINUSE') reject(new UsageError(`port ${port} is in use - choose another with --port`));
+      else if (error.code === 'EADDRNOTAVAIL' || error.code === 'ENOTFOUND') reject(new UsageError(`cannot listen on ${host} - give an address this machine has (e.g. 0.0.0.0 for every interface)`));
+      else reject(error);
     });
-    server.listen(port, '127.0.0.1', resolve);
+    server.listen(port, host, resolve);
   });
+  const urls = addressesFor(host).map((address) => `http://${address}:${server.address().port}${base}`);
 
   return {
-    url: `http://127.0.0.1:${server.address().port}${base}`,
+    url: urls[0],
+    urls,
     /**
      * A live-only line (the pause state) to every open page.
      */
@@ -123,6 +130,17 @@ export async function startWatch({ port = 0, mode, source, control = null }) {
       server.close(() => resolve());
     }),
   };
+}
+
+/**
+ * Where a page can reach a server listening on `host`: the host itself, or
+ * for 0.0.0.0 (every interface) each IPv4 address this machine has.
+ */
+function addressesFor(host) {
+  if (host !== '0.0.0.0') return [host.includes(':') ? `[${host}]` : host];
+  const interfaces = Object.values(os.networkInterfaces()).flat();
+  const external = interfaces.filter((each) => each.family === 'IPv4' && !each.internal).map((each) => each.address);
+  return [...external, '127.0.0.1'];
 }
 
 /**

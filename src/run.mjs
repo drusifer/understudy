@@ -80,7 +80,7 @@ function watchInterrupts(signals, onSecond, onFirst = () => {}) {
  *   environment?: object, makeJudge?: (environment: object) => object|Promise<object>,
  *   makeTarget?: (spec: object, options: { directory: string, environment: object }) => Promise<object>,
  *   logRoot?: string, firstMoveMs?: number, stallMs?: number, pollMs?: number, signals?: import('node:events').EventEmitter,
- *   clock?: () => number, watch?: { port?: number, paused?: boolean }|null, makeWatch?: typeof startWatch }} [options]
+ *   clock?: () => number, watch?: { port?: number, host?: string, paused?: boolean }|null, makeWatch?: typeof startWatch }} [options]
  *   `watch` serves the live view (`--watch`); the server starts before anything else, so a
  *   busy port refuses the run with nothing started. `paused` starts it paused (`--pause`).
  * @throws {UsageError} before anything starts; {RunError} once it has.
@@ -98,8 +98,8 @@ export async function runSketch(location, {
   const stream = createStream({ stdout, logFile });
   // The page's controls reach the run's gate once the run has made it.
   const controls = { gate: OPEN_GATE };
-  const watcher = watch ? await makeWatch({ port: watch.port, mode: 'live', source: stream, control: (action) => controls.gate[action]() }) : null;
-  if (watcher) stderr.write(`understudy: watch at ${watcher.url}\n`);
+  const watcher = watch ? await makeWatch({ port: watch.port, host: watch.host, mode: 'live', source: stream, control: (action) => controls.gate[action]() }) : null;
+  if (watcher) stderr.write(`understudy: watch at ${(watcher.urls ?? [watcher.url]).join(' or ')}\n`);
   try {
     await playSketch({ sketch, limit, stream, logDirectory, logFile, stdout, stderr, environment, makeJudge, makeTarget, firstMoveMs, stallMs, pollMs, signals, clock, watch, watcher, controls });
   } finally {

@@ -17,14 +17,15 @@ import { genericLibrary } from './library.mjs';
 
 const KEY = 'TYPESAFE_API_KEY';
 
-const USAGE = `usage: understudy run <sketch> [--steps N] [--watch [--port N] [--pause]]
+const USAGE = `usage: understudy run <sketch> [--steps N] [--watch [--port N] [--host ADDR] [--pause]]
            play the sketch against its app (needs ${KEY});
-           --watch serves a live view of the run on 127.0.0.1; --pause starts it paused
+           --watch serves a live view of the run on 127.0.0.1 (--host 0.0.0.0: every interface);
+           --pause starts it paused
        understudy check <sketch>
            check the sketch without starting anything
        understudy library [<sketch>]
            list every name a sketch may use, with its meaning
-       understudy watch <log.jsonl> [--port N]
+       understudy watch <log.jsonl> [--port N] [--host ADDR]
            replay a finished run's log on the watch page
 <sketch> is a directory holding sketch.yaml (e.g. examples/cli) or the file itself.
 `;
@@ -57,6 +58,7 @@ const OPTIONS = {
     if (!/^\d+$/.test(value) || port < 1 || port > 65_535) throw new UsageError(`--port must be a port number from 1 to 65535 (got "${value}")`);
     return port;
   }, needs: 'a port number', example: '--port 4173' },
+  host: { commands: ['run', 'watch'], read: (value) => value, needs: 'an address', example: '--host 0.0.0.0' },
   watch: { commands: ['run'], read: null },
   pause: { commands: ['run'], read: null },
 };
@@ -88,6 +90,7 @@ function parse(argv) {
     index += used;
   }
   if (command === 'run' && options.port !== undefined && !options.watch) throw new UsageError('--port needs --watch (it is the watch page\'s port)');
+  if (command === 'run' && options.host !== undefined && !options.watch) throw new UsageError('--host needs --watch (it is where the watch page listens)');
   if (command === 'run' && options.pause && !options.watch) throw new UsageError('--pause needs --watch (the page is where you step it)');
   return { command, positional, ...options };
 }
@@ -116,12 +119,12 @@ const defaultCommands = {
     const { sketchLibrary } = await loadModule('./sketch.mjs');
     return sketchLibrary(location);
   },
-  async watch(file, { port, stderr }) {
+  async watch(file, { port, host, stderr }) {
     const { readLog } = await loadModule('./watch/replay.mjs');
     const { startWatch, logSource } = await loadModule('./watch/server.mjs');
     const lines = readLog(file);
-    const server = await startWatch({ port, mode: 'replay', source: logSource(lines) });
-    stderr.write(`understudy: replaying ${file} at ${server.url} - Ctrl-C to stop\n`);
+    const server = await startWatch({ port, host, mode: 'replay', source: logSource(lines) });
+    stderr.write(`understudy: replaying ${file} at ${server.urls.join(' or ')} - Ctrl-C to stop\n`);
     // UND-16 AC5: serve until Ctrl-C, then stop cleanly (exit 0).
     await new Promise((resolve) => process.once('SIGINT', resolve));
     await server.close();
@@ -135,10 +138,10 @@ const HELP = new Set(['--help', '-h', 'help']);
  * stdout; failures are thrown.
  */
 const COMMANDS = {
-  async run({ positional, steps, watch, port, pause }, { use, environment, stdout, stderr }) {
+  async run({ positional, steps, watch, port, host, pause }, { use, environment, stdout, stderr }) {
     // UND-4: Jev is required, so a run without its key never starts.
     if (!environment[KEY]?.trim()) throw new UsageError(`understudy run needs a TypeSafe key: set ${KEY}`);
-    await use.run(oneSketch('run', positional), { steps, stdout, stderr, environment, watch: watch ? { port, paused: pause === true } : null });
+    await use.run(oneSketch('run', positional), { steps, stdout, stderr, environment, watch: watch ? { port, host, paused: pause === true } : null });
   },
   async check({ positional }, { use, stdout }) {
     stdout.write(`${await use.check(oneSketch('check', positional))}\n`);
@@ -147,10 +150,10 @@ const COMMANDS = {
     const location = oneSketch('library', positional, { isOptional: true });
     stdout.write(libraryListing(location ? await use.sketchLibrary(location) : null));
   },
-  async watch({ positional, port }, { use, stderr }) {
+  async watch({ positional, port, host }, { use, stderr }) {
     const quoted = positional.map((each) => JSON.stringify(each)).join(', ');
     if (positional.length !== 1) throw new UsageError(positional.length === 0 ? 'watch needs a run log, e.g. understudy watch build/runs/coffee-cli/<time>.jsonl' : `watch takes one log (got ${quoted})`);
-    await use.watch(positional[0], { port, stderr });
+    await use.watch(positional[0], { port, host, stderr });
   },
 };
 
