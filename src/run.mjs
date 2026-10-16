@@ -163,6 +163,14 @@ async function playSketch({ sketch, inputs, limit, stream, logDirectory, logFile
     await target.close();
   }
   flushChanges(run, write);
+  if (!interrupts.isAsked() && run.seat.hasTag('walked-away')) {
+    // UND-25: leaving empty-handed is a result, not a failure.
+    const { removed, sentence } = sketch.app.leaving?.() ?? { removed: {}, sentence: 'walked away' };
+    write({ event: 'walked-away', removed });
+    stderr.write(`understudy: ${sentence}\n`);
+    write({ final: true, outcome: 'walked-away', steps: run.taken, state: run.seat.state });
+    return;
+  }
   const outcome = interrupts.isAsked() ? 'interrupted' : 'done';
   const stopped = run.isStoppedPaused
     ? `stopped by Ctrl-C while paused, after ${stepCount(run.taken)}`

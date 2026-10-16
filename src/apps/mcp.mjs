@@ -60,7 +60,8 @@ function movesFor(tool, { calls, values, last, decided, pick }) {
  */
 function decidedArgument(name, schema, decision, pick) {
   if (decision.candidates.length === 0) return { why: `argument "${name}" ${decision.why}` };
-  return { name, schema, candidates: decision.candidates, isDecided: true, ...(pick && { instructions: pick.instructions }) };
+  // The final pick (UND-24) is for a ranked argument; any other is chosen as usual.
+  return { name, schema, candidates: decision.candidates, isDecided: true, ...(pick && decision.isRanked && { instructions: pick.instructions }) };
 }
 
 /**
@@ -111,6 +112,8 @@ export function mcpApp({ calls = [], values = {}, decide = {}, pick = null, ques
   const scored = new Map();
   let waitingScores = new Map();
   let step = 0;
+  // UND-25: where each decided argument stood at the last look.
+  const standing = new Map();
   const rows = answerRows({ notify: (line) => app.notify?.(line) });
   // ADR-0017: a decided value used in a call that answered is spent - the
   // answer is remembered, so asking again gains nothing.
@@ -157,7 +160,8 @@ export function mcpApp({ calls = [], values = {}, decide = {}, pick = null, ques
     const candidates = (table ?? ranked.slice(0, MAX_CANDIDATES)).map((each) => each.value);
     const jev = hasAsk(entry) ? { jev: { asked: scored.values().filter((each) => each.step === step).toArray().length, reused } } : {};
     const record = { argument: key, ...(table && { table }), removed, held: heldBack, ...jev };
-    return { candidates, why: whyNone(heldBack, removed), record };
+    standing.set(key, { seen: rows.valuesOf(entry.field ?? argument).length, shortlisted: candidates.length, held: heldBack.length, removed });
+    return { candidates, why: whyNone(heldBack, removed), record, isRanked: Boolean(entry.scores) };
   }
 
   /**
@@ -252,6 +256,28 @@ export function mcpApp({ calls = [], values = {}, decide = {}, pick = null, ques
      * Before the phase is read: the Scores decided values wait for are
      * asked (a look that finds nothing new asks nothing).
      */
+    /**
+     * Where each decided argument stands: values seen, shortlisted, held
+     * back - for the `nothing_qualifies` guard (ADR-0021).
+     */
+    decisions: () => Object.fromEntries([...standing].map(([key, { seen, shortlisted, held: waiting }]) => [key, { seen, shortlisted, held: waiting }])),
+    /**
+     * What the gates and zero scores removed, per argument and field - for
+     * the walked-away line and sentence.
+     */
+    leaving() {
+      const removed = {};
+      for (const [key, each] of standing) {
+        const counts = {};
+        for (const { why } of each.removed) {
+          const rule = why.startsWith('none of any') ? 'any' : why.split(' ', 1)[0];
+          counts[rule] = (counts[rule] ?? 0) + 1;
+        }
+        if (Object.keys(counts).length > 0) removed[key] = counts;
+      }
+      const parts = Object.entries(removed).flatMap(([key, counts]) => Object.entries(counts).map(([rule, count]) => `${rule} removed ${count} ${key.split('.').at(-1)}${count === 1 ? '' : 's'}`));
+      return { removed, sentence: `walked away - nothing qualified: ${parts.join('; ') || 'nothing was offered'}` };
+    },
     async prepare(view, judge) {
       if (Object.values(decide).every((entry) => !hasAsk(entry))) return;
       app.moves(view, { isQuiet: true });

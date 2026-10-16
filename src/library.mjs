@@ -91,6 +91,13 @@ export function genericLibrary(services) {
           return context[parameters.field] >= limit;
         },
       },
+      nothing_qualifies: {
+        doc: 'the last `look` saw values for the decided arguments `for` and none of them has anything shortlisted or held back - nothing the person would accept is left (walk away)',
+        fn: ({ event }, parameters) => {
+          const standing = (parameters.for ?? []).map((key) => event.output?.decisions?.[key]).filter(Boolean);
+          return standing.some((each) => each.seen > 0) && standing.every((each) => each.shortlisted === 0 && each.held === 0);
+        },
+      },
       played: {
         doc: 'the step just taken was a move of kind `move` (the part of its id before any `:`)',
         fn: ({ event }, parameters) => event.output?.kind === parameters.move,
@@ -146,7 +153,9 @@ export function genericLibrary(services) {
           const view = input.event?.view ?? await services.target.view();
           // UND-23: an app may need Jev before it can say what it offers.
           await services.app.prepare?.(view, services.judge);
-          return { phase: services.app.phase(view, input.context), view };
+          const phase = services.app.phase(view, input.context);
+          // UND-25: where each decided argument stands, for nothing_qualifies.
+          return { phase, view, ...(services.app.decisions && { decisions: services.app.decisions() }) };
         },
       },
       play: {

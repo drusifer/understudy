@@ -45,7 +45,7 @@ const play = (library, context = {}) => library.actors.play.fn({ input: { contex
 
 test('the vocabulary uses app words, not card-table words', () => {
   const library = genericLibrary({});
-  assert.deepEqual(Object.keys(library.guards).toSorted((a, b) => a.localeCompare(b)), ['changed', 'counted', 'phase', 'played', 'quiet', 'showing', 'verdict']);
+  assert.deepEqual(Object.keys(library.guards).toSorted((a, b) => a.localeCompare(b)), ['changed', 'counted', 'nothing_qualifies', 'phase', 'played', 'quiet', 'showing', 'verdict']);
   assert.deepEqual(Object.keys(library.actors).toSorted((a, b) => a.localeCompare(b)), ['ask', 'judge', 'look', 'play']);
   for (const kind of ['guards', 'actions', 'actors']) {
     const entries = Object.entries(library[kind]);
@@ -104,4 +104,16 @@ test('two off-list picks stop the run, naming both answers, and nothing is sent'
     return true;
   });
   assert.deepEqual(target.acted, []);
+});
+
+test('nothing_qualifies: values were seen for a listed argument and none is shortlisted or held (UND-25, Smith Gate 2)', () => {
+  const guard = genericLibrary({}).guards.nothing_qualifies.fn;
+  const after = (decisions) => ({ event: { output: { decisions } } });
+  const parameters = { for: ['seat_map.showing', 'pick_seats.seat'] };
+  // Every showing gated out: no seat map was ever read, and still it walks away.
+  assert.equal(guard(after({ 'seat_map.showing': { seen: 6, shortlisted: 0, held: 0 } }), parameters), true);
+  assert.equal(guard(after({ 'seat_map.showing': { seen: 6, shortlisted: 0, held: 0 }, 'pick_seats.seat': { seen: 40, shortlisted: 0, held: 0 } }), parameters), true);
+  assert.equal(guard(after({ 'seat_map.showing': { seen: 6, shortlisted: 1, held: 0 } }), parameters), false);
+  assert.equal(guard(after({ 'seat_map.showing': { seen: 6, shortlisted: 0, held: 2 } }), parameters), false, 'waiting for an answer is not walking away');
+  assert.equal(guard(after({}), parameters), false, 'nothing seen yet');
 });

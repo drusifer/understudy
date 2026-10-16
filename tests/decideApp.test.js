@@ -93,3 +93,13 @@ test('seats are scored and shortlisted best first; the table is in the move for 
   assert.ok(removed.some((each) => each.value === 's4-E1' && each.why === 'centre 0 scores 0'));
   assert.ok(removed.some((each) => /^(row|together) /.test(each.why)), 'gated seats are removed before scoring');
 });
+
+test('with nothing left and no leaving state, the stall reason says the gates removed everything (UND-25 AC5)', async () => {
+  const target = await startTarget(SPEC, { directory: 'examples/evening', environment: process.env });
+  test.after(() => target.close());
+  const app = mcpApp({ decide: { 'boxoffice/seat_map.showing': { gates: { starts: { at_least: '23:00' } } } } });
+  await target.act({ server: 'boxoffice', tool: 'list_films', arguments: {} });
+  const view = await target.view();
+  assert.match(app.idle(view), /tool:boxoffice\/seat_map - argument "showing" has nothing that passes its gates \(13 removed\)/);
+  assert.deepEqual(app.decisions()['boxoffice/seat_map.showing'], { seen: 13, shortlisted: 0, held: 0 });
+});

@@ -129,4 +129,8 @@ sequenceDiagram
     Note right of Morpheus: "Phase 4 done (UND-22):<br/>scores + shortlist +<br/>score table in log/watch<br/>page, 239 unit + 4<br/>browser tests, UAT PASS,<br/>review passed,<br/>committed.…"
     Mouse->>All: "phase 5"
     Note right of Mouse: "Jev's Score, inputs and<br/>the final pick - UND-23,<br/>UND-24"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 5 done<br/>(UND-23/24): Jev Score<br/>factor (batched,<br/>cached), --input, pick +<br/>told inputs, shortlist-<br/>of-one, 248 tests, UAT<br/>PASS (live in P…"
+    Mouse->>All: "phase 6"
+    Note right of Mouse: "Walk away - UND-25"
 ```

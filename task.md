@@ -5,7 +5,7 @@
 *   **Total Points**: 29 (UND-18 3, UND-19 2, UND-20 5, UND-21 3, UND-22 5, UND-23 3, UND-24 3, UND-25 2, UND-26 3) - kept whole by the owner ("go big or go home")
 *   **Branch**: `sprint-5`
 *   **Stories / Arch**: `docs/sprints/USER_STORIES_SPRINT5.md`, `docs/sprints/ARCH_SPRINT5.md` (sprint 4 board: `docs/sprints/TASKS_SPRINT4.md`)
-*   **Status**: In progress - Phases 1-5 done; Phase 6 next. Note: `test-live` skips nothing - `examples/evening` has no sketch until Phase 7, so do not run test-live before then
+*   **Status**: In progress - Phases 1-6 done; Phase 7 next (`examples/evening/sketch.yaml` already written in Phase 6)
 *   **Commits**: one local commit per phase after Morpheus's review (`Phase <N>: ...`); publishing only via `bobp make push` when the owner asks (SDLC §6). No back-compat (owner rule).
 
 ---
@@ -46,8 +46,8 @@
 
 ### Phase 6: Walk away - UND-25
 *Phase goal: `nothing_qualifies` + a `walked-away` final state end the run with exit 0 and an explanation; without it, `stalled` says what was removed.*
-- [ ] **Task 6.1:** look actor output carries `decisions`; guard `nothing_qualifies` (ARCH §4 as amended at Gate 2); outcome `walked-away` from the tagged final state, `walked-away` event line + stderr sentence; no call after an empty shortlist; `idle()` lists removals; held values never count. Tests: all showings gated out (no seat map read) walks away; held film does not. (*Owner: Neo | Verification: `bobp make test`*)
-- [ ] **Task 6.2:** UAT UND-25 AC1-6 then Morpheus review vs ADR-0021. (*Owner: Trin → Morpheus | Verification: `bobp make check`; commit `Phase 6`*)
+- [x] **Task 6.1:** look actor output carries `decisions`; guard `nothing_qualifies` (ARCH §4 as amended at Gate 2); outcome `walked-away` from the tagged final state, `walked-away` event line + stderr sentence; no call after an empty shortlist; `idle()` lists removals; held values never count. Tests: all showings gated out (no seat map read) walks away; held film does not. (*Owner: Neo | Verification: `bobp make test`*)
+- [x] **Task 6.2:** UAT UND-25 AC1-6 then Morpheus review vs ADR-0021. (*Owner: Trin → Morpheus | Verification: `bobp make check`; commit `Phase 6`*)
 
 ### Phase 7: The owner's evening - UND-26
 *Phase goal: `examples/evening` buys the owner's seats live, walks away when full, and the docs teach decide/inputs/several servers.*
