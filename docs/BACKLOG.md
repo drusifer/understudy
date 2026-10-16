@@ -73,8 +73,7 @@ Design approved on a clickable mockup - **`docs/design/DASHBOARD.md`** is the br
 ## Next (from the sprint 6 retro)
 - Tube labels still crowd when a state has several guarded exits (evening's "looking"); try label
   leader lines or a label-collision pass. (Smith)
-- A "seats together" switch needs a box office that can hold seats apart (or a count that follows
-  the switch). (Cypher)
+- DONE in sprint 7: the "seats together" toggle became a number-of-tickets stepper (owner).
 - `not offering ... yet - already answered` should not say "yet". (Smith)
 - `src/dashboard/page.mjs` is ~550 lines: split the tube drawing and the panels into modules. (Neo)
 

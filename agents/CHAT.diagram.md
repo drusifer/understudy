@@ -10,7 +10,10 @@ sequenceDiagram
     participant All
     participant Tank
     participant Mouse
-    Note over User,Mouse: 📅 2026-10-16
+    participant Morpheus
+    participant Neo
+    participant Cypher
+    Note over User,Cypher: 📅 2026-10-16
     User->>All: "request"
     Note right of User: "merge and push sprint 6"
     Tank->>All: "done"
@@ -19,4 +22,8 @@ sequenceDiagram
     Note right of User: "Owner: replace the<br/>seats-together toggle<br/>with a number-of-tickets<br/>selector - a brass<br/>stepper. Weights stay<br/>analog faders, the<br/>stepper is a…"
     Mouse->>All: "phase 1"
     Note right of Mouse: "Sprint 7 (Tier 2): docs/<br/>sprints/USER_STORIES_SPR<br/>INT7.md - UND-34 count<br/>input + { input: }<br/>references + brass<br/>stepper, 3 pts. Smith<br/>Gate 1 a…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 1 done (UND-34):<br/>count inputs, { input: }<br/>in values/gate bounds,<br/>evening tickets, three<br/>tickets books three<br/>seats together, 285<br/>tests…"
+    Cypher->>All: "pm launch"
+    Note right of Cypher: "Sprint 7 close: SDLC<br/>unchanged (no deps),<br/>check + browser green,<br/>ADR-0027, changelog.<br/>Smith: stepper looks and<br/>steps right, stops at<br/>its en…"
 ```

@@ -67,6 +67,8 @@ test('the console plays the evening: controls, Play, the tube follows, the print
   assert.equal(await page.textContent('#fader-centre >> xpath=../..//div[contains(@class,"nixie")]'), '1.50');
   await page.fill('#fader-row', '3');
   assert.equal(await page.textContent('#fader-row >> xpath=../..//div[contains(@class,"nixie")]'), '11');
+  await page.click('button[aria-label="tickets up"]');
+  assert.equal(await page.textContent('.stepper-nixie'), '3', 'the brass stepper (UND-34 AC4)');
   const evenings = page.locator('.switch:has-text("evenings")');
   assert.equal(await evenings.getAttribute('aria-pressed'), 'true');
 
@@ -79,7 +81,8 @@ test('the console plays the evening: controls, Play, the tube follows, the print
   await until(page, () => document.querySelector('#paper').textContent.includes('Ticket issued'));
   await until(page, () => document.querySelector('#play-word').textContent === 'PLAY');
   const paper = await page.textContent('#paper');
-  assert.match(paper, /inputs {2}mood=romantic .*centre=1\.5/);
+  assert.match(paper, /inputs {2}mood=romantic .*centre=1\.5.*tickets=3/);
+  assert.match(paper, /seats E\d+, E\d+, E\d+/, 'three seats together');
   assert.match(paper, /=== DONE after \d+ steps ===/);
   assert.ok((await page.$$eval('#paper .eleven', (cells) => cells.length)) > 0, 'a perfect 1.0 prints as 11');
   const tube = await page.getAttribute('#tube svg', 'aria-label');
