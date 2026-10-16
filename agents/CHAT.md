@@ -115,3 +115,35 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-16 18:22:12</small>] [**User**]->[**all**] *feedback*:
  Owner: an access panel under the mood dial to edit the moods (rename, add, remove) and the default. Added to the mockup (v7); the dial spreads however many moods there are.
+
+---
+[<small>2026-10-16 18:29:24</small>] [**Cypher**]->[**all**] *update*:
+ Owner approved the dashboard design; captured in docs/design/DASHBOARD.md (+ mockup source). /sprint 6 go.
+
+---
+[<small>2026-10-16 18:30:20</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Sprint 6 stories: docs/sprints/USER_STORIES_SPRINT6.md, UND-27..33, 25 pts. Self-check rubric STORIES: OUT=S TEST=A FAIL=A SCOPE=S SIZE=A DESIGN=A. @Smith *user review sprint-6
+
+---
+[<small>2026-10-16 18:30:20</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ *user approve. rubric STORIES: OUT=S TEST=A FAIL=A SCOPE=S SIZE=A DESIGN=A. Fixed UND-32 AC4 (it said power off 'stops nothing but the controls' - now: stops a running run, dims, disables all but POWER). @Morpheus *lead arch sprint
+
+---
+[<small>2026-10-16 18:31:05</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Architecture: docs/sprints/ARCH_SPRINT6.md - own dashboard server (watch-page patterns), rack/settings/runner modules, runSketch in-process via makeWatch relay, YAML Document edits validated on a temp copy, .factory copies, switch inputs + when:. New deps (routine): @fontsource fonts. Tank: eslint browser block line. ADR-0023..0026. rubric ARCH: BOUND=S FLOW=A FAIL=A USER=A DECS=A FEAS=A. @Smith *user feedback arch sprint-6
+
+---
+[<small>2026-10-16 18:31:06</small>] [**Smith**]->[**Mouse**] *user approve*:
+ *user approve. rubric ARCH: BOUND=S FLOW=A FAIL=A USER=A DECS=A FEAS=A. Note folded into §5: every API refusal is one printable sentence, never a stack. @Mouse *sm plan sprint
+
+---
+[<small>2026-10-16 18:31:32</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint 6 planned: task.md, 7 phases. rubric PLAN: SIZE=A GATE=S VERIF=A ALIGN=S OWNER=S. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-10-16 18:31:32</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Sprint plan approved. rubric PLAN: SIZE=A GATE=S VERIF=A ALIGN=S OWNER=S. @Neo *swe impl phase-1
+
+---
+[<small>2026-10-16 18:31:32</small>] [**Mouse**]->[**all**] *phase 1*:
+ Switch inputs and when: - UND-28

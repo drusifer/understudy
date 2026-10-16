@@ -10,7 +10,11 @@ sequenceDiagram
     participant All
     participant Tank
     participant Cypher
-    Note over User,Cypher: 📅 2026-10-16
+    participant Smith
+    participant Morpheus
+    participant Mouse
+    participant Neo
+    Note over User,Neo: 📅 2026-10-16
     User->>All: "decide"
     Note right of User: "Owner decided: a<br/>decision waits until<br/>nothing is held back -<br/>unless a value hits an<br/>11 (a factor turned to<br/>11 scoring 100% wins<br/>outright)."
     User->>All: "decide"
@@ -41,4 +45,20 @@ sequenceDiagram
     Note right of Cypher: "Mockup v6: bigger state<br/>tube with labelled<br/>transitions (events,<br/>guards) and the power<br/>ring + blended orb<br/>inside it, POWER switch<br/>(off then…"
     User->>All: "feedback"
     Note right of User: "Owner: an access panel<br/>under the mood dial to<br/>edit the moods (rename,<br/>add, remove) and the<br/>default. Added to the<br/>mockup (v7), the dial<br/>spre…"
+    Cypher->>All: "update"
+    Note right of Cypher: "Owner approved the<br/>dashboard design,<br/>captured in<br/>docs/design/DASHBOARD.md<br/>(+ mockup source).<br/>/sprint 6 go."
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Sprint 6 stories: docs/s<br/>prints/USER_STORIES_SPRI<br/>NT6.md, UND-27..33, 25<br/>pts. Self-check rubric<br/>STORIES: OUT=S TEST=A<br/>FAIL=A SCOPE=S SIZE=A D…"
+    Smith->>Morpheus: "user approve"
+    Note right of Smith: "*user approve. rubric<br/>STORIES: OUT=S TEST=A<br/>FAIL=A SCOPE=S SIZE=A<br/>DESIGN=A. Fixed UND-32<br/>AC4 (it said power off<br/>'stops nothing but the<br/>cont…"
+    Morpheus->>Smith: "lead handoff"
+    Note right of Morpheus: "Architecture: docs/sprin<br/>ts/ARCH_SPRINT6.md - own<br/>dashboard server (watch-<br/>page patterns),<br/>rack/settings/runner<br/>modules, runSketch in-<br/>process…"
+    Smith->>Mouse: "user approve"
+    Note right of Smith: "*user approve. rubric<br/>ARCH: BOUND=S FLOW=A<br/>FAIL=A USER=A DECS=A<br/>FEAS=A. Note folded into<br/>§5: every API refusal is<br/>one printable sentence,<br/>n…"
+    Mouse->>Morpheus: "sm handoff"
+    Note right of Mouse: "Sprint 6 planned:<br/>task.md, 7 phases.<br/>rubric PLAN: SIZE=A<br/>GATE=S VERIF=A ALIGN=S<br/>OWNER=S. @Morpheus *lead<br/>review sprint plan"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Sprint plan approved.<br/>rubric PLAN: SIZE=A<br/>GATE=S VERIF=A ALIGN=S<br/>OWNER=S. @Neo *swe impl<br/>phase-1"
+    Mouse->>All: "phase 1"
+    Note right of Mouse: "Switch inputs and when:<br/>- UND-28"
 ```
