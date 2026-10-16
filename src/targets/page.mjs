@@ -116,6 +116,14 @@ async function choose(page, { role, name, list }) {
 }
 
 /**
+ * Headless Chromium as the page target starts it (Playwright's, else a
+ * system one) - for the browser tests too.
+ */
+export async function launchHeadless() {
+  return launchChromium(playwrightLaunch, SYSTEM_CHROMIUM);
+}
+
+/**
  * Serves the example and opens its page.
  * @param {{ kind: 'page', root?: string, page?: string }} spec
  * @param {{ directory: string, launch?: Function, systemChromium?: string[] }} options

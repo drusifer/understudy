@@ -388,14 +388,28 @@ Guards are `fn({ context, event }, params) => boolean`; actions are `fn(...)` or
 ## 7. Running
 
 ```sh
-understudy run <sketch> [--steps N]     # cap: --steps, else the sketch's steps:, else 50
+understudy run <sketch> [--steps N] [--watch [--port N] [--pause]]   # cap: --steps, else steps:, else 50
+understudy watch <log.jsonl> [--port N]                              # replay a finished run
 ```
+
+`--watch`, `--pause` and replay are described in [USER_GUIDE.md §5](USER_GUIDE.md#5-watch-a-run).
 
 - **stdout**: one JSON line per step — `step`, `phase`, `options`, `picked`, `move`,
   `confidence`, `state` (and `offList`/`answer` when Jev's first pick was not offered,
   `response` when the app answered the move: an HTTP status, or an MCP tool call and its
   result) — then a final line `{ "final": true, "outcome": ..., "steps": ..., "state": ... }`.
   The same lines go to `build/runs/<sketch name>/<timestamp>.jsonl`.
+- **Event lines** (also on stdout and in the log, with an `event` field - skip them if you only
+  want steps). They make a log a complete record that `understudy watch` can replay:
+  - first: `{"event":"start","sketch":"coffee-cli","plays":"node app.mjs","turn":{...},"at":"..."}`
+    - the sketch, what it plays, and its `turn:` as written;
+  - each state change: `{"event":"state","from":"looking","to":"answering","on":"done: phase is asking","at":"..."}`,
+    in order, around the step lines. `on` is the event (`OBSERVE`, `STEP`, `QUIT`, `done` when an
+    invoked actor finished, `always`) and its guard in words. A look that ends where it began
+    without a move is not listed; the next listed change carries how many there were,
+    `"idle_looks": 12`;
+  - before the final line of a run that did not end `done`: `{"event":"ended","outcome":"stalled","message":"..."}`
+    - why it ended, as stderr said it.
 - **stderr**: what is played and where the log is, then one readable line per step.
 - **Off-list answers**: never sent. Jev is asked once more; a second off-list answer (for the
   move, or for one of its arguments) stops the run.
@@ -406,7 +420,7 @@ understudy run <sketch> [--steps N]     # cap: --steps, else the sketch's steps:
 |---|---|---|
 | 0 | reached the end state | `done` |
 | 1 | started, then could not finish | `step-cap`, `stalled`, `app-exited`, `connection-lost`, `refused` (a remote MCP server answered the connection with an HTTP error), `control-gone`, `off-list`, `no-first-move`, `jev-error`, `interrupted` |
-| 2 | refused before starting anything | bad arguments, broken sketch, unset `${VAR}`, no `TYPESAFE_API_KEY`, no Chromium |
+| 2 | refused before starting anything | bad arguments, broken sketch, unset `${VAR}`, no `TYPESAFE_API_KEY`, no Chromium, watch port in use |
 
 ## 8. A new kind of app
 

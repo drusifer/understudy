@@ -229,3 +229,76 @@ a yes/no from the start.
 
 ### References
 - **Files:** `docs/sprints/USER_STORIES_SPRINT3.md` UND-9 AC6, UND-12 AC3; `docs/sprints/USER_STORIES_SPRINT2.md` UND-8 AC2
+
+## [2026-10-15] Look at a drawing before building on it - tests cannot see overlap
+
+> **Tags:** #ux #layout #Trin #Neo
+
+### Context
+Sprint 4 Phase 2: a layered SVG layout of the sketch's statechart, with unit tests (every state
+and edge present, boxes not overlapping, paths well-formed).
+
+### The Issue
+All tests passed, but the first rendered picture had transition labels squeezed under the next
+box and two back-edge labels colliding with a forward curve. Nothing the tests checked was false.
+
+### The Solution
+Trin rendered the layout to SVG and screenshotted it in headless Chromium before the page was
+built; column gaps became as wide as the longest label crossing them, and back edges arc above
+the top row. Re-rendered clean.
+
+### The Rule (The "Lesson")
+For anything visual, render it and look at it (a headless screenshot is enough) before building
+on it; geometry tests confirm structure, not legibility.
+
+### References
+- **Commit:** 7e878cb
+- **Files:** `src/watch/layout.mjs`, `tests/turnGraph.test.js`
+
+## [2026-10-15] Replay at the grain of what the user asked to see
+
+> **Tags:** #ux #replay #Trin #Morpheus
+
+### Context
+Sprint 4 Phase 5: replay frames first ended at each step line.
+
+### The Issue
+A step's own transitions (`choosing -> acting -> waiting`) are logged just before its step line,
+so every frame showed `waiting`: replay never showed the move state where Jev decided, nor the
+state changes the owner asked to watch.
+
+### The Solution
+One frame per log line: Step forward/back walk each state change; clicking a decision jumps to
+that step's line.
+
+### The Rule (The "Lesson")
+When replaying a record, choose frames at the grain of the thing the user wants to see (here,
+state changes), not at the grain that is easiest to count (steps).
+
+### References
+- **Commit:** 26e6b03
+- **Files:** `src/watch/page.mjs` (`framesOf`), `tests/replay.test.js`
+
+## [2026-10-15] A new wait point needs its own way out
+
+> **Tags:** #architecture #runloop #Morpheus #Neo
+
+### Context
+Sprint 4 Phase 4: the pause gate waits in a move state, before the step.
+
+### The Issue
+Ctrl-C sends `QUIT`, which only takes effect at a state tagged `safe`; a move state is not safe,
+so a paused run would have made its move (a Jev call) before stopping - the opposite of "stop at
+once while paused".
+
+### The Solution
+Ctrl-C releases a paused gate with `stop`, and the loop ends without stepping (`interrupted`,
+"stopped by Ctrl-C while paused"); a running watched run keeps the old behaviour.
+
+### The Rule (The "Lesson")
+When adding a place where a loop can wait, check how each existing way of stopping reaches that
+place, and give the wait its own exit if they do not.
+
+### References
+- **Commit:** 86d9c8c
+- **Files:** `src/watch/gate.mjs`, `src/run.mjs`, `tests/watchRun.test.js`

@@ -12,29 +12,50 @@ Done - see `CHANGELOG.md` (one `sketch.yaml` per sketch; MCP target, local and r
 tool arguments). Decisions: ADR-0011..0013. Owner confirmed (2026-10-15): Jev chooses argument
 values, never writes them - understudy is constrained automation by design.
 
-## Sprint 4 (owner, 2026-10-15) - watch the understudy live
-- Owner: "a way to see what the understudy is doing - a UX that displays the state machine
-  diagram and shows the state changes and Jev decisions in real time."
-- **Browser page** (owner decided): `understudy run ... --watch` serves a local page on
-  127.0.0.1 that draws the turn's statechart, highlights the current state, and streams each
-  Jev decision (options, pick, confidence, chosen arguments, the app's answer).
-- **Live + replay** (owner decided): the same page follows a run live (`run --watch`) and
-  replays a finished one from its log (`understudy watch <log.jsonl>`); the log gains the state
-  changes it needs for that.
-- **Decision detail = pick + confidence** (owner decided): options offered, the pick, its
-  confidence, chosen arguments, the app's answer - what the log has today. No probability bars.
-- **Pause and step live** (owner decided): the page can pause a live run before its next move
-  and release it one step at a time, then resume. Replay has play / pause / step through the log.
-- Assumptions to confirm at story time: the diagram is drawn from the sketch's own `turn:` (no
-  hand-made picture); the page and its drawing library are served by understudy itself (works
-  offline, nothing fetched from the internet); 127.0.0.1 only, no login; while paused the
-  first-move/stall timers do not run; Ctrl-C still stops a paused run.
+## Sprint 4
+Done - see `CHANGELOG.md` (live watch page, pause/step, replay, the log as an event stream).
+Decisions: ADR-0014..0016.
 
-## Next (from the sprint 3 retro)
+## Sprint 5 (owner, 2026-10-16) - preferences as hard rules
+- Owner: "I prefer horror films, and I want to go in the evenings but only if row E, F, or D is
+  available (in that order), seats together but not too far from the center."
+- **All hard rules** (owner decided): every preference becomes a rule in `sketch.yaml` (filters
+  and orderings on the values Jev may choose) - not left to Jev's judgment. Needs a rule
+  language in the sketch format, and a richer box office (genres, showtimes, a seat map).
+- **Ties go to Jev** (owner decided): rules filter (an ordering keeps only the best available);
+  Jev chooses among what is left, as now. A rule is never broken.
+- **Enrichment from more MCP servers** (owner, 2026-10-16): a sketch may play several MCP
+  servers at once - e.g. the box office plus a ratings service - so rules can use facts another
+  server answers (a film's Rotten Tomatoes score). Owner asked for the tomato score: Rotten
+  Tomatoes has no open public API; OMDb (omdbapi.com, free key, daily limit) returns it in
+  `Ratings` for most titles (to verify when web search is back).
+- **Fake ratings only** (owner decided): an in-repo ratings MCP server with made-up scores for the
+  box office's made-up films - no key, no network, repeatable.
+- **Follow the MCP pattern** (owner): the ratings service is its own MCP server, named in the
+  sketch the same way as the box office (an `mcpServers` entry, inline or in `servers.json`);
+  enrichment is tool calls to it, nothing baked into the box office.
+- **Rules are YAML on answers** (owner decided): code-free. A rule names a tool's argument and
+  tests fields of the answer object its value came from, from any of the sketch's servers
+  (`where: { genre: horror, starts: { at_least: '17:00' }, tomato: { at_least: 70 } }`); words
+  `is`, `in`, `at_least`, `at_most`, `order`.
+- **Nothing passes -> walk away, run succeeds** (owner decided): leaving empty-handed is a
+  legitimate end - the sketch's turn has an end state for it and the run exits 0; the log says
+  which rules ruled out what.
+- Assumptions for the stories: the box office grows genres, evening/afternoon showings and a seat
+  map (each seat's row, `together` run length, `from_centre`); a separate in-repo ratings MCP
+  server answers a film's made-up tomato score; facts about the same film from different servers
+  are joined by the film's title (or id) for `where:`; `order` keeps only the best value still
+  available. Sprint 5 branches from main after sprint-4 is merged.
+
+## Next (from the sprint 3 and 4 retros)
 - Scope `showing` to results for generic MCP sketches (today it also searches tool descriptions). (Morpheus)
 - "not offering ... yet" should not say "yet" for array/object arguments a result can never fill. (Smith)
+- Watch page: shorten a stall message's raw view JSON; show what Jev read for a step on demand. (Smith)
+- A Playwright UAT script for the watch page kept in the repo (and a make target - Tank's call). (Trin)
 
 ## Later
+- Watch page: reconnect a live page that lost its stream mid-run (today: "connection lost", reload). (Morpheus)
+- Split `src/watch/page.mjs` into model and DOM when it next grows. (Neo)
 - OAuth for remote MCP servers (sprint 3 does token headers only). (Morpheus)
 - MCP resources, prompts and notifications in the view; cache the tool list until `list_changed`. (Morpheus, Neo)
 - A test that drops a remote MCP server mid-run (`connection-lost` is unit-tested only). (Trin)

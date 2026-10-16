@@ -12,11 +12,13 @@
   `bobp make push MSG=...` when the owner asks.
 
 ## Current Task
-**Status:** Shaping sprint 4 (watch the understudy live) - owner answered all four questions
-(browser page; live + replay; pick + confidence; pause and step live). Recorded in
-docs/BACKLOG.md "Sprint 4". Waiting for the owner's go.
+**Status:** Shaping sprint 5 (preferences as hard rules + enrichment from more MCP servers) with
+the owner. sprint-4 (+ --host, browser tests) is complete on branch sprint-4, NOT merged yet.
+Decisions so far in docs/BACKLOG.md "Sprint 5": all hard rules; ties go to Jev; several MCP
+servers per sketch for enrichment; fake in-repo ratings server.
 
 ## Next Steps
-1. On go: `/sprint 4` - cut `sprint-4` from main, archive task.md to docs/sprints/TASKS_SPRINT3.md,
-   Cypher writes docs/sprints/USER_STORIES_SPRINT4.md from BACKLOG "Sprint 4" (assumptions there
-   go into the stories' Assumptions section) -> Smith Gate 1.
+1. Shaping done (BACKLOG "Sprint 5": hard rules as YAML on answers, ties to Jev, ratings as its
+   own MCP server with fake scores, walk away = success). Wait for the owner's go.
+2. On go: merge sprint-4 into main first (owner's say), cut sprint-5, write
+   docs/sprints/USER_STORIES_SPRINT5.md from BACKLOG (assumptions listed there) -> Smith Gate 1.

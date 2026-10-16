@@ -8,6 +8,12 @@ offers, and makes that move — until its **sketch** says it is done. A sketch i
 `sketch.yaml`: what to play, a small statechart, and the questions Jev answers. Code only
 where an app needs reading that no built-in app does (`hooks.mjs`). No scripted inputs.
 
+You can **watch it think**: `--watch` serves a page that draws the sketch's statechart, lights
+up the state the understudy is in, and lists every Jev decision as it is made - and you can
+pause it and step it one move at a time, or replay any finished run from its log.
+
+![The watch page: the statechart and the decisions of a run of examples/mcp](docs/images/watch.png)
+
 It plays four kinds of app, with the same sketch format:
 
 - **command-line programs** — reads the terminal output, types the answers;
@@ -37,6 +43,7 @@ bobp make install-browser                           # once, for web targets (ski
 bobp make run ARGS="run examples/web"               # play the sign-up web page
 bobp make run ARGS="run examples/http"              # play the vending machine API
 bobp make run ARGS="run examples/mcp"               # play the box office MCP server
+bobp make run ARGS="run examples/mcp --watch"       # the same, with a live view in your browser
 bobp make run ARGS="check examples/cli"             # check a sketch without starting anything (no key needed)
 ```
 
@@ -47,7 +54,7 @@ Always go through `bobp make <target>` - it is the front door for people and age
 
 | Read | When you want to |
 |---|---|
-| [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | install, run, read the output, write your first sketch, fix errors |
+| [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | install, run, watch a run, read the output, write your first sketch, fix errors |
 | [docs/WALKTHROUGH.md](docs/WALKTHROUGH.md) | see the examples taken apart, line by line, with real runs |
 | [docs/MCP_GUIDE.md](docs/MCP_GUIDE.md) | point understudy at an MCP server you already have (yours, or one configured for Claude) |
 | [docs/SKETCHES.md](docs/SKETCHES.md) | the reference: `sketch.yaml`, the four targets, hooks, library names, exit codes |
@@ -63,7 +70,7 @@ out of recard's game harness) and the sprint documents in
 
 ```text
 bin/understudy.mjs     the command
-src/                   the core: run loop, sketch loader, statechart, seat, Jev decisions, targets/, apps/
+src/                   the core: run loop, sketch loader, statechart, seat, Jev decisions, targets/, apps/, watch/ (the live page)
 examples/cli/          a terminal coffee counter + its sketch and hooks
 examples/web/          a sign-up wizard page (unmodified) + its sketch (no code)
 examples/http/         a vending machine JSON API + its sketch and hooks
@@ -79,6 +86,7 @@ agents/                the Bob Protocol team (personas, state, chat) - see AGENT
 
 ```sh
 bobp make test        # unit tests - never calls Jev or launches a browser
+bobp make test-browser  # the watch page in headless Chromium, with a Jev double (no key, no cost)
 bobp make lint        # eslint
 bobp make check       # test + lint + gitleaks secret scan (the gate)
 bobp make test-live   # plays every example with real Jev (costs API calls)
