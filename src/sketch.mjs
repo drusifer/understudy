@@ -20,7 +20,7 @@ import { pageApp } from './apps/page.mjs';
 import { mcpApp } from './apps/mcp.mjs';
 import { resolveServers } from './mcpConfig.mjs';
 import { checkGates, checkScores, checkShortlist } from './engine.mjs';
-import { checkInputs, weightInputs } from './inputs.mjs';
+import { checkInputs, switchInputs, weightInputs } from './inputs.mjs';
 
 const SKETCH = 'sketch.yaml';
 const GUIDE = 'see docs/SKETCHES.md';
@@ -131,7 +131,7 @@ function checkCalls(sketch, fail) {
   checkCallList(sketch.calls ?? [], fail);
   checkValues(sketch.values ?? {}, fail);
   if (sketch.inputs !== undefined) checkInputs(sketch.inputs, fail);
-  checkDecide(sketch.decide ?? {}, { weights: weightInputs(sketch.inputs), questions: sketch.questions ?? {} }, fail);
+  checkDecide(sketch.decide ?? {}, { weights: weightInputs(sketch.inputs), switches: switchInputs(sketch.inputs), questions: sketch.questions ?? {} }, fail);
   if (sketch.pick !== undefined) checkPick(sketch.pick, sketch.inputs ?? {}, fail);
 }
 
@@ -191,7 +191,7 @@ function checkDecided(key, entry, known, fail) {
   for (const field of ['field', 'join']) {
     if (entry[field] !== undefined && (typeof entry[field] !== 'string' || entry[field] === '')) fail(`${at}.${field}`, 'must name a field of the answers, e.g. title');
   }
-  if (entry.gates !== undefined) checkGates(entry.gates, `${at}.gates`, fail);
+  if (entry.gates !== undefined) checkGates(entry.gates, `${at}.gates`, fail, known.switches);
   if (entry.scores !== undefined) {
     checkScores(entry.scores, `${at}.scores`, fail);
     checkFactorNames(entry.scores, `${at}.scores`, known, fail);

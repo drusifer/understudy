@@ -49,7 +49,7 @@ test('check refuses unknown words, a non-list in or any, and an incomparable bou
     return null;
   };
   assert.equal(refusal(OWNER), null);
-  assert.equal(refusal({ row: { among: ['E'] } }), 'decide.x.y.gates.row: unknown word "among" - use is, in, at_least, at_most, any');
+  assert.equal(refusal({ row: { among: ['E'] } }), 'decide.x.y.gates.row: unknown word "among" - use is, in, at_least, at_most, when, any');
   assert.equal(refusal({ row: { in: 'E' } }), 'decide.x.y.gates.row.in: must be a list, e.g. [E, F, D]');
   assert.equal(refusal({ any: { genre: 'horror' } }), 'decide.x.y.gates.any: must be a list of gate groups, e.g. [{ genre: horror }, { tomato: { at_least: 91 } }]');
   assert.equal(refusal({ starts: { at_least: 'evening' } }), 'decide.x.y.gates.starts.at_least: must be a number or an HH:MM time (got evening)');
@@ -119,4 +119,22 @@ test('a weight may name an input; an ask factor uses Jev\'s answer for the value
   assert.deepEqual(score({ centre: 0.65 }, factors, { inputs: { centre: 1 }, answers: { audience: 0.5 } }), { factors: { centre: 0.5, audience: 0.25 }, total: 0.125 });
   assert.deepEqual(score({ centre: 0.65 }, factors, { inputs: { centre: 0 }, answers: { audience: 1 } }), { factors: { centre: 1, audience: 1 }, total: 1 });
   assert.deepEqual(score({ centre: 0.65 }, factors, { inputs: { centre: 1 }, answers: { audience: 0 } }).removed, 'audience 0 scores 0');
+});
+
+test('a test with when: applies only while its switch is on (UND-28 AC3)', () => {
+  const gates = { together: { at_least: 2, when: 'together' }, row: { in: ['E', 'F', 'D'] } };
+  const single = { together: 1, row: 'E' };
+  assert.deepEqual(gate(single, gates, { inputs: { together: true } }), { removed: 'together 1 < 2' });
+  assert.deepEqual(gate(single, gates, { inputs: { together: false } }), { pass: true });
+  assert.deepEqual(gate({ row: 'E' }, gates, { inputs: { together: false } }), { pass: true }, 'an off test needs no fact');
+  const refusal = (switches) => {
+    try {
+      checkGates(gates, 'decide.x.y.gates', (at, message) => { throw new Error(`${at}: ${message}`); }, switches);
+    } catch (error) {
+      return error.message;
+    }
+    return null;
+  };
+  assert.equal(refusal(['together']), null);
+  assert.equal(refusal([]), 'decide.x.y.gates.together.when: names "together" - declare it under inputs: as { switch: true, default: true }');
 });

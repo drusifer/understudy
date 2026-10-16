@@ -231,7 +231,7 @@ test('decide: gates are checked at load, naming the file, the gate and the word 
   const good = mcpSketch('{ kind: mcp, server: { command: node } }', "decide:\n  seat_map.showing: { join: title, gates: { starts: { at_least: '17:00' } } }\n");
   assert.ok((await loadSketch(good)).app);
   const bad = mcpSketch('{ kind: mcp, server: { command: node } }', 'decide:\n  seat_map.showing: { gates: { row: { among: [E] } } }\n');
-  await assert.rejects(checkSketch(bad), { message: `${shown(bad)}/sketch.yaml: decide.seat_map.showing.gates.row: unknown word "among" - use is, in, at_least, at_most, any` });
+  await assert.rejects(checkSketch(bad), { message: `${shown(bad)}/sketch.yaml: decide.seat_map.showing.gates.row: unknown word "among" - use is, in, at_least, at_most, when, any` });
   const misnamed = mcpSketch('{ kind: mcp, server: { command: node } }', 'decide:\n  seat_map: { gates: {} }\n');
   await assert.rejects(checkSketch(misnamed), /decide\.seat_map: name a tool argument as <tool>\.<argument>/);
   const notMcp = mcpSketch('{ kind: process, command: node }', 'app: hooks.mjs\ndecide: {}\n');

@@ -147,3 +147,11 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-16 18:31:32</small>] [**Mouse**]->[**all**] *phase 1*:
  Switch inputs and when: - UND-28
+
+---
+[<small>2026-10-16 18:34:20</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+6:34PM INF no leaks found
+6:34PM INF 1 commits scanned.
+6:34PM INF scanned ~6586 bytes (6.59 KB) in 256ms
+6:34PM INF no leaks found

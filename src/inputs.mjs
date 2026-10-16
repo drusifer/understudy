@@ -6,9 +6,13 @@
 //   inputs:
 //     mood:   { choose: [fun, serious, dramatic, romantic], default: fun }
 //     centre: { weight: [0, 3], default: 3 }
+//     together: { switch: true, default: true }      (sprint 6: turns a gate on or off, `when:`)
 
 import { UsageError } from './errors.mjs';
 
+const KINDS = ['choose', 'weight', 'switch'];
+const SHAPES = '{ choose: [...], default }, { weight: [low, high], default } or { switch: true, default: true|false }';
+const SWITCH_WORDS = new Map([['on', true], ['true', true], ['off', false], ['false', false]]);
 const isMapping = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 const isBounds = (range) => Array.isArray(range) && range.length === 2 && range.every((each) => typeof each === 'number') && range[0] < range[1];
 
@@ -16,20 +20,21 @@ const isBounds = (range) => Array.isArray(range) && range.length === 2 && range.
  * Checks `inputs:` as written; `fail(at, message)` names the path.
  */
 export function checkInputs(inputs, fail) {
-  if (!isMapping(inputs)) fail('inputs', 'must map each input to { choose: [...], default } or { weight: [low, high], default }');
+  if (!isMapping(inputs)) fail('inputs', `must map each input to ${SHAPES}`);
   for (const [name, input] of Object.entries(inputs)) checkInput(name, input, fail);
 }
 
 function checkInput(name, input, fail) {
   const at = `inputs.${name}`;
-  const kinds = isMapping(input) ? ['choose', 'weight'].filter((kind) => Object.hasOwn(input, kind)) : [];
-  if (kinds.length !== 1) fail(at, 'must be { choose: [...], default } or { weight: [low, high], default }');
+  const kinds = isMapping(input) ? KINDS.filter((kind) => Object.hasOwn(input, kind)) : [];
+  if (kinds.length !== 1) fail(at, `must be ${SHAPES}`);
   const extra = Object.keys(input).find((key) => key !== kinds[0] && key !== 'default');
   if (extra) fail(`${at}.${extra}`, `not an input field (known: ${kinds[0]}, default)`);
   if (input.choose !== undefined && !(Array.isArray(input.choose) && input.choose.length > 0 && input.choose.every((each) => typeof each === 'string'))) {
     fail(`${at}.choose`, 'must be a list of words, e.g. [fun, serious, dramatic, romantic]');
   }
   if (input.weight !== undefined && !isBounds(input.weight)) fail(`${at}.weight`, 'must be [low, high], two numbers, e.g. [0, 3]');
+  if (input.switch !== undefined && input.switch !== true) fail(`${at}.switch`, 'must be true - a switch is { switch: true, default: true|false }');
   const problem = problemWith(name, input, input.default);
   if (problem) fail(`${at}.default`, problem.replace(`input "${name}" `, ''));
 }
@@ -38,6 +43,7 @@ function checkInput(name, input, fail) {
  * Why `value` cannot be `input`'s value, or null.
  */
 function problemWith(name, input, value) {
+  if (input.switch) return typeof value === 'boolean' ? null : `input "${name}" must be on or off, got ${JSON.stringify(value)}`;
   if (input.choose) {
     return input.choose.includes(value) ? null : `input "${name}" must be one of ${input.choose.join(', ')}, got ${JSON.stringify(value)}`;
   }
@@ -60,12 +66,29 @@ export function resolveInputs(declared = {}, given = []) {
       throw new UsageError(`no input "${name}" in sketch.yaml - it declares ${names.length > 0 ? names.join(', ') : 'none'}`);
     }
     const input = declared[name];
-    const value = input.weight && /^-?\d+(\.\d+)?$/.test(text) ? Number(text) : text;
+    const value = valueOf(input, text);
     const problem = problemWith(name, input, value);
     if (problem) throw new UsageError(problem);
     values[name] = value;
   }
   return values;
+}
+
+/**
+ * A `--input` text as the input's kind of value: a number for a weight,
+ * a boolean for a switch (on/off, true/false), else the text.
+ */
+function valueOf(input, text) {
+  if (input.weight && /^-?\d+(\.\d+)?$/.test(text)) return Number(text);
+  if (input.switch && SWITCH_WORDS.has(text)) return SWITCH_WORDS.get(text);
+  return text;
+}
+
+/**
+ * The names of the switch inputs, for checking `when: <name>`.
+ */
+export function switchInputs(declared = {}) {
+  return Object.keys(declared).filter((name) => declared[name].switch);
 }
 
 /**

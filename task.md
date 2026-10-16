@@ -5,7 +5,7 @@
 *   **Total Points**: 25 (UND-27 3, UND-28 5, UND-29 3, UND-30 5, UND-31 2, UND-32 5, UND-33 2)
 *   **Branch**: `sprint-6`
 *   **Stories / Arch / Design**: `docs/sprints/USER_STORIES_SPRINT6.md`, `docs/sprints/ARCH_SPRINT6.md`, `docs/design/DASHBOARD.md` (sprint 5 board: `docs/sprints/TASKS_SPRINT5.md`)
-*   **Status**: In progress - Phase 1
+*   **Status**: In progress - Phase 2
 *   **Commits**: one local commit per phase after Morpheus's review (`Phase <N>: ...`); publishing only via `bobp make push` when the owner asks (SDLC §6).
 
 ---
@@ -19,8 +19,8 @@
 ## Sprint Execution Phases
 
 ### Phase 1: Switch inputs and `when:` - UND-28 AC3-4
-- [ ] **Task 1.1:** `inputs.mjs` switch kind (`on/off/true/false`), `engine.gate` skips a test whose `when` switch is off, `check` refuses `when` naming a non-switch; app passes inputs to gates. TDD. (*Owner: Neo | Verification: `bobp make test`, `bobp make lint`*)
-- [ ] **Task 1.2:** UAT + review vs ADR-0026. (*Owner: Trin → Morpheus | commit `Phase 1`*)
+- [x] **Task 1.1:** `inputs.mjs` switch kind (`on/off/true/false`), `engine.gate` skips a test whose `when` switch is off, `check` refuses `when` naming a non-switch; app passes inputs to gates. TDD. (*Owner: Neo | Verification: `bobp make test`, `bobp make lint`*)
+- [x] **Task 1.2:** UAT + review vs ADR-0026. (*Owner: Trin → Morpheus | commit `Phase 1`*)
 
 ### Phase 2: The dashboard server and the rack - UND-27
 - [ ] **Task 2.1:** `src/dashboard/server.mjs` (token path, static, SSE, API skeleton, 16 KB bodies), `rack.mjs` (list, describe: inputs, factors, graph, check problem), `cli.mjs dashboard <folder> [--port] [--host]`; tests over real HTTP. (*Owner: Neo | Verification: `bobp make test`*)

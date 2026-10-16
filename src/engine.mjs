@@ -5,7 +5,8 @@
 // what is missing - never removed.
 //
 //   gates:   { <field>: <test>, ..., any: [<gates>, ...] }
-//   test:    a bare value (is) | { is, in, at_least, at_most }
+//   test:    a bare value (is) | { is, in, at_least, at_most, when }
+//            (`when: <switch input>` - the test applies only while that switch is on)
 //
 // `at_least`/`at_most` compare numbers as numbers and HH:MM as times.
 //
@@ -18,7 +19,7 @@
 // every total above zero, best first, bounded by `at_most` and/or
 // `total: { at_least }`.
 
-export const GATE_WORDS = ['is', 'in', 'at_least', 'at_most'];
+export const GATE_WORDS = ['is', 'in', 'at_least', 'at_most', 'when'];
 const TIME = /^([01]?\d|2[0-3]):([0-5]\d)$/;
 
 const isMapping = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -48,40 +49,53 @@ function failedTest(field, fact, test) {
   return null;
 }
 
+const isSwitchedOff = (test, inputs = {}) => isMapping(test) && test.when !== undefined && inputs[test.when] === false;
+
 /**
- * A value's facts against gates.
+ * A value's facts against gates; `given.inputs` turns `when:` tests off.
  * @returns {{ pass: true }|{ removed: string }|{ missing: string }}
  */
-export function gate(facts, gates = {}) {
+export function gate(facts, gates = {}, given = {}) {
   let missing = null;
   for (const [field, test] of Object.entries(gates)) {
-    if (field === 'any') {
-      const results = test.map((group) => gate(facts, group));
-      if (results.some((result) => result.pass)) continue;
-      const waiting = results.find((result) => result.missing);
-      if (waiting) {
-        missing ??= waiting.missing;
-        continue;
-      }
-      return { removed: `none of any: ${results.map((result) => result.removed).join('; ')}` };
-    }
-    if (!Object.hasOwn(facts, field)) {
-      missing ??= field;
-      continue;
-    }
-    const why = failedTest(field, facts[field], test);
-    if (why) return { removed: why };
+    const result = field === 'any' ? anyOf(facts, test, given) : oneTest(facts, field, test, given);
+    if (result.removed) return result;
+    if (result.missing) missing ??= result.missing;
   }
   return missing === null ? { pass: true } : { missing };
 }
 
 /**
+ * `any:` - passes if one group passes; waits if one is waiting.
+ */
+function anyOf(facts, groups, given) {
+  const results = groups.map((group) => gate(facts, group, given));
+  if (results.some((result) => result.pass)) return { pass: true };
+  const waiting = results.find((result) => result.missing);
+  if (waiting) return { missing: waiting.missing };
+  return { removed: `none of any: ${results.map((result) => result.removed).join('; ')}` };
+}
+
+/**
+ * One field's test: off (its switch is off), missing, passed or why not.
+ */
+function oneTest(facts, field, test, given) {
+  if (isSwitchedOff(test, given.inputs)) return { pass: true };
+  if (!Object.hasOwn(facts, field)) return { missing: field };
+  const why = failedTest(field, facts[field], test);
+  return why ? { removed: why } : { pass: true };
+}
+
+/**
  * One field's test as written.
  */
-function checkTest(test, at, fail) {
+function checkTest(test, at, fail, switches) {
   if (!isMapping(test)) return;
   for (const [word, value] of Object.entries(test)) {
     if (!GATE_WORDS.includes(word)) fail(at, `unknown word "${word}" - use ${GATE_WORDS.join(', ')}, any`);
+    if (word === 'when' && switches && !switches.includes(value)) {
+      fail(`${at}.when`, `names "${value}" - declare it under inputs: as { switch: true, default: true }`);
+    }
     if (word === 'in' && !Array.isArray(value)) fail(`${at}.in`, 'must be a list, e.g. [E, F, D]');
     if ((word === 'at_least' || word === 'at_most') && comparable(value) === null) {
       fail(`${at}.${word}`, `must be a number or an HH:MM time (got ${shown(value)})`);
@@ -92,15 +106,15 @@ function checkTest(test, at, fail) {
 /**
  * Checks a gates mapping as written; `fail(at, message)` names the path.
  */
-export function checkGates(gates, at, fail) {
+export function checkGates(gates, at, fail, switches = null) {
   if (!isMapping(gates)) fail(at, 'must map each field to a test, e.g. { genre: horror, starts: { at_least: \'17:00\' } }');
   for (const [field, test] of Object.entries(gates)) {
     if (field !== 'any') {
-      checkTest(test, `${at}.${field}`, fail);
+      checkTest(test, `${at}.${field}`, fail, switches);
       continue;
     }
     if (!Array.isArray(test) || test.length === 0) fail(`${at}.any`, 'must be a list of gate groups, e.g. [{ genre: horror }, { tomato: { at_least: 91 } }]');
-    for (const [index, group] of test.entries()) checkGates(group, `${at}.any[${index}]`, fail);
+    for (const [index, group] of test.entries()) checkGates(group, `${at}.any[${index}]`, fail, switches);
   }
 }
 
