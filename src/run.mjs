@@ -27,9 +27,9 @@ async function typesafeJudge(environment) {
   }
 }
 
-async function startTarget(spec, { directory }) {
+async function startTarget(spec, { directory, environment }) {
   const { startTarget: start } = await import(`./targets/${spec.kind}.mjs`);
-  return start(spec, { directory });
+  return start(spec, { directory, environment });
 }
 
 /**
@@ -74,7 +74,7 @@ function watchInterrupts(signals, onSecond) {
  * @param {string} location a directory holding sketch.yaml, or the file
  * @param {{ steps?: number, stdout?: { write: Function }, stderr?: { write: Function },
  *   environment?: object, makeJudge?: (environment: object) => object|Promise<object>,
- *   makeTarget?: (spec: object, options: { directory: string }) => Promise<object>,
+ *   makeTarget?: (spec: object, options: { directory: string, environment: object }) => Promise<object>,
  *   logRoot?: string, firstMoveMs?: number, stallMs?: number, pollMs?: number, signals?: import('node:events').EventEmitter,
  *   clock?: () => number }} [options]
  * @throws {UsageError} before anything starts; {RunError} once it has.
@@ -87,7 +87,7 @@ export async function runSketch(location, {
   const sketch = await loadSketch(location);
   const limit = steps ?? sketch.steps ?? DEFAULT_STEPS;
   const judge = reportingFailures(await makeJudge(environment));
-  const target = await makeTarget(sketch.target, { directory: sketch.directory });
+  const target = await makeTarget(sketch.target, { directory: sketch.directory, environment });
   const logDirectory = path.join(logRoot, sketch.name);
   const logFile = path.join(logDirectory, `${new Date(clock()).toISOString().replaceAll(':', '-')}.jsonl`);
   const write = (entry) => {
@@ -95,7 +95,9 @@ export async function runSketch(location, {
     stdout.write(line);
     appendFileSync(logFile, line);
   };
-  const run = { taken: 0, seat: null, lastMoveAt: null };
+  const run = { taken: 0, seat: null, lastMoveAt: null, app: sketch.app };
+  // A generic app may have something to say once (a tool it cannot offer).
+  if (Object.hasOwn(sketch.app, 'notify')) sketch.app.notify = (line) => stderr.write(`understudy: ${line}\n`);
   const interrupts = watchInterrupts(signals, () => target.close());
   try {
     mkdirSync(logDirectory, { recursive: true });
@@ -149,12 +151,17 @@ async function playUntilDone({ run, target, steps, waits, clock, interrupts, wri
 async function checkIdle({ run, target, waits, idleFor }) {
   const limit = run.taken === 0 ? waits.firstMoveMs : waits.stallMs;
   if (idleFor < limit) return;
-  const view = JSON.stringify(await target.view());
+  const view = await target.view();
+  // The app can say why nothing is offered; else the view speaks for itself.
+  const why = run.app.idle?.(view);
+  const shownView = JSON.stringify(view);
   if (run.taken === 0) {
-    throw new RunError(`no first move from ${target.describe()} within ${limit / 1000} s - last view: ${view}`, { outcome: 'no-first-move' });
+    const seen = why ?? 'last view: ' + shownView;
+    throw new RunError(`no first move from ${target.describe()} within ${limit / 1000} s - ${seen}`, { outcome: 'no-first-move' });
   }
+  const seen = why ?? 'the app showed: ' + shownView.slice(0, 200);
   throw new RunError(`stalled: nothing to do for ${limit / 1000} s after step ${run.taken} (last state: ${run.seat.state})`
-    + ` - the app showed: ${view.slice(0, 200)} - if this is where the sketch should end, add a showing guard (docs/SKETCHES.md)`, { outcome: 'stalled' });
+    + ` - ${seen} - if this is where the sketch should end, add a showing guard (docs/SKETCHES.md)`, { outcome: 'stalled' });
 }
 
 /**

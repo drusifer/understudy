@@ -128,7 +128,8 @@ sequenceDiagram
 
 Order of precedence, first non-empty wins: (1) the sketch's `values.<tool>.<arg>`; (2) the
 schema's `enum`, `boolean` → `[true, false]`, `integer` with `minimum`/`maximum` ≤ 19 apart → each
-whole number; (3) the last result's leaves of the argument's JSON type (strings for `string`,
+whole number; (3) the leaves of the argument's JSON type in the last result that was **not an error** (Phase 2:
+a refused call must not take away what the call before it offered) (strings for `string`,
 numbers for `number`/`integer`) from `structuredContent` and from any text content that parses as
 JSON, deduplicated, at most 20. Required arguments with no candidates make the tool not offered;
 optional arguments are sent only when the sketch fixes them or lists values. Each argument

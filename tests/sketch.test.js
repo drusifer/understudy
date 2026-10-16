@@ -115,7 +115,7 @@ test('bad YAML is refused naming the file and the line', async () => {
 test('an unknown top-level key is refused naming the known ones', async () => {
   const directory = sketchChanged((text) => `${text}adapter: adapter.mjs\n`);
   assert.equal(await refusal(directory),
-    `${shown(directory)}/sketch.yaml: adapter: not a sketch key (known: name, description, target, app, player, steps, questions, turn)`);
+    `${shown(directory)}/sketch.yaml: adapter: not a sketch key (known: name, description, target, app, player, steps, questions, turn, calls, values)`);
 });
 
 test('a missing name, questions or turn is refused naming the key', async () => {
@@ -147,7 +147,7 @@ test('a process or http target without hooks is refused, saying what to add', as
 
 test('a target kind that does not exist is refused naming the kinds', async () => {
   const directory = sketchChanged((text) => text.replace('kind: process', 'kind: ftp'));
-  assert.equal(await refusal(directory), `${shown(directory)}/sketch.yaml: target.kind: must be "process", "page" or "http" (got "ftp")`);
+  assert.equal(await refusal(directory), `${shown(directory)}/sketch.yaml: target.kind: must be "process", "page", "http" or "mcp" (got "ftp")`);
 });
 
 test('a target field the kind does not have is refused, naming the known ones', async () => {
@@ -196,4 +196,43 @@ test('understudy library <sketch> lists the names its hooks add', async () => {
   const { io, ...out } = streams();
   assert.equal(await main(['library', GOOD], { environment: {}, ...out }), 0);
   assert.match(io.out, /^fixture-good guards:\n {2}sold_out - the app says the item is sold out$/m);
+});
+
+/**
+ * A sketch directory holding an MCP sketch with these target and extra
+ * top-level lines (and these other files).
+ */
+function mcpSketch(target, extra = '', files = {}) {
+  const directory = scratch();
+  const good = readFileSync(path.join(GOOD, 'sketch.yaml'), 'utf8');
+  const text = good.replace('target: { kind: process, command: node, args: [app.mjs] }\napp: hooks.mjs\n', () => `target: ${target}\n${extra}`);
+  writeFileSync(path.join(directory, 'sketch.yaml'), text);
+  for (const [name, content] of Object.entries(files)) writeFileSync(path.join(directory, name), content);
+  return directory;
+}
+
+test('an MCP sketch needs no code: the generic MCP app plays it, and check says so', async () => {
+  const directory = mcpSketch('{ kind: mcp, server: { command: node, args: [server.mjs] } }');
+  const sketch = await loadSketch(directory);
+  assert.deepEqual(sketch.target, { kind: 'mcp', entry: { command: 'node', args: ['server.mjs'] }, server: null, from: `${shown(directory)}/sketch.yaml` });
+  assert.equal(typeof sketch.app.idle, 'function');
+  assert.equal(await checkSketch(directory), `${shown(directory)}: sketch OK - fixture-good (mcp, generic app) - 5 states, 1 question`);
+});
+
+test('an MCP sketch by reference reads the mcpServers file; a missing name is refused naming the ones there', async () => {
+  const files = { 'servers.json': '{"mcpServers":{"box":{"type":"http","url":"http://127.0.0.1:1/mcp"}}}' };
+  const good = mcpSketch('{ kind: mcp, config: servers.json, server: box }', '', files);
+  assert.equal((await loadSketch(good)).target.entry.type, 'http');
+  const wrong = mcpSketch('{ kind: mcp, config: servers.json, server: bx }', '', files);
+  assert.equal(await refusal(wrong), `${shown(wrong)}/sketch.yaml: target.server: no server "bx" in servers.json (it has: box)`);
+});
+
+test('an MCP sketch takes calls and values, checked; no hooks; other kinds take neither', async () => {
+  const server = '{ kind: mcp, server: { command: node } }';
+  const fine = mcpSketch(server, 'calls:\n  - { tool: pay, arguments: { method: card } }\nvalues:\n  pick_seats: { count: [2] }\n');
+  assert.equal((await loadSketch(fine)).name, 'fixture-good');
+  assert.match(await refusal(mcpSketch(server, 'calls:\n  - { tol: pay }\n')), /sketch\.yaml: calls\[0\]: needs tool: <name> \(and arguments: \{ \.\.\. \} to fix some\)$/);
+  assert.match(await refusal(mcpSketch(server, 'values:\n  pick_seats: { count: [] }\n')), /values\.pick_seats\.count: must be a non-empty list/);
+  assert.match(await refusal(mcpSketch(server, 'app: hooks.mjs\n')), /app: an mcp target is played by the generic MCP app - remove app:/);
+  assert.match(await refusal(sketchChanged((text) => `${text}calls: []\n`)), /sketch\.yaml: calls: only for an mcp target$/);
 });

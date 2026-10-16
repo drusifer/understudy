@@ -101,7 +101,8 @@ use its tools as an agent would,
    - the values its schema allows: every `enum` value, `true`/`false`, or every whole number of
      an `integer` with `minimum` and `maximum` at most 20 apart;
    - the values the sketch lists for that argument (`values:`);
-   - the strings and numbers in the last call's result (its text and structured content) - for
+   - the strings and numbers in the last result that was not an error (its text and structured
+     content; Phase 2 finding: a refused call must not take away the values before it) - for
      example, after `list_films` answered `[{"id":"f2","title":"Up"}]`, `pick_seats` is offered
      with `film` from `f2`, `Up`.
    Every value sent is one of these; the log line shows it.

@@ -11,6 +11,7 @@
 import { decide } from './decide.mjs';
 import { verdictOf, askTable, floorFallback } from './escalate.mjs';
 import { askChannel } from './table.mjs';
+import { argumentQuestions } from './fill.mjs';
 import { RunError } from './errors.mjs';
 
 const verdictFromAnswer = (answer) => {
@@ -182,7 +183,9 @@ async function play(services, { context, phase, question: questionName }) {
       throw new RunError(`in phase "${phase}" Jev answered off the list twice ("${offList}", then "${again}") - offered: ${Object.keys(criteria).join(', ')}`, { outcome: 'off-list' });
     }
   }
-  const move = byId(result.option);
+  let move = byId(result.option);
+  // ADR-0013: a move with open arguments has them chosen by Jev too.
+  if (move.open?.length > 0) move = { ...move, filled: await fillArguments({ judge, state, question, move, phase }) };
   const { actions = [], say = null, tracks = {}, data } = app.act(move, state, view, context);
   // What the app answered (an HTTP status, say) - the last answer worth keeping.
   let response;
@@ -197,6 +200,29 @@ async function play(services, { context, phase, question: questionName }) {
   };
   services.onRecord?.(record);
   return { record, move: move.id, kind: move.id.split(':', 1)[0], tracks };
+}
+
+/**
+ * One request, one Choice per open argument of the picked move. An
+ * answer that was not offered is asked once more; twice stops the run
+ * (ADR-0004).
+ */
+async function fillArguments({ judge, state, question, move, phase }) {
+  const { questions, read } = argumentQuestions({ instructions: question.instructions, tool: move.call.tool, open: move.open });
+  const asked = { ...state, chosen: move.id };
+  const ask = async () => {
+    const response = await judge.systemOne({ state: asked, questions });
+    return read(response.answers);
+  };
+  let reading = await ask();
+  if (!reading.offList) return reading.filled;
+  const first = reading.offList;
+  reading = await ask();
+  if (!reading.offList) return reading.filled;
+  const { name, answer } = reading.offList;
+  const offered = move.open.find((each) => each.name === name).candidates.map((value) => JSON.stringify(value)).join(', ');
+  throw new RunError(`in phase "${phase}" Jev answered off the list twice for argument "${name}" of ${move.call.tool}`
+    + ` ("${first.answer}", then "${answer}") - offered: ${offered}`, { outcome: 'off-list' });
 }
 
 /**

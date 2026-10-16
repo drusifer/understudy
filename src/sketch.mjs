@@ -1,7 +1,8 @@
 // Sprint 3 UND-9 (ADR-0011): a sketch - one `sketch.yaml`, loaded and
 // checked as a whole before anything starts.
 //
-//   <dir>/sketch.yaml   name, target, player, steps, questions, turn (the statechart)
+//   <dir>/sketch.yaml   name, target, player, steps, questions, turn (the statechart);
+//                       for an MCP server also calls and values (ADR-0012/0013)
 //   <dir>/hooks.mjs     only where the sketch names it (`app: hooks.mjs`): how to read the app
 //
 // Every mistake is refused HERE as a `UsageError` naming the file and the
@@ -16,10 +17,12 @@ import { parseTurn, unknown } from './machine.mjs';
 import { genericLibrary, mergeLibraries } from './library.mjs';
 import { checkInstruction } from './strategyFile.mjs';
 import { pageApp } from './apps/page.mjs';
+import { mcpApp } from './apps/mcp.mjs';
+import { resolveServer } from './mcpConfig.mjs';
 
 const SKETCH = 'sketch.yaml';
 const GUIDE = 'see docs/SKETCHES.md';
-const KEYS = ['name', 'description', 'target', 'app', 'player', 'steps', 'questions', 'turn'];
+const KEYS = ['name', 'description', 'target', 'app', 'player', 'steps', 'questions', 'turn', 'calls', 'values'];
 const QUESTION_TYPES = ['noul', 'choice', 'score'];
 // The fields a kind cannot do without, with what each one is for.
 const REQUIRED = {
@@ -27,9 +30,11 @@ const REQUIRED = {
   http: { url: 'where the API is, e.g. http://127.0.0.1:{port}', state: 'the path a look GETs, e.g. /status' },
 };
 // The fields each kind of target takes; anything else is a mistake, named at load.
-const TARGET_FIELDS = { process: ['command', 'args'], page: ['root', 'page'], http: ['command', 'args', 'url', 'state'] };
-// Kinds with a built-in app; the others read their app through hooks.mjs.
-const GENERIC_APPS = { page: pageApp };
+const TARGET_FIELDS = { process: ['command', 'args'], page: ['root', 'page'], http: ['command', 'args', 'url', 'state'], mcp: ['server', 'config'] };
+// Kinds with a built-in app, made for each sketch; the others read their
+// app through hooks.mjs. An MCP server is only ever played by its own.
+const GENERIC_APPS = { page: () => pageApp, mcp: (sketch) => mcpApp({ calls: sketch.calls, values: sketch.values }) };
+const ONLY_GENERIC = new Set(['mcp']);
 const APP_HOOKS = ['phase', 'project', 'options', 'act'];
 
 /**
@@ -104,15 +109,60 @@ function checkTarget(target, fail) {
 }
 
 /**
+ * The target as the run starts it: an MCP one carries its server entry,
+ * resolved from the sketch or the file it names.
+ */
+function resolvedTarget(target, { file, directory }) {
+  if (target.kind !== 'mcp') return target;
+  const { entry, name, from } = resolveServer(target, { directory, shownFile: shown(file), shown });
+  return { kind: 'mcp', entry, server: name, from };
+}
+
+/**
+ * `calls:` and `values:` - the generic MCP app's settings, nothing else's.
+ */
+function checkCalls(sketch, fail) {
+  for (const key of ['calls', 'values']) {
+    if (sketch[key] !== undefined && sketch.target.kind !== 'mcp') fail(key, 'only for an mcp target');
+  }
+  checkCallList(sketch.calls ?? [], fail);
+  checkValues(sketch.values ?? {}, fail);
+}
+
+function checkCallList(calls, fail) {
+  if (!Array.isArray(calls)) fail('calls', 'must be a list of { tool, arguments }');
+  for (const [index, call] of calls.entries()) {
+    const where = `calls[${index}]`;
+    if (!isMapping(call) || typeof call.tool !== 'string' || call.tool === '') fail(where, 'needs tool: <name> (and arguments: { ... } to fix some)');
+    const extra = Object.keys(call).find((key) => key !== 'tool' && key !== 'arguments');
+    if (extra) fail(`${where}.${extra}`, 'not a call field (known: tool, arguments)');
+    if (call.arguments !== undefined && !isMapping(call.arguments)) fail(`${where}.arguments`, 'must map argument names to values');
+  }
+}
+
+function checkValues(values, fail) {
+  if (!isMapping(values)) fail('values', 'must map each tool to { <argument>: [values...] }');
+  for (const [tool, arguments_] of Object.entries(values)) {
+    if (!isMapping(arguments_)) fail(`values.${tool}`, 'must map each argument to a list of values');
+    for (const [name, list] of Object.entries(arguments_)) {
+      if (!Array.isArray(list) || list.length === 0) fail(`values.${tool}.${name}`, 'must be a non-empty list of values to choose from');
+    }
+  }
+}
+
+/**
  * The app: the kind's built-in one when the sketch names no hooks, else
  * `hooks.mjs` (or whatever `app:` names) next to the sketch.
  * @returns {Promise<{ app: object, library: object, hooks: string|null }>}
  */
 async function loadApp(sketch, { file, directory }, fail) {
   const generic = GENERIC_APPS[sketch.target.kind];
+  if (sketch.app !== undefined && ONLY_GENERIC.has(sketch.target.kind)) {
+    fail('app', `an ${sketch.target.kind} target is played by the generic MCP app - remove app: (use calls: and values:) - ${GUIDE}`);
+  }
   if (sketch.app === undefined) {
     if (!generic) fail('app', `a ${sketch.target.kind} target needs hooks that read the app, e.g. app: hooks.mjs - ${GUIDE}`);
-    return { app: generic, library: {}, hooks: null };
+    return { app: generic(sketch), library: {}, hooks: null };
   }
   if (typeof sketch.app !== 'string' || sketch.app === '') fail('app', 'must name a module next to the sketch, e.g. hooks.mjs');
   const hooksFile = path.join(directory, sketch.app);
@@ -181,6 +231,8 @@ export async function loadSketch(location) {
   const fail = (where, message) => { throw new UsageError(`${shown(file)}: ${where}: ${message}`); };
   checkTop(sketch, fail);
   checkTarget(sketch.target, fail);
+  const target = resolvedTarget(sketch.target, { file, directory });
+  checkCalls(sketch, fail);
   checkQuestions(sketch.questions, fail);
   const { app, library: own, hooks } = await loadApp(sketch, { file, directory }, fail);
   const services = { questions: sketch.questions };
@@ -197,7 +249,7 @@ export async function loadSketch(location) {
     throw new UsageError(error.message);
   }
   return {
-    directory, file, name: sketch.name, target: sketch.target, player: sketch.player ?? {}, steps: sketch.steps ?? null,
+    directory, file, name: sketch.name, target, player: sketch.player ?? {}, steps: sketch.steps ?? null,
     app, library: own, hooks, questions: sketch.questions, machine: compiled.machine, services,
     states: Object.keys(compiled.config.states).length - 1, // not the reserved stop state
   };
