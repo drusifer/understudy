@@ -1,5 +1,15 @@
 # Changelog
 
+## Sprint 11 — light and dark (2026-10-16, branch `sprint-11`, not yet merged)
+
+- A **MODE** switch on the dashboard: **AUTO** follows the device's light/dark setting (live),
+  **LIGHT** and **DARK** fix it; remembered per browser, `?mode=` on the link. Every theme has both:
+  steampunk light (parchment, maple, brass), professional dark (charcoal), starship light (the
+  bars on a pale screen). ADR-0032.
+- The fader LEDs, slot glows and readouts shine as brightly as their fader is set (owner).
+- Phones: the bay drops down under the tube; the theme switch wraps. The dashboard is served at
+  the root - no token in the URL (owner; ADR-0023 amended).
+
 ## Sprint 10 — a schema for sketch.yaml (2026-10-16, branch `sprint-10`, not yet merged)
 
 - **`schema/sketch.schema.json`**: editors with the YAML language server complete `sketch.yaml`

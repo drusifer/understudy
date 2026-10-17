@@ -10,6 +10,14 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+## ADR-0032: Light and dark are a `data-mode` attribute; each theme's colours are variables
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-38
+*   **Context**: owner: every theme in light and dark; the mode follows the device unless chosen (LIGHT / DARK / AUTO, remembered).
+*   **Options**: (1) `data-mode` beside `data-theme`, each theme's other mode an override block, colours held in custom properties; (2) six separate theme stylesheets; (3) only `prefers-color-scheme` media queries.
+*   **Decision**: (1). `modeOf(choice, isDeviceDark)` with a `matchMedia` listener sets `data-mode`; professional and starship were rewritten so their other mode only redefines variables; steampunk light is one override file, because steampunk's wood and brass live in `page.css`. Media queries alone (3) could not honour a fixed choice.
+*   **Consequences**: + a mode switch is instant and follows the device live; a new theme declares its variables twice. − steampunk light is an override list that must follow `page.css` when panels change.
+
 ## ADR-0031: A hand-written JSON Schema for editors; check stays the full check
 
 *   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-37
