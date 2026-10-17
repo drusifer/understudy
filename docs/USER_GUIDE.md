@@ -243,6 +243,14 @@ an unguessable path. Ctrl-C stops it (and any run).
   faders' ratio, with each weight's share.
 - **Printer**: the run log on tractor-feed paper - each step, what the rules removed, Jev's scores,
   each score table (a perfect 1.0 prints as `11`), the ticket and the outcome.
+- **Behind the printer**: **REMOVE** takes the printer off and shows the sketch's whole
+  `sketch.yaml` in an edit box, with a cheat-sheet sticker of the keys, the `turn:` shapes and the
+  input kinds. Half a second after you stop typing, the text is checked and **saved**, and the
+  tube, controls and rack redraw from it - add or rename a state and watch it appear. Text the
+  checks would refuse is not saved: the box turns red, says why in one line, and the tube keeps the
+  last good sketch. The box is read-only while a run plays. **REFIT PRINTER** puts the printer back
+  (the run log kept printing behind it). POWER off and on puts the factory sketch back, as for the
+  access panels.
 
 ## 6. Write a sketch for your own app
 

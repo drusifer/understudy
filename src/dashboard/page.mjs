@@ -460,17 +460,87 @@ function boot() {
   async function save(changes) {
     const saved = await api('edit', { sketch: state.sketch.name, changes });
     if (saved.ok) {
-      const { value } = await api(`sketch/${encodeURIComponent(state.sketch.name)}`);
-      const kept = state.values;
-      state.sketch = value;
-      state.values = { ...startingValues(value.inputs), ...Object.fromEntries(Object.entries(kept).filter(([name, current]) => value.inputs.find((input) => input.name === name)?.options?.includes?.(current) ?? true)) };
-      drawControls();
-      drawTube();
+      await redraw();
+      await loadBay();
     } else {
       print({ event: 'dashboard', refused: saved.value.problem });
     }
     return saved;
   }
+
+  // Redraws from the sketch as saved, keeping the controls' values that still fit.
+  async function redraw() {
+    const { ok, value } = await api(`sketch/${encodeURIComponent(state.sketch.name)}`);
+    if (!ok) return;
+    const kept = state.values;
+    state.sketch = value;
+    state.values = { ...startingValues(value.inputs), ...Object.fromEntries(Object.entries(kept).filter(([name, current]) => value.inputs.find((input) => input.name === name)?.options?.includes?.(current) ?? true)) };
+    if (value.graph.nodes.every((node) => node.id !== state.current)) state.current = value.graph.initial;
+    state.liveEdge = null;
+    drawControls();
+    drawTube();
+    const rack = await api('sketches');
+    if (rack.ok) {
+      state.rack = rack.value;
+      drawRack();
+    }
+  }
+
+  // UND-35: the bay behind the printer - the sketch's whole file, saved a
+  // moment after typing stops, one write at a time; the textarea is never
+  // redrawn by its own saves, so the caret and undo stay.
+  const bay = { text: $('bay-text'), timer: null, pending: null, queue: Promise.resolve() };
+
+  async function loadBay() {
+    if ($('bay').hidden || !state.sketch) return;
+    const { ok, value } = await api(`text/${encodeURIComponent(state.sketch.name)}`);
+    if (!ok) return;
+    bay.text.value = value.text;
+    bay.text.setAttribute('aria-invalid', 'false');
+    $('bay-problem').textContent = '';
+  }
+
+  async function writeBay({ sketch, text }) {
+    const written = await api('write', { sketch, text });
+    if (sketch !== state.sketch?.name) return;
+    bay.text.setAttribute('aria-invalid', String(!written.ok));
+    $('bay-problem').textContent = written.ok ? '' : written.value.problem;
+    if (written.ok) await redraw();
+  }
+
+  // Sends the waiting write now (before Play, or leaving the sketch).
+  function flushBay() {
+    clearTimeout(bay.timer);
+    if (bay.pending) {
+      const pending = bay.pending;
+      bay.pending = null;
+      bay.queue = (async (previous) => {
+        await previous;
+        await writeBay(pending);
+      })(bay.queue);
+    }
+    return bay.queue;
+  }
+
+  bay.text.addEventListener('input', () => {
+    clearTimeout(bay.timer);
+    bay.pending = { sketch: state.sketch.name, text: bay.text.value };
+    bay.timer = setTimeout(flushBay, 500);
+  });
+
+  function showBay(isOpen) {
+    $('printer').hidden = isOpen;
+    $('bay').hidden = !isOpen;
+    (isOpen ? bay.text : $('remove-printer')).focus();
+  }
+  $('remove-printer').addEventListener('click', async () => {
+    showBay(true);
+    await loadBay();
+  });
+  $('refit-printer').addEventListener('click', async () => {
+    await flushBay();
+    showBay(false);
+  });
 
   function drawStatus() {
     const { running, on } = state;
@@ -493,6 +563,8 @@ function boot() {
     $('power').setAttribute('aria-label', on ? 'Power off the console' : 'Power on the console (resets the sketches to their factory defaults)');
     $('power-word').textContent = on ? 'ON' : 'OFF';
     $('printer-state').textContent = running ? 'PRINTING' : 'IDLE';
+    bay.text.readOnly = running;
+    $('bay-note').textContent = running ? 'Read-only while a run plays - stop it to edit.' : 'Saved to sketch.yaml as you type. Power off and on for the factory sketch.';
   }
 
   function print(line) {
@@ -516,6 +588,7 @@ function boot() {
 
   async function choose(name) {
     if (state.running) return;
+    await flushBay();
     const { ok, value } = await api(`sketch/${encodeURIComponent(name)}`);
     if (!ok) return;
     state.sketch = value;
@@ -527,6 +600,7 @@ function boot() {
     drawTube();
     drawStatus();
     $('paper').replaceChildren();
+    await loadBay();
   }
 
   $('play').addEventListener('click', async () => {
@@ -534,6 +608,7 @@ function boot() {
       await api('stop', {});
       return;
     }
+    await flushBay();
     $('paper').replaceChildren();
     const { ok, value } = await api('play', { sketch: state.sketch.name, inputs: state.values });
     if (!ok) print({ event: 'dashboard', refused: value.problem });

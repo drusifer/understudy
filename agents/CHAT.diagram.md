@@ -70,4 +70,12 @@ sequenceDiagram
     Note right of Trin: "UAT phase 1 passed: AC2<br/>write+factory+restore,<br/>AC3 refused writes<br/>nothing and names the<br/>problem without path,<br/>AC4 409 while running,<br/>290 te…"
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "Phase 1 review passed:<br/>shared saved() keeps<br/>edit and write on one<br/>path, GET text reads<br/>only rack names. @Neo<br/>*swe impl phase-2"
+    Mouse->>All: "phase 2"
+    Note right of Mouse: "Phase 2: the bay and the<br/>sticker (page)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 2 impl:<br/>REMOVE/REFIT PRINTER,<br/>the bay (debounced<br/>serialised writes,<br/>problem line, read-only<br/>while running, reload on<br/>rack/POWER/drawe…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 2 passed:<br/>AC1-3, AC6-7 in the<br/>browser test (keyboard<br/>REMOVE, sticker fits,<br/>rename shows in tube,<br/>broken text not saved).<br/>AC4-5 by…"
+    Morpheus->>Tank: "lead handoff"
+    Note right of Morpheus: "Phase 2 review passed:<br/>redraw() shared by<br/>drawer and bay saves,<br/>textarea never redrawn<br/>by its own write, flush<br/>before Play and tab<br/>switch.…"
 ```

@@ -33,12 +33,41 @@
 </nav>
 
 <main id="console" class="stage">
-  <section class="printer" aria-label="Printer">
-    <div class="printer-head"><span>RUN LOG · PRINTER</span><span id="printer-state">IDLE</span></div>
+  <section id="printer" class="printer" aria-label="Printer">
+    <div class="printer-head"><span>RUN LOG · PRINTER</span><span id="printer-state">IDLE</span>
+      <button type="button" id="remove-printer" class="screw-button" aria-label="Remove the printer to edit the sketch's YAML">REMOVE</button></div>
     <div class="paper-window" id="paper-window">
       <div id="paper" class="paper" aria-live="polite"></div>
     </div>
     <div class="roller" aria-hidden="true"></div>
+  </section>
+
+  <section id="bay" class="bay" aria-label="Behind the printer: the sketch's YAML" hidden>
+    <div class="printer-head"><span>SKETCH.YAML</span>
+      <button type="button" id="refit-printer" class="screw-button" aria-label="Refit the printer">REFIT PRINTER</button></div>
+    <aside class="sticker" aria-label="Cheat sheet">
+      <div class="sticker-title">SKETCH CHEAT SHEET</div>
+      <dl>
+        <dt>name</dt><dd><code>name: evening</code></dd>
+        <dt>description</dt><dd><code>description: &gt;- what it does</code></dd>
+        <dt>target</dt><dd><code>{ kind: process | page | http | mcp, ... }</code></dd>
+        <dt>inputs</dt><dd><code>mood: { choose: [fun, serious], default: fun }</code>
+          <code>centre: { weight: [0, 10], default: 7 }</code>
+          <code>tickets: { count: [1, 4], default: 2 }</code>
+          <code>evenings: { switch: true, default: true }</code></dd>
+        <dt>decide</dt><dd><code>&lt;tool.arg&gt;: { scores: { centre: { range: [0.3, 1], weight: centre } } }</code></dd>
+        <dt>questions</dt><dd><code>next: { type: choice, instructions: ..., looks_at: [...] }</code></dd>
+        <dt>player</dt><dd><code>player: { floor: 0.4 }</code></dd>
+        <dt>turn</dt><dd><code>initial: waiting</code>
+          <code>states: { waiting: { on: { OBSERVE: looking } } }</code>
+          <code>tags: [move] · on: { STEP: acting } · tags: [safe]</code>
+          <code>invoke: { src: look, onDone: [{ target: x, guard: ... }] }</code>
+          <code>finished: { type: final }</code></dd>
+      </dl>
+    </aside>
+    <textarea id="bay-text" class="bay-text" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="sketch.yaml" aria-describedby="bay-note bay-problem"></textarea>
+    <div id="bay-problem" class="bay-problem" role="status"></div>
+    <div id="bay-note" class="about">Saved to sketch.yaml as you type. Power off and on for the factory sketch.</div>
   </section>
 
   <section class="tube-panel" aria-label="State tube">

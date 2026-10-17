@@ -10,8 +10,8 @@
 - [x] **Task 1.2:** `*uat` + review, commit `Phase 1`. (*Owner: Trin → Morpheus*)
 
 ## Phase 2: The bay and the sticker - UND-35 AC1-7 (page)
-- [ ] **Task 2.1:** `*impl` REMOVE / REFIT PRINTER, the bay textarea (debounced, serialised writes; problem line; read-only while running; reload on rack switch, POWER, drawer save), the sticker; browser test; USER_GUIDE + DASHBOARD note. (*Owner: Neo, Oracle*)
-- [ ] **Task 2.2:** `*uat` + review, commit `Phase 2`. (*Owner: Trin → Morpheus*)
+- [x] **Task 2.1:** `*impl` REMOVE / REFIT PRINTER, the bay textarea (debounced, serialised writes; problem line; read-only while running; reload on rack switch, POWER, drawer save), the sticker; browser test; USER_GUIDE + DASHBOARD note. (*Owner: Neo, Oracle*)
+- [x] **Task 2.2:** `*uat` + review, commit `Phase 2`. (*Owner: Trin → Morpheus*)
 
 ## Close
 - [ ] Tank sdlc-check · Oracle groom (ADR-0028, changelog) · Smith test · retro · launch.
