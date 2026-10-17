@@ -115,4 +115,12 @@ sequenceDiagram
     Note right of Trin: "UAT phase 1 passed: unit<br/>themeOf/rgbOf/levelOf,<br/>browser: switch, reload,<br/>?theme=, unknown<br/>ignored, Play through a<br/>theme change, fits<br/>1600x9…"
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "Phase 1 review passed:<br/>no colour left hard-<br/>coded in page.mjs, theme<br/>rules scoped under<br/>:root[data-theme] so<br/>page.css stays the<br/>default. @Ne…"
+    Mouse->>All: "phase 2"
+    Note right of Mouse: "Phase 2: the starship<br/>theme"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 2 impl: theme-<br/>starship.css (elbows,<br/>pills, Antonio via<br/>@fontsource/antonio,<br/>black tube and readout),<br/>browser test covers all<br/>three, U…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 2 passed: 3<br/>distinct themes, each<br/>fits 1600x960, Play runs<br/>through a switch to<br/>starship, 7/7 browser,<br/>check green. AC3<br/>contrast c…"
+    Morpheus->>Tank: "lead handoff"
+    Note right of Morpheus: "Phase 2 review passed:<br/>starship is pure CSS<br/>under its own scope,<br/>font served like the<br/>others. @Tank *devops<br/>sdlc-check"
 ```

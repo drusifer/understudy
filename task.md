@@ -11,9 +11,9 @@
 - [x] **Task 1.3:** `*uat` + review, commit `Phase 1`. (*Owner: Trin → Morpheus*)
 
 ## Phase 2: The starship theme - UND-36 AC4-6
-- [ ] **Task 2.1:** `*impl` `@fontsource/antonio`; `theme-starship.css`; browser test covers it. (*Owner: Neo*)
-- [ ] **Task 2.2:** USER_GUIDE + DASHBOARD sections, screenshots. (*Owner: Oracle*)
-- [ ] **Task 2.3:** `*uat` + review, commit `Phase 2`. (*Owner: Trin → Morpheus*)
+- [x] **Task 2.1:** `*impl` `@fontsource/antonio`; `theme-starship.css`; browser test covers it. (*Owner: Neo*)
+- [x] **Task 2.2:** USER_GUIDE + DASHBOARD sections, screenshots. (*Owner: Oracle*)
+- [x] **Task 2.3:** `*uat` + review, commit `Phase 2`. (*Owner: Trin → Morpheus*)
 
 ## Close
 - [ ] Tank sdlc-check · Oracle groom (ADR-0029, changelog) · Smith test · retro · launch.

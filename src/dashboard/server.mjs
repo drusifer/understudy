@@ -37,6 +37,8 @@ const FILES = {
   'fonts/spectral-400-italic.woff2': font('spectral-latin-400-italic.woff2'),
   'fonts/vt323-400.woff2': font('vt323-latin-400-normal.woff2'),
   'fonts/dotgothic16-400.woff2': font('dotgothic16-latin-400-normal.woff2'),
+  'fonts/antonio-400.woff2': font('antonio-latin-400-normal.woff2'),
+  'fonts/antonio-700.woff2': font('antonio-latin-700-normal.woff2'),
 };
 
 const json = (response, status, value) => response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }).end(JSON.stringify(value));

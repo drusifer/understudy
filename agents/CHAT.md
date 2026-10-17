@@ -357,3 +357,31 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-16 21:45:47</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
  Phase 1 review passed: no colour left hard-coded in page.mjs; theme rules scoped under :root[data-theme] so page.css stays the default. @Neo *swe impl phase-2
+
+---
+[<small>2026-10-16 21:45:47</small>] [**Mouse**]->[**all**] *phase 2*:
+ Phase 2: the starship theme
+
+---
+[<small>2026-10-16 21:49:44</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-browser | /home/drusifer/Projects/understudy/build/build.out
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 25272.279745
+
+---
+[<small>2026-10-16 21:50:03</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 2 impl: theme-starship.css (elbows, pills, Antonio via @fontsource/antonio, black tube and readout); browser test covers all three; USER_GUIDE + DASHBOARD + screenshots. @Trin *qa uat phase-2
+
+---
+[<small>2026-10-16 21:50:03</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 2 passed: 3 distinct themes, each fits 1600x960, Play runs through a switch to starship; 7/7 browser, check green. AC3 contrast checked by eye on the colours (muted #5a6373 on white ~6:1), not measured by a test. @Morpheus *lead review phase-2
+
+---
+[<small>2026-10-16 21:50:03</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
+ Phase 2 review passed: starship is pure CSS under its own scope; font served like the others. @Tank *devops sdlc-check

@@ -243,6 +243,15 @@ an unguessable path. Ctrl-C stops it (and any run).
   faders' ratio, with each weight's share.
 - **Printer**: the run log on tractor-feed paper - each step, what the rules removed, Jev's scores,
   each score table (a perfect 1.0 prints as `11`), the ticket and the outcome.
+- **THEME** (in the header): **STEAMPUNK** (the console above), **PROFESSIONAL** (light and flat,
+  one blue accent, the system font) or **STARSHIP** (black screens framed by rounded orange, lilac
+  and blue bars, pill buttons, condensed lettering). It switches at once, even during a run, and
+  the browser remembers it; `?theme=professional` (or `starship`, `steampunk`) on the link opens
+  in that theme.
+
+  ![The professional theme](images/dashboard-professional.png)
+  ![The starship theme](images/dashboard-starship.png)
+
 - **Behind the printer**: **REMOVE** takes the printer off and shows the sketch's whole
   `sketch.yaml` in an edit box, with a cheat-sheet sticker of the keys, the `turn:` shapes and the
   input kinds. Half a second after you stop typing, the text is checked and **saved**, and the

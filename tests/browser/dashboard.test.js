@@ -156,8 +156,8 @@ test('the THEME switch: each theme restyles the page, is remembered, ?theme= win
     errors.push(error.message);
   });
   const theme = () => page.evaluate(() => document.documentElement.dataset.theme);
-  const background = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  const fits = () => page.evaluate(() => document.scrollingElement.scrollHeight <= innerHeight && document.scrollingElement.scrollWidth <= innerWidth);
+  const background = () => page.evaluate(() => globalThis.getComputedStyle(document.body).backgroundColor);
+  const fits = () => page.evaluate(() => document.scrollingElement.scrollHeight <= globalThis.innerHeight && document.scrollingElement.scrollWidth <= globalThis.innerWidth);
   await page.goto(dashboard.url);
   await until(page, () => document.querySelector('#tube svg'));
   assert.equal(await theme(), 'steampunk');
@@ -165,14 +165,14 @@ test('the THEME switch: each theme restyles the page, is remembered, ?theme= win
   const steampunk = await background();
 
   const seen = new Set([steampunk]);
-  for (const name of ['professional']) {
+  for (const name of ['professional', 'starship']) {
     await page.click(`.theme-choice[data-theme="${name}"]`);
     assert.equal(await theme(), name);
     assert.equal(await page.getAttribute(`.theme-choice[data-theme="${name}"]`, 'aria-pressed'), 'true');
     seen.add(await background());
     assert.ok(await fits(), `${name} fits 1600x960`);
   }
-  assert.equal(seen.size, 2, 'each theme has its own background');
+  assert.equal(seen.size, 3, 'each theme has its own background');
 
   // AC2: remembered across a reload; ?theme= wins; an unknown one is ignored.
   await page.click('.theme-choice[data-theme="professional"]');
