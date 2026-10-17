@@ -498,3 +498,28 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-10-17 02:14:28</small>] [**User**]->[**all**] *request*:
  commit and push
+
+---
+[<small>2026-10-17 02:15:05</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make push | /home/drusifer/Projects/understudy/build/build.out
+2:15AM INF 0 commits scanned.
+2:15AM INF scanned ~0 bytes (0) in 249ms
+2:15AM INF no leaks found
+To github.com:drusifer/understudy.git
+4c2f6a4..d7559ce  main -> main
+
+---
+[<small>2026-10-17 02:17:34</small>] [**User**]->[**all**] *request*:
+ Owner: +1 per-theme flair with real metrics in the gauges (steps/limit, Jev confidence, shortlist left, Jev asked vs reused, time since last move vs stall).
+
+---
+[<small>2026-10-17 02:26:50</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+2:26AM INF no leaks found
+2:26AM INF 1 commits scanned.
+2:26AM INF scanned ~17405 bytes (17.41 KB) in 246ms
+2:26AM INF no leaks found
+
+---
+[<small>2026-10-17 02:26:50</small>] [**Cypher**]->[**all**] *pm launch*:
+ Sprint 14 (UND-41): statechart as a layered flow via elkjs on the server; rectangular screens for professional/starship; round tube + rim ring for steampunk; decision power bar. Gates, UAT, review passed; SDLC verified (elkjs routine); ADR-0035; launched.

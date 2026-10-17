@@ -85,7 +85,7 @@ test('the console plays the evening: controls, Play, the tube follows, the print
   assert.match(paper, /seats E\d+, E\d+, E\d+/, 'three seats together');
   assert.match(paper, /=== DONE after \d+ steps ===/);
   assert.ok((await page.$$eval('#paper .eleven', (cells) => cells.length)) > 0, 'a perfect 1.0 prints as 11');
-  const tube = await page.getAttribute('#tube svg', 'aria-label');
+  const tube = await page.getAttribute('#tube svg.flow', 'aria-label');
   assert.ok(tube.endsWith('Now: booked.'), tube);
 
   // UND-39: STEP plays one move at a time; RESUME runs on; STOP ends it.

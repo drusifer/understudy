@@ -1,33 +1,44 @@
-// Sprint 6 UND-30 (docs/design/DASHBOARD.md "State tube"): the tube's
-// geometry - states round a loop from the initial one, finals inside beside
-// their source, every edge drawn and labelled, the power ring.
+// Sprint 6 UND-30, sprint 14 UND-41 (docs/design/DASHBOARD.md "State tube"):
+// the statechart as a layered flow - initial state first, every state and
+// edge laid out and labelled, nothing on top of anything else - and the
+// tube's power ring.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadSketch } from '../src/sketch.mjs';
 import { turnGraph } from '../src/watch/turnGraph.mjs';
-import { ringOf, tubeLayout } from '../src/dashboard/tube.mjs';
+import { ringOf } from '../src/dashboard/tube.mjs';
+import { flowLayout } from '../src/dashboard/flow.mjs';
 
-test('every state is placed and named; finals sit inside the loop (UND-30 AC1)', async () => {
-  const sketch = await loadSketch('examples/evening');
-  const graph = turnGraph(sketch.turn);
-  const layout = tubeLayout(graph, [4]);
+const isOverlapping = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+
+test('the flow: every state placed, the initial one on top, finals marked, no two boxes overlapping (UND-41 AC1)', async () => {
+  const graph = turnGraph((await loadSketch('examples/evening')).turn);
+  const flow = await flowLayout(graph, [4]);
   const byName = (a, b) => a.localeCompare(b);
-  assert.deepEqual(layout.nodes.map((node) => node.id).toSorted(byName), graph.nodes.map((node) => node.id).toSorted(byName));
-  const distance = (node) => Math.hypot(node.x - 300, node.y - 300);
-  const waiting = layout.nodes.find((node) => node.id === 'waiting');
-  assert.deepEqual([waiting.x, waiting.y], [130, 300], 'the initial state at the left');
-  for (const node of layout.nodes) assert.ok(node.final ? distance(node) < 120 : Math.abs(distance(node) - 170) < 1, node.id);
+  assert.deepEqual(flow.nodes.map((node) => node.id).toSorted(byName), graph.nodes.map((node) => node.id).toSorted(byName));
+  const waiting = flow.nodes.find((node) => node.id === 'waiting');
+  assert.ok(waiting.initial);
+  assert.equal(Math.min(...flow.nodes.map((node) => node.y)), waiting.y, 'the initial state is at the top');
+  assert.deepEqual(flow.nodes.filter((node) => node.final).map((node) => node.id).toSorted(byName), ['booked', 'walked_away']);
+  for (const [index, a] of flow.nodes.entries()) {
+    const later = flow.nodes.slice(index + 1);
+    for (const b of later) assert.ok(!isOverlapping(a, b), `${a.id} and ${b.id} overlap`);
+    assert.ok(a.x >= 0 && a.y >= 0 && a.x + a.width <= flow.width && a.y + a.height <= flow.height, `${a.id} inside the drawing`);
+  }
+  assert.equal(flow.nodes.find((node) => node.id === 'walked_away').name, 'walked away');
 });
 
-test('every transition is drawn and labelled with its event and guard (UND-30 AC1)', async () => {
+test('every transition is routed and labelled with its event and guard; the decision edge is marked (UND-41 AC2)', async () => {
   const graph = turnGraph((await loadSketch('examples/evening')).turn);
-  const layout = tubeLayout(graph, []);
-  assert.equal(layout.edges.length, graph.edges.length);
-  const toBooked = layout.edges.find((edge) => edge.to === 'booked');
-  assert.deepEqual([toBooked.label, toBooked.sub], ['done', 'showing text Ticket iss…']);
-  const observe = layout.edges.find((edge) => edge.label === 'OBSERVE');
-  assert.match(observe.d, / A 170 170 0 0 1 /, 'neighbours run along the loop');
-  for (const edge of layout.edges) assert.match(edge.d, /^M [\d.]+ [\d.]+ /);
+  const flow = await flowLayout(graph, [4]);
+  assert.equal(flow.edges.length, graph.edges.length);
+  const toBooked = flow.edges.find((edge) => edge.to === 'booked');
+  assert.deepEqual([toBooked.label, toBooked.sub], ['done', 'showing text Ticket issued']);
+  for (const edge of flow.edges) {
+    assert.ok(edge.points.length >= 2, `${edge.from}->${edge.to} is routed`);
+    assert.ok(Number.isFinite(edge.lx) && Number.isFinite(edge.ly));
+  }
+  assert.deepEqual(flow.edges.filter((edge) => edge.isDecision).map((edge) => edge.index), [4]);
 });
 
 test('the ring: one arc per weight in its share of the rim, filled by its value (UND-30 AC3-4)', () => {

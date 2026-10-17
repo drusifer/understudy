@@ -160,4 +160,8 @@ sequenceDiagram
     Note right of Neo: "Printer: paper spool to<br/>spool behind glass,<br/>reading order, scroll up<br/>to rewind / down to wind<br/>on, follows only at the<br/>bottom (owner). Fix:…"
     User->>All: "request"
     Note right of User: "commit and push"
+    User->>All: "request"
+    Note right of User: "Owner: +1 per-theme<br/>flair with real metrics<br/>in the gauges<br/>(steps/limit, Jev<br/>confidence, shortlist<br/>left, Jev asked vs<br/>reused, time since las…"
+    Cypher->>All: "pm launch"
+    Note right of Cypher: "Sprint 14 (UND-41):<br/>statechart as a layered<br/>flow via elkjs on the<br/>server, rectangular<br/>screens for<br/>professional/starship,<br/>round tube + rim r…"
 ```

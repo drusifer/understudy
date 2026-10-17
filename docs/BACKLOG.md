@@ -73,6 +73,11 @@ Design approved on a clickable mockup - **`docs/design/DASHBOARD.md`** is the br
 ## Sprint 9 (owner, 2026-10-16) - themes - DONE (launched 2026-10-16)
 - UND-36: THEME switch - steampunk, professional, starship.
 
+## Sprint 14 (owner, 2026-10-17) - the statechart as a flow - DONE (launched 2026-10-17)
+- UND-41: layered flow (elkjs); rectangular screens; decision power bar.
+- Next - sprint 15 (owner): per-theme flair and five real gauges (steps/limit, Jev confidence,
+  shortlist left, Jev asked vs reused, time since last move vs stall).
+
 ## Sprint 13 (owner, 2026-10-17) - questions that know the inputs - DONE (launched 2026-10-17)
 - UND-40: every Jev request sees `inputs`; `pick.with` removed; the evening's questions use them.
 - Next: the evening's horror taste is fixed in a gate; a `genre` choice input would let it follow too. (Cypher)

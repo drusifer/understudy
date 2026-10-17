@@ -10,6 +10,14 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+## ADR-0035: The statechart is a layered flow laid out by ELK on the server
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus · **Date**: 2026-10-17 · **Related**: UND-41, UND-30
+*   **Context**: owner: the states-round-a-circle tube was hard to follow ("is there a more standard visualization?"); edges crossed the middle and labels piled up.
+*   **Options**: (1) a layered (Sugiyama) flow from `elkjs`, computed on the server and sent with the sketch; (2) `@dagrejs/dagre`; (3) improve the hand-made circle layout.
+*   **Decision**: (1), top to bottom (it comes out square, so it fits the round tube and a phone without shrinking), orthogonal arrows, edge labels placed by ELK, model order kept so the initial state leads. The page only draws boxes, arrows and text. Steampunk keeps its round tube with a thin power ring on the rim; the other themes draw on a rectangular screen; the shares that the orb showed are a bar under the screen.
+*   **Consequences**: + the standard statechart picture; no overlaps; no layout code in the page. − a new dependency; the layout is async, so describing a sketch waits for it.
+
 ## ADR-0034: Every Jev request carries the run's inputs; `pick.with` is removed
 
 *   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-17 · **Related**: UND-40, UND-24
