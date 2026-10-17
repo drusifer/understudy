@@ -89,4 +89,6 @@ sequenceDiagram
     Note right of Mouse: "Retro. Neo: page.mjs<br/>~640 lines, split<br/>overdue. Trin: read-<br/>only-while-running and<br/>POWER reload not<br/>browser-tested.<br/>Morpheus: whole-file<br/>wri…"
     Cypher->>All: "pm launch"
     Note right of Cypher: "*pm launch sprint-8.<br/>Behind the printer:<br/>REMOVE to edit<br/>sketch.yaml with a cheat<br/>sheet, tube redraws as<br/>you type. Retro items on<br/>BACKLOG. M…"
+    User->>All: "request"
+    Note right of User: "push all please"
 ```
