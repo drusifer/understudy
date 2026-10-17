@@ -73,7 +73,8 @@ Standard targets deliberately absent:
   `@fontsource/vt323`, `@fontsource/dotgothic16` (the dashboard's fonts, OFL, served locally so the
   page fetches nothing from the internet) - added in sprint 6; `@fontsource/antonio` (the starship
   theme's lettering, OFL) - added in sprint 9. Dev: `ajv` (tests check `schema/sketch.schema.json`
-  against the examples) - added in sprint 10. Expected later:
+  against the examples) - added in sprint 10. `elkjs` (the dashboard lays the statechart out as a
+  layered flow, on the server) - added in sprint 14. Expected later:
   `@xstate/graph ^3.0.4`.
 
 ## 5. Quality gates
@@ -173,7 +174,9 @@ Run by Tank at sprint close (`*devops sdlc-check`):
 8. Nothing under `src/` or `tests/` imports from `seed/`.
 
 ---
-*Last verified: 2026-10-17 by Tank (sprint-13 close: clean → check green; no dependency or
+*Last verified: 2026-10-17 by Tank (sprint-15 close: clean → check green, browser tests green;
+no dependency or mechanism change. Sprint-14 close: clean → check green, browser tests green;
+routine dependency `elkjs` per §4. Sprint-13 close: clean → check green; no dependency or
 mechanism change. Sprint-12 close: clean → check green, browser tests green; no
 dependency or mechanism change. Sprint-11 close: clean → check green, browser tests green; no
 dependency or mechanism change. Sprint-10 close: clean → check green; routine dev dependency

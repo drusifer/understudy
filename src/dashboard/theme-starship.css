@@ -21,7 +21,7 @@
   --tube-glows: off; --tube-track: #1a1a2a; --tube-shadow: #000000;
   --tube-edge: #9999ff; --tube-edge-live: #ff9900; --tube-edge-tone: #99ccff;
   --tube-state: #000000; --tube-state-now: #ff9900; --tube-state-edge: #ffcc99; --tube-state-edge-now: #ffcc66;
-  --tube-state-tone: #ffcc99; --tube-state-tone-now: #ff9900; --tube-state-glow: transparent; --tube-orb-title: #cc99cc;
+  --tube-state-tone: #ffcc99; --tube-state-tone-now: #000000; --tube-state-glow: transparent; --tube-orb-title: #cc99cc;
 }
 :root[data-theme="starship"][data-mode="light"] {
   --void: #ebe8f0; --dim: #c4c0cc; --track: #d6d2dc; --focus: #1a1a2a;
@@ -30,7 +30,7 @@
   --tube-track: #d6d2dc; --tube-shadow: #ebe8f0;
   --tube-edge: #5050c8; --tube-edge-live: #d07000; --tube-edge-tone: #1d5a94;
   --tube-state: #ebe8f0; --tube-state-now: #ff9900; --tube-state-edge: #6e3f12; --tube-state-edge-now: #a85400;
-  --tube-state-tone: #4a2a0a; --tube-state-tone-now: #a85400; --tube-orb-title: #743a74;
+  --tube-state-tone: #4a2a0a; --tube-state-tone-now: #000000; --tube-orb-title: #743a74;
 }
 :root[data-theme="starship"] * { font-family: Antonio, "Arial Narrow", sans-serif; text-shadow: none; letter-spacing: .06em; }
 :root[data-theme="starship"] body,
@@ -149,11 +149,37 @@
 :root[data-theme="starship"] .move-button:disabled { filter: none; opacity: .4; }
 
 /* The tube: a display ringed in thin coloured lines */
-:root[data-theme="starship"] .tube { background: var(--void); border: 3px solid var(--violet); box-shadow: 0 0 0 8px var(--void), 0 0 0 12px var(--lilac); animation: none; }
-:root[data-theme="starship"] .tube::before { display: none; }
-:root[data-theme="starship"] .tube .labels,
-:root[data-theme="starship"] .tube .label { font-family: Antonio, "Arial Narrow", sans-serif; text-transform: uppercase; }
+/* A rectangular screen (owner): the flow only, no ring. */
+:root[data-theme="starship"] .tube { aspect-ratio: auto; height: 560px; background: var(--void); border: 3px solid var(--violet); border-radius: 22px 6px 6px 22px; box-shadow: none; animation: none; }
+:root[data-theme="starship"] .tube::before,
+:root[data-theme="starship"] .tube .ring,
+:root[data-theme="starship"] .tube .ring-labels { display: none; }
+:root[data-theme="starship"] .tube .flow { inset: 3%; width: 94%; height: 94%; }
+:root[data-theme="starship"] .tube .flow text { font-family: Antonio, "Arial Narrow", sans-serif; text-transform: uppercase; letter-spacing: .05em; }
+:root[data-theme="starship"] .tube .flow .state-label { font-size: 16px; font-weight: 700; }
 :root[data-theme="starship"] .tube .now { filter: none; }
+:root[data-theme="starship"] .power-title { color: var(--t-sky); font-size: 14px; letter-spacing: .12em; }
+:root[data-theme="starship"] .power-bar { border-radius: 999px; background: var(--dim); }
+:root[data-theme="starship"] .power-legend { font-family: Antonio, "Arial Narrow", sans-serif; font-size: clamp(14px, .85vw, 19px); text-transform: uppercase; }
+
+/* UND-42: no leather, no bulbs; each gauge is a ship readout - a cluster of power bars that keep
+   moving, but only within a small band round the real reading, its figure and its name. */
+:root[data-theme="starship"] .controls,
+:root[data-theme="starship"] .tube-panel { outline: none; background-image: none; }
+:root[data-theme="starship"] .bulbs,
+:root[data-theme="starship"] .gauge .dial { display: none; }
+:root[data-theme="starship"] .tube { height: auto; min-height: 360px; width: 100%; max-width: none; }
+:root[data-theme="starship"] .gauge { align-items: stretch; gap: 3px; padding: 6px 8px; border-radius: 0 14px 14px 0; background: var(--void); border: none; border-left: 8px solid var(--lilac); box-shadow: none; }
+:root[data-theme="starship"] .gauge:nth-child(2n) { border-left-color: var(--sky); }
+:root[data-theme="starship"] .gauge:nth-child(3n) { border-left-color: var(--orange); }
+:root[data-theme="starship"] .gauge .bars { display: flex; align-items: flex-end; gap: 3px; height: 44px; }
+:root[data-theme="starship"] .gauge .bars i { flex: 1; height: calc(8% + var(--level) * 88%); background: var(--sky); border-radius: 2px; transform-origin: bottom; animation: hover 1.3s ease-in-out infinite alternate; animation-delay: calc(var(--n) * -0.37s); transition: height .5s; }
+:root[data-theme="starship"] .gauge .bars i:nth-child(3n) { background: var(--orange); }
+:root[data-theme="starship"] .gauge .bars i:nth-child(4n) { background: var(--lilac); }
+@keyframes hover { from { transform: scaleY(.9); } to { transform: scaleY(1.06); } }
+@media (prefers-reduced-motion: reduce) { :root[data-theme="starship"] .gauge .bars i { animation: none; } }
+:root[data-theme="starship"] .gauge .figure { font-family: Antonio, "Arial Narrow", sans-serif; font-size: clamp(16px, 1vw, 22px); font-weight: 700; color: var(--t-orange); text-align: right; }
+:root[data-theme="starship"] .gauge-name { font-family: Antonio, "Arial Narrow", sans-serif; font-size: clamp(12px, .7vw, 15px); letter-spacing: .1em; color: var(--t-sky); text-align: right; }
 
 /* The printer: a readout of coloured text on the screen */
 :root[data-theme="starship"] .paper { background: var(--void); background-image: none; padding: 10px 8px; color: var(--t-orange); }
@@ -163,7 +189,6 @@
 :root[data-theme="starship"] .paper .held { color: var(--t-red); }
 :root[data-theme="starship"] .paper .jev { color: var(--t-lilac); }
 :root[data-theme="starship"] .paper .bold { color: var(--t-gold); }
-:root[data-theme="starship"] .paper-window { height: 668px; }
 :root[data-theme="starship"] .roller,
 :root[data-theme="starship"] .glass::after { display: none; }
 

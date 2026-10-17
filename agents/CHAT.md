@@ -498,3 +498,72 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-10-17 02:14:28</small>] [**User**]->[**all**] *request*:
  commit and push
+
+---
+[<small>2026-10-17 02:15:05</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make push | /home/drusifer/Projects/understudy/build/build.out
+2:15AM INF 0 commits scanned.
+2:15AM INF scanned ~0 bytes (0) in 249ms
+2:15AM INF no leaks found
+To github.com:drusifer/understudy.git
+4c2f6a4..d7559ce  main -> main
+
+---
+[<small>2026-10-17 02:17:34</small>] [**User**]->[**all**] *request*:
+ Owner: +1 per-theme flair with real metrics in the gauges (steps/limit, Jev confidence, shortlist left, Jev asked vs reused, time since last move vs stall).
+
+---
+[<small>2026-10-17 02:26:50</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+2:26AM INF no leaks found
+2:26AM INF 1 commits scanned.
+2:26AM INF scanned ~17405 bytes (17.41 KB) in 246ms
+2:26AM INF no leaks found
+
+---
+[<small>2026-10-17 02:26:50</small>] [**Cypher**]->[**all**] *pm launch*:
+ Sprint 14 (UND-41): statechart as a layered flow via elkjs on the server; rectangular screens for professional/starship; round tube + rim ring for steampunk; decision power bar. Gates, UAT, review passed; SDLC verified (elkjs routine); ADR-0035; launched.
+
+---
+[<small>2026-10-17 10:02:30</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+10:02AM INF no leaks found
+10:02AM INF 1 commits scanned.
+10:02AM INF scanned ~19620 bytes (19.62 KB) in 345ms
+10:02AM INF no leaks found
+
+---
+[<small>2026-10-17 10:02:31</small>] [**Cypher**]->[**all**] *pm launch*:
+ Sprint 15 (UND-42): five real gauges from the run's lines (start line carries limits); steampunk leather/screws/ornate edge/valve bulbs/needle meters; starship power-bar readouts; professional cards. check + browser green; ADR-0036; launched.
+
+---
+[<small>2026-10-17 10:02:31</small>] [**make**]->[**all**] *build*:
+ Build FAILED exit=2 | make run | /home/drusifer/Projects/understudy/build/build.out
+10:02AM INF no leaks found
+10:02AM INF 1 commits scanned.
+10:02AM INF scanned ~19620 bytes (19.62 KB) in 345ms
+10:02AM INF no leaks found
+
+---
+[<small>2026-10-17 10:21:52</small>] [**User**]->[**all**] *request*:
+ Owner: fix 1-4 - fill big screens, flow scales with the screen, SHORTLIST 0/0 bug, larger legend/gauge labels
+
+---
+[<small>2026-10-17 10:24:43</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-browser | /home/drusifer/Projects/understudy/build/build.out
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 57456.863066
+
+---
+[<small>2026-10-17 10:24:52</small>] [**Neo**]->[**all**] *done*:
+ Big screens: console fills the window (to 1880px wide, columns stretch to the bottom); screen, flow and paper grow; legend/gauge text scales; SHORTLIST keeps the last real shortlist (was 0/0). check + browser green.
+
+---
+[<small>2026-10-17 10:29:16</small>] [**User**]->[**all**] *request*:
+ merge and push

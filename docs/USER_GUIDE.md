@@ -238,11 +238,18 @@ sketches and edit them. Ctrl-C stops it (and any run).
 
 ![The state tube during a run](images/dashboard-tube.png)
 
-- **State tube**: the sketch's statechart on a circle, from its initial state; final states inside.
-  Every transition is labelled with its event and guard. The current state glows; the transition
-  just taken flows. Around the rim, one arc per weight in its colour; the transition into the
-  state that plays a move, and the orb in the middle, carry the weights' colours mixed in the
-  faders' ratio, with each weight's share.
+- **State tube**: the sketch's statechart as a layered flow, top to bottom from the initial state
+  (the dot), each state a rounded box, final states double-bordered; every transition is an arrow
+  labelled with its event and guard. The current state is lit; the transition just taken flows.
+  The transition into the state that plays a move carries the weights' colours mixed in the
+  faders' ratio. Steampunk draws it on the round tube with one arc per weight round the rim; the
+  other themes on a rectangular screen. **Decision power** under it: each weight's share as one bar.
+- **Gauges**: five readings from the run itself - **STEPS** (taken, of the step limit), **SURE** (how
+  sure Jev was of its last choice), **SHORTLIST** (values still on the shortlist, of those
+  considered), **JEV** (scores asked · reused) and **IDLE** (time since the last move, of the idle
+  limit). Steampunk shows them as backlit panel meters with a red needle, starship as power-bar
+  readouts that hover round the reading, professional as plain metric cards. Steampunk also wears
+  leather panels, brass screws and flickering valve bulbs; nothing decorative pretends to be a reading.
 - **Printer**: the run log on tractor-feed paper - each step, what the rules removed, Jev's scores,
   each score table (a perfect 1.0 prints as `11`), the ticket and the outcome.
 - **THEME** (in the header): **STEAMPUNK** (the console above), **PROFESSIONAL** (light and flat,

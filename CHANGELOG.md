@@ -1,5 +1,22 @@
 # Changelog
 
+## Sprint 15 — flair and real gauges (2026-10-17, branch `sprint-15`, not yet merged)
+
+- **Five gauges** from the run: steps of the limit, Jev's confidence, shortlist left, Jev scores
+  asked · reused, idle time of the idle limit. The run's start line now carries its `limits`.
+  ADR-0036.
+- **Flair**: steampunk stitched leather, brass screws, ornate edges, flickering valve bulbs and
+  backlit needle meters; starship power-bar readouts; professional metric cards.
+
+## Sprint 14 — the statechart as a flow (2026-10-17, branch `sprint-14`, not yet merged)
+
+- The state tube draws the statechart as a **layered flow** (as Graphviz and the XState visualiser
+  do): rounded state boxes from the initial dot down, double-bordered finals, labelled orthogonal
+  arrows, laid out by `elkjs` - no overlaps. Steampunk keeps the round tube; professional and
+  starship use a rectangular screen. The weights' shares are a bar under the screen. ADR-0035.
+- The printer runs spool to spool behind glass; scroll up to rewind. A page opened mid-run shows
+  that run. The printer opens on a release latch.
+
 ## Sprint 13 — questions that know the inputs (2026-10-17, branch `sprint-13`, not yet merged)
 
 - **Every Jev question sees the run's inputs** as `inputs` in its state; any question's wording

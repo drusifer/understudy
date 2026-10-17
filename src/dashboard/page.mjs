@@ -3,7 +3,7 @@
 // the printer's lines) run in Node too, for tests; the DOM wiring below them
 // runs only in a page.
 
-import { ringOf, SIZE, tubeLayout } from './tube.mjs';
+import { ringOf, SIZE } from './tube.mjs';
 
 // The themes (UND-36): steampunk is the console as first designed.
 export const THEMES = ['steampunk', 'professional', 'starship'];
@@ -71,6 +71,55 @@ export function readoutOf(value, [, high]) {
 
 // A score as the printer shows it: a perfect 1.0 is 11 (owner).
 export const scoreText = (value) => (value === 1 ? '11' : String(value));
+
+// UND-42: the gauges' readings, gathered from the run's own lines - every
+// needle and bar shows something real (owner).
+export const FRESH_METERS = { steps: 0, limit: null, firstMoveMs: null, stallMs: null, confidence: null, shortlist: null, asked: 0, reused: 0, lastMoveAt: null, startedAt: null };
+
+const sumOf = (list, read) => list.reduce((sum, each) => sum + read(each), 0);
+
+/**
+ * The readings after one more line of the run, seen at `now` (ms).
+ */
+export function metersAfter(meters, line, now) {
+  if (line.event === 'start') {
+    return { ...FRESH_METERS, limit: line.limits?.steps ?? null, firstMoveMs: line.limits?.first_move_ms ?? null, stallMs: line.limits?.stall_ms ?? null, startedAt: now };
+  }
+  if (line.step === undefined) return meters;
+  const decided = line.decided ?? [];
+  const left = sumOf(decided, (each) => each.table?.length ?? 0);
+  const of = left + sumOf(decided, (each) => each.removed?.length ?? 0) + sumOf(decided, (each) => each.held?.length ?? 0);
+  return {
+    ...meters,
+    steps: line.step,
+    confidence: typeof line.confidence === 'number' ? line.confidence : meters.confidence,
+    // A step whose decided value needed no shortlist keeps the last real one (owner: it read 0/0).
+    shortlist: of > 0 ? { left, of } : meters.shortlist,
+    asked: meters.asked + sumOf(decided, (each) => each.jev?.asked ?? 0),
+    reused: meters.reused + sumOf(decided, (each) => each.jev?.reused ?? 0),
+    lastMoveAt: now,
+  };
+}
+
+const share = (part, whole) => (whole > 0 ? Math.min(1, Math.max(0, part / whole)) : 0);
+
+/**
+ * The five gauges at `now`: each a level from 0 to 1 and what it reads.
+ * @returns {{ name: string, level: number, text: string, about: string }[]}
+ */
+export function gaugesOf(meters, now) {
+  const { steps, limit, confidence, shortlist, asked, reused } = meters;
+  const since = meters.lastMoveAt ?? meters.startedAt;
+  const idle = since === null ? 0 : now - since;
+  const idleLimit = meters.lastMoveAt === null ? meters.firstMoveMs : meters.stallMs;
+  return [
+    { name: 'STEPS', level: share(steps, limit), text: limit === null ? '-' : `${steps}/${limit}`, about: 'steps taken of the step limit' },
+    { name: 'SURE', level: confidence ?? 0, text: confidence === null ? '-' : confidence.toFixed(2), about: "how sure Jev was of its last choice" },
+    { name: 'SHORTLIST', level: shortlist ? share(shortlist.left, shortlist.of) : 0, text: shortlist ? `${shortlist.left}/${shortlist.of}` : '-', about: 'values still on the shortlist of those considered' },
+    { name: 'JEV', level: share(asked, asked + reused), text: `${asked}·${reused}`, about: 'Jev scores asked · reused' },
+    { name: 'IDLE', level: share(idle, idleLimit), text: since === null ? '-' : `${(idle / 1000).toFixed(1)}s`, about: 'time since the last move, of the idle limit' },
+  ];
+}
 
 // An input's value as `--input` text: a switch as on/off.
 function wordOf(value) {
@@ -248,8 +297,8 @@ function drawRing(svg, weights, look) {
   const arcs = ringOf(weights.map((each) => ({ ...each, colour: rgb(each.colour) })));
   return arcs.map((arc, index) => {
     const glow = look.glows ? `filter: drop-shadow(0 0 ${2 + levelOf(arc.value, weights[index].range) * 3}px ${arc.colour})` : '';
-    svg.append(svgElement('path', { d: arc.track, fill: 'none', stroke: look.track, 'stroke-width': 16, 'stroke-linecap': 'round' }),
-      svgElement('path', { d: arc.fill, fill: 'none', stroke: arc.colour, 'stroke-width': 12, 'stroke-linecap': 'round', 'stroke-dasharray': '10 5', class: arc.value > 0 ? 'flowing' : 'faint', style: glow }));
+    svg.append(svgElement('path', { d: arc.track, fill: 'none', stroke: look.track, 'stroke-width': 9, 'stroke-linecap': 'round' }),
+      svgElement('path', { d: arc.fill, fill: 'none', stroke: arc.colour, 'stroke-width': 6, 'stroke-linecap': 'round', 'stroke-dasharray': '10 5', class: arc.value > 0 ? 'flowing' : 'faint', style: glow }));
     const text = `${arc.name.toUpperCase()} ${readoutOf(arc.value, weights[index].range)}`;
     return label(arc.lx, arc.ly, text, { color: arc.colour, fontSize: 'clamp(11px,2.4vw,17px)', textShadow: look.glows ? `0 0 6px ${arc.colour}` : 'none' });
   });
@@ -264,39 +313,67 @@ function edgeLook(edge, power, isLive, look) {
   return { colour: look.edge, width: 2.5, tone: look.edgeTone, glow: '' };
 }
 
-function drawEdges(svg, edges, power, { isRunning, liveEdge }, theme) {
-  const labels = [];
+// UND-41: an arrowhead at the end of a polyline, pointing along its last leg.
+function arrowhead(points, size = 8) {
+  const [[x1, y1], [x2, y2]] = points.slice(-2);
+  const length = Math.hypot(x2 - x1, y2 - y1) || 1;
+  const [ux, uy] = [(x2 - x1) / length, (y2 - y1) / length];
+  const [bx, by] = [x2 - ux * size, y2 - uy * size];
+  return `M ${x2} ${y2} L ${bx - uy * size * 0.55} ${by + ux * size * 0.55} L ${bx + uy * size * 0.55} ${by - ux * size * 0.55} Z`;
+}
+
+function flowText(x, y, text, attributes) {
+  const node = svgElement('text', { x, y, 'text-anchor': 'middle', ...attributes });
+  node.textContent = text;
+  return node;
+}
+
+// Each transition: an orthogonal arrow, its event and guard written beside it.
+function drawEdges(svg, labels, edges, power, { isRunning, liveEdge }, theme) {
   for (const edge of edges) {
+    if (edge.points.length < 2) continue;
     const isLive = isRunning && edge.index === liveEdge;
     const look = edgeLook(edge, power, isLive, theme);
     const isFlowing = isRunning && (isLive || edge.isDecision);
-    svg.append(svgElement('path', { d: edge.d, fill: 'none', stroke: look.colour, 'stroke-width': look.width, 'stroke-linecap': 'round', 'stroke-dasharray': '7 5', class: isFlowing ? 'flowing' : 'still', style: look.glow }));
-    labels.push(label(edge.lx, edge.ly - 6, edge.label, { color: look.tone, fontSize: 'clamp(11px,2.3vw,17px)', textShadow: theme.glows ? `0 0 5px ${theme.shadow}, 0 0 8px ${look.tone}` : 'none' }));
-    if (edge.sub) labels.push(label(edge.lx, edge.ly + 10, edge.sub, { color: look.tone, fontSize: 'clamp(9px,1.7vw,13px)', opacity: '.8', textShadow: theme.glows ? `0 0 4px ${theme.shadow}` : 'none' }));
+    const d = edge.points.map(([x, y], index) => `${index === 0 ? 'M' : 'L'} ${x} ${y}`).join(' ');
+    svg.append(svgElement('path', { d, fill: 'none', stroke: look.colour, 'stroke-width': Math.min(look.width, 8), 'stroke-linejoin': 'round', 'stroke-dasharray': isFlowing ? '7 5' : 'none', class: isFlowing ? 'flowing' : 'still', style: look.glow }),
+      svgElement('path', { d: arrowhead(edge.points), fill: look.colour, style: look.glow }));
+    const halo = { 'paint-order': 'stroke', stroke: theme.shadow, 'stroke-width': 4, 'stroke-linejoin': 'round' };
+    labels.append(flowText(edge.lx, edge.ly + 12, edge.label, { class: 'edge-label', fill: look.tone, ...halo }));
+    if (edge.sub) labels.append(flowText(edge.lx, edge.ly + 26, edge.sub, { class: 'edge-sub', fill: look.tone, ...halo }));
   }
-  return labels;
 }
 
-function drawOrb(svg, { weights, total, level, blend }, look) {
-  if (weights.length === 0) return [];
-  svg.append(svgElement('circle', { cx: 300, cy: 318, r: 14 + level * 2, fill: blend, class: 'orb', style: look.glows ? `filter: drop-shadow(0 0 ${8 + level * 4}px ${blend})` : '' }));
-  const shares = weights.map((weight, index) => {
-    const share = total === 0 ? 0 : Math.round((weight.value / total) * 100);
-    const colour = rgb(weight.colour);
-    return label(300 + (index - (weights.length - 1) / 2) * 46, 380, `${share}%`, { color: colour, fontSize: 'clamp(11px,2.2vw,17px)', textShadow: look.glows ? `0 0 6px ${colour}` : 'none' });
-  });
-  return [label(300, 362, 'DECISION POWER', { class: 'orb-title', color: look.orbTitle }), ...shares];
-}
-
-function drawStates(svg, nodes, current, look) {
-  return nodes.map((node) => {
+// Each state: a rounded box; the initial one has a dot and an arrow into it, a final one a double border.
+function drawStates(svg, labels, nodes, current, look) {
+  for (const node of nodes) {
     const isNow = node.id === current;
-    const edge = isNow ? look.stateEdgeNow : look.stateEdge;
-    svg.append(svgElement('circle', { cx: node.x, cy: node.y, r: isNow ? 20 : 15, fill: isNow ? look.stateNow : look.state, stroke: edge, 'stroke-width': 2.5, class: isNow ? 'now' : '' }));
-    if (node.final) svg.append(svgElement('circle', { cx: node.x, cy: node.y, r: isNow ? 14 : 10, fill: 'none', stroke: edge, 'stroke-width': 1.5 }));
+    const stroke = isNow ? look.stateEdgeNow : look.stateEdge;
+    const box = { x: node.x, y: node.y, width: node.width, height: node.height, rx: node.height / 2 };
+    svg.append(svgElement('rect', { ...box, fill: isNow ? look.stateNow : look.state, stroke, 'stroke-width': 2.5, class: isNow ? 'now' : '' }));
+    if (node.final) svg.append(svgElement('rect', { x: node.x + 4, y: node.y + 4, width: node.width - 8, height: node.height - 8, rx: (node.height - 8) / 2, fill: 'none', stroke, 'stroke-width': 1.5 }));
+    if (node.initial) {
+      const cx = node.x + node.width / 2;
+      svg.append(svgElement('circle', { cx, cy: node.y - 14, r: 5, fill: stroke }), svgElement('path', { d: `M ${cx} ${node.y - 9} L ${cx} ${node.y - 2}`, stroke, 'stroke-width': 2 }));
+    }
     const tone = isNow ? look.stateToneNow : look.stateTone;
-    return label(node.lx, node.ly, node.id.replaceAll('_', ' '), { color: tone, fontSize: 'clamp(13px,2.8vw,21px)', textShadow: look.glows ? `0 0 6px ${look.stateGlow}, 0 0 3px ${look.shadow}` : 'none' });
+    labels.append(flowText(node.x + node.width / 2, node.y + node.height / 2 + 5, node.name, { class: 'state-label', fill: tone }));
+  }
+}
+
+// The weights' shares, as one bar under the screen (was the orb, UND-30 AC3).
+function drawPower({ weights, total }, look) {
+  if (weights.length === 0) return [];
+  const parts = weights.map((weight) => {
+    const share = total === 0 ? 0 : Math.round((weight.value / total) * 100);
+    return { name: weight.name, share, colour: rgb(weight.colour) };
   });
+  const said = parts.map((part) => part.name + ' ' + part.share + '%').join(', ');
+  const bar = element('div', { class: 'power-bar', role: 'img', 'aria-label': `Decision power: ${said}` },
+    ...parts.map((part) => element('span', { class: 'power-part', style: { flexGrow: String(Math.max(part.share, 0.5)), background: part.colour, boxShadow: look.glows ? `0 0 8px ${part.colour}` : 'none' } })));
+  const legend = element('div', { class: 'power-legend', 'aria-hidden': 'true' },
+    ...parts.map((part) => element('span', { style: { color: part.colour } }, `${part.name} ${part.share}%`)));
+  return [element('div', { class: 'power-title' }, 'DECISION POWER'), bar, legend];
 }
 
 async function api(path, body) {
@@ -312,7 +389,41 @@ async function api(path, body) {
  * The console's state, and what draws it.
  */
 function boot() {
-  const state = { rack: [], sketch: null, values: {}, running: false, paused: false, on: true, current: null, liveEdge: null, open: new Set(), look: null };
+  const state = { rack: [], sketch: null, values: {}, running: false, paused: false, on: true, current: null, liveEdge: null, open: new Set(), look: null, meters: FRESH_METERS };
+
+  // UND-42: five gauges, built once; each theme shows them its own way -
+  // a backlit needle meter, a moving bar cluster, or a plain card.
+  const gauges = gaugesOf(FRESH_METERS, Date.now()).map((gauge) => {
+    const ticks = Array.from({ length: 11 }, (_, index) => {
+      const angle = ((-60 + index * 12) * Math.PI) / 180;
+      const [inner, outer] = index % 5 === 0 ? [36, 46] : [40, 46];
+      return svgElement('line', { x1: 50 + inner * Math.sin(angle), y1: 56 - inner * Math.cos(angle), x2: 50 + outer * Math.sin(angle), y2: 56 - outer * Math.cos(angle), class: 'tick' });
+    });
+    const dial = svgElement('svg', { viewBox: '0 0 100 62', class: 'dial', 'aria-hidden': 'true' });
+    dial.append(svgElement('path', { d: 'M 10 56 A 46 46 0 0 1 90 56', class: 'arc', fill: 'none' }), ...ticks,
+      svgElement('line', { x1: 50, y1: 56, x2: 50, y2: 14, class: 'needle' }), svgElement('circle', { cx: 50, cy: 56, r: 4, class: 'hub' }));
+    const bars = element('div', { class: 'bars', 'aria-hidden': 'true' }, ...Array.from({ length: 7 }, (_, index) => element('i', { style: { '--n': String(index) } })));
+    const track = element('div', { class: 'track', 'aria-hidden': 'true' }, element('div', { class: 'fill' }));
+    const figure = element('div', { class: 'figure' });
+    const node = element('div', { class: 'gauge', role: 'meter', 'aria-valuemin': '0', 'aria-valuemax': '1', 'aria-label': gauge.about, title: gauge.about },
+      dial, bars, track, figure, element('div', { class: 'gauge-name' }, gauge.name));
+    return { node, figure };
+  });
+  $('gauges').replaceChildren(...gauges.map((each) => each.node));
+  function drawGauges() {
+    for (const [index, gauge] of gaugesOf(state.meters, Date.now()).entries()) {
+      const { node, figure } = gauges[index];
+      node.style.setProperty('--level', String(gauge.level));
+      node.setAttribute('aria-valuenow', String(gauge.level));
+      node.setAttribute('aria-valuetext', `${gauge.name.toLowerCase()} ${gauge.text}`);
+      figure.textContent = gauge.text;
+    }
+  }
+  drawGauges();
+  // The idle gauge moves between lines.
+  setInterval(() => {
+    if (state.running) drawGauges();
+  }, 500);
 
   // UND-36, UND-38: the theme and the mode - a known ?theme= / ?mode= wins,
   // then the one this browser remembers; auto mode follows the device.
@@ -503,15 +614,18 @@ function boot() {
       weights, total: weights.reduce((sum, each) => sum + each.value, 0),
       level: weights.reduce((sum, each) => sum + levelOf(each.value, each.range), 0), blend: rgb(blendOf(weights)),
     };
-    const layout = tubeLayout(sketch.graph, sketch.decision);
-    const svg = svgElement('svg', { viewBox: `0 0 ${SIZE} ${SIZE}`, role: 'img', 'aria-label': tubeAria(layout, state.current) });
-    const labels = [
-      ...drawRing(svg, weights, look),
-      ...drawEdges(svg, layout.edges, power, { isRunning: state.running, liveEdge: state.liveEdge }, look),
-      ...drawOrb(svg, power, look),
-      ...drawStates(svg, layout.nodes, state.current, look),
-    ];
-    $('tube').replaceChildren(svg, element('div', { class: 'labels', 'aria-hidden': 'true' }, ...labels));
+    // The power ring round the rim (the steampunk tube; other screens hide it).
+    const ring = svgElement('svg', { viewBox: `0 0 ${SIZE} ${SIZE}`, class: 'ring', 'aria-hidden': 'true' });
+    const ringLabels = drawRing(ring, weights, look);
+    // UND-41: the statechart as a layered flow, laid out on the server.
+    const { flow } = sketch;
+    const svg = svgElement('svg', { viewBox: `0 0 ${flow.width} ${flow.height}`, class: 'flow', role: 'img', 'aria-label': tubeAria(flow, state.current) });
+    const labels = svgElement('g', { class: 'labels' });
+    drawEdges(svg, labels, flow.edges, power, { isRunning: state.running, liveEdge: state.liveEdge }, look);
+    drawStates(svg, labels, flow.nodes, state.current, look);
+    svg.append(labels);
+    $('tube').replaceChildren(ring, element('div', { class: 'ring-labels', 'aria-hidden': 'true' }, ...ringLabels), svg);
+    $('decision-power').replaceChildren(...drawPower(power, look));
   }
 
   // UND-32: a ▸ button that slides down a panel of edit boxes; each box saves on change.
@@ -717,6 +831,8 @@ function boot() {
     await flushBay();
     if (!(await show(name))) return;
     $('paper').replaceChildren();
+    state.meters = FRESH_METERS;
+    drawGauges();
     await loadBay();
   }
 
@@ -799,6 +915,8 @@ function boot() {
       drawTube();
     }
     print(line);
+    state.meters = metersAfter(state.meters, line, Date.now());
+    drawGauges();
   });
 
   (async () => {

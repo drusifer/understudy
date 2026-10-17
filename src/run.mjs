@@ -149,7 +149,9 @@ async function playSketch({ sketch, inputs, limit, stream, logDirectory, logFile
   try {
     mkdirSync(logDirectory, { recursive: true });
     const declared = Object.keys(inputs).length > 0 ? { inputs } : {};
-    write({ event: 'start', sketch: sketch.name, plays: target.describe(), ...declared, turn: sketch.turn, at: new Date(clock()).toISOString() });
+    // UND-42: the run's limits, so a gauge can show how near it is to each.
+    const limits = { steps: limit, first_move_ms: firstMoveMs, stall_ms: stallMs };
+    write({ event: 'start', sketch: sketch.name, plays: target.describe(), ...declared, limits, turn: sketch.turn, at: new Date(clock()).toISOString() });
     stderr.write(`understudy: playing ${sketch.name} (${target.describe()}) - log ${shown(logFile)}\n`);
     // UND-40: every Jev request carries the run's inputs (services.inputs).
     Object.assign(sketch.services, { target, judge, name: 'understudy', player: sketch.player, app: sketch.app, inputs });

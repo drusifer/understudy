@@ -73,6 +73,14 @@ Design approved on a clickable mockup - **`docs/design/DASHBOARD.md`** is the br
 ## Sprint 9 (owner, 2026-10-16) - themes - DONE (launched 2026-10-16)
 - UND-36: THEME switch - steampunk, professional, starship.
 
+## Sprint 15 (owner, 2026-10-17) - flair and real gauges - DONE (launched 2026-10-17)
+- UND-42: five gauges from the run's lines (start line now carries `limits`); steampunk leather,
+  screws, ornate edge, valve bulbs, needle meters; starship power-bar readouts; professional cards.
+- Next: steampunk's flow labels are small inside the round tube. (Smith)
+
+## Sprint 14 (owner, 2026-10-17) - the statechart as a flow - DONE (launched 2026-10-17)
+- UND-41: layered flow (elkjs); rectangular screens; decision power bar.
+
 ## Sprint 13 (owner, 2026-10-17) - questions that know the inputs - DONE (launched 2026-10-17)
 - UND-40: every Jev request sees `inputs`; `pick.with` removed; the evening's questions use them.
 - Next: the evening's horror taste is fixed in a gate; a `genre` choice input would let it follow too. (Cypher)

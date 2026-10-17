@@ -8,6 +8,7 @@ import path from 'node:path';
 import { UsageError } from '../errors.mjs';
 import { loadSketch } from '../sketch.mjs';
 import { turnGraph } from '../watch/turnGraph.mjs';
+import { flowLayout } from './flow.mjs';
 
 const SKETCH = 'sketch.yaml';
 
@@ -117,9 +118,11 @@ export async function describeSketch(folder, name) {
   const directory = path.join(folder, name);
   const sketch = await loadSketch(directory);
   const graph = turnGraph(sketch.turn);
+  const decision = decisionEdges(sketch.turn, graph);
   return {
     name, title: sketch.name, description: sketch.description,
     inputs: Object.entries(sketch.inputs).map(([inputName, input]) => controlOf(inputName, input, sketch)),
-    graph, decision: decisionEdges(sketch.turn, graph),
+    // UND-41: the statechart laid out as a layered flow, ready to draw.
+    graph, decision, flow: await flowLayout(graph, decision),
   };
 }

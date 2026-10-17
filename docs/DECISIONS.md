@@ -10,6 +10,22 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+## ADR-0036: Gauges read the run's own lines; flair is visibly decoration
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus · **Date**: 2026-10-17 · **Related**: UND-42
+*   **Context**: owner: per-theme flair with gauges - "yes real metrics in the gauges".
+*   **Options**: (1) gauges computed in the page from the stream it already gets (start, step and `decided` lines), plus the run's limits added to the start line; (2) a separate metrics endpoint; (3) decorative gauges.
+*   **Decision**: (1). `metersAfter`/`gaugesOf` are pure and unit-tested; the start line gains `limits: { steps, first_move_ms, stall_ms }`. Each theme draws the same five readings its own way (needle, hovering bars that stay within a small band round the value, card). Bulbs, leather and screws carry no meaning.
+*   **Consequences**: + no new endpoint; a page joining mid-run rebuilds the readings from the history. − the start line has one more field.
+
+## ADR-0035: The statechart is a layered flow laid out by ELK on the server
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus · **Date**: 2026-10-17 · **Related**: UND-41, UND-30
+*   **Context**: owner: the states-round-a-circle tube was hard to follow ("is there a more standard visualization?"); edges crossed the middle and labels piled up.
+*   **Options**: (1) a layered (Sugiyama) flow from `elkjs`, computed on the server and sent with the sketch; (2) `@dagrejs/dagre`; (3) improve the hand-made circle layout.
+*   **Decision**: (1), top to bottom (it comes out square, so it fits the round tube and a phone without shrinking), orthogonal arrows, edge labels placed by ELK, model order kept so the initial state leads. The page only draws boxes, arrows and text. Steampunk keeps its round tube with a thin power ring on the rim; the other themes draw on a rectangular screen; the shares that the orb showed are a bar under the screen.
+*   **Consequences**: + the standard statechart picture; no overlaps; no layout code in the page. − a new dependency; the layout is async, so describing a sketch waits for it.
+
 ## ADR-0034: Every Jev request carries the run's inputs; `pick.with` is removed
 
 *   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-17 · **Related**: UND-40, UND-24
