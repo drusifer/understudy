@@ -250,9 +250,20 @@ sketches and edit them. Ctrl-C stops it (and any run).
   and blue bars, pill buttons, condensed lettering). It switches at once, even during a run, and
   the browser remembers it; `?theme=professional` (or `starship`, `steampunk`) on the link opens
   in that theme.
+- **MODE** (under THEME): **AUTO** follows your device's light or dark setting (and changes with
+  it), **LIGHT** and **DARK** fix it. Every theme has both: steampunk light is parchment and pale
+  maple (the tube and the readouts stay dark glass), professional dark is charcoal, starship light
+  keeps its coloured bars on a pale screen. Remembered like the theme; `?mode=light` / `dark` /
+  `auto` on the link.
 
-  ![The professional theme](images/dashboard-professional.png)
-  ![The starship theme](images/dashboard-starship.png)
+  | | Light | Dark |
+  |---|---|---|
+  | Steampunk | ![](images/dashboard-steampunk-light.png) | ![](images/dashboard.png) |
+  | Professional | ![](images/dashboard-professional.png) | ![](images/dashboard-professional-dark.png) |
+  | Starship | ![](images/dashboard-starship-light.png) | ![](images/dashboard-starship.png) |
+
+- **Faders' lights**: each fader's LED, the glow in its slot and its readout shine as brightly as
+  the fader is set - dim near OFF, full at 11.
 
 - **Behind the printer**: **REMOVE** takes the printer off and shows the sketch's whole
   `sketch.yaml` in an edit box, with a cheat-sheet sticker of the keys, the `turn:` shapes and the

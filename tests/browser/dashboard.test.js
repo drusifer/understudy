@@ -209,7 +209,7 @@ test('the THEME switch: each theme restyles the page, is remembered, ?theme= win
 });
 
 // Sprint 11 UND-38: every theme in light and dark; AUTO follows the device.
-const MODED = ['professional'];
+const MODED = ['steampunk', 'professional', 'starship'];
 
 test('the MODE switch: each theme has a light and a dark look, AUTO follows the device, ?mode= wins, remembered, fits', async () => {
   const dashboard = await serveDashboard({ folder: 'examples', port: 0, environment: { ...process.env, TYPESAFE_API_KEY: 'test' } });

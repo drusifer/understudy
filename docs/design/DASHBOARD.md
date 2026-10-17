@@ -51,6 +51,19 @@ colours the script draws on the tube come from CSS custom properties (`--tube-*`
 | Professional | light grey page, white panels with thin borders, one blue accent, system font; no glows, textures or animations; the tube a flat diagram on a white disc; the printer a plain monospace log |
 | Starship | in the manner of the Enterprise-D's computer screens: black; each panel framed by a thick rounded "elbow" bar (printer orange, tube blue-violet, controls lilac, bay peach); pill buttons; condensed upper-case Antonio lettering; the tube a black display with thin coloured rings; the printer coloured text on black. Original styling - no logos or insignia |
 
+**Light and dark (sprint 11, owner).** Each theme has both; the **MODE** switch picks AUTO (the
+device's setting, followed live), LIGHT or DARK, as `data-mode` on `<html>`. Professional and
+starship keep every colour in custom properties and their other mode only redefines them;
+steampunk light is `theme-steampunk-light.css` over `page.css`.
+
+| Theme | Light | Dark |
+|---|---|---|
+| Steampunk | parchment room, pale maple panels edged in brass, brushed-steel printer; the tube, Nixies, slots, dial well, PLAY and the YAML screen stay dark glass and metal | walnut and brass (default) |
+| Professional | light grey and white (default) | charcoal panels, light text, the blue accent lightened |
+| Starship | the same coloured bars and pills on a pale grey screen, dark readout text | black screen (default) |
+
+The fader LEDs, slot glows and readouts shine in proportion to the fader's setting (owner).
+
 ## Type and colour
 
 Cinzel (plates, labels), Spectral (prose), VT323 (Nixies, tube labels), DotGothic16 (printer).

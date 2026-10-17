@@ -1,1 +1,59 @@
-/* Sprint 11 UND-38 (ADR-0032): steampunk in light mode - phase 2. */
+/* Sprint 11 UND-38 (ADR-0032): steampunk in light mode - parchment, pale
+   maple and polished brass. The devices stay as they are: the state tube,
+   the Nixie readouts, the fader slots, the dial well, PLAY and the YAML
+   screen are dark glass and metal in either light. Every rule is under
+   :root[data-theme="steampunk"][data-mode="light"], so it beats page.css. */
+:root[data-theme="steampunk"][data-mode="light"] {
+  --walnut: #efe4cc; --cream: #2a1d10; --muted: #6b5a40; --ink: #2a2622;
+  --maple: #f6eedb; --maple-2: #eadbb9; --edge: #b08a4a; --brass-ink: #6b4a22;
+}
+:root[data-theme="steampunk"][data-mode="light"] body { background: var(--walnut); color: var(--cream); }
+:root[data-theme="steampunk"][data-mode="light"] .room { background: radial-gradient(ellipse at 50% 0%, #fbf4e2 0%, #efe4cc 55%, #e4d4b2 100%); }
+:root[data-theme="steampunk"][data-mode="light"] .plate-label,
+:root[data-theme="steampunk"][data-mode="light"] .panel-head { color: var(--brass-ink); }
+:root[data-theme="steampunk"][data-mode="light"] .plate { box-shadow: inset 0 2px 0 rgba(255,236,190,.55), inset 0 -3px 0 rgba(0,0,0,.25), 0 8px 20px rgba(90,60,20,.25); }
+
+/* The tube's glass is solid here: the pale page must not show through it. */
+:root[data-theme="steampunk"][data-mode="light"] .tube { background: radial-gradient(circle at 50% 50%, #3a2212 0%, #1e0f06 60%, #0a0503 100%); }
+
+/* Rack */
+:root[data-theme="steampunk"][data-mode="light"] .sketch-tab { background: var(--maple); border-color: var(--edge); color: var(--brass-ink); }
+:root[data-theme="steampunk"][data-mode="light"] .sketch-tab[aria-selected="true"] { color: #24170a; }
+
+/* Panels of pale maple, brass-edged */
+:root[data-theme="steampunk"][data-mode="light"] .controls,
+:root[data-theme="steampunk"][data-mode="light"] .tube-panel { background: linear-gradient(160deg, var(--maple) 0%, var(--maple-2) 100%); border-color: var(--edge); box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 8px 20px rgba(90,60,20,.2); }
+:root[data-theme="steampunk"][data-mode="light"] .controls-head h2,
+:root[data-theme="steampunk"][data-mode="light"] .ready-text,
+:root[data-theme="steampunk"][data-mode="light"] .drawer-title,
+:root[data-theme="steampunk"][data-mode="light"] .switch .label { color: var(--brass-ink); }
+:root[data-theme="steampunk"][data-mode="light"] .dial-option { color: var(--muted); }
+:root[data-theme="steampunk"][data-mode="light"] .dial-option[aria-pressed="true"] { color: #8a4a00; text-shadow: none; }
+:root[data-theme="steampunk"][data-mode="light"] .fader-scale { color: var(--muted); }
+:root[data-theme="steampunk"][data-mode="light"] .channel label { color: var(--cream); }
+:root[data-theme="steampunk"][data-mode="light"] .slot .ticks { background: repeating-linear-gradient(180deg, rgba(107,74,34,.6) 0 1px, transparent 1px 10%); }
+:root[data-theme="steampunk"][data-mode="light"] .access { background: rgba(255,255,255,.5); border-color: var(--edge); color: var(--brass-ink); }
+:root[data-theme="steampunk"][data-mode="light"] .access .caret { color: var(--brass-ink); }
+
+/* Drawers, switches, stepper */
+:root[data-theme="steampunk"][data-mode="light"] .drawer { background: linear-gradient(180deg, #e8d9b8, #f2e7cf); border-color: var(--edge); box-shadow: inset 0 4px 8px rgba(90,60,20,.25); }
+:root[data-theme="steampunk"][data-mode="light"] .drawer .field { color: var(--brass-ink); }
+:root[data-theme="steampunk"][data-mode="light"] .drawer input { border-color: var(--edge); }
+:root[data-theme="steampunk"][data-mode="light"] .drawer .yaml,
+:root[data-theme="steampunk"][data-mode="light"] .drawer .hint { color: var(--muted); }
+:root[data-theme="steampunk"][data-mode="light"] .drawer .problem,
+:root[data-theme="steampunk"][data-mode="light"] .bay-problem { color: #a8200c; }
+:root[data-theme="steampunk"][data-mode="light"] .panel-button { background: var(--maple); border-color: var(--edge); color: var(--brass-ink); }
+:root[data-theme="steampunk"][data-mode="light"] .switches { border-top-color: rgba(107,74,34,.35); }
+:root[data-theme="steampunk"][data-mode="light"] .switch,
+:root[data-theme="steampunk"][data-mode="light"] .stepper { background: var(--maple); border-color: var(--edge); color: var(--cream); }
+:root[data-theme="steampunk"][data-mode="light"] .switch .state { color: var(--muted); }
+:root[data-theme="steampunk"][data-mode="light"] .switch[aria-pressed="true"] .state { color: #a85a00; text-shadow: none; }
+
+/* The printer and the bay: brushed steel instead of black iron */
+:root[data-theme="steampunk"][data-mode="light"] .printer,
+:root[data-theme="steampunk"][data-mode="light"] .bay { background-color: #d9d4ca; background-image: radial-gradient(circle at 9px 9px, #8a857c 3px, #6b665e 4px, transparent 5px), radial-gradient(circle at calc(100% - 9px) 9px, #8a857c 3px, #6b665e 4px, transparent 5px), radial-gradient(circle at 9px calc(100% - 9px), #8a857c 3px, #6b665e 4px, transparent 5px), radial-gradient(circle at calc(100% - 9px) calc(100% - 9px), #8a857c 3px, #6b665e 4px, transparent 5px), linear-gradient(180deg, #e6e2da, #cfc9bd); border-color: #a39d92; box-shadow: 0 8px 20px rgba(90,60,20,.2); }
+:root[data-theme="steampunk"][data-mode="light"] .printer-head { color: #4a4640; }
+:root[data-theme="steampunk"][data-mode="light"] .roller { background: linear-gradient(180deg, #6b665e, #b8b2a6 40%, #7a756c); }
+:root[data-theme="steampunk"][data-mode="light"] .screw-button { background: #eeebe5; border-color: #8a857c; color: #3a3631; }
+:root[data-theme="steampunk"][data-mode="light"] .bay .about { color: #4a4640; }

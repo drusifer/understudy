@@ -93,4 +93,12 @@ sequenceDiagram
     Note right of Trin: "UAT phase 1 passed: unit<br/>modes, browser: AUTO<br/>follows emulated device,<br/>light/dark differ, fits<br/>1600x960 and 390px,<br/>?mode= wins,<br/>remembered,…"
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "Phase 1 review passed:<br/>one useLook() for<br/>theme+mode, professional<br/>colours now only in<br/>variables. @Neo *swe<br/>impl phase-2"
+    Mouse->>All: "phase 2"
+    Note right of Mouse: "Phase 2: steampunk<br/>light, starship light"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 2 impl: theme-<br/>steampunk-light.css<br/>(solid tube glass),<br/>starship on variables<br/>with a light block, test<br/>covers all six looks at<br/>1600x960…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 2 passed: 6<br/>looks distinct, fit,<br/>AUTO follows device,<br/>screenshots of each<br/>checked by eye.<br/>@Morpheus *lead review<br/>phase-2"
+    Morpheus->>Tank: "lead handoff"
+    Note right of Morpheus: "Phase 2 review passed.<br/>@Tank *devops sdlc-check"
 ```
