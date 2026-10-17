@@ -265,7 +265,7 @@ sketches and edit them. Ctrl-C stops it (and any run).
 - **Faders' lights**: each fader's LED, the glow in its slot and its readout shine as brightly as
   the fader is set - dim near OFF, full at 11.
 
-- **Behind the printer**: **REMOVE** takes the printer off and shows the sketch's whole
+- **Behind the printer**: the **OPEN** release latch swings the printer away and shows the sketch's whole
   `sketch.yaml` in an edit box, with a cheat-sheet sticker of the keys, the `turn:` shapes and the
   input kinds. Half a second after you stop typing, the text is checked and **saved**, and the
   tube, controls and rack redraw from it - add or rename a state and watch it appear. Text the

@@ -185,6 +185,12 @@ function statusTextOf(on, running) {
   return running ? 'ON AIR' : 'STANDING BY';
 }
 
+// What READY's hint says: what the buttons will do now (UND-39 AC4).
+function readyHintOf(running, paused) {
+  if (!running) return 'PLAY to run, STEP for one move';
+  return paused ? 'STEP for the next move, RESUME to run on' : 'press to stop the run';
+}
+
 // ---------------------------------------------------------------- page --
 
 const $ = (id) => document.querySelector(`#${id}`);
@@ -306,7 +312,7 @@ async function api(path, body) {
  * The console's state, and what draws it.
  */
 function boot() {
-  const state = { rack: [], sketch: null, values: {}, running: false, on: true, current: null, liveEdge: null, open: new Set(), look: null };
+  const state = { rack: [], sketch: null, values: {}, running: false, paused: false, on: true, current: null, liveEdge: null, open: new Set(), look: null };
 
   // UND-36, UND-38: the theme and the mode - a known ?theme= / ?mode= wins,
   // then the one this browser remembers; auto mode follows the device.
@@ -486,7 +492,8 @@ function boot() {
   // UND-30: the statechart in the tube, the weights' ring and their blend.
   function drawTube() {
     const { sketch } = state;
-    $('tube-caption').textContent = state.running ? `running · ${state.current ?? ''}` : 'idle';
+    const going = state.paused ? 'paused' : 'running';
+    $('tube-caption').textContent = state.running ? `${going} · ${state.current ?? ''}` : 'idle';
     if (!sketch) return;
     const look = state.look;
     const weights = sketch.inputs.filter((input) => input.kind === 'weight').map((input, index) => ({
@@ -640,9 +647,9 @@ function boot() {
   function showBay(isOpen) {
     $('printer').hidden = isOpen;
     $('bay').hidden = !isOpen;
-    (isOpen ? bay.text : $('remove-printer')).focus();
+    (isOpen ? bay.text : $('open-printer')).focus();
   }
-  $('remove-printer').addEventListener('click', async () => {
+  $('open-printer').addEventListener('click', async () => {
     showBay(true);
     await loadBay();
   });
@@ -661,7 +668,12 @@ function boot() {
     lamp.classList.toggle('off', !on || !state.sketch);
     lamp.setAttribute('aria-label', running ? 'Running' : 'Ready');
     $('ready-text').textContent = running ? 'RUNNING' : 'READY';
-    $('ready-hint').textContent = running ? 'press to stop the run' : 'press to play the sketch';
+    $('ready-hint').textContent = readyHintOf(running, state.paused);
+    // UND-39: STEP idle or paused; PAUSE while running, RESUME while paused.
+    $('step').disabled = !state.sketch || !on || (running && !state.paused);
+    $('pause').disabled = !running;
+    $('pause').textContent = state.paused ? 'RESUME' : 'PAUSE';
+    $('pause').setAttribute('aria-pressed', String(state.paused));
     $('play').classList.toggle('running', running);
     $('play').setAttribute('aria-label', running ? 'Stop the run' : 'Play the sketch');
     $('play-word').textContent = running ? 'STOP' : 'PLAY';
@@ -723,6 +735,24 @@ function boot() {
     if (!ok) print({ event: 'dashboard', refused: value.problem });
   });
 
+  // UND-39: STEP - idle, start paused and make the first move; paused, one more move.
+  $('step').addEventListener('click', async () => {
+    if (state.running) {
+      await api('step', {});
+      return;
+    }
+    await flushBay();
+    $('paper').replaceChildren();
+    const started = await api('play', { sketch: state.sketch.name, inputs: state.values, paused: true });
+    if (!started.ok) {
+      print({ event: 'dashboard', refused: started.value.problem });
+      return;
+    }
+    await api('step', {});
+  });
+
+  $('pause').addEventListener('click', () => api(state.paused ? 'resume' : 'pause', {}));
+
   $('power').addEventListener('click', async () => {
     state.on = !state.on;
     await api('power', { on: state.on });
@@ -735,6 +765,13 @@ function boot() {
     const line = JSON.parse(message.data);
     if (line.event === 'dashboard' && line.running !== undefined) {
       state.running = line.running;
+      state.paused = line.running && line.paused === true;
+      drawStatus();
+      drawTube();
+    }
+    // UND-39: the run's gate - paused before a move, or running on.
+    if (line.event === 'dashboard' && line.running === undefined && line.paused !== undefined) {
+      state.paused = line.paused;
       drawStatus();
       drawTube();
     }

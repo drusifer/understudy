@@ -134,4 +134,12 @@ sequenceDiagram
     Note right of Trin: "UAT phase 1 passed:<br/>AC1-3 server side, check<br/>green. @Morpheus *lead<br/>review phase-1"
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "Phase 1 review passed:<br/>reuses the watch gate,<br/>no change for runs<br/>without one. @Neo *swe<br/>impl phase-2"
+    Mouse->>All: "phase 2"
+    Note right of Mouse: "Phase 2: STEP and PAUSE<br/>on the console"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 2 impl: STEP and<br/>PAUSE/RESUME under PLAY<br/>(all themes), paused<br/>caption and hint, owner<br/>nit: printer's REMOVE is<br/>now an OPEN release la…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 2 passed:<br/>check + browser green,<br/>screenshot checked.<br/>@Morpheus *lead review<br/>phase-2"
+    Morpheus->>Tank: "lead handoff"
+    Note right of Morpheus: "Phase 2 review passed.<br/>@Tank *devops sdlc-check"
 ```

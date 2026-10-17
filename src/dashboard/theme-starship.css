@@ -144,6 +144,9 @@
 :root[data-theme="starship"] .play-bezel { padding: 0; background: none; box-shadow: none; }
 :root[data-theme="starship"] .play { width: 110px; height: 64px; border: none; border-radius: 999px; background: var(--orange); box-shadow: none; color: var(--on-bar); font-size: 24px; font-weight: 700; letter-spacing: .12em; }
 :root[data-theme="starship"] .play.running { background: var(--red); box-shadow: none; }
+:root[data-theme="starship"] .move-button { border: none; border-radius: 999px; background: var(--sky); box-shadow: none; color: var(--on-bar); font-size: 14px; font-weight: 700; letter-spacing: .08em; }
+:root[data-theme="starship"] .move-button[aria-pressed="true"] { background: var(--gold); box-shadow: none; }
+:root[data-theme="starship"] .move-button:disabled { filter: none; opacity: .4; }
 
 /* The tube: a display ringed in thin coloured lines */
 :root[data-theme="starship"] .tube { background: var(--void); border: 3px solid var(--violet); box-shadow: 0 0 0 8px var(--void), 0 0 0 12px var(--lilac); animation: none; }

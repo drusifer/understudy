@@ -124,6 +124,9 @@
 :root[data-theme="professional"] .play-bezel { padding: 0; background: none; box-shadow: none; }
 :root[data-theme="professional"] .play { border: none; border-radius: 8px; background: var(--accent); box-shadow: 0 1px 2px var(--shadow); color: var(--on-accent); font-size: 18px; font-weight: 700; letter-spacing: .04em; }
 :root[data-theme="professional"] .play.running { background: var(--stop); box-shadow: none; }
+:root[data-theme="professional"] .move-button { background: var(--surface); border: 1px solid var(--line-strong); border-radius: 6px; box-shadow: none; color: var(--ink); font-size: 12px; font-weight: 600; letter-spacing: .02em; }
+:root[data-theme="professional"] .move-button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); box-shadow: none; }
+:root[data-theme="professional"] .move-button:disabled { filter: none; opacity: .45; }
 
 /* Tube: a flat diagram on a plain disc */
 :root[data-theme="professional"] .tube { background: var(--surface); border: 1px solid var(--line); box-shadow: none; }

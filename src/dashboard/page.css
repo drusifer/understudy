@@ -70,7 +70,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 }
 
 /* Controls */
-.controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'head head' 'dials play' 'faders faders' 'drawers drawers' 'nothing nothing' 'switches switches'; gap: 8px 10px; align-items: center; padding: 16px 16px 18px; border-radius: 12px; background: linear-gradient(160deg, #3b2918 0%, #2a1c11 60%, #22170e 100%); border: 2px solid #6b4a22; box-shadow: inset 0 1px 0 rgba(255,220,160,.12), 0 10px 28px rgba(0,0,0,.55); }
+.controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'head head' 'dials play' 'faders faders' 'drawers drawers' 'nothing nothing' 'switches switches'; gap: 6px 10px; align-items: center; padding: 12px 16px 12px; border-radius: 12px; background: linear-gradient(160deg, #3b2918 0%, #2a1c11 60%, #22170e 100%); border: 2px solid #6b4a22; box-shadow: inset 0 1px 0 rgba(255,220,160,.12), 0 10px 28px rgba(0,0,0,.55); }
 .controls.locked .dials, .controls.locked .faders, .controls.locked .switches, .controls.locked .fader-drawers { opacity: .6; pointer-events: none; }
 .controls-head { grid-area: head; display: flex; flex-direction: column; gap: 2px; }
 .controls-head .about { font-size: 12px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
@@ -144,6 +144,12 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .play { width: 92px; height: 92px; border-radius: 14px; border: 4px solid #3a0a04; background: radial-gradient(circle at 50% 42%, #ff9a80 0%, #e0301a 30%, #a01408 62%, #4a0502 100%); box-shadow: inset 0 6px 12px rgba(255,220,200,.45), inset 0 -10px 18px rgba(0,0,0,.55), 0 0 16px rgba(255,60,30,.55); font-family: Cinzel, serif; font-weight: 900; font-size: 20px; letter-spacing: 3px; color: #fff2e0; text-shadow: 0 0 8px rgba(255,200,170,.9); }
 .play.running { background: radial-gradient(circle at 50% 42%, #ffd0b8 0%, #ff5a3a 22%, #d0200c 55%, #6a0a02 100%); box-shadow: inset 0 6px 12px rgba(255,220,200,.45), inset 0 -10px 18px rgba(0,0,0,.55), 0 0 40px #ff4020; animation: pulse 1.2s infinite; }
 .play:disabled { filter: grayscale(.7) brightness(.6); cursor: not-allowed; }
+/* UND-39: STEP and PAUSE/RESUME, small brass keys under PLAY */
+.move-buttons { display: flex; gap: 6px; }
+.move-button { min-width: 52px; min-height: 28px; padding: 2px 8px; border-radius: 6px; border: 2px solid #2b1b0b; background: radial-gradient(circle at 40% 30%, #f3d48c, #b88a3b 50%, #6e4c1c); box-shadow: 0 3px 6px rgba(0,0,0,.5); color: #24170a; font-family: Cinzel, serif; font-weight: 900; font-size: 10px; letter-spacing: 1px; }
+.move-button[aria-pressed="true"] { background: radial-gradient(circle at 40% 30%, #fff1c8, #ffb020 50%, #a85a00); box-shadow: 0 0 10px #ffb020; }
+.move-button:active { transform: translateY(1px); }
+.move-button:disabled { filter: grayscale(.7) brightness(.6); cursor: not-allowed; }
 
 .stepper { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 10px; border: 2px solid #6b4a22; background: linear-gradient(180deg, #2b1d12, #1d140d); }
 .stepper-body { display: flex; align-items: center; gap: 10px; }
@@ -195,6 +201,12 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 /* UND-35: behind the printer - the sketch's YAML and a cheat-sheet sticker */
 .screw-button { min-height: 32px; padding: 2px 10px; border-radius: 6px; border: 2px solid #4a4640; background: #26231f; color: #c9c2b6; font-family: Cinzel, serif; font-size: 10px; letter-spacing: 2px; }
 .screw-button:hover, .screw-button:focus-visible { border-color: var(--brass); color: var(--brass); }
+/* The printer's release latch (owner): a lever that swings open on hover and press. */
+.latch { display: inline-flex; align-items: center; gap: 7px; }
+.latch .lever { position: relative; width: 16px; height: 6px; border-radius: 3px; background: currentColor; transform-origin: 3px 50%; transition: transform .2s; }
+.latch .lever::before { content: ''; position: absolute; left: -1px; top: -1px; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.latch:hover .lever, .latch:focus-visible .lever { transform: rotate(-35deg); }
+.latch:active .lever { transform: rotate(-70deg); }
 .bay { display: flex; flex-direction: column; gap: 8px; height: 730px; box-sizing: border-box; background-color: #141210; box-shadow: inset 0 8px 22px rgba(0,0,0,.85), 0 12px 28px rgba(0,0,0,.6); }
 .bay[hidden], .printer[hidden] { display: none; }
 .sticker { flex: none; padding: 8px 10px; border-radius: 4px; background: #efe3b8; color: var(--ink); transform: rotate(-.6deg); box-shadow: 0 3px 8px rgba(0,0,0,.6); font-size: 11px; line-height: 1.2; }

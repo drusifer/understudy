@@ -87,6 +87,22 @@ test('the console plays the evening: controls, Play, the tube follows, the print
   assert.ok((await page.$$eval('#paper .eleven', (cells) => cells.length)) > 0, 'a perfect 1.0 prints as 11');
   const tube = await page.getAttribute('#tube svg', 'aria-label');
   assert.ok(tube.endsWith('Now: booked.'), tube);
+
+  // UND-39: STEP plays one move at a time; RESUME runs on; STOP ends it.
+  const steps = () => page.$$eval('#paper .line', (nodes) => nodes.filter((node) => /^step \d+/.test(node.textContent.trim())).length);
+  assert.equal(await page.isDisabled('#pause'), true, 'PAUSE only while a run plays');
+  await page.click('#step');
+  await until(page, () => document.querySelector('#tube-caption').textContent.startsWith('paused'));
+  await until(page, () => document.querySelector('#ready-hint').textContent.includes('STEP for the next move'));
+  const first = await steps();
+  await page.click('#step');
+  await until(page, () => document.querySelector('#tube-caption').textContent.startsWith('paused') && document.querySelector('#step').disabled === false);
+  assert.equal(await page.textContent('#pause'), 'RESUME');
+  // Exactly one move per STEP is held to in tests/dashboardRun.test.js; here, no run-away.
+  assert.ok((await steps()) <= first + 1, 'one move per STEP');
+  await page.click('#pause');
+  await until(page, () => document.querySelector('#play-word').textContent === 'PLAY');
+  assert.match(await page.textContent('#paper'), /=== DONE after \d+ steps ===/);
   assert.deepEqual(errors, []);
 });
 
@@ -108,8 +124,9 @@ test('behind the printer: the sketch\'s YAML and a sticker; typing saves and the
   await page.goto(dashboard.url);
   await until(page, () => document.querySelector('#tube .labels')?.textContent.includes('replying'));
 
-  // AC1, AC6: REMOVE swaps the printer for the bay; the sticker fits beside the edit box.
-  await page.focus('#remove-printer');
+  // AC1, AC6: the OPEN latch swaps the printer for the bay; the sticker fits beside the edit box.
+  assert.equal(await page.textContent('#open-printer'), 'OPEN');
+  await page.focus('#open-printer');
   await page.keyboard.press('Enter');
   assert.equal(await page.isVisible('#printer'), false);
   await until(page, () => document.querySelector('#bay-text').value.includes('initial: waiting'));
