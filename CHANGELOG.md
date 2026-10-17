@@ -1,5 +1,34 @@
 # Changelog
 
+## Sprint 13 — questions that know the inputs (2026-10-17, branch `sprint-13`, not yet merged)
+
+- **Every Jev question sees the run's inputs** as `inputs` in its state; any question's wording
+  can name one (`` `inputs.tickets` ``), and `check` refuses an undeclared name. `pick.with` is
+  gone (the pick sees all of them too). ADR-0034.
+- The evening's questions follow its controls: the party size, the mood and the evenings switch.
+
+## Sprint 12 — one move at a time (2026-10-17, branch `sprint-12`, not yet merged)
+
+- **STEP** and **PAUSE/RESUME** on the dashboard: STEP starts a run and makes one move, then one
+  more each press; PAUSE holds a playing run before its next move; STOP ends either. ADR-0033.
+- The printer opens on an **OPEN** release latch (was REMOVE).
+
+## Sprint 11 — light and dark (2026-10-16, branch `sprint-11`, not yet merged)
+
+- A **MODE** switch on the dashboard: **AUTO** follows the device's light/dark setting (live),
+  **LIGHT** and **DARK** fix it; remembered per browser, `?mode=` on the link. Every theme has both:
+  steampunk light (parchment, maple, brass), professional dark (charcoal), starship light (the
+  bars on a pale screen). ADR-0032.
+- The fader LEDs, slot glows and readouts shine as brightly as their fader is set (owner).
+- Phones: the bay drops down under the tube; the theme switch wraps. The dashboard is served at
+  the root - no token in the URL (owner; ADR-0023 amended).
+
+## Sprint 10 — a schema for sketch.yaml (2026-10-16, branch `sprint-10`, not yet merged)
+
+- **`schema/sketch.schema.json`**: editors with the YAML language server complete `sketch.yaml`
+  keys, show what each means and underline mistakes as you type. Every example points at it;
+  `docs/SKETCHES.md` "Editor help" says how to point yours. `check` is unchanged. ADR-0031.
+
 ## Between sprints (2026-10-16, on `main`)
 
 - **A weight input is a share of the full weighting** (owner): the top of its range weighs a factor

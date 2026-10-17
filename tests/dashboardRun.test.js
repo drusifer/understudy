@@ -111,3 +111,46 @@ test('the bay reads a sketch\'s file as it is, only by a rack name (UND-35 AC1)'
   assert.deepEqual(await read.json(), { text: readFileSync('examples/evening/sketch.yaml', 'utf8') });
   assert.equal((await fetch(`${dashboard.url}api/text/..%2Fsrc`)).status, 404);
 });
+
+// Sprint 12 UND-39: one move at a time.
+async function until(check, ms = 10_000) {
+  const end = Date.now() + ms;
+  while (!check()) {
+    if (Date.now() > end) throw new Error('timed out');
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+}
+
+test('a run started paused takes one move per STEP, then RESUME runs it on (UND-39 AC1-2)', async () => {
+  const { dashboard, lines, post } = await console_();
+  const steps = () => lines.filter((line) => line.step).length;
+  const isWaiting = () => lines.at(-1)?.event === 'dashboard' && lines.at(-1).paused === true && lines.at(-1).waiting === true;
+  assert.equal((await post('step')).status, 409, 'nothing is running');
+  assert.equal((await post('play', { sketch: 'evening', paused: true })).status, 202);
+  await until(isWaiting);
+  assert.equal(steps(), 0, 'paused before the first move');
+  for (const expected of [1, 2, 3]) {
+    assert.equal((await post('step')).status, 202);
+    await until(() => steps() === expected && isWaiting());
+  }
+  assert.equal((await post('pause')).status, 409, 'already paused');
+  assert.equal((await post('resume')).status, 202);
+  await dashboard.runner.finished();
+  assert.equal(lines.find((line) => line.final).outcome, 'done');
+  assert.ok(steps() > 3);
+});
+
+test('PAUSE holds a playing run before its next move; STOP ends a paused run at once (UND-39 AC2-3)', async () => {
+  const { dashboard, lines, post } = await console_({ delayMs: 60 });
+  await post('play', { sketch: 'evening' });
+  await until(() => lines.some((line) => line.step));
+  assert.equal((await post('step')).status, 409, 'STEP only while paused');
+  assert.equal((await post('pause')).status, 202);
+  await until(() => lines.some((line) => line.event === 'dashboard' && line.paused && line.waiting));
+  const held = lines.filter((line) => line.step).length;
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  assert.equal(lines.filter((line) => line.step).length, held, 'no move while paused');
+  assert.equal((await post('stop')).status, 202);
+  await dashboard.runner.finished();
+  assert.match(lines.find((line) => line.final).outcome, /stopped|interrupted/);
+});

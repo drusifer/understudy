@@ -24,15 +24,15 @@ import { checkInputs, isInputReference, numberInputs, switchInputs, weightInputs
 
 const SKETCH = 'sketch.yaml';
 const GUIDE = 'see docs/SKETCHES.md';
-const KEYS = ['name', 'description', 'target', 'app', 'player', 'steps', 'questions', 'turn', 'calls', 'values', 'decide', 'inputs', 'pick'];
-const QUESTION_TYPES = ['noul', 'choice', 'score'];
+export const KEYS = ['name', 'description', 'target', 'app', 'player', 'steps', 'questions', 'turn', 'calls', 'values', 'decide', 'inputs', 'pick'];
+export const QUESTION_TYPES = ['noul', 'choice', 'score'];
 // The fields a kind cannot do without, with what each one is for.
 const REQUIRED = {
   process: { command: 'the program to start, e.g. node' },
   http: { url: 'where the API is, e.g. http://127.0.0.1:{port}', state: 'the path a look GETs, e.g. /status' },
 };
 // The fields each kind of target takes; anything else is a mistake, named at load.
-const TARGET_FIELDS = { process: ['command', 'args'], page: ['root', 'page'], http: ['command', 'args', 'url', 'state'], mcp: ['server', 'servers', 'config'] };
+export const TARGET_FIELDS = { process: ['command', 'args'], page: ['root', 'page'], http: ['command', 'args', 'url', 'state'], mcp: ['server', 'servers', 'config'] };
 // Kinds with a built-in app, made for each sketch; the others read their
 // app through hooks.mjs. An MCP server is only ever played by its own.
 const GENERIC_APPS = { page: () => pageApp, mcp: (sketch) => mcpApp({ calls: sketch.calls, values: sketch.values, decide: sketch.decide, pick: sketch.pick, questions: sketch.questions }) };
@@ -136,19 +136,26 @@ function checkCalls(sketch, fail) {
 }
 
 /**
- * `pick:` - the final Choice among a shortlist: its instructions, and the
- * choice inputs Jev is told (UND-24).
+ * `pick:` - the final Choice among a shortlist: its instructions (UND-24).
+ * Like every question it sees all the inputs (UND-40).
  */
 function checkPick(pick, inputs, fail) {
   if (!isMapping(pick) || typeof pick.instructions !== 'string') fail('pick', 'needs instructions: <how the person chooses among the shortlist>');
-  const extra = Object.keys(pick).find((key) => key !== 'instructions' && key !== 'with');
-  if (extra) fail(`pick.${extra}`, 'not a pick field (known: instructions, with)');
-  const complaint = checkInstruction(pick.instructions);
+  const extra = Object.keys(pick).find((key) => key !== 'instructions');
+  if (extra) fail(`pick.${extra}`, 'not a pick field (known: instructions) - every question sees all the inputs');
+  const complaint = checkInstruction(pick.instructions) ?? unknownInputIn(pick.instructions, inputs);
   if (complaint) fail('pick.instructions', complaint);
-  if (pick.with === undefined) return;
-  if (!Array.isArray(pick.with)) fail('pick.with', 'must be a list of choice inputs, e.g. [mood]');
-  const unknownInput = pick.with.find((name) => !inputs[name]?.choose);
-  if (unknownInput !== undefined) fail('pick.with', `"${unknownInput}" is not a choice input declared under inputs:`);
+}
+
+/**
+ * Why prose names an input the sketch does not declare (`inputs.<name>`
+ * in backticks, UND-40), or null.
+ */
+function unknownInputIn(text, inputs) {
+  for (const [, name] of text.matchAll(/`inputs\.([\w-]+)/g)) {
+    if (!Object.hasOwn(inputs, name)) return `\`inputs.${name}\`: ${unknown('input', name, Object.keys(inputs))}`;
+  }
+  return null;
 }
 
 const DECIDED = /^(?:[\w-]+\/)?[\w-]+\.[\w-]+$/;
@@ -286,12 +293,12 @@ function proseOf(name, question) {
   return prose;
 }
 
-function checkQuestions(questions, fail) {
+function checkQuestions(questions, inputs, fail) {
   for (const [name, question] of Object.entries(questions)) {
     if (!QUESTION_TYPES.includes(question?.type)) fail(`questions.${name}.type`, unknown('question type', question?.type, QUESTION_TYPES));
     if (typeof question.instructions !== 'string') fail(`questions.${name}.instructions`, 'every question needs instructions');
     for (const [where, text] of proseOf(name, question)) {
-      const complaint = checkInstruction(text);
+      const complaint = checkInstruction(text) ?? unknownInputIn(text, inputs);
       if (complaint) fail(`questions.${where}`, complaint);
     }
   }
@@ -310,7 +317,7 @@ export async function loadSketch(location) {
   checkTarget(sketch.target, fail);
   const target = resolvedTarget(sketch.target, { file, directory });
   checkCalls(sketch, fail);
-  checkQuestions(sketch.questions, fail);
+  checkQuestions(sketch.questions, sketch.inputs ?? {}, fail);
   const { app, library: own, hooks } = await loadApp(sketch, { file, directory }, fail);
   const services = { questions: sketch.questions };
   let library;

@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../schema/sketch.schema.json
 # The CLI example's sketch (docs/SKETCHES.md): wait for the counter to ask
 # something, answer it, and stop when the order is placed. Every name in
 # `turn` is from the library (`understudy library examples/cli`).

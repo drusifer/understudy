@@ -57,7 +57,7 @@ function movesFor(tool, { calls, values, last, decided, pick, inputs }) {
     const fixing = Object.keys(fixed).length > 0 ? ` with ${JSON.stringify(fixed)}` : '';
     const move = { id: idOf(tool, fixed), what: `call ${nameOf(tool)}${fixing}${about}`, call: { ...(tool.server && { server: tool.server }), tool: tool.name, arguments: fixed }, open };
     if (decisions.length === 0) return move;
-    return { ...move, decided: decisions, ...(pick?.told && { told: pick.told }) };
+    return { ...move, decided: decisions };
   });
 }
 
@@ -198,14 +198,6 @@ export function mcpApp({ calls = [], values = {}, decide = {}, pick = null, ques
   }
 
   /**
-   * The inputs the final pick is told (`pick.with`), or null.
-   */
-  function told() {
-    if (!pick?.with) return null;
-    return Object.fromEntries(pick.with.map((name) => [name, app.inputs[name]]));
-  }
-
-  /**
    * The Score answers known for a row, by factor.
    */
   function answersFor(factors = {}, about) {
@@ -226,7 +218,8 @@ export function mcpApp({ calls = [], values = {}, decide = {}, pick = null, ques
     if (waitingScores.size === 0) return;
     const waiting = waitingScores.values().toArray();
     waitingScores = new Map();
-    const state = { rows: {} };
+    // UND-40: a score question sees the run's inputs too.
+    const state = { rows: {}, ...(Object.keys(app.inputs).length > 0 && { inputs: app.inputs }) };
     const asked = {};
     for (const [index, { ask, facts }] of waiting.entries()) {
       const id = `r${index + 1}`;
@@ -266,7 +259,7 @@ export function mcpApp({ calls = [], values = {}, decide = {}, pick = null, ques
       // A refused call spends nothing.
       if (spending.length > 0 && view.last?.isError) for (const [key, value] of spending) spent.get(key).delete(value);
       spending = [];
-      const found = view.tools.flatMap((tool) => movesFor(tool, { calls, values, last: answered, decided: (key, argument) => decided(key, argument, options), pick: pick && { ...pick, told: told() }, inputs: app.inputs }));
+      const found = view.tools.flatMap((tool) => movesFor(tool, { calls, values, last: answered, decided: (key, argument) => decided(key, argument, options), pick, inputs: app.inputs }));
       // Owner, 2026-10-16: a deciding sketch keeps every answer, so a call
       // already answered with the same arguments is not made again.
       const all = found.map((move) => (move.open?.length === 0 && answeredCalls.get(callKey(move.call))

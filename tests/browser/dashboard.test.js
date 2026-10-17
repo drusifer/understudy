@@ -87,6 +87,34 @@ test('the console plays the evening: controls, Play, the tube follows, the print
   assert.ok((await page.$$eval('#paper .eleven', (cells) => cells.length)) > 0, 'a perfect 1.0 prints as 11');
   const tube = await page.getAttribute('#tube svg', 'aria-label');
   assert.ok(tube.endsWith('Now: booked.'), tube);
+
+  // UND-39: STEP plays one move at a time; RESUME runs on; STOP ends it.
+  const steps = () => page.$$eval('#paper .line', (nodes) => nodes.filter((node) => /^step \d+/.test(node.textContent.trim())).length);
+  assert.equal(await page.isDisabled('#pause'), true, 'PAUSE only while a run plays');
+  await page.click('#step');
+  await until(page, () => document.querySelector('#tube-caption').textContent.startsWith('paused'));
+  await until(page, () => document.querySelector('#ready-hint').textContent.includes('STEP for the next move'));
+  const first = await steps();
+  await page.click('#step');
+  await until(page, () => document.querySelector('#tube-caption').textContent.startsWith('paused') && document.querySelector('#step').disabled === false);
+  assert.equal(await page.textContent('#pause'), 'RESUME');
+  // Exactly one move per STEP is held to in tests/dashboardRun.test.js; here, no run-away.
+  assert.ok((await steps()) <= first + 1, 'one move per STEP');
+
+  // A page opened while the run is paused shows that run: its sketch, the tube, the paper so far.
+  const late = await browser.newPage({ viewport: { width: 1600, height: 960 } });
+  late.on('pageerror', (error) => {
+    errors.push(`late page: ${error.message}`);
+  });
+  await late.goto(dashboard.url);
+  await until(late, () => document.querySelector('#sketch-title').textContent === 'evening' && document.querySelector('#tube svg'));
+  await until(late, () => document.querySelector('#tube-caption').textContent.startsWith('paused'));
+  await until(late, () => /step 1 /.test(document.querySelector('#paper').textContent));
+  await late.close();
+
+  await page.click('#pause');
+  await until(page, () => document.querySelector('#play-word').textContent === 'PLAY');
+  assert.match(await page.textContent('#paper'), /=== DONE after \d+ steps ===/);
   assert.deepEqual(errors, []);
 });
 
@@ -108,8 +136,9 @@ test('behind the printer: the sketch\'s YAML and a sticker; typing saves and the
   await page.goto(dashboard.url);
   await until(page, () => document.querySelector('#tube .labels')?.textContent.includes('replying'));
 
-  // AC1, AC6: REMOVE swaps the printer for the bay; the sticker fits beside the edit box.
-  await page.focus('#remove-printer');
+  // AC1, AC6: the OPEN latch swaps the printer for the bay; the sticker fits beside the edit box.
+  assert.equal(await page.textContent('#open-printer'), 'OPEN');
+  await page.focus('#open-printer');
   await page.keyboard.press('Enter');
   assert.equal(await page.isVisible('#printer'), false);
   await until(page, () => document.querySelector('#bay-text').value.includes('initial: waiting'));
@@ -131,6 +160,19 @@ test('behind the printer: the sketch\'s YAML and a sticker; typing saves and the
   assert.equal(readFileSync(file, 'utf8'), renamed);
   assert.ok((await page.textContent('#tube .labels')).includes('responding'));
 
+  // On a phone the bay drops down under the tube, one column, nothing wider than the screen (owner).
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const theme of ['steampunk', 'professional', 'starship']) {
+    await page.click(`.theme-choice[data-theme="${theme}"]`);
+    const phone = await page.evaluate(() => {
+      const box = (selector) => document.querySelector(selector).getBoundingClientRect();
+      return { wide: document.scrollingElement.scrollWidth, tube: box('.tube-panel'), bay: box('#bay'), controls: box('.controls') };
+    });
+    assert.ok(phone.wide <= 390, `${theme}: nothing scrolls sideways (${phone.wide}px)`);
+    assert.ok(phone.bay.top >= phone.tube.bottom && phone.bay.bottom <= phone.controls.top, `${theme}: the bay sits between the tube and the controls`);
+  }
+  await page.setViewportSize({ width: 1600, height: 960 });
+
   // AC1, AC7: REFIT PRINTER puts the printer back.
   await page.click('#refit-printer');
   assert.equal(await page.isVisible('#printer'), true);
@@ -150,7 +192,8 @@ test('the THEME switch: each theme restyles the page, is remembered, ?theme= win
     await dashboard.close();
     rmSync(logRoot, { recursive: true, force: true });
   });
-  const page = await browser.newPage({ viewport: { width: 1600, height: 960 } });
+  // A dark device, so AUTO shows each theme's dark look.
+  const page = await browser.newPage({ viewport: { width: 1600, height: 960 }, colorScheme: 'dark' });
   const errors = [];
   page.on('pageerror', (error) => {
     errors.push(error.message);
@@ -191,5 +234,60 @@ test('the THEME switch: each theme restyles the page, is remembered, ?theme= win
   await page.click('.theme-choice[data-theme="starship"]');
   await until(page, () => document.querySelector('#paper').textContent.includes('Ticket issued'));
   await until(page, () => document.querySelector('#play-word').textContent === 'PLAY');
+  assert.deepEqual(errors, []);
+});
+
+// Sprint 11 UND-38: every theme in light and dark; AUTO follows the device.
+const MODED = ['steampunk', 'professional', 'starship'];
+
+test('the MODE switch: each theme has a light and a dark look, AUTO follows the device, ?mode= wins, remembered, fits', async () => {
+  const dashboard = await serveDashboard({ folder: 'examples', port: 0, environment: { ...process.env, TYPESAFE_API_KEY: 'test' } });
+  test.after(() => dashboard.close());
+  const page = await browser.newPage({ viewport: { width: 1600, height: 960 }, colorScheme: 'light' });
+  const errors = [];
+  page.on('pageerror', (error) => {
+    errors.push(error.message);
+  });
+  const mode = () => page.evaluate(() => document.documentElement.dataset.mode);
+  const looks = () => page.evaluate(() => {
+    const style = globalThis.getComputedStyle;
+    return { page: style(document.body).backgroundColor, text: style(document.querySelector('.controls-head h2')).color };
+  });
+  const fits = () => page.evaluate(() => document.scrollingElement.scrollHeight <= globalThis.innerHeight && document.scrollingElement.scrollWidth <= globalThis.innerWidth);
+  const narrow = () => page.evaluate(() => document.scrollingElement.scrollWidth <= globalThis.innerWidth);
+  await page.goto(dashboard.url);
+  await until(page, () => document.querySelector('#tube svg') && document.querySelector('.controls-head h2').textContent !== '…');
+
+  // AC1: AUTO by default, following the device - and changing with it.
+  assert.equal(await page.getAttribute('.mode-choice[data-mode="auto"]', 'aria-pressed'), 'true');
+  assert.equal(await mode(), 'light');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await until(page, () => document.documentElement.dataset.mode === 'dark');
+
+  // AC2, AC4: each theme, light and dark, looks different, keeps its text readable from its page, and fits.
+  for (const name of MODED) {
+    await page.click(`.theme-choice[data-theme="${name}"]`);
+    const seen = {};
+    for (const each of ['light', 'dark']) {
+      await page.click(`.mode-choice[data-mode="${each}"]`);
+      assert.equal(await mode(), each);
+      seen[each] = await looks();
+      assert.notEqual(seen[each].page, seen[each].text, `${name} ${each}: text differs from the page`);
+      assert.ok(await fits(), `${name} ${each} fits 1600x960`);
+      await page.setViewportSize({ width: 390, height: 844 });
+      assert.ok(await narrow(), `${name} ${each}: nothing scrolls sideways on a phone`);
+      await page.setViewportSize({ width: 1600, height: 960 });
+    }
+    assert.notEqual(seen.light.page, seen.dark.page, `${name}: light and dark differ`);
+  }
+
+  // AC1: remembered across a reload; ?mode= wins; an unknown one is ignored.
+  await page.reload();
+  await until(page, () => document.querySelector('#tube svg'));
+  assert.equal(await mode(), 'dark');
+  await page.goto(`${dashboard.url}?mode=light`);
+  assert.equal(await mode(), 'light');
+  await page.goto(`${dashboard.url}?mode=dim`);
+  assert.equal(await mode(), 'dark');
   assert.deepEqual(errors, []);
 });

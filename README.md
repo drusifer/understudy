@@ -67,7 +67,7 @@ Always go through `bobp make <target>` - it is the front door for people and age
 | [docs/WALKTHROUGH.md](docs/WALKTHROUGH.md) | see the examples taken apart, line by line, with real runs |
 | [docs/MCP_GUIDE.md](docs/MCP_GUIDE.md) | point understudy at an MCP server you already have (yours, or one configured for Claude) |
 | [docs/design/DASHBOARD.md](docs/design/DASHBOARD.md) | how the dashboard looks and why: its parts, the bay behind the printer, the themes |
-| [docs/SKETCHES.md](docs/SKETCHES.md) | the reference: `sketch.yaml`, the four targets, hooks, library names, exit codes |
+| [docs/SKETCHES.md](docs/SKETCHES.md) | the reference: `sketch.yaml`, the four targets, hooks, library names, exit codes; [schema/sketch.schema.json](schema/sketch.schema.json) for editor completion and checking |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | why it is built this way (ADRs) |
 | [docs/SDLC.md](docs/SDLC.md) | how the project is built, tested, changed and released |
 | [CHANGELOG.md](CHANGELOG.md) · [docs/BACKLOG.md](docs/BACKLOG.md) | what shipped · what is next |

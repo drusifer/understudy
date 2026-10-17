@@ -73,8 +73,29 @@ Design approved on a clickable mockup - **`docs/design/DASHBOARD.md`** is the br
 ## Sprint 9 (owner, 2026-10-16) - themes - DONE (launched 2026-10-16)
 - UND-36: THEME switch - steampunk, professional, starship.
 
+## Sprint 13 (owner, 2026-10-17) - questions that know the inputs - DONE (launched 2026-10-17)
+- UND-40: every Jev request sees `inputs`; `pick.with` removed; the evening's questions use them.
+- Next: the evening's horror taste is fixed in a gate; a `genre` choice input would let it follow too. (Cypher)
+
+## Sprint 12 (owner, 2026-10-17) - one move at a time - DONE (launched 2026-10-17)
+- UND-39: STEP and PAUSE/RESUME on the dashboard; the printer opens on a release latch.
+
+## Sprint 11 (owner, 2026-10-16) - light and dark - DONE (launched 2026-10-16)
+- UND-38: MODE switch (AUTO / LIGHT / DARK); six looks; LEDs follow their faders; phone layout of the bay.
+
+## Next (from the sprint 11 retro)
+- Steampunk light is an override list over `page.css`; moving steampunk's colours into variables would make it a variable block like the others. (Morpheus)
+- A contrast check in the browser test (still by eye). (Trin)
+
+## Sprint 10 (owner, 2026-10-16) - a schema for sketch.yaml - DONE (launched 2026-10-16)
+- UND-37: `schema/sketch.schema.json`, editor line in every example, kept in step with check by tests.
+
+## Next (from the sprint 10 retro)
+- The bay's edit box could offer the schema's completions (it is a plain textarea today). (Smith)
+- Try the schema in a real editor (VS Code YAML extension) and note any rough edges. (Trin)
+
 ## Next (from the sprint 9 retro)
-- A JSON Schema for `sketch.yaml`, so editors complete and flag keys as you type (owner asked how the YAML docs are; the reference is complete, editor help is missing). (Oracle)
+- DONE in sprint 10: a JSON Schema for `sketch.yaml` (UND-37).
 - Measure contrast in the browser test instead of by eye (professional AC3). (Trin)
 - The tube's labels still overlap round "looking" in every theme - the sprint 6 item below. (Smith)
 - Styling each new control three times is the cost of themes; keep new controls built from the shared custom properties. (Morpheus)

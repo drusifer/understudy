@@ -3,7 +3,7 @@
 // starting values and what the printer prints.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { blendOf, dialAngles, levelOf, printed, readoutOf, rgbOf, scoreText, startingValues, themeOf, THEMES } from '../src/dashboard/page.mjs';
+import { blendOf, dialAngles, levelOf, modeChoiceOf, modeOf, MODES, printed, readoutOf, rgbOf, scoreText, startingValues, themeOf, THEMES } from '../src/dashboard/page.mjs';
 
 const RED = [255, 72, 56];
 
@@ -48,6 +48,19 @@ test('the theme: a known ?theme= wins, then the remembered one, else steampunk (
   assert.equal(themeOf('lcars', 'professional'), 'professional', 'an unknown name is ignored');
   assert.equal(themeOf('lcars', 'tartan'), 'steampunk');
   assert.equal(themeOf(null, null), 'steampunk');
+});
+
+// Sprint 11 UND-38: light and dark.
+test('the mode: a known ?mode= wins, then the remembered one, else auto; auto follows the device (UND-38 AC1)', () => {
+  assert.deepEqual(MODES, ['auto', 'light', 'dark']);
+  assert.equal(modeChoiceOf('dark', 'light'), 'dark');
+  assert.equal(modeChoiceOf(null, 'light'), 'light');
+  assert.equal(modeChoiceOf('dim', 'light'), 'light', 'an unknown value is ignored');
+  assert.equal(modeChoiceOf(null, null), 'auto');
+  assert.equal(modeOf('auto', true), 'dark');
+  assert.equal(modeOf('auto', false), 'light');
+  assert.equal(modeOf('light', true), 'light');
+  assert.equal(modeOf('dark', false), 'dark');
 });
 
 test('theme colours are read as #rrggbb; a weight\'s level is 0-3 whatever its range', () => {

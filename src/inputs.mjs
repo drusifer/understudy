@@ -11,7 +11,7 @@
 
 import { UsageError } from './errors.mjs';
 
-const KINDS = ['choose', 'weight', 'switch', 'count'];
+export const KINDS = ['choose', 'weight', 'switch', 'count'];
 const SHAPES = '{ choose: [...], default }, { weight: [low, high], default }, { count: [low, high], default } or { switch: true, default: true|false }';
 const SWITCH_WORDS = new Map([['on', true], ['true', true], ['off', false], ['false', false]]);
 const isMapping = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);

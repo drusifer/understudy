@@ -15,6 +15,24 @@ export function themeOf(query, stored) {
   return [query, stored].find((name) => THEMES.includes(name)) ?? THEMES[0];
 }
 
+// Light or dark (UND-38): auto follows the device.
+export const MODES = ['auto', 'light', 'dark'];
+
+/**
+ * The mode chosen: a known `?mode=` wins, then the remembered one, else auto.
+ */
+export function modeChoiceOf(query, stored) {
+  return [query, stored].find((name) => MODES.includes(name)) ?? MODES[0];
+}
+
+/**
+ * The mode shown: the one chosen, or with auto the device's.
+ */
+export function modeOf(choice, isDeviceDark) {
+  if (choice !== 'auto') return choice;
+  return isDeviceDark ? 'dark' : 'light';
+}
+
 /**
  * A `#rrggbb` colour as [r, g, b]; grey for anything else.
  */
@@ -167,6 +185,12 @@ function statusTextOf(on, running) {
   return running ? 'ON AIR' : 'STANDING BY';
 }
 
+// What READY's hint says: what the buttons will do now (UND-39 AC4).
+function readyHintOf(running, paused) {
+  if (!running) return 'PLAY to run, STEP for one move';
+  return paused ? 'STEP for the next move, RESUME to run on' : 'press to stop the run';
+}
+
 // ---------------------------------------------------------------- page --
 
 const $ = (id) => document.querySelector(`#${id}`);
@@ -288,32 +312,50 @@ async function api(path, body) {
  * The console's state, and what draws it.
  */
 function boot() {
-  const state = { rack: [], sketch: null, values: {}, running: false, on: true, current: null, liveEdge: null, open: new Set(), look: null };
+  const state = { rack: [], sketch: null, values: {}, running: false, paused: false, on: true, current: null, liveEdge: null, open: new Set(), look: null };
 
-  // UND-36: the theme - a known ?theme= wins, then the one this browser remembers.
-  const STORE = 'understudy-theme';
-  function remembered() {
+  // UND-36, UND-38: the theme and the mode - a known ?theme= / ?mode= wins,
+  // then the one this browser remembers; auto mode follows the device.
+  function remembered(key) {
     try {
-      return globalThis.localStorage.getItem(STORE);
+      return globalThis.localStorage.getItem(`understudy-${key}`);
     } catch {
       return null;
     }
   }
-  function useTheme(name) {
-    document.documentElement.dataset.theme = name;
-    state.look = themeLook();
-    for (const button of document.querySelectorAll('.theme-choice')) button.setAttribute('aria-pressed', String(button.dataset.theme === name));
+  function remember(key, value) {
+    try {
+      globalThis.localStorage.setItem(`understudy-${key}`, value);
+    } catch { /* not remembered: a blocked store */ }
   }
-  useTheme(themeOf(new URLSearchParams(globalThis.location.search).get('theme'), remembered()));
+  const query = new URLSearchParams(globalThis.location.search);
+  const device = globalThis.matchMedia('(prefers-color-scheme: dark)');
+  const look = { theme: themeOf(query.get('theme'), remembered('theme')), mode: modeChoiceOf(query.get('mode'), remembered('mode')) };
+  function useLook() {
+    const root = document.documentElement;
+    root.dataset.theme = look.theme;
+    root.dataset.mode = modeOf(look.mode, device.matches);
+    state.look = themeLook();
+    for (const button of document.querySelectorAll('.theme-choice')) button.setAttribute('aria-pressed', String(button.dataset.theme === look.theme));
+    for (const button of document.querySelectorAll('.mode-choice')) button.setAttribute('aria-pressed', String(button.dataset.mode === look.mode));
+    if (!state.sketch) return;
+    drawControls();
+    drawTube();
+  }
+  useLook();
+  device.addEventListener('change', useLook);
   for (const button of document.querySelectorAll('.theme-choice')) {
     button.addEventListener('click', () => {
-      useTheme(button.dataset.theme);
-      try {
-        globalThis.localStorage.setItem(STORE, button.dataset.theme);
-      } catch { /* not remembered: a blocked store */ }
-      if (!state.sketch) return;
-      drawControls();
-      drawTube();
+      look.theme = button.dataset.theme;
+      remember('theme', look.theme);
+      useLook();
+    });
+  }
+  for (const button of document.querySelectorAll('.mode-choice')) {
+    button.addEventListener('click', () => {
+      look.mode = button.dataset.mode;
+      remember('mode', look.mode);
+      useLook();
     });
   }
 
@@ -368,16 +410,18 @@ function boot() {
     const fader = element('input', { id, class: 'fader', type: 'range', min: String(low), max: String(high), step: '0.05', value: String(state.values[input.name]), 'aria-orientation': 'vertical' });
     const slot = element('div', { class: 'slot', style: { '--colour': colour } }, element('div', { class: 'ticks', 'aria-hidden': 'true' }), element('div', { class: 'glow', 'aria-hidden': 'true' }), fader);
     const nixie = element('div', { class: 'nixie', style: { '--colour': colour } });
+    const chip = element('span', { class: 'chip', style: { '--colour': colour }, 'aria-hidden': 'true' });
     const update = () => {
       const value = Number(fader.value);
       state.values[input.name] = value;
       nixie.textContent = readoutOf(value, input.range);
       fader.setAttribute('aria-valuetext', value === 0 ? 'off' : value.toFixed(2));
-      slot.style.setProperty('--fill', String((value - low) / (high - low)));
+      // The slot's glow, the LED and the readout all shine as brightly as the fader is set (owner).
+      for (const lit of [slot, chip, nixie]) lit.style.setProperty('--fill', String((value - low) / (high - low)));
       drawTube();
     };
     fader.addEventListener('input', update);
-    const label = element('label', { for: id }, element('span', { class: 'chip', style: { '--colour': colour }, 'aria-hidden': 'true' }), input.name);
+    const label = element('label', { for: id }, chip, input.name);
     const about = input.factors.map((factor) => factorAbout(factor)).join(' · ');
     update();
     const fields = [...input.factors.flatMap((factor) => factorFields(factor)), { label: 'DEFAULT', value: input.default, width: 90, path: ['inputs', input.name, 'default'], parse: Number }];
@@ -448,7 +492,8 @@ function boot() {
   // UND-30: the statechart in the tube, the weights' ring and their blend.
   function drawTube() {
     const { sketch } = state;
-    $('tube-caption').textContent = state.running ? `running · ${state.current ?? ''}` : 'idle';
+    const going = state.paused ? 'paused' : 'running';
+    $('tube-caption').textContent = state.running ? `${going} · ${state.current ?? ''}` : 'idle';
     if (!sketch) return;
     const look = state.look;
     const weights = sketch.inputs.filter((input) => input.kind === 'weight').map((input, index) => ({
@@ -602,9 +647,9 @@ function boot() {
   function showBay(isOpen) {
     $('printer').hidden = isOpen;
     $('bay').hidden = !isOpen;
-    (isOpen ? bay.text : $('remove-printer')).focus();
+    (isOpen ? bay.text : $('open-printer')).focus();
   }
-  $('remove-printer').addEventListener('click', async () => {
+  $('open-printer').addEventListener('click', async () => {
     showBay(true);
     await loadBay();
   });
@@ -623,7 +668,12 @@ function boot() {
     lamp.classList.toggle('off', !on || !state.sketch);
     lamp.setAttribute('aria-label', running ? 'Running' : 'Ready');
     $('ready-text').textContent = running ? 'RUNNING' : 'READY';
-    $('ready-hint').textContent = running ? 'press to stop the run' : 'press to play the sketch';
+    $('ready-hint').textContent = readyHintOf(running, state.paused);
+    // UND-39: STEP idle or paused; PAUSE while running, RESUME while paused.
+    $('step').disabled = !state.sketch || !on || (running && !state.paused);
+    $('pause').disabled = !running;
+    $('pause').textContent = state.paused ? 'RESUME' : 'PAUSE';
+    $('pause').setAttribute('aria-pressed', String(state.paused));
     $('play').classList.toggle('running', running);
     $('play').setAttribute('aria-label', running ? 'Stop the run' : 'Play the sketch');
     $('play-word').textContent = running ? 'STOP' : 'PLAY';
@@ -638,8 +688,12 @@ function boot() {
     $('bay-note').textContent = running ? 'Read-only while a run plays - stop it to edit.' : 'Saved to sketch.yaml as you type. Power off and on for the factory sketch.';
   }
 
+  // The paper reads top to bottom, spool to spool behind glass (owner): a new
+  // print winds on into view unless you have scrolled back to read.
   function print(line) {
-    const paper = $('paper');
+    const window = $('paper-window');
+    const isFollowing = window.scrollHeight - window.scrollTop - window.clientHeight < 40;
+    const paper = document.createDocumentFragment();
     const items = printed(line) ?? [];
     for (const each of items) {
       if (each.table) {
@@ -653,25 +707,36 @@ function boot() {
         paper.append(element('div', { class: `line ${each.tone ?? ''}` }, each.text));
       }
     }
-    const window = $('paper-window');
-    window.scrollTop = window.scrollHeight;
+    $('paper').append(paper);
+    if (isFollowing) window.scrollTop = window.scrollHeight;
   }
 
+  // A tab pressed: the sketch, fresh paper. Not while a run plays.
   async function choose(name) {
     if (state.running) return;
     await flushBay();
+    if (!(await show(name))) return;
+    $('paper').replaceChildren();
+    await loadBay();
+  }
+
+  /**
+   * Draws a sketch: with `playing` (a page opened mid-run), the run's own
+   * values and the state it is in; else the defaults from the start.
+   */
+  async function show(name, playing = null) {
     const { ok, value } = await api(`sketch/${encodeURIComponent(name)}`);
-    if (!ok) return;
+    // A run that started meanwhile wins: its sketch is being shown.
+    if (!ok || (!playing && state.running)) return false;
     state.sketch = value;
-    state.values = startingValues(value.inputs);
-    state.current = value.graph.initial;
+    state.values = { ...startingValues(value.inputs), ...playing?.inputs };
+    state.current = playing ? state.current ?? value.graph.initial : value.graph.initial;
     state.liveEdge = null;
     drawRack();
     drawControls();
     drawTube();
     drawStatus();
-    $('paper').replaceChildren();
-    await loadBay();
+    return true;
   }
 
   $('play').addEventListener('click', async () => {
@@ -685,6 +750,24 @@ function boot() {
     if (!ok) print({ event: 'dashboard', refused: value.problem });
   });
 
+  // UND-39: STEP - idle, start paused and make the first move; paused, one more move.
+  $('step').addEventListener('click', async () => {
+    if (state.running) {
+      await api('step', {});
+      return;
+    }
+    await flushBay();
+    $('paper').replaceChildren();
+    const started = await api('play', { sketch: state.sketch.name, inputs: state.values, paused: true });
+    if (!started.ok) {
+      print({ event: 'dashboard', refused: started.value.problem });
+      return;
+    }
+    await api('step', {});
+  });
+
+  $('pause').addEventListener('click', () => api(state.paused ? 'resume' : 'pause', {}));
+
   $('power').addEventListener('click', async () => {
     state.on = !state.on;
     await api('power', { on: state.on });
@@ -697,13 +780,22 @@ function boot() {
     const line = JSON.parse(message.data);
     if (line.event === 'dashboard' && line.running !== undefined) {
       state.running = line.running;
+      state.paused = line.running && line.paused === true;
+      // A page opened, or left on another sketch, while a run plays shows that run's sketch.
+      if (line.running && line.sketch && line.sketch !== state.sketch?.name) show(line.sketch, line);
+      drawStatus();
+      drawTube();
+    }
+    // UND-39: the run's gate - paused before a move, or running on.
+    if (line.event === 'dashboard' && line.running === undefined && line.paused !== undefined) {
+      state.paused = line.paused;
       drawStatus();
       drawTube();
     }
     // UND-30 AC2: the state the run is in glows; the transition just taken flows.
-    if (line.event === 'state' && state.sketch) {
+    if (line.event === 'state') {
       state.current = line.to;
-      state.liveEdge = state.sketch.graph.edges.findIndex((edge) => edge.from === line.from && edge.to === line.to);
+      state.liveEdge = state.sketch?.graph.edges.findIndex((edge) => edge.from === line.from && edge.to === line.to) ?? null;
       drawTube();
     }
     print(line);
@@ -714,9 +806,11 @@ function boot() {
     state.rack = value;
     drawRack();
     drawStatus();
-    // Open on a sketch with controls to show, else the first that plays.
+    // Open on a sketch with controls to show, else the first that plays -
+    // unless a run is playing, whose sketch is shown instead (above).
     const first = value.find((entry) => entry.ok && entry.inputs > 0) ?? value.find((entry) => entry.ok);
-    if (first) await choose(first.name);
+    if (first && !state.running && !state.sketch) await show(first.name);
+    await loadBay();
   })();
 }
 

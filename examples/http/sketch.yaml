@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../schema/sketch.schema.json
 # The vending machine sketch (docs/SKETCHES.md): the same shape as the
 # other examples - look, make a move when there is something to do, stop
 # once a drink is out.

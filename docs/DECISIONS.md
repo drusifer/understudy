@@ -10,6 +10,38 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+## ADR-0034: Every Jev request carries the run's inputs; `pick.with` is removed
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-17 · **Related**: UND-40, UND-24
+*   **Context**: owner: the questions' wording should follow the parameters ("see all"); fixed words like "two seats" contradicted the tickets input.
+*   **Options**: (1) the run's inputs in every request's state, named in prose as `` `inputs.<name>` ``; (2) per-question `with:` lists, as `pick` had; (3) substituting values into the prose text before asking.
+*   **Decision**: (1). `services.inputs` reaches the library's requests and the MCP app's score request; `pick.with` is removed outright; `check` refuses an undeclared `inputs.<name>`. (3) would put literal values in the prose, which the no-literals rule forbids - Jev reads the path from the state instead.
+*   **Consequences**: + one rule for every question; wording cannot drift from the controls. − every request is a little larger; a sketch that used `with:` must drop it.
+
+## ADR-0033: A run takes the caller's pause gate; the dashboard steps through it
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-17 · **Related**: UND-39, ADR-0016
+*   **Context**: owner: step a run one move at a time from the dashboard, as `--watch` already can.
+*   **Options**: (1) `runSketch({ gate })` - the caller makes a `createGate` and holds it; (2) the dashboard starts each run with `watch` and drives the watch server; (3) a second pause mechanism in the runner.
+*   **Decision**: (1). The run loop already asks `gate.beforeMove()`; the dashboard's runner makes one gate per run, sends its changes to the pages as `{ event: 'dashboard', paused, waiting }`, and exposes `pause`/`step`/`resume`. Without a gate a run is unchanged.
+*   **Consequences**: + one pause mechanism for both pages; paused time stays out of the idle limits. − a run takes either the watch page's gate or the caller's, not both.
+
+## ADR-0032: Light and dark are a `data-mode` attribute; each theme's colours are variables
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-38
+*   **Context**: owner: every theme in light and dark; the mode follows the device unless chosen (LIGHT / DARK / AUTO, remembered).
+*   **Options**: (1) `data-mode` beside `data-theme`, each theme's other mode an override block, colours held in custom properties; (2) six separate theme stylesheets; (3) only `prefers-color-scheme` media queries.
+*   **Decision**: (1). `modeOf(choice, isDeviceDark)` with a `matchMedia` listener sets `data-mode`; professional and starship were rewritten so their other mode only redefines variables; steampunk light is one override file, because steampunk's wood and brass live in `page.css`. Media queries alone (3) could not honour a fixed choice.
+*   **Consequences**: + a mode switch is instant and follows the device live; a new theme declares its variables twice. − steampunk light is an override list that must follow `page.css` when panels change.
+
+## ADR-0031: A hand-written JSON Schema for editors; check stays the full check
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-37
+*   **Context**: owner asked how the YAML is documented; the reference is complete but editors gave no help while typing.
+*   **Options**: (1) a hand-written draft-07 schema for the YAML language server, kept in step with `check` by tests; (2) generate the schema from `check`'s code; (3) make `check` run the schema.
+*   **Decision**: (1). `ajv` (dev only) validates the examples and common mistakes; a test compares the schema's keys, target fields, input kinds and question types with the lists `check` exports. Examples carry a `# yaml-language-server: $schema=` line.
+*   **Consequences**: + completion, hover text and underlines in any YAML-language-server editor, no runtime dependency; `check`'s precise messages unchanged. − the schema is a second description of the format, held to `check` only where the comparison test reaches (deeper rules - names, states, prose - are `check`'s alone).
+
 ## ADR-0030: A weight input is a share of the full weighting (3)
 
 *   **Status**: Accepted · **Deciders**: owner · **Date**: 2026-10-16 · **Related**: UND-24, ADR-0017
@@ -72,6 +104,7 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 *   **Context**: owner: a steampunk console over a folder of sketches - set inputs, press Play, watch.
 *   **Options**: (1) a second local server built like the watch page (token path, local files, SSE) with a small JSON API, running sketches in-process through `runSketch` and reading their stdout lines; (2) extend the per-run watch server; (3) spawn `understudy run` processes.
 *   **Decision**: (1). `listenOn`/`readBody` are shared with the watch server; the watch page's `turnGraph` is reused. A STOP pressed while a run's servers start is held and delivered on its start line.
+*   **Amendment (owner, 2026-10-16)**: the dashboard is served at the root (`http://<host>:<port>/`), with no token in the URL - not needed on the owner's network. With `--host 0.0.0.0` anyone who reaches the port can play and edit sketches; the watch page keeps its token path.
 *   **Consequences**: + the CLI and the console run sketches the same way. − one run at a time; two browsers share it.
 
 ## ADR-0022: Several servers in one MCP target

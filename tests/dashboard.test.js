@@ -1,5 +1,5 @@
 // Sprint 6 UND-27 (ARCH §3, §5, ADR-0023): the dashboard's rack and server -
-// a folder's sketches over a token path, one sketch's controls, refusals.
+// a folder's sketches at the server's root, one sketch's controls, refusals.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { cpSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -52,10 +52,10 @@ test('the evening sketch is described as controls: a mood dial, weights with the
   await assert.rejects(describeSketch('examples', '../src'), /no sketch "\.\.\/src" in examples/);
 });
 
-test('the server: token path, the rack and a sketch as JSON, 404 elsewhere (UND-27 AC1, AC5)', async () => {
+test('the server: at the root, the rack and a sketch as JSON, 404 elsewhere (UND-27 AC1, AC5)', async () => {
   const dashboard = await startDashboard({ folder: 'examples', port: 0 });
   test.after(() => dashboard.close());
-  assert.match(dashboard.url, /^http:\/\/127\.0\.0\.1:\d+\/d\/[\w-]{16}\/$/);
+  assert.match(dashboard.url, /^http:\/\/127\.0\.0\.1:\d+\/$/);
   const page = await fetch(dashboard.url);
   assert.equal(page.status, 200);
   assert.match(await page.text(), /Understudy operations console/);
@@ -66,7 +66,7 @@ test('the server: token path, the rack and a sketch as JSON, 404 elsewhere (UND-
   const missing = await fetch(`${dashboard.url}api/sketch/nope`);
   assert.equal(missing.status, 404);
   assert.deepEqual(await missing.json(), { problem: 'no sketch "nope" in examples' });
-  assert.equal((await fetch(dashboard.url.replace(/\/d\/[^/]+\//, '/d/wrong/'))).status, 404);
+  assert.equal((await fetch(`${dashboard.url}nope.html`)).status, 404);
   assert.equal((await fetch(`${dashboard.url}api/play`, { method: 'POST', body: '{}' })).status, 404, 'no actions wired');
 });
 

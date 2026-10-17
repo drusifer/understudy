@@ -34,7 +34,7 @@ then the stepper and switches). Under 1100 px the columns stack: tube, controls,
 | State tube | a big round vacuum-tube screen with a glass glint | the sketch's statechart on a circle (finals inside); **every state and edge labelled** (event or guard, plus a short note); the current state glows; energy flows along the edges while running |
 | Power ring | arcs around the tube's rim, one per weight in its colour, filled by its value | the decision edge (the move) and a centre orb carry the **blend of the weight colours in the faders' ratio**; shares in % under the orb |
 | Printer | tractor-feed paper rising out of a printer roller, dot-matrix type | the run log prints line by line; ends with the score table, where 1.0 prints as `11` |
-| Behind the printer (sprint 8) | the printer's **REMOVE** button (screws at its corners) swaps it for a dark recessed bay: a cream **cheat-sheet sticker** above a monospace edit box of the whole `sketch.yaml`; the column widens while the bay is open | **saved as you type** (owner, as the drawers), checked first; the tube redraws from each save; a refused text shows its problem and is not saved; **REFIT PRINTER** puts the printer back |
+| Behind the printer (sprint 8) | the printer's **OPEN** release latch (a lever that swings as you press it; screws at the corners) swaps it for a dark recessed bay: a cream **cheat-sheet sticker** above a monospace edit box of the whole `sketch.yaml`; the column widens while the bay is open | **saved as you type** (owner, as the drawers), checked first; the tube redraws from each save; a refused text shows its problem and is not saved; **REFIT PRINTER** puts the printer back |
 
 "11" is only how a perfect 1.0 is shown (owner); the engine rule for it shipped in sprint 5.
 
@@ -50,6 +50,19 @@ colours the script draws on the tube come from CSS custom properties (`--tube-*`
 | Steampunk | walnut, brass and glowing valves (above) |
 | Professional | light grey page, white panels with thin borders, one blue accent, system font; no glows, textures or animations; the tube a flat diagram on a white disc; the printer a plain monospace log |
 | Starship | in the manner of the Enterprise-D's computer screens: black; each panel framed by a thick rounded "elbow" bar (printer orange, tube blue-violet, controls lilac, bay peach); pill buttons; condensed upper-case Antonio lettering; the tube a black display with thin coloured rings; the printer coloured text on black. Original styling - no logos or insignia |
+
+**Light and dark (sprint 11, owner).** Each theme has both; the **MODE** switch picks AUTO (the
+device's setting, followed live), LIGHT or DARK, as `data-mode` on `<html>`. Professional and
+starship keep every colour in custom properties and their other mode only redefines them;
+steampunk light is `theme-steampunk-light.css` over `page.css`.
+
+| Theme | Light | Dark |
+|---|---|---|
+| Steampunk | parchment room, pale maple panels edged in brass, brushed-steel printer; the tube, Nixies, slots, dial well, PLAY and the YAML screen stay dark glass and metal | walnut and brass (default) |
+| Professional | light grey and white (default) | charcoal panels, light text, the blue accent lightened |
+| Starship | the same coloured bars and pills on a pale grey screen, dark readout text | black screen (default) |
+
+The fader LEDs, slot glows and readouts shine in proportion to the fader's setting (owner).
 
 ## Type and colour
 

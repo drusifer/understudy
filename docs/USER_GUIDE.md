@@ -211,9 +211,10 @@ console to play them from instead of a command line:
 bobp make run ARGS="dashboard examples"      # understudy dashboard <folder> [--port N] [--host ADDR]
 ```
 
-It prints `understudy: dashboard at http://127.0.0.1:<port>/d/<token>/`; open it. Like the watch
-page it is served by understudy alone (no internet), on 127.0.0.1 unless you give `--host`, behind
-an unguessable path. Ctrl-C stops it (and any run).
+It prints `understudy: dashboard at http://127.0.0.1:<port>/`; open it. Like the watch page it is
+served by understudy alone (no internet), on 127.0.0.1 unless you give `--host`. There is no token
+in the address: with `--host 0.0.0.0` anyone on your network who can reach the port can play the
+sketches and edit them. Ctrl-C stops it (and any run).
 
 ![The dashboard with the evening sketch chosen](images/dashboard.png)
 
@@ -249,11 +250,22 @@ an unguessable path. Ctrl-C stops it (and any run).
   and blue bars, pill buttons, condensed lettering). It switches at once, even during a run, and
   the browser remembers it; `?theme=professional` (or `starship`, `steampunk`) on the link opens
   in that theme.
+- **MODE** (under THEME): **AUTO** follows your device's light or dark setting (and changes with
+  it), **LIGHT** and **DARK** fix it. Every theme has both: steampunk light is parchment and pale
+  maple (the tube and the readouts stay dark glass), professional dark is charcoal, starship light
+  keeps its coloured bars on a pale screen. Remembered like the theme; `?mode=light` / `dark` /
+  `auto` on the link.
 
-  ![The professional theme](images/dashboard-professional.png)
-  ![The starship theme](images/dashboard-starship.png)
+  | | Light | Dark |
+  |---|---|---|
+  | Steampunk | ![](images/dashboard-steampunk-light.png) | ![](images/dashboard.png) |
+  | Professional | ![](images/dashboard-professional.png) | ![](images/dashboard-professional-dark.png) |
+  | Starship | ![](images/dashboard-starship-light.png) | ![](images/dashboard-starship.png) |
 
-- **Behind the printer**: **REMOVE** takes the printer off and shows the sketch's whole
+- **Faders' lights**: each fader's LED, the glow in its slot and its readout shine as brightly as
+  the fader is set - dim near OFF, full at 11.
+
+- **Behind the printer**: the **OPEN** release latch swings the printer away and shows the sketch's whole
   `sketch.yaml` in an edit box, with a cheat-sheet sticker of the keys, the `turn:` shapes and the
   input kinds. Half a second after you stop typing, the text is checked and **saved**, and the
   tube, controls and rack redraw from it - add or rename a state and watch it appear. Text the
