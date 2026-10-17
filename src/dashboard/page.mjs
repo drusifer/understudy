@@ -15,6 +15,24 @@ export function themeOf(query, stored) {
   return [query, stored].find((name) => THEMES.includes(name)) ?? THEMES[0];
 }
 
+// Light or dark (UND-38): auto follows the device.
+export const MODES = ['auto', 'light', 'dark'];
+
+/**
+ * The mode chosen: a known `?mode=` wins, then the remembered one, else auto.
+ */
+export function modeChoiceOf(query, stored) {
+  return [query, stored].find((name) => MODES.includes(name)) ?? MODES[0];
+}
+
+/**
+ * The mode shown: the one chosen, or with auto the device's.
+ */
+export function modeOf(choice, isDeviceDark) {
+  if (choice !== 'auto') return choice;
+  return isDeviceDark ? 'dark' : 'light';
+}
+
 /**
  * A `#rrggbb` colour as [r, g, b]; grey for anything else.
  */
@@ -290,30 +308,48 @@ async function api(path, body) {
 function boot() {
   const state = { rack: [], sketch: null, values: {}, running: false, on: true, current: null, liveEdge: null, open: new Set(), look: null };
 
-  // UND-36: the theme - a known ?theme= wins, then the one this browser remembers.
-  const STORE = 'understudy-theme';
-  function remembered() {
+  // UND-36, UND-38: the theme and the mode - a known ?theme= / ?mode= wins,
+  // then the one this browser remembers; auto mode follows the device.
+  function remembered(key) {
     try {
-      return globalThis.localStorage.getItem(STORE);
+      return globalThis.localStorage.getItem(`understudy-${key}`);
     } catch {
       return null;
     }
   }
-  function useTheme(name) {
-    document.documentElement.dataset.theme = name;
-    state.look = themeLook();
-    for (const button of document.querySelectorAll('.theme-choice')) button.setAttribute('aria-pressed', String(button.dataset.theme === name));
+  function remember(key, value) {
+    try {
+      globalThis.localStorage.setItem(`understudy-${key}`, value);
+    } catch { /* not remembered: a blocked store */ }
   }
-  useTheme(themeOf(new URLSearchParams(globalThis.location.search).get('theme'), remembered()));
+  const query = new URLSearchParams(globalThis.location.search);
+  const device = globalThis.matchMedia('(prefers-color-scheme: dark)');
+  const look = { theme: themeOf(query.get('theme'), remembered('theme')), mode: modeChoiceOf(query.get('mode'), remembered('mode')) };
+  function useLook() {
+    const root = document.documentElement;
+    root.dataset.theme = look.theme;
+    root.dataset.mode = modeOf(look.mode, device.matches);
+    state.look = themeLook();
+    for (const button of document.querySelectorAll('.theme-choice')) button.setAttribute('aria-pressed', String(button.dataset.theme === look.theme));
+    for (const button of document.querySelectorAll('.mode-choice')) button.setAttribute('aria-pressed', String(button.dataset.mode === look.mode));
+    if (!state.sketch) return;
+    drawControls();
+    drawTube();
+  }
+  useLook();
+  device.addEventListener('change', useLook);
   for (const button of document.querySelectorAll('.theme-choice')) {
     button.addEventListener('click', () => {
-      useTheme(button.dataset.theme);
-      try {
-        globalThis.localStorage.setItem(STORE, button.dataset.theme);
-      } catch { /* not remembered: a blocked store */ }
-      if (!state.sketch) return;
-      drawControls();
-      drawTube();
+      look.theme = button.dataset.theme;
+      remember('theme', look.theme);
+      useLook();
+    });
+  }
+  for (const button of document.querySelectorAll('.mode-choice')) {
+    button.addEventListener('click', () => {
+      look.mode = button.dataset.mode;
+      remember('mode', look.mode);
+      useLook();
     });
   }
 
@@ -368,16 +404,18 @@ function boot() {
     const fader = element('input', { id, class: 'fader', type: 'range', min: String(low), max: String(high), step: '0.05', value: String(state.values[input.name]), 'aria-orientation': 'vertical' });
     const slot = element('div', { class: 'slot', style: { '--colour': colour } }, element('div', { class: 'ticks', 'aria-hidden': 'true' }), element('div', { class: 'glow', 'aria-hidden': 'true' }), fader);
     const nixie = element('div', { class: 'nixie', style: { '--colour': colour } });
+    const chip = element('span', { class: 'chip', style: { '--colour': colour }, 'aria-hidden': 'true' });
     const update = () => {
       const value = Number(fader.value);
       state.values[input.name] = value;
       nixie.textContent = readoutOf(value, input.range);
       fader.setAttribute('aria-valuetext', value === 0 ? 'off' : value.toFixed(2));
-      slot.style.setProperty('--fill', String((value - low) / (high - low)));
+      // The slot's glow, the LED and the readout all shine as brightly as the fader is set (owner).
+      for (const lit of [slot, chip, nixie]) lit.style.setProperty('--fill', String((value - low) / (high - low)));
       drawTube();
     };
     fader.addEventListener('input', update);
-    const label = element('label', { for: id }, element('span', { class: 'chip', style: { '--colour': colour }, 'aria-hidden': 'true' }), input.name);
+    const label = element('label', { for: id }, chip, input.name);
     const about = input.factors.map((factor) => factorAbout(factor)).join(' · ');
     update();
     const fields = [...input.factors.flatMap((factor) => factorFields(factor)), { label: 'DEFAULT', value: input.default, width: 90, path: ['inputs', input.name, 'default'], parse: Number }];

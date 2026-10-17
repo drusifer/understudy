@@ -1,10 +1,11 @@
 <!doctype html>
-<html lang="en" data-theme="steampunk">
+<html lang="en" data-theme="steampunk" data-mode="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Understudy operations console</title>
 <link rel="stylesheet" href="page.css">
+<link rel="stylesheet" href="theme-steampunk-light.css">
 <link rel="stylesheet" href="theme-professional.css">
 <link rel="stylesheet" href="theme-starship.css">
 <script type="module" src="page.mjs"></script>
@@ -19,11 +20,19 @@
       <div class="subtitle">OPERATIONS CONSOLE</div>
     </div>
   </div>
-  <div class="theme-switch" role="group" aria-label="Theme">
-    <span class="theme-label">THEME</span>
-    <button type="button" class="theme-choice" data-theme="steampunk" aria-pressed="true">STEAMPUNK</button>
-    <button type="button" class="theme-choice" data-theme="professional" aria-pressed="false">PROFESSIONAL</button>
-    <button type="button" class="theme-choice" data-theme="starship" aria-pressed="false">STARSHIP</button>
+  <div class="looks">
+    <div class="theme-switch" role="group" aria-label="Theme">
+      <span class="theme-label">THEME</span>
+      <button type="button" class="theme-choice" data-theme="steampunk" aria-pressed="true">STEAMPUNK</button>
+      <button type="button" class="theme-choice" data-theme="professional" aria-pressed="false">PROFESSIONAL</button>
+      <button type="button" class="theme-choice" data-theme="starship" aria-pressed="false">STARSHIP</button>
+    </div>
+    <div class="theme-switch" role="group" aria-label="Light or dark">
+      <span class="theme-label">MODE</span>
+      <button type="button" class="mode-choice" data-mode="auto" aria-pressed="true" title="Follow this device's light or dark setting">AUTO</button>
+      <button type="button" class="mode-choice" data-mode="light" aria-pressed="false">LIGHT</button>
+      <button type="button" class="mode-choice" data-mode="dark" aria-pressed="false">DARK</button>
+    </div>
   </div>
   <div class="status">
     <span id="status-lamp" class="lamp standby" aria-hidden="true"></span>

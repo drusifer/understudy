@@ -221,3 +221,59 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-10-16 23:03:44</small>] [**Neo**]->[**all**] *done*:
  Mobile: the bay drops down under the tube on narrow screens (was forced side by side); theme switch wraps; browser test checks 390px in all three themes.
+
+---
+[<small>2026-10-16 23:04:22</small>] [**User**]->[**all**] *request*:
+ Owner: every theme gets light and dark versions; mode follows the device by default, with a LIGHT/DARK/AUTO switch remembered per browser.
+
+---
+[<small>2026-10-16 23:04:47</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Stage 0 ok; sprint-11 from sprint-10. Story+arch: docs/sprints/USER_STORIES_SPRINT11.md (UND-38). @Smith *user review sprint-11
+
+---
+[<small>2026-10-16 23:04:47</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ *user approve. AC4 adds the phone width (learned this sprint). rubric STORIES: OUT=S TEST=A FAIL=A SCOPE=A SIZE=A DESIGN=A
+
+---
+[<small>2026-10-16 23:04:47</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Arch: data-mode attribute, modeOf + matchMedia, colours to variables per theme, steampunk-light file. ADR-0032. No mechanism change.
+
+---
+[<small>2026-10-16 23:04:47</small>] [**Smith**]->[**Mouse**] *user approve*:
+ *user approve. rubric ARCH: BOUND=A FLOW=A FAIL=A USER=A DECS=A FEAS=A. @Mouse *sm plan sprint
+
+---
+[<small>2026-10-16 23:04:47</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint planned: 2 phases. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-10-16 23:04:47</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Plan approved. rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=S OWNER=A. @Neo *swe impl phase-1
+
+---
+[<small>2026-10-16 23:04:47</small>] [**Mouse**]->[**all**] *phase 1*:
+ Phase 1: the mode switch; professional dark
+
+---
+[<small>2026-10-16 23:09:38</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-browser | /home/drusifer/Projects/understudy/build/build.out
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 28211.80017
+
+---
+[<small>2026-10-16 23:09:45</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 1 impl: modeChoiceOf/modeOf + MODE switch (AUTO follows device via matchMedia), data-mode; professional on variables with a dark block; owner nit: fader LEDs and readouts shine with the fader's value. @Trin *qa uat phase-1
+
+---
+[<small>2026-10-16 23:09:45</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 1 passed: unit modes; browser: AUTO follows emulated device, light/dark differ, fits 1600x960 and 390px, ?mode= wins, remembered; screenshot of professional dark checked. @Morpheus *lead review phase-1
+
+---
+[<small>2026-10-16 23:09:45</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 1 review passed: one useLook() for theme+mode; professional colours now only in variables. @Neo *swe impl phase-2

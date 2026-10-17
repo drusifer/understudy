@@ -163,7 +163,8 @@ test('the THEME switch: each theme restyles the page, is remembered, ?theme= win
     await dashboard.close();
     rmSync(logRoot, { recursive: true, force: true });
   });
-  const page = await browser.newPage({ viewport: { width: 1600, height: 960 } });
+  // A dark device, so AUTO shows each theme's dark look.
+  const page = await browser.newPage({ viewport: { width: 1600, height: 960 }, colorScheme: 'dark' });
   const errors = [];
   page.on('pageerror', (error) => {
     errors.push(error.message);
@@ -204,5 +205,60 @@ test('the THEME switch: each theme restyles the page, is remembered, ?theme= win
   await page.click('.theme-choice[data-theme="starship"]');
   await until(page, () => document.querySelector('#paper').textContent.includes('Ticket issued'));
   await until(page, () => document.querySelector('#play-word').textContent === 'PLAY');
+  assert.deepEqual(errors, []);
+});
+
+// Sprint 11 UND-38: every theme in light and dark; AUTO follows the device.
+const MODED = ['professional'];
+
+test('the MODE switch: each theme has a light and a dark look, AUTO follows the device, ?mode= wins, remembered, fits', async () => {
+  const dashboard = await serveDashboard({ folder: 'examples', port: 0, environment: { ...process.env, TYPESAFE_API_KEY: 'test' } });
+  test.after(() => dashboard.close());
+  const page = await browser.newPage({ viewport: { width: 1600, height: 960 }, colorScheme: 'light' });
+  const errors = [];
+  page.on('pageerror', (error) => {
+    errors.push(error.message);
+  });
+  const mode = () => page.evaluate(() => document.documentElement.dataset.mode);
+  const looks = () => page.evaluate(() => {
+    const style = globalThis.getComputedStyle;
+    return { page: style(document.body).backgroundColor, text: style(document.querySelector('.controls-head h2')).color };
+  });
+  const fits = () => page.evaluate(() => document.scrollingElement.scrollHeight <= globalThis.innerHeight && document.scrollingElement.scrollWidth <= globalThis.innerWidth);
+  const narrow = () => page.evaluate(() => document.scrollingElement.scrollWidth <= globalThis.innerWidth);
+  await page.goto(dashboard.url);
+  await until(page, () => document.querySelector('#tube svg') && document.querySelector('.controls-head h2').textContent !== '…');
+
+  // AC1: AUTO by default, following the device - and changing with it.
+  assert.equal(await page.getAttribute('.mode-choice[data-mode="auto"]', 'aria-pressed'), 'true');
+  assert.equal(await mode(), 'light');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await until(page, () => document.documentElement.dataset.mode === 'dark');
+
+  // AC2, AC4: each theme, light and dark, looks different, keeps its text readable from its page, and fits.
+  for (const name of MODED) {
+    await page.click(`.theme-choice[data-theme="${name}"]`);
+    const seen = {};
+    for (const each of ['light', 'dark']) {
+      await page.click(`.mode-choice[data-mode="${each}"]`);
+      assert.equal(await mode(), each);
+      seen[each] = await looks();
+      assert.notEqual(seen[each].page, seen[each].text, `${name} ${each}: text differs from the page`);
+      assert.ok(await fits(), `${name} ${each} fits 1600x960`);
+      await page.setViewportSize({ width: 390, height: 844 });
+      assert.ok(await narrow(), `${name} ${each}: nothing scrolls sideways on a phone`);
+      await page.setViewportSize({ width: 1600, height: 960 });
+    }
+    assert.notEqual(seen.light.page, seen.dark.page, `${name}: light and dark differ`);
+  }
+
+  // AC1: remembered across a reload; ?mode= wins; an unknown one is ignored.
+  await page.reload();
+  await until(page, () => document.querySelector('#tube svg'));
+  assert.equal(await mode(), 'dark');
+  await page.goto(`${dashboard.url}?mode=light`);
+  assert.equal(await mode(), 'light');
+  await page.goto(`${dashboard.url}?mode=dim`);
+  assert.equal(await mode(), 'dark');
   assert.deepEqual(errors, []);
 });

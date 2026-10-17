@@ -24,6 +24,7 @@ const FILES = {
   '': [path.join(HERE, 'page.html'), 'text/html; charset=utf-8'],
   'page.mjs': [path.join(HERE, 'page.mjs'), 'text/javascript; charset=utf-8'],
   'page.css': [path.join(HERE, 'page.css'), 'text/css; charset=utf-8'],
+  'theme-steampunk-light.css': [path.join(HERE, 'theme-steampunk-light.css'), 'text/css; charset=utf-8'],
   'theme-professional.css': [path.join(HERE, 'theme-professional.css'), 'text/css; charset=utf-8'],
   'theme-starship.css': [path.join(HERE, 'theme-starship.css'), 'text/css; charset=utf-8'],
   'tube.mjs': [path.join(HERE, 'tube.mjs'), 'text/javascript; charset=utf-8'],

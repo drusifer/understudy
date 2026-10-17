@@ -1,17 +1,19 @@
-# Sprint 10 Task Board: A schema for sketch.yaml (Tier 2)
+# Sprint 11 Task Board: Light and dark (Tier 2)
 
-*   **Goal**: `schema/sketch.schema.json` so editors complete and flag `sketch.yaml` as you type; kept in step with `check` by tests.
-*   **Tier**: Tier 2 · **Points**: 3 (UND-37) · **Branch**: `sprint-10`
-*   **Story + Arch**: `docs/sprints/USER_STORIES_SPRINT10.md`
-*   **Status**: Complete - launched 2026-10-16; merge to main awaiting owner
+*   **Goal**: every theme in a light and a dark version; a MODE switch (AUTO follows the device, LIGHT, DARK), remembered per browser.
+*   **Tier**: Tier 2 · **Points**: 5 (UND-38) · **Branch**: `sprint-11` (from `sprint-10`)
+*   **Story + Arch**: `docs/sprints/USER_STORIES_SPRINT11.md`
+*   **Status**: In progress - planned 2026-10-16
 
-## Phase 1: The schema and its tests - UND-37 AC1, AC3-5
-- [x] **Task 1.1:** `*impl` tests first (ajv: examples pass, broken ones fail with their path; lists match `check`'s); then `schema/sketch.schema.json`; export the lists. (*Owner: Neo*)
-- [x] **Task 1.2:** `*uat` + review, commit `Phase 1`. (*Owner: Trin → Morpheus*)
+## Phase 1: The mode switch; professional dark - UND-38 AC1, AC2 (professional), AC3-4
+- [ ] **Task 1.1:** `*impl` `modeOf` (TDD) + MODE switch + matchMedia; `data-mode`; redraw on change. (*Owner: Neo*)
+- [ ] **Task 1.2:** `*impl` professional on variables, its dark block; browser test (modes, AUTO, `?mode=`, reload, fits). (*Owner: Neo*)
+- [ ] **Task 1.3:** `*uat` + review, commit `Phase 1`. (*Owner: Trin → Morpheus*)
 
-## Phase 2: Editors find it - UND-37 AC2
-- [x] **Task 2.1:** `*impl` `# yaml-language-server: $schema=` line in every example; SKETCHES "Editor help"; README. (*Owner: Neo, Oracle*)
-- [x] **Task 2.2:** `*uat` + review, commit `Phase 2`. (*Owner: Trin → Morpheus*)
+## Phase 2: Steampunk light, starship light - UND-38 AC2-4
+- [ ] **Task 2.1:** `*impl` `theme-steampunk-light.css`; starship on variables, its light block; test covers all six. (*Owner: Neo*)
+- [ ] **Task 2.2:** USER_GUIDE, DASHBOARD table, screenshots. (*Owner: Oracle*)
+- [ ] **Task 2.3:** `*uat` + review, commit `Phase 2`. (*Owner: Trin → Morpheus*)
 
 ## Close
-- [x] Tank sdlc-check · Oracle groom (ADR-0031, changelog) · Smith test · retro · launch.
+- [ ] Tank sdlc-check · Oracle groom (ADR-0032, changelog) · Smith test · retro · launch.
