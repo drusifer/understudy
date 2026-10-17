@@ -151,7 +151,8 @@ async function playSketch({ sketch, inputs, limit, stream, logDirectory, logFile
     const declared = Object.keys(inputs).length > 0 ? { inputs } : {};
     write({ event: 'start', sketch: sketch.name, plays: target.describe(), ...declared, turn: sketch.turn, at: new Date(clock()).toISOString() });
     stderr.write(`understudy: playing ${sketch.name} (${target.describe()}) - log ${shown(logFile)}\n`);
-    Object.assign(sketch.services, { target, judge, name: 'understudy', player: sketch.player, app: sketch.app });
+    // UND-40: every Jev request carries the run's inputs (services.inputs).
+    Object.assign(sketch.services, { target, judge, name: 'understudy', player: sketch.player, app: sketch.app, inputs });
     run.seat = new MachineSeat({ machine: sketch.machine, services: sketch.services, pollMs, clock });
     await playUntilDone({ run, target, steps: limit, waits: { firstMoveMs, stallMs }, clock, interrupts, write, stderr, gate });
   } catch (error) {

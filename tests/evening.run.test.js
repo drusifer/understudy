@@ -44,14 +44,15 @@ async function playEvening({ inputs = [], environment = process.env } = {}) {
   test.after(() => rmSync(logRoot, { recursive: true, force: true }));
   let stdout = '';
   let stderr = '';
+  const judge = eveningJudge();
   await runSketch('examples/evening', {
     inputs, environment,
     stdout: { write: (text) => { stdout += text; } }, stderr: { write: (text) => { stderr += text; } },
-    makeJudge: () => eveningJudge(), logRoot, pollMs: 20, steps: 30,
+    makeJudge: () => judge, logRoot, pollMs: 20, steps: 30,
     signals: new EventEmitter(), // eslint-disable-line unicorn/prefer-event-target -- stands in for `process`
   });
   const lines = stdout.trim().split('\n').map((line) => JSON.parse(line));
-  return { lines, steps: lines.filter((line) => line.step), stderr };
+  return { lines, steps: lines.filter((line) => line.step), stderr, requests: judge.requests };
 }
 
 test('the evening books two central seats in row E for an evening horror film (UND-26 AC1)', async () => {
@@ -93,7 +94,10 @@ test('the evenings switch off lets afternoon showings qualify (UND-28 AC3, UND-3
 });
 
 test('three tickets: three side-by-side seats, on the ticket (UND-34 AC3)', async () => {
-  const { steps } = await playEvening({ inputs: ['tickets=3'] });
+  const { steps, requests } = await playEvening({ inputs: ['tickets=3'] });
+  // UND-40 AC4: every Jev request sees the inputs; the questions name them.
+  assert.ok(requests.length > 0 && requests.every((request) => request.state.inputs?.tickets === 3), 'every request carries inputs.tickets 3');
+  assert.ok(requests.some((request) => Object.values(request.questions).some((question) => question.instructions.includes('`inputs.tickets`'))));
   const hold = steps.find((line) => line.move === 'tool:boxoffice/pick_seats');
   assert.equal(hold.response.call.arguments.count, 3);
   const [decided] = hold.decided;

@@ -426,3 +426,23 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-10-17 01:41:48</small>] [**Cypher**]->[**all**] *pm launch*:
  SDLC check passed. Docs groomed: ADR-0033, CHANGELOG, BACKLOG. User test passed (screenshot). Retro: reused the watch gate cleanly. *pm launch sprint-12. Merge awaiting owner.
+
+---
+[<small>2026-10-17 01:45:07</small>] [**User**]->[**all**] *request*:
+ Owner: every Jev question sees all the run's inputs (inputs.<name> in its state); then the evening's questions use them.
+
+---
+[<small>2026-10-17 01:45:39</small>] [**Mouse**]->[**all**] *phase 1*:
+ Stage 0 ok; sprint-13. Story+arch: docs/sprints/USER_STORIES_SPRINT13.md (UND-40). Gates: Smith approve (STORIES OUT=S TEST=S FAIL=A SCOPE=A SIZE=A DESIGN=A; ARCH all A). Plan: 2 phases, Morpheus approved. @Neo *swe impl phase-1
+
+---
+[<small>2026-10-17 01:49:32</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+1:49AM INF 1 commits scanned.
+1:49AM INF scanned ~8134 bytes (8.13 KB) in 246ms
+1:49AM INF no leaks found
+
+---
+[<small>2026-10-17 01:49:32</small>] [**Neo**]->[**Tank**] *swe handoff*:
+ Phases 1+2 impl (coupled: the evening used pick.with): services.inputs into every request (play, arguments, judge, scores); pick.with removed; check refuses undeclared inputs.<name> in prose; evening questions use inputs.tickets/mood/evenings; schema + SKETCHES. UAT: check green, tickets=3 run sends it. Review passed.

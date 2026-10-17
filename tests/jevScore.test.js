@@ -6,7 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { startTarget } from '../src/targets/mcp.mjs';
 import { mcpApp } from '../src/apps/mcp.mjs';
-import { fillArguments } from '../src/library.mjs';
+import { fillArguments, withInputs } from '../src/library.mjs';
 
 const from = 'examples/evening/sketch.yaml';
 const SPEC = { kind: 'mcp', servers: [
@@ -47,7 +47,7 @@ function scoringJudge() {
 async function evening() {
   const target = await startTarget(SPEC, { directory: 'examples/evening', environment: process.env });
   test.after(() => target.close());
-  const app = mcpApp({ decide: DECIDE, questions: QUESTIONS, pick: { instructions: 'Choose for yourself and a friend, in the mood for `inputs.mood`.', with: ['mood'] } });
+  const app = mcpApp({ decide: DECIDE, questions: QUESTIONS, pick: { instructions: 'Choose for yourself and a friend, in the mood for `inputs.mood`.' } });
   app.inputs = { mood: 'fun', audience: 2 };
   app.weights = { audience: 2 };
   const judge = scoringJudge();
@@ -88,21 +88,23 @@ test('Jev scores the passing rows once, in one request; enthusiastic reviews ran
   assert.deepEqual(jev, { asked: 0, reused: 4 });
 });
 
-test('the final pick carries the pick instructions and the inputs it is told (UND-24 AC3)', async () => {
-  const { call } = await evening();
+test('the final pick carries the pick instructions; every request sees the inputs (UND-24 AC3, UND-40 AC1)', async () => {
+  const { app, judge: scorer, call } = await evening();
   await call({ server: 'boxoffice', tool: 'list_films', arguments: {} });
   let moves;
   for (const title of TITLES) moves = await call({ server: 'ratings', tool: 'rating', arguments: { title } });
+  assert.deepEqual(scorer.requests[0].state.inputs, app.inputs, 'the score questions see the inputs');
   const move = moves.offered.find((each) => each.id === 'tool:boxoffice/seat_map');
-  assert.deepEqual(move.told, { mood: 'fun' });
   const requests = [];
   const judge = { async systemOne(request) {
     requests.push(request);
     return { answers: { argument_showing: { choice: 'v2' } } };
   } };
-  const filled = await fillArguments({ judge, state: { tools: [] }, question: { instructions: 'Buy tickets.' }, move, phase: 'asking' });
+  const state = withInputs({ inputs: app.inputs }, { tools: [] });
+  assert.deepEqual(withInputs({ inputs: {} }, { tools: [] }), { tools: [] }, 'no inputs, no `inputs`');
+  const filled = await fillArguments({ judge, state, question: { instructions: 'Buy tickets.' }, move, phase: 'asking' });
   assert.deepEqual(filled, { showing: 's13' });
-  assert.deepEqual(requests[0].state.inputs, { mood: 'fun' });
+  assert.deepEqual(requests[0].state.inputs, app.inputs);
   assert.match(requests[0].questions.argument_showing.instructions, /^Choose for yourself and a friend, in the mood for `inputs\.mood`\. You are calling/);
 });
 

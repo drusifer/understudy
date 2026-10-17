@@ -129,7 +129,7 @@ export function genericLibrary(services) {
         fn: async ({ input }) => {
           const view = input.event.view ?? await services.target.view();
           const talk = input.event.talk ?? await services.target.talk();
-          const projected = services.app.project(view, input.context, input.phase);
+          const projected = withInputs(services, services.app.project(view, input.context, input.phase));
           const state = { ...projected, talk: talk.map(({ name, text }) => ({ name, text })) };
           const names = [input.question, ...(input.also ?? [])];
           const questions = Object.fromEntries(names.map((each) => [each, asked(services.questions[each])]));
@@ -166,10 +166,19 @@ export function genericLibrary(services) {
   };
 }
 
+/**
+ * A request's state with the run's inputs as `inputs`, when it has any
+ * (UND-40): every question can name them, e.g. `inputs.tickets`.
+ */
+export function withInputs(services, state) {
+  const { inputs = {} } = services;
+  return Object.keys(inputs).length > 0 ? { ...state, inputs } : state;
+}
+
 async function play(services, { context, phase, question: questionName }) {
   const { target, judge, app, player = {} } = services;
   const view = await target.view();
-  const state = app.project(view, context, phase);
+  const state = withInputs(services, app.project(view, context, phase));
   const options = app.options(state, phase, context);
   const question = services.questions[questionName];
   const criteria = criteriaFor(question, options);
@@ -225,7 +234,7 @@ export async function fillArguments({ judge, state, question, move, phase }) {
   const open = move.open.filter((each) => !Object.hasOwn(taken, each.name));
   if (open.length === 0) return taken;
   const { questions, read } = argumentQuestions({ instructions: question.instructions, tool: move.call.tool, open });
-  const asked = { ...state, chosen: move.id, ...(move.told && { inputs: move.told }) };
+  const asked = { ...state, chosen: move.id };
   const ask = async () => {
     const response = await judge.systemOne({ state: asked, questions });
     return read(response.answers);

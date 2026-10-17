@@ -246,11 +246,14 @@ test('inputs, ask factors and pick are checked against what the sketch declares 
   await assert.rejects(checkSketch(asksChoice), /decide\.seat_map\.showing\.scores\.audience\.ask: names "next" - it must be a type: score question under questions:/);
   const undeclared = mcpSketch(target, 'decide:\n  pick_seats.seat: { scores: { centre: { range: [0.3, 1], weight: centre } } }\n');
   await assert.rejects(checkSketch(undeclared), /decide\.pick_seats\.seat\.scores\.centre\.weight: names input "centre" - declare it under inputs: as \{ weight: \[low, high\], default \}/);
-  const pickUnknown = mcpSketch(target, `${inputs}pick: { instructions: Choose one you would enjoy., with: [centre] }\n`);
-  await assert.rejects(checkSketch(pickUnknown), /pick\.with: "centre" is not a choice input declared under inputs:/);
+  // UND-40: every question sees all the inputs - no `with:`, and only declared ones are named.
+  const pickWith = mcpSketch(target, `${inputs}pick: { instructions: Choose one you would enjoy., with: [mood] }\n`);
+  await assert.rejects(checkSketch(pickWith), /pick\.with: not a pick field \(known: instructions\) - every question sees all the inputs/);
+  const pickUnknown = mcpSketch(target, `${inputs}pick: { instructions: 'In the mood for \`inputs.moud\`.' }\n`);
+  await assert.rejects(checkSketch(pickUnknown), /pick\.instructions: `inputs\.moud`: no input "moud" - did you mean "mood"\?/);
   const badDefault = mcpSketch(target, 'inputs:\n  centre: { weight: [0, 3], default: 5 }\n');
   await assert.rejects(checkSketch(badDefault), /inputs\.centre\.default: must be between 0 and 3, got 5/);
-  const good = mcpSketch(target, `${inputs}pick: { instructions: Choose one you would enjoy., with: [mood] }\n`);
+  const good = mcpSketch(target, `${inputs}pick: { instructions: 'Choose the one you would enjoy, in the mood for \`inputs.mood\`.' }\n`);
   assert.deepEqual((await loadSketch(good)).inputs.mood.default, 'fun');
 });
 

@@ -351,13 +351,18 @@ inputs:
   evenings: { switch: true, default: true }
   tickets:  { count: [1, 4], default: 2 }
 pick:                                  # the final Choice among a shortlist
-  instructions: You are choosing for yourself and a friend, in the mood for something `inputs.mood`.
-  with: [mood]                         # the choice inputs Jev is told
+  instructions: You are choosing for a party of `inputs.tickets`, in the mood for something `inputs.mood`.
 ```
+
+**Every question sees the inputs.** Each Jev request - the move, its arguments, a judge, the
+score questions and the pick - carries the run's inputs as `inputs` in its state, so any
+question's wording can name one in backticks: `` `inputs.tickets` ``, `` `inputs.mood` ``.
+`check` refuses a name the sketch does not declare (`` `inputs.moud`: no input "moud" - did you
+mean "mood"? ``). This is how wording follows the controls instead of fixing a number in prose.
 
 | Kind | Written | Its value | `--input` | Used by | Dashboard |
 |---|---|---|---|---|---|
-| choice | `choose: [word, ...]` - a non-empty list of words | one of the words | `mood=romantic` | `pick.with` (Jev is told it), `` `inputs.<name>` `` in pick instructions | pointer dial |
+| choice | `choose: [word, ...]` - a non-empty list of words | one of the words | `mood=romantic` | `` `inputs.<name>` `` in any question | pointer dial |
 | weight | `weight: [low, high]` - two numbers, low first | any number in the range | `centre=7.5` | a score's `weight: <name>`; a gate bound or `values:` list as `{ input: }` | fader |
 | count | `count: [low, high]` - two whole numbers, low first | a whole number in the range | `tickets=3` | a gate bound or `values:` list as `{ input: }` | brass stepper |
 | switch | `switch: true` | on or off | `evenings=off` (`on/off`, `true/false`) | a gate test's `when: <name>` | toggle with a lamp |

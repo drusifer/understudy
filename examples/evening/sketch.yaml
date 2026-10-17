@@ -43,16 +43,17 @@ questions:
   next:
     type: choice
     instructions: >-
-      You are booking a night at the cinema for yourself and a friend. `tools` are what the box
-      office and the ratings service let you do, and `last_call` is what was last said. Find out
-      what is on and how good it is, look at the seats of a showing worth seeing, hold two seats
-      and pay for them.
+      You are booking the cinema for a party of `inputs.tickets`, in the mood for something
+      `inputs.mood`; while `inputs.evenings` is on, only an evening showing will do. `tools` are
+      what the box office and the ratings service let you do, and `last_call` is what was last
+      said. Find out what is on and how good it is, look at the seats of a showing worth seeing,
+      hold `inputs.tickets` seats side by side and pay for them.
   audience:
     type: score
     looks_at: reviews
     instructions: >-
-      Judging by these audience reviews, how much would someone who loves horror films enjoy
-      this one?
+      Judging by these audience reviews, how much would a horror lover in the mood for something
+      `inputs.mood` enjoy this one?
     levels:
       - Bored, or walked out
       - Mixed, a few good moments
@@ -83,9 +84,8 @@ decide:
 
 pick:
   instructions: >-
-    You are choosing for yourself and a friend tonight, in the mood for something `inputs.mood`.
+    You are choosing for a party of `inputs.tickets`, in the mood for something `inputs.mood`.
     Every option here already suits you; choose the one you would enjoy most.
-  with: [mood]
 
 turn:
   initial: waiting

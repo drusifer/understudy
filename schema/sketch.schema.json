@@ -50,8 +50,7 @@
       "type": "object", "additionalProperties": false, "required": ["instructions"],
       "description": "mcp only: the final Choice among a shortlist.",
       "properties": {
-        "instructions": { "type": "string", "description": "How the person chooses; refer to state by path in backticks, no literals." },
-        "with": { "type": "array", "items": { "type": "string" }, "description": "The choice inputs Jev is told." }
+        "instructions": { "type": "string", "description": "How the person chooses; refer to state by path in backticks (e.g. `inputs.mood`), no literals." }
       }
     },
     "questions": {

@@ -144,4 +144,10 @@ sequenceDiagram
     Note right of Morpheus: "Phase 2 review passed.<br/>@Tank *devops sdlc-check"
     Cypher->>All: "pm launch"
     Note right of Cypher: "SDLC check passed. Docs<br/>groomed: ADR-0033,<br/>CHANGELOG, BACKLOG. User<br/>test passed<br/>(screenshot). Retro:<br/>reused the watch gate<br/>cleanly. *pm lau…"
+    User->>All: "request"
+    Note right of User: "Owner: every Jev<br/>question sees all the<br/>run's inputs<br/>(inputs.<name> in its<br/>state), then the<br/>evening's questions use<br/>them."
+    Mouse->>All: "phase 1"
+    Note right of Mouse: "Stage 0 ok, sprint-13.<br/>Story+arch: docs/sprints<br/>/USER_STORIES_SPRINT13.m<br/>d (UND-40). Gates: Smith<br/>approve (STORIES OUT=S<br/>TEST=S FAIL=A SCOPE=…"
+    Neo->>Tank: "swe handoff"
+    Note right of Neo: "Phases 1+2 impl<br/>(coupled: the evening<br/>used pick.with):<br/>services.inputs into<br/>every request (play,<br/>arguments, judge,<br/>scores), pick.with<br/>remov…"
 ```
