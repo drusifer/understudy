@@ -221,7 +221,8 @@ an unguessable path. Ctrl-C stops it (and any run).
   `check` is greyed out with its message.
 - **Controls**: each of the sketch's `inputs:` as a control - a `choose` input is a pointer dial,
   a `weight` a fader (left = less important, right = more; each its own colour; the readout shows
-  `OFF` at 0 and `11` at the top), a `count` a brass stepper (− and + round a Nixie number, e.g. the
+  `OFF` at 0 and `11` at the top; the fader is the share of the full weighting applied - half way
+  weighs the factor 1.5 of 3), a `count` a brass stepper (− and + round a Nixie number, e.g. the
   evening's number of tickets), a `switch` a toggle with a lamp. They start at the defaults.
 - **Access panels**: the ▸ under a fader or the mood dial opens edit boxes for that factor's range
   or order, its Jev question, its default, or the moods. Each change is checked and **saved to the

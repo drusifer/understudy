@@ -1,5 +1,12 @@
 # Changelog
 
+## Between sprints (2026-10-16, on `main`)
+
+- **A weight input is a share of the full weighting** (owner): the top of its range weighs a factor
+  3, half way 1.5, the bottom turns it off - so the evening's 0-10 faders score as the old 0-3 did.
+- `docs/SKETCHES.md`: a table of the four input kinds and their rules, the weight rule, and
+  `when:` / `{ input: }` in the table of words.
+
 ## Sprint 9 — themes (2026-10-16, branch `sprint-9`, not yet merged)
 
 - A **THEME** switch on the dashboard: **steampunk** (default), **professional** (light, flat, one

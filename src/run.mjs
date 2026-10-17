@@ -12,7 +12,7 @@
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { MachineSeat } from './seat.mjs';
-import { resolveInputs } from './inputs.mjs';
+import { resolveInputs, weightsOf } from './inputs.mjs';
 import { loadSketch, shown } from './sketch.mjs';
 import { RunError, UsageError } from './errors.mjs';
 import { createStream } from './stream.mjs';
@@ -142,6 +142,7 @@ async function playSketch({ sketch, inputs, limit, stream, logDirectory, logFile
   // A generic app may have something to say once (a tool it cannot offer).
   if (Object.hasOwn(sketch.app, 'notify')) sketch.app.notify = (line) => stderr.write(`understudy: ${line}\n`);
   if (Object.hasOwn(sketch.app, 'inputs')) sketch.app.inputs = inputs;
+  if (Object.hasOwn(sketch.app, 'weights')) sketch.app.weights = weightsOf(sketch.inputs, inputs);
   const interrupts = watchInterrupts(signals, () => target.close(), () => gate.stop());
   try {
     mkdirSync(logDirectory, { recursive: true });

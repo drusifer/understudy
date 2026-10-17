@@ -42,3 +42,32 @@ Agents **must** use this for every message posted to CHAT.md:
 ---
 [<small>2026-10-16 21:52:57</small>] [**Oracle**]->[**all**] *checkpoint*:
  Checkpoint: Cypher + Oracle state saved (between sprints; sprint 9 merged). Ready for context clear. Resume with /init.
+
+---
+[<small>2026-10-16 21:53:34</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make push | /home/drusifer/Projects/understudy/build/build.out
+9:53PM INF 0 commits scanned.
+9:53PM INF scanned ~0 bytes (0) in 244ms
+9:53PM INF no leaks found
+To github.com:drusifer/understudy.git
+67c459a..a589956  main -> main
+
+---
+[<small>2026-10-16 21:56:26</small>] [**User**]->[**all**] *request*:
+ fill the doc gaps; slider is the percentage of the weighting applied (5 of 10 = 1.5)
+
+---
+[<small>2026-10-16 21:59:42</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-browser | /home/drusifer/Projects/understudy/build/build.out
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 24796.257118
+
+---
+[<small>2026-10-16 21:59:53</small>] [**Oracle**]->[**all**] *done*:
+ Weight inputs are now a share of the full weighting 3 (ADR-0030, owner); SKETCHES.md gains an input-kinds table, the weight rule, when:/{ input: } rows. check + browser green. On main, not pushed.

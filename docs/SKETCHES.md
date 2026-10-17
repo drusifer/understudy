@@ -301,7 +301,9 @@ decide:
 | `range: [from, to]` | score | position runs straight from 0 at `from` to 1 at `to`, either way, clamped |
 | `order: [best, ..., worst]` | score | item i of n at (n - i) / n (E, F, D: 1, 0.67, 0.33); unlisted 0 |
 | `ask: <question>` | score | position is Jev's answer to a `type: score` question about the row |
-| `weight` | score | a number from 0 (factor off) up, or an input's name; default 1 |
+| `weight` | score | a number from 0 (factor off) up - the exponent; or a weight input's name (see Inputs below); default 1 |
+| `when: <switch>` | gate test | the test applies only while that switch input is on |
+| `{ input: <name> }` | gate bound, `values:` list | the run's value of that input, in place of a number or the list |
 | `field`, `join` | decided argument | the answer field the values come from (default: the argument's name); the field that joins rows across answers |
 | `shortlist` | decided argument | `at_most: N`, `total: { at_least: X }` |
 
@@ -323,21 +325,36 @@ questions:
     levels: [Bored, or walked out, Mixed, Solid fun, Loved it]
 ```
 
-**Inputs** are what the person sets when the run starts - a choice, a weight in a range, or a
-switch -
-with `understudy run <sketch> --input mood=romantic --input centre=1`; the start line lists
-them, and a value out of range refuses the run:
+**Inputs** are what the person sets when the run starts, with `--input name=value` (or on the
+dashboard's controls). Each input is one of four kinds, plus its `default`; the start line lists
+them, and a value outside its kind's rule refuses the run before anything starts:
 
 ```yaml
 inputs:
   mood:     { choose: [fun, serious, dramatic, romantic], default: fun }
   centre:   { weight: [0, 10], default: 10 }
-  evenings: { switch: true, default: true }      # --input evenings=off (on/off, true/false)
-  tickets:  { count: [1, 4], default: 2 }        # a whole number: --input tickets=3
+  evenings: { switch: true, default: true }
+  tickets:  { count: [1, 4], default: 2 }
 pick:                                  # the final Choice among a shortlist
   instructions: You are choosing for yourself and a friend, in the mood for something `inputs.mood`.
   with: [mood]                         # the choice inputs Jev is told
 ```
+
+| Kind | Written | Its value | `--input` | Used by | Dashboard |
+|---|---|---|---|---|---|
+| choice | `choose: [word, ...]` - a non-empty list of words | one of the words | `mood=romantic` | `pick.with` (Jev is told it), `` `inputs.<name>` `` in pick instructions | pointer dial |
+| weight | `weight: [low, high]` - two numbers, low first | any number in the range | `centre=7.5` | a score's `weight: <name>`; a gate bound or `values:` list as `{ input: }` | fader |
+| count | `count: [low, high]` - two whole numbers, low first | a whole number in the range | `tickets=3` | a gate bound or `values:` list as `{ input: }` | brass stepper |
+| switch | `switch: true` | on or off | `evenings=off` (`on/off`, `true/false`) | a gate test's `when: <name>` | toggle with a lamp |
+
+The `default` must itself pass the rule (`check` says `inputs.centre.default: must be between 0
+and 10, got 12`). An input has exactly its kind and `default` - any other field is refused.
+
+**A weight input is a share of the full weighting.** A score's exponent from a weight input is
+3 at the top of the input's range, 0 at the bottom (the factor is off), and in proportion
+between: with `centre: { weight: [0, 10] }`, `--input centre=5` weighs the factor 1.5, as if
+`weight: 1.5` were written. So any range works - `[0, 10]` reads well on a fader - and the
+strongest a person can make a factor is a written weight of 3.
 
 **Inputs fill in values.** Where a sketch lists values or a gate's bound, `{ input: <name> }`
 uses the run's input instead: `values: { boxoffice/pick_seats: { count: { input: tickets } } }`

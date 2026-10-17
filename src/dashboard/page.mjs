@@ -24,8 +24,9 @@ export function rgbOf(hex) {
 }
 
 /**
- * How strongly a weight is set, 0 to 3, whatever its range - the tube's
- * glows and widths are sized for this.
+ * The weight a weight input gives its factors, 0 to 3, whatever its range
+ * (as inputs.weightsOf, which the run uses) - the tube's glows and widths
+ * are sized for this.
  */
 export const levelOf = (value, [low, high]) => (3 * (value - low)) / (high - low);
 

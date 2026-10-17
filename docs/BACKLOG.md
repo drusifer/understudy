@@ -74,6 +74,7 @@ Design approved on a clickable mockup - **`docs/design/DASHBOARD.md`** is the br
 - UND-36: THEME switch - steampunk, professional, starship.
 
 ## Next (from the sprint 9 retro)
+- A JSON Schema for `sketch.yaml`, so editors complete and flag keys as you type (owner asked how the YAML docs are; the reference is complete, editor help is missing). (Oracle)
 - Measure contrast in the browser test instead of by eye (professional AC3). (Trin)
 - The tube's labels still overlap round "looking" in every theme - the sprint 6 item below. (Smith)
 - Styling each new control three times is the cost of themes; keep new controls built from the shared custom properties. (Morpheus)

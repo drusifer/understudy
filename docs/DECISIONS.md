@@ -10,6 +10,14 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+## ADR-0030: A weight input is a share of the full weighting (3)
+
+*   **Status**: Accepted · **Deciders**: owner · **Date**: 2026-10-16 · **Related**: UND-24, ADR-0017
+*   **Context**: the evening's weight inputs moved from [0, 3] to [0, 10] so the faders read 1-10; used straight as exponents, 10 punished anything short of the best far harder (row F 0.67^10 = 0.02 against 0.67^3 = 0.30).
+*   **Options**: (1) the input's share of its range times a full weight of 3; (2) keep the value as the exponent; (3) a per-input `max` field.
+*   **Decision**: (1) - owner: "the slider is the percentage of the weighting applied (so 5 is = 1.5)". `inputs.weightsOf` turns the run's values into weights; `score` takes them as `weights`. A written number is still the exponent itself.
+*   **Consequences**: + any range reads naturally and scores the same; the dashboard's sizes and the engine agree. − a person cannot weigh a factor above 3 from an input; a sketch wanting more writes the number.
+
 ## ADR-0029: Dashboard themes are a `data-theme` attribute and one stylesheet per theme
 
 *   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-36

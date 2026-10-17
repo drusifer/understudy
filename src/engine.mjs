@@ -160,19 +160,19 @@ function placing(field, factor, facts, answers) {
 
 /**
  * A value's factor scores and their product. A weight may name an input
- * (`weight: centre`); an `ask` factor's position is Jev's Score answer for
- * this value, from `answers` (UND-23).
+ * (`weight: centre`), taken from `weights` (inputs.weightsOf); an `ask`
+ * factor's position is Jev's Score answer for this value, from `answers` (UND-23).
  * @param {object} facts
  * @param {Record<string, { range?: unknown[], order?: unknown[], ask?: string, weight?: number|string }>} factors
- * @param {{ inputs?: Record<string, unknown>, answers?: Record<string, number> }} [given]
+ * @param {{ weights?: Record<string, number>, answers?: Record<string, number> }} [given]
  * @returns {{ factors: Record<string, number>, total: number }|{ missing: string, ask?: string }|{ removed: string, factors: object, total: 0 }}
  */
-export function score(facts, factors = {}, { inputs = {}, answers = {} } = {}) {
+export function score(facts, factors = {}, { weights = {}, answers = {} } = {}) {
   const scores = {};
   let total = 1;
   let zero = null;
   for (const [field, factor] of Object.entries(factors)) {
-    const weight = typeof factor.weight === 'string' ? inputs[factor.weight] : factor.weight ?? 1;
+    const weight = typeof factor.weight === 'string' ? weights[factor.weight] : factor.weight ?? 1;
     if (weight === 0) {
       scores[field] = 1;
       continue;

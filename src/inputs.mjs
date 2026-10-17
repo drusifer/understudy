@@ -111,6 +111,24 @@ export function switchInputs(declared = {}) {
   return Object.keys(declared).filter((name) => declared[name].switch);
 }
 
+// A weight input is a share of the full weighting (owner, 2026-10-16): at
+// the top of its range a factor's weight is FULL_WEIGHT, half way 1.5, at
+// the bottom 0 (the factor is off).
+export const FULL_WEIGHT = 3;
+
+/**
+ * The weight each weight input gives the factors that name it, from the
+ * run's values: FULL_WEIGHT times its share of its range.
+ * @param {Record<string, object>} declared the sketch's `inputs:`
+ * @param {Record<string, unknown>} values the run's inputs
+ */
+export function weightsOf(declared = {}, values = {}) {
+  return Object.fromEntries(Object.entries(declared).filter(([, input]) => input.weight).map(([name, input]) => {
+    const [low, high] = input.weight;
+    return [name, (FULL_WEIGHT * (values[name] - low)) / (high - low)];
+  }));
+}
+
 /**
  * The names of the weight inputs, for checking `weight: <name>`.
  */

@@ -192,7 +192,7 @@ export function mcpApp({ calls = [], values = {}, decide = {}, pick = null, ques
     if (!passed.pass) return { result: passed, reusing: 0 };
     const about = entry.join ? row[entry.join] : value;
     const answers = answersFor(entry.scores, about);
-    const result = score(facts, entry.scores, { inputs: app.inputs, answers: valuesOf(answers) });
+    const result = score(facts, entry.scores, { weights: app.weights, answers: valuesOf(answers) });
     if (result.ask) waitingScores.set(`${result.ask}|${about}`, { ask: result.ask, about, facts });
     return { result, reusing: Object.values(answers).filter((each) => each.step < step).length };
   }
@@ -248,8 +248,10 @@ export function mcpApp({ calls = [], values = {}, decide = {}, pick = null, ques
   const app = {
     // Set by the run: one stderr line, e.g. a tool not offered.
     notify: null,
-    // Set by the run: the person's inputs (UND-24), e.g. { mood: 'fun', centre: 3 }.
+    // Set by the run: the person's inputs (UND-24), e.g. { mood: 'fun', centre: 7 },
+    // and the weight each weight input gives its factors, e.g. { centre: 2.1 }.
     inputs: {},
+    weights: {},
 
     /**
      * The moves a view offers, and the ones it cannot, with why.

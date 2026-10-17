@@ -2,7 +2,7 @@
 // set with --input, refused before anything starts when out of range.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { checkInputs, resolveInputs, weightInputs } from '../src/inputs.mjs';
+import { checkInputs, FULL_WEIGHT, resolveInputs, weightInputs, weightsOf } from '../src/inputs.mjs';
 import { UsageError } from '../src/errors.mjs';
 
 const DECLARED = {
@@ -65,4 +65,12 @@ test('a count is a whole number in its range (UND-34 AC1)', () => {
   const check = (inputs) => refusal(() => checkInputs(inputs, (at, message) => { throw new Error(`${at}: ${message}`); }));
   assert.equal(check(declared), null);
   assert.equal(check({ tickets: { count: [1, 2.5], default: 2 } }), 'inputs.tickets.count: must be [low, high], two whole numbers, e.g. [1, 4]');
+});
+
+test('a weight input is a share of the full weighting: 10 of 0-10 weighs 3, 5 weighs 1.5, 0 turns the factor off (owner)', () => {
+  const declared = { centre: { weight: [0, 10], default: 10 }, row: { weight: [1, 3], default: 2 }, mood: { choose: ['fun'], default: 'fun' } };
+  assert.equal(FULL_WEIGHT, 3);
+  assert.deepEqual(weightsOf(declared, { centre: 10, row: 2, mood: 'fun' }), { centre: 3, row: 1.5 });
+  assert.deepEqual(weightsOf(declared, { centre: 5, row: 1 }), { centre: 1.5, row: 0 });
+  assert.deepEqual(weightsOf({}, {}), {});
 });

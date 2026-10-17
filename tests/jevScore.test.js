@@ -49,6 +49,7 @@ async function evening() {
   test.after(() => target.close());
   const app = mcpApp({ decide: DECIDE, questions: QUESTIONS, pick: { instructions: 'Choose for yourself and a friend, in the mood for `inputs.mood`.', with: ['mood'] } });
   app.inputs = { mood: 'fun', audience: 2 };
+  app.weights = { audience: 2 };
   const judge = scoringJudge();
   const look = async () => {
     const view = await target.view();
