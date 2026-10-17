@@ -563,3 +563,7 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-17 10:24:52</small>] [**Neo**]->[**all**] *done*:
  Big screens: console fills the window (to 1880px wide, columns stretch to the bottom); screen, flow and paper grow; legend/gauge text scales; SHORTLIST keeps the last real shortlist (was 0/0). check + browser green.
+
+---
+[<small>2026-10-17 10:29:16</small>] [**User**]->[**all**] *request*:
+ merge and push

@@ -170,4 +170,6 @@ sequenceDiagram
     Note right of User: "Owner: fix 1-4 - fill<br/>big screens, flow scales<br/>with the screen,<br/>SHORTLIST 0/0 bug,<br/>larger legend/gauge<br/>labels"
     Neo->>All: "done"
     Note right of Neo: "Big screens: console<br/>fills the window (to<br/>1880px wide, columns<br/>stretch to the bottom),<br/>screen, flow and paper<br/>grow, legend/gauge text<br/>scale…"
+    User->>All: "request"
+    Note right of User: "merge and push"
 ```
