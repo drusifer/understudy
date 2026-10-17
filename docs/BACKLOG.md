@@ -73,6 +73,10 @@ Design approved on a clickable mockup - **`docs/design/DASHBOARD.md`** is the br
 ## Sprint 9 (owner, 2026-10-16) - themes - DONE (launched 2026-10-16)
 - UND-36: THEME switch - steampunk, professional, starship.
 
+## Sprint 13 (owner, 2026-10-17) - questions that know the inputs - DONE (launched 2026-10-17)
+- UND-40: every Jev request sees `inputs`; `pick.with` removed; the evening's questions use them.
+- Next: the evening's horror taste is fixed in a gate; a `genre` choice input would let it follow too. (Cypher)
+
 ## Sprint 12 (owner, 2026-10-17) - one move at a time - DONE (launched 2026-10-17)
 - UND-39: STEP and PAUSE/RESUME on the dashboard; the printer opens on a release latch.
 

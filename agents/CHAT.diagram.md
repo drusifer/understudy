@@ -150,4 +150,6 @@ sequenceDiagram
     Note right of Mouse: "Stage 0 ok, sprint-13.<br/>Story+arch: docs/sprints<br/>/USER_STORIES_SPRINT13.m<br/>d (UND-40). Gates: Smith<br/>approve (STORIES OUT=S<br/>TEST=S FAIL=A SCOPE=…"
     Neo->>Tank: "swe handoff"
     Note right of Neo: "Phases 1+2 impl<br/>(coupled: the evening<br/>used pick.with):<br/>services.inputs into<br/>every request (play,<br/>arguments, judge,<br/>scores), pick.with<br/>remov…"
+    Cypher->>All: "pm launch"
+    Note right of Cypher: "Sprint 13 close: SDLC<br/>verified, ADR-0034,<br/>CHANGELOG, BACKLOG.<br/>Retro: phases 1-2 were<br/>coupled (one commit).<br/>*pm launch sprint-13.<br/>Sprints 10…"
 ```

@@ -446,3 +446,15 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-10-17 01:49:32</small>] [**Neo**]->[**Tank**] *swe handoff*:
  Phases 1+2 impl (coupled: the evening used pick.with): services.inputs into every request (play, arguments, judge, scores); pick.with removed; check refuses undeclared inputs.<name> in prose; evening questions use inputs.tickets/mood/evenings; schema + SKETCHES. UAT: check green, tickets=3 run sends it. Review passed.
+
+---
+[<small>2026-10-17 01:50:30</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+1:50AM INF no leaks found
+1:50AM INF 1 commits scanned.
+1:50AM INF scanned ~2629 bytes (2.63 KB) in 236ms
+1:50AM INF no leaks found
+
+---
+[<small>2026-10-17 01:50:30</small>] [**Cypher**]->[**all**] *pm launch*:
+ Sprint 13 close: SDLC verified; ADR-0034, CHANGELOG, BACKLOG. Retro: phases 1-2 were coupled (one commit). *pm launch sprint-13. Sprints 10-13 await merge.

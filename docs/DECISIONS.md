@@ -10,6 +10,14 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+## ADR-0034: Every Jev request carries the run's inputs; `pick.with` is removed
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-17 · **Related**: UND-40, UND-24
+*   **Context**: owner: the questions' wording should follow the parameters ("see all"); fixed words like "two seats" contradicted the tickets input.
+*   **Options**: (1) the run's inputs in every request's state, named in prose as `` `inputs.<name>` ``; (2) per-question `with:` lists, as `pick` had; (3) substituting values into the prose text before asking.
+*   **Decision**: (1). `services.inputs` reaches the library's requests and the MCP app's score request; `pick.with` is removed outright; `check` refuses an undeclared `inputs.<name>`. (3) would put literal values in the prose, which the no-literals rule forbids - Jev reads the path from the state instead.
+*   **Consequences**: + one rule for every question; wording cannot drift from the controls. − every request is a little larger; a sketch that used `with:` must drop it.
+
 ## ADR-0033: A run takes the caller's pause gate; the dashboard steps through it
 
 *   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-17 · **Related**: UND-39, ADR-0016

@@ -1,5 +1,12 @@
 # Changelog
 
+## Sprint 13 — questions that know the inputs (2026-10-17, branch `sprint-13`, not yet merged)
+
+- **Every Jev question sees the run's inputs** as `inputs` in its state; any question's wording
+  can name one (`` `inputs.tickets` ``), and `check` refuses an undeclared name. `pick.with` is
+  gone (the pick sees all of them too). ADR-0034.
+- The evening's questions follow its controls: the party size, the mood and the evenings switch.
+
 ## Sprint 12 — one move at a time (2026-10-17, branch `sprint-12`, not yet merged)
 
 - **STEP** and **PAUSE/RESUME** on the dashboard: STEP starts a run and makes one move, then one
