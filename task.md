@@ -3,7 +3,7 @@
 *   **Goal**: take the printer off the console to edit the sketch's YAML in the bay behind it, with a cheat-sheet sticker; saves as you type and the state tube redraws.
 *   **Tier**: Tier 2 · **Points**: 3 (UND-35) · **Branch**: `sprint-8`
 *   **Story + Arch**: `docs/sprints/USER_STORIES_SPRINT8.md`
-*   **Status**: In progress - planned 2026-10-16
+*   **Status**: Complete - launched 2026-10-16; merge to main awaiting owner
 
 ## Phase 1: Whole-file writes - UND-35 AC2-4 (server side)
 - [x] **Task 1.1:** `*impl` `settings.write({ sketch, text })` (check on a copy, factory copy, 422 with the problem); server `write` POST (409 while a run plays) and GET of a sketch's text. TDD. (*Owner: Neo*)
@@ -14,4 +14,4 @@
 - [x] **Task 2.2:** `*uat` + review, commit `Phase 2`. (*Owner: Trin → Morpheus*)
 
 ## Close
-- [ ] Tank sdlc-check · Oracle groom (ADR-0028, changelog) · Smith test · retro · launch.
+- [x] Tank sdlc-check · Oracle groom (ADR-0028, changelog) · Smith test · retro · launch.

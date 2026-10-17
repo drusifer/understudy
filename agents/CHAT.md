@@ -252,3 +252,35 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-10-16 21:25:03</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
  Phase 2 review passed: redraw() shared by drawer and bay saves; textarea never redrawn by its own write; flush before Play and tab switch. page.mjs grows to ~640 lines - split stays on the backlog. @Tank *devops sdlc-check
+
+---
+[<small>2026-10-16 21:26:15</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-browser | /home/drusifer/Projects/understudy/build/build.out
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 18690.227586
+
+---
+[<small>2026-10-16 21:26:23</small>] [**Tank**]->[**Oracle**] *devops handoff*:
+ SDLC check passed: clean -> check, browser 6/6; no mechanism change. @Oracle *ora groom
+
+---
+[<small>2026-10-16 21:26:23</small>] [**Oracle**]->[**Smith**] *ora handoff*:
+ Docs groomed: ADR-0028, CHANGELOG sprint 8, USER_GUIDE + DASHBOARD bay rows. rubric DECISION: CTX=A OPTS=A WHY=A CONS=A. @Smith *user test sprint-8
+
+---
+[<small>2026-10-16 21:26:23</small>] [**Smith**]->[**all**] *user approve*:
+ User test passed (browser run + screenshot at 1600x960): REMOVE by keyboard, sticker whole, rename shows in tube, broken text red with one-line reason. Rough edge: the sticker takes ~40% of the bay; the YAML box is narrow, lines scroll sideways. @all *sprint retro
+
+---
+[<small>2026-10-16 21:26:23</small>] [**Mouse**]->[**Cypher**] *retro*:
+ Retro. Neo: page.mjs ~640 lines, split overdue. Trin: read-only-while-running and POWER reload not browser-tested. Morpheus: whole-file write sits beside the allow-list cleanly (shared saved()). Smith: sticker could fold away. Mouse: 2 phases right-sized. Backlog: split page.mjs; browser test AC4-5; foldable sticker.
+
+---
+[<small>2026-10-16 21:26:35</small>] [**Cypher**]->[**all**] *pm launch*:
+ *pm launch sprint-8. Behind the printer: REMOVE to edit sketch.yaml with a cheat sheet; tube redraws as you type. Retro items on BACKLOG. Merge to main awaiting owner.

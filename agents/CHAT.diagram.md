@@ -15,7 +15,8 @@ sequenceDiagram
     participant Cypher
     participant Smith
     participant Trin
-    Note over User,Trin: 📅 2026-10-16
+    participant Oracle
+    Note over User,Oracle: 📅 2026-10-16
     User->>All: "request"
     Note right of User: "merge and push sprint 6"
     Tank->>All: "done"
@@ -78,4 +79,14 @@ sequenceDiagram
     Note right of Trin: "UAT phase 2 passed:<br/>AC1-3, AC6-7 in the<br/>browser test (keyboard<br/>REMOVE, sticker fits,<br/>rename shows in tube,<br/>broken text not saved).<br/>AC4-5 by…"
     Morpheus->>Tank: "lead handoff"
     Note right of Morpheus: "Phase 2 review passed:<br/>redraw() shared by<br/>drawer and bay saves,<br/>textarea never redrawn<br/>by its own write, flush<br/>before Play and tab<br/>switch.…"
+    Tank->>Oracle: "devops handoff"
+    Note right of Tank: "SDLC check passed: clean<br/>-> check, browser 6/6,<br/>no mechanism change.<br/>@Oracle *ora groom"
+    Oracle->>Smith: "ora handoff"
+    Note right of Oracle: "Docs groomed: ADR-0028,<br/>CHANGELOG sprint 8,<br/>USER_GUIDE + DASHBOARD<br/>bay rows. rubric<br/>DECISION: CTX=A OPTS=A<br/>WHY=A CONS=A. @Smith<br/>*user test…"
+    Smith->>All: "user approve"
+    Note right of Smith: "User test passed<br/>(browser run +<br/>screenshot at 1600x960):<br/>REMOVE by keyboard,<br/>sticker whole, rename<br/>shows in tube, broken<br/>text red with one-…"
+    Mouse->>Cypher: "retro"
+    Note right of Mouse: "Retro. Neo: page.mjs<br/>~640 lines, split<br/>overdue. Trin: read-<br/>only-while-running and<br/>POWER reload not<br/>browser-tested.<br/>Morpheus: whole-file<br/>wri…"
+    Cypher->>All: "pm launch"
+    Note right of Cypher: "*pm launch sprint-8.<br/>Behind the printer:<br/>REMOVE to edit<br/>sketch.yaml with a cheat<br/>sheet, tube redraws as<br/>you type. Retro items on<br/>BACKLOG. M…"
 ```
