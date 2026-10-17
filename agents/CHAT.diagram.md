@@ -152,4 +152,8 @@ sequenceDiagram
     Note right of Neo: "Phases 1+2 impl<br/>(coupled: the evening<br/>used pick.with):<br/>services.inputs into<br/>every request (play,<br/>arguments, judge,<br/>scores), pick.with<br/>remov…"
     Cypher->>All: "pm launch"
     Note right of Cypher: "Sprint 13 close: SDLC<br/>verified, ADR-0034,<br/>CHANGELOG, BACKLOG.<br/>Retro: phases 1-2 were<br/>coupled (one commit).<br/>*pm launch sprint-13.<br/>Sprints 10…"
+    User->>All: "request"
+    Note right of User: "Owner nit: flip the<br/>printer - the feeder<br/>slot at the top under<br/>the latch, paper feeding<br/>down"
+    Neo->>All: "done"
+    Note right of Neo: "Printer flipped: the<br/>feeder slot sits under<br/>the latch and the paper<br/>feeds down, newest print<br/>at the top, head no<br/>longer wraps. check +<br/>brow…"
 ```

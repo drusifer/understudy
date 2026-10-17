@@ -54,6 +54,6 @@
 :root[data-theme="steampunk"][data-mode="light"] .printer,
 :root[data-theme="steampunk"][data-mode="light"] .bay { background-color: #d9d4ca; background-image: radial-gradient(circle at 9px 9px, #8a857c 3px, #6b665e 4px, transparent 5px), radial-gradient(circle at calc(100% - 9px) 9px, #8a857c 3px, #6b665e 4px, transparent 5px), radial-gradient(circle at 9px calc(100% - 9px), #8a857c 3px, #6b665e 4px, transparent 5px), radial-gradient(circle at calc(100% - 9px) calc(100% - 9px), #8a857c 3px, #6b665e 4px, transparent 5px), linear-gradient(180deg, #e6e2da, #cfc9bd); border-color: #a39d92; box-shadow: 0 8px 20px rgba(90,60,20,.2); }
 :root[data-theme="steampunk"][data-mode="light"] .printer-head { color: #4a4640; }
-:root[data-theme="steampunk"][data-mode="light"] .roller { background: linear-gradient(180deg, #6b665e, #b8b2a6 40%, #7a756c); }
+:root[data-theme="steampunk"][data-mode="light"] .roller { background: linear-gradient(0deg, #6b665e, #b8b2a6 40%, #7a756c); }
 :root[data-theme="steampunk"][data-mode="light"] .screw-button { background: #eeebe5; border-color: #8a857c; color: #3a3631; }
 :root[data-theme="steampunk"][data-mode="light"] .bay .about { color: #4a4640; }

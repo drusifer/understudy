@@ -688,8 +688,10 @@ function boot() {
     $('bay-note').textContent = running ? 'Read-only while a run plays - stop it to edit.' : 'Saved to sketch.yaml as you type. Power off and on for the factory sketch.';
   }
 
+  // The paper feeds down from the slot (owner): each line's print goes in at
+  // the top, its own lines and tables in reading order.
   function print(line) {
-    const paper = $('paper');
+    const paper = document.createDocumentFragment();
     const items = printed(line) ?? [];
     for (const each of items) {
       if (each.table) {
@@ -703,8 +705,8 @@ function boot() {
         paper.append(element('div', { class: `line ${each.tone ?? ''}` }, each.text));
       }
     }
-    const window = $('paper-window');
-    window.scrollTop = window.scrollHeight;
+    $('paper').prepend(paper);
+    $('paper-window').scrollTop = 0;
   }
 
   async function choose(name) {

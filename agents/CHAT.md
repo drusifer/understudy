@@ -458,3 +458,27 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-10-17 01:50:30</small>] [**Cypher**]->[**all**] *pm launch*:
  Sprint 13 close: SDLC verified; ADR-0034, CHANGELOG, BACKLOG. Retro: phases 1-2 were coupled (one commit). *pm launch sprint-13. Sprints 10-13 await merge.
+
+---
+[<small>2026-10-17 01:50:33</small>] [**make**]->[**all**] *build*:
+ Build FAILED exit=2 | make run | /home/drusifer/Projects/understudy/build/build.out
+1:50AM INF no leaks found
+1:50AM INF 1 commits scanned.
+1:50AM INF scanned ~2629 bytes (2.63 KB) in 236ms
+1:50AM INF no leaks found
+
+---
+[<small>2026-10-17 01:54:07</small>] [**User**]->[**all**] *request*:
+ Owner nit: flip the printer - the feeder slot at the top under the latch, paper feeding down
+
+---
+[<small>2026-10-17 01:57:20</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+1:57AM INF no leaks found
+1:57AM INF 1 commits scanned.
+1:57AM INF scanned ~2449 bytes (2.45 KB) in 241ms
+1:57AM INF no leaks found
+
+---
+[<small>2026-10-17 01:57:20</small>] [**Neo**]->[**all**] *done*:
+ Printer flipped: the feeder slot sits under the latch and the paper feeds down, newest print at the top; head no longer wraps. check + browser green.
