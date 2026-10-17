@@ -81,16 +81,18 @@ function watchInterrupts(signals, onSecond, onFirst = () => {}) {
  *   environment?: object, makeJudge?: (environment: object) => object|Promise<object>,
  *   makeTarget?: (spec: object, options: { directory: string, environment: object }) => Promise<object>,
  *   logRoot?: string, firstMoveMs?: number, stallMs?: number, pollMs?: number, signals?: import('node:events').EventEmitter,
- *   clock?: () => number, watch?: { port?: number, host?: string, paused?: boolean }|null, makeWatch?: typeof startWatch }} [options]
+ *   clock?: () => number, watch?: { port?: number, host?: string, paused?: boolean }|null, makeWatch?: typeof startWatch,
+ *   gate?: ReturnType<typeof createGate>|null }} [options]
  *   `watch` serves the live view (`--watch`); the server starts before anything else, so a
  *   busy port refuses the run with nothing started. `paused` starts it paused (`--pause`).
+ *   `gate` is a pause gate the caller holds (the dashboard's STEP and PAUSE, UND-39).
  * @throws {UsageError} before anything starts; {RunError} once it has.
  */
 export async function runSketch(location, {
   steps, inputs = [], stdout = process.stdout, stderr = process.stderr, environment = process.env,
   makeJudge = typesafeJudge, makeTarget = startTarget, logRoot = path.join('build', 'runs'),
   firstMoveMs = 10_000, stallMs = 10_000, pollMs = 250, signals = process, clock = Date.now,
-  watch = null, makeWatch = startWatch,
+  watch = null, makeWatch = startWatch, gate = null,
 } = {}) {
   const sketch = await loadSketch(location);
   // UND-24: inputs out of their range or list refuse the run before it starts.
@@ -104,7 +106,7 @@ export async function runSketch(location, {
   const watcher = watch ? await makeWatch({ port: watch.port, host: watch.host, mode: 'live', source: stream, control: (action) => controls.gate[action]() }) : null;
   if (watcher) stderr.write(`understudy: watch at ${(watcher.urls ?? [watcher.url]).join(' or ')}\n`);
   try {
-    await playSketch({ sketch, inputs: values, limit, stream, logDirectory, logFile, stdout, stderr, environment, makeJudge, makeTarget, firstMoveMs, stallMs, pollMs, signals, clock, watch, watcher, controls });
+    await playSketch({ sketch, inputs: values, limit, stream, logDirectory, logFile, stdout, stderr, environment, makeJudge, makeTarget, firstMoveMs, stallMs, pollMs, signals, clock, watch, watcher, controls, held: gate });
   } finally {
     await watcher?.close();
   }
@@ -132,12 +134,12 @@ function pauseGate({ run, watch, watcher, stderr, clock }) {
 /**
  * The run itself, once anything that can refuse it has been checked.
  */
-async function playSketch({ sketch, inputs, limit, stream, logDirectory, logFile, stderr, environment, makeJudge, makeTarget, firstMoveMs, stallMs, pollMs, signals, clock, watch, watcher, controls }) {
+async function playSketch({ sketch, inputs, limit, stream, logDirectory, logFile, stderr, environment, makeJudge, makeTarget, firstMoveMs, stallMs, pollMs, signals, clock, watch, watcher, controls, held }) {
   const judge = reportingFailures(await makeJudge(environment));
   const target = await makeTarget(sketch.target, { directory: sketch.directory, environment });
   const write = (entry) => stream.emit(entry);
   const run = { taken: 0, seat: null, lastMoveAt: null, pausedBefore: 0, app: sketch.app, isStoppedPaused: false };
-  const gate = watcher ? pauseGate({ run, watch, watcher, stderr, clock }) : OPEN_GATE;
+  const gate = held ?? (watcher ? pauseGate({ run, watch, watcher, stderr, clock }) : OPEN_GATE);
   controls.gate = gate;
   // A generic app may have something to say once (a tool it cannot offer).
   if (Object.hasOwn(sketch.app, 'notify')) sketch.app.notify = (line) => stderr.write(`understudy: ${line}\n`);

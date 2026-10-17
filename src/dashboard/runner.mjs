@@ -7,6 +7,7 @@
 import { EventEmitter } from 'node:events';
 import path from 'node:path';
 import { runSketch } from '../run.mjs';
+import { createGate } from '../watch/gate.mjs';
 import { sketchNames } from './rack.mjs';
 
 const STDERR = 'understudy: ';
@@ -49,7 +50,7 @@ function pairsOf(inputs = {}) {
 export function createRunner({ folder, hub, environment = process.env, run = runSketch, runOptions = {} }) {
   let current = null;
 
-  async function playing(sketch, inputs, signals, state) {
+  async function playing(sketch, inputs, signals, state, gate) {
     let outcome = null;
     let isStarted = false;
     const stdout = lineWriter((text) => {
@@ -65,7 +66,7 @@ export function createRunner({ folder, hub, environment = process.env, run = run
     });
     const stderr = lineWriter((text) => hub.send({ event: 'dashboard', stderr: text.startsWith(STDERR) ? text.slice(STDERR.length) : text }));
     try {
-      await run(path.join(folder, sketch), { ...runOptions, inputs: pairsOf(inputs), environment, stdout, stderr, signals });
+      await run(path.join(folder, sketch), { ...runOptions, inputs: pairsOf(inputs), environment, stdout, stderr, signals, gate });
     } catch (error) {
       // UND-29 AC4: refused before it started - say why; nothing is running.
       if (!isStarted) return { refused: error.message };
@@ -77,19 +78,22 @@ export function createRunner({ folder, hub, environment = process.env, run = run
     isRunning: () => current !== null,
 
     /**
-     * Starts `sketch` with the controls' values; refused while one runs.
+     * Starts `sketch` with the controls' values - `paused`: before its first
+     * move (STEP, UND-39); refused while one runs.
      * @returns {Promise<{ status: number, value?: object }>}
      */
-    async play({ sketch, inputs } = {}) {
+    async play({ sketch, inputs, paused = false } = {}) {
       if (current) return { status: 409, value: { problem: 'a run is going - press STOP first' } };
       if (typeof sketch !== 'string' || !sketchNames(folder).includes(sketch)) return { status: 404, value: { problem: `no sketch "${sketch}" in ${folder}` } };
       // Stands in for `process` in runSketch, which listens for 'SIGINT' on it.
       const signals = new EventEmitter(); // eslint-disable-line unicorn/prefer-event-target -- runSketch takes an EventEmitter
+      // UND-39: every pause, step and resume is shown on the open pages.
+      const gate = createGate({ isPaused: paused === true, onChange: (change) => hub.send({ event: 'dashboard', ...change }) });
       hub.reset();
-      hub.send({ event: 'dashboard', running: true, sketch, inputs: inputs ?? {} });
-      const playingNow = { sketch, signals, isStopAsked: false, finished: null };
+      hub.send({ event: 'dashboard', running: true, sketch, inputs: inputs ?? {}, paused: paused === true });
+      const playingNow = { sketch, signals, gate, isStopAsked: false, finished: null };
       playingNow.finished = (async () => {
-        const ended = await playing(sketch, inputs, signals, playingNow);
+        const ended = await playing(sketch, inputs, signals, playingNow, gate);
         current = null;
         hub.send({ event: 'dashboard', running: false, sketch, ...ended });
         return ended;
@@ -106,6 +110,16 @@ export function createRunner({ folder, hub, environment = process.env, run = run
       current.isStopAsked = true;
       current.signals.emit('SIGINT');
       return { status: 202, value: { stopping: true } };
+    },
+
+    /**
+     * PAUSE, STEP and RESUME (UND-39): the run's gate, refused when nothing
+     * runs or the gate cannot (pause while paused, step or resume while running).
+     */
+    control(action) {
+      if (!current) return { status: 409, value: { problem: 'nothing is running' } };
+      if (!current.gate[action]()) return { status: 409, value: { problem: `cannot ${action} now` } };
+      return { status: 202, value: { [action]: true } };
     },
 
     /**

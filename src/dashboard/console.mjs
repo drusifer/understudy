@@ -21,6 +21,10 @@ export async function serveDashboard({ folder, port, host, environment = process
     actions: {
       play: (body) => runner.play(body),
       stop: () => runner.stop(),
+      // UND-39: one move at a time.
+      pause: async () => runner.control('pause'),
+      step: async () => runner.control('step'),
+      resume: async () => runner.control('resume'),
       // UND-32 AC5: no edits while a run is going.
       edit: async (body) => (runner.isRunning() ? STOP_FIRST : settings.edit(body)),
       // UND-35 AC4: nor writes from the bay.

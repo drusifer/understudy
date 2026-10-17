@@ -334,3 +334,55 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-10-16 23:15:18</small>] [**Cypher**]->[**all**] *pm launch*:
  *pm launch sprint-11. Light and dark for every theme; LEDs follow faders. Merge awaiting owner.
+
+---
+[<small>2026-10-17 01:33:18</small>] [**User**]->[**all**] *request*:
+ add the step feature to go one move at a time (dashboard)
+
+---
+[<small>2026-10-17 01:34:01</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Stage 0 ok; sprint-12 from sprint-11. Story+arch: docs/sprints/USER_STORIES_SPRINT12.md (UND-39 step). @Smith *user review sprint-12
+
+---
+[<small>2026-10-17 01:34:01</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ *user approve. AC1-3 say exactly what each button does in each state. rubric STORIES: OUT=S TEST=S FAIL=A SCOPE=A SIZE=A DESIGN=A
+
+---
+[<small>2026-10-17 01:34:01</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Arch: runSketch takes a gate; runner gate -> hub; actions pause/step/resume. ADR-0033. No mechanism change.
+
+---
+[<small>2026-10-17 01:34:01</small>] [**Smith**]->[**Mouse**] *user approve*:
+ *user approve. rubric ARCH: BOUND=A FLOW=A FAIL=A USER=A DECS=A FEAS=A. @Mouse *sm plan sprint
+
+---
+[<small>2026-10-17 01:34:01</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint planned: 2 phases. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-10-17 01:34:01</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Plan approved. rubric PLAN: SIZE=S GATE=A VERIF=A ALIGN=S OWNER=A. @Neo *swe impl phase-1
+
+---
+[<small>2026-10-17 01:34:01</small>] [**Mouse**]->[**all**] *phase 1*:
+ Phase 1: the run takes a gate; the runner pauses and steps
+
+---
+[<small>2026-10-17 01:36:01</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+1:36AM INF no leaks found
+1:36AM INF 1 commits scanned.
+1:36AM INF scanned ~8533 bytes (8.53 KB) in 239ms
+1:36AM INF no leaks found
+
+---
+[<small>2026-10-17 01:36:07</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 1 impl: runSketch({ gate }); runner gate -> hub {paused, waiting}; play({paused}); pause/step/resume actions (409 when they cannot). Tests: start paused, 3 single steps, resume to done; pause holds, stop while paused. @Trin *qa uat phase-1
+
+---
+[<small>2026-10-17 01:36:07</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 1 passed: AC1-3 server side; check green. @Morpheus *lead review phase-1
+
+---
+[<small>2026-10-17 01:36:07</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 1 review passed: reuses the watch gate; no change for runs without one. @Neo *swe impl phase-2
