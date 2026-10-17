@@ -1,5 +1,12 @@
 # Changelog
 
+## Sprint 7 — how many tickets (2026-10-16, branch `sprint-7`, not yet merged)
+
+- **Count inputs** (`tickets: { count: [1, 4], default: 2 }`, `--input tickets=3`), shown on the
+  dashboard as a **brass stepper**; weights stay analog faders.
+- **`{ input: <name> }`** in `values:` lists and gate bounds: the evening holds as many seats as
+  tickets, all together in one row. ADR-0027.
+
 ## Sprint 6 — the dashboard, with atmosphere (2026-10-16, branch `sprint-6`, not yet merged)
 
 - **`understudy dashboard <folder>`**: a steampunk operations console (design approved on a

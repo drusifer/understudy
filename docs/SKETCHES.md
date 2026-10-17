@@ -333,10 +333,16 @@ inputs:
   mood:     { choose: [fun, serious, dramatic, romantic], default: fun }
   centre:   { weight: [0, 3], default: 3 }
   evenings: { switch: true, default: true }      # --input evenings=off (on/off, true/false)
+  tickets:  { count: [1, 4], default: 2 }        # a whole number: --input tickets=3
 pick:                                  # the final Choice among a shortlist
   instructions: You are choosing for yourself and a friend, in the mood for something `inputs.mood`.
   with: [mood]                         # the choice inputs Jev is told
 ```
+
+**Inputs fill in values.** Where a sketch lists values or a gate's bound, `{ input: <name> }`
+uses the run's input instead: `values: { boxoffice/pick_seats: { count: { input: tickets } } }`
+holds that many seats, and `together: { at_least: { input: tickets } }` needs that many free seats
+in a row. A bound must name a count or a weight; `check` says so otherwise.
 
 **Switches turn gates on and off.** A gate test with `when: <switch>` applies only while that
 switch is on: `starts: { at_least: '17:00', when: evenings }`. `check` refuses a `when:` that names

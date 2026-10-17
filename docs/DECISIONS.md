@@ -10,6 +10,14 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+## ADR-0027: Count inputs, and inputs referenced as `{ input: <name> }`
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-34
+*   **Context**: owner: replace the "seats together" toggle with a number-of-tickets selector (a brass stepper); the number must drive both the seats held and the together rule.
+*   **Options**: (1) a `count` input kind and `{ input: name }` wherever a value or a gate bound is written; (2) a tickets-specific setting; (3) Jev choosing the count.
+*   **Decision**: (1), in `values:` lists and gate `at_least`/`at_most` only. `check` validates the name and, for bounds, that it is a count or weight. On the dashboard a count is a stepper; weights stay analog faders.
+*   **Consequences**: + one input feeds several places; other sketches get the stepper for free. − references are not allowed elsewhere yet (e.g. score ranges).
+
 ## ADR-0026: Switch inputs turn gates on and off (`when:`)
 
 *   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-28

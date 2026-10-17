@@ -92,6 +92,7 @@ function gatesOf(decide, name) {
 function controlOf(name, input, sketch) {
   if (input.choose) return { name, kind: 'choose', options: input.choose, default: input.default };
   if (input.switch) return { name, kind: 'switch', default: input.default, gates: gatesOf(sketch.decide, name) };
+  if (input.count) return { name, kind: 'count', range: input.count, default: input.default };
   const factors = factorsOf(sketch.decide, name).map((factor) => (factor.ask
     ? { ...factor, question: factor.ask, looks_at: sketch.questions[factor.ask]?.looks_at ?? null }
     : factor));

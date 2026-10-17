@@ -335,6 +335,31 @@ function boot() {
     return button;
   }
 
+  // UND-34: a whole-number input is a brass stepper - − and + round a Nixie.
+  function drawStepper(input) {
+    const [low, high] = input.range;
+    const nixie = element('div', { class: 'nixie stepper-nixie', role: 'status', 'aria-live': 'polite' });
+    const down = element('button', { type: 'button', class: 'step', 'aria-label': `${input.name} down` }, '−');
+    const up = element('button', { type: 'button', class: 'step', 'aria-label': `${input.name} up` }, '+');
+    const update = () => {
+      const value = state.values[input.name];
+      nixie.textContent = String(value);
+      nixie.setAttribute('aria-label', `${input.name} ${value}`);
+      down.disabled = value <= low;
+      up.disabled = value >= high;
+    };
+    const by = (change) => () => {
+      state.values[input.name] = Math.min(high, Math.max(low, state.values[input.name] + change));
+      update();
+    };
+    down.addEventListener('click', by(-1));
+    up.addEventListener('click', by(1));
+    update();
+    return element('div', { class: 'stepper', role: 'group', 'aria-label': input.name },
+      element('div', { class: 'plate-label' }, input.name.toUpperCase()), element('div', { class: 'stepper-body' }, down, nixie, up),
+      element('div', { class: 'about' }, `${low} to ${high}`));
+  }
+
   function drawControls() {
     const { sketch } = state;
     $('sketch-title').textContent = sketch.name;
@@ -343,7 +368,8 @@ function boot() {
     $('dials').replaceChildren(...sketch.inputs.filter((input) => input.kind === 'choose').map((input) => drawDial(input)));
     $('faders').replaceChildren(...(weights.length > 0 ? [element('div', { class: 'fader-scale', 'aria-hidden': 'true' }, element('span', {}, '◂ LESS IMPORTANT'), element('span', {}, 'MORE IMPORTANT ▸'))] : []),
       ...weights.flatMap((input, index) => drawFader(input, index)));
-    $('switches').replaceChildren(...sketch.inputs.filter((input) => input.kind === 'switch').map((input) => drawSwitch(input)));
+    $('switches').replaceChildren(...sketch.inputs.filter((input) => input.kind === 'count').map((input) => drawStepper(input)),
+      ...sketch.inputs.filter((input) => input.kind === 'switch').map((input) => drawSwitch(input)));
     $('nothing-to-tune').hidden = sketch.inputs.length > 0;
   }
 

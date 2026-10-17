@@ -22,6 +22,8 @@
 export const GATE_WORDS = ['is', 'in', 'at_least', 'at_most', 'when'];
 const TIME = /^([01]?\d|2[0-3]):([0-5]\d)$/;
 
+import { isInputReference } from './inputs.mjs';
+
 const isMapping = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 const shown = (value) => (typeof value === 'string' ? value : JSON.stringify(value));
 
@@ -37,14 +39,16 @@ export function comparable(value) {
 /**
  * One field's test against its fact: null when it passes, else why not.
  */
-function failedTest(field, fact, test) {
+function failedTest(field, fact, test, inputs = {}) {
   const words = isMapping(test) ? test : { is: test };
   if (Object.hasOwn(words, 'is') && fact !== words.is) return `${field} ${shown(fact)} is not ${shown(words.is)}`;
   if (Object.hasOwn(words, 'in') && !words.in.includes(fact)) return `${field} ${shown(fact)} not in [${words.in.map((each) => shown(each)).join(', ')}]`;
   for (const [word, sign, isFailed] of [['at_least', '<', (a, b) => a < b], ['at_most', '>', (a, b) => a > b]]) {
     if (!Object.hasOwn(words, word)) continue;
     const have = comparable(fact);
-    if (have === null || isFailed(have, comparable(words[word]))) return `${field} ${shown(fact)} ${sign} ${shown(words[word])}`;
+    // A bound may be one of the run's inputs (`{ input: tickets }`, sprint 7).
+    const bound = isInputReference(words[word]) ? inputs[words[word].input] : words[word];
+    if (have === null || isFailed(have, comparable(bound))) return `${field} ${shown(fact)} ${sign} ${shown(bound)}`;
   }
   return null;
 }
@@ -82,14 +86,25 @@ function anyOf(facts, groups, given) {
 function oneTest(facts, field, test, given) {
   if (isSwitchedOff(test, given.inputs)) return { pass: true };
   if (!Object.hasOwn(facts, field)) return { missing: field };
-  const why = failedTest(field, facts[field], test);
+  const why = failedTest(field, facts[field], test, given.inputs);
   return why ? { removed: why } : { pass: true };
+}
+
+/**
+ * An at_least/at_most bound: a number, an HH:MM time, or a number input.
+ */
+function checkBound(value, at, fail, numbers) {
+  if (isInputReference(value)) {
+    if (numbers && !numbers.includes(value.input)) fail(at, `names input "${value.input}" - declare it under inputs: as a count or a weight`);
+    return;
+  }
+  if (comparable(value) === null) fail(at, `must be a number or an HH:MM time (got ${shown(value)})`);
 }
 
 /**
  * One field's test as written.
  */
-function checkTest(test, at, fail, switches) {
+function checkTest(test, at, fail, switches, numbers) {
   if (!isMapping(test)) return;
   for (const [word, value] of Object.entries(test)) {
     if (!GATE_WORDS.includes(word)) fail(at, `unknown word "${word}" - use ${GATE_WORDS.join(', ')}, any`);
@@ -97,24 +112,22 @@ function checkTest(test, at, fail, switches) {
       fail(`${at}.when`, `names "${value}" - declare it under inputs: as { switch: true, default: true }`);
     }
     if (word === 'in' && !Array.isArray(value)) fail(`${at}.in`, 'must be a list, e.g. [E, F, D]');
-    if ((word === 'at_least' || word === 'at_most') && comparable(value) === null) {
-      fail(`${at}.${word}`, `must be a number or an HH:MM time (got ${shown(value)})`);
-    }
+    if (word === 'at_least' || word === 'at_most') checkBound(value, `${at}.${word}`, fail, numbers);
   }
 }
 
 /**
  * Checks a gates mapping as written; `fail(at, message)` names the path.
  */
-export function checkGates(gates, at, fail, switches = null) {
+export function checkGates(gates, at, fail, switches = null, numbers = null) {
   if (!isMapping(gates)) fail(at, 'must map each field to a test, e.g. { genre: horror, starts: { at_least: \'17:00\' } }');
   for (const [field, test] of Object.entries(gates)) {
     if (field !== 'any') {
-      checkTest(test, `${at}.${field}`, fail, switches);
+      checkTest(test, `${at}.${field}`, fail, switches, numbers);
       continue;
     }
     if (!Array.isArray(test) || test.length === 0) fail(`${at}.any`, 'must be a list of gate groups, e.g. [{ genre: horror }, { tomato: { at_least: 91 } }]');
-    for (const [index, group] of test.entries()) checkGates(group, `${at}.any[${index}]`, fail, switches);
+    for (const [index, group] of test.entries()) checkGates(group, `${at}.any[${index}]`, fail, switches, numbers);
   }
 }
 

@@ -138,3 +138,19 @@ test('a test with when: applies only while its switch is on (UND-28 AC3)', () =>
   assert.equal(refusal(['together']), null);
   assert.equal(refusal([]), 'decide.x.y.gates.together.when: names "together" - declare it under inputs: as { switch: true, default: true }');
 });
+
+test('a gate bound may be one of the run\'s inputs (UND-34 AC2)', () => {
+  const gates = { together: { at_least: { input: 'tickets' } } };
+  assert.deepEqual(gate({ together: 2 }, gates, { inputs: { tickets: 2 } }), { pass: true });
+  assert.deepEqual(gate({ together: 2 }, gates, { inputs: { tickets: 3 } }), { removed: 'together 2 < 3' });
+  const refusal = (numbers) => {
+    try {
+      checkGates(gates, 'decide.x.y.gates', (at, message) => { throw new Error(`${at}: ${message}`); }, [], numbers);
+    } catch (error) {
+      return error.message;
+    }
+    return null;
+  };
+  assert.equal(refusal(['tickets']), null);
+  assert.equal(refusal(['mood']), 'decide.x.y.gates.together.at_least: names input "tickets" - declare it under inputs: as a count or a weight');
+});

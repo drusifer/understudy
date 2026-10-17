@@ -56,7 +56,7 @@ async function playEvening({ inputs = [], environment = process.env } = {}) {
 
 test('the evening books two central seats in row E for an evening horror film (UND-26 AC1)', async () => {
   const { lines, steps } = await playEvening();
-  assert.deepEqual(lines[0].inputs, { mood: 'fun', tomato: 1, audience: 2, row: 2, centre: 3, evenings: true });
+  assert.deepEqual(lines[0].inputs, { mood: 'fun', tomato: 1, audience: 2, row: 2, centre: 3, evenings: true, tickets: 2 });
   const paid = steps.at(-1);
   assert.match(paid.response.text, /^Ticket issued: Night Shift at 19:30, seats E1[5-6], E1[6-7]/);
   const seatStep = steps.find((line) => line.move === 'tool:boxoffice/pick_seats');
@@ -90,4 +90,13 @@ test('the evenings switch off lets afternoon showings qualify (UND-28 AC3, UND-3
   const [decided] = showing.decided;
   assert.ok(decided.table.some((each) => each.value === 's1'), 'Night Shift at 14:00 is on the shortlist');
   assert.equal(decided.removed.some((each) => each.why.startsWith('starts')), false);
+});
+
+test('three tickets: three side-by-side seats, on the ticket (UND-34 AC3)', async () => {
+  const { steps } = await playEvening({ inputs: ['tickets=3'] });
+  const hold = steps.find((line) => line.move === 'tool:boxoffice/pick_seats');
+  assert.equal(hold.response.call.arguments.count, 3);
+  const [decided] = hold.decided;
+  assert.ok(decided.removed.some((each) => each.why.startsWith('together 2 < 3')), 'pairs are too short now');
+  assert.match(steps.at(-1).response.text, /seats E\d+, E\d+, E\d+/);
 });
