@@ -156,4 +156,6 @@ sequenceDiagram
     Note right of User: "Owner nit: flip the<br/>printer - the feeder<br/>slot at the top under<br/>the latch, paper feeding<br/>down"
     Neo->>All: "done"
     Note right of Neo: "Printer flipped: the<br/>feeder slot sits under<br/>the latch and the paper<br/>feeds down, newest print<br/>at the top, head no<br/>longer wraps. check +<br/>brow…"
+    Neo->>All: "done"
+    Note right of Neo: "Printer: paper spool to<br/>spool behind glass,<br/>reading order, scroll up<br/>to rewind / down to wind<br/>on, follows only at the<br/>bottom (owner). Fix:…"
 ```

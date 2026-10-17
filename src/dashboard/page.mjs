@@ -688,9 +688,11 @@ function boot() {
     $('bay-note').textContent = running ? 'Read-only while a run plays - stop it to edit.' : 'Saved to sketch.yaml as you type. Power off and on for the factory sketch.';
   }
 
-  // The paper feeds down from the slot (owner): each line's print goes in at
-  // the top, its own lines and tables in reading order.
+  // The paper reads top to bottom, spool to spool behind glass (owner): a new
+  // print winds on into view unless you have scrolled back to read.
   function print(line) {
+    const window = $('paper-window');
+    const isFollowing = window.scrollHeight - window.scrollTop - window.clientHeight < 40;
     const paper = document.createDocumentFragment();
     const items = printed(line) ?? [];
     for (const each of items) {
@@ -705,25 +707,36 @@ function boot() {
         paper.append(element('div', { class: `line ${each.tone ?? ''}` }, each.text));
       }
     }
-    $('paper').prepend(paper);
-    $('paper-window').scrollTop = 0;
+    $('paper').append(paper);
+    if (isFollowing) window.scrollTop = window.scrollHeight;
   }
 
+  // A tab pressed: the sketch, fresh paper. Not while a run plays.
   async function choose(name) {
     if (state.running) return;
     await flushBay();
+    if (!(await show(name))) return;
+    $('paper').replaceChildren();
+    await loadBay();
+  }
+
+  /**
+   * Draws a sketch: with `playing` (a page opened mid-run), the run's own
+   * values and the state it is in; else the defaults from the start.
+   */
+  async function show(name, playing = null) {
     const { ok, value } = await api(`sketch/${encodeURIComponent(name)}`);
-    if (!ok) return;
+    // A run that started meanwhile wins: its sketch is being shown.
+    if (!ok || (!playing && state.running)) return false;
     state.sketch = value;
-    state.values = startingValues(value.inputs);
-    state.current = value.graph.initial;
+    state.values = { ...startingValues(value.inputs), ...playing?.inputs };
+    state.current = playing ? state.current ?? value.graph.initial : value.graph.initial;
     state.liveEdge = null;
     drawRack();
     drawControls();
     drawTube();
     drawStatus();
-    $('paper').replaceChildren();
-    await loadBay();
+    return true;
   }
 
   $('play').addEventListener('click', async () => {
@@ -768,6 +781,8 @@ function boot() {
     if (line.event === 'dashboard' && line.running !== undefined) {
       state.running = line.running;
       state.paused = line.running && line.paused === true;
+      // A page opened, or left on another sketch, while a run plays shows that run's sketch.
+      if (line.running && line.sketch && line.sketch !== state.sketch?.name) show(line.sketch, line);
       drawStatus();
       drawTube();
     }
@@ -778,9 +793,9 @@ function boot() {
       drawTube();
     }
     // UND-30 AC2: the state the run is in glows; the transition just taken flows.
-    if (line.event === 'state' && state.sketch) {
+    if (line.event === 'state') {
       state.current = line.to;
-      state.liveEdge = state.sketch.graph.edges.findIndex((edge) => edge.from === line.from && edge.to === line.to);
+      state.liveEdge = state.sketch?.graph.edges.findIndex((edge) => edge.from === line.from && edge.to === line.to) ?? null;
       drawTube();
     }
     print(line);
@@ -791,9 +806,11 @@ function boot() {
     state.rack = value;
     drawRack();
     drawStatus();
-    // Open on a sketch with controls to show, else the first that plays.
+    // Open on a sketch with controls to show, else the first that plays -
+    // unless a run is playing, whose sketch is shown instead (above).
     const first = value.find((entry) => entry.ok && entry.inputs > 0) ?? value.find((entry) => entry.ok);
-    if (first) await choose(first.name);
+    if (first && !state.running && !state.sketch) await show(first.name);
+    await loadBay();
   })();
 }
 

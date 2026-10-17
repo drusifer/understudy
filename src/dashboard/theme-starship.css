@@ -164,7 +164,8 @@
 :root[data-theme="starship"] .paper .jev { color: var(--t-lilac); }
 :root[data-theme="starship"] .paper .bold { color: var(--t-gold); }
 :root[data-theme="starship"] .paper-window { height: 668px; }
-:root[data-theme="starship"] .roller { display: none; }
+:root[data-theme="starship"] .roller,
+:root[data-theme="starship"] .glass::after { display: none; }
 
 /* The bay */
 :root[data-theme="starship"] .sticker { background: var(--peach); color: var(--on-bar); transform: none; box-shadow: none; border-radius: 18px 0 0 18px; }

@@ -143,7 +143,8 @@
 :root[data-theme="professional"] .paper .held { color: var(--held); }
 :root[data-theme="professional"] .paper .jev { color: var(--accent-strong); }
 :root[data-theme="professional"] .paper-window { border: 1px solid var(--line); border-radius: 6px; height: 666px; }
-:root[data-theme="professional"] .roller { display: none; }
+:root[data-theme="professional"] .roller,
+:root[data-theme="professional"] .glass::after { display: none; }
 
 /* The bay */
 :root[data-theme="professional"] .sticker { background: var(--note-bg); color: var(--ink); border: 1px solid var(--note-line); transform: none; box-shadow: none; }

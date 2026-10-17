@@ -482,3 +482,15 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-10-17 01:57:20</small>] [**Neo**]->[**all**] *done*:
  Printer flipped: the feeder slot sits under the latch and the paper feeds down, newest print at the top; head no longer wraps. check + browser green.
+
+---
+[<small>2026-10-17 02:05:11</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+2:05AM INF 1 commits scanned.
+2:05AM INF scanned ~4715 bytes (4.72 KB) in 244ms
+2:05AM INF no leaks found
+
+---
+[<small>2026-10-17 02:05:12</small>] [**Neo**]->[**all**] *done*:
+ Printer: paper spool to spool behind glass, reading order, scroll up to rewind / down to wind on, follows only at the bottom (owner). Fix: a page opened mid-run shows that run's sketch, values, state and paper (was blank). check + browser green.

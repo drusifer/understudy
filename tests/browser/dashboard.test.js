@@ -100,6 +100,18 @@ test('the console plays the evening: controls, Play, the tube follows, the print
   assert.equal(await page.textContent('#pause'), 'RESUME');
   // Exactly one move per STEP is held to in tests/dashboardRun.test.js; here, no run-away.
   assert.ok((await steps()) <= first + 1, 'one move per STEP');
+
+  // A page opened while the run is paused shows that run: its sketch, the tube, the paper so far.
+  const late = await browser.newPage({ viewport: { width: 1600, height: 960 } });
+  late.on('pageerror', (error) => {
+    errors.push(`late page: ${error.message}`);
+  });
+  await late.goto(dashboard.url);
+  await until(late, () => document.querySelector('#sketch-title').textContent === 'evening' && document.querySelector('#tube svg'));
+  await until(late, () => document.querySelector('#tube-caption').textContent.startsWith('paused'));
+  await until(late, () => /step 1 /.test(document.querySelector('#paper').textContent));
+  await late.close();
+
   await page.click('#pause');
   await until(page, () => document.querySelector('#play-word').textContent === 'PLAY');
   assert.match(await page.textContent('#paper'), /=== DONE after \d+ steps ===/);
