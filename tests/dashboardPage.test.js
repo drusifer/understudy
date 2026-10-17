@@ -3,7 +3,7 @@
 // starting values and what the printer prints.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { blendOf, dialAngles, levelOf, modeChoiceOf, modeOf, MODES, printed, readoutOf, rgbOf, scoreText, startingValues, themeOf, THEMES } from '../src/dashboard/page.mjs';
+import { blendOf, dialAngles, FRESH_METERS, gaugesOf, levelOf, metersAfter, modeChoiceOf, modeOf, MODES, printed, readoutOf, rgbOf, scoreText, startingValues, themeOf, THEMES } from '../src/dashboard/page.mjs';
 
 const RED = [255, 72, 56];
 
@@ -69,4 +69,23 @@ test('theme colours are read as #rrggbb; a weight\'s level is 0-3 whatever its r
   assert.equal(levelOf(10, [0, 10]), 3);
   assert.equal(levelOf(5, [0, 10]), 1.5);
   assert.equal(levelOf(2, [1, 3]), 1.5);
+});
+
+// Sprint 15 UND-42: the gauges read the run's own lines.
+test('the gauges: steps of the limit, Jev\'s confidence, the shortlist left, Jev asked and reused, idle time (UND-42)', () => {
+  const at = (meters, line, now) => metersAfter(meters, line, now);
+  let meters = at(FRESH_METERS, { event: 'start', limits: { steps: 30, first_move_ms: 10_000, stall_ms: 8000 } }, 1000);
+  assert.deepEqual(gaugesOf(meters, 3000).map((gauge) => [gauge.name, gauge.level, gauge.text]), [
+    ['STEPS', 0, '0/30'], ['SURE', 0, '-'], ['SHORTLIST', 0, '-'], ['JEV', 0, '0·0'], ['IDLE', 0.2, '2.0s'],
+  ], 'before the first move, idle counts against the first-move limit');
+  meters = at(meters, { event: 'state', from: 'a', to: 'b' }, 4000);
+  meters = at(meters, { step: 3, confidence: 0.9, decided: [{ table: [{}, {}], removed: [{}, {}, {}], held: [{}], jev: { asked: 2, reused: 1 } }] }, 5000);
+  meters = at(meters, { step: 4, confidence: 0.6, decided: [{ table: [{}], removed: [{}], held: [], jev: { asked: 0, reused: 3 } }] }, 6000);
+  const [steps, sure, shortlist, jev, idle] = gaugesOf(meters, 10_000);
+  assert.deepEqual([steps.level, steps.text], [4 / 30, '4/30']);
+  assert.deepEqual([sure.level, sure.text], [0.6, '0.60']);
+  assert.deepEqual([shortlist.level, shortlist.text], [0.5, '1/2']);
+  assert.deepEqual([jev.level, jev.text], [2 / 6, '2·4']);
+  assert.deepEqual([idle.level, idle.text], [0.5, '4.0s'], 'after a move, against the stall limit');
+  assert.equal(gaugesOf(meters, 60_000)[4].level, 1, 'capped at the limit');
 });

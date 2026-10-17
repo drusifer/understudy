@@ -144,6 +144,18 @@
 :root[data-theme="professional"] .power-bar { background: var(--well); }
 :root[data-theme="professional"] .power-legend { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
 
+/* UND-42: no leather, no bulbs; the gauges are plain metric cards - a figure, a name, a thin bar. */
+:root[data-theme="professional"] .controls,
+:root[data-theme="professional"] .tube-panel { outline: none; background-image: none; }
+:root[data-theme="professional"] .bulbs,
+:root[data-theme="professional"] .gauge .dial { display: none; }
+:root[data-theme="professional"] .tube { height: 440px; }
+:root[data-theme="professional"] .gauge { align-items: flex-start; gap: 4px; padding: 8px 10px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); box-shadow: none; }
+:root[data-theme="professional"] .gauge .figure { order: -1; font-family: system-ui, sans-serif; font-size: 20px; font-weight: 700; color: var(--ink); }
+:root[data-theme="professional"] .gauge-name { font-size: 11px; font-weight: 600; letter-spacing: .04em; color: var(--muted); }
+:root[data-theme="professional"] .gauge .track { display: block; align-self: stretch; height: 4px; border-radius: 2px; background: var(--well); overflow: hidden; }
+:root[data-theme="professional"] .gauge .fill { height: 100%; width: calc(var(--level) * 100%); background: var(--accent); transition: width .4s; }
+
 /* Printer: a plain log */
 :root[data-theme="professional"] .paper { background: var(--surface); background-image: none; padding: 10px 12px; color: var(--ink); }
 :root[data-theme="professional"] .paper,

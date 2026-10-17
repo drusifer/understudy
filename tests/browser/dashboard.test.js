@@ -91,15 +91,19 @@ test('the console plays the evening: controls, Play, the tube follows, the print
   // UND-39: STEP plays one move at a time; RESUME runs on; STOP ends it.
   const steps = () => page.$$eval('#paper .line', (nodes) => nodes.filter((node) => /^step \d+/.test(node.textContent.trim())).length);
   assert.equal(await page.isDisabled('#pause'), true, 'PAUSE only while a run plays');
+  // Each STEP's move is waited for by its printed line (the count is exact in tests/dashboardRun.test.js).
+  const stepped = (count) => page.waitForFunction((wanted) => [...document.querySelectorAll('#paper .line')].filter((node) => /^step \d+/.test(node.textContent.trim())).length === wanted
+    && document.querySelector('#tube-caption').textContent.startsWith('paused'), count, { timeout: 15_000 });
   await page.click('#step');
-  await until(page, () => document.querySelector('#tube-caption').textContent.startsWith('paused'));
+  await stepped(1);
   await until(page, () => document.querySelector('#ready-hint').textContent.includes('STEP for the next move'));
-  const first = await steps();
   await page.click('#step');
-  await until(page, () => document.querySelector('#tube-caption').textContent.startsWith('paused') && document.querySelector('#step').disabled === false);
+  await stepped(2);
   assert.equal(await page.textContent('#pause'), 'RESUME');
-  // Exactly one move per STEP is held to in tests/dashboardRun.test.js; here, no run-away.
-  assert.ok((await steps()) <= first + 1, 'one move per STEP');
+  assert.equal(await steps(), 2, 'one move per STEP');
+  // UND-42: the gauges read the run - two steps of the limit, Jev's confidence.
+  assert.equal(await page.textContent('.gauge:nth-child(1) .figure'), '2/30');
+  assert.match(await page.textContent('.gauge:nth-child(2) .figure'), /^\d\.\d\d$/);
 
   // A page opened while the run is paused shows that run: its sketch, the tube, the paper so far.
   const late = await browser.newPage({ viewport: { width: 1600, height: 960 } });

@@ -174,7 +174,8 @@ Run by Tank at sprint close (`*devops sdlc-check`):
 8. Nothing under `src/` or `tests/` imports from `seed/`.
 
 ---
-*Last verified: 2026-10-17 by Tank (sprint-14 close: clean → check green, browser tests green;
+*Last verified: 2026-10-17 by Tank (sprint-15 close: clean → check green, browser tests green;
+no dependency or mechanism change. Sprint-14 close: clean → check green, browser tests green;
 routine dependency `elkjs` per §4. Sprint-13 close: clean → check green; no dependency or
 mechanism change. Sprint-12 close: clean → check green, browser tests green; no
 dependency or mechanism change. Sprint-11 close: clean → check green, browser tests green; no

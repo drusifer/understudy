@@ -219,7 +219,8 @@ test('what the app answered a move with is kept in that step\'s log line', async
 test('the log tells the whole story: a start line, then state lines around each step (UND-13)', async () => {
   const run = await play();
   const [start, ...changes] = run.events;
-  assert.deepEqual(Object.keys(start), ['event', 'sketch', 'plays', 'turn', 'at']);
+  assert.deepEqual(Object.keys(start), ['event', 'sketch', 'plays', 'limits', 'turn', 'at']);
+  assert.deepEqual(Object.keys(start.limits), ['steps', 'first_move_ms', 'stall_ms'], 'the limits a gauge shows (UND-42)');
   assert.equal(start.event, 'start');
   assert.equal(start.sketch, 'fixture-good');
   assert.equal(start.plays, 'node app.mjs');

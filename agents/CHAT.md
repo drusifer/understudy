@@ -523,3 +523,15 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-17 02:26:50</small>] [**Cypher**]->[**all**] *pm launch*:
  Sprint 14 (UND-41): statechart as a layered flow via elkjs on the server; rectangular screens for professional/starship; round tube + rim ring for steampunk; decision power bar. Gates, UAT, review passed; SDLC verified (elkjs routine); ADR-0035; launched.
+
+---
+[<small>2026-10-17 10:02:30</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+10:02AM INF no leaks found
+10:02AM INF 1 commits scanned.
+10:02AM INF scanned ~19620 bytes (19.62 KB) in 345ms
+10:02AM INF no leaks found
+
+---
+[<small>2026-10-17 10:02:31</small>] [**Cypher**]->[**all**] *pm launch*:
+ Sprint 15 (UND-42): five real gauges from the run's lines (start line carries limits); steampunk leather/screws/ornate edge/valve bulbs/needle meters; starship power-bar readouts; professional cards. check + browser green; ADR-0036; launched.

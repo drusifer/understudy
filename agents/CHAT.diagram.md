@@ -164,4 +164,6 @@ sequenceDiagram
     Note right of User: "Owner: +1 per-theme<br/>flair with real metrics<br/>in the gauges<br/>(steps/limit, Jev<br/>confidence, shortlist<br/>left, Jev asked vs<br/>reused, time since las…"
     Cypher->>All: "pm launch"
     Note right of Cypher: "Sprint 14 (UND-41):<br/>statechart as a layered<br/>flow via elkjs on the<br/>server, rectangular<br/>screens for<br/>professional/starship,<br/>round tube + rim r…"
+    Cypher->>All: "pm launch"
+    Note right of Cypher: "Sprint 15 (UND-42): five<br/>real gauges from the<br/>run's lines (start line<br/>carries limits),<br/>steampunk<br/>leather/screws/ornate<br/>edge/valve bulbs/nee…"
 ```

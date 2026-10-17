@@ -72,6 +72,54 @@ export function readoutOf(value, [, high]) {
 // A score as the printer shows it: a perfect 1.0 is 11 (owner).
 export const scoreText = (value) => (value === 1 ? '11' : String(value));
 
+// UND-42: the gauges' readings, gathered from the run's own lines - every
+// needle and bar shows something real (owner).
+export const FRESH_METERS = { steps: 0, limit: null, firstMoveMs: null, stallMs: null, confidence: null, shortlist: null, asked: 0, reused: 0, lastMoveAt: null, startedAt: null };
+
+const sumOf = (list, read) => list.reduce((sum, each) => sum + read(each), 0);
+
+/**
+ * The readings after one more line of the run, seen at `now` (ms).
+ */
+export function metersAfter(meters, line, now) {
+  if (line.event === 'start') {
+    return { ...FRESH_METERS, limit: line.limits?.steps ?? null, firstMoveMs: line.limits?.first_move_ms ?? null, stallMs: line.limits?.stall_ms ?? null, startedAt: now };
+  }
+  if (line.step === undefined) return meters;
+  const decided = line.decided ?? [];
+  const left = sumOf(decided, (each) => each.table?.length ?? 0);
+  const of = left + sumOf(decided, (each) => each.removed?.length ?? 0) + sumOf(decided, (each) => each.held?.length ?? 0);
+  return {
+    ...meters,
+    steps: line.step,
+    confidence: typeof line.confidence === 'number' ? line.confidence : meters.confidence,
+    shortlist: decided.length > 0 ? { left, of } : meters.shortlist,
+    asked: meters.asked + sumOf(decided, (each) => each.jev?.asked ?? 0),
+    reused: meters.reused + sumOf(decided, (each) => each.jev?.reused ?? 0),
+    lastMoveAt: now,
+  };
+}
+
+const share = (part, whole) => (whole > 0 ? Math.min(1, Math.max(0, part / whole)) : 0);
+
+/**
+ * The five gauges at `now`: each a level from 0 to 1 and what it reads.
+ * @returns {{ name: string, level: number, text: string, about: string }[]}
+ */
+export function gaugesOf(meters, now) {
+  const { steps, limit, confidence, shortlist, asked, reused } = meters;
+  const since = meters.lastMoveAt ?? meters.startedAt;
+  const idle = since === null ? 0 : now - since;
+  const idleLimit = meters.lastMoveAt === null ? meters.firstMoveMs : meters.stallMs;
+  return [
+    { name: 'STEPS', level: share(steps, limit), text: limit === null ? '-' : `${steps}/${limit}`, about: 'steps taken of the step limit' },
+    { name: 'SURE', level: confidence ?? 0, text: confidence === null ? '-' : confidence.toFixed(2), about: "how sure Jev was of its last choice" },
+    { name: 'SHORTLIST', level: shortlist ? share(shortlist.left, shortlist.of) : 0, text: shortlist ? `${shortlist.left}/${shortlist.of}` : '-', about: 'values still on the shortlist of those considered' },
+    { name: 'JEV', level: share(asked, asked + reused), text: `${asked}·${reused}`, about: 'Jev scores asked · reused' },
+    { name: 'IDLE', level: share(idle, idleLimit), text: since === null ? '-' : `${(idle / 1000).toFixed(1)}s`, about: 'time since the last move, of the idle limit' },
+  ];
+}
+
 // An input's value as `--input` text: a switch as on/off.
 function wordOf(value) {
   if (typeof value !== 'boolean') return String(value);
@@ -340,7 +388,41 @@ async function api(path, body) {
  * The console's state, and what draws it.
  */
 function boot() {
-  const state = { rack: [], sketch: null, values: {}, running: false, paused: false, on: true, current: null, liveEdge: null, open: new Set(), look: null };
+  const state = { rack: [], sketch: null, values: {}, running: false, paused: false, on: true, current: null, liveEdge: null, open: new Set(), look: null, meters: FRESH_METERS };
+
+  // UND-42: five gauges, built once; each theme shows them its own way -
+  // a backlit needle meter, a moving bar cluster, or a plain card.
+  const gauges = gaugesOf(FRESH_METERS, Date.now()).map((gauge) => {
+    const ticks = Array.from({ length: 11 }, (_, index) => {
+      const angle = ((-60 + index * 12) * Math.PI) / 180;
+      const [inner, outer] = index % 5 === 0 ? [36, 46] : [40, 46];
+      return svgElement('line', { x1: 50 + inner * Math.sin(angle), y1: 56 - inner * Math.cos(angle), x2: 50 + outer * Math.sin(angle), y2: 56 - outer * Math.cos(angle), class: 'tick' });
+    });
+    const dial = svgElement('svg', { viewBox: '0 0 100 62', class: 'dial', 'aria-hidden': 'true' });
+    dial.append(svgElement('path', { d: 'M 10 56 A 46 46 0 0 1 90 56', class: 'arc', fill: 'none' }), ...ticks,
+      svgElement('line', { x1: 50, y1: 56, x2: 50, y2: 14, class: 'needle' }), svgElement('circle', { cx: 50, cy: 56, r: 4, class: 'hub' }));
+    const bars = element('div', { class: 'bars', 'aria-hidden': 'true' }, ...Array.from({ length: 7 }, (_, index) => element('i', { style: { '--n': String(index) } })));
+    const track = element('div', { class: 'track', 'aria-hidden': 'true' }, element('div', { class: 'fill' }));
+    const figure = element('div', { class: 'figure' });
+    const node = element('div', { class: 'gauge', role: 'meter', 'aria-valuemin': '0', 'aria-valuemax': '1', 'aria-label': gauge.about, title: gauge.about },
+      dial, bars, track, figure, element('div', { class: 'gauge-name' }, gauge.name));
+    return { node, figure };
+  });
+  $('gauges').replaceChildren(...gauges.map((each) => each.node));
+  function drawGauges() {
+    for (const [index, gauge] of gaugesOf(state.meters, Date.now()).entries()) {
+      const { node, figure } = gauges[index];
+      node.style.setProperty('--level', String(gauge.level));
+      node.setAttribute('aria-valuenow', String(gauge.level));
+      node.setAttribute('aria-valuetext', `${gauge.name.toLowerCase()} ${gauge.text}`);
+      figure.textContent = gauge.text;
+    }
+  }
+  drawGauges();
+  // The idle gauge moves between lines.
+  setInterval(() => {
+    if (state.running) drawGauges();
+  }, 500);
 
   // UND-36, UND-38: the theme and the mode - a known ?theme= / ?mode= wins,
   // then the one this browser remembers; auto mode follows the device.
@@ -748,6 +830,8 @@ function boot() {
     await flushBay();
     if (!(await show(name))) return;
     $('paper').replaceChildren();
+    state.meters = FRESH_METERS;
+    drawGauges();
     await loadBay();
   }
 
@@ -830,6 +914,8 @@ function boot() {
       drawTube();
     }
     print(line);
+    state.meters = metersAfter(state.meters, line, Date.now());
+    drawGauges();
   });
 
   (async () => {

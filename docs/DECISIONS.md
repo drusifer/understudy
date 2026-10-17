@@ -10,6 +10,14 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+## ADR-0036: Gauges read the run's own lines; flair is visibly decoration
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus · **Date**: 2026-10-17 · **Related**: UND-42
+*   **Context**: owner: per-theme flair with gauges - "yes real metrics in the gauges".
+*   **Options**: (1) gauges computed in the page from the stream it already gets (start, step and `decided` lines), plus the run's limits added to the start line; (2) a separate metrics endpoint; (3) decorative gauges.
+*   **Decision**: (1). `metersAfter`/`gaugesOf` are pure and unit-tested; the start line gains `limits: { steps, first_move_ms, stall_ms }`. Each theme draws the same five readings its own way (needle, hovering bars that stay within a small band round the value, card). Bulbs, leather and screws carry no meaning.
+*   **Consequences**: + no new endpoint; a page joining mid-run rebuilds the readings from the history. − the start line has one more field.
+
 ## ADR-0035: The statechart is a layered flow laid out by ELK on the server
 
 *   **Status**: Accepted · **Deciders**: owner, Morpheus · **Date**: 2026-10-17 · **Related**: UND-41, UND-30

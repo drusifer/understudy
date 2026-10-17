@@ -162,6 +162,25 @@
 :root[data-theme="starship"] .power-bar { border-radius: 999px; background: var(--dim); }
 :root[data-theme="starship"] .power-legend { font-family: Antonio, "Arial Narrow", sans-serif; font-size: 14px; text-transform: uppercase; }
 
+/* UND-42: no leather, no bulbs; each gauge is a ship readout - a cluster of power bars that keep
+   moving, but only within a small band round the real reading, its figure and its name. */
+:root[data-theme="starship"] .controls,
+:root[data-theme="starship"] .tube-panel { outline: none; background-image: none; }
+:root[data-theme="starship"] .bulbs,
+:root[data-theme="starship"] .gauge .dial { display: none; }
+:root[data-theme="starship"] .tube { height: 440px; }
+:root[data-theme="starship"] .gauge { align-items: stretch; gap: 3px; padding: 6px 8px; border-radius: 0 14px 14px 0; background: var(--void); border: none; border-left: 8px solid var(--lilac); box-shadow: none; }
+:root[data-theme="starship"] .gauge:nth-child(2n) { border-left-color: var(--sky); }
+:root[data-theme="starship"] .gauge:nth-child(3n) { border-left-color: var(--orange); }
+:root[data-theme="starship"] .gauge .bars { display: flex; align-items: flex-end; gap: 3px; height: 44px; }
+:root[data-theme="starship"] .gauge .bars i { flex: 1; height: calc(8% + var(--level) * 88%); background: var(--sky); border-radius: 2px; transform-origin: bottom; animation: hover 1.3s ease-in-out infinite alternate; animation-delay: calc(var(--n) * -0.37s); transition: height .5s; }
+:root[data-theme="starship"] .gauge .bars i:nth-child(3n) { background: var(--orange); }
+:root[data-theme="starship"] .gauge .bars i:nth-child(4n) { background: var(--lilac); }
+@keyframes hover { from { transform: scaleY(.9); } to { transform: scaleY(1.06); } }
+@media (prefers-reduced-motion: reduce) { :root[data-theme="starship"] .gauge .bars i { animation: none; } }
+:root[data-theme="starship"] .gauge .figure { font-family: Antonio, "Arial Narrow", sans-serif; font-size: 16px; font-weight: 700; color: var(--t-orange); text-align: right; }
+:root[data-theme="starship"] .gauge-name { font-family: Antonio, "Arial Narrow", sans-serif; font-size: 12px; letter-spacing: .1em; color: var(--t-sky); text-align: right; }
+
 /* The printer: a readout of coloured text on the screen */
 :root[data-theme="starship"] .paper { background: var(--void); background-image: none; padding: 10px 8px; color: var(--t-orange); }
 :root[data-theme="starship"] .paper,
