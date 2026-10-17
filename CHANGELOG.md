@@ -1,5 +1,11 @@
 # Changelog
 
+## Sprint 10 — a schema for sketch.yaml (2026-10-16, branch `sprint-10`, not yet merged)
+
+- **`schema/sketch.schema.json`**: editors with the YAML language server complete `sketch.yaml`
+  keys, show what each means and underline mistakes as you type. Every example points at it;
+  `docs/SKETCHES.md` "Editor help" says how to point yours. `check` is unchanged. ADR-0031.
+
 ## Between sprints (2026-10-16, on `main`)
 
 - **A weight input is a share of the full weighting** (owner): the top of its range weighs a factor

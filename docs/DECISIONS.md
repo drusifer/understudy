@@ -10,6 +10,14 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+## ADR-0031: A hand-written JSON Schema for editors; check stays the full check
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-37
+*   **Context**: owner asked how the YAML is documented; the reference is complete but editors gave no help while typing.
+*   **Options**: (1) a hand-written draft-07 schema for the YAML language server, kept in step with `check` by tests; (2) generate the schema from `check`'s code; (3) make `check` run the schema.
+*   **Decision**: (1). `ajv` (dev only) validates the examples and common mistakes; a test compares the schema's keys, target fields, input kinds and question types with the lists `check` exports. Examples carry a `# yaml-language-server: $schema=` line.
+*   **Consequences**: + completion, hover text and underlines in any YAML-language-server editor, no runtime dependency; `check`'s precise messages unchanged. − the schema is a second description of the format, held to `check` only where the comparison test reaches (deeper rules - names, states, prose - are `check`'s alone).
+
 ## ADR-0030: A weight input is a share of the full weighting (3)
 
 *   **Status**: Accepted · **Deciders**: owner · **Date**: 2026-10-16 · **Related**: UND-24, ADR-0017
