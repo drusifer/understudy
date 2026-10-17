@@ -70,3 +70,34 @@ test('the factory reset puts every edited sketch back and forgets the copies (UN
   assert.equal(existsSync(path.join(root, '.factory')), false);
   assert.deepEqual(settings.restore(), []);
 });
+
+// Sprint 8 UND-35 (ADR-0028): the bay behind the printer writes the whole file.
+test('the bay writes the whole file as typed, keeping the factory copy (UND-35 AC2)', async () => {
+  const root = folder();
+  const settings = createSettings({ folder: root });
+  const file = path.join(root, 'evening', 'sketch.yaml');
+  const factory = readFileSync(file, 'utf8');
+  const text = factory.replace('name: evening', 'name: late evening\n# typed in the bay');
+  assert.deepEqual(await settings.write({ sketch: 'evening', text }), { status: 200, value: { ok: true } });
+  assert.equal(readFileSync(file, 'utf8'), text);
+  assert.equal(readFileSync(path.join(root, '.factory', 'evening.yaml'), 'utf8'), factory);
+  assert.deepEqual(settings.restore(), ['evening']);
+  assert.equal(readFileSync(file, 'utf8'), factory);
+});
+
+test('a write that fails the checks writes nothing and says why, without the path (UND-35 AC3)', async () => {
+  const root = folder();
+  const settings = createSettings({ folder: root });
+  const file = path.join(root, 'evening', 'sketch.yaml');
+  const before = readFileSync(file, 'utf8');
+  const unknownState = await settings.write({ sketch: 'evening', text: before.replace('initial: waiting', 'initial: nowhere') });
+  assert.equal(unknownState.status, 422);
+  assert.match(unknownState.value.problem, /nowhere/);
+  assert.doesNotMatch(unknownState.value.problem, /understudy-edit-|sketch\.yaml/);
+  const broken = await settings.write({ sketch: 'evening', text: before.replace('turn:', 'turn: [') });
+  assert.equal(broken.status, 422);
+  assert.equal(readFileSync(file, 'utf8'), before);
+  assert.equal(existsSync(path.join(root, '.factory')), false, 'no factory copy for a refused write');
+  assert.equal((await settings.write({ sketch: '../evening', text: before })).status, 404);
+  assert.equal((await settings.write({ sketch: 'evening' })).status, 400);
+});

@@ -34,6 +34,7 @@ then the stepper and switches). Under 1100 px the columns stack: tube, controls,
 | State tube | a big round vacuum-tube screen with a glass glint | the sketch's statechart on a circle (finals inside); **every state and edge labelled** (event or guard, plus a short note); the current state glows; energy flows along the edges while running |
 | Power ring | arcs around the tube's rim, one per weight in its colour, filled by its value | the decision edge (the move) and a centre orb carry the **blend of the weight colours in the faders' ratio**; shares in % under the orb |
 | Printer | tractor-feed paper rising out of a printer roller, dot-matrix type | the run log prints line by line; ends with the score table, where 1.0 prints as `11` |
+| Behind the printer (sprint 8) | the printer's **REMOVE** button (screws at its corners) swaps it for a dark recessed bay: a cream **cheat-sheet sticker** above a monospace edit box of the whole `sketch.yaml`; the column widens while the bay is open | **saved as you type** (owner, as the drawers), checked first; the tube redraws from each save; a refused text shows its problem and is not saved; **REFIT PRINTER** puts the printer back |
 
 "11" is only how a perfect 1.0 is shown (owner); the engine rule for it shipped in sprint 5.
 

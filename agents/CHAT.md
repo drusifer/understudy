@@ -180,3 +180,111 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-16 21:16:52</small>] [**User**]->[**all**] *request*:
  yes commit and /sprint 8 go
+
+---
+[<small>2026-10-16 21:17:00</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Stage 0: SDLC present; branch sprint-8 cut from main. Story+arch (Tier 2) drafted: docs/sprints/USER_STORIES_SPRINT8.md. @Smith *user review sprint-8
+
+---
+[<small>2026-10-16 21:17:18</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ Gate 1 review: AC5 missed a drawer save while the bay is open; AC6 'fits' had no viewport. Revised with Cypher. *user approve. rubric STORIES: OUT=S TEST=A FAIL=S SCOPE=A SIZE=A DESIGN=A
+
+---
+[<small>2026-10-16 21:17:18</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Arch in the same doc (Tier 2): settings.write + server write/GET text; debounced, serialised saves; textarea never redrawn. ADR-0028 whole-file writes beside the allow-list. No build-env change.
+
+---
+[<small>2026-10-16 21:17:18</small>] [**Smith**]->[**Mouse**] *user approve*:
+ *user approve. Architecture approved. rubric ARCH: BOUND=A FLOW=A FAIL=A USER=A DECS=A FEAS=S. @Mouse *sm plan sprint
+
+---
+[<small>2026-10-16 21:17:29</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint planned: 2 phases (server write; page bay + sticker). @Morpheus *lead review sprint plan
+
+---
+[<small>2026-10-16 21:17:29</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Plan approved. rubric PLAN: SIZE=S GATE=A VERIF=A ALIGN=S OWNER=A. @Neo *swe impl phase-1
+
+---
+[<small>2026-10-16 21:17:29</small>] [**Mouse**]->[**all**] *phase 1*:
+ Phase 1: whole-file writes (server side)
+
+---
+[<small>2026-10-16 21:21:03</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make lint | /home/drusifer/Projects/understudy/build/build.out
+
+> understudy@0.1.0 lint
+> eslint --no-error-on-unmatched-pattern 'src/**/*.mjs' 'bin/**/*.mjs' 'examples/**/*.mjs' 'examples/**/*.js' 'tests/**/*.js' 'tests/**/*.mjs'
+
+
+---
+[<small>2026-10-16 21:21:03</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 1 impl: settings.write, write action (409 while running), GET api/text/<name>, body cap 64 KB. Tests added; check passes. @Trin *qa uat phase-1
+
+---
+[<small>2026-10-16 21:21:03</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 1 passed: AC2 write+factory+restore, AC3 refused writes nothing and names the problem without path, AC4 409 while running; 290 tests green. @Morpheus *lead review phase-1
+
+---
+[<small>2026-10-16 21:21:03</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 1 review passed: shared saved() keeps edit and write on one path; GET text reads only rack names. @Neo *swe impl phase-2
+
+---
+[<small>2026-10-16 21:21:03</small>] [**Mouse**]->[**all**] *phase 2*:
+ Phase 2: the bay and the sticker (page)
+
+---
+[<small>2026-10-16 21:24:53</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+9:24PM INF 1 commits scanned.
+9:24PM INF scanned ~12488 bytes (12.49 KB) in 252ms
+9:24PM INF no leaks found
+
+---
+[<small>2026-10-16 21:25:03</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 2 impl: REMOVE/REFIT PRINTER, the bay (debounced serialised writes, problem line, read-only while running, reload on rack/POWER/drawer save), sticker, wider column when open; browser test at 1600x960; USER_GUIDE + DASHBOARD. @Trin *qa uat phase-2
+
+---
+[<small>2026-10-16 21:25:03</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 2 passed: AC1-3, AC6-7 in the browser test (keyboard REMOVE, sticker fits, rename shows in tube, broken text not saved). AC4-5 by code review only (no browser run of read-only / POWER reload). Screenshot checked. @Morpheus *lead review phase-2
+
+---
+[<small>2026-10-16 21:25:03</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
+ Phase 2 review passed: redraw() shared by drawer and bay saves; textarea never redrawn by its own write; flush before Play and tab switch. page.mjs grows to ~640 lines - split stays on the backlog. @Tank *devops sdlc-check
+
+---
+[<small>2026-10-16 21:26:15</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-browser | /home/drusifer/Projects/understudy/build/build.out
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 18690.227586
+
+---
+[<small>2026-10-16 21:26:23</small>] [**Tank**]->[**Oracle**] *devops handoff*:
+ SDLC check passed: clean -> check, browser 6/6; no mechanism change. @Oracle *ora groom
+
+---
+[<small>2026-10-16 21:26:23</small>] [**Oracle**]->[**Smith**] *ora handoff*:
+ Docs groomed: ADR-0028, CHANGELOG sprint 8, USER_GUIDE + DASHBOARD bay rows. rubric DECISION: CTX=A OPTS=A WHY=A CONS=A. @Smith *user test sprint-8
+
+---
+[<small>2026-10-16 21:26:23</small>] [**Smith**]->[**all**] *user approve*:
+ User test passed (browser run + screenshot at 1600x960): REMOVE by keyboard, sticker whole, rename shows in tube, broken text red with one-line reason. Rough edge: the sticker takes ~40% of the bay; the YAML box is narrow, lines scroll sideways. @all *sprint retro
+
+---
+[<small>2026-10-16 21:26:23</small>] [**Mouse**]->[**Cypher**] *retro*:
+ Retro. Neo: page.mjs ~640 lines, split overdue. Trin: read-only-while-running and POWER reload not browser-tested. Morpheus: whole-file write sits beside the allow-list cleanly (shared saved()). Smith: sticker could fold away. Mouse: 2 phases right-sized. Backlog: split page.mjs; browser test AC4-5; foldable sticker.
+
+---
+[<small>2026-10-16 21:26:35</small>] [**Cypher**]->[**all**] *pm launch*:
+ *pm launch sprint-8. Behind the printer: REMOVE to edit sketch.yaml with a cheat sheet; tube redraws as you type. Retro items on BACKLOG. Merge to main awaiting owner.
+
+---
+[<small>2026-10-16 21:34:04</small>] [**User**]->[**all**] *request*:
+ push all please

@@ -171,7 +171,8 @@ Run by Tank at sprint close (`*devops sdlc-check`):
 8. Nothing under `src/` or `tests/` imports from `seed/`.
 
 ---
-*Last verified: 2026-10-16 by Tank (sprint-6 close: clean → check, browser tests 5/5. Routine
+*Last verified: 2026-10-16 by Tank (sprint-8 close: clean → check, browser tests 6/6; no
+mechanism change - the dashboard's request body cap is code, not tooling. Sprint-6 close: Routine
 dependencies added per §4 (`@fontsource/*` fonts); eslint browser-globals block now also covers
 `src/dashboard/page.mjs` (Mechanism, small, owner-approved with the sprint plan); `.factory/`
 git-ignored. Sprint 5: `test-live` outcome checks and the full-house walk-away run).*

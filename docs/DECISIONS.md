@@ -10,6 +10,14 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+## ADR-0028: The bay behind the printer writes the whole sketch file
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-35
+*   **Context**: owner: take the printer off to edit the sketch's YAML, saved as you type, and watch the tube change. The access panels' allow-list (ADR-0024) only lets listed values change.
+*   **Options**: (1) a separate whole-file `write` beside the allow-listed `edit`, checked the same way on a copy; (2) widen the allow-list to every path; (3) a code-editor library with live parse and save.
+*   **Decision**: (1). Same refusal check and factory copy as `edit`; refused while a run plays; the page sends writes one at a time after 500 ms of quiet, into a plain `<textarea>`.
+*   **Consequences**: + any part of the sketch is editable, with the same safety (nothing failing `check` is written; POWER restores). − a whole-file write rewrites comments as typed, and no highlighting or completion; the drawers stay the precise way to change one value.
+
 ## ADR-0027: Count inputs, and inputs referenced as `{ input: <name> }`
 
 *   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-34

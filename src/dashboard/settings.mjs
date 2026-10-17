@@ -3,7 +3,8 @@
 // (allow-listed paths); only the edited value's text in the file is
 // replaced (found through the YAML parser), so comments and layout stay; the result is checked with loadSketch on a copy
 // before anything is written. The first edit of a sketch keeps a factory
-// copy in <folder>/.factory/; POWER on puts every copy back.
+// copy in <folder>/.factory/; POWER on puts every copy back. Sprint 8 UND-35
+// (ADR-0028): the bay behind the printer writes the whole file, checked the same way.
 
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -80,6 +81,22 @@ export function createSettings({ folder }) {
     }
   }
 
+  /**
+   * Writes `text` as the sketch if it passes the checks, keeping the factory
+   * copy on its first change.
+   */
+  async function saved(sketch, text) {
+    const problem = await refusalOf(sketch, text);
+    if (problem) return { status: 422, value: { problem } };
+    const file = path.join(folder, sketch, SKETCH);
+    if (!existsSync(factoryOf(sketch))) {
+      mkdirSync(path.dirname(factoryOf(sketch)), { recursive: true });
+      writeFileSync(factoryOf(sketch), readFileSync(file));
+    }
+    writeFileSync(file, text);
+    return { status: 200, value: { ok: true } };
+  }
+
   return {
     /**
      * Saves changes - `[{ path: [...keys], value }]` - to one sketch, all or nothing.
@@ -90,18 +107,20 @@ export function createSettings({ folder }) {
       if (!Array.isArray(changes) || changes.length === 0 || changes.some((change) => !isAllowed(change?.path))) {
         return { status: 400, value: { problem: 'only the settings the panels show can be changed' } };
       }
-      const file = path.join(folder, sketch, SKETCH);
-      const original = readFileSync(file, 'utf8');
-      let text = original;
+      let text = readFileSync(path.join(folder, sketch, SKETCH), 'utf8');
       for (const { path: keys, value } of changes) text = patched(text, keys, value);
-      const problem = await refusalOf(sketch, text);
-      if (problem) return { status: 422, value: { problem } };
-      if (!existsSync(factoryOf(sketch))) {
-        mkdirSync(path.dirname(factoryOf(sketch)), { recursive: true });
-        writeFileSync(factoryOf(sketch), original);
-      }
-      writeFileSync(file, text);
-      return { status: 200, value: { ok: true } };
+      return saved(sketch, text);
+    },
+
+    /**
+     * Replaces one sketch's whole file with `text` (UND-35, ADR-0028) - the
+     * bay behind the printer - checked like an edit, all or nothing.
+     * @returns {Promise<{ status: number, value: object }>}
+     */
+    async write({ sketch, text } = {}) {
+      if (typeof sketch !== 'string' || !sketchNames(folder).includes(sketch)) return { status: 404, value: { problem: `no sketch "${sketch}" in ${folder}` } };
+      if (typeof text !== 'string') return { status: 400, value: { problem: 'the sketch\'s text is missing' } };
+      return saved(sketch, text);
     },
 
     /**

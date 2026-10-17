@@ -3,7 +3,7 @@
 // says why a run could not start.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { serveDashboard } from '../src/dashboard/console.mjs';
@@ -95,9 +95,19 @@ test('edits are refused while a run goes; POWER off stops the run (UND-32 AC4-5)
   const edit = await post('edit', { sketch: 'evening', changes: [{ path: ['inputs', 'centre', 'default'], value: 2 }] });
   assert.equal(edit.status, 409);
   assert.deepEqual(await edit.json(), { problem: 'stop the run before changing the settings' });
+  const write = await post('write', { sketch: 'evening', text: 'name: evening\n' });
+  assert.equal(write.status, 409, 'nor writes from the bay (UND-35 AC4)');
   const off = await post('power', { on: false });
   assert.deepEqual(await off.json(), { on: false });
   assert.equal(dashboard.runner.isRunning(), false);
   assert.equal(lines.at(-1).outcome, 'interrupted');
   assert.deepEqual(await (await post('power', { on: true })).json(), { on: true, restored: [] });
+});
+
+test('the bay reads a sketch\'s file as it is, only by a rack name (UND-35 AC1)', async () => {
+  const { dashboard } = await console_();
+  const read = await fetch(`${dashboard.url}api/text/evening`);
+  assert.equal(read.status, 200);
+  assert.deepEqual(await read.json(), { text: readFileSync('examples/evening/sketch.yaml', 'utf8') });
+  assert.equal((await fetch(`${dashboard.url}api/text/..%2Fsrc`)).status, 404);
 });

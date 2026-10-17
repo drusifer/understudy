@@ -70,6 +70,14 @@ Design approved on a clickable mockup - **`docs/design/DASHBOARD.md`** is the br
   POWER off and on resets the sketch to its **factory defaults**.
 - "11" is how a perfect 1.0 is shown. Square lit Play button; green glowing READY lamp.
 
+## Sprint 8 (owner, 2026-10-16) - behind the printer - DONE (launched 2026-10-16)
+- UND-35: REMOVE the printer to edit the sketch's YAML with a cheat-sheet sticker; saved as typed; the tube redraws.
+
+## Next (from the sprint 8 retro)
+- `src/dashboard/page.mjs` is now ~640 lines: the split below is overdue. (Neo, Morpheus)
+- Browser-test the bay's read-only-while-running and its reload on POWER and drawer saves (UND-35 AC4-5). (Trin)
+- The sticker takes ~40% of the bay; let it fold away to give the YAML box room. (Smith)
+
 ## Next (from the sprint 6 retro)
 - Tube labels still crowd when a state has several guarded exits (evening's "looking"); try label
   leader lines or a label-collision pass. (Smith)

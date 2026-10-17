@@ -1,5 +1,13 @@
 # Changelog
 
+## Sprint 8 — behind the printer (2026-10-16, branch `sprint-8`, not yet merged)
+
+- **REMOVE the printer** to edit the sketch's whole `sketch.yaml` in the bay behind it, with a
+  cheat-sheet sticker; saved half a second after typing stops (checked first), and the state tube
+  redraws as you type. Refused text is not saved and says why; read-only while a run plays.
+  **REFIT PRINTER** puts it back. ADR-0028.
+- The evening's weights run 0-10 (was 0-3).
+
 ## Sprint 7 — how many tickets (2026-10-16, branch `sprint-7`, not yet merged)
 
 - **Count inputs** (`tickets: { count: [1, 4], default: 2 }`, `--input tickets=3`), shown on the

@@ -4,7 +4,7 @@
 // and the printer print the ticket.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { serveDashboard } from '../../src/dashboard/console.mjs';
@@ -87,5 +87,53 @@ test('the console plays the evening: controls, Play, the tube follows, the print
   assert.ok((await page.$$eval('#paper .eleven', (cells) => cells.length)) > 0, 'a perfect 1.0 prints as 11');
   const tube = await page.getAttribute('#tube svg', 'aria-label');
   assert.ok(tube.endsWith('Now: booked.'), tube);
+  assert.deepEqual(errors, []);
+});
+
+// Sprint 8 UND-35: take the printer off, edit the sketch behind it, watch the tube change.
+test('behind the printer: the sketch\'s YAML and a sticker; typing saves and the tube redraws; a broken sketch is not saved', async () => {
+  const folder = mkdtempSync(path.join(tmpdir(), 'understudy-dash-bay-'));
+  cpSync('examples/cli', path.join(folder, 'cli'), { recursive: true });
+  const file = path.join(folder, 'cli', 'sketch.yaml');
+  const dashboard = await serveDashboard({ folder, port: 0, environment: { ...process.env, TYPESAFE_API_KEY: 'test' } });
+  test.after(async () => {
+    await dashboard.close();
+    rmSync(folder, { recursive: true, force: true });
+  });
+  const page = await browser.newPage({ viewport: { width: 1600, height: 960 } });
+  const errors = [];
+  page.on('pageerror', (error) => {
+    errors.push(error.message);
+  });
+  await page.goto(dashboard.url);
+  await until(page, () => document.querySelector('#tube .labels')?.textContent.includes('replying'));
+
+  // AC1, AC6: REMOVE swaps the printer for the bay; the sticker fits beside the edit box.
+  await page.focus('#remove-printer');
+  await page.keyboard.press('Enter');
+  assert.equal(await page.isVisible('#printer'), false);
+  await until(page, () => document.querySelector('#bay-text').value.includes('initial: waiting'));
+  assert.equal(await page.inputValue('#bay-text'), readFileSync(file, 'utf8'));
+  const sticker = await page.$eval('.sticker', (node) => ({ text: node.textContent, fits: node.scrollHeight <= node.clientHeight + 1, bottom: node.getBoundingClientRect().bottom }));
+  for (const word of ['inputs', 'turn', 'choose', 'weight', 'count', 'switch', 'type: final']) assert.ok(sticker.text.includes(word), word);
+  assert.ok(sticker.fits && sticker.bottom <= 960, 'the sticker shows whole on a 1600x960 screen');
+
+  // AC2: typing saves a moment later; the tube shows the renamed state.
+  const renamed = readFileSync(file, 'utf8').replaceAll('replying', 'responding');
+  await page.fill('#bay-text', renamed);
+  await until(page, () => document.querySelector('#tube .labels').textContent.includes('responding'));
+  assert.equal(readFileSync(file, 'utf8'), renamed);
+
+  // AC3: a sketch that fails its checks is not saved; the problem shows; the tube keeps the last good one.
+  await page.fill('#bay-text', renamed.replace('initial: waiting', 'initial: nowhere'));
+  await until(page, () => document.querySelector('#bay-problem').textContent.includes('nowhere'));
+  assert.equal(await page.getAttribute('#bay-text', 'aria-invalid'), 'true');
+  assert.equal(readFileSync(file, 'utf8'), renamed);
+  assert.ok((await page.textContent('#tube .labels')).includes('responding'));
+
+  // AC1, AC7: REFIT PRINTER puts the printer back.
+  await page.click('#refit-printer');
+  assert.equal(await page.isVisible('#printer'), true);
+  assert.equal(await page.isVisible('#bay'), false);
   assert.deepEqual(errors, []);
 });
