@@ -9,7 +9,13 @@ sequenceDiagram
     participant Oracle
     participant All
     participant User
-    Note over Oracle,User: 📅 2026-10-16
+    participant Cypher
+    participant Smith
+    participant Morpheus
+    participant Mouse
+    participant Neo
+    participant Trin
+    Note over Oracle,Trin: 📅 2026-10-16
     Oracle->>All: "checkpoint"
     Note right of Oracle: "Checkpoint: Cypher +<br/>Oracle state saved<br/>(between sprints, sprint<br/>9 merged). Ready for<br/>context clear. Resume<br/>with /init."
     User->>All: "request"
@@ -18,4 +24,24 @@ sequenceDiagram
     Note right of Oracle: "Weight inputs are now a<br/>share of the full<br/>weighting 3 (ADR-0030,<br/>owner), SKETCHES.md<br/>gains an input-kinds<br/>table, the weight rule,<br/>when:/{ i…"
     User->>All: "request"
     Note right of User: "push then add the schema<br/>validation"
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Stage 0 ok, branch<br/>sprint-10. Story+arch: d<br/>ocs/sprints/USER_STORIES<br/>_SPRINT10.md (UND-37<br/>sketch schema). @Smith<br/>*user review sprint-10"
+    Smith->>Morpheus: "user approve"
+    Note right of Smith: "*user approve. AC3 names<br/>each rejected mistake,<br/>AC5 keeps check's<br/>messages. rubric<br/>STORIES: OUT=S TEST=S<br/>FAIL=A SCOPE=A SIZE=A<br/>DESIGN=A"
+    Morpheus->>Smith: "lead handoff"
+    Note right of Morpheus: "Arch: hand-written<br/>draft-07 schema, ajv dev<br/>dep in tests, exported<br/>key lists compared with<br/>schema. ADR-0031. No<br/>mechanism change."
+    Smith->>Mouse: "user approve"
+    Note right of Smith: "*user approve. rubric<br/>ARCH: BOUND=S FLOW=A<br/>FAIL=A USER=A DECS=A<br/>FEAS=A. @Mouse *sm plan<br/>sprint"
+    Mouse->>Morpheus: "sm handoff"
+    Note right of Mouse: "Sprint planned: 2<br/>phases. @Morpheus *lead<br/>review sprint plan"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Plan approved. rubric<br/>PLAN: SIZE=S GATE=A<br/>VERIF=S ALIGN=A OWNER=A.<br/>@Neo *swe impl phase-1"
+    Mouse->>All: "phase 1"
+    Note right of Mouse: "Phase 1: the schema and<br/>its tests"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 1 impl: schema/ske<br/>tch.schema.json<br/>(draft-07),<br/>tests/schema.test.js<br/>with ajv (dev dep): 6<br/>examples pass, 7<br/>mistakes flagged at<br/>path, k…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 1 passed: AC1,<br/>AC3-5, check green.<br/>@Morpheus *lead review<br/>phase-1"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 1 review passed:<br/>schema is data, drift<br/>caught by the comparison<br/>test, check untouched.<br/>@Neo *swe impl phase-2"
 ```

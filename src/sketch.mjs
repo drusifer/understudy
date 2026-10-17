@@ -24,15 +24,15 @@ import { checkInputs, isInputReference, numberInputs, switchInputs, weightInputs
 
 const SKETCH = 'sketch.yaml';
 const GUIDE = 'see docs/SKETCHES.md';
-const KEYS = ['name', 'description', 'target', 'app', 'player', 'steps', 'questions', 'turn', 'calls', 'values', 'decide', 'inputs', 'pick'];
-const QUESTION_TYPES = ['noul', 'choice', 'score'];
+export const KEYS = ['name', 'description', 'target', 'app', 'player', 'steps', 'questions', 'turn', 'calls', 'values', 'decide', 'inputs', 'pick'];
+export const QUESTION_TYPES = ['noul', 'choice', 'score'];
 // The fields a kind cannot do without, with what each one is for.
 const REQUIRED = {
   process: { command: 'the program to start, e.g. node' },
   http: { url: 'where the API is, e.g. http://127.0.0.1:{port}', state: 'the path a look GETs, e.g. /status' },
 };
 // The fields each kind of target takes; anything else is a mistake, named at load.
-const TARGET_FIELDS = { process: ['command', 'args'], page: ['root', 'page'], http: ['command', 'args', 'url', 'state'], mcp: ['server', 'servers', 'config'] };
+export const TARGET_FIELDS = { process: ['command', 'args'], page: ['root', 'page'], http: ['command', 'args', 'url', 'state'], mcp: ['server', 'servers', 'config'] };
 // Kinds with a built-in app, made for each sketch; the others read their
 // app through hooks.mjs. An MCP server is only ever played by its own.
 const GENERIC_APPS = { page: () => pageApp, mcp: (sketch) => mcpApp({ calls: sketch.calls, values: sketch.values, decide: sketch.decide, pick: sketch.pick, questions: sketch.questions }) };

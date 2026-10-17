@@ -84,3 +84,51 @@ To github.com:drusifer/understudy.git
 10:01PM INF no leaks found
 To github.com:drusifer/understudy.git
 a589956..4c2f6a4  main -> main
+
+---
+[<small>2026-10-16 22:02:28</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Stage 0 ok; branch sprint-10. Story+arch: docs/sprints/USER_STORIES_SPRINT10.md (UND-37 sketch schema). @Smith *user review sprint-10
+
+---
+[<small>2026-10-16 22:02:28</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ *user approve. AC3 names each rejected mistake; AC5 keeps check's messages. rubric STORIES: OUT=S TEST=S FAIL=A SCOPE=A SIZE=A DESIGN=A
+
+---
+[<small>2026-10-16 22:02:28</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Arch: hand-written draft-07 schema, ajv dev dep in tests, exported key lists compared with schema. ADR-0031. No mechanism change.
+
+---
+[<small>2026-10-16 22:02:28</small>] [**Smith**]->[**Mouse**] *user approve*:
+ *user approve. rubric ARCH: BOUND=S FLOW=A FAIL=A USER=A DECS=A FEAS=A. @Mouse *sm plan sprint
+
+---
+[<small>2026-10-16 22:02:28</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint planned: 2 phases. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-10-16 22:02:28</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Plan approved. rubric PLAN: SIZE=S GATE=A VERIF=S ALIGN=A OWNER=A. @Neo *swe impl phase-1
+
+---
+[<small>2026-10-16 22:02:28</small>] [**Mouse**]->[**all**] *phase 1*:
+ Phase 1: the schema and its tests
+
+---
+[<small>2026-10-16 22:06:23</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+10:06PM INF no leaks found
+10:06PM INF 1 commits scanned.
+10:06PM INF scanned ~6052 bytes (6.05 KB) in 247ms
+10:06PM INF no leaks found
+
+---
+[<small>2026-10-16 22:06:33</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 1 impl: schema/sketch.schema.json (draft-07); tests/schema.test.js with ajv (dev dep): 6 examples pass, 7 mistakes flagged at path, key/kind/field/type lists equal check's (now exported). @Trin *qa uat phase-1
+
+---
+[<small>2026-10-16 22:06:33</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 1 passed: AC1, AC3-5; check green. @Morpheus *lead review phase-1
+
+---
+[<small>2026-10-16 22:06:33</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 1 review passed: schema is data; drift caught by the comparison test; check untouched. @Neo *swe impl phase-2

@@ -1,0 +1,301 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/drusifer/understudy/schema/sketch.schema.json",
+  "title": "understudy sketch.yaml",
+  "description": "A sketch: what to play, a small statechart, and the questions Jev answers. Reference: docs/SKETCHES.md. This schema is the editor's quick structural check; `understudy check` is the full one.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "target", "questions", "turn"],
+  "properties": {
+    "name": { "type": "string", "minLength": 1, "description": "The sketch's name; logs go to build/runs/<name>/." },
+    "description": { "type": "string", "description": "What the stand-in does, for people." },
+    "target": { "$ref": "#/definitions/target" },
+    "app": { "type": "string", "minLength": 1, "description": "The hooks module next to the sketch, e.g. hooks.mjs. process and http: required; page: optional; mcp: not allowed." },
+    "player": {
+      "type": "object", "additionalProperties": false,
+      "description": "What an unconvincing answer does.",
+      "properties": {
+        "floor": { "type": "number", "minimum": 0, "maximum": 1, "description": "The confidence below which a pick is not trusted." },
+        "escalation": { "enum": ["floor_fallback", "ask"], "description": "floor_fallback: play the last option; ask: ask on the talk channel." }
+      }
+    },
+    "steps": { "type": "integer", "minimum": 1, "description": "Step cap; --steps wins; default 50." },
+    "calls": {
+      "type": "array", "description": "mcp only: the tools Jev may call, some with fixed arguments.",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["tool"],
+        "properties": {
+          "tool": { "type": "string", "minLength": 1, "description": "<tool>, or <server>/<tool> with several servers." },
+          "arguments": { "type": "object", "description": "Argument names to fixed values." }
+        }
+      }
+    },
+    "values": {
+      "type": "object", "description": "mcp only: per tool, per argument, the values Jev chooses from - a list, or { input: <name> }.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": { "anyOf": [{ "type": "array", "minItems": 1 }, { "$ref": "#/definitions/inputReference" }] }
+      }
+    },
+    "decide": {
+      "type": "object", "description": "mcp only: per <tool>.<argument>, how a person decides - gates, scores, shortlist.",
+      "propertyNames": { "pattern": "^(?:[\\w-]+/)?[\\w-]+\\.[\\w-]+$" },
+      "additionalProperties": { "$ref": "#/definitions/decided" }
+    },
+    "inputs": {
+      "type": "object", "description": "What the person sets when the run starts (--input name=value, or the dashboard's controls).",
+      "additionalProperties": { "$ref": "#/definitions/input" }
+    },
+    "pick": {
+      "type": "object", "additionalProperties": false, "required": ["instructions"],
+      "description": "mcp only: the final Choice among a shortlist.",
+      "properties": {
+        "instructions": { "type": "string", "description": "How the person chooses; refer to state by path in backticks, no literals." },
+        "with": { "type": "array", "items": { "type": "string" }, "description": "The choice inputs Jev is told." }
+      }
+    },
+    "questions": {
+      "type": "object", "description": "TypeSafe questions, one per name the turn uses.",
+      "additionalProperties": { "$ref": "#/definitions/question" }
+    },
+    "turn": { "$ref": "#/definitions/turn" }
+  },
+  "definitions": {
+    "target": {
+      "description": "How the app is seen and moved.",
+      "type": "object", "required": ["kind"],
+      "properties": { "kind": { "enum": ["process", "page", "http", "mcp"], "description": "process: a command-line program; page: a web page in headless Chromium; http: a JSON API; mcp: an MCP server." } },
+      "oneOf": [
+        {
+          "additionalProperties": false, "required": ["kind", "command"],
+          "properties": {
+            "kind": { "const": "process" },
+            "command": { "type": "string", "minLength": 1, "description": "The program to start, in the sketch directory, e.g. node." },
+            "args": { "type": "array", "items": { "type": "string" }, "description": "Its arguments." }
+          }
+        },
+        {
+          "additionalProperties": false, "required": ["kind"],
+          "properties": {
+            "kind": { "const": "page" },
+            "root": { "type": "string", "description": "The directory served (default: the sketch directory)." },
+            "page": { "type": "string", "description": "The page opened, e.g. index.html." }
+          }
+        },
+        {
+          "additionalProperties": false, "required": ["kind", "url", "state"],
+          "properties": {
+            "kind": { "const": "http" },
+            "command": { "type": "string", "description": "A service to start first (its URL may use {port})." },
+            "args": { "type": "array", "items": { "type": "string" } },
+            "url": { "type": "string", "minLength": 1, "description": "Where the API is, e.g. http://127.0.0.1:{port}." },
+            "state": { "type": "string", "minLength": 1, "description": "The path a look GETs, e.g. /status." }
+          }
+        },
+        {
+          "additionalProperties": false, "required": ["kind"],
+          "properties": {
+            "kind": { "const": "mcp" },
+            "server": { "description": "One server: its entry inline, or its name in config:.", "anyOf": [{ "$ref": "#/definitions/server" }, { "type": "string", "minLength": 1 }] },
+            "servers": {
+              "description": "Several servers: name -> entry, or (with config:) a list of names.",
+              "anyOf": [
+                { "type": "object", "minProperties": 1, "additionalProperties": { "$ref": "#/definitions/server" } },
+                { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } }
+              ]
+            },
+            "config": { "type": "string", "minLength": 1, "description": "An mcpServers file, e.g. servers.json next to the sketch or ~/.claude.json." }
+          }
+        }
+      ]
+    },
+    "server": {
+      "description": "An mcpServers entry: local { command, args, env } or remote { type: http, url, headers }.",
+      "type": "object",
+      "oneOf": [
+        {
+          "additionalProperties": false, "required": ["command"],
+          "properties": {
+            "type": { "const": "stdio" },
+            "command": { "type": "string", "minLength": 1 },
+            "args": { "type": "array", "items": { "type": "string" } },
+            "env": { "type": "object", "additionalProperties": { "type": "string" }, "description": "${VAR} and ${VAR:-default} are filled from the environment." }
+          }
+        },
+        {
+          "additionalProperties": false, "required": ["type", "url"],
+          "properties": {
+            "type": { "const": "http", "description": "Streamable HTTP." },
+            "url": { "type": "string", "minLength": 1 },
+            "headers": { "type": "object", "additionalProperties": { "type": "string" } }
+          }
+        }
+      ]
+    },
+    "inputReference": {
+      "type": "object", "additionalProperties": false, "required": ["input"],
+      "properties": { "input": { "type": "string", "minLength": 1, "description": "The run's value of this input." } }
+    },
+    "bound": {
+      "description": "A number, an HH:MM time, or { input: <count or weight> }.",
+      "anyOf": [{ "type": "number" }, { "type": "string", "pattern": "^\\d{1,2}:\\d{2}$" }, { "$ref": "#/definitions/inputReference" }]
+    },
+    "input": {
+      "description": "One input: exactly one kind - choose, weight, count or switch - and its default.",
+      "type": "object", "required": ["default"],
+      "oneOf": [
+        {
+          "additionalProperties": false, "required": ["choose"],
+          "properties": {
+            "choose": { "type": "array", "minItems": 1, "items": { "type": "string" }, "description": "A choice: the words to choose from (a pointer dial)." },
+            "default": { "type": "string" }
+          }
+        },
+        {
+          "additionalProperties": false, "required": ["weight"],
+          "properties": {
+            "weight": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2, "description": "A weight: [low, high] (a fader); the top weighs a factor 3, half way 1.5." },
+            "default": { "type": "number" }
+          }
+        },
+        {
+          "additionalProperties": false, "required": ["count"],
+          "properties": {
+            "count": { "type": "array", "items": { "type": "integer" }, "minItems": 2, "maxItems": 2, "description": "A count: [low, high] whole numbers (a brass stepper)." },
+            "default": { "type": "integer" }
+          }
+        },
+        {
+          "additionalProperties": false, "required": ["switch"],
+          "properties": {
+            "switch": { "const": true, "description": "A switch: on or off (a toggle); gates use it with when:." },
+            "default": { "type": "boolean" }
+          }
+        }
+      ]
+    },
+    "test": {
+      "description": "A gate test: a bare value (equals), or { is | in | at_least | at_most, when }.",
+      "anyOf": [
+        { "type": ["string", "number", "boolean"] },
+        {
+          "type": "object", "additionalProperties": false, "minProperties": 1,
+          "properties": {
+            "is": { "description": "The field equals it." },
+            "in": { "type": "array", "description": "The field is one of these." },
+            "at_least": { "$ref": "#/definitions/bound" },
+            "at_most": { "$ref": "#/definitions/bound" },
+            "when": { "type": "string", "description": "A switch input: the test applies only while it is on." }
+          }
+        }
+      ]
+    },
+    "gates": {
+      "description": "What the person never accepts: field -> test, and any: [group, ...].",
+      "type": "object",
+      "properties": { "any": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/gates" }, "description": "Passes if any one group passes." } },
+      "additionalProperties": { "$ref": "#/definitions/test" }
+    },
+    "factor": {
+      "description": "One score factor: range, order or ask, and its weight.",
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "range": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": ["number", "string"] }, "description": "[from, to]: 0 at from, 1 at to, clamped." },
+        "order": { "type": "array", "minItems": 1, "description": "[best, ..., worst]; unlisted 0." },
+        "ask": { "type": "string", "description": "A type: score question; position is Jev's answer." },
+        "weight": { "anyOf": [{ "type": "number", "minimum": 0 }, { "type": "string", "minLength": 1 }], "description": "The exponent (0 = off; default 1), or a weight input's name." }
+      },
+      "oneOf": [{ "required": ["range"] }, { "required": ["order"] }, { "required": ["ask"] }]
+    },
+    "decided": {
+      "description": "One decided argument.",
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "field": { "type": "string", "description": "The answer field the values come from (default: the argument's name)." },
+        "join": { "type": "string", "description": "The field that joins rows across answers." },
+        "gates": { "$ref": "#/definitions/gates" },
+        "scores": { "type": "object", "additionalProperties": { "$ref": "#/definitions/factor" }, "description": "What the person likes more: field -> factor." },
+        "shortlist": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "at_most": { "type": "integer", "minimum": 1 },
+            "total": { "type": "object", "additionalProperties": false, "properties": { "at_least": { "type": "number" } } }
+          }
+        }
+      }
+    },
+    "question": {
+      "description": "A TypeSafe question. Prose refers to state by path in backticks - no numbers or quoted values.",
+      "type": "object", "additionalProperties": false, "required": ["type", "instructions"],
+      "properties": {
+        "type": { "enum": ["choice", "noul", "score"] },
+        "instructions": { "type": "string" },
+        "criteria": { "type": ["object", "array"], "description": "choice: wording per option kind (the id before ':')." },
+        "looks_at": { "type": "string", "description": "score (used by ask:): the row field it reads." },
+        "levels": { "type": "array", "minItems": 2, "items": { "type": "string" }, "description": "score: the levels, worst first." }
+      }
+    },
+    "guard": {
+      "description": "A guard from the library (understudy library), by name or { type, params }.",
+      "anyOf": [{ "type": "string" }, { "type": "object", "required": ["type"], "properties": { "type": { "type": "string" }, "params": { "type": "object" } }, "additionalProperties": false }]
+    },
+    "actions": {
+      "anyOf": [
+        { "type": "string" },
+        { "type": "object", "required": ["type"], "properties": { "type": { "type": "string" }, "params": { "type": "object" } }, "additionalProperties": false },
+        { "type": "array", "items": { "anyOf": [{ "type": "string" }, { "type": "object", "required": ["type"] }] } }
+      ]
+    },
+    "transition": {
+      "anyOf": [
+        { "type": "string", "description": "The state to go to." },
+        {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "target": { "type": "string" },
+            "guard": { "$ref": "#/definitions/guard" },
+            "actions": { "$ref": "#/definitions/actions" },
+            "description": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "transitions": { "anyOf": [{ "$ref": "#/definitions/transition" }, { "type": "array", "items": { "$ref": "#/definitions/transition" } }] },
+    "state": {
+      "description": "A flat state (no nesting).",
+      "type": ["object", "null"], "additionalProperties": false,
+      "properties": {
+        "description": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" }, "description": "move: the understudy's move; safe: stopping here is harmless; walked-away on a final state." },
+        "type": { "const": "final", "description": "The end state." },
+        "on": { "type": "object", "additionalProperties": { "$ref": "#/definitions/transitions" }, "description": "OBSERVE (each look), STEP (a move step), QUIT (Ctrl-C)." },
+        "after": { "type": "object", "additionalProperties": { "$ref": "#/definitions/transitions" } },
+        "always": { "$ref": "#/definitions/transitions" },
+        "entry": { "$ref": "#/definitions/actions" },
+        "exit": { "$ref": "#/definitions/actions" },
+        "invoke": {
+          "type": "object", "additionalProperties": false, "required": ["src"],
+          "properties": {
+            "src": { "type": "string", "description": "An actor from the library, e.g. look or play." },
+            "with": { "type": "object", "description": "The actor's parameters, e.g. { phase: asking, question: answer }." },
+            "onDone": { "$ref": "#/definitions/transitions" },
+            "onError": { "$ref": "#/definitions/transitions" }
+          }
+        },
+        "meta": { "type": "object" }
+      }
+    },
+    "turn": {
+      "description": "When to look, when to move, when it is over: a flat XState statechart.",
+      "type": "object", "additionalProperties": false, "required": ["initial", "states"],
+      "properties": {
+        "initial": { "type": "string", "description": "The state the run starts in." },
+        "states": {
+          "type": "object", "minProperties": 1,
+          "propertyNames": { "not": { "const": "left" } },
+          "additionalProperties": { "$ref": "#/definitions/state" }
+        }
+      }
+    }
+  }
+}
