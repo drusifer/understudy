@@ -166,4 +166,8 @@ sequenceDiagram
     Note right of Cypher: "Sprint 14 (UND-41):<br/>statechart as a layered<br/>flow via elkjs on the<br/>server, rectangular<br/>screens for<br/>professional/starship,<br/>round tube + rim r…"
     Cypher->>All: "pm launch"
     Note right of Cypher: "Sprint 15 (UND-42): five<br/>real gauges from the<br/>run's lines (start line<br/>carries limits),<br/>steampunk<br/>leather/screws/ornate<br/>edge/valve bulbs/nee…"
+    User->>All: "request"
+    Note right of User: "Owner: fix 1-4 - fill<br/>big screens, flow scales<br/>with the screen,<br/>SHORTLIST 0/0 bug,<br/>larger legend/gauge<br/>labels"
+    Neo->>All: "done"
+    Note right of Neo: "Big screens: console<br/>fills the window (to<br/>1880px wide, columns<br/>stretch to the bottom),<br/>screen, flow and paper<br/>grow, legend/gauge text<br/>scale…"
 ```

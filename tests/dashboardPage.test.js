@@ -88,4 +88,7 @@ test('the gauges: steps of the limit, Jev\'s confidence, the shortlist left, Jev
   assert.deepEqual([jev.level, jev.text], [2 / 6, '2·4']);
   assert.deepEqual([idle.level, idle.text], [0.5, '4.0s'], 'after a move, against the stall limit');
   assert.equal(gaugesOf(meters, 60_000)[4].level, 1, 'capped at the limit');
+  // A last step that decided without a shortlist (pay's hold) keeps the shortlist read before.
+  meters = at(meters, { step: 5, confidence: 0.8, decided: [{ removed: [], held: [], jev: { asked: 0, reused: 0 } }] }, 7000);
+  assert.equal(gaugesOf(meters, 7000)[2].text, '1/2');
 });

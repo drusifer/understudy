@@ -93,7 +93,8 @@ export function metersAfter(meters, line, now) {
     ...meters,
     steps: line.step,
     confidence: typeof line.confidence === 'number' ? line.confidence : meters.confidence,
-    shortlist: decided.length > 0 ? { left, of } : meters.shortlist,
+    // A step whose decided value needed no shortlist keeps the last real one (owner: it read 0/0).
+    shortlist: of > 0 ? { left, of } : meters.shortlist,
     asked: meters.asked + sumOf(decided, (each) => each.jev?.asked ?? 0),
     reused: meters.reused + sumOf(decided, (each) => each.jev?.reused ?? 0),
     lastMoveAt: now,

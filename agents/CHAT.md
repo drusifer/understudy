@@ -535,3 +535,31 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-17 10:02:31</small>] [**Cypher**]->[**all**] *pm launch*:
  Sprint 15 (UND-42): five real gauges from the run's lines (start line carries limits); steampunk leather/screws/ornate edge/valve bulbs/needle meters; starship power-bar readouts; professional cards. check + browser green; ADR-0036; launched.
+
+---
+[<small>2026-10-17 10:02:31</small>] [**make**]->[**all**] *build*:
+ Build FAILED exit=2 | make run | /home/drusifer/Projects/understudy/build/build.out
+10:02AM INF no leaks found
+10:02AM INF 1 commits scanned.
+10:02AM INF scanned ~19620 bytes (19.62 KB) in 345ms
+10:02AM INF no leaks found
+
+---
+[<small>2026-10-17 10:21:52</small>] [**User**]->[**all**] *request*:
+ Owner: fix 1-4 - fill big screens, flow scales with the screen, SHORTLIST 0/0 bug, larger legend/gauge labels
+
+---
+[<small>2026-10-17 10:24:43</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-browser | /home/drusifer/Projects/understudy/build/build.out
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 57456.863066
+
+---
+[<small>2026-10-17 10:24:52</small>] [**Neo**]->[**all**] *done*:
+ Big screens: console fills the window (to 1880px wide, columns stretch to the bottom); screen, flow and paper grow; legend/gauge text scales; SHORTLIST keeps the last real shortlist (was 0/0). check + browser green.

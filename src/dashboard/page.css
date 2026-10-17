@@ -255,6 +255,23 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 /* UND-42: the tube gives up a little height to the gauges. */
 .tube { max-width: 470px; }
 
+/* Big screens (owner, 2026-10-17): the console fills the window - wider, and the middle and left
+   columns stretch to the bottom; the screen and the paper grow into the space, and the flow,
+   being drawn to the screen's size, grows with them. */
+.room > * { max-width: 1880px; }
+@media (min-width: 1101px) {
+  .stage { align-items: stretch; min-height: calc(100vh - 196px); }
+  .printer, .bay { display: flex; flex-direction: column; }
+  .bay { height: auto; }
+  .printer .glass { flex: 1 1 0; min-height: 300px; display: flex; flex-direction: column; }
+  .printer .paper-window { flex: 1 1 0; height: auto; min-height: 0; width: 100%; }
+  .tube { flex: 1 1 0; min-height: 340px; width: auto; max-width: 100%; }
+}
+.power-legend { font-size: clamp(15px, .9vw, 20px); }
+.gauge .dial { max-width: clamp(92px, 6vw, 130px); }
+.gauge .figure { font-size: clamp(15px, 1vw, 22px); }
+.gauge-name { font-size: clamp(9px, .55vw, 13px); }
+
 /* UND-42: the gauges - here backlit panel meters, a red needle under an arch of ticks. */
 .gauges { align-self: stretch; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
 .gauge { --level: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px 5px; border-radius: 10px 10px 4px 4px; background: radial-gradient(ellipse at 50% 85%, #fff4d0 0%, #f2d79a 45%, #b98c46 100%); border: 3px solid #8a6630; box-shadow: inset 0 0 10px rgba(120,70,10,.55), 0 0 0 2px #2b1b0b, 0 4px 8px rgba(0,0,0,.6); }

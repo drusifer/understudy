@@ -160,7 +160,7 @@
 :root[data-theme="starship"] .tube .now { filter: none; }
 :root[data-theme="starship"] .power-title { color: var(--t-sky); font-size: 14px; letter-spacing: .12em; }
 :root[data-theme="starship"] .power-bar { border-radius: 999px; background: var(--dim); }
-:root[data-theme="starship"] .power-legend { font-family: Antonio, "Arial Narrow", sans-serif; font-size: 14px; text-transform: uppercase; }
+:root[data-theme="starship"] .power-legend { font-family: Antonio, "Arial Narrow", sans-serif; font-size: clamp(14px, .85vw, 19px); text-transform: uppercase; }
 
 /* UND-42: no leather, no bulbs; each gauge is a ship readout - a cluster of power bars that keep
    moving, but only within a small band round the real reading, its figure and its name. */
@@ -168,7 +168,7 @@
 :root[data-theme="starship"] .tube-panel { outline: none; background-image: none; }
 :root[data-theme="starship"] .bulbs,
 :root[data-theme="starship"] .gauge .dial { display: none; }
-:root[data-theme="starship"] .tube { height: 440px; }
+:root[data-theme="starship"] .tube { height: auto; min-height: 360px; width: 100%; max-width: none; }
 :root[data-theme="starship"] .gauge { align-items: stretch; gap: 3px; padding: 6px 8px; border-radius: 0 14px 14px 0; background: var(--void); border: none; border-left: 8px solid var(--lilac); box-shadow: none; }
 :root[data-theme="starship"] .gauge:nth-child(2n) { border-left-color: var(--sky); }
 :root[data-theme="starship"] .gauge:nth-child(3n) { border-left-color: var(--orange); }
@@ -178,8 +178,8 @@
 :root[data-theme="starship"] .gauge .bars i:nth-child(4n) { background: var(--lilac); }
 @keyframes hover { from { transform: scaleY(.9); } to { transform: scaleY(1.06); } }
 @media (prefers-reduced-motion: reduce) { :root[data-theme="starship"] .gauge .bars i { animation: none; } }
-:root[data-theme="starship"] .gauge .figure { font-family: Antonio, "Arial Narrow", sans-serif; font-size: 16px; font-weight: 700; color: var(--t-orange); text-align: right; }
-:root[data-theme="starship"] .gauge-name { font-family: Antonio, "Arial Narrow", sans-serif; font-size: 12px; letter-spacing: .1em; color: var(--t-sky); text-align: right; }
+:root[data-theme="starship"] .gauge .figure { font-family: Antonio, "Arial Narrow", sans-serif; font-size: clamp(16px, 1vw, 22px); font-weight: 700; color: var(--t-orange); text-align: right; }
+:root[data-theme="starship"] .gauge-name { font-family: Antonio, "Arial Narrow", sans-serif; font-size: clamp(12px, .7vw, 15px); letter-spacing: .1em; color: var(--t-sky); text-align: right; }
 
 /* The printer: a readout of coloured text on the screen */
 :root[data-theme="starship"] .paper { background: var(--void); background-image: none; padding: 10px 8px; color: var(--t-orange); }
@@ -189,7 +189,6 @@
 :root[data-theme="starship"] .paper .held { color: var(--t-red); }
 :root[data-theme="starship"] .paper .jev { color: var(--t-lilac); }
 :root[data-theme="starship"] .paper .bold { color: var(--t-gold); }
-:root[data-theme="starship"] .paper-window { height: 668px; }
 :root[data-theme="starship"] .roller,
 :root[data-theme="starship"] .glass::after { display: none; }
 
