@@ -118,7 +118,7 @@ a4c651a..2e5885d  main -> main
  Owner: tighten the display - state diagram front and centre, compact sliders aligned vertically on the right, printout on the left of the circle.
 
 ---
-[<small>2026-10-16 20:35:16</small>] [**make**]->[**all**] *build*:
+[<small>2026-10-16 20:42:28</small>] [**make**]->[**all**] *build*:
  Build PASSED | make test-browser | /home/drusifer/Projects/understudy/build/build.out
 ℹ tests 5
 ℹ suites 0
@@ -127,4 +127,4 @@ a4c651a..2e5885d  main -> main
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 17267.416855
+ℹ duration_ms 15504.395359

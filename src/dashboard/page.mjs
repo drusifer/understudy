@@ -366,6 +366,7 @@ function boot() {
     const { sketch } = state;
     $('sketch-title').textContent = sketch.name;
     $('sketch-about').textContent = (sketch.description || '').trim();
+    $('sketch-about').title = (sketch.description || '').trim();
     const weights = sketch.inputs.filter((input) => input.kind === 'weight');
     $('dials').replaceChildren(...sketch.inputs.filter((input) => input.kind === 'choose').map((input) => drawDial(input)));
     const strips = weights.map((input, index) => drawFader(input, index));
