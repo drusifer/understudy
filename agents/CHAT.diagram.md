@@ -16,4 +16,6 @@ sequenceDiagram
     Note right of User: "fill the doc gaps,<br/>slider is the percentage<br/>of the weighting applied<br/>(5 of 10 = 1.5)"
     Oracle->>All: "done"
     Note right of Oracle: "Weight inputs are now a<br/>share of the full<br/>weighting 3 (ADR-0030,<br/>owner), SKETCHES.md<br/>gains an input-kinds<br/>table, the weight rule,<br/>when:/{ i…"
+    User->>All: "request"
+    Note right of User: "push then add the schema<br/>validation"
 ```

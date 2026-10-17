@@ -71,3 +71,7 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-16 21:59:53</small>] [**Oracle**]->[**all**] *done*:
  Weight inputs are now a share of the full weighting 3 (ADR-0030, owner); SKETCHES.md gains an input-kinds table, the weight rule, when:/{ input: } rows. check + browser green. On main, not pushed.
+
+---
+[<small>2026-10-16 22:00:55</small>] [**User**]->[**all**] *request*:
+ push then add the schema validation
