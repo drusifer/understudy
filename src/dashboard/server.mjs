@@ -1,7 +1,8 @@
 // Sprint 6 UND-27 (ARCH §3, §5, ADR-0023): the dashboard's server - built
 // like the watch page's (plain node:http, an unguessable token path, every
 // file served locally, Server-Sent Events), plus a small JSON API: the rack,
-// one sketch's controls, and - through `actions` - play, stop, edit, power.
+// one sketch's controls and its text, and - through `actions` - play, stop,
+// edit, write, power.
 // It only ever reads sketches by the names the folder's listing gives.
 
 import http from 'node:http';
@@ -11,13 +12,14 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { UsageError } from '../errors.mjs';
 import { listenOn, readBody } from '../watch/server.mjs';
-import { describeSketch, listSketches } from './rack.mjs';
+import { describeSketch, listSketches, sketchNames } from './rack.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const WATCH = path.join(HERE, '..', 'watch');
 const FONTS = path.join(HERE, '..', '..', 'node_modules', '@fontsource');
 const font = (file) => [path.join(FONTS, file.split('-', 1)[0], 'files', file), 'font/woff2'];
-const MAX_BODY = 16 * 1024;
+// A whole sketch's text fits (UND-35); the largest example is under 5 KB.
+const MAX_BODY = 64 * 1024;
 // The page's own files, and the watch page's pure modules it shares.
 const FILES = {
   '': [path.join(HERE, 'page.html'), 'text/html; charset=utf-8'],
@@ -70,7 +72,7 @@ export function createHub() {
  * Starts the dashboard for `folder`.
  * @param {{ folder: string, port?: number, host?: string, hub?: ReturnType<typeof createHub>,
  *   actions?: Record<string, (body: object) => Promise<{ status: number, value?: object }>> }} options
- *   `actions`: the POST endpoints (play, stop, edit, power), each given the parsed body.
+ *   `actions`: the POST endpoints (play, stop, edit, write, power), each given the parsed body.
  * @returns {Promise<{ url: string, urls: string[], hub: object, close: () => Promise<void> }>}
  */
 export async function startDashboard({ folder, port = 0, host = '127.0.0.1', hub = createHub(), actions = {} }) {
@@ -78,18 +80,27 @@ export async function startDashboard({ folder, port = 0, host = '127.0.0.1', hub
   const token = randomBytes(12).toString('base64url');
   const base = `/d/${token}/`;
 
-  const api = async (request, response, rest) => {
-    const isGet = request.method === 'GET';
-    if (rest === 'api/sketches' && isGet) return json(response, 200, await listSketches(folder));
-    if (isGet && rest.startsWith('api/sketch/')) {
-      const name = decodeURIComponent(rest.slice('api/sketch/'.length));
-      try {
-        return json(response, 200, await describeSketch(folder, name));
-      } catch (error) {
-        if (error instanceof UsageError) return refuse(response, 404, error.message);
-        throw error;
-      }
+  // The GET endpoints: the rack, one sketch's controls, one sketch's text.
+  const read = async (response, rest) => {
+    if (rest === 'api/sketches') return json(response, 200, await listSketches(folder));
+    // UND-35: a sketch's file as it is, for the bay - even one that fails its checks.
+    if (rest.startsWith('api/text/')) {
+      const name = decodeURIComponent(rest.slice('api/text/'.length));
+      if (!sketchNames(folder).includes(name)) return refuse(response, 404, `no sketch "${name}" in ${folder}`);
+      return json(response, 200, { text: await readFile(path.join(folder, name, 'sketch.yaml'), 'utf8') });
     }
+    if (!rest.startsWith('api/sketch/')) return refuse(response, 404, 'not found');
+    const name = decodeURIComponent(rest.slice('api/sketch/'.length));
+    try {
+      return json(response, 200, await describeSketch(folder, name));
+    } catch (error) {
+      if (error instanceof UsageError) return refuse(response, 404, error.message);
+      throw error;
+    }
+  };
+
+  const api = async (request, response, rest) => {
+    if (request.method === 'GET') return read(response, rest);
     const verb = rest.slice('api/'.length);
     const action = request.method === 'POST' && Object.hasOwn(actions, verb) ? actions[verb] : undefined;
     if (!action) return refuse(response, 404, 'not found');
@@ -97,7 +108,7 @@ export async function startDashboard({ folder, port = 0, host = '127.0.0.1', hub
     try {
       body = JSON.parse((await readBody(request, MAX_BODY)) || '{}');
     } catch {
-      return refuse(response, 400, 'the request was not readable JSON (16 KB at most)');
+      return refuse(response, 400, 'the request was not readable JSON (64 KB at most)');
     }
     const { status, value = {} } = await action(body);
     return json(response, status, value);

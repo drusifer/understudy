@@ -180,3 +180,51 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-16 21:16:52</small>] [**User**]->[**all**] *request*:
  yes commit and /sprint 8 go
+
+---
+[<small>2026-10-16 21:17:00</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Stage 0: SDLC present; branch sprint-8 cut from main. Story+arch (Tier 2) drafted: docs/sprints/USER_STORIES_SPRINT8.md. @Smith *user review sprint-8
+
+---
+[<small>2026-10-16 21:17:18</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ Gate 1 review: AC5 missed a drawer save while the bay is open; AC6 'fits' had no viewport. Revised with Cypher. *user approve. rubric STORIES: OUT=S TEST=A FAIL=S SCOPE=A SIZE=A DESIGN=A
+
+---
+[<small>2026-10-16 21:17:18</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Arch in the same doc (Tier 2): settings.write + server write/GET text; debounced, serialised saves; textarea never redrawn. ADR-0028 whole-file writes beside the allow-list. No build-env change.
+
+---
+[<small>2026-10-16 21:17:18</small>] [**Smith**]->[**Mouse**] *user approve*:
+ *user approve. Architecture approved. rubric ARCH: BOUND=A FLOW=A FAIL=A USER=A DECS=A FEAS=S. @Mouse *sm plan sprint
+
+---
+[<small>2026-10-16 21:17:29</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint planned: 2 phases (server write; page bay + sticker). @Morpheus *lead review sprint plan
+
+---
+[<small>2026-10-16 21:17:29</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Plan approved. rubric PLAN: SIZE=S GATE=A VERIF=A ALIGN=S OWNER=A. @Neo *swe impl phase-1
+
+---
+[<small>2026-10-16 21:17:29</small>] [**Mouse**]->[**all**] *phase 1*:
+ Phase 1: whole-file writes (server side)
+
+---
+[<small>2026-10-16 21:21:03</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make lint | /home/drusifer/Projects/understudy/build/build.out
+
+> understudy@0.1.0 lint
+> eslint --no-error-on-unmatched-pattern 'src/**/*.mjs' 'bin/**/*.mjs' 'examples/**/*.mjs' 'examples/**/*.js' 'tests/**/*.js' 'tests/**/*.mjs'
+
+
+---
+[<small>2026-10-16 21:21:03</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 1 impl: settings.write, write action (409 while running), GET api/text/<name>, body cap 64 KB. Tests added; check passes. @Trin *qa uat phase-1
+
+---
+[<small>2026-10-16 21:21:03</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 1 passed: AC2 write+factory+restore, AC3 refused writes nothing and names the problem without path, AC4 409 while running; 290 tests green. @Morpheus *lead review phase-1
+
+---
+[<small>2026-10-16 21:21:03</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 1 review passed: shared saved() keeps edit and write on one path; GET text reads only rack names. @Neo *swe impl phase-2

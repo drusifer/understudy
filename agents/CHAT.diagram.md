@@ -13,7 +13,9 @@ sequenceDiagram
     participant Morpheus
     participant Neo
     participant Cypher
-    Note over User,Cypher: 📅 2026-10-16
+    participant Smith
+    participant Trin
+    Note over User,Trin: 📅 2026-10-16
     User->>All: "request"
     Note right of User: "merge and push sprint 6"
     Tank->>All: "done"
@@ -48,4 +50,24 @@ sequenceDiagram
     Note right of Cypher: "Nit done: evening<br/>weights now [0, 10]<br/>(defaults 3/7/7/10),<br/>SKETCHES example and<br/>tests updated, check +<br/>test-browser pass.<br/>Uncommitted. Spri…"
     User->>All: "request"
     Note right of User: "yes commit and /sprint 8<br/>go"
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Stage 0: SDLC present,<br/>branch sprint-8 cut from<br/>main. Story+arch (Tier<br/>2) drafted: docs/sprints<br/>/USER_STORIES_SPRINT8.md<br/>. @Smith *user revie…"
+    Smith->>Morpheus: "user approve"
+    Note right of Smith: "Gate 1 review: AC5<br/>missed a drawer save<br/>while the bay is open,<br/>AC6 'fits' had no<br/>viewport. Revised with<br/>Cypher. *user approve.<br/>rubric STORI…"
+    Morpheus->>Smith: "lead handoff"
+    Note right of Morpheus: "Arch in the same doc<br/>(Tier 2): settings.write<br/>+ server write/GET text,<br/>debounced, serialised<br/>saves, textarea never<br/>redrawn. ADR-0028<br/>whole-…"
+    Smith->>Mouse: "user approve"
+    Note right of Smith: "*user approve.<br/>Architecture approved.<br/>rubric ARCH: BOUND=A<br/>FLOW=A FAIL=A USER=A<br/>DECS=A FEAS=S. @Mouse<br/>*sm plan sprint"
+    Mouse->>Morpheus: "sm handoff"
+    Note right of Mouse: "Sprint planned: 2 phases<br/>(server write, page bay<br/>+ sticker). @Morpheus<br/>*lead review sprint plan"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Plan approved. rubric<br/>PLAN: SIZE=S GATE=A<br/>VERIF=A ALIGN=S OWNER=A.<br/>@Neo *swe impl phase-1"
+    Mouse->>All: "phase 1"
+    Note right of Mouse: "Phase 1: whole-file<br/>writes (server side)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 1 impl:<br/>settings.write, write<br/>action (409 while<br/>running), GET<br/>api/text/<name>, body<br/>cap 64 KB. Tests added,<br/>check passes. @Trin *qa<br/>u…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 1 passed: AC2<br/>write+factory+restore,<br/>AC3 refused writes<br/>nothing and names the<br/>problem without path,<br/>AC4 409 while running,<br/>290 te…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 1 review passed:<br/>shared saved() keeps<br/>edit and write on one<br/>path, GET text reads<br/>only rack names. @Neo<br/>*swe impl phase-2"
 ```

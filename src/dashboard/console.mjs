@@ -5,6 +5,8 @@ import { createHub, startDashboard } from './server.mjs';
 import { createRunner } from './runner.mjs';
 import { createSettings } from './settings.mjs';
 
+const STOP_FIRST = { status: 409, value: { problem: 'stop the run before changing the settings' } };
+
 /**
  * Serves the console for `folder` until closed; closing stops any run.
  * @param {{ folder: string, port?: number, host?: string, environment?: object, runOptions?: object }} options
@@ -20,7 +22,9 @@ export async function serveDashboard({ folder, port, host, environment = process
       play: (body) => runner.play(body),
       stop: () => runner.stop(),
       // UND-32 AC5: no edits while a run is going.
-      edit: async (body) => (runner.isRunning() ? { status: 409, value: { problem: 'stop the run before changing the settings' } } : settings.edit(body)),
+      edit: async (body) => (runner.isRunning() ? STOP_FIRST : settings.edit(body)),
+      // UND-35 AC4: nor writes from the bay.
+      write: async (body) => (runner.isRunning() ? STOP_FIRST : settings.write(body)),
       // UND-32 AC4: off stops a run; on puts the factory settings back.
       async power({ on }) {
         if (!on) {
