@@ -206,10 +206,17 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .bay-text[aria-invalid="true"] { border-color: #d0200c; box-shadow: 0 0 8px #ff4020; }
 .bay-text[readonly] { opacity: .6; }
 .bay-problem { min-height: 18px; font-size: 13px; color: #ff8a6a; }
-.stage:has(> .bay:not([hidden])) { grid-template-columns: minmax(250px, 1.35fr) minmax(0, 1.4fr) minmax(300px, 340px); }
+@media (min-width: 1101px) {
+  .stage:has(> .bay:not([hidden])) { grid-template-columns: minmax(250px, 1.35fr) minmax(0, 1.4fr) minmax(300px, 340px); }
+}
+/* Narrow screens: the bay drops down under the tube, so the tube redraws in view as you type. */
+@media (max-width: 1100px) {
+  .bay { order: 2; height: auto; }
+  .bay-text { min-height: 55vh; }
+}
 
 /* UND-36: the theme switch */
-.theme-switch { display: flex; align-items: center; gap: 4px; }
+.theme-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .theme-label { font-family: Cinzel, serif; font-size: 11px; letter-spacing: 3px; color: #2b1b0b; margin-right: 4px; }
 .theme-choice { min-height: 32px; padding: 2px 10px; border-radius: 6px; border: 2px solid var(--brass-deep); background: #2b1d12; color: #c9a15a; font-family: Cinzel, serif; font-size: 10px; letter-spacing: 2px; }
 .theme-choice[aria-pressed="true"] { background: #f0c46a; color: #2b1b0b; box-shadow: 0 0 10px rgba(255,200,110,.6); }

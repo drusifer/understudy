@@ -131,6 +131,19 @@ test('behind the printer: the sketch\'s YAML and a sticker; typing saves and the
   assert.equal(readFileSync(file, 'utf8'), renamed);
   assert.ok((await page.textContent('#tube .labels')).includes('responding'));
 
+  // On a phone the bay drops down under the tube, one column, nothing wider than the screen (owner).
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const theme of ['steampunk', 'professional', 'starship']) {
+    await page.click(`.theme-choice[data-theme="${theme}"]`);
+    const phone = await page.evaluate(() => {
+      const box = (selector) => document.querySelector(selector).getBoundingClientRect();
+      return { wide: document.scrollingElement.scrollWidth, tube: box('.tube-panel'), bay: box('#bay'), controls: box('.controls') };
+    });
+    assert.ok(phone.wide <= 390, `${theme}: nothing scrolls sideways (${phone.wide}px)`);
+    assert.ok(phone.bay.top >= phone.tube.bottom && phone.bay.bottom <= phone.controls.top, `${theme}: the bay sits between the tube and the controls`);
+  }
+  await page.setViewportSize({ width: 1600, height: 960 });
+
   // AC1, AC7: REFIT PRINTER puts the printer back.
   await page.click('#refit-printer');
   assert.equal(await page.isVisible('#printer'), true);

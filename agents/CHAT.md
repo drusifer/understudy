@@ -205,3 +205,19 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-10-16 22:56:28</small>] [**Neo**]->[**all**] *done*:
  Dashboard served at the root - no token in the URL (owner); ADR-0023 amended; USER_GUIDE notes --host 0.0.0.0 exposure. check + browser green.
+
+---
+[<small>2026-10-16 23:01:58</small>] [**User**]->[**all**] *feedback*:
+ Owner: open panel layout needs work on mobile - maybe the panel flips down instead of to the side so it works vertically
+
+---
+[<small>2026-10-16 23:03:44</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+11:03PM INF no leaks found
+11:03PM INF 1 commits scanned.
+11:03PM INF scanned ~1978 bytes (1.98 KB) in 237ms
+11:03PM INF no leaks found
+
+---
+[<small>2026-10-16 23:03:44</small>] [**Neo**]->[**all**] *done*:
+ Mobile: the bay drops down under the tube on narrow screens (was forced side by side); theme switch wraps; browser test checks 390px in all three themes.

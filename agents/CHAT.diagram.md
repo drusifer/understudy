@@ -67,4 +67,8 @@ sequenceDiagram
     Note right of User: "remove the dashboard's<br/>URL token - not<br/>necessary here"
     Neo->>All: "done"
     Note right of Neo: "Dashboard served at the<br/>root - no token in the<br/>URL (owner), ADR-0023<br/>amended, USER_GUIDE<br/>notes --host 0.0.0.0<br/>exposure. check +<br/>browser gre…"
+    User->>All: "feedback"
+    Note right of User: "Owner: open panel layout<br/>needs work on mobile -<br/>maybe the panel flips<br/>down instead of to the<br/>side so it works<br/>vertically"
+    Neo->>All: "done"
+    Note right of Neo: "Mobile: the bay drops<br/>down under the tube on<br/>narrow screens (was<br/>forced side by side),<br/>theme switch wraps,<br/>browser test checks<br/>390px in all…"
 ```
