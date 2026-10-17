@@ -562,7 +562,8 @@ function boot() {
     state.rack = value;
     drawRack();
     drawStatus();
-    const first = value.find((entry) => entry.ok);
+    // Open on a sketch with controls to show, else the first that plays.
+    const first = value.find((entry) => entry.ok && entry.inputs > 0) ?? value.find((entry) => entry.ok);
     if (first) await choose(first.name);
   })();
 }

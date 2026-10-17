@@ -28,4 +28,6 @@ sequenceDiagram
     Note right of Cypher: "Sprint 7 close: SDLC<br/>unchanged (no deps),<br/>check + browser green,<br/>ADR-0027, changelog.<br/>Smith: stepper looks and<br/>steps right, stops at<br/>its en…"
     User->>All: "request"
     Note right of User: "merge and push sprint 7"
+    Tank->>All: "done"
+    Note right of Tank: "Sprint 7 merged to main<br/>and pushed via bobp make<br/>push."
 ```

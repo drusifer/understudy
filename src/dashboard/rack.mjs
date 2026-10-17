@@ -38,14 +38,14 @@ function firstLine(text) {
 
 /**
  * The rack: each sketch's name and first line, or why it cannot be played.
- * @returns {Promise<{ name: string, title: string|null, description: string, ok: boolean, problem: string|null }[]>}
+ * @returns {Promise<{ name: string, title: string|null, description: string, ok: boolean, problem: string|null, inputs?: number }[]>}
  */
 export async function listSketches(folder) {
   const rack = [];
   for (const name of sketchNames(folder)) {
     try {
       const sketch = await loadSketch(path.join(folder, name));
-      rack.push({ name, title: sketch.name, description: firstLine(sketch.description), ok: true, problem: null });
+      rack.push({ name, title: sketch.name, description: firstLine(sketch.description), ok: true, problem: null, inputs: Object.keys(sketch.inputs).length });
     } catch (error) {
       if (!(error instanceof UsageError)) throw error;
       rack.push({ name, title: null, description: '', ok: false, problem: error.message });
