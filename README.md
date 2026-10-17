@@ -16,11 +16,12 @@ pause it and step it one move at a time, or replay any finished run from its log
 
 Or run the whole folder from a **console**: `understudy dashboard examples` serves an
 operations console - a rack of sketches, each sketch's inputs as dials, faders, a stepper and
-switches, PLAY, the statechart on a round state tube and the run log on a printer. Take the
-printer off to edit the sketch's YAML and watch the tube redraw. Three themes: steampunk,
-professional, starship.
+switches, PLAY or STEP one move at a time, the statechart drawn as a flow on the state tube, five
+gauges of how the run is going, and the run log on a printer. Open the printer's latch to edit the
+sketch's YAML and watch the flow redraw. Three themes - steampunk, professional, starship - each
+in light and dark.
 
-![The dashboard: the evening sketch on the operations console](docs/images/dashboard.png)
+![The dashboard: the evening sketch played to the end, with its gauges](docs/images/dashboard-tube.png)
 
 It plays four kinds of app, with the same sketch format:
 

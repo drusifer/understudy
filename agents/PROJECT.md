@@ -16,9 +16,11 @@ TypeSafe questions) and a small **adapter**; understudy supplies the run loop, t
 authors testing their apps. Lifted out of recard's game harness in sprint 1 (see
 `docs/EXTRACTION_MAP.md`); recard itself is no longer a goal (owner, 2026-10-15).
 
-**Status:** sprints 1-9 done and merged to `main` (2026-10-16): four targets (process, page, http, mcp),
-`--watch`, deciding (`decide:`/`inputs:`/`pick:`), and the `understudy dashboard` console with the
-bay behind the printer and three themes. Release tag `v0.1.0` is on 766a47c (sprint 1).
+**Status:** sprints 1-15 done and merged to `main` (2026-10-17): four targets (process, page, http, mcp),
+`--watch`, deciding (`decide:`/`inputs:`/`pick:`), a JSON Schema for `sketch.yaml`, and the
+`understudy dashboard` console - YAML bay behind the printer, three themes in light and dark, STEP
+and PAUSE, the statechart as a layered flow (elkjs), five real gauges. Release tag `v0.1.0` is on
+766a47c (sprint 1).
 Next: `docs/BACKLOG.md` ("Next" sections from the sprint retros).
 
 ## Capabilities
