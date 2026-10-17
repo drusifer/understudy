@@ -91,4 +91,8 @@ sequenceDiagram
     Note right of Cypher: "*pm launch sprint-8.<br/>Behind the printer:<br/>REMOVE to edit<br/>sketch.yaml with a cheat<br/>sheet, tube redraws as<br/>you type. Retro items on<br/>BACKLOG. M…"
     User->>All: "request"
     Note right of User: "push all please"
+    Tank->>All: "done"
+    Note right of Tank: "Sprint 8 merged to main<br/>and pushed via bobp make<br/>push."
+    User->>All: "request"
+    Note right of User: "/sprint 9 css themes -<br/>one professional theme<br/>and one Star Trek TNG<br/>themed like the<br/>Enterprise screens"
 ```
