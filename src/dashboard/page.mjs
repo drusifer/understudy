@@ -252,9 +252,10 @@ function boot() {
 
   function drawRack() {
     const rack = $('rack');
+    rack.setAttribute('role', 'tablist');
     rack.replaceChildren(...state.rack.map((entry) => {
-      const tab = element('button', { type: 'button', class: 'sketch-tab', 'aria-pressed': String(entry.name === state.sketch?.name) },
-        element('span', { class: 'name' }, entry.name), element('span', { class: 'line' }, entry.ok ? entry.description : entry.problem));
+      const tab = element('button', { type: 'button', role: 'tab', class: 'sketch-tab', 'aria-selected': String(entry.name === state.sketch?.name), title: entry.ok ? entry.description : entry.problem },
+        element('span', { class: 'name' }, entry.name));
       if (!entry.ok) {
         tab.disabled = true;
         tab.title = entry.problem;
@@ -297,8 +298,8 @@ function boot() {
     const colour = rgb(COLOURS[index % COLOURS.length]);
     const [low, high] = input.range;
     const id = `fader-${input.name}`;
-    const fader = element('input', { id, class: 'fader', type: 'range', min: String(low), max: String(high), step: '0.05', value: String(state.values[input.name]) });
-    const slot = element('div', { class: 'slot', style: { '--colour': colour } }, element('div', { class: 'glow', 'aria-hidden': 'true' }), element('div', { class: 'ticks', 'aria-hidden': 'true' }), fader);
+    const fader = element('input', { id, class: 'fader', type: 'range', min: String(low), max: String(high), step: '0.05', value: String(state.values[input.name]), 'aria-orientation': 'vertical' });
+    const slot = element('div', { class: 'slot', style: { '--colour': colour } }, element('div', { class: 'ticks', 'aria-hidden': 'true' }), element('div', { class: 'glow', 'aria-hidden': 'true' }), fader);
     const nixie = element('div', { class: 'nixie', style: { '--colour': colour } });
     const update = () => {
       const value = Number(fader.value);
@@ -311,11 +312,12 @@ function boot() {
     fader.addEventListener('input', update);
     const label = element('label', { for: id }, element('span', { class: 'chip', style: { '--colour': colour }, 'aria-hidden': 'true' }), input.name);
     const about = input.factors.map((factor) => factorAbout(factor)).join(' · ');
-    const row = element('div', { class: 'fader-row' }, label, slot, nixie);
     update();
     const fields = [...input.factors.flatMap((factor) => factorFields(factor)), { label: 'DEFAULT', value: input.default, width: 90, path: ['inputs', input.name, 'default'], parse: Number }];
     const yaml = [...input.factors.map((factor) => factorYaml(factor)), `inputs.${input.name}: { weight: [${input.range.join(', ')}], default: ${input.default} }`].join(' · ');
-    return [row, element('div', { class: 'fader-about' }, accessPanel(`fader-${input.name}`, about || 'not used by any factor', fields, yaml))];
+    const panel = accessPanel(`fader-${input.name}`, `${input.name}: ${about || 'not used by any factor'}`, fields, yaml, [], '▸');
+    // The channel strip holds the fader; its drawer opens under all the channels.
+    return { channel: element('div', { class: 'channel', title: about }, nixie, slot, label, panel.toggle), drawer: panel.drawer };
   }
 
   function drawSwitch(input) {
@@ -366,8 +368,10 @@ function boot() {
     $('sketch-about').textContent = (sketch.description || '').trim();
     const weights = sketch.inputs.filter((input) => input.kind === 'weight');
     $('dials').replaceChildren(...sketch.inputs.filter((input) => input.kind === 'choose').map((input) => drawDial(input)));
-    $('faders').replaceChildren(...(weights.length > 0 ? [element('div', { class: 'fader-scale', 'aria-hidden': 'true' }, element('span', {}, '◂ LESS IMPORTANT'), element('span', {}, 'MORE IMPORTANT ▸'))] : []),
-      ...weights.flatMap((input, index) => drawFader(input, index)));
+    const strips = weights.map((input, index) => drawFader(input, index));
+    $('faders').replaceChildren(...(strips.length > 0 ? [element('div', { class: 'fader-scale', 'aria-hidden': 'true' }, element('span', {}, '▲ MORE'), element('span', {}, 'IMPORTANT'), element('span', {}, '▼ LESS'))] : []),
+      ...strips.map((strip) => strip.channel));
+    $('fader-drawers').replaceChildren(...strips.map((strip) => strip.drawer));
     $('switches').replaceChildren(...sketch.inputs.filter((input) => input.kind === 'count').map((input) => drawStepper(input)),
       ...sketch.inputs.filter((input) => input.kind === 'switch').map((input) => drawSwitch(input)));
     $('nothing-to-tune').hidden = sketch.inputs.length > 0;
@@ -394,11 +398,11 @@ function boot() {
   }
 
   // UND-32: a ▸ button that slides down a panel of edit boxes; each box saves on change.
-  function accessPanel(id, title, fields, yaml, extra = []) {
+  function accessPanel(id, title, fields, yaml, extra = [], short = null) {
     const drawerId = `drawer-${id}`;
     const isOpen = state.open.has(id);
-    const toggle = element('button', { type: 'button', class: 'access', 'aria-expanded': String(isOpen), 'aria-controls': drawerId },
-      element('span', { class: 'caret', 'aria-hidden': 'true' }, '▸'), title);
+    const toggle = element('button', { type: 'button', class: short ? 'access compact' : 'access', 'aria-expanded': String(isOpen), 'aria-controls': drawerId, ...(short && { 'aria-label': `Settings for ${title}` }) },
+      element('span', { class: 'caret', 'aria-hidden': 'true' }, '▸'), short ? '' : title);
     const problem = element('div', { class: 'problem', role: 'status' });
     const boxes = fields.map((field) => {
       const box = element('input', { type: 'text', value: String(field.value ?? ''), style: { width: `${field.width}px` } });
@@ -412,13 +416,14 @@ function boot() {
     const drawer = element('div', { id: drawerId, class: 'drawer' }, ...boxes, ...extra, element('div', { class: 'yaml' }, yaml),
       element('div', { class: 'hint' }, 'Saved to the sketch as you change it. Power the console off and on for its defaults.'), problem);
     drawer.hidden = !isOpen;
+    if (short) drawer.prepend(element('div', { class: 'drawer-title' }, title));
     toggle.addEventListener('click', () => {
       if (state.open.has(id)) state.open.delete(id);
       else state.open.add(id);
       drawer.hidden = !state.open.has(id);
       toggle.setAttribute('aria-expanded', String(state.open.has(id)));
     });
-    return element('div', { class: 'access-block' }, toggle, drawer);
+    return { toggle, drawer, block: element('div', { class: 'access-block' }, toggle, drawer) };
   }
 
   function moodPanel(input) {
@@ -436,7 +441,7 @@ function boot() {
         panelButton('− REMOVE LAST', input.options.length > 2, () => save([{ path: [...at, 'choose'], value: input.options.slice(0, -1) }, ...(input.options.at(-1) === input.default ? [{ path: [...at, 'default'], value: input.options[0] }] : [])]))),
       moodBox({ label: 'DEFAULT', value: input.default, width: 150, path: [...at, 'default'] }),
     ]);
-    return panel;
+    return panel.block;
   }
 
   function moodBox(field) {

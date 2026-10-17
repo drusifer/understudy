@@ -112,3 +112,19 @@ a4c651a..2e5885d  main -> main
 8:27PM INF 1 commits scanned.
 8:27PM INF scanned ~1032 bytes (1.03 KB) in 241ms
 8:27PM INF no leaks found
+
+---
+[<small>2026-10-16 20:31:46</small>] [**User**]->[**all**] *feedback*:
+ Owner: tighten the display - state diagram front and centre, compact sliders aligned vertically on the right, printout on the left of the circle.
+
+---
+[<small>2026-10-16 20:35:16</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-browser | /home/drusifer/Projects/understudy/build/build.out
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17267.416855

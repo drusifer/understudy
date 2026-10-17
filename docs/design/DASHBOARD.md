@@ -11,6 +11,14 @@ A steampunk operations console for understudy. `understudy dashboard <folder>` o
 folder of sketches; the person picks a sketch, sets its inputs, presses Play and watches the run.
 Knobs are set **before** a run, not during it (owner).
 
+## Layout (owner revision, 2026-10-16, after using it)
+
+Tightened: the sketch rack is a row of **tabs** under the header; below it three columns - the
+**printer on the left**, the **state tube front and centre**, and a compact **control column on
+the right** (Play and READY at its top, the mood dial, the weights as **vertical faders** side by
+side like a mixing desk - up = more important - with each fader's ▸ opening its panel underneath,
+then the stepper and switches). Under 1100 px the columns stack: tube, controls, printer.
+
 ## The parts, top to bottom
 
 | Part | Looks like | Does |

@@ -30,4 +30,6 @@ sequenceDiagram
     Note right of User: "merge and push sprint 7"
     Tank->>All: "done"
     Note right of Tank: "Sprint 7 merged to main<br/>and pushed via bobp make<br/>push."
+    User->>All: "feedback"
+    Note right of User: "Owner: tighten the<br/>display - state diagram<br/>front and centre,<br/>compact sliders aligned<br/>vertically on the right,<br/>printout on the left of<br/>the c…"
 ```
