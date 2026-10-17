@@ -32,4 +32,8 @@ sequenceDiagram
     Note right of Tank: "Sprint 7 merged to main<br/>and pushed via bobp make<br/>push."
     User->>All: "feedback"
     Note right of User: "Owner: tighten the<br/>display - state diagram<br/>front and centre,<br/>compact sliders aligned<br/>vertically on the right,<br/>printout on the left of<br/>the c…"
+    User->>All: "request"
+    Note right of User: "prepare for clear,<br/>commit and push"
+    Cypher->>All: "checkpoint"
+    Note right of Cypher: "Checkpoint saved in<br/>agents/cypher/state.md<br/>(between sprints,<br/>dashboard layout<br/>revision on main,<br/>background dashboard<br/>noted). Ready for cont…"
 ```

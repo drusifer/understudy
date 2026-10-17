@@ -15,12 +15,14 @@
   `test-live` (real Jev, paid).
 
 ## Current Task
-Sprint 6 COMPLETE - launched 2026-10-16 on branch `sprint-6` (308c242..8795f8d). Dashboard: `understudy dashboard <folder>`.
-- 281 unit + 5 browser tests; ADR-0023..0026; CHANGELOG; chat archived (CHAT_sprint-6).
-- Deviation flagged to owner: evening has an "evenings only" switch, not "seats together" (box office holds side-by-side only).
-- Not merged/pushed: awaits the owner.
+Between sprints. Sprints 5-7 merged and pushed. After sprint 7, on main: dashboard opens on a sketch
+with inputs (2e4b7c2), layout tightened per owner - tube centre, printer left, compact vertical faders
+right, rack as tabs, everything fits one 1600x960 screen (3650ba1, c596ca2); pushed with this checkpoint.
+- A dashboard was left running in the session's background: `understudy dashboard examples --port 4180
+  --host 0.0.0.0` (http://192.168.86.69:4180/d/<token>/). It ends with the session; restart the same way.
+- Open owner note: shrunken mood-dial labels (~11px) may need more room.
 
 ## Next Steps
-1. On owner request: merge sprint-6 to main (--no-ff) and push via `bobp make push` (Tank).
-2. Backlog "Next (from the sprint 6 retro)": tube label crowding, together switch, "yet" wording, split page.mjs.
-3. Owner prefers short conversational replies, one question at a time; generic utilities from libraries.
+1. `/init` -> resume as Cypher; ask the owner what is next (one question at a time, short replies).
+2. Backlog "Next (from the sprint 6 retro)": tube label crowding, "yet" wording, split page.mjs (~600 lines).
+3. Any new feature: Tier 2 mini-sprint (story+arch doc, task.md, phases, close) like sprint 7.
