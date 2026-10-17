@@ -73,6 +73,9 @@ Design approved on a clickable mockup - **`docs/design/DASHBOARD.md`** is the br
 ## Sprint 9 (owner, 2026-10-16) - themes - DONE (launched 2026-10-16)
 - UND-36: THEME switch - steampunk, professional, starship.
 
+## Sprint 12 (owner, 2026-10-17) - one move at a time - DONE (launched 2026-10-17)
+- UND-39: STEP and PAUSE/RESUME on the dashboard; the printer opens on a release latch.
+
 ## Sprint 11 (owner, 2026-10-16) - light and dark - DONE (launched 2026-10-16)
 - UND-38: MODE switch (AUTO / LIGHT / DARK); six looks; LEDs follow their faders; phone layout of the bay.
 

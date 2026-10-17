@@ -10,6 +10,14 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+## ADR-0033: A run takes the caller's pause gate; the dashboard steps through it
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-17 · **Related**: UND-39, ADR-0016
+*   **Context**: owner: step a run one move at a time from the dashboard, as `--watch` already can.
+*   **Options**: (1) `runSketch({ gate })` - the caller makes a `createGate` and holds it; (2) the dashboard starts each run with `watch` and drives the watch server; (3) a second pause mechanism in the runner.
+*   **Decision**: (1). The run loop already asks `gate.beforeMove()`; the dashboard's runner makes one gate per run, sends its changes to the pages as `{ event: 'dashboard', paused, waiting }`, and exposes `pause`/`step`/`resume`. Without a gate a run is unchanged.
+*   **Consequences**: + one pause mechanism for both pages; paused time stays out of the idle limits. − a run takes either the watch page's gate or the caller's, not both.
+
 ## ADR-0032: Light and dark are a `data-mode` attribute; each theme's colours are variables
 
 *   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-38

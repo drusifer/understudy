@@ -142,4 +142,6 @@ sequenceDiagram
     Note right of Trin: "UAT phase 2 passed:<br/>check + browser green,<br/>screenshot checked.<br/>@Morpheus *lead review<br/>phase-2"
     Morpheus->>Tank: "lead handoff"
     Note right of Morpheus: "Phase 2 review passed.<br/>@Tank *devops sdlc-check"
+    Cypher->>All: "pm launch"
+    Note right of Cypher: "SDLC check passed. Docs<br/>groomed: ADR-0033,<br/>CHANGELOG, BACKLOG. User<br/>test passed<br/>(screenshot). Retro:<br/>reused the watch gate<br/>cleanly. *pm lau…"
 ```

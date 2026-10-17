@@ -1,5 +1,11 @@
 # Changelog
 
+## Sprint 12 — one move at a time (2026-10-17, branch `sprint-12`, not yet merged)
+
+- **STEP** and **PAUSE/RESUME** on the dashboard: STEP starts a run and makes one move, then one
+  more each press; PAUSE holds a playing run before its next move; STOP ends either. ADR-0033.
+- The printer opens on an **OPEN** release latch (was REMOVE).
+
 ## Sprint 11 — light and dark (2026-10-16, branch `sprint-11`, not yet merged)
 
 - A **MODE** switch on the dashboard: **AUTO** follows the device's light/dark setting (live),
