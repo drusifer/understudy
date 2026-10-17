@@ -5,8 +5,29 @@
 
 import { ringOf, SIZE, tubeLayout } from './tube.mjs';
 
-// Each weight's own colour, in the order the sketch declares them.
-export const COLOURS = [[255, 72, 56], [176, 98, 255], [56, 196, 255], [120, 236, 70], [255, 176, 32], [255, 110, 190]];
+// The themes (UND-36): steampunk is the console as first designed.
+export const THEMES = ['steampunk', 'professional', 'starship'];
+
+/**
+ * The theme to show: a known `?theme=` wins, then the remembered one, else steampunk.
+ */
+export function themeOf(query, stored) {
+  return [query, stored].find((name) => THEMES.includes(name)) ?? THEMES[0];
+}
+
+/**
+ * A `#rrggbb` colour as [r, g, b]; grey for anything else.
+ */
+export function rgbOf(hex) {
+  const match = /^#([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex.trim());
+  return match ? match.slice(1).map((part) => Number.parseInt(part, 16)) : [128, 128, 128];
+}
+
+/**
+ * How strongly a weight is set, 0 to 3, whatever its range - the tube's
+ * glows and widths are sized for this.
+ */
+export const levelOf = (value, [low, high]) => (3 * (value - low)) / (high - low);
 
 export const rgb = (colour) => `rgb(${colour.map((part) => Math.round(part)).join(',')})`;
 
@@ -169,9 +190,26 @@ function svgElement(tag, attributes = {}) {
 }
 
 // A label over the tube, placed in its 600 x 600 drawing's units.
-function label(x, y, text, look) {
+function label(x, y, text, { class: extra = '', ...look }) {
   const style = { left: `${(x / SIZE) * 100}%`, top: `${(y / SIZE) * 100}%` };
-  return element('div', { class: 'label', style: { ...style, ...look } }, text);
+  return element('div', { class: `label ${extra}`.trim(), style: { ...style, ...look } }, text);
+}
+
+/**
+ * The theme's colours for what the script draws, from the page's CSS custom
+ * properties (UND-36): each theme's stylesheet sets them.
+ */
+function themeLook() {
+  const style = globalThis.getComputedStyle(document.documentElement);
+  const value = (name) => style.getPropertyValue(`--${name}`).trim();
+  return {
+    glows: value('tube-glows') !== 'off',
+    weights: [1, 2, 3, 4, 5, 6].map((index) => rgbOf(value(`weight-${index}`))),
+    track: value('tube-track'), edge: value('tube-edge'), edgeLive: value('tube-edge-live'), edgeTone: value('tube-edge-tone'),
+    state: value('tube-state'), stateNow: value('tube-state-now'), stateEdge: value('tube-state-edge'), stateEdgeNow: value('tube-state-edge-now'),
+    stateTone: value('tube-state-tone'), stateToneNow: value('tube-state-tone-now'), stateGlow: value('tube-state-glow'),
+    shadow: value('tube-shadow'), orbTitle: value('tube-orb-title'),
+  };
 }
 
 function tubeAria(layout, current) {
@@ -181,57 +219,58 @@ function tubeAria(layout, current) {
 
 // ------------------------------------------------------------ the tube --
 
-function drawRing(svg, weights) {
+function drawRing(svg, weights, look) {
   const arcs = ringOf(weights.map((each) => ({ ...each, colour: rgb(each.colour) })));
   return arcs.map((arc, index) => {
-    const glow = `filter: drop-shadow(0 0 ${2 + arc.value * 3}px ${arc.colour})`;
-    svg.append(svgElement('path', { d: arc.track, fill: 'none', stroke: '#1a0f08', 'stroke-width': 16, 'stroke-linecap': 'round' }),
+    const glow = look.glows ? `filter: drop-shadow(0 0 ${2 + levelOf(arc.value, weights[index].range) * 3}px ${arc.colour})` : '';
+    svg.append(svgElement('path', { d: arc.track, fill: 'none', stroke: look.track, 'stroke-width': 16, 'stroke-linecap': 'round' }),
       svgElement('path', { d: arc.fill, fill: 'none', stroke: arc.colour, 'stroke-width': 12, 'stroke-linecap': 'round', 'stroke-dasharray': '10 5', class: arc.value > 0 ? 'flowing' : 'faint', style: glow }));
     const text = `${arc.name.toUpperCase()} ${readoutOf(arc.value, weights[index].range)}`;
-    return label(arc.lx, arc.ly, text, { color: arc.colour, fontSize: 'clamp(11px,2.4vw,17px)', textShadow: `0 0 6px ${arc.colour}` });
+    return label(arc.lx, arc.ly, text, { color: arc.colour, fontSize: 'clamp(11px,2.4vw,17px)', textShadow: look.glows ? `0 0 6px ${arc.colour}` : 'none' });
   });
 }
 
 // How one edge is drawn: the decision edge carries the blend; the one just taken glows.
-function edgeLook(edge, power, isLive) {
+function edgeLook(edge, power, isLive, look) {
   const isPowered = edge.isDecision && power.weights.length > 0;
-  if (isPowered) return { colour: power.blend, width: 3 + power.total * 1.6, tone: power.blend, glow: `filter: drop-shadow(0 0 ${3 + power.total * 2.5}px ${power.blend})` };
-  if (isLive) return { colour: '#ffb04a', width: 4, tone: '#e0a868', glow: 'filter: drop-shadow(0 0 6px #ff8a2a)' };
-  return { colour: '#b0602a', width: 2.5, tone: '#e0a868', glow: '' };
+  const glow = (colour, size) => (look.glows ? `filter: drop-shadow(0 0 ${size}px ${colour})` : '');
+  if (isPowered) return { colour: power.blend, width: 3 + power.level * 1.6, tone: power.blend, glow: glow(power.blend, 3 + power.level * 2.5) };
+  if (isLive) return { colour: look.edgeLive, width: 4, tone: look.edgeTone, glow: glow(look.edgeLive, 6) };
+  return { colour: look.edge, width: 2.5, tone: look.edgeTone, glow: '' };
 }
 
-function drawEdges(svg, edges, power, { isRunning, liveEdge }) {
+function drawEdges(svg, edges, power, { isRunning, liveEdge }, theme) {
   const labels = [];
   for (const edge of edges) {
     const isLive = isRunning && edge.index === liveEdge;
-    const look = edgeLook(edge, power, isLive);
+    const look = edgeLook(edge, power, isLive, theme);
     const isFlowing = isRunning && (isLive || edge.isDecision);
     svg.append(svgElement('path', { d: edge.d, fill: 'none', stroke: look.colour, 'stroke-width': look.width, 'stroke-linecap': 'round', 'stroke-dasharray': '7 5', class: isFlowing ? 'flowing' : 'still', style: look.glow }));
-    labels.push(label(edge.lx, edge.ly - 6, edge.label, { color: look.tone, fontSize: 'clamp(11px,2.3vw,17px)', textShadow: `0 0 5px rgba(0,0,0,.9), 0 0 8px ${look.tone}` }));
-    if (edge.sub) labels.push(label(edge.lx, edge.ly + 10, edge.sub, { color: look.tone, fontSize: 'clamp(9px,1.7vw,13px)', opacity: '.8', textShadow: '0 0 4px #000' }));
+    labels.push(label(edge.lx, edge.ly - 6, edge.label, { color: look.tone, fontSize: 'clamp(11px,2.3vw,17px)', textShadow: theme.glows ? `0 0 5px ${theme.shadow}, 0 0 8px ${look.tone}` : 'none' }));
+    if (edge.sub) labels.push(label(edge.lx, edge.ly + 10, edge.sub, { color: look.tone, fontSize: 'clamp(9px,1.7vw,13px)', opacity: '.8', textShadow: theme.glows ? `0 0 4px ${theme.shadow}` : 'none' }));
   }
   return labels;
 }
 
-function drawOrb(svg, { weights, total, blend }) {
+function drawOrb(svg, { weights, total, level, blend }, look) {
   if (weights.length === 0) return [];
-  svg.append(svgElement('circle', { cx: 300, cy: 318, r: 14 + total * 2, fill: blend, class: 'orb', style: `filter: drop-shadow(0 0 ${8 + total * 4}px ${blend})` }));
+  svg.append(svgElement('circle', { cx: 300, cy: 318, r: 14 + level * 2, fill: blend, class: 'orb', style: look.glows ? `filter: drop-shadow(0 0 ${8 + level * 4}px ${blend})` : '' }));
   const shares = weights.map((weight, index) => {
     const share = total === 0 ? 0 : Math.round((weight.value / total) * 100);
     const colour = rgb(weight.colour);
-    return label(300 + (index - (weights.length - 1) / 2) * 46, 380, `${share}%`, { color: colour, fontSize: 'clamp(11px,2.2vw,17px)', textShadow: `0 0 6px ${colour}` });
+    return label(300 + (index - (weights.length - 1) / 2) * 46, 380, `${share}%`, { color: colour, fontSize: 'clamp(11px,2.2vw,17px)', textShadow: look.glows ? `0 0 6px ${colour}` : 'none' });
   });
-  return [label(300, 362, 'DECISION POWER', { fontFamily: 'Cinzel, serif', fontSize: 'clamp(9px,1.6vw,12px)', letterSpacing: '3px', color: '#e8c890' }), ...shares];
+  return [label(300, 362, 'DECISION POWER', { class: 'orb-title', color: look.orbTitle }), ...shares];
 }
 
-function drawStates(svg, nodes, current) {
+function drawStates(svg, nodes, current, look) {
   return nodes.map((node) => {
     const isNow = node.id === current;
-    const edge = isNow ? '#ffe2a8' : '#a86a32';
-    svg.append(svgElement('circle', { cx: node.x, cy: node.y, r: isNow ? 20 : 15, fill: isNow ? '#ffb04a' : '#2a1608', stroke: edge, 'stroke-width': 2.5, class: isNow ? 'now' : '' }));
+    const edge = isNow ? look.stateEdgeNow : look.stateEdge;
+    svg.append(svgElement('circle', { cx: node.x, cy: node.y, r: isNow ? 20 : 15, fill: isNow ? look.stateNow : look.state, stroke: edge, 'stroke-width': 2.5, class: isNow ? 'now' : '' }));
     if (node.final) svg.append(svgElement('circle', { cx: node.x, cy: node.y, r: isNow ? 14 : 10, fill: 'none', stroke: edge, 'stroke-width': 1.5 }));
-    const tone = isNow ? '#ffe2a8' : '#d39a5c';
-    return label(node.lx, node.ly, node.id.replaceAll('_', ' '), { color: tone, fontSize: 'clamp(13px,2.8vw,21px)', textShadow: '0 0 6px rgba(255,150,60,.7), 0 0 3px #000' });
+    const tone = isNow ? look.stateToneNow : look.stateTone;
+    return label(node.lx, node.ly, node.id.replaceAll('_', ' '), { color: tone, fontSize: 'clamp(13px,2.8vw,21px)', textShadow: look.glows ? `0 0 6px ${look.stateGlow}, 0 0 3px ${look.shadow}` : 'none' });
   });
 }
 
@@ -248,7 +287,34 @@ async function api(path, body) {
  * The console's state, and what draws it.
  */
 function boot() {
-  const state = { rack: [], sketch: null, values: {}, running: false, on: true, current: null, liveEdge: null, open: new Set() };
+  const state = { rack: [], sketch: null, values: {}, running: false, on: true, current: null, liveEdge: null, open: new Set(), look: null };
+
+  // UND-36: the theme - a known ?theme= wins, then the one this browser remembers.
+  const STORE = 'understudy-theme';
+  function remembered() {
+    try {
+      return globalThis.localStorage.getItem(STORE);
+    } catch {
+      return null;
+    }
+  }
+  function useTheme(name) {
+    document.documentElement.dataset.theme = name;
+    state.look = themeLook();
+    for (const button of document.querySelectorAll('.theme-choice')) button.setAttribute('aria-pressed', String(button.dataset.theme === name));
+  }
+  useTheme(themeOf(new URLSearchParams(globalThis.location.search).get('theme'), remembered()));
+  for (const button of document.querySelectorAll('.theme-choice')) {
+    button.addEventListener('click', () => {
+      useTheme(button.dataset.theme);
+      try {
+        globalThis.localStorage.setItem(STORE, button.dataset.theme);
+      } catch { /* not remembered: a blocked store */ }
+      if (!state.sketch) return;
+      drawControls();
+      drawTube();
+    });
+  }
 
   function drawRack() {
     const rack = $('rack');
@@ -295,7 +361,7 @@ function boot() {
   }
 
   function drawFader(input, index) {
-    const colour = rgb(COLOURS[index % COLOURS.length]);
+    const colour = rgb(state.look.weights[index % state.look.weights.length]);
     const [low, high] = input.range;
     const id = `fader-${input.name}`;
     const fader = element('input', { id, class: 'fader', type: 'range', min: String(low), max: String(high), step: '0.05', value: String(state.values[input.name]), 'aria-orientation': 'vertical' });
@@ -383,17 +449,21 @@ function boot() {
     const { sketch } = state;
     $('tube-caption').textContent = state.running ? `running · ${state.current ?? ''}` : 'idle';
     if (!sketch) return;
+    const look = state.look;
     const weights = sketch.inputs.filter((input) => input.kind === 'weight').map((input, index) => ({
-      name: input.name, value: state.values[input.name], range: input.range, colour: COLOURS[index % COLOURS.length],
+      name: input.name, value: state.values[input.name], range: input.range, colour: look.weights[index % look.weights.length],
     }));
-    const power = { weights, total: weights.reduce((sum, each) => sum + each.value, 0), blend: rgb(blendOf(weights)) };
+    const power = {
+      weights, total: weights.reduce((sum, each) => sum + each.value, 0),
+      level: weights.reduce((sum, each) => sum + levelOf(each.value, each.range), 0), blend: rgb(blendOf(weights)),
+    };
     const layout = tubeLayout(sketch.graph, sketch.decision);
     const svg = svgElement('svg', { viewBox: `0 0 ${SIZE} ${SIZE}`, role: 'img', 'aria-label': tubeAria(layout, state.current) });
     const labels = [
-      ...drawRing(svg, weights),
-      ...drawEdges(svg, layout.edges, power, { isRunning: state.running, liveEdge: state.liveEdge }),
-      ...drawOrb(svg, power),
-      ...drawStates(svg, layout.nodes, state.current),
+      ...drawRing(svg, weights, look),
+      ...drawEdges(svg, layout.edges, power, { isRunning: state.running, liveEdge: state.liveEdge }, look),
+      ...drawOrb(svg, power, look),
+      ...drawStates(svg, layout.nodes, state.current, look),
     ];
     $('tube').replaceChildren(svg, element('div', { class: 'labels', 'aria-hidden': 'true' }, ...labels));
   }

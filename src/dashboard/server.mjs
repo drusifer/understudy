@@ -25,6 +25,8 @@ const FILES = {
   '': [path.join(HERE, 'page.html'), 'text/html; charset=utf-8'],
   'page.mjs': [path.join(HERE, 'page.mjs'), 'text/javascript; charset=utf-8'],
   'page.css': [path.join(HERE, 'page.css'), 'text/css; charset=utf-8'],
+  'theme-professional.css': [path.join(HERE, 'theme-professional.css'), 'text/css; charset=utf-8'],
+  'theme-starship.css': [path.join(HERE, 'theme-starship.css'), 'text/css; charset=utf-8'],
   'tube.mjs': [path.join(HERE, 'tube.mjs'), 'text/javascript; charset=utf-8'],
   'turnGraph.mjs': [path.join(WATCH, 'turnGraph.mjs'), 'text/javascript; charset=utf-8'],
   'watchPage.mjs': [path.join(WATCH, 'page.mjs'), 'text/javascript; charset=utf-8'],
@@ -35,6 +37,8 @@ const FILES = {
   'fonts/spectral-400-italic.woff2': font('spectral-latin-400-italic.woff2'),
   'fonts/vt323-400.woff2': font('vt323-latin-400-normal.woff2'),
   'fonts/dotgothic16-400.woff2': font('dotgothic16-latin-400-normal.woff2'),
+  'fonts/antonio-400.woff2': font('antonio-latin-400-normal.woff2'),
+  'fonts/antonio-700.woff2': font('antonio-latin-700-normal.woff2'),
 };
 
 const json = (response, status, value) => response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }).end(JSON.stringify(value));

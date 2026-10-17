@@ -38,6 +38,19 @@ then the stepper and switches). Under 1100 px the columns stack: tube, controls,
 
 "11" is only how a perfect 1.0 is shown (owner); the engine rule for it shipped in sprint 5.
 
+## Themes (sprint 9, owner)
+
+The **THEME** switch in the header picks one of three looks; the layout and every control are the
+same in each. Steampunk (everything above) is the default. The theme is `data-theme` on `<html>`;
+`page.css` is steampunk, `theme-professional.css` and `theme-starship.css` override it, and the
+colours the script draws on the tube come from CSS custom properties (`--tube-*`, `--weight-1..6`).
+
+| Theme | Looks like |
+|---|---|
+| Steampunk | walnut, brass and glowing valves (above) |
+| Professional | light grey page, white panels with thin borders, one blue accent, system font; no glows, textures or animations; the tube a flat diagram on a white disc; the printer a plain monospace log |
+| Starship | in the manner of the Enterprise-D's computer screens: black; each panel framed by a thick rounded "elbow" bar (printer orange, tube blue-violet, controls lilac, bay peach); pill buttons; condensed upper-case Antonio lettering; the tube a black display with thin coloured rings; the printer coloured text on black. Original styling - no logos or insignia |
+
 ## Type and colour
 
 Cinzel (plates, labels), Spectral (prose), VT323 (Nixies, tube labels), DotGothic16 (printer).

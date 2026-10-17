@@ -16,8 +16,10 @@ TypeSafe questions) and a small **adapter**; understudy supplies the run loop, t
 authors testing their apps. Lifted out of recard's game harness in sprint 1 (see
 `docs/EXTRACTION_MAP.md`); recard itself is no longer a goal (owner, 2026-10-15).
 
-**Status:** sprint 1 "MVP first run" done and merged to `main` (766a47c). Release tag `v0.1.0` exists but points at the initial commit (66ce717) - the owner is to move it to 766a47c.
-Next: `docs/BACKLOG.md` (HTTP target).
+**Status:** sprints 1-9 done and merged to `main` (2026-10-16): four targets (process, page, http, mcp),
+`--watch`, deciding (`decide:`/`inputs:`/`pick:`), and the `understudy dashboard` console with the
+bay behind the printer and three themes. Release tag `v0.1.0` is on 766a47c (sprint 1).
+Next: `docs/BACKLOG.md` ("Next" sections from the sprint retros).
 
 ## Capabilities
 

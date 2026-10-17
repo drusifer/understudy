@@ -137,3 +137,59 @@ test('behind the printer: the sketch\'s YAML and a sticker; typing saves and the
   assert.equal(await page.isVisible('#bay'), false);
   assert.deepEqual(errors, []);
 });
+
+// Sprint 9 UND-36: the themes - the switch restyles at once, is remembered, ?theme= wins,
+// the console still plays, and it fits one 1600x960 screen.
+test('the THEME switch: each theme restyles the page, is remembered, ?theme= wins, Play still runs, fits 1600x960', async () => {
+  const logRoot = mkdtempSync(path.join(tmpdir(), 'understudy-dash-theme-'));
+  const dashboard = await serveDashboard({
+    folder: 'examples', port: 0, environment: { ...process.env, TYPESAFE_API_KEY: 'test' },
+    runOptions: { makeJudge: () => eveningJudge(), logRoot, pollMs: 20, steps: 30 },
+  });
+  test.after(async () => {
+    await dashboard.close();
+    rmSync(logRoot, { recursive: true, force: true });
+  });
+  const page = await browser.newPage({ viewport: { width: 1600, height: 960 } });
+  const errors = [];
+  page.on('pageerror', (error) => {
+    errors.push(error.message);
+  });
+  const theme = () => page.evaluate(() => document.documentElement.dataset.theme);
+  const background = () => page.evaluate(() => globalThis.getComputedStyle(document.body).backgroundColor);
+  const fits = () => page.evaluate(() => document.scrollingElement.scrollHeight <= globalThis.innerHeight && document.scrollingElement.scrollWidth <= globalThis.innerWidth);
+  await page.goto(dashboard.url);
+  await until(page, () => document.querySelector('#tube svg'));
+  assert.equal(await theme(), 'steampunk');
+  assert.ok(await fits(), 'steampunk fits');
+  const steampunk = await background();
+
+  const seen = new Set([steampunk]);
+  for (const name of ['professional', 'starship']) {
+    await page.click(`.theme-choice[data-theme="${name}"]`);
+    assert.equal(await theme(), name);
+    assert.equal(await page.getAttribute(`.theme-choice[data-theme="${name}"]`, 'aria-pressed'), 'true');
+    seen.add(await background());
+    assert.ok(await fits(), `${name} fits 1600x960`);
+  }
+  assert.equal(seen.size, 3, 'each theme has its own background');
+
+  // AC2: remembered across a reload; ?theme= wins; an unknown one is ignored.
+  await page.click('.theme-choice[data-theme="professional"]');
+  await page.reload();
+  await until(page, () => document.querySelector('#tube svg'));
+  assert.equal(await theme(), 'professional');
+  await page.goto(`${dashboard.url}?theme=starship`);
+  assert.equal(await theme(), 'starship');
+  await page.goto(`${dashboard.url}?theme=tartan`);
+  assert.equal(await theme(), 'professional');
+
+  // AC1, AC5: a run keeps going through a theme change, and the controls work.
+  await until(page, () => document.querySelector('.fader'));
+  await page.click('#play');
+  await until(page, () => document.querySelector('#play-word').textContent === 'STOP');
+  await page.click('.theme-choice[data-theme="starship"]');
+  await until(page, () => document.querySelector('#paper').textContent.includes('Ticket issued'));
+  await until(page, () => document.querySelector('#play-word').textContent === 'PLAY');
+  assert.deepEqual(errors, []);
+});

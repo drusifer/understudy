@@ -14,6 +14,14 @@ pause it and step it one move at a time, or replay any finished run from its log
 
 ![The watch page: the statechart and the decisions of a run of examples/mcp](docs/images/watch.png)
 
+Or run the whole folder from a **console**: `understudy dashboard examples` serves an
+operations console - a rack of sketches, each sketch's inputs as dials, faders, a stepper and
+switches, PLAY, the statechart on a round state tube and the run log on a printer. Take the
+printer off to edit the sketch's YAML and watch the tube redraw. Three themes: steampunk,
+professional, starship.
+
+![The dashboard: the evening sketch on the operations console](docs/images/dashboard.png)
+
 It plays four kinds of app, with the same sketch format:
 
 - **command-line programs** — reads the terminal output, types the answers;
@@ -45,6 +53,7 @@ bobp make run ARGS="run examples/http"              # play the vending machine A
 bobp make run ARGS="run examples/mcp"               # play the box office MCP server
 bobp make run ARGS="run examples/mcp --watch"       # the same, with a live view in your browser
 bobp make run ARGS="check examples/cli"             # check a sketch without starting anything (no key needed)
+bobp make run ARGS="dashboard examples"             # the operations console for every example
 ```
 
 Always go through `bobp make <target>` - it is the front door for people and agents alike.
@@ -57,6 +66,7 @@ Always go through `bobp make <target>` - it is the front door for people and age
 | [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | install, run, watch a run, read the output, write your first sketch, fix errors |
 | [docs/WALKTHROUGH.md](docs/WALKTHROUGH.md) | see the examples taken apart, line by line, with real runs |
 | [docs/MCP_GUIDE.md](docs/MCP_GUIDE.md) | point understudy at an MCP server you already have (yours, or one configured for Claude) |
+| [docs/design/DASHBOARD.md](docs/design/DASHBOARD.md) | how the dashboard looks and why: its parts, the bay behind the printer, the themes |
 | [docs/SKETCHES.md](docs/SKETCHES.md) | the reference: `sketch.yaml`, the four targets, hooks, library names, exit codes |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | why it is built this way (ADRs) |
 | [docs/SDLC.md](docs/SDLC.md) | how the project is built, tested, changed and released |

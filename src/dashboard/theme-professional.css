@@ -1,0 +1,131 @@
+/* Sprint 9 UND-36 (ADR-0029): the professional theme - light, flat, one
+   blue accent, the system font; no glows, textures or animations. Every
+   rule is under :root[data-theme="professional"], so it beats page.css. */
+:root[data-theme="professional"] {
+  --walnut: #f4f5f7; --brass: #1f4fd1; --brass-dark: #c9ced8; --brass-deep: #c9ced8;
+  --cream: #1b2230; --muted: #5a6373; --amber: #1f4fd1; --paper: #ffffff; --ink: #1b2230;
+  --weight-1: #c93636; --weight-2: #7a35e0; --weight-3: #0b6f8a; --weight-4: #1d7a3a; --weight-5: #a3530a; --weight-6: #b3195a;
+  --tube-glows: off; --tube-track: #e6e9ef; --tube-shadow: #ffffff;
+  --tube-edge: #9aa3b2; --tube-edge-live: #1f4fd1; --tube-edge-tone: #4a5466;
+  --tube-state: #ffffff; --tube-state-now: #1f4fd1; --tube-state-edge: #6b7486; --tube-state-edge-now: #173ea6;
+  --tube-state-tone: #1b2230; --tube-state-tone-now: #173ea6; --tube-state-glow: transparent; --tube-orb-title: #5a6373;
+}
+:root[data-theme="professional"] * { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; text-shadow: none; animation: none; letter-spacing: normal; }
+:root[data-theme="professional"] body { background: var(--walnut); color: var(--ink); }
+:root[data-theme="professional"] .room { background: var(--walnut); }
+:root[data-theme="professional"] .about { color: var(--muted); font-style: normal; }
+:root[data-theme="professional"] .plate-label,
+:root[data-theme="professional"] .panel-head,
+:root[data-theme="professional"] .printer-head { font-size: 12px; font-weight: 600; letter-spacing: .04em; color: var(--muted); }
+:root[data-theme="professional"] button:focus-visible,
+:root[data-theme="professional"] input:focus-visible,
+:root[data-theme="professional"] textarea:focus-visible { outline: 3px solid #8fb0ff; outline-offset: 2px; }
+
+/* Header and rack */
+:root[data-theme="professional"] .plate { background: #ffffff; border: 1px solid var(--brass-deep); border-radius: 8px; box-shadow: 0 1px 2px rgba(16,24,40,.06); }
+:root[data-theme="professional"] .brand svg g { stroke: var(--brass); }
+:root[data-theme="professional"] .plate h1 { font-size: 22px; font-weight: 700; letter-spacing: .02em; color: var(--ink); }
+:root[data-theme="professional"] .subtitle { font-size: 12px; font-weight: 500; letter-spacing: .08em; color: var(--muted); }
+:root[data-theme="professional"] .status { color: var(--ink); font-weight: 600; font-size: 13px; }
+:root[data-theme="professional"] .lamp { border: none; box-shadow: none; }
+:root[data-theme="professional"] .lamp.standby { background: #d99b06; }
+:root[data-theme="professional"] .lamp.on-air { background: #1d9a4a; }
+:root[data-theme="professional"] .lamp.dark { background: #9aa3b2; }
+:root[data-theme="professional"] .power,
+:root[data-theme="professional"] .theme-choice,
+:root[data-theme="professional"] .screw-button,
+:root[data-theme="professional"] .panel-button,
+:root[data-theme="professional"] .access,
+:root[data-theme="professional"] .sketch-tab { border: 1px solid var(--brass-deep); border-radius: 6px; background: #ffffff; color: var(--ink); box-shadow: none; font-size: 13px; }
+:root[data-theme="professional"] .bat-slot { background: #e6e9ef; border: 1px solid var(--brass-deep); }
+:root[data-theme="professional"] .bat { background: var(--brass); }
+:root[data-theme="professional"] .theme-label { color: var(--muted); font-size: 12px; font-weight: 600; }
+:root[data-theme="professional"] .theme-choice[aria-pressed="true"],
+:root[data-theme="professional"] .sketch-tab[aria-selected="true"] { background: var(--brass); border-color: var(--brass); color: #ffffff; box-shadow: none; }
+:root[data-theme="professional"] .sketch-tab .name { font-size: 14px; font-weight: 600; letter-spacing: 0; }
+:root[data-theme="professional"] .access .caret { color: var(--brass); }
+
+/* Panels */
+:root[data-theme="professional"] .controls,
+:root[data-theme="professional"] .tube-panel,
+:root[data-theme="professional"] .printer,
+:root[data-theme="professional"] .bay { background: #ffffff; border: 1px solid var(--brass-deep); border-radius: 8px; box-shadow: 0 1px 2px rgba(16,24,40,.06); }
+:root[data-theme="professional"] .controls-head h2 { font-size: 18px; font-weight: 700; letter-spacing: 0; color: var(--ink); text-transform: none; }
+:root[data-theme="professional"] .stage.dark { opacity: .35; filter: grayscale(1); }
+
+/* Dial */
+:root[data-theme="professional"] .dial-well { background: #eef1f5; border: 2px solid var(--brass-deep); box-shadow: none; }
+:root[data-theme="professional"] .dial-tick { background: #c9ced8; }
+:root[data-theme="professional"] .dial-tick.on { background: var(--brass); box-shadow: none; }
+:root[data-theme="professional"] .dial-pointer .body { background: #3a4252; box-shadow: none; }
+:root[data-theme="professional"] .dial-pointer .line { background: #ffffff; box-shadow: none; }
+:root[data-theme="professional"] .dial-pointer .cap { background: #ffffff; }
+:root[data-theme="professional"] .dial-option { color: var(--muted); font-size: 16px; }
+:root[data-theme="professional"] .dial-option[aria-pressed="true"] { color: var(--brass); font-weight: 700; }
+
+/* Faders and readouts */
+:root[data-theme="professional"] .fader-scale { color: var(--muted); }
+:root[data-theme="professional"] .channel label { color: var(--ink); font-weight: 600; }
+:root[data-theme="professional"] .chip { box-shadow: none; }
+:root[data-theme="professional"] .slot .ticks { background: repeating-linear-gradient(180deg, #c9ced8 0 1px, transparent 1px 10%); }
+:root[data-theme="professional"] .slot .glow { box-shadow: none; background: var(--colour); opacity: .35; }
+:root[data-theme="professional"] .fader::-webkit-slider-runnable-track { background: #e6e9ef; border: 1px solid var(--brass-deep); box-shadow: none; }
+:root[data-theme="professional"] .fader::-moz-range-track { background: #e6e9ef; border: 1px solid var(--brass-deep); }
+:root[data-theme="professional"] .fader::-webkit-slider-thumb { background: #ffffff; border: 1px solid #6b7486; box-shadow: 0 1px 3px rgba(16,24,40,.25); }
+:root[data-theme="professional"] .fader::-moz-range-thumb { background: #ffffff; border: 1px solid #6b7486; }
+:root[data-theme="professional"] .nixie { background: #ffffff; border: 1px solid var(--brass-deep); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 17px; padding: 5px 4px; font-weight: 600; }
+
+/* Drawers */
+:root[data-theme="professional"] .drawer { background: #f7f8fa; border: 1px solid var(--brass-deep); box-shadow: none; }
+:root[data-theme="professional"] .drawer .field,
+:root[data-theme="professional"] .drawer-title { color: var(--muted); font-size: 12px; font-weight: 600; }
+:root[data-theme="professional"] .drawer input { border: 1px solid #9aa3b2; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 15px; }
+:root[data-theme="professional"] .drawer .yaml,
+:root[data-theme="professional"] .drawer .hint { color: var(--muted); }
+:root[data-theme="professional"] .drawer .problem,
+:root[data-theme="professional"] .bay-problem { color: #b42318; }
+
+/* Switches, stepper, play */
+:root[data-theme="professional"] .switches { border-top: 1px solid var(--brass-deep); }
+:root[data-theme="professional"] .switch,
+:root[data-theme="professional"] .stepper { background: #ffffff; border: 1px solid var(--brass-deep); color: var(--ink); }
+:root[data-theme="professional"] .switch .socket { background: #e6e9ef; box-shadow: none; }
+:root[data-theme="professional"] .switch .led { background: #c9ced8; box-shadow: none; }
+:root[data-theme="professional"] .switch[aria-pressed="true"] .led { background: var(--brass); box-shadow: none; }
+:root[data-theme="professional"] .switch .label { color: var(--ink); font-weight: 600; }
+:root[data-theme="professional"] .switch .state { color: var(--muted); font-size: 14px; }
+:root[data-theme="professional"] .switch[aria-pressed="true"] .state { color: var(--brass); }
+:root[data-theme="professional"] .step { background: #ffffff; border: 1px solid #9aa3b2; box-shadow: none; color: var(--ink); font-size: 22px; }
+:root[data-theme="professional"] .ready-bezel { background: none; box-shadow: none; }
+:root[data-theme="professional"] .ready-lamp { background: #1d9a4a; box-shadow: none; }
+:root[data-theme="professional"] .ready-lamp.running { background: #d97706; box-shadow: none; }
+:root[data-theme="professional"] .ready-lamp.off { background: #c9ced8; box-shadow: none; }
+:root[data-theme="professional"] .ready-text { color: var(--ink); font-weight: 600; }
+:root[data-theme="professional"] .play-bezel { padding: 0; background: none; box-shadow: none; }
+:root[data-theme="professional"] .play { border: none; border-radius: 8px; background: var(--brass); box-shadow: 0 1px 2px rgba(16,24,40,.2); color: #ffffff; font-size: 18px; font-weight: 700; letter-spacing: .04em; }
+:root[data-theme="professional"] .play.running { background: #b42318; box-shadow: none; }
+
+/* Tube: a flat diagram on a white disc */
+:root[data-theme="professional"] .tube { background: #ffffff; border: 1px solid var(--brass-deep); box-shadow: none; }
+:root[data-theme="professional"] .tube::before { display: none; }
+:root[data-theme="professional"] .tube .labels { font-family: system-ui, sans-serif; }
+:root[data-theme="professional"] .tube .label { font-weight: 500; }
+:root[data-theme="professional"] .tube .now { filter: none; }
+
+/* Printer: a plain log */
+:root[data-theme="professional"] .paper { background: #ffffff; background-image: none; padding: 10px 12px; }
+:root[data-theme="professional"] .paper,
+:root[data-theme="professional"] .paper * { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; line-height: 18px; }
+:root[data-theme="professional"] .paper .note { color: var(--muted); }
+:root[data-theme="professional"] .paper .held { color: #8a4b08; }
+:root[data-theme="professional"] .paper .jev { color: #173ea6; }
+:root[data-theme="professional"] .paper-window { border: 1px solid var(--brass-deep); border-radius: 6px; height: 666px; }
+:root[data-theme="professional"] .roller { display: none; }
+
+/* The bay */
+:root[data-theme="professional"] .sticker { background: #fff8db; border: 1px solid #ecd98a; transform: none; box-shadow: none; }
+:root[data-theme="professional"] .sticker-title { color: #6b5310; font-weight: 700; }
+:root[data-theme="professional"] .sticker code,
+:root[data-theme="professional"] .bay-text { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+:root[data-theme="professional"] .sticker code { font-size: 11px; }
+:root[data-theme="professional"] .bay-text { background: #ffffff; color: var(--ink); border: 1px solid #9aa3b2; font-size: 13px; }
