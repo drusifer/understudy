@@ -57,3 +57,9 @@ test('the schema knows exactly what check knows (UND-37 AC4)', () => {
   assert.deepEqual(sorted(inputKinds), sorted(KINDS), 'input kinds');
   assert.deepEqual(sorted(schema.definitions.question.properties.type.enum), sorted(QUESTION_TYPES), 'question types');
 });
+
+test('every example points the YAML language server at the schema (UND-37 AC2)', () => {
+  for (const file of examples) {
+    assert.equal(readFileSync(file, 'utf8').split('\n', 1)[0], '# yaml-language-server: $schema=../../schema/sketch.schema.json', file);
+  }
+});

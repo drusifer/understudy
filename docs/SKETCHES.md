@@ -54,6 +54,21 @@ questions: { ... }                     # required; section 5
 turn: { initial: waiting, states: { ... } }   # required; section 4
 ```
 
+**Editor help.** [`schema/sketch.schema.json`](../schema/sketch.schema.json) describes this
+format for editors that run the YAML language server (VS Code's YAML extension, Neovim with
+`yamlls`, JetBrains IDEs): they complete keys, show what each means, and underline a misspelt
+key, a field of the wrong target kind or an unknown question type as you type. Point your sketch
+at it with a first line - every example has one:
+
+```yaml
+# yaml-language-server: $schema=../../schema/sketch.schema.json
+```
+
+From a sketch outside this repository, use the published file:
+`# yaml-language-server: $schema=https://raw.githubusercontent.com/drusifer/understudy/main/schema/sketch.schema.json`.
+The schema checks shape only; `understudy check` remains the full check (names, states, the
+prose rules, files next to the sketch).
+
 Any other top-level key is refused, naming the known ones. Every mistake is reported before
 anything starts, as one line naming `sketch.yaml` and the path inside it:
 

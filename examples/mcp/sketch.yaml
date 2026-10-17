@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../schema/sketch.schema.json
 # The MCP example's sketch (docs/SKETCHES.md): the box office in server.mjs,
 # played through its tools with no code - the generic MCP app offers each
 # tool, and Jev chooses the arguments from what the tools allow and what

@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../schema/sketch.schema.json
 # The remote MCP example's sketch (docs/SKETCHES.md, README.md here): the
 # same box office, already running behind a URL and a token. The server is
 # named by reference to servers.json - Claude Code's mcpServers shape - and

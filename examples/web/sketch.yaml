@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../schema/sketch.schema.json
 # The web example's sketch (docs/SKETCHES.md): the page is played as it
 # is. With no hooks, the generic page app offers whatever a person could
 # press on it; `turn` says where it ends.

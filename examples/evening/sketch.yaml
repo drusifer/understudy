@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../schema/sketch.schema.json
 # The evening example's sketch (docs/MCP_GUIDE.md "Deciding like a person"):
 # the owner's night at the cinema, played against two servers - a box office
 # and a ratings service - with the owner's preferences written down:

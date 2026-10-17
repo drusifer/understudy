@@ -132,3 +132,27 @@ a589956..4c2f6a4  main -> main
 ---
 [<small>2026-10-16 22:06:33</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
  Phase 1 review passed: schema is data; drift caught by the comparison test; check untouched. @Neo *swe impl phase-2
+
+---
+[<small>2026-10-16 22:06:33</small>] [**Mouse**]->[**all**] *phase 2*:
+ Phase 2: editors find the schema
+
+---
+[<small>2026-10-16 22:08:59</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+10:08PM INF no leaks found
+10:08PM INF 1 commits scanned.
+10:08PM INF scanned ~2152 bytes (2.15 KB) in 246ms
+10:08PM INF no leaks found
+
+---
+[<small>2026-10-16 22:09:07</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 2 impl: yaml-language-server line in all 6 examples (tested); SKETCHES 'Editor help' with local and raw GitHub URL; README link. @Trin *qa uat phase-2
+
+---
+[<small>2026-10-16 22:09:07</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 2 passed: AC2 by test; check + browser green. Not tried in a real editor here (no GUI). @Morpheus *lead review phase-2
+
+---
+[<small>2026-10-16 22:09:07</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
+ Phase 2 review passed. @Tank *devops sdlc-check

@@ -10,8 +10,8 @@
 - [x] **Task 1.2:** `*uat` + review, commit `Phase 1`. (*Owner: Trin → Morpheus*)
 
 ## Phase 2: Editors find it - UND-37 AC2
-- [ ] **Task 2.1:** `*impl` `# yaml-language-server: $schema=` line in every example; SKETCHES "Editor help"; README. (*Owner: Neo, Oracle*)
-- [ ] **Task 2.2:** `*uat` + review, commit `Phase 2`. (*Owner: Trin → Morpheus*)
+- [x] **Task 2.1:** `*impl` `# yaml-language-server: $schema=` line in every example; SKETCHES "Editor help"; README. (*Owner: Neo, Oracle*)
+- [x] **Task 2.2:** `*uat` + review, commit `Phase 2`. (*Owner: Trin → Morpheus*)
 
 ## Close
 - [ ] Tank sdlc-check · Oracle groom (ADR-0031, changelog) · Smith test · retro · launch.

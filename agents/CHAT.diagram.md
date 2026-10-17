@@ -15,7 +15,8 @@ sequenceDiagram
     participant Mouse
     participant Neo
     participant Trin
-    Note over Oracle,Trin: 📅 2026-10-16
+    participant Tank
+    Note over Oracle,Tank: 📅 2026-10-16
     Oracle->>All: "checkpoint"
     Note right of Oracle: "Checkpoint: Cypher +<br/>Oracle state saved<br/>(between sprints, sprint<br/>9 merged). Ready for<br/>context clear. Resume<br/>with /init."
     User->>All: "request"
@@ -44,4 +45,12 @@ sequenceDiagram
     Note right of Trin: "UAT phase 1 passed: AC1,<br/>AC3-5, check green.<br/>@Morpheus *lead review<br/>phase-1"
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "Phase 1 review passed:<br/>schema is data, drift<br/>caught by the comparison<br/>test, check untouched.<br/>@Neo *swe impl phase-2"
+    Mouse->>All: "phase 2"
+    Note right of Mouse: "Phase 2: editors find<br/>the schema"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 2 impl: yaml-<br/>language-server line in<br/>all 6 examples (tested),<br/>SKETCHES 'Editor help'<br/>with local and raw<br/>GitHub URL, README link.<br/>@Tri…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 2 passed: AC2<br/>by test, check + browser<br/>green. Not tried in a<br/>real editor here (no<br/>GUI). @Morpheus *lead<br/>review phase-2"
+    Morpheus->>Tank: "lead handoff"
+    Note right of Morpheus: "Phase 2 review passed.<br/>@Tank *devops sdlc-check"
 ```
