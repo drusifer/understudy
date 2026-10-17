@@ -172,4 +172,6 @@ sequenceDiagram
     Note right of Neo: "Big screens: console<br/>fills the window (to<br/>1880px wide, columns<br/>stretch to the bottom),<br/>screen, flow and paper<br/>grow, legend/gauge text<br/>scale…"
     User->>All: "request"
     Note right of User: "merge and push"
+    Cypher->>All: "checkpoint"
+    Note right of Cypher: "Checkpoint saved in<br/>agents/cypher/state.md<br/>(sprints 1-15 on main<br/>3507240, pushed, demo<br/>running on 4180). Next:<br/>ask owner what is next.<br/>Read…"
 ```
