@@ -305,3 +305,55 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-16 21:40:20</small>] [**User**]->[**all**] *request*:
  /sprint 9 css themes - one professional theme and one Star Trek TNG themed like the Enterprise screens
+
+---
+[<small>2026-10-16 21:41:04</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Stage 0: SDLC present; branch sprint-9. Story+arch (Tier 2): docs/sprints/USER_STORIES_SPRINT9.md (UND-36 themes). @Smith *user review sprint-9
+
+---
+[<small>2026-10-16 21:41:04</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ *user approve. AC2 says what happens to an unknown ?theme=; AC3 contrast is measurable; AC4 rules out copied artwork. rubric STORIES: OUT=S TEST=A FAIL=A SCOPE=S SIZE=A DESIGN=A
+
+---
+[<small>2026-10-16 21:41:04</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Arch: data-theme + per-theme stylesheets; script colours to CSS vars; themeOf(query, stored); Antonio font via @fontsource (routine §4, no mechanism change). ADR-0029.
+
+---
+[<small>2026-10-16 21:41:04</small>] [**Smith**]->[**Mouse**] *user approve*:
+ *user approve. Architecture approved. rubric ARCH: BOUND=A FLOW=A FAIL=A USER=A DECS=A FEAS=A. @Mouse *sm plan sprint
+
+---
+[<small>2026-10-16 21:41:04</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint planned: 2 phases (switch + professional; starship). @Morpheus *lead review sprint plan
+
+---
+[<small>2026-10-16 21:41:04</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Plan approved. rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=S OWNER=A. @Neo *swe impl phase-1
+
+---
+[<small>2026-10-16 21:41:04</small>] [**Mouse**]->[**all**] *phase 1*:
+ Phase 1: the theme switch and the professional theme
+
+---
+[<small>2026-10-16 21:45:32</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-browser | /home/drusifer/Projects/understudy/build/build.out
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 25587.309482
+
+---
+[<small>2026-10-16 21:45:46</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 1 impl: script colours read from CSS vars (themeLook), themeOf + header THEME switch (URL > localStorage > steampunk), professional theme; fixed orb/edge sizes blowing up on 0-10 weights (levelOf). @Trin *qa uat phase-1
+
+---
+[<small>2026-10-16 21:45:46</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 1 passed: unit themeOf/rgbOf/levelOf; browser: switch, reload, ?theme=, unknown ignored, Play through a theme change, fits 1600x960. Screenshot checked. @Morpheus *lead review phase-1
+
+---
+[<small>2026-10-16 21:45:47</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 1 review passed: no colour left hard-coded in page.mjs; theme rules scoped under :root[data-theme] so page.css stays the default. @Neo *swe impl phase-2
