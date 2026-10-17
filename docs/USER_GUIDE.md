@@ -211,9 +211,10 @@ console to play them from instead of a command line:
 bobp make run ARGS="dashboard examples"      # understudy dashboard <folder> [--port N] [--host ADDR]
 ```
 
-It prints `understudy: dashboard at http://127.0.0.1:<port>/d/<token>/`; open it. Like the watch
-page it is served by understudy alone (no internet), on 127.0.0.1 unless you give `--host`, behind
-an unguessable path. Ctrl-C stops it (and any run).
+It prints `understudy: dashboard at http://127.0.0.1:<port>/`; open it. Like the watch page it is
+served by understudy alone (no internet), on 127.0.0.1 unless you give `--host`. There is no token
+in the address: with `--host 0.0.0.0` anyone on your network who can reach the port can play the
+sketches and edit them. Ctrl-C stops it (and any run).
 
 ![The dashboard with the evening sketch chosen](images/dashboard.png)
 

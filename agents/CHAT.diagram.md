@@ -63,4 +63,8 @@ sequenceDiagram
     Note right of Mouse: "Retro. Neo: exporting<br/>check's lists made drift<br/>testable. Trin: verify<br/>in a real editor next.<br/>Smith: bay could use the<br/>schema. Morpheus: sch…"
     Cypher->>All: "pm launch"
     Note right of Cypher: "*pm launch sprint-10.<br/>sketch.yaml schema for<br/>editors. Merge to main<br/>awaiting owner."
+    User->>All: "request"
+    Note right of User: "remove the dashboard's<br/>URL token - not<br/>necessary here"
+    Neo->>All: "done"
+    Note right of Neo: "Dashboard served at the<br/>root - no token in the<br/>URL (owner), ADR-0023<br/>amended, USER_GUIDE<br/>notes --host 0.0.0.0<br/>exposure. check +<br/>browser gre…"
 ```

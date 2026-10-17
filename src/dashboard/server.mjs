@@ -1,12 +1,11 @@
 // Sprint 6 UND-27 (ARCH §3, §5, ADR-0023): the dashboard's server - built
-// like the watch page's (plain node:http, an unguessable token path, every
-// file served locally, Server-Sent Events), plus a small JSON API: the rack,
-// one sketch's controls and its text, and - through `actions` - play, stop,
-// edit, write, power.
+// like the watch page's (plain node:http, every file served locally,
+// Server-Sent Events) but at the root, with no token in the URL (owner,
+// 2026-10-16) - plus a small JSON API: the rack, one sketch's controls and
+// its text, and - through `actions` - play, stop, edit, write, power.
 // It only ever reads sketches by the names the folder's listing gives.
 
 import http from 'node:http';
-import { randomBytes } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -81,8 +80,7 @@ export function createHub() {
  */
 export async function startDashboard({ folder, port = 0, host = '127.0.0.1', hub = createHub(), actions = {} }) {
   await listSketches(folder); // refuses a folder with no sketches before anything listens
-  const token = randomBytes(12).toString('base64url');
-  const base = `/d/${token}/`;
+  const base = '/';
 
   // The GET endpoints: the rack, one sketch's controls, one sketch's text.
   const read = async (response, rest) => {

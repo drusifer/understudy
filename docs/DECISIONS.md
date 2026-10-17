@@ -80,6 +80,7 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 *   **Context**: owner: a steampunk console over a folder of sketches - set inputs, press Play, watch.
 *   **Options**: (1) a second local server built like the watch page (token path, local files, SSE) with a small JSON API, running sketches in-process through `runSketch` and reading their stdout lines; (2) extend the per-run watch server; (3) spawn `understudy run` processes.
 *   **Decision**: (1). `listenOn`/`readBody` are shared with the watch server; the watch page's `turnGraph` is reused. A STOP pressed while a run's servers start is held and delivered on its start line.
+*   **Amendment (owner, 2026-10-16)**: the dashboard is served at the root (`http://<host>:<port>/`), with no token in the URL - not needed on the owner's network. With `--host 0.0.0.0` anyone who reaches the port can play and edit sketches; the watch page keeps its token path.
 *   **Consequences**: + the CLI and the console run sketches the same way. − one run at a time; two browsers share it.
 
 ## ADR-0022: Several servers in one MCP target

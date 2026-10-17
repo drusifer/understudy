@@ -185,3 +185,23 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-10-16 22:10:03</small>] [**Cypher**]->[**all**] *pm launch*:
  *pm launch sprint-10. sketch.yaml schema for editors. Merge to main awaiting owner.
+
+---
+[<small>2026-10-16 22:53:09</small>] [**User**]->[**all**] *request*:
+ remove the dashboard's URL token - not necessary here
+
+---
+[<small>2026-10-16 22:56:24</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-browser | /home/drusifer/Projects/understudy/build/build.out
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 23658.854175
+
+---
+[<small>2026-10-16 22:56:28</small>] [**Neo**]->[**all**] *done*:
+ Dashboard served at the root - no token in the URL (owner); ADR-0023 amended; USER_GUIDE notes --host 0.0.0.0 exposure. check + browser green.
