@@ -56,7 +56,7 @@ async function playEvening({ inputs = [], environment = process.env } = {}) {
 
 test('the evening books two central seats in row E for an evening horror film (UND-26 AC1)', async () => {
   const { lines, steps } = await playEvening();
-  assert.deepEqual(lines[0].inputs, { mood: 'fun', tomato: 1, audience: 2, row: 2, centre: 3, evenings: true, tickets: 2 });
+  assert.deepEqual(lines[0].inputs, { mood: 'fun', tomato: 3, audience: 7, row: 7, centre: 10, evenings: true, tickets: 2 });
   const paid = steps.at(-1);
   assert.match(paid.response.text, /^Ticket issued: Night Shift at 19:30, seats E1[5-6], E1[6-7]/);
   const seatStep = steps.find((line) => line.move === 'tool:boxoffice/pick_seats');

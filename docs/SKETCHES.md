@@ -331,7 +331,7 @@ them, and a value out of range refuses the run:
 ```yaml
 inputs:
   mood:     { choose: [fun, serious, dramatic, romantic], default: fun }
-  centre:   { weight: [0, 3], default: 3 }
+  centre:   { weight: [0, 10], default: 10 }
   evenings: { switch: true, default: true }      # --input evenings=off (on/off, true/false)
   tickets:  { count: [1, 4], default: 2 }        # a whole number: --input tickets=3
 pick:                                  # the final Choice among a shortlist

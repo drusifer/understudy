@@ -65,7 +65,7 @@ test('the console plays the evening: controls, Play, the tube follows, the print
   assert.equal(await page.getAttribute('.dial-option:has-text("romantic")', 'aria-pressed'), 'true');
   await page.fill('#fader-centre', '1.5');
   assert.equal(await page.textContent('#fader-centre >> xpath=../..//div[contains(@class,"nixie")]'), '1.50');
-  await page.fill('#fader-row', '3');
+  await page.fill('#fader-row', '10');
   assert.equal(await page.textContent('#fader-row >> xpath=../..//div[contains(@class,"nixie")]'), '11');
   await page.click('button[aria-label="tickets up"]');
   assert.equal(await page.textContent('.stepper-nixie'), '3', 'the brass stepper (UND-34 AC4)');

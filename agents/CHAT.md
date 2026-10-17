@@ -136,3 +136,47 @@ a4c651a..2e5885d  main -> main
 ---
 [<small>2026-10-16 20:43:05</small>] [**Cypher**]->[**all**] *checkpoint*:
  Checkpoint saved in agents/cypher/state.md (between sprints; dashboard layout revision on main; background dashboard noted). Ready for context clear. Resume with /init.
+
+---
+[<small>2026-10-16 20:43:44</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make push | /home/drusifer/Projects/understudy/build/build.out
+8:43PM INF scanned ~1575 bytes (1.58 KB) in 245ms
+8:43PM INF no leaks found
+To github.com:drusifer/understudy.git
+2e5885d..215b6a0  main -> main
+
+---
+[<small>2026-10-16 21:01:17</small>] [**User**]->[**all**] *request*:
+ /init
+
+---
+[<small>2026-10-16 21:01:25</small>] [**Cypher**]->[**all**] *resume*:
+ Resuming as Cypher: between sprints, asking owner what is next.
+
+---
+[<small>2026-10-16 21:08:24</small>] [**User**]->[**all**] *request*:
+ removing a panel reveals the sketch yaml; user edits it and the panel updates
+
+---
+[<small>2026-10-16 21:10:54</small>] [**Cypher**]->[**all**] *note*:
+ Owner: remove the printer panel to reveal the sketch YAML; tube redraws live as YAML changes; cheat-sheet sticker inside the panel.
+
+---
+[<small>2026-10-16 21:14:41</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-browser | /home/drusifer/Projects/understudy/build/build.out
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16857.509785
+
+---
+[<small>2026-10-16 21:14:45</small>] [**Cypher**]->[**all**] *update*:
+ Nit done: evening weights now [0, 10] (defaults 3/7/7/10); SKETCHES example and tests updated; check + test-browser pass. Uncommitted. Sprint 8 draft: docs/sprints/USER_STORIES_SPRINT8.md (UND-35, behind the printer).
+
+---
+[<small>2026-10-16 21:16:52</small>] [**User**]->[**all**] *request*:
+ yes commit and /sprint 8 go

@@ -43,7 +43,7 @@ test('the evening sketch is described as controls: a mood dial, weights with the
   const mood = evening.inputs.find((input) => input.name === 'mood');
   assert.deepEqual(mood, { name: 'mood', kind: 'choose', options: ['fun', 'serious', 'dramatic', 'romantic'], default: 'fun' });
   const centre = evening.inputs.find((input) => input.name === 'centre');
-  assert.deepEqual(centre.range, [0, 3]);
+  assert.deepEqual(centre.range, [0, 10]);
   assert.deepEqual(centre.factors, [{ argument: 'boxoffice/pick_seats.seat', field: 'centre', range: [0.3, 1], weight: 'centre' }]);
   const audience = evening.inputs.find((input) => input.name === 'audience');
   assert.equal(audience.factors[0].looks_at, 'reviews');

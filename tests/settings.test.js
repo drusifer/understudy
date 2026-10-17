@@ -27,7 +27,7 @@ test('an edit is saved; the file keeps its comments and still checks (UND-32 AC1
   assert.deepEqual(saved, { status: 200, value: { ok: true } });
   const after = readFileSync(file, 'utf8');
   assert.ok(after.includes('      centre: { range: [0.4, 1], weight: centre }'));
-  assert.ok(after.includes('  centre: { weight: [0, 3], default: 2 }'));
+  assert.ok(after.includes('  centre: { weight: [0, 10], default: 2 }'));
   const changed = after.split('\n').filter((line, index) => line !== before.split('\n')[index]);
   assert.equal(changed.length, 2, 'only the two edited lines change');
   assert.ok(after.includes('# The evening example\'s sketch'), 'comments kept');
@@ -46,8 +46,8 @@ test('moods are renamed with their default in one edit; a refused edit writes no
   const before = readFileSync(file, 'utf8');
   const refused = await settings.edit({ sketch: 'evening', changes: [{ path: CENTRE_RANGE, value: [1, 1] }] });
   assert.deepEqual(refused, { status: 422, value: { problem: 'decide.boxoffice/pick_seats.seat.scores.centre.range: must be two different numbers or HH:MM times, e.g. [0.3, 1]' } });
-  const outOfRange = await settings.edit({ sketch: 'evening', changes: [{ path: ['inputs', 'centre', 'default'], value: 7 }] });
-  assert.equal(outOfRange.value.problem, 'inputs.centre.default: must be between 0 and 3, got 7');
+  const outOfRange = await settings.edit({ sketch: 'evening', changes: [{ path: ['inputs', 'centre', 'default'], value: 12 }] });
+  assert.equal(outOfRange.value.problem, 'inputs.centre.default: must be between 0 and 10, got 12');
   assert.equal(readFileSync(file, 'utf8'), before);
 });
 

@@ -82,9 +82,9 @@ test('STOP stops the run as Ctrl-C would (UND-29 AC2)', async () => {
 
 test('a run that cannot start says why and leaves nothing running (UND-29 AC4)', async () => {
   const { dashboard, lines, post } = await console_({ environment: {} });
-  await post('play', { sketch: 'evening', inputs: { centre: 9 } });
+  await post('play', { sketch: 'evening', inputs: { centre: 12 } });
   await dashboard.runner.finished();
-  assert.deepEqual(lines.at(-1), { event: 'dashboard', running: false, sketch: 'evening', refused: 'input "centre" must be between 0 and 3, got 9' });
+  assert.deepEqual(lines.at(-1), { event: 'dashboard', running: false, sketch: 'evening', refused: 'input "centre" must be between 0 and 10, got 12' });
   assert.equal(dashboard.runner.isRunning(), false);
   assert.equal((await post('play', { sketch: '../src' })).status, 404);
 });

@@ -31,10 +31,10 @@ values:
 
 inputs:
   mood: { choose: [fun, serious, dramatic, romantic], default: fun }
-  tomato: { weight: [0, 3], default: 1 }
-  audience: { weight: [0, 3], default: 2 }
-  row: { weight: [0, 3], default: 2 }
-  centre: { weight: [0, 3], default: 3 }
+  tomato: { weight: [0, 10], default: 3 }
+  audience: { weight: [0, 10], default: 7 }
+  row: { weight: [0, 10], default: 7 }
+  centre: { weight: [0, 10], default: 10 }
   evenings: { switch: true, default: true }      # off: afternoon showings qualify too
   tickets: { count: [1, 4], default: 2 }         # how many seats, all together (--input tickets=3)
 
