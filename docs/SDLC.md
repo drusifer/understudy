@@ -71,7 +71,8 @@ Standard targets deliberately absent:
   example server's tool schemas; the SDK's peer) - both added in sprint 3; `lru-cache` (a deciding sketch's answered calls,
   fixed size, least recently used forgotten) - added in sprint 5. `@fontsource/cinzel`, `@fontsource/spectral`,
   `@fontsource/vt323`, `@fontsource/dotgothic16` (the dashboard's fonts, OFL, served locally so the
-  page fetches nothing from the internet) - added in sprint 6. Expected later:
+  page fetches nothing from the internet) - added in sprint 6; `@fontsource/antonio` (the starship
+  theme's lettering, OFL) - added in sprint 9. Expected later:
   `@xstate/graph ^3.0.4`.
 
 ## 5. Quality gates
@@ -171,7 +172,8 @@ Run by Tank at sprint close (`*devops sdlc-check`):
 8. Nothing under `src/` or `tests/` imports from `seed/`.
 
 ---
-*Last verified: 2026-10-16 by Tank (sprint-8 close: clean → check, browser tests 6/6; no
+*Last verified: 2026-10-16 by Tank (sprint-9 close: clean → check, browser tests 7/7; routine
+dependency `@fontsource/antonio` per §4. Sprint-8 close: clean → check, browser tests 6/6; no
 mechanism change - the dashboard's request body cap is code, not tooling. Sprint-6 close: Routine
 dependencies added per §4 (`@fontsource/*` fonts); eslint browser-globals block now also covers
 `src/dashboard/page.mjs` (Mechanism, small, owner-approved with the sprint plan); `.factory/`

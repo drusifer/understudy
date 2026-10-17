@@ -1,5 +1,14 @@
 # Changelog
 
+## Sprint 9 — themes (2026-10-16, branch `sprint-9`, not yet merged)
+
+- A **THEME** switch on the dashboard: **steampunk** (default), **professional** (light, flat, one
+  blue accent) and **starship** (black screens framed by rounded orange/lilac/blue bars, pill
+  buttons, condensed lettering - in the manner of the Enterprise-D's computers). Remembered per
+  browser; `?theme=` on the link. ADR-0029.
+- Fixed: with 0-10 weights the tube's centre orb and decision edge grew far too big; sizes now
+  follow each weight's share of its range.
+
 ## Sprint 8 — behind the printer (2026-10-16, branch `sprint-8`, not yet merged)
 
 - **REMOVE the printer** to edit the sketch's whole `sketch.yaml` in the bay behind it, with a

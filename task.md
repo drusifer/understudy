@@ -3,7 +3,7 @@
 *   **Goal**: a THEME switch on the dashboard - steampunk (default), professional, and a starship look like the Enterprise-D's screens.
 *   **Tier**: Tier 2 · **Points**: 5 (UND-36) · **Branch**: `sprint-9`
 *   **Story + Arch**: `docs/sprints/USER_STORIES_SPRINT9.md`
-*   **Status**: In progress - planned 2026-10-16
+*   **Status**: Complete - launched 2026-10-16; merge to main awaiting owner
 
 ## Phase 1: The switch, and the professional theme - UND-36 AC1-3, AC5-6
 - [x] **Task 1.1:** `*impl` script colours to CSS vars; `themeOf` + header switch (URL, localStorage, default); redraw on change. TDD. (*Owner: Neo*)
@@ -16,4 +16,4 @@
 - [x] **Task 2.3:** `*uat` + review, commit `Phase 2`. (*Owner: Trin → Morpheus*)
 
 ## Close
-- [ ] Tank sdlc-check · Oracle groom (ADR-0029, changelog) · Smith test · retro · launch.
+- [x] Tank sdlc-check · Oracle groom (ADR-0029, changelog) · Smith test · retro · launch.

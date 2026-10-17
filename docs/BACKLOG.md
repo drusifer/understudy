@@ -70,6 +70,14 @@ Design approved on a clickable mockup - **`docs/design/DASHBOARD.md`** is the br
   POWER off and on resets the sketch to its **factory defaults**.
 - "11" is how a perfect 1.0 is shown. Square lit Play button; green glowing READY lamp.
 
+## Sprint 9 (owner, 2026-10-16) - themes - DONE (launched 2026-10-16)
+- UND-36: THEME switch - steampunk, professional, starship.
+
+## Next (from the sprint 9 retro)
+- Measure contrast in the browser test instead of by eye (professional AC3). (Trin)
+- The tube's labels still overlap round "looking" in every theme - the sprint 6 item below. (Smith)
+- Styling each new control three times is the cost of themes; keep new controls built from the shared custom properties. (Morpheus)
+
 ## Sprint 8 (owner, 2026-10-16) - behind the printer - DONE (launched 2026-10-16)
 - UND-35: REMOVE the printer to edit the sketch's YAML with a cheat-sheet sticker; saved as typed; the tube redraws.
 

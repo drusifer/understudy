@@ -10,6 +10,14 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+## ADR-0029: Dashboard themes are a `data-theme` attribute and one stylesheet per theme
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-36
+*   **Context**: owner: a professional theme and a Star Trek TNG one, beside the steampunk console. The tube's colours were hard-coded in the page script.
+*   **Options**: (1) `<html data-theme>` with `page.css` as the default and a scoped stylesheet per theme, all loaded; script colours read from CSS custom properties; (2) swap one stylesheet link at run time; (3) a theme object in JavaScript styling every element.
+*   **Decision**: (1). Theme rules sit under `:root[data-theme="..."]` so they beat the default without `!important`; the choice is `?theme=`, else localStorage, else steampunk.
+*   **Consequences**: + an instant switch, mid-run; a new theme is one CSS file and one button. − every new piece of the console must be styled three times; the theme files are long override lists.
+
 ## ADR-0028: The bay behind the printer writes the whole sketch file
 
 *   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-35

@@ -385,3 +385,35 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-16 21:50:03</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
  Phase 2 review passed: starship is pure CSS under its own scope; font served like the others. @Tank *devops sdlc-check
+
+---
+[<small>2026-10-16 21:51:12</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-browser | /home/drusifer/Projects/understudy/build/build.out
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 26105.363831
+
+---
+[<small>2026-10-16 21:51:31</small>] [**Tank**]->[**Oracle**] *devops handoff*:
+ SDLC check passed: clean -> check, browser 7/7; @fontsource/antonio recorded in §4 (routine). @Oracle *ora groom
+
+---
+[<small>2026-10-16 21:51:31</small>] [**Oracle**]->[**Smith**] *ora handoff*:
+ Docs groomed: ADR-0029, CHANGELOG sprint 9, USER_GUIDE themes + screenshots, DASHBOARD themes table. rubric DECISION: CTX=A OPTS=A WHY=A CONS=A. @Smith *user test sprint-9
+
+---
+[<small>2026-10-16 21:51:31</small>] [**Smith**]->[**all**] *user approve*:
+ User test passed on screenshots at 1600x960: each theme reads as itself, controls in place. Rough edges: tube labels overlap round LOOKING (all themes); starship minus key reads small. @all *sprint retro
+
+---
+[<small>2026-10-16 21:51:31</small>] [**Mouse**]->[**Cypher**] *retro*:
+ Retro. Neo: colours out of page.mjs made themes cheap; caught the orb blow-up from 0-10 weights. Trin: contrast not measured by test. Morpheus: scoped overrides avoid !important; cost is styling each control 3x. Mouse: 2 phases fine. Backlog updated.
+
+---
+[<small>2026-10-16 21:51:31</small>] [**Cypher**]->[**all**] *pm launch*:
+ *pm launch sprint-9. Themes: steampunk, professional, starship. Merge to main awaiting owner.
