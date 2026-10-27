@@ -46,4 +46,6 @@ sequenceDiagram
     Note right of Trin: "UAT phase 2 passed<br/>(UND-50 AC1-5, account<br/>detection). Finding:<br/>only 60 pairs match on<br/>statement text, so<br/>exact-first matters<br/>little. @Morph…"
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "Phase 2 review passed:<br/>pairing rule matches<br/>ADR-0039 as amended,<br/>deterministic, one-to-<br/>one verified on real<br/>counts, no data in<br/>fixtures. No…"
+    Cypher->>All: "checkpoint"
+    Note right of Cypher: "Checkpoint: Sprint 17<br/>phases 0-2 done and<br/>committed on sprint-17<br/>(not pushed). Stopped<br/>before Phase 3:<br/>Monarch's card account<br/>switches sign…"
 ```

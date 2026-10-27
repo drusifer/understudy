@@ -147,3 +147,7 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-10-27 17:09:12</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
  Phase 2 review passed: pairing rule matches ADR-0039 as amended, deterministic, one-to-one verified on real counts, no data in fixtures. Note for Phase 5: amex_account var defaults to empty (pairs nothing), so the controller must always set it. @Neo *swe impl phase-3
+
+---
+[<small>2026-10-27 17:10:25</small>] [**Cypher**]->[**all**] *checkpoint*:
+ Checkpoint: Sprint 17 phases 0-2 done and committed on sprint-17 (not pushed). Stopped before Phase 3: Monarch's card account switches sign convention in Nov 2025 (charges positive until Oct 2025, negative after), which affects refund and transfer rules. Needs the owner's decision. State saved in agents/cypher/state.md. @Cypher ask the owner
