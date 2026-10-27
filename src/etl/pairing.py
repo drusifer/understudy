@@ -6,6 +6,7 @@ sign-flipped matches with the Amex rows, unless the owner names it with --amex-a
 """
 
 import re
+from datetime import date
 from pathlib import Path
 
 import duckdb
@@ -43,8 +44,14 @@ def _describe(counts: dict[str, int]) -> str:
     return ", ".join(f"{name} ({count} matches)" for name, count in sorted(merged.items()))
 
 
-def detect_amex_account(monarch_jsonl: Path, amex_jsonl: Path, override: str | None = None) -> dict:
-    """The Monarch account of the Amex card: {account, matches, source}. Refuses when unclear."""
+def detect_amex_account(
+    monarch_jsonl: Path, amex_jsonl: Path, override: str | None = None, since: str | None = None
+) -> dict:
+    """The Monarch account of the Amex card: {account, matches, source}. Refuses when unclear.
+
+    Only rows dated on or after `since` (an ISO date) are looked at, the run's period.
+    """
+    start = "DATE '1900-01-01'" if not since else f"DATE '{date.fromisoformat(since).isoformat()}'"
     with duckdb.connect(":memory:") as connection:
         rows = connection.execute(
             f"""
@@ -58,7 +65,7 @@ def detect_amex_account(monarch_jsonl: Path, amex_jsonl: Path, override: str | N
             )
             SELECT m.account, count(*) AS matches
             FROM m JOIN a ON m.day = a.day AND m.signed = -a.signed
-            WHERE m.day IS NOT NULL AND m.account IS NOT NULL
+            WHERE m.day IS NOT NULL AND m.day >= {start} AND m.account IS NOT NULL
             GROUP BY m.account
             """
         ).fetchall()

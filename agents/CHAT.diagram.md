@@ -48,4 +48,6 @@ sequenceDiagram
     Note right of Morpheus: "Phase 2 review passed:<br/>pairing rule matches<br/>ADR-0039 as amended,<br/>deterministic, one-to-<br/>one verified on real<br/>counts, no data in<br/>fixtures. No…"
     Cypher->>All: "checkpoint"
     Note right of Cypher: "Checkpoint: Sprint 17<br/>phases 0-2 done and<br/>committed on sprint-17<br/>(not pushed). Stopped<br/>before Phase 3:<br/>Monarch's card account<br/>switches sign…"
+    Cypher->>All: "decision"
+    Note right of Cypher: "Owner: keep the run to<br/>2026 YTD, use fresh<br/>exports. Period rule<br/>added: default start =<br/>Amex export's first<br/>date, --since overrides,<br/>older M…"
 ```

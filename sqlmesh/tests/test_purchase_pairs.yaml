@@ -93,6 +93,47 @@ a_row_posted_a_day_apart_pairs_only_after_same_date_pairs_and_picks_the_nearest_
         - { match_status: paired, pair_method: near_date, transaction_date: '2026-03-04', amount: -9.99, merchant: Streaming, account: Card (...1111), monarch_source_row: 2, amex_source_row: 2, monarch_raw: '{"Id":"m2"}', amex_raw: '{"Reference":"a2"}' }
         - { match_status: monarch_only, pair_method: null, transaction_date: '2026-03-20', amount: -9.99, merchant: Streaming, account: Card (...1111), monarch_source_row: 3, amex_source_row: null, monarch_raw: '{"Id":"m3"}', amex_raw: null }
 
+rows_before_the_period_start_are_left_out_of_both_sources_but_undated_rows_are_kept:
+  model: etl.purchase_pairs
+  vars:
+    amex_account: Card (...1111)
+    period_start: '2026-01-01'
+  inputs:
+    etl.raw_monarch:
+      rows:
+        - { source_row_number: 1, source: monarch, transaction_date: '2025-12-30', amount: 40.00, merchant: Old Import, statement: OLD, account: Card (...1111), raw_record: '{"Id":"m1"}' }
+        - { source_row_number: 2, source: monarch, transaction_date: '2026-01-02', amount: -5.00, merchant: New, statement: NEW, account: Card (...1111), raw_record: '{"Id":"m2"}' }
+        - { source_row_number: 3, source: monarch, transaction_date: null, amount: -1.00, merchant: No Date, statement: ND, account: Card (...1111), raw_record: '{"Id":"m3"}' }
+    etl.raw_amex:
+      rows:
+        - { source_row_number: 1, source: amex, transaction_date: '2025-12-30', amount: 40.00, merchant: OLD, account: '-11111', raw_record: '{"Reference":"a1"}' }
+        - { source_row_number: 2, source: amex, transaction_date: '2026-01-02', amount: 5.00, merchant: NEW, account: '-11111', raw_record: '{"Reference":"a2"}' }
+  outputs:
+    query:
+      rows:
+        - { match_status: paired, pair_method: exact, transaction_date: '2026-01-02', amount: -5.00, merchant: New, account: Card (...1111), monarch_source_row: 2, amex_source_row: 2, monarch_raw: '{"Id":"m2"}', amex_raw: '{"Reference":"a2"}' }
+        - { match_status: invalid_key, pair_method: null, transaction_date: null, amount: -1.00, merchant: No Date, account: Card (...1111), monarch_source_row: 3, amex_source_row: null, monarch_raw: '{"Id":"m3"}', amex_raw: null }
+
+period_scope_counts_what_each_source_holds_and_what_the_period_leaves_out:
+  model: etl.period_scope
+  vars:
+    period_start: '2026-01-01'
+  inputs:
+    etl.raw_monarch:
+      rows:
+        - { source_row_number: 1, source: monarch, transaction_date: '2025-12-30', amount: 40.00, merchant: Old, statement: OLD, account: Card (...1111), raw_record: '{}' }
+        - { source_row_number: 2, source: monarch, transaction_date: '2025-11-01', amount: 41.00, merchant: Old, statement: OLD, account: Card (...1111), raw_record: '{}' }
+        - { source_row_number: 3, source: monarch, transaction_date: '2026-01-02', amount: -5.00, merchant: New, statement: NEW, account: Card (...1111), raw_record: '{}' }
+        - { source_row_number: 4, source: monarch, transaction_date: null, amount: -1.00, merchant: No Date, statement: ND, account: Card (...1111), raw_record: '{}' }
+    etl.raw_amex:
+      rows:
+        - { source_row_number: 1, source: amex, transaction_date: '2026-01-02', amount: 5.00, merchant: NEW, account: '-11111', raw_record: '{}' }
+  outputs:
+    query:
+      rows:
+        - { source: amex, rows_read: 1, rows_in_period: 1, rows_before_period: 0, rows_without_date: 0 }
+        - { source: monarch, rows_read: 4, rows_in_period: 1, rows_before_period: 2, rows_without_date: 1 }
+
 rows_that_differ_in_text_pair_by_order_and_a_row_without_a_date_is_kept_as_invalid:
   model: etl.purchase_pairs
   vars:

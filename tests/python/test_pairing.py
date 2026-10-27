@@ -84,6 +84,19 @@ class DetectAmexAccountTests(unittest.TestCase):
             with self.assertRaises(PairingError):
                 detect_amex_account(m, a, override="(...")
 
+    def test_only_matches_inside_the_period_count(self):
+        with tempfile.TemporaryDirectory() as directory:
+            m, a = self.files(
+                directory,
+                [monarch(1, "2025-06-01", "-10.00", OTHER), monarch(2, "2025-06-02", "-5.00", OTHER),
+                 monarch(3, "2026-02-01", "-7.00", CARD)],
+                [amex(1, "2025-06-01", "10.00"), amex(2, "2025-06-02", "5.00"), amex(3, "2026-02-01", "7.00")],
+            )
+            self.assertEqual(detect_amex_account(m, a)["account"], OTHER)
+            result = detect_amex_account(m, a, since="2026-01-01")
+            self.assertEqual(result["account"], CARD)
+            self.assertEqual(result["matches"], 1)
+
     def test_amounts_with_dollar_signs_and_commas_still_match(self):
         with tempfile.TemporaryDirectory() as directory:
             m, a = self.files(directory, [monarch(1, "2026-01-02", "-1,234.50", CARD)], [amex(1, "2026-01-02", "$1,234.50")])

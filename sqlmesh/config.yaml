@@ -11,3 +11,4 @@ variables:
   monarch_jsonl: "{{ env_var('UNDERSTUDY_ETL_MONARCH_JSONL', '') }}"
   amex_jsonl: "{{ env_var('UNDERSTUDY_ETL_AMEX_JSONL', '') }}"
   amex_account: "{{ env_var('UNDERSTUDY_ETL_AMEX_ACCOUNT', '') }}"
+  period_start: "{{ env_var('UNDERSTUDY_ETL_PERIOD_START', '') }}"

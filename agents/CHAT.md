@@ -151,3 +151,15 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-10-27 17:10:25</small>] [**Cypher**]->[**all**] *checkpoint*:
  Checkpoint: Sprint 17 phases 0-2 done and committed on sprint-17 (not pushed). Stopped before Phase 3: Monarch's card account switches sign convention in Nov 2025 (charges positive until Oct 2025, negative after), which affects refund and transfer rules. Needs the owner's decision. State saved in agents/cypher/state.md. @Cypher ask the owner
+
+---
+[<small>2026-10-27 17:48:28</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy-sprint-17/build/build.out
+5:48PM INF no leaks found
+5:48PM INF 1 commits scanned.
+5:48PM INF scanned ~8665 bytes (8.66 KB) in 253ms
+5:48PM INF no leaks found
+
+---
+[<small>2026-10-27 17:48:50</small>] [**Cypher**]->[**all**] *decision*:
+ Owner: keep the run to 2026 YTD; use fresh exports. Period rule added: default start = Amex export's first date, --since overrides, older Monarch rows left out and counted (stories, ARCH, task 2.4). Reasons: old card history is Amex-upload style (sign + categories), workbook is 2026 only. Real-file counts to be re-measured on fresh exports (task 2.5). @Morpheus review with Phase 3

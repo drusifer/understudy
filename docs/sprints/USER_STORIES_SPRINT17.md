@@ -19,6 +19,8 @@ When this sprint is done, the owner can point understudy at their Monarch and Am
 4. **A refund with no findable original charge** (for example the purchase was before 2026-01-01) still counts against its merchant, without a link. If wrong: such refunds go to the review list instead.
 5. **One Jev decision per distinct merchant**, reused for every row of that merchant in the run, so cost follows the number of merchants, not rows. If wrong: cost grows with rows.
 6. **Nothing is written back** to Monarch or Amex. The result is a new file.
+7. **The period is 2026 year to date (owner, 2026-10-27).** The run reconciles the period the Amex export covers: its first date onward. Monarch rows before that date are left out and counted in the summary; `--since <date>` changes the start. Why: Monarch's card history before November 2025 was uploaded from Amex files with Amex's sign and category style, there is no Amex export for it, and the owner's own workbook is 2026 only. If wrong: a longer Amex export brings that history into scope and needs a per-row sign rule and a within-Monarch duplicate check.
+8. **The owner uses fresh exports** of both files for the acceptance run; the counts in these stories come from the 2026-10-17 files and will shift. A handful of card rows inside the period carry the older Amex-style categories (2 of 4,339 in the old files); they are treated like any other row.
 
 ---
 
@@ -53,6 +55,7 @@ When this sprint is done, the owner can point understudy at their Monarch and Am
 3. Two real purchases with the same date and amount (two coffees at $4.50) stay two records: each source row is matched at most once, to one counterpart.
 4. A Monarch row that has no Amex counterpart (any other account, or an Amex row from before the export began) appears once, unchanged.
 5. Running the same files twice gives the same matches.
+6. Monarch rows dated before the period start (by default the Amex export's first date) are left out of the result; the summary says how many Monarch and Amex rows were read, how many fall in the period and how many were left out. `--since <date>` moves the start; a row with no date is kept and listed as invalid.
 
 ---
 
@@ -135,7 +138,8 @@ When this sprint is done, the owner can point understudy at their Monarch and Am
 - Calendar de-duplication, trip grouping, travel tagging and merchant consolidation from the owner's procedure: later sprints.
 - Exports for the Ridgewood, Citi and Student Advantage accounts (their rows come only from Monarch).
 - Writing categories back to Monarch, and promoting learned categories or merchant rules for future runs.
-- Amex history before 2026-01-01 (the export does not have it).
+- Amex history before 2026-01-01 (the export does not have it) and the Monarch card history before it, which came from older Amex uploads with the opposite sign; the period rule leaves it out.
+- Checking for duplicates inside Monarch (older uploads against synced rows): outside the period.
 - Letting Jev write category names: it chooses only from the 180 and the MCC list.
 
 ## Open Questions

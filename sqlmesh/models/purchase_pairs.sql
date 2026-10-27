@@ -20,17 +20,30 @@ MODEL (
 -- Monarch's negative). Inside a (date, amount) group pairing is one-to-one: rows whose
 -- statement text is equal pair first, the rest pair by source row order. Amounts are kept in
 -- Monarch's sign (spending negative) in the output.
-WITH monarch AS (
+WITH scope AS (
+  SELECT coalesce(TRY_CAST(@period_start AS DATE), DATE '1900-01-01') AS start_date
+),
+-- The run's period: rows dated before @period_start are left out (period_scope counts them);
+-- rows without a date are kept so they show up as invalid_key.
+monarch_scoped AS (
+  SELECT r.* FROM etl.raw_monarch AS r CROSS JOIN scope AS s
+  WHERE r.transaction_date IS NULL OR r.transaction_date >= s.start_date
+),
+amex_scoped AS (
+  SELECT r.* FROM etl.raw_amex AS r CROSS JOIN scope AS s
+  WHERE r.transaction_date IS NULL OR r.transaction_date >= s.start_date
+),
+monarch AS (
   SELECT
     m.*,
     -m.amount AS charge_key,
     lower(trim(coalesce(m.statement, m.merchant))) AS text_key,
     (m.account = @amex_account AND m.transaction_date IS NOT NULL AND m.amount IS NOT NULL) AS eligible
-  FROM etl.raw_monarch AS m
+  FROM monarch_scoped AS m
 ),
 amex AS (
   SELECT a.*, a.amount AS charge_key, lower(trim(a.merchant)) AS text_key
-  FROM etl.raw_amex AS a
+  FROM amex_scoped AS a
   WHERE a.transaction_date IS NOT NULL AND a.amount IS NOT NULL
 ),
 monarch_exact AS (
@@ -137,8 +150,8 @@ paired AS (
     m.raw_record AS monarch_raw,
     a.raw_record AS amex_raw
   FROM pairs AS p
-  JOIN etl.raw_monarch AS m ON m.source_row_number = p.monarch_row
-  JOIN etl.raw_amex AS a ON a.source_row_number = p.amex_row
+  JOIN monarch_scoped AS m ON m.source_row_number = p.monarch_row
+  JOIN amex_scoped AS a ON a.source_row_number = p.amex_row
 ),
 monarch_single AS (
   SELECT
@@ -152,7 +165,7 @@ monarch_single AS (
     CAST(NULL AS INT) AS amex_source_row,
     m.raw_record AS monarch_raw,
     CAST(NULL AS VARCHAR) AS amex_raw
-  FROM etl.raw_monarch AS m
+  FROM monarch_scoped AS m
   WHERE m.source_row_number NOT IN (SELECT monarch_row FROM pairs)
 ),
 amex_single AS (
@@ -167,7 +180,7 @@ amex_single AS (
     a.source_row_number AS amex_source_row,
     CAST(NULL AS VARCHAR) AS monarch_raw,
     a.raw_record AS amex_raw
-  FROM etl.raw_amex AS a
+  FROM amex_scoped AS a
   WHERE a.source_row_number NOT IN (SELECT amex_row FROM pairs)
 )
 SELECT * FROM (
