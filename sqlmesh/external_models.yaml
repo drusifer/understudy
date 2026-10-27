@@ -1,0 +1,12 @@
+- name: etl__dev.category_map
+  description: Run-scoped merchant classifications written by Understudy after Jev decisions.
+  columns:
+    merchant_key: text
+    merchant: text
+    category: text
+    subcategory: text
+    classification_status: text
+    confidence: double
+    taxonomy_version: text
+    decision_model: text
+    review_required: boolean

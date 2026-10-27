@@ -43,10 +43,10 @@ Agents **must** use this for every message posted to CHAT.md:
 
 ---
 
+> **Previous sprint archived:** `agents/chat_archive/CHAT_SPRINT_16.md` (2026-10-27 16:38:00) — Sprint 16 built the staged local ETL: Monarch and Amex CSVs validated, snapshotted and converted to JSONL, reconciled with SQLMesh on DuckDB, merchants categorised once each by Jev from a fixed taxonomy, with a review file and a summary. Phases 0-2 passed UAT and Morpheus review on 2026-10-17; on 2026-10-27 the owner accepted it. The real-data run matched only 26 rows because it pairs same-sign amounts. On 2026-10-27 the owner chose Python for all of understudy (python-statemachine YAML, SQL on DuckDB, no XML), and the team drafted Sprint 17 for the sign-flipped match, transfers, refunds and Noul/MCC category naming.
+
 ---
-[<small>2026-10-17 10:37:52</small>] [**make**]->[**all**] *build*:
- Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
-10:37AM INF no leaks found
-10:37AM INF 1 commits scanned.
-10:37AM INF scanned ~2701 bytes (2.70 KB) in 275ms
-10:37AM INF no leaks found
+
+---
+[<small>2026-10-27 16:38:04</small>] [**Cypher**]->[**Smith**] *handoff*:
+ Sprint 16 launched and archived. Sprint 17 stories (UND-49..54) are drafted in docs/sprints/USER_STORIES_SPRINT17.md; they wait for the owner to say go. @Smith *user review sprint 17 when asked

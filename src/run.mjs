@@ -14,22 +14,13 @@ import path from 'node:path';
 import { MachineSeat } from './seat.mjs';
 import { resolveInputs, weightsOf } from './inputs.mjs';
 import { loadSketch, shown } from './sketch.mjs';
-import { RunError, UsageError } from './errors.mjs';
+import { RunError } from './errors.mjs';
 import { createStream } from './stream.mjs';
 import { startWatch } from './watch/server.mjs';
 import { createGate, OPEN_GATE } from './watch/gate.mjs';
+import { createJevJudge, reportJevFailures } from './jev.mjs';
 
-const KEY = 'TYPESAFE_API_KEY';
 export const DEFAULT_STEPS = 50;
-
-async function typesafeJudge(environment) {
-  const { TypeSafeClient } = await import('@typesafe-ai/sdk');
-  try {
-    return new TypeSafeClient({ apiKey: environment[KEY] });
-  } catch (error) {
-    throw new UsageError(`Jev could not be set up: ${error.message}`);
-  }
-}
 
 async function startTarget(spec, { directory, environment }) {
   const { startTarget: start } = await import(`./targets/${spec.kind}.mjs`);
@@ -40,18 +31,6 @@ async function startTarget(spec, { directory, environment }) {
  * Jev's failures as the run reports them: the SDK's own message, never
  * the key, and an outcome for the final line.
  */
-function reportingFailures(judge) {
-  return {
-    async systemOne(request) {
-      try {
-        return await judge.systemOne(request);
-      } catch (error) {
-        throw new RunError(`Jev request failed: ${error.message}`, { outcome: 'jev-error', cause: error });
-      }
-    },
-  };
-}
-
 const stepCount = (count) => `${count} step${count === 1 ? '' : 's'}`;
 
 function summaryLine(entry) {
@@ -90,7 +69,7 @@ function watchInterrupts(signals, onSecond, onFirst = () => {}) {
  */
 export async function runSketch(location, {
   steps, inputs = [], stdout = process.stdout, stderr = process.stderr, environment = process.env,
-  makeJudge = typesafeJudge, makeTarget = startTarget, logRoot = path.join('build', 'runs'),
+  makeJudge = createJevJudge, makeTarget = startTarget, logRoot = path.join('build', 'runs'),
   firstMoveMs = 10_000, stallMs = 10_000, pollMs = 250, signals = process, clock = Date.now,
   watch = null, makeWatch = startWatch, gate = null,
 } = {}) {
@@ -135,7 +114,7 @@ function pauseGate({ run, watch, watcher, stderr, clock }) {
  * The run itself, once anything that can refuse it has been checked.
  */
 async function playSketch({ sketch, inputs, limit, stream, logDirectory, logFile, stderr, environment, makeJudge, makeTarget, firstMoveMs, stallMs, pollMs, signals, clock, watch, watcher, controls, held }) {
-  const judge = reportingFailures(await makeJudge(environment));
+    const judge = reportJevFailures(await makeJudge(environment));
   const target = await makeTarget(sketch.target, { directory: sketch.directory, environment });
   const write = (entry) => stream.emit(entry);
   const run = { taken: 0, seat: null, lastMoveAt: null, pausedBefore: 0, app: sketch.app, isStoppedPaused: false };

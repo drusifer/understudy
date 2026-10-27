@@ -2,43 +2,55 @@
 
 ## Context
 ### Recent Decisions
-None yet
+- Sprint 16 uses two private local CSV exports (Monarch and Amex), converts them to internal flat JSONL, reconciles with provenance, classifies against a fixed taxonomy with `Misc`, and writes local review outputs. Sheets/MCP and arbitrary JSONL input are deferred.
+- Phase 2 UAT and Morpheus review passed. Tank's clean setup/check and Oracle documentation grooming passed.
 
 ### Key Findings
-None yet
+- Gate 1 approved `docs/sprints/USER_STORIES_SPRINT16.md`: `rubric STORIES: OUT=A TEST=A FAIL=A SCOPE=S SIZE=A DESIGN=A`.
+- Initial Gate 2 found a conflict in hydration responsibility and returned the architecture to Morpheus.
+- Re-review confirms the CSV snapshot/validator now only validates, copies, and hashes; SQLMesh is consistently the sole owner of loading CSV snapshots into raw DuckDB tables and running models. Diagram, sequence, component contract, and feasibility note align.
+- Gate 2 verdict after revision: `rubric ARCH: BOUND=A FLOW=A FAIL=A USER=A DECS=A FEAS=A`. Approved for Mouse planning; no implementation or tests performed.
+- Sprint close usability check: CLI help presents the actual command `etl run --monarch <csv> --amex <csv>` and states Jev is required. An incomplete invocation returns exit 2 and names the missing `--amex <csv>` input before any run or Jev request.
+- Trin closed STORY-UND-48 AC4 with 4,700 matched synthetic transactions, five repeated merchants in one fake-Jev batch, full review output, and a 10,286 ms end-to-end result. The refreshed `bobp make check` passed (310 JS tests plus Python/SQLMesh, lint, and secret scan). No private workload CSV or live Jev call was used.
+- Smith UAT review: `rubric UAT: COVER=S STEPS=A FAIL=S DATA=S EVID=A`; no new lessons were recorded this sprint for separate lesson-rubric review.
 
 ### Important Notes
-None yet
+- Keep private transaction exports and contents out of version control and team chat.
+- Mouse's plan must schedule Tank Phase 0 for Python/SQLMesh environment and the SQLMesh/DuckDB/Node handoff feasibility spike before implementation.
 
 ## Current Task
-**Status:** Gate 1 sprint 5 done (approved)
+**Status:** Sprint 16 user review evidence complete; owner acceptance is pending.
 **Assigned to:** Smith
-**Started:** 2026-10-16
+**Started:** 2026-10-17
 
 ### Task Description
-Sprint 5 Gate 1: approved USER_STORIES_SPRINT5.md (UND-18..26), rubric STORIES: OUT=S TEST=A FAIL=S SCOPE=S SIZE=A DESIGN=A.
-Notes folded in: weight 0 switches a factor off (UND-22 AC1); check validates input references (UND-24 AC6).
-Gate 2 done: approved ARCH_SPRINT5.md, rubric ARCH: BOUND=S FLOW=S FAIL=A USER=A DECS=S FEAS=A; folded fix: nothing_qualifies must fire when seats never saw a candidate.
-Next for Smith: sprint-close *user test against UAT_PLAN_SPRINT5 - check score table readability (log + watch page) and --input messages.
+Review Sprint 16 delivery against UAT from a user perspective and close out the owner acceptance gate.
 
 ### Progress
-- [ ] Not started
+- [x] Check CLI usage and review UAT evidence for output clarity, recovery behavior, and privacy boundary.
+- [x] Obtain synthetic scale evidence for roughly 4,700 reconciled transactions.
+- [x] Review CLI usage, missing-input error, privacy boundary, output evidence, and scale result.
+- [x] Apply UAT rubric to the final UAT plan and confirm acceptance evidence is ready.
+- [ ] Present owner-facing summary and record owner accept/reject decision.
 
 ### Blockers
-None
+None.
 
 ### Oracle Consultations
-None yet
+None
 
 ## Next Steps
 ### Immediate Next Action
-None planned
+Present completed UAT evidence to the owner and request the final acceptance decision before Cypher launches Sprint 16.
 
 ### Waiting On
-None
+Owner acceptance decision.
 
 ### Planned Work
-- [ ] No planned work
+- [x] Review delivered CLI help and current Sprint 16 UAT evidence.
+- [x] Review scale acceptance result and CLI feedback.
+- [x] Apply UAT rubric; all criteria Acceptable or Strong.
+- [ ] Ask the owner for final acceptance and record the response.
 
 ---
-*Last updated: [timestamp]*
+*Last updated: 2026-10-17*

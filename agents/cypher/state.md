@@ -21,14 +21,12 @@
 - Owner screenshot of the console kept at build/Screenshot From 2026-10-17 10-15-45.png (ignored).
 
 ## Current Task
-Between sprints. Sprint 15 + big-screen fixes merged to main and pushed (3507240). Working tree
-clean except the team chat files.
+2026-10-27: Sprint 16 (UND-46..48, SQLMesh + DuckDB ETL, built 2026-10-17) accepted by the owner and launched; its stories file was overwritten by mistake and rebuilt (reconstruction noted in the file). Nothing on `sprint-16` is committed or merged: that waits for the owner. Sprint 17 stories (UND-49..54: source servers, sign-flipped match, transfers as linked records, refunds, Noul + MCC category naming, JSONL result) are drafted in `docs/sprints/USER_STORIES_SPRINT17.md`, not yet through Smith Gate 1.
+
+Owner decisions today (details in `agents/cypher/platform_decision_2026-10-27.md`): Python for all of understudy, no back-compat; sketches stay no-code and custom, but no new ETL language or state machine format (SQL on DuckDB; `python-statemachine` YAML); no XML; Jev categories from Monarch's 180 plus a Noul "does it fit", new names from the MCC list; transfers kept as two linked records; refunds linked to the merchant; IO is JSONL in and out. Movie selector (TMDB + OMDb, keys in `.env`; OMDb key was still rejected) is in `docs/BACKLOG.md` on `main`'s working tree.
 
 ## Next Steps
-1. `/init` -> resume as Cypher; ask the owner what is next (one question at a time).
-2. Backlog (docs/BACKLOG.md "Next" sections): steampunk flow labels small in the round tube;
-   split src/dashboard/page.mjs (~1000 lines, overdue); browser-test bay AC4-5; measure contrast
-   in a test; a `genre` input for the evening; try the schema in a real editor.
-3. New features: Tier 2 mini-sprint like sprints 10-15 (story+arch doc in docs/sprints/,
-   task.md, branch sprint-<N>, phases, close with ADR/CHANGELOG/BACKLOG/SDLC line), screenshots
-   checked with a scratch headless script before reporting.
+1. Owner decides when to commit and merge `sprint-16` (`bobp make push MSG=...`); the tree mixes Sprint 16 work with today's docs, `.gitignore` and Sprint 17 draft.
+2. Smith Gate 1 on `USER_STORIES_SPRINT17.md`, then Morpheus architecture (the source servers and sketch runtime language depend on the Python epic).
+3. Frame the Python port as its own epic (`*epic`): verify `python-statemachine` YAML coverage of `turn:` (tags, guards, invoke), `typesafe-sdk` per-answer probabilities, and the `elkjs` layout replacement.
+4. Main tree still holds uncommitted `Makefile` (`.env` sourcing), `.gitignore` (`data/`) and `docs/BACKLOG.md` (movie selector) edits; the worktree has its own copies of the first two.

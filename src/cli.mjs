@@ -32,6 +32,8 @@ const USAGE = `usage: understudy run <sketch> [--steps N] [--input name=value]..
            replay a finished run's log on the watch page
        understudy dashboard <folder> [--port N] [--host ADDR]
            the console: choose a sketch from the folder, set its inputs, press Play
+       understudy etl run --monarch <csv> --amex <csv>
+           snapshot, reconcile, classify merchants with Jev, and export local review rows (needs ${KEY})
 <sketch> is a directory holding sketch.yaml (e.g. examples/cli) or the file itself.
 `;
 /**
@@ -70,6 +72,8 @@ const OPTIONS = {
   }, needs: 'name=value', example: '--input mood=romantic', isRepeated: true },
   watch: { commands: ['run'], read: null },
   pause: { commands: ['run'], read: null },
+  monarch: { commands: ['etl'], read: (value) => value, needs: 'a CSV path', example: '--monarch transactions.csv' },
+  amex: { commands: ['etl'], read: (value) => value, needs: 'a CSV path', example: '--amex transactions.csv' },
 };
 
 /**
@@ -147,6 +151,10 @@ const defaultCommands = {
     await dashboard.close();
     stderr.write('understudy: dashboard stopped\n');
   },
+  async etl(options) {
+    const { runEtl } = await loadModule('./etl/run.mjs');
+    return runEtl(options);
+  },
 };
 
 const HELP = new Set(['--help', '-h', 'help']);
@@ -177,6 +185,15 @@ const COMMANDS = {
     const quoted = positional.map((each) => JSON.stringify(each)).join(', ');
     if (positional.length !== 1) throw new UsageError(positional.length === 0 ? 'dashboard needs a folder of sketches, e.g. understudy dashboard examples' : `dashboard takes one folder (got ${quoted})`);
     await use.dashboard(positional[0], { port, host, environment, stderr });
+  },
+  async etl({ positional, monarch, amex }, { use, environment, stdout }) {
+    if (positional.length !== 1 || positional[0] !== 'run') {
+      throw new UsageError('usage: understudy etl run --monarch <csv> --amex <csv>');
+    }
+    if (!monarch) throw new UsageError('understudy etl run needs --monarch <csv>');
+    if (!amex) throw new UsageError('understudy etl run needs --amex <csv>');
+    if (!environment[KEY]?.trim()) throw new UsageError(`understudy etl run needs a TypeSafe key: set ${KEY}`);
+    await use.etl({ monarchPath: monarch, amexPath: amex, environment, stdout });
   },
 };
 

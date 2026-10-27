@@ -1,19 +1,30 @@
 # Morpheus State
 
 ## Context
-- docs/EXTRACTION_MAP.md (copied from recard) is the plan: core moves as-is, the rest is
-  generalized around an app-adapter contract, game content stays in recard as its adapter.
-- Owner decisions (2026-10-15): transport-neutral adapter (web page hook is ONE target;
-  CLI and HTTP next to it; sprint 1 proves it with web + CLI), git dependency, Jev required
-  (unit tests double the judge at the SDK seam: `judge.systemOne(...)`).
-- Adapter shape seen in recard today (seat `services`): `peer` = target {view, act, say,
-  talk}, `game` = app knowledge {project, options, act, propose}, plus judge, questions,
-  player. Generalize names: `TABLE` event -> e.g. `OBSERVE`, `services.game` -> `services.app`.
+- 2026-10-17: Owner wants to reproduce a household transaction-cleaning workflow with Understudy; Google Sheets is only an input/output adapter. The procedure covers raw preservation, transaction-source reconciliation, merchant/category lookup maps, human review, calendar dedupe/trip grouping, travel tagging, and merchant consolidation.
+- VIA/docs inspection: current `decide.join` merges remembered answer facts by one exact key; ADR-0017 caps retained rows at 500. It is not a general relational join and the core has no general map/group transform pipeline. Current decision gates can filter candidates but do not perform batch ETL.
+- Owner's principle: quantitative/deterministic work uses logic; qualitative choices use Jev. Critical correction: raw input will not contain normalized merchant/category mappings. Understudy must discover those mappings and any new categories as it evaluates data.
+- Revised decision boundary: deterministic joins/extractions run first; for each unknown merchant/descriptor, Jev judges the enriched raw evidence, selects an existing category or proposes a new category, and proposes a contextual mapping. The run builds a provisional mapping/taxonomy as it proceeds and reuses it for subsequent matching rows; conflicts or low-confidence cases remain review items. At the end, validate and preview the learned rules before optionally promoting them for future runs. Multi-service merchants require contextual mappings, not a global merchant-only rule.
+- Owner prefers adopting an existing ELT tool with YAML-described configuration over implementing general-purpose join/map/group operators. Candidate scan: SQLMesh defines models in SQL files and project config in YAML; dbt also uses SQL models plus YAML configuration; dlt supports joins and transformations but its transforms are Python-defined. None makes all transformations declarative YAML. Key integration question: Jev-derived mappings are run-time outputs, so they need a persisted/staged decisions table that SQL models consume in a deterministic pass; they cannot be assumed to exist as static config before evaluation.
+- Owner accepts SQL + YAML config and suggests MCP calls to populate the database. Existing Understudy MCP target is an interactive tool-choosing client: it can call an MCP source, but its current flow is not a paginated bulk loader. Prefer a deterministic MCP ingestion adapter/tool that fetches pages into DuckDB raw tables, then hand only unique/unknown entities to Jev for judgement and persist decisions; SQLMesh consumes raw and decision tables. Correct capability limit: current Jev integration selects from bounded supplied candidates and cannot invent arbitrary category labels or map text, so the discovery story needs an explicit proposal mechanism/review step and must not claim free-form generation.
+- Owner clarifies pagination is below ETL ops: source hydration should normalize MCP fetches and fully materialize DuckDB before logic begins, in named stages; a later state transition may request more data before its next logic step. Domain fit: orchestration owns stage dependencies and explicit data-demand transitions; source adapters own cursors/pages/retries; each completed hydration stage yields a run-scoped database snapshot to SQLMesh/decision steps. Keep fetch scope/results/checkpoints recorded so resumed or audited runs are reproducible.
+- Owner sets scale boundary: the transaction sheet (about 4.7k rows) is near the larger workload Understudy should handle for now; this is not an enterprise-scale platform. Prefer straightforward local DuckDB materialization and bounded staged fetches; avoid distributed/warehouse/complex checkpoint architecture unless measured need emerges.
+- Owner resolves category creation: provide Jev a rich, explicit category/subcategory taxonomy to choose from; use `Misc` when none fits. No free-form category invention is needed. Jev's output must be validated against the supplied taxonomy, and learned merchant mappings can be reused within the run.
+- Owner defers Google Sheets integration but chooses two provided CSVs with overlapping transactions as Sprint 16 inputs: one Monarch export and one Amex export. Preserve source identity/provenance while reconciling the overlap. Keep full household CSVs out of version control and add Sheets/MCP source and sink adapters later.
+- Workbook has 8 tabs and thousands of rows. It and the procedure contain household financial and travel data; keep full exports out of the repo, use sanitized fixtures in tests, and use an owner-controlled production copy for a live run.
+- No architecture/story artifacts drafted yet. Main worktree is on `main` with prior dashboard, test-guidance, chat, and persona edits uncommitted; sprint branch handling must avoid sweeping those into this work.
 
 ## Current Task
-Architecture for sprint 1 not started - waits on Smith Gate 1 of the stories.
+- Status: Sprint 16 Phase 1 and Phase 2 reviews passed. Phase 2 UAT passed; closeout is pending.
+- Phase 1 review: Owner redirected hydration to CSV → internal flat JSONL → SQLMesh. The converter preserves normalized transaction fields, source name, source row number, and the full original flat source row. Users still provide CSV; arbitrary or nested JSONL is not supported. Tank's approved Python environment is in use; SQLMesh JSONL loading was verified in a synthetic CLI run.
+- Phase 1 gates: Trin UAT passed (2 Monarch + 2 Amex input rows; 1 match, 2 unmatched; ambiguous and invalid-key model cases; missing-file exit before run creation). JS 303, Python 3, SQLMesh model test, and lint pass. No Phase 1 defects found. `bobp make judge-trace` is absent from this worktree's Makefile and is recorded as a tooling gap, not a feature blocker.
+- Phase 2 review: Trin UAT passed using synthetic data (JS 309, SQLMesh category model, end-to-end with Jev double); final lint passed after fixing comparator and switch-case lint issues. Code matches ADR-0037: CSV snapshots -> internal flat JSONL -> SQLMesh/DuckDB reconciliation -> distinct bounded Jev taxonomy decisions -> run-scoped map -> final SQL and review export. No live Jev or personal CSV used.
+- Phase 2 architecture doc review found stale planning claims; fixed command shape, runtime approval/probe status, restart behavior (clean new run only), accepted decisions, and ADR consequences. No code defects found. UAT plan now records Phase 2 UAT and Morpheus review as passed.
+- Artifacts updated: `docs/sprints/ARCH_SPRINT16.md`, ADR-0037 in `docs/DECISIONS.md`, `docs/sprints/UAT_PLAN_SPRINT16.md`, and `task.md`.
+- Review verdict: PASS, no changes requested before Phase 2.
 
 ## Next Steps
-After Gate 1: append the architecture to docs/sprints/USER_STORIES_SPRINT1.md (adapter
-contract, CLI target over a child process, web target over Playwright, run loop from
-seed/recard/tools/jev/runner.mjs), then Smith Gate 2.
+1. Mouse updates `task.md`: Phase 2 Tasks 2.2 and 2.3 are complete, with references to the UAT verdict and review; then proceed with sprint closeout tasks.
+2. Tank runs the required clean setup and `bobp make check`, recording results in `docs/SDLC.md`.
+3. Oracle grooms the sprint artifacts and archives the chat report; Smith runs the owner-facing acceptance gate; personas record retrospectives and backlog items; Cypher posts launch only after gates pass.
+4. Keep private CSV/transaction data under ignored `build/runs/`; do not add owner exports to git or CHAT.

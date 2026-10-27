@@ -41,11 +41,11 @@ understudy: step 3 asking -> confirm:order (0.96)
 
 ## Quick start
 
-Needs Node 24, `make`, the `bobp` CLI (Bob Protocol tooling - it wraps every make target and
-captures its output in `build/build.out`), and a TypeSafe API key.
+Needs Node 24, CPython 3.12.15, uv 0.13.0, `make`, the `bobp` CLI (Bob Protocol tooling - it
+wraps every make target and captures its output in `build/build.out`), and a TypeSafe API key.
 
 ```sh
-bobp make install                                   # npm ci - everything stays inside the project
+bobp make install                                   # locked Node and Python environments stay inside the project
 export TYPESAFE_API_KEY=...                    # Jev is required for a run
 bobp make run ARGS="run examples/cli"               # play the coffee-counter program
 bobp make install-browser                           # once, for web targets (skip if Chromium is installed)
@@ -55,6 +55,15 @@ bobp make run ARGS="run examples/mcp"               # play the box office MCP se
 bobp make run ARGS="run examples/mcp --watch"       # the same, with a live view in your browser
 bobp make run ARGS="check examples/cli"             # check a sketch without starting anything (no key needed)
 bobp make run ARGS="dashboard examples"             # the operations console for every example
+```
+
+Sprint 16 also includes a local transaction cleanup run. It snapshots two Monarch/Amex CSV
+exports, converts their flat rows to an internal JSONL format, reconciles overlaps in DuckDB,
+asks Jev to choose from the fixed category/subcategory taxonomy, and writes a review CSV under
+`build/runs/<run-id>/`:
+
+```sh
+bobp make run ARGS="etl run --monarch inputs/monarch.csv --amex inputs/amex.csv"
 ```
 
 Always go through `bobp make <target>` - it is the front door for people and agents alike.

@@ -6,14 +6,20 @@ ask `@Tank *devops sdlc <what and why>` — the mechanism and this document chan
 
 ## 1. Toolchain
 
-| | JavaScript (Node ESM, `.mjs` sources) |
-|---|---|
-| Runtime version | Node 24 — `engines.node: ">=24"` in `package.json` and `.nvmrc` (`24`). Verified on v24.13.0. |
-| Manifest | `package.json` (tasks in `scripts`) |
-| Lockfile | `package-lock.json` (committed) |
-| Package manager | npm (11.x) |
-| Local environment | `node_modules/` (gitignored) |
-| Test runner | `node:test` (built in, no dependency) |
+| | JavaScript (Node ESM, `.mjs` sources) | Python (SQLMesh ETL models) |
+|---|---|---|
+| Runtime version | Node 24 — `engines.node: ">=24"` in `package.json` and `.nvmrc` (`24`). Verified on v24.13.0. | CPython 3.12.15 in `.python-version` |
+| Manifest | `package.json` (tasks in `scripts`) | `pyproject.toml` |
+| Lockfile | `package-lock.json` (committed) | `uv.lock` (committed) |
+| Package manager | npm (11.x) | uv 0.13.0 |
+| Local environment | `node_modules/` (gitignored) | `.venv/` (gitignored) |
+| Test runner | `node:test` (built in, no dependency) | `unittest` (built in) |
+
+The ETL stack pins SQLMesh 0.236.3 and DuckDB 1.5.6 in Python, plus
+`@duckdb/node-api` 1.5.6-r.1 in Node (the matching Node package build for DuckDB 1.5.6).
+Keep the Python and Node DuckDB clients on the same
+version. ETL stages share a run database sequentially: SQLMesh must exit before Node opens
+it for writes, and Node must close before SQLMesh resumes.
 
 Other required tools: `make`, `bobp` (agents run every target through `bobp make <target>`),
 `gitleaks` on `PATH` for `make secrets` / `make check` and the pre-commit hook.
@@ -23,9 +29,9 @@ Other required tools: `make`, `bobp` (agents run every target through `bobp make
 From a clean checkout:
 
 ```sh
-make install     # npm ci (npm install only if the lockfile is missing)
-make test        # expect "fail 0"
-make hooks       # optional: gitleaks pre-commit hook
+bobp make install     # installs the locked npm and uv environments
+bobp make test        # JavaScript and Python unit tests; expect "fail 0" / "OK"
+bobp make hooks       # optional: gitleaks pre-commit hook
 ```
 
 Nothing is installed globally. Run local tools with `npx`, never `npm install -g`.
@@ -33,13 +39,20 @@ Nothing is installed globally. Run local tools with `npx`, never `npm install -g
 ## 3. Make targets
 
 The Makefile is the only entry point; recipes call `package.json` scripts rather than
-repeating their commands. `make help` lists them.
+repeating their commands. `bobp make help` lists them.
 
 | Target | Runs | Notes |
 |---|---|---|
-| `install` | `npm ci` | exact lockfile install; idempotent; touches the network |
+| `install` | `install-js` + `install-py` | installs both exact lockfiles; touches the network |
+| `install-js` | `npm ci` | exact npm lockfile install; touches the network |
+| `install-py` | `uv sync --locked` | exact Python lockfile install into `.venv`; touches the network on first setup |
+| `lock-js` | `npm install --package-lock-only --ignore-scripts` | updates the npm lockfile after a manifest change; touches the network |
+| `lock-py` | `uv lock --python 3.12.15` | updates `uv.lock` after a Python manifest change; touches the network |
 | `install-browser` | `npx playwright install chromium` | needed only for web targets; touches the network; see §9 |
-| `test` | `npm test -- $(ARGS)` → `node --test tests/*.test.js` | e.g. `ARGS="--test-name-pattern=seat"` |
+| `test` | `test-js` + `test-py` | both language suites; no Jev or browser calls |
+| `test-js` | JavaScript `node:test` suite | `ARGS` supports Node test filtering |
+| `test-py` | `python -m unittest discover -s tests/python` | offline tests for Python tooling and ETL helpers |
+| `probe-etl` | synthetic SQLMesh CSV load followed by Node DuckDB write and Python reopen | Phase 0 handoff smoke check; uses temporary synthetic data only |
 | `test-browser` | `npm run test:browser` → `node --test tests/browser/*.test.js` (one file at a time) | the watch page driven in headless Chromium against real runs of the examples with a Jev double - no key, no cost; needs Chromium (`make install-browser`); `make test` stays browser-free (ADR-0006) |
 | `test-live` | `understudy run <sketch> --steps 30` for every `examples/*/`, each run's final `outcome` checked (`done`), then `examples/evening` again with `BOX_STATE=full` (`walked-away`); serves the box office over HTTP with a throwaway token (`MCP_TOKEN`, `BOX_PORT`, default 8765) for `examples/mcp-remote` and stops it after | live Jev (paid) and, for web examples, Chromium; UAT only |
 | `run` | `node bin/understudy.mjs $(ARGS)` | e.g. `ARGS="check examples/cli"` |
@@ -48,8 +61,8 @@ repeating their commands. `make help` lists them.
 | `hooks` | `git config core.hooksPath .githooks` | installs the gitleaks pre-commit hook |
 | `check` | `test` + `lint` + `secrets` | the full gate |
 | `push` | `check`, then `scripts/push.sh`: stage all → gitleaks scan of the staged files → commit with `MSG` → `git push --follow-tags origin <current branch>` | the only way changes are committed for publishing and pushed; `MSG="..."` required when anything is uncommitted; `ARGS="--dry-run"` commits nothing and previews; never `--force`; touches the network |
-| `clean` | removes `build/`, `coverage/`, `.eslintcache` | keeps `node_modules` |
-| `distclean` | `clean` + removes `node_modules/` | used for the from-clean check |
+| `clean` | removes `build/`, `coverage/`, `.eslintcache` | keeps installed environments |
+| `distclean` | `clean` + removes `node_modules/` and `.venv/` | used for the from-clean check |
 | `help` | lists targets | parses `## comment` suffixes |
 
 Standard targets deliberately absent:
@@ -59,12 +72,12 @@ Standard targets deliberately absent:
 
 ## 4. Dependencies
 
-- **Add a runtime dependency:** `npm install {pkg}`; **dev tool:** `npm install -D {pkg}`.
-- **Upgrade / remove:** `npm install {pkg}@{version}` / `npm uninstall {pkg}`.
-- **Commit afterwards:** `package.json` **and** `package-lock.json`, together.
+- **Add a Node runtime dependency:** `npm install {pkg}`; **dev tool:** `npm install -D {pkg}`.
+- **Add or upgrade Python dependencies:** edit `pyproject.toml`, run `bobp make lock-py`, then `bobp make install-py`.
+- **Commit afterwards:** the appropriate manifest and lockfile (`package.json` + `package-lock.json`, or `pyproject.toml` + `uv.lock`) together.
 - **Who:** Neo adds and bumps dependencies, in the story whose code first imports them. A
   different package manager, a Node version change or a new language is a mechanism change — Tank's.
-- Never hand-edit the lockfile; never mix lockfiles from two package managers.
+- Never hand-edit either lockfile; do not use multiple lockfiles for one package manager.
 - Declare only what the code imports. Runtime today: `xstate`, `yaml`, `@typesafe-ai/sdk`
   (Jev), `playwright` (page target; locked at 1.62.1 so its Chromium download is shared with
   recard's), `@modelcontextprotocol/sdk` (mcp target client; the example server) and `zod` (the
@@ -81,7 +94,7 @@ Standard targets deliberately absent:
 
 | Gate | Target | Required before |
 |---|---|---|
-| Tests | `make test` | every handoff to Trin; sprint close |
+| Tests | `bobp make test` | every handoff to Trin; sprint close |
 | Lint | `make lint` | every handoff to Trin; sprint close |
 | Live Jev runs | `make test-live` with `TYPESAFE_API_KEY` | UAT only; small runs with a step cap (owner, 2026-10-15). `make test` never calls Jev — it uses a judge test double. |
 | Secret scan | `make secrets` | every commit (pre-commit hook, if `make hooks` was run); sprint close |
@@ -142,7 +155,7 @@ is reported to Tank so one of them gets fixed.
 ## 8. CI / deploy
 
 None — everything runs locally on the dev Pi. A CI job, if added, must run
-`make install && make check`, not raw tool commands.
+`bobp make install && bobp make check`, not raw tool commands.
 
 ## 9. Known deviations
 
@@ -156,25 +169,26 @@ None — everything runs locally on the dev Pi. A CI job, if added, must run
 - Playwright's Chromium is downloaded by `make install-browser` into Playwright's default
   `~/.cache/ms-playwright`, outside the project (same as recard): browsers are large and shared
   across projects. `make test` never launches it; only `test-live` and web runs do.
-- Three targets touch the network: `install`, `install-browser` and `push`.
+- Network targets: `install`, `lock-js`, `install-js`, `install-py`, `install-browser` and `push`.
 - The lint script passes `--no-error-on-unmatched-pattern` because `tests/**/*.mjs` is empty today.
 
 ## 10. Conformance check
 
 Run by Tank at sprint close (`*devops sdlc-check`):
 
-1. `make distclean && make install && make check` passes, and `make test` made no network call
+1. `bobp make distclean && bobp make install && bobp make check` passes, and `bobp make test` made no network call
    to Jev and launched no browser (unit tests use a judge double and fake targets).
-2. `make install` a second time leaves `package-lock.json` unchanged (`git status` clean).
-3. Every imported package is in `dependencies`/`devDependencies`; only one lockfile exists.
+2. `bobp make install` a second time leaves both lockfiles unchanged (`git status` clean).
+3. Every imported package is declared in its language manifest and lockfile.
 4. Every target in section 3 exists and maps to a `package.json` script or a documented command.
 5. No doc or script tells people to install globally or bypass `make`.
-6. `node_modules/` and `build/` are ignored; `.nvmrc` and `engines.node` agree.
+6. `node_modules/`, `.venv/` and `build/` are ignored; runtime pins match their manifests.
 7. This sprint's changes followed section 6: right class, right approval, recorded where it says.
 8. Nothing under `src/` or `tests/` imports from `seed/`.
 
 ---
-*Last verified: 2026-10-17 by Tank (sprint-15 close: clean → check green, browser tests green;
+*Last verified: 2026-10-17 by Tank (Sprint 16 close: distclean → install → check green; repeated install passed idempotently; Phase 0 SQLMesh/Node/Python DuckDB handoff probe green).*
+*Previous verification: 2026-10-17 by Tank (sprint-15 close: clean → check green, browser tests green;
 no dependency or mechanism change. Sprint-14 close: clean → check green, browser tests green;
 routine dependency `elkjs` per §4. Sprint-13 close: clean → check green; no dependency or
 mechanism change. Sprint-12 close: clean → check green, browser tests green; no
