@@ -69,4 +69,4 @@ const server = http.createServer(async (request, response) => {
   answer(response, status, result);
 });
 
-server.listen(Number(process.env.PORT ?? 8080), '127.0.0.1');
+server.listen(Number(process.env.PORT ?? 8080), '0.0.0.0');

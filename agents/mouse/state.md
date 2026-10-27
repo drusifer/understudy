@@ -1,15 +1,15 @@
 # Mouse State
 
 ## Context
-- Sprints 1 and 2 merged and pushed to main (b020fc5). Sprint 3 merged and pushed (1dc029f). Sprint 4 COMPLETE on branch sprint-4 (launched 2026-10-15).
-  Branch sprint-3 fully merged (owner may delete). Boards: docs/sprints/TASKS_SPRINT{1,2}.md, task.md
-  (sprint 3, all checked). Chat archives: agents/chat_archive/CHAT_SPRINT_{1,2,3}.md.
-- Tag v0.1.0 still points at 66ce717 - owner's call.
+- Sprints 1-15 complete on `main` as of 2026-10-17; see `agents/PROJECT.md`, `docs/BACKLOG.md`, and `docs/SDLC.md` for current project context.
+- Owner wants to reproduce their household transaction-cleaning procedure with Understudy. Procedure document covers preserving raw inputs, cross-source reconciliation, merchant/category dictionaries, human review, calendar dedupe/trip grouping, travel tagging, taxonomy mapping, and location-aware merchant consolidation.
+- Workbook export is publicly reachable and contains 8 tabs: transaction source/output, Amex transactions, merchant map, two calendar/event tabs, consolidated trips, category ontology, and pivot output. Row counts inspected, but no further row values retained. Temporary CSV/XLSX/doc exports removed.
+- Owner notes Understudy may need additional primitives/operations such as joins and maps. This is the key architecture question before sprint scope.
 
 ## Current Task
-None - sprint 4 merged and pushed (51fa684). Sprint 5 shaped (docs/BACKLOG.md), not started.
+- Status: Product/architecture discovery handed off to Morpheus (0% implementation).
+- Proposed direction: identify the smallest composable deterministic transformation primitives needed for the procedure; then let Jev handle bounded ambiguous cases and keep approval/reporting explicit. Do not write sprint artifacts until technical shape is clear.
 
 ## Next Steps
-1. On `/sprint 5 go`: Stage 0, cut `sprint-5` from main, archive task.md to
-   docs/sprints/TASKS_SPRINT4.md before writing the new board; keep loader/format changes and
-   the examples they break in one phase.
+1. Morpheus assesses how joins, maps, filters/grouping, and exception decisions fit Understudy's sketch model and what belongs in a small first increment.
+2. Resume sprint planning only after architecture and scope are agreed; use a sanitized sample, keep workbook data out of repo artifacts, and start with a read-only production pilot.

@@ -614,7 +614,7 @@ function boot() {
       weights, total: weights.reduce((sum, each) => sum + each.value, 0),
       level: weights.reduce((sum, each) => sum + levelOf(each.value, each.range), 0), blend: rgb(blendOf(weights)),
     };
-    // The power ring round the rim (the steampunk tube; other screens hide it).
+    // Retained for the legacy drawing data; rectangular screens use the power bar below.
     const ring = svgElement('svg', { viewBox: `0 0 ${SIZE} ${SIZE}`, class: 'ring', 'aria-hidden': 'true' });
     const ringLabels = drawRing(ring, weights, look);
     // UND-41: the statechart as a layered flow, laid out on the server.

@@ -10,6 +10,10 @@
 
 NEED_INSTALL = @test -d node_modules || { echo "No node_modules - run 'make install' first"; exit 1; }
 
+# Live targets (run, test-live) read API keys from .env (gitignored; `export NAME=value` lines);
+# test never does, so it can never reach a paid or networked service.
+LOAD_ENV = set -a; if [ -f .env ]; then . ./.env; fi; set +a;
+
 help: ## List targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
 
@@ -30,7 +34,7 @@ test-browser: ## Browser tests: the watch page driven in headless Chromium again
 
 test-live: ## Live runs: every examples/*/ played with real Jev (paid; needs TYPESAFE_API_KEY), capped at 30 steps, each final outcome checked (done; examples/evening also with BOX_STATE=full: walked-away); serves the box office over HTTP (throwaway token) for examples/mcp-remote
 	$(NEED_INSTALL)
-	@token="live-$$$$-$$(date +%s)"; port=$${BOX_PORT:-8765}; \
+	@$(LOAD_ENV) token="live-$$$$-$$(date +%s)"; port=$${BOX_PORT:-8765}; \
 	node examples/mcp/server.mjs --http --port "$$port" --token "$$token" 2>/dev/null & server=$$!; \
 	trap 'kill $$server 2>/dev/null' EXIT; \
 	live() { want="$$1"; shift; echo "== $$* (want $$want)"; \
@@ -42,7 +46,7 @@ test-live: ## Live runs: every examples/*/ played with real Jev (paid; needs TYP
 run: ## Run the understudy command: ARGS="run examples/cli" | "check <sketch>" | "library [<sketch>]"
 	$(NEED_INSTALL)
 	@test -f bin/understudy.mjs || { echo "bin/understudy.mjs does not exist yet (sprint 1, phase 2)"; exit 1; }
-	node bin/understudy.mjs $(ARGS)
+	@$(LOAD_ENV) node bin/understudy.mjs $(ARGS)
 
 lint: ## eslint over src/ and tests/
 	$(NEED_INSTALL)

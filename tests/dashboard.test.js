@@ -2,12 +2,19 @@
 // a folder's sketches at the server's root, one sketch's controls, refusals.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cpSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { UsageError } from '../src/errors.mjs';
 import { describeSketch, listSketches, sketchNames } from '../src/dashboard/rack.mjs';
 import { startDashboard } from '../src/dashboard/server.mjs';
+
+test('the desktop CRT has a definite width so its centered flow cannot collapse', () => {
+  const css = readFileSync(new URL('../src/dashboard/page.css', import.meta.url), 'utf8');
+  const rule = css.match(/\.tube\s*\{[^}]*\}/g)?.find((each) => each.includes('flex: 1 1 0'));
+  assert.ok(rule, 'desktop tube sizing rule exists');
+  assert.match(rule, /\bwidth:\s*100%/);
+});
 
 /**
  * A folder holding two real examples and one broken sketch.

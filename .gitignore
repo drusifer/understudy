@@ -156,3 +156,6 @@ vite.config.ts.timestamp-*
 build/
 .claude/settings.local.json
 .factory/
+
+# household CSV exports (Monarch, Amex): private financial data, never committed
+data/

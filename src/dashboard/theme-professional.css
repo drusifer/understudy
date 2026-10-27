@@ -134,7 +134,7 @@
 :root[data-theme="professional"] .tube::before,
 :root[data-theme="professional"] .tube .ring,
 :root[data-theme="professional"] .tube .ring-labels { display: none; }
-:root[data-theme="professional"] .tube .flow { inset: 3%; width: 94%; height: 94%; }
+:root[data-theme="professional"] .tube .flow { inset: auto; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 94%; height: 94%; }
 :root[data-theme="professional"] .tube .flow text { font-family: system-ui, sans-serif; }
 :root[data-theme="professional"] .tube .flow .state-label { font-size: 14px; font-weight: 600; }
 :root[data-theme="professional"] .tube .flow .edge-label { font-size: 11.5px; font-weight: 500; }

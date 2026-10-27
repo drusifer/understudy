@@ -208,6 +208,14 @@ test('the THEME switch: each theme restyles the page, is remembered, ?theme= win
   await page.goto(dashboard.url);
   await until(page, () => document.querySelector('#tube svg'));
   assert.equal(await theme(), 'steampunk');
+  const displayGeometry = () => page.$eval('#tube .flow', (flow) => {
+    const screen = flow.parentElement.getBoundingClientRect();
+    const diagram = flow.getBoundingClientRect();
+    return { width: screen.width, centreOffset: Math.abs((diagram.left + diagram.width / 2) - (screen.left + screen.width / 2)) };
+  });
+  const steampunkGeometry = await displayGeometry();
+  assert.ok(steampunkGeometry.width > 300, `steampunk display is not collapsed (${steampunkGeometry.width}px)`);
+  assert.ok(steampunkGeometry.centreOffset < 1, `steampunk diagram is off centre (${steampunkGeometry.centreOffset}px)`);
   assert.ok(await fits(), 'steampunk fits');
   const steampunk = await background();
 
@@ -216,6 +224,9 @@ test('the THEME switch: each theme restyles the page, is remembered, ?theme= win
     await page.click(`.theme-choice[data-theme="${name}"]`);
     assert.equal(await theme(), name);
     assert.equal(await page.getAttribute(`.theme-choice[data-theme="${name}"]`, 'aria-pressed'), 'true');
+    const geometry = await displayGeometry();
+    assert.ok(geometry.width > 300, `${name} display is not collapsed (${geometry.width}px)`);
+    assert.ok(geometry.centreOffset < 1, `${name} diagram is off centre (${geometry.centreOffset}px)`);
     seen.add(await background());
     assert.ok(await fits(), `${name} fits 1600x960`);
   }

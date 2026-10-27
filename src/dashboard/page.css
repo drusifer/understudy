@@ -161,14 +161,14 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 /* Tube */
 .tube-panel { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px; border-radius: 12px; background: radial-gradient(ellipse at center, #241810, #160f0a 70%); border: 2px solid #5a3e1e; }
 .tube-panel .panel-head { align-self: stretch; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
-.tube { position: relative; width: 100%; max-width: 700px; aspect-ratio: 1 / 1; border-radius: 50%; background: radial-gradient(circle at 50% 50%, rgba(255,140,60,.12) 0%, rgba(30,14,6,.96) 60%, #0a0503 100%); border: 8px solid #3c3a37; box-shadow: inset 0 0 70px rgba(0,0,0,.92), inset 0 0 0 2px rgba(255,255,255,.06), 0 0 0 5px var(--brass-dark), 0 0 0 9px #3b2711, 0 14px 40px rgba(0,0,0,.75); animation: hum 4s infinite; }
-.tube::before { content: ''; position: absolute; left: 16%; top: 7%; width: 32%; height: 13%; border-radius: 50%; background: radial-gradient(ellipse, rgba(255,255,255,.14), transparent 70%); transform: rotate(-26deg); pointer-events: none; }
-.tube .ring { position: absolute; inset: 0; width: 100%; height: 100%; }
-/* The ring's names and values are in the power bar under the screen. */
+.tube { position: relative; width: 100%; max-width: 700px; aspect-ratio: auto; height: 560px; border-radius: 18px; background: linear-gradient(180deg, rgba(255,140,60,.1), rgba(30,14,6,.96) 18%, #0a0503 100%); border: 8px solid #3c3a37; box-shadow: inset 0 0 70px rgba(0,0,0,.92), inset 0 0 0 2px rgba(255,255,255,.06), 0 0 0 5px var(--brass-dark), 0 0 0 9px #3b2711, 0 14px 40px rgba(0,0,0,.75); animation: hum 4s infinite; }
+.tube::before { content: ''; position: absolute; left: 8%; top: 3%; width: 42%; height: 9%; border-radius: 50%; background: radial-gradient(ellipse, rgba(255,255,255,.14), transparent 70%); transform: rotate(-8deg); pointer-events: none; }
+.tube .ring { display: none; position: absolute; inset: 0; width: 100%; height: 100%; }
+/* The power bar under the screen carries weight names and values. */
 .tube .ring-labels { display: none; }
 .tube .label { position: absolute; transform: translate(-50%, -50%); white-space: nowrap; }
-/* UND-41: the flow sits inside the ring, in the square the circle holds. */
-.tube .flow { position: absolute; inset: 8%; width: 84%; height: 84%; overflow: visible; }
+/* UND-41: center the statechart in the CRT display. */
+.tube .flow { position: absolute; inset: auto; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 94%; height: 94%; overflow: visible; }
 .tube .flow text { font-family: VT323, monospace; }
 .tube .flow .state-label { font-size: 21px; }
 .tube .flow .edge-label { font-size: 16px; }
@@ -265,7 +265,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
   .bay { height: auto; }
   .printer .glass { flex: 1 1 0; min-height: 300px; display: flex; flex-direction: column; }
   .printer .paper-window { flex: 1 1 0; height: auto; min-height: 0; width: 100%; }
-  .tube { flex: 1 1 0; min-height: 340px; width: auto; max-width: 100%; }
+  .tube { flex: 1 1 0; min-height: 340px; width: 100%; max-width: 100%; }
 }
 .power-legend { font-size: clamp(15px, .9vw, 20px); }
 .gauge .dial { max-width: clamp(92px, 6vw, 130px); }

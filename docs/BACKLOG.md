@@ -139,6 +139,12 @@ Design approved on a clickable mockup - **`docs/design/DASHBOARD.md`** is the br
 - Watch page: shorten a stall message's raw view JSON; show what Jev read for a step on demand. (Smith)
 - A Playwright UAT script for the watch page kept in the repo (and a make target - Tank's call). (Trin)
 
+## Next (owner, 2026-10-27) - the evening example on real movies
+- `examples/evening` picks from real films: TMDB now-playing (film list, genres, review text) joined with Rotten Tomatoes % (OMDb `Ratings`, or a hand-filled `title,year,tomato` CSV while the OMDb key is not yet active). Showtimes and seats stay simulated; tests keep an offline fixture; the OMDb call replaces the CSV outright, no fallback chain.
+- Owner put keys in `.env` (gitignored): `TMDB_API_KEY` works; `OMDB_API_KEY` was still rejected ("Invalid API key!") 2026-10-27 after the activation link. `make run` and `make test-live` source `.env`; `make test` does not.
+- Natural first public customer of the Sprint 16 ETL: films are the raw table, tomato scores the join, the per-film OMDb fetch a data-demand stage. Wait for it, or ship on the CSV first (owner chose to backlog and do sprint 16 first).
+- Test constraints: `tests/evening.test.js:92-104` (Night Shift tomato 82, 3-5 reviews, horror both >=70 and <70, non-horror both >90 and <=90); Jev doubles in `tests/jevScore.test.js`, `tests/dashboardRun.test.js`, `tests/browser/dashboard.test.js` match /scream|best scare/ in reviews. Gates may need retuning to real scores.
+
 ## Later
 - Watch page: reconnect a live page that lost its stream mid-run (today: "connection lost", reload). (Morpheus)
 - Split `src/watch/page.mjs` into model and DOM when it next grows. (Neo)

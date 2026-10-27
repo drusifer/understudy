@@ -1,19 +1,24 @@
 # Morpheus State
 
 ## Context
-- docs/EXTRACTION_MAP.md (copied from recard) is the plan: core moves as-is, the rest is
-  generalized around an app-adapter contract, game content stays in recard as its adapter.
-- Owner decisions (2026-10-15): transport-neutral adapter (web page hook is ONE target;
-  CLI and HTTP next to it; sprint 1 proves it with web + CLI), git dependency, Jev required
-  (unit tests double the judge at the SDK seam: `judge.systemOne(...)`).
-- Adapter shape seen in recard today (seat `services`): `peer` = target {view, act, say,
-  talk}, `game` = app knowledge {project, options, act, propose}, plus judge, questions,
-  player. Generalize names: `TABLE` event -> e.g. `OBSERVE`, `services.game` -> `services.app`.
+- 2026-10-17: Owner wants to reproduce a household transaction-cleaning workflow with Understudy; Google Sheets is only an input/output adapter. The procedure covers raw preservation, transaction-source reconciliation, merchant/category lookup maps, human review, calendar dedupe/trip grouping, travel tagging, and merchant consolidation.
+- VIA/docs inspection: current `decide.join` merges remembered answer facts by one exact key; ADR-0017 caps retained rows at 500. It is not a general relational join and the core has no general map/group transform pipeline. Current decision gates can filter candidates but do not perform batch ETL.
+- Owner's principle: quantitative/deterministic work uses logic; qualitative choices use Jev. Critical correction: raw input will not contain normalized merchant/category mappings. Understudy must discover those mappings and any new categories as it evaluates data.
+- Revised decision boundary: deterministic joins/extractions run first; for each unknown merchant/descriptor, Jev judges the enriched raw evidence, selects an existing category or proposes a new category, and proposes a contextual mapping. The run builds a provisional mapping/taxonomy as it proceeds and reuses it for subsequent matching rows; conflicts or low-confidence cases remain review items. At the end, validate and preview the learned rules before optionally promoting them for future runs. Multi-service merchants require contextual mappings, not a global merchant-only rule.
+- Owner prefers adopting an existing ELT tool with YAML-described configuration over implementing general-purpose join/map/group operators. Candidate scan: SQLMesh defines models in SQL files and project config in YAML; dbt also uses SQL models plus YAML configuration; dlt supports joins and transformations but its transforms are Python-defined. None makes all transformations declarative YAML. Key integration question: Jev-derived mappings are run-time outputs, so they need a persisted/staged decisions table that SQL models consume in a deterministic pass; they cannot be assumed to exist as static config before evaluation.
+- Owner accepts SQL + YAML config and suggests MCP calls to populate the database. Existing Understudy MCP target is an interactive tool-choosing client: it can call an MCP source, but its current flow is not a paginated bulk loader. Prefer a deterministic MCP ingestion adapter/tool that fetches pages into DuckDB raw tables, then hand only unique/unknown entities to Jev for judgement and persist decisions; SQLMesh consumes raw and decision tables. Correct capability limit: current Jev integration selects from bounded supplied candidates and cannot invent arbitrary category labels or map text, so the discovery story needs an explicit proposal mechanism/review step and must not claim free-form generation.
+- Owner clarifies pagination is below ETL ops: source hydration should normalize MCP fetches and fully materialize DuckDB before logic begins, in named stages; a later state transition may request more data before its next logic step. Domain fit: orchestration owns stage dependencies and explicit data-demand transitions; source adapters own cursors/pages/retries; each completed hydration stage yields a run-scoped database snapshot to SQLMesh/decision steps. Keep fetch scope/results/checkpoints recorded so resumed or audited runs are reproducible.
+- Owner sets scale boundary: the transaction sheet (about 4.7k rows) is near the larger workload Understudy should handle for now; this is not an enterprise-scale platform. Prefer straightforward local DuckDB materialization and bounded staged fetches; avoid distributed/warehouse/complex checkpoint architecture unless measured need emerges.
+- Owner resolves category creation: provide Jev a rich, explicit category/subcategory taxonomy to choose from; use `Misc` when none fits. No free-form category invention is needed. Jev's output must be validated against the supplied taxonomy, and learned merchant mappings can be reused within the run.
+- Owner defers Google Sheets integration but chooses two provided CSVs with overlapping transactions as Sprint 16 inputs: one Monarch export and one Amex export. Preserve source identity/provenance while reconciling the overlap. Keep full household CSVs out of version control and add Sheets/MCP source and sink adapters later.
+- Workbook has 8 tabs and thousands of rows. It and the procedure contain household financial and travel data; keep full exports out of the repo, use sanitized fixtures in tests, and use an owner-controlled production copy for a live run.
+- No architecture/story artifacts drafted yet. Main worktree is on `main` with prior dashboard, test-guidance, chat, and persona edits uncommitted; sprint branch handling must avoid sweeping those into this work.
 
 ## Current Task
-Architecture for sprint 1 not started - waits on Smith Gate 1 of the stories.
+- Status: Architecture discovery complete (100%); sprint story/architecture/plan not started.
+- Proposed slicing: first prove generic row-source/sink interfaces and composite join plus on-the-fly Jev-derived merchant/category mappings on transaction + Amex enrichment. The pipeline must stream/chunk beyond 500 rows, retain run-scoped discovered mappings, and record row-level evidence/provenance. Follow with calendar/trip grouping, travel tagging, and pivot/entity consolidation.
 
 ## Next Steps
-After Gate 1: append the architecture to docs/sprints/USER_STORIES_SPRINT1.md (adapter
-contract, CLI target over a child process, web target over Playwright, run loop from
-seed/recard/tools/jev/runner.mjs), then Smith Gate 2.
+1. Owner accepts SQL + YAML config and confirms staged hydration. Next, shape a spike for source hydration stages, dynamic data-demand transitions, DuckDB snapshots and SQLMesh execution; also specify how novel qualitative categories/maps can be proposed within Jev's bounded-choice capability.
+2. Before writing Sprint 16 artifacts, isolate the sprint branch from existing uncommitted dashboard changes, then follow the required Cypher story → Smith gate → Morpheus architecture → Smith gate → Mouse plan → Morpheus review sequence.
+3. Keep Google Sheets behind a source/sink adapter. Do not use the full household export in repo tests or commits.
