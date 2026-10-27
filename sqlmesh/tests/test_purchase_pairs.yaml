@@ -80,6 +80,32 @@ unequal_counts_pair_what_they_can_and_leave_the_extra_row_single:
         - { match_status: paired, pair_method: exact, transaction_date: '2026-01-02', amount: -4.50, merchant: Coffee, account: Card (...1111), monarch_source_row: 1, amex_source_row: 1, monarch_raw: '{"Id":"m1"}', amex_raw: '{"Reference":"a1"}' }
         - { match_status: monarch_only, pair_method: null, transaction_date: '2026-01-02', amount: -4.50, merchant: Coffee, account: Card (...1111), monarch_source_row: 2, amex_source_row: null, monarch_raw: '{"Id":"m2"}', amex_raw: null }
 
+identical_fares_posted_days_apart_all_pair_one_to_one:
+  model: etl.purchase_pairs
+  vars:
+    amex_account: Card (...1111)
+  inputs:
+    etl.business_calendar:
+      rows:
+        - { day: '2026-08-01', is_business_day: false, business_day_index: 300 }
+        - { day: '2026-08-05', is_business_day: true, business_day_index: 303 }
+    etl.raw_monarch:
+      rows:
+        - { source_row_number: 1, source: monarch, transaction_date: '2026-08-01', amount: -3.00, merchant: MTA, statement: MTA, account: Card (...1111), raw_record: '{"Id":"m1"}' }
+        - { source_row_number: 2, source: monarch, transaction_date: '2026-08-01', amount: -3.00, merchant: MTA, statement: MTA, account: Card (...1111), raw_record: '{"Id":"m2"}' }
+        - { source_row_number: 3, source: monarch, transaction_date: '2026-08-01', amount: -3.00, merchant: MTA, statement: MTA, account: Card (...1111), raw_record: '{"Id":"m3"}' }
+    etl.raw_amex:
+      rows:
+        - { source_row_number: 1, source: amex, transaction_date: '2026-08-05', amount: 3.00, merchant: AplPay NYCT PAYGO, account: '-11111', raw_record: '{"Reference":"a1"}' }
+        - { source_row_number: 2, source: amex, transaction_date: '2026-08-05', amount: 3.00, merchant: AplPay NYCT PAYGO, account: '-11111', raw_record: '{"Reference":"a2"}' }
+        - { source_row_number: 3, source: amex, transaction_date: '2026-08-05', amount: 3.00, merchant: AplPay NYCT PAYGO, account: '-11111', raw_record: '{"Reference":"a3"}' }
+  outputs:
+    query:
+      rows:
+        - { match_status: paired, pair_method: near_date, transaction_date: '2026-08-01', amount: -3.00, merchant: MTA, account: Card (...1111), monarch_source_row: 1, amex_source_row: 1, monarch_raw: '{"Id":"m1"}', amex_raw: '{"Reference":"a1"}' }
+        - { match_status: paired, pair_method: near_date, transaction_date: '2026-08-01', amount: -3.00, merchant: MTA, account: Card (...1111), monarch_source_row: 2, amex_source_row: 2, monarch_raw: '{"Id":"m2"}', amex_raw: '{"Reference":"a2"}' }
+        - { match_status: paired, pair_method: near_date, transaction_date: '2026-08-01', amount: -3.00, merchant: MTA, account: Card (...1111), monarch_source_row: 3, amex_source_row: 3, monarch_raw: '{"Id":"m3"}', amex_raw: '{"Reference":"a3"}' }
+
 a_charge_before_a_bank_holiday_weekend_pairs_with_the_row_posted_the_tuesday_after:
   model: etl.purchase_pairs
   vars:

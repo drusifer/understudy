@@ -97,8 +97,10 @@ same_date_pairs AS (
 -- Pass 3: what is still unpaired pairs when the amount is equal and the dates differ by up to
 -- three business days (a charge often posts a day or two apart in the two exports, and a
 -- weekend or bank holiday does not count), nearest date first.
--- Each Amex row takes its nearest Monarch candidate, then each Monarch row keeps its nearest
--- taker, so a row is used at most once and a tie stays unpaired.
+-- Matching is one-to-one in up to five rounds: a pair is made when an Amex row and a Monarch
+-- row each have the other as their nearest candidate (ties by source row), then the rows left
+-- over try again, so identical fares competing for the same row all find a partner. A row is
+-- used at most once; whatever is still left stays single.
 monarch_rest AS (
   SELECT source_row_number, transaction_date, charge_key
   FROM monarch
@@ -122,19 +124,77 @@ near_candidates AS (
   JOIN etl.business_calendar AS ca ON ca.day = a.transaction_date
   WHERE abs(cm.business_day_index - ca.business_day_index) <= 3
 ),
-amex_choice AS (
-  SELECT *, row_number() OVER (PARTITION BY amex_row ORDER BY day_gap, monarch_row) AS amex_rank
+near_best1 AS (
+  SELECT monarch_row, amex_row, day_gap,
+    row_number() OVER (PARTITION BY amex_row ORDER BY day_gap, monarch_row) AS amex_rank,
+    row_number() OVER (PARTITION BY monarch_row ORDER BY day_gap, amex_row) AS monarch_rank
   FROM near_candidates
 ),
-monarch_choice AS (
-  SELECT *, row_number() OVER (PARTITION BY monarch_row ORDER BY day_gap, amex_row) AS monarch_rank
-  FROM amex_choice
-  WHERE amex_rank = 1
+near_round1 AS (
+  SELECT monarch_row, amex_row FROM near_best1 WHERE amex_rank = 1 AND monarch_rank = 1
+),
+near_edges2 AS (
+  SELECT * FROM near_candidates
+  WHERE monarch_row NOT IN (SELECT monarch_row FROM near_round1) AND amex_row NOT IN (SELECT amex_row FROM near_round1)
+),
+near_best2 AS (
+  SELECT monarch_row, amex_row, day_gap,
+    row_number() OVER (PARTITION BY amex_row ORDER BY day_gap, monarch_row) AS amex_rank,
+    row_number() OVER (PARTITION BY monarch_row ORDER BY day_gap, amex_row) AS monarch_rank
+  FROM near_edges2
+),
+near_round2 AS (
+  SELECT monarch_row, amex_row FROM near_best2 WHERE amex_rank = 1 AND monarch_rank = 1
+),
+near_edges3 AS (
+  SELECT * FROM near_edges2
+  WHERE monarch_row NOT IN (SELECT monarch_row FROM near_round2) AND amex_row NOT IN (SELECT amex_row FROM near_round2)
+),
+near_best3 AS (
+  SELECT monarch_row, amex_row, day_gap,
+    row_number() OVER (PARTITION BY amex_row ORDER BY day_gap, monarch_row) AS amex_rank,
+    row_number() OVER (PARTITION BY monarch_row ORDER BY day_gap, amex_row) AS monarch_rank
+  FROM near_edges3
+),
+near_round3 AS (
+  SELECT monarch_row, amex_row FROM near_best3 WHERE amex_rank = 1 AND monarch_rank = 1
+),
+near_edges4 AS (
+  SELECT * FROM near_edges3
+  WHERE monarch_row NOT IN (SELECT monarch_row FROM near_round3) AND amex_row NOT IN (SELECT amex_row FROM near_round3)
+),
+near_best4 AS (
+  SELECT monarch_row, amex_row, day_gap,
+    row_number() OVER (PARTITION BY amex_row ORDER BY day_gap, monarch_row) AS amex_rank,
+    row_number() OVER (PARTITION BY monarch_row ORDER BY day_gap, amex_row) AS monarch_rank
+  FROM near_edges4
+),
+near_round4 AS (
+  SELECT monarch_row, amex_row FROM near_best4 WHERE amex_rank = 1 AND monarch_rank = 1
+),
+near_edges5 AS (
+  SELECT * FROM near_edges4
+  WHERE monarch_row NOT IN (SELECT monarch_row FROM near_round4) AND amex_row NOT IN (SELECT amex_row FROM near_round4)
+),
+near_best5 AS (
+  SELECT monarch_row, amex_row, day_gap,
+    row_number() OVER (PARTITION BY amex_row ORDER BY day_gap, monarch_row) AS amex_rank,
+    row_number() OVER (PARTITION BY monarch_row ORDER BY day_gap, amex_row) AS monarch_rank
+  FROM near_edges5
+),
+near_round5 AS (
+  SELECT monarch_row, amex_row FROM near_best5 WHERE amex_rank = 1 AND monarch_rank = 1
 ),
 near_pairs AS (
-  SELECT monarch_row, amex_row, 'near_date' AS pair_method
-  FROM monarch_choice
-  WHERE monarch_rank = 1
+  SELECT monarch_row, amex_row, 'near_date' AS pair_method FROM near_round1
+  UNION ALL
+  SELECT monarch_row, amex_row, 'near_date' FROM near_round2
+  UNION ALL
+  SELECT monarch_row, amex_row, 'near_date' FROM near_round3
+  UNION ALL
+  SELECT monarch_row, amex_row, 'near_date' FROM near_round4
+  UNION ALL
+  SELECT monarch_row, amex_row, 'near_date' FROM near_round5
 ),
 pairs AS (
   SELECT * FROM same_date_pairs
