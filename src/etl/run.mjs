@@ -104,6 +104,14 @@ async function createCategoryMap(databasePath) {
       decision_model VARCHAR,
       review_required BOOLEAN
     )`);
+    // Sprint 17's refund model reads this table; this runner never fills it (it goes with the
+    // Python controller), but SQLMesh plans every model in the project, so it must exist.
+    await connection.run(`CREATE TABLE etl__dev.transfer_judgment (
+      payee_key VARCHAR,
+      payee VARCHAR,
+      decision VARCHAR,
+      probability DOUBLE
+    )`);
   });
 }
 

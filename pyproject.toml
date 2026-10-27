@@ -7,6 +7,7 @@ dependencies = [
     "holidays==0.107",
     "mcp==2.3.0",
     "sqlmesh[duckdb]==0.236.3",
+    "typesafe-sdk==0.7.5",
 ]
 
 [tool.uv]

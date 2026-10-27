@@ -4,7 +4,7 @@
 * **Author**: Trin (*qa)
 * **Date**: 2026-10-27
 * **Branch**: `sprint-17`
-* **Status**: Phase 1 and Phase 2 UAT passed; later phases not yet run
+* **Status**: Phases 1 to 3 UAT passed; later phases not yet run
 
 ## 1. Scope
 
@@ -61,4 +61,44 @@
 
 * **Phase 2 UAT verdict:** **PASSED**. No defects. Finding recorded: only 60 pairs match on statement text (Monarch's `Original Statement` rarely equals Amex's description exactly), so most pairs rely on being the only candidate in their date and amount group; it does not change counts but weakens the exact-first rule for busy days.
 
-*Self-check: rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A (phases 1 and 2; the plan grows with each phase).*
+## 4. Phase 3: transfers and refunds (UND-51, UND-52)
+
+### `UAT-UND-51-01` Transfer legs pair one-to-one on business days and both are kept
+* **Story/AC:** UND-51 AC 1, 5, 6.
+* **Command:** `bobp make test-etl` (`test_transfer_pairs.yaml`, 8 cases, `test_business_calendar.yaml`).
+* **Expected:** a Ridgewood debit and the card's credit pair and both rows stay; two same-amount payments in a week pair one-to-one; a Friday payment landing Monday, or the Tuesday after a Monday holiday, is one business day; legs more than three business days apart, or in one account, do not pair; a refund is never a transfer; a merchant whose name contains "payment" is not a candidate.
+* **Result:** Pass. 8 transfer cases and the calendar case pass (25 model tests in all).
+
+### `UAT-UND-51-02` Unpaired candidates are judged by payee, Venmo and Zelle are spending
+* **Story/AC:** UND-51 AC 3, 4.
+* **Command:** `bobp make test-py` (`test_transfers.py`, a Jev double).
+* **Expected:** one request per distinct payee; Venmo and Zelle judged as spending, a savings-bank payee as an external transfer, an unsure payee goes to review; Jev sees the payee, the owner's account names without numbers and the payment counts, never Monarch's category label; Jev unreachable stops the stage naming it.
+* **Result:** Pass. 5 tests: decisions for 4 distinct payees from 6 records with 4 requests, no account number or category in the state, error message names "transfer payees".
+
+### `UAT-UND-51-03` Real-file transfer counts (fresh exports, counts only)
+* **Story/AC:** UND-51 AC 3, 4.
+* **Command:** hydrate, detect, run SQLMesh through `refund_candidates`, query counts, delete the run.
+* **Expected:** every leg is used at most once; the unpaired candidates are the ones Jev will judge.
+* **Result:** Pass. 155 transfer candidates: 40 paired (20 pairs, 24 at gap 0 and 16 at gap 1 business day, all one-to-one), 115 unpaired, across 25 distinct payees (Venmo 59 records, Bank Transfer 18, Ridgewood Savings Bank 7, Zelle 6). That is 25 Jev requests. Live Jev decisions are not run in this phase (owner's go-ahead needed); the owner checks the final Venmo/Zelle outcome on the acceptance run.
+
+### `UAT-UND-52-01` Refunds link to their original, or are marked
+* **Story/AC:** UND-52 AC 1, 3, 4.
+* **Command:** `bobp make test-etl` (`test_refund_candidates.yaml`, 4 cases).
+* **Expected:** one earlier same-merchant charge at least the refund's links without asking; several are listed most recent first with the full count (five shown); none is marked `no_original`; a later-dated charge, a smaller charge, a transfer leg and income are not offered or counted as refunds.
+* **Result:** Pass.
+
+### `UAT-UND-52-02` Jev chooses among several originals, never off the list
+* **Story/AC:** UND-52 AC 2.
+* **Command:** `bobp make test-py` (`test_refunds.py`, a Jev double).
+* **Expected:** only refunds with several originals are asked; the choice and its confidence are kept; an answer that is not offered links nothing; one original or none asks nothing; Jev unreachable stops the stage naming it; two identical charges get distinct option names.
+* **Result:** Pass. 5 tests. Real files: 65 refunds need a choice (65 requests), 27 link directly, 18 have no original.
+
+### `UAT-UND-52-03` Jev client behaviour
+* **Story/AC:** supports UND-52 AC 2 and UND-51 AC 3.
+* **Command:** `bobp make test-py` (`test_jev.py`, a fake SDK client).
+* **Expected:** a Choice returns the option, its confidence and every probability; a Noul returns the probability of yes; no key is refused naming `TYPESAFE_API_KEY`; an unreachable service is an error, not an answer.
+* **Result:** Pass. 4 tests.
+
+* **Phase 3 UAT verdict:** **PASSED** for the SQL and the Jev stages with doubles. Open for the acceptance run: the live Jev outcome on the real payees and refunds (needs the owner's go-ahead and key), and persistence of the decision rows, which belongs to the controller in Phase 5.
+
+*Self-check: rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A (phases 1 to 3; the plan grows with each phase).*

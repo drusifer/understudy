@@ -36,8 +36,17 @@ WITH records AS (
     AND transaction_date IS NOT NULL
     AND amount IS NOT NULL
 ),
+-- Paired transfer legs, and unpaired candidates whose payee Jev judged an external transfer
+-- (etl__dev.transfer_judgment), are not spending, so they are neither refunds nor charges.
+-- A payee judged spending (Venmo, Zelle) or left for review stays an ordinary record.
 plain AS (
-  SELECT * FROM records WHERE record_id NOT IN (SELECT record_id FROM etl.transfer_pairs)
+  SELECT * FROM records
+  WHERE record_id NOT IN (SELECT record_id FROM etl.transfer_pairs WHERE transfer_status = 'paired')
+    AND NOT (
+      record_id IN (SELECT record_id FROM etl.transfer_pairs WHERE transfer_status = 'unpaired')
+      AND regexp_replace(lower(trim(merchant)), '\s+', ' ', 'g')
+        IN (SELECT payee_key FROM etl__dev.transfer_judgment WHERE decision = 'external_transfer')
+    )
 ),
 refunds AS (
   SELECT * FROM plain

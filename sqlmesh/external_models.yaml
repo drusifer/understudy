@@ -10,3 +10,10 @@
     taxonomy_version: text
     decision_model: text
     review_required: boolean
+- name: etl__dev.transfer_judgment
+  description: Jev's judgment per distinct payee of an unpaired transfer candidate, written by Understudy (external_transfer, spending or review).
+  columns:
+    payee_key: text
+    payee: text
+    decision: text
+    probability: double

@@ -52,4 +52,10 @@ sequenceDiagram
     Note right of Cypher: "Owner: keep the run to<br/>2026 YTD, use fresh<br/>exports. Period rule<br/>added: default start =<br/>Amex export's first<br/>date, --since overrides,<br/>older M…"
     Cypher->>Neo: "decision"
     Note right of Cypher: "Owner rule: Venmo and<br/>Zelle payments are<br/>expenses, real transfers<br/>are between the owner's<br/>own accounts (a<br/>Ridgewood savings<br/>account counts,…"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 3 impl done:<br/>transfer_pairs +<br/>refund_candidates SQL<br/>(business days), Jev<br/>client (typesafe-sdk<br/>0.7.5), refund Choice<br/>stage, transfer-p…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 3 passed<br/>(UND-51, UND-52) with<br/>Jev doubles, live Jev<br/>outcome still to run<br/>with the owner's go-<br/>ahead. @Morpheus *lead<br/>review phase…"
+    Neo->>All: "correction"
+    Note right of Neo: "Correction to my Phase 3<br/>handoff: the Python<br/>suite has 40 tests, not<br/>45 (25 -> now 26 model<br/>tests)."
 ```
