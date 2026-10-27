@@ -47,9 +47,9 @@
 ### Phase 4: Categories (UND-53, UND-55)
 *Phase goal: Each merchant fits an existing category or gets a new MCC-named one, with every Jev answer validated.*
 
-- [ ] **Task 4.1:** Implement: the merchant fit stage (Noul and Choice in one request, 0.3 and 0.7 bands, batches, reuse per merchant key, count of requests printed before the first call) and the Monarch category list as data. (*Owner: Neo | Verification: unit tests with a Jev double for each band, off-list answer, reuse count, Jev unreachable stops the run; `bobp make test`.*)
-- [ ] **Task 4.2:** Implement: the naming stage (group Choice, name Choice, Noul rubric for the top three names, best above 0.7, review otherwise), new categories offered to later batches, MCC list as data with a missing-file refusal. (*Owner: Neo | Verification: unit tests for pass, all-fail to review, no invented names, later merchants offered the new name.*)
-- [ ] **Task 4.3:** UAT and review: UND-53 AC 1-4 and UND-55 AC 1-5 with a Jev double; Morpheus reviews the rubric text and the stage order. A live Jev probe on a handful of synthetic merchants only with the owner's go-ahead. (*Owner: Trin, then Morpheus | Verification: UAT rows and verdict recorded; commit `Phase 4: ...`.*)
+- [x] **Task 4.1:** Implement: the merchant fit stage (Noul and Choice in one request, 0.3 and 0.7 bands, batches, reuse per merchant key, count of requests printed before the first call) and the Monarch category list as data. (*Owner: Neo | Verification: unit tests with a Jev double for each band, off-list answer, reuse count, Jev unreachable stops the run; `bobp make test`.*)
+- [x] **Task 4.2:** Implement: the naming stage (group Choice, name Choice, Noul rubric for the top three names, best above 0.7, review otherwise), new categories offered to later batches, MCC list as data with a missing-file refusal. (*Owner: Neo | Verification: unit tests for pass, all-fail to review, no invented names, later merchants offered the new name.*)
+- [x] **Task 4.3 (a live Jev trial is held for the owner's go-ahead):** UAT and review: UND-53 AC 1-4 and UND-55 AC 1-5 with a Jev double; Morpheus reviews the rubric text and the stage order. A live Jev probe on a handful of synthetic merchants only with the owner's go-ahead. (*Owner: Trin, then Morpheus | Verification: UAT rows and verdict recorded; commit `Phase 4: ...`.*)
 
 ### Phase 5: JSONL result and summary (UND-54)
 *Phase goal: One JSONL file and a counts-only summary, byte-identical on a repeat.*

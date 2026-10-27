@@ -58,4 +58,10 @@ sequenceDiagram
     Note right of Trin: "UAT phase 3 passed<br/>(UND-51, UND-52) with<br/>Jev doubles, live Jev<br/>outcome still to run<br/>with the owner's go-<br/>ahead. @Morpheus *lead<br/>review phase…"
     Neo->>All: "correction"
     Note right of Neo: "Correction to my Phase 3<br/>handoff: the Python<br/>suite has 40 tests, not<br/>45 (25 -> now 26 model<br/>tests)."
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 4 impl done:<br/>offered_categories +<br/>merchant_candidates SQL,<br/>MCC list (iso18245, 13<br/>groups/280 names),<br/>placement stage<br/>(Noul+Choice per…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 4 passed<br/>(UND-53, UND-55) with<br/>Jev doubles. Review<br/>found+fixed: a Jev<br/>failure let queued<br/>merchants still be sent,<br/>shared GatedJev…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 4 review passed.<br/>Category stage matches<br/>ARCH (validated answers,<br/>sorted order, no<br/>invented names, no<br/>Monarch labels in Jev's<br/>state).…"
 ```

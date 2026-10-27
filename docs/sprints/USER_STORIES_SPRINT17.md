@@ -94,10 +94,10 @@ When this sprint is done, the owner can point understudy at their Monarch and Am
 **Points:** 5
 **Depends on:** UND-49
 
-**As the** owner, **I want** each merchant placed in one of my 180 Monarch categories when one fits, **so that** most of the result is categorised without me labelling merchants one at a time.
+**As the** owner, **I want** each merchant placed in one of my Monarch categories when one fits, **so that** most of the result is categorised without me labelling merchants one at a time.
 
 ### Acceptance Criteria
-1. For each distinct merchant (the merchant key above), Jev is asked whether it fits any of the 180 existing Monarch categories. An answer above 0.7 means it fits; below 0.3 means it does not fit and the merchant goes to UND-55; between the two it goes to the review list.
+1. For each distinct merchant (the merchant key above), Jev is asked whether it fits any of the offered categories: the Monarch labels in use in the run's period, without labels about moving money ("transfer", "payment") and without the Amex-upload style ("Restaurant-Restaurant"); on the 2026 files that is 87 categories (the earlier "180" counted the whole old export, which includes the Amex-style names). Jev sees the merchant's name, its statement texts and a few amounts, never Monarch's own label for the row. An answer above 0.7 means it fits; below 0.3 means it does not fit and the merchant goes to UND-55; between the two it goes to the review list.
 2. A merchant that fits is placed in the one existing category Jev chooses; its records show the category and Jev's confidence.
 3. Jev is asked once per distinct merchant and the answer is reused for every row with that merchant; the summary says how many Jev decisions were made and how many were reused.
 4. If Jev cannot be reached, the run stops at that stage, says so, and writes no result.
@@ -112,9 +112,9 @@ When this sprint is done, the owner can point understudy at their Monarch and Am
 
 ### Acceptance Criteria
 1. For a merchant UND-53 marked as not fitting, Jev chooses a group and then a name from the MCC (ISO 18245) description list; Jev can choose only names on that list.
-2. For each candidate name, Jev answers a yes or no question judged against a written naming rubric (names what is bought, is a common phrase, differs from the 180). The merchant is given the best name whose answer is above 0.7; if none passes, the merchant goes to the review list with no new category.
+2. For each candidate name, Jev answers a yes or no question judged against a written naming rubric (names what is bought, is a common phrase, differs from the offered categories). The merchant is given the best name whose answer is above 0.7; if none passes, the merchant goes to the review list with no new category.
 3. Once a new category is named it is available to every later merchant in the run, and the summary lists the new categories created and how many merchants are in each.
-4. Every category name in the result is either one of the 180 or one from the MCC list; the run never makes up a name.
+4. Every category name in the result is either one of the offered categories or one from the MCC list; the run never makes up a name.
 5. If the MCC list cannot be read, the run stops before any naming and says which file is missing; nothing is written.
 
 ---
@@ -141,7 +141,7 @@ When this sprint is done, the owner can point understudy at their Monarch and Am
 - Writing categories back to Monarch, and promoting learned categories or merchant rules for future runs.
 - Amex history before 2026-01-01 (the export does not have it) and the Monarch card history before it, which came from older Amex uploads with the opposite sign; the period rule leaves it out.
 - Checking for duplicates inside Monarch (older uploads against synced rows): outside the period.
-- Letting Jev write category names: it chooses only from the 180 and the MCC list.
+- Letting Jev write category names: it chooses only from the offered categories and the MCC list.
 
 ## Open Questions
 1. **Jev call limit.** Is there a number of Jev decisions per run that should stop it? Owner. Assumed: the start of the run shows how many distinct merchants it will ask about, and there is no hard cap.

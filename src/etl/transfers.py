@@ -7,7 +7,7 @@ it (owner, 2026-10-27). That is a judgment about the payee, so Jev makes it, onc
 
 import asyncio
 
-from src.etl.jev import Jev, JevError
+from src.etl.jev import GatedJev, Jev, JevError
 
 CONCURRENCY = 8
 EXTERNAL_ABOVE = 0.7
@@ -33,7 +33,7 @@ def _decision(probability: float) -> str:
     return "review"
 
 
-async def _judge(payee: str, records: list[dict], owner_accounts: list[str], jev: Jev, gate: asyncio.Semaphore) -> dict:
+async def _judge(payee: str, records: list[dict], owner_accounts: list[str], jev: Jev) -> dict:
     state = {
         "payee": payee,
         "owner_accounts": owner_accounts,
@@ -43,8 +43,7 @@ async def _judge(payee: str, records: list[dict], owner_accounts: list[str], jev
             "example_amounts": [r["amount"] for r in records[:3]],
         },
     }
-    async with gate:
-        probability = await jev.decide(state=state, instructions=INSTRUCTIONS, yes=YES, no=NO)
+    probability = await jev.decide(state=state, instructions=INSTRUCTIONS, yes=YES, no=NO)
     return {
         "payee_key": _key(payee),
         "payee": payee,
@@ -64,9 +63,9 @@ async def judge_payees(rows: list[dict], owner_accounts: list[str], jev: Jev) ->
     grouped: dict[str, list[dict]] = {}
     for row in rows:
         grouped.setdefault(_key(row["merchant"]), []).append(row)
-    gate = asyncio.Semaphore(CONCURRENCY)
+    gated = GatedJev(jev, CONCURRENCY)
     tasks = [
-        asyncio.ensure_future(_judge(records[0]["merchant"].strip(), records, owner_accounts, jev, gate))
+        asyncio.ensure_future(_judge(records[0]["merchant"].strip(), records, owner_accounts, gated))
         for _, records in sorted(grouped.items())
     ]
     try:

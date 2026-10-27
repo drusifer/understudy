@@ -2,7 +2,7 @@
 
 import asyncio
 
-from src.etl.jev import Jev, JevError
+from src.etl.jev import GatedJev, Jev, JevError
 
 CONCURRENCY = 8
 INSTRUCTIONS = (
@@ -31,7 +31,7 @@ def _options(candidates: list[dict]) -> dict[str, dict]:
     return named
 
 
-async def _choose(refund_id: str, rows: list[dict], jev: Jev, gate: asyncio.Semaphore) -> dict:
+async def _choose(refund_id: str, rows: list[dict], jev: Jev) -> dict:
     named = _options(rows)
     first = rows[0]
     state = {"refund": {"merchant": first["merchant"], "date": str(first["refund_date"]), "amount": first["refund_amount"]}}
@@ -39,8 +39,7 @@ async def _choose(refund_id: str, rows: list[dict], jev: Jev, gate: asyncio.Sema
         name: f"The charge of {abs(candidate['candidate_amount']):.2f} on {candidate['candidate_date']}."
         for name, candidate in named.items()
     }
-    async with gate:
-        chosen = await jev.choose(state=state, instructions=INSTRUCTIONS, options=options)
+    chosen = await jev.choose(state=state, instructions=INSTRUCTIONS, options=options)
     if chosen.option not in named:
         return {"refund_id": refund_id, "candidate_id": None, "status": "off_list", "confidence": None}
     return {
@@ -58,13 +57,13 @@ async def decide_refunds(rows: list[dict], jev: Jev) -> list[dict]:
     none is marked, and one with several is put to Jev as a Choice among the listed originals; an
     answer that is not one of them links nothing.
     """
-    gate = asyncio.Semaphore(CONCURRENCY)
+    gated = GatedJev(jev, CONCURRENCY)
     grouped = _group(rows)
     tasks: dict[str, asyncio.Task] = {}
     try:
         for refund_id, candidates in grouped.items():
             if candidates[0]["link_status"] == "needs_choice":
-                tasks[refund_id] = asyncio.ensure_future(_choose(refund_id, candidates, jev, gate))
+                tasks[refund_id] = asyncio.ensure_future(_choose(refund_id, candidates, gated))
         results = {refund_id: await task for refund_id, task in tasks.items()}
     except JevError as error:
         for task in tasks.values():

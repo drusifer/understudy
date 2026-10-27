@@ -4,7 +4,7 @@
 * **Author**: Trin (*qa)
 * **Date**: 2026-10-27
 * **Branch**: `sprint-17`
-* **Status**: Phases 1 to 3 UAT passed; later phases not yet run
+* **Status**: Phases 1 to 4 UAT passed; later phases not yet run
 
 ## 1. Scope
 
@@ -101,4 +101,31 @@
 
 * **Phase 3 UAT verdict:** **PASSED** for the SQL and the Jev stages with doubles. Open for the acceptance run: the live Jev outcome on the real payees and refunds (needs the owner's go-ahead and key), and persistence of the decision rows, which belongs to the controller in Phase 5.
 
-*Self-check: rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A (phases 1 to 3; the plan grows with each phase).*
+## 5. Phase 4: categories (UND-53, UND-55)
+
+### `UAT-UND-53-01` What Jev may offer, and which merchants it is asked about
+* **Story/AC:** UND-53 AC 1.
+* **Command:** `bobp make test-etl` (`test_category_inputs.yaml`).
+* **Expected:** the offered categories are the Monarch labels in use, without "transfer"/"payment" labels and without Amex-upload-style labels; the merchants to place are the distinct merchants of spending records, with paired transfer legs and external-transfer payees left out, each with a record count, up to three amounts and up to three statement texts.
+* **Result:** Pass. 28 model tests in all (2 new here).
+
+### `UAT-UND-53-02` Fit, choose, review, reuse
+* **Story/AC:** UND-53 AC 1 to 4.
+* **Command:** `bobp make test-py` (`test_categorize.py`, `test_jev.py`, a Jev double).
+* **Expected:** one request per distinct merchant asking a Noul and a Choice together; above 0.7 places the merchant in the Choice's category with the fit probability and confidence; between 0.3 and 0.7, or an answer that is not offered, goes to review (a suggestion is kept for the owner); the request count is announced before the first request; a Jev failure stops the stage naming it and nothing is placed.
+* **Result:** Pass. 59 Python tests in all (15 new for categorize, the batched client and the shared request wrapper). Review found that after a Jev failure the queued merchants could still be sent (16 requests against a limit of 8 in a test with 40 merchants); a shared wrapper (`GatedJev`: concurrency limit, request counter, stop after the first failure) now serves the refund, transfer and category stages, with its own tests.
+
+### `UAT-UND-55-01` A new category is named from the MCC list, never made up
+* **Story/AC:** UND-55 AC 1 to 5.
+* **Command:** `bobp make test-py` (`test_categorize.py`, `test_mcc.py`).
+* **Expected:** a merchant that fits nothing is named by a group Choice, a name Choice and a rubric Noul on the top three names; the best above 0.7 becomes a new category, otherwise the merchant goes to review; a new category is offered to later merchants and shared (merchant and record counts kept); every category in the result is an offered one or an MCC name; an unreadable MCC list stops the run before naming.
+* **Result:** Pass. Venmo and Zelle (tested) share one MCC-named category with 65 records; a merchant whose names all fail the rubric goes to review and creates nothing; a made-up answer is never placed. The MCC list is 13 groups and 280 names (largest group 58) from the MIT `iso18245` package.
+
+### `UAT-UND-53-03` Real-file workload (fresh exports, counts only)
+* **Story/AC:** UND-53 AC 3, UND-55 (cost).
+* **Command:** hydrate, detect, run SQLMesh through `merchant_candidates` and `offered_categories`, query counts, delete the run.
+* **Result:** Pass. 87 offered categories (4,906 labelled Monarch records); 819 distinct merchants covering 5,034 records (475 with one record, 35 with more than 20). That is 819 fit requests plus 3 per merchant needing naming. No live Jev call was made; the owner's go-ahead and key are needed, and the quality of the placements (and whether Venmo/Zelle land in the wire-transfer name) is for the owner to judge on the acceptance run.
+
+* **Phase 4 UAT verdict:** **PASSED** for the SQL inputs and the stages with doubles. Open: a live Jev trial on a small sample; persistence of the decision rows (controller, Phase 5).
+
+*Self-check: rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A (phases 1 to 4; the plan grows with each phase).*

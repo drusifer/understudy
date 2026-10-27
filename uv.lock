@@ -331,6 +331,15 @@ wheels = [
 ]
 
 [[package]]
+name = "importlib-resources"
+version = "5.13.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a5/f1/8711c49ffd121083007a24c1bff0d324c9ff621d4fdf8b4ffcb8d9e60330/importlib_resources-5.13.0.tar.gz", hash = "sha256:82d5c6cca930697dbbd86c93333bb2c2e72861d4789a11c2662b933e5ad2b528", size = 36550, upload-time = "2023-07-07T16:21:00.171Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7a/68/bd9dd6bbf06772c7accce77d0354d783333fbe712a60b08fc13540c05422/importlib_resources-5.13.0-py3-none-any.whl", hash = "sha256:9f7bd0c97b79972a6cce36a366356d16d5e13b09679c11a58f1014bfdf8e64b2", size = 32912, upload-time = "2023-07-07T16:20:58.128Z" },
+]
+
+[[package]]
 name = "ipython"
 version = "9.17.1"
 source = { registry = "https://pypi.org/simple" }
@@ -377,6 +386,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c9/7c/6db60eddf38547353b06d57941f5eee22a990640ce30479fd71a810507f2/ipywidgets-8.1.9.tar.gz", hash = "sha256:bcccba38a6ec3253f7a39c943cea5b9ad01999ce071396171adbc51c6a6a8613", size = 117252, upload-time = "2026-08-18T08:54:24.123Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c3/55/298e9b3b864a198234997e87a1471c1b17d7f3546ace6d18fb5cf1ce24b2/ipywidgets-8.1.9-py3-none-any.whl", hash = "sha256:f2b8cbcaae10252b809fbe4d7470db75c09b769a32cbf816d20e5ca6d3c5a79d", size = 140101, upload-time = "2026-08-18T08:54:22.339Z" },
+]
+
+[[package]]
+name = "iso18245"
+version = "1.4.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "importlib-resources" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5c/de/e8095ac5ac026e4ad23c07d1cb35bc1495051d2ae32c863b246d43e1d9a1/iso18245-1.4.1.tar.gz", hash = "sha256:1ee69d2b6b6334e29d9131371970a171649a969fe319ae7b09afcfc2ecb02720", size = 50749, upload-time = "2025-09-03T09:23:07.299Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cd/5e/ef3e709668014b9ebabb86d05f4848f96ffac406e202c7207b773b3ccc2f/iso18245-1.4.1-py3-none-any.whl", hash = "sha256:07fcac02b22044e5f188a7683684f2166900a36d39119eb6ca0f4ef5f0df5772", size = 66746, upload-time = "2025-09-03T09:23:05.833Z" },
 ]
 
 [[package]]
@@ -1126,6 +1147,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "duckdb" },
     { name = "holidays" },
+    { name = "iso18245" },
     { name = "mcp" },
     { name = "sqlmesh" },
     { name = "typesafe-sdk" },
@@ -1135,6 +1157,7 @@ dependencies = [
 requires-dist = [
     { name = "duckdb", specifier = "==1.5.6" },
     { name = "holidays", specifier = "==0.107" },
+    { name = "iso18245", specifier = "==1.4.1" },
     { name = "mcp", specifier = "==2.3.0" },
     { name = "sqlmesh", extras = ["duckdb"], specifier = "==0.236.3" },
     { name = "typesafe-sdk", specifier = "==0.7.5" },

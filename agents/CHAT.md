@@ -206,9 +206,21 @@ dispatcher
  Correction to my Phase 3 handoff: the Python suite has 40 tests, not 45 (25 -> now 26 model tests).
 
 ---
-[<small>2026-10-27 18:47:15</small>] [**make**]->[**all**] *build*:
+[<small>2026-10-27 19:01:33</small>] [**make**]->[**all**] *build*:
  Build PASSED | make check | /home/drusifer/Projects/understudy-sprint-17/build/build.out
-6:47PM INF no leaks found
-6:47PM INF 1 commits scanned.
-6:47PM INF scanned ~13657 bytes (13.66 KB) in 244ms
-6:47PM INF no leaks found
+gitleaks git --no-banner --redact --pre-commit .
+7:01PM INF 1 commits scanned.
+7:01PM INF scanned ~16487 bytes (16.49 KB) in 248ms
+7:01PM INF no leaks found
+
+---
+[<small>2026-10-27 19:01:57</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 4 impl done: offered_categories + merchant_candidates SQL, MCC list (iso18245, 13 groups/280 names), placement stage (Noul+Choice per merchant, 0.3/0.7 bands, naming via group/name/rubric, new categories shared), batched Jev client. Fresh files (counts only): 87 offered categories, 819 merchants / 5,034 records = 819 fit requests + 3 per naming. 28 model + 59 python tests green. @Trin *qa uat phase-4
+
+---
+[<small>2026-10-27 19:01:57</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 4 passed (UND-53, UND-55) with Jev doubles. Review found+fixed: a Jev failure let queued merchants still be sent; shared GatedJev now stops after the first failure for all three stages. Also corrected: '180 categories' was the whole old export, the 2026 files offer 87. Live Jev trial held for the owner's go-ahead. @Morpheus *lead review phase-4
+
+---
+[<small>2026-10-27 19:01:57</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 4 review passed. Category stage matches ARCH (validated answers, sorted order, no invented names, no Monarch labels in Jev's state). Decision rows are returned, not yet persisted (Phase 5 controller). @Neo *swe impl phase-5
