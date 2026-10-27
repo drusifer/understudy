@@ -31,9 +31,9 @@
 ### Phase 2: One record per purchase (UND-50)
 *Phase goal: A purchase in both exports becomes one record; the Amex account is detected or given.*
 
-- [ ] **Task 2.1:** Implement: `purchase_pairs` SQL model (sign-flipped, one-to-one inside a date-and-amount group, exact merchant text first), Amex-account auto-detection with `--amex-account` override and its refusals, summary counts. (*Owner: Neo | Verification: SQLMesh model tests for repeated amounts (two $4.50), one-sided rows, other-account coincidences; controller tests for detection tie and none; `bobp make test`.*)
-- [ ] **Task 2.2:** UAT: UND-50 AC 1-5 on synthetic data; the owner's real-file counts (4,229 of 4,321; 92 unmatched) checked by the owner on their files. (*Owner: Trin | Verification: UAT rows for `UND-50`; the real-file counts are an owner-run acceptance step, not committed.*)
-- [ ] **Task 2.3:** Review: pairing rule against ADR-0039, determinism, no data in fixtures. (*Owner: Morpheus | Verification: verdict recorded; commit `Phase 2: ...`.*)
+- [x] **Task 2.1:** Implement: `purchase_pairs` SQL model (sign-flipped, one-to-one inside a date-and-amount group, exact merchant text first), Amex-account auto-detection with `--amex-account` override and its refusals, summary counts. (*Owner: Neo | Verification: SQLMesh model tests for repeated amounts (two $4.50), one-sided rows, other-account coincidences; controller tests for detection tie and none; `bobp make test`.*)
+- [x] **Task 2.2:** UAT: UND-50 AC 1-5 on synthetic data; the real-file counts (4,276 of 4,321 paired; 45 unmatched) measured locally by Trin, counts only. (*Owner: Trin | Verification: UAT rows for `UND-50`; the real-file counts are an owner-run acceptance step, not committed.*)
+- [x] **Task 2.3:** Review: pairing rule against ADR-0039, determinism, no data in fixtures. (*Owner: Morpheus | Verification: verdict recorded; commit `Phase 2: ...`.*)
 
 ### Phase 3: Transfers and refunds (UND-51, UND-52)
 *Phase goal: Transfer legs are paired and kept out of spending; refunds link to an original charge or are marked without one.*
@@ -60,6 +60,6 @@
 
 - [ ] **Task C.1:** Tank `*devops sdlc-check`: clean setup, `bobp make check`, SDLC record updated for any added Python packages. (*Owner: Tank | Verification: `bobp make distclean`, `bobp make install`, `bobp make check`; `docs/SDLC.md` records verification.*)
 - [ ] **Task C.2:** Oracle `*ora groom`: ADR-0038 and ADR-0039, USER_GUIDE ETL section, CHANGELOG, lessons, chat archive after launch. (*Owner: Oracle | Verification: artifact rubrics pass; `bobp chat-report --moniker SPRINT_17` after launch.*)
-- [ ] **Task C.3:** Smith `*user test`: end-to-end acceptance against `UAT_PLAN_SPRINT17.md`, with the owner's own run on the real files (the 4,229 and 92 counts). (*Owner: Smith | Verification: UAT rubric verdict and the owner's acceptance in `agents/CHAT.md`.*)
+- [ ] **Task C.3:** Smith `*user test`: end-to-end acceptance against `UAT_PLAN_SPRINT17.md`, with the owner's own run on the real files (the 4,276 and 45 counts). (*Owner: Smith | Verification: UAT rubric verdict and the owner's acceptance in `agents/CHAT.md`.*)
 - [ ] **Task C.4:** All personas post retrospectives and backlog items. (*Owner: All | Verification: each persona's retro in `agents/CHAT.md`.*)
 - [ ] **Task C.5:** Cypher `*pm launch`. (*Owner: Cypher | Verification: launch recorded in `agents/CHAT.md`; merge and push only when the owner asks.*)

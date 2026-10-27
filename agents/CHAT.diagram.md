@@ -40,4 +40,10 @@ sequenceDiagram
     Note right of Trin: "UAT phase 1 passed<br/>(UND-49 AC1-5). Review<br/>found+fixed one bug<br/>(f-string docstring left<br/>a tool undescribed).<br/>@Morpheus *lead review<br/>phase-1"
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "Phase 1 review passed:<br/>server contract,<br/>1000-row page limit,<br/>error messages, privacy<br/>match ARCH_SPRINT17,<br/>moved the date helper<br/>out of Spri…"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 2 impl done:<br/>purchase_pairs SQL<br/>(same-date exact/order +<br/>3-day pass), Amex-<br/>account detection with<br/>refusals. Real files<br/>(counts only):…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 2 passed<br/>(UND-50 AC1-5, account<br/>detection). Finding:<br/>only 60 pairs match on<br/>statement text, so<br/>exact-first matters<br/>little. @Morph…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 2 review passed:<br/>pairing rule matches<br/>ADR-0039 as amended,<br/>deterministic, one-to-<br/>one verified on real<br/>counts, no data in<br/>fixtures. No…"
 ```

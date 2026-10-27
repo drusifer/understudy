@@ -3,7 +3,7 @@
 *   **Total Points**: 29 (Tier 1)
 *   **Branch**: `sprint-17` (cut from `main` at the Sprint 16 merge, 5786fc8)
 *   **Source**: owner, 2026-10-17 to 2026-10-27, recorded in `agents/CHAT.md` and `agents/morpheus/state.md`: reproduce the household transaction-cleaning procedure with understudy, starting from a Monarch export and an Amex export that overlap.
-*   **Builds on**: Sprint 16 (`USER_STORIES_SPRINT16.md`). Its reconciliation matches only same-sign rows (26 matches on the owner's real files); these stories add the sign-flipped match (4,229 of 4,321 Amex rows), transfers, refunds and new category names.
+*   **Builds on**: Sprint 16 (`USER_STORIES_SPRINT16.md`). Its reconciliation matches only same-sign rows (26 matches on the owner's real files); these stories add the sign-flipped match (4,276 of 4,321 Amex rows, measured), transfers, refunds and new category names.
 *   **Platform**: the owner decided on 2026-10-27 that understudy moves to Python for all (`agents/cypher/platform_decision_2026-10-27.md`). The port is a separate epic; where these stories say "source server" and "sketch", the language they run in is for the architecture to settle.
 *   **Status**: Revised after Smith's Gate 1 rejection (2026-10-27): UND-53 split, UND-51 recognition rule stated, dependencies and merchant key added — awaiting re-review
 
@@ -14,7 +14,7 @@ When this sprint is done, the owner can point understudy at their Monarch and Am
 ## Assumptions made for the owner
 
 1. **Two sources only.** Monarch (14,522 rows, 2023-12-30 to 2026-10-17, six accounts) and Amex (4,321 rows, 2026-01-01 to 2026-10-16). Monarch rows for the other accounts (Ridgewood, Citi, Student Advantage and so on) are read and reconciled, but there is no export for them to merge with. If wrong: a third source needs its own source server, the same shape as the first two.
-2. **Match rule for the same purchase:** same date and same amount with the sign flipped (Amex charges are positive, Monarch's are negative). In the real files 4,229 of 4,321 Amex rows match this way. If wrong: Morpheus widens the rule (a day either side, or the statement text).
+2. **Match rule for the same purchase:** same amount with the sign flipped (Amex charges are positive, Monarch's are negative), on the same date first and then within three days. Measured in Phase 2 on the real files: 4,276 of 4,321 Amex rows pair this way (4,207 same date, 69 within three days); a first estimate of 4,229 had used a looser many-to-many count. If wrong: Morpheus changes the window or adds the statement text.
 3. **A transfer pairs on opposite amount in a different account within 3 days.** In the real files 43 of 70 rows Monarch labels "Credit Card Payment" pair this way. Monarch's own transfer labels are inconsistent ("Food & Dining: Credit Card Payment", "Transportation: Transfers"), so the label alone does not decide. If wrong: the window or the rule changes, the stories do not.
 4. **A refund with no findable original charge** (for example the purchase was before 2026-01-01) still counts against its merchant, without a link. If wrong: such refunds go to the review list instead.
 5. **One Jev decision per distinct merchant**, reused for every row of that merchant in the run, so cost follows the number of merchants, not rows. If wrong: cost grows with rows.
@@ -48,8 +48,8 @@ When this sprint is done, the owner can point understudy at their Monarch and Am
 **As the** owner, **I want** a purchase that appears in both exports to become one record, **so that** my spending is counted once.
 
 ### Acceptance Criteria
-1. An Amex row and a Monarch row on the Amex card with the same date and the same amount (signs opposite) become one record that carries both source rows.
-2. Against the real files, 4,229 of the 4,321 Amex rows are matched; the other 92 are listed as unmatched with their date, description and amount, and still appear once in the result.
+1. An Amex row and a Monarch row on the Amex card with the same date and the same amount (signs opposite) become one record that carries both source rows. A row left over after that pairs with a same-amount row one to three days apart (the two exports often post a charge a day or two apart), nearest date first; a same-date pair is never given up for a nearer-in-time one.
+2. Against the real files, 4,276 of the 4,321 Amex rows are matched (4,207 on the same date, 69 within three days); the other 45 are listed as unmatched with their date, description and amount, and still appear once in the result.
 3. Two real purchases with the same date and amount (two coffees at $4.50) stay two records: each source row is matched at most once, to one counterpart.
 4. A Monarch row that has no Amex counterpart (any other account, or an Amex row from before the export began) appears once, unchanged.
 5. Running the same files twice gives the same matches.

@@ -4,7 +4,7 @@
 * **Author**: Trin (*qa)
 * **Date**: 2026-10-27
 * **Branch**: `sprint-17`
-* **Status**: Phase 1 UAT passed; later phases not yet run
+* **Status**: Phase 1 and Phase 2 UAT passed; later phases not yet run
 
 ## 1. Scope
 
@@ -39,4 +39,26 @@
 
 * **Phase 1 UAT verdict:** **PASSED**. No defects. One bug was found in review and fixed before the gate (an f-string docstring that would have left the `read_transactions` tool without a description); a test now asserts both tools are described.
 
-*Self-check: rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A (Phase 1 only; the plan grows with each phase).*
+## 3. Phase 2: one record per purchase (UND-50)
+
+### `UAT-UND-50-01` Sign-flipped pairs keep both source rows; repeated amounts stay separate
+* **Story/AC:** UND-50 AC 1, 3, 4.
+* **Command:** `bobp make test-etl` (`sqlmesh/tests/test_purchase_pairs.yaml`, 6 cases) and `bobp make test-py` (`tests/python/test_pairing.py`, 6 cases).
+* **Expected:** a charge and its sign-flipped copy become one `paired` record carrying both source rows; two real $4.50 purchases on one day stay two records, paired by statement text; a coincidence in another account is not paired; unequal counts pair what they can; a same-date pair is never given up for a near-date one; a row posted a day or two apart pairs, nearest first; a row without a date is kept as `invalid_key`.
+* **Result:** Pass. 8 SQLMesh model tests (2 earlier + 6 new) and 6 account-detection tests; the near-date case failed before the third pass was written and passes after.
+
+### `UAT-UND-50-02` Real-file counts
+* **Story/AC:** UND-50 AC 2, 5.
+* **Command:** hydrate both real files into an ignored folder, detect the card, run SQLMesh for `etl.purchase_pairs`, query counts, delete the folder (counts only).
+* **Expected:** most Amex rows pair; the rest are listed single; no source row is used twice; records = Monarch rows + Amex rows − pairs.
+* **Result:** Pass. 14,567 records = 14,522 + 4,321 − 4,276. 4,276 of 4,321 Amex rows paired (60 by statement text and date, 4,147 by order within a date, 69 within three days); 45 Amex rows unpaired; no Monarch or Amex row used twice. The first run, with same-date pairing only, paired 4,207 and left 114; 95 of those 114 had a same-amount card row one to three days apart, which led to the third pass.
+
+### `UAT-UND-50-03` The card account is found, or the run says what to pass
+* **Story/AC:** ARCH_SPRINT17 section 6 (account detection) supporting UND-50 AC 1.
+* **Command:** `bobp make test-py` (`test_pairing.py`).
+* **Expected:** the account with the most sign-flipped matches is the card; no matches, a tie, an override matching nothing or two accounts is refused with "could not tell which Monarch account is the Amex card (candidates: ...); pass --amex-account <text>", account names shown without their digits.
+* **Result:** Pass. All refusals asserted, including that no account number appears in the message. On the real files the card was detected without an override.
+
+* **Phase 2 UAT verdict:** **PASSED**. No defects. Finding recorded: only 60 pairs match on statement text (Monarch's `Original Statement` rarely equals Amex's description exactly), so most pairs rely on being the only candidate in their date and amount group; it does not change counts but weakens the exact-first rule for busy days.
+
+*Self-check: rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A (phases 1 and 2; the plan grows with each phase).*

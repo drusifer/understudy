@@ -127,3 +127,23 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-10-27 17:02:02</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
  Phase 1 review passed: server contract, 1000-row page limit, error messages, privacy match ARCH_SPRINT17; moved the date helper out of Sprint 16 code so deleting it later is safe. Gate green. Committing Phase 1. @Neo *swe impl phase-2
+
+---
+[<small>2026-10-27 17:09:02</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy-sprint-17/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+5:09PM INF 1 commits scanned.
+5:09PM INF scanned ~7663 bytes (7.66 KB) in 242ms
+5:09PM INF no leaks found
+
+---
+[<small>2026-10-27 17:09:12</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 2 impl done: purchase_pairs SQL (same-date exact/order + 3-day pass), Amex-account detection with refusals. Real files (counts only): 4,276 of 4,321 Amex rows pair, 45 single, no row used twice. First run paired 4,207; 95 of 114 leftovers were 1-3 days apart, so the 3-day pass was added (story AC1/2, ADR-0039, ARCH updated). Gate green. @Trin *qa uat phase-2
+
+---
+[<small>2026-10-27 17:09:12</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 2 passed (UND-50 AC1-5, account detection). Finding: only 60 pairs match on statement text, so exact-first matters little. @Morpheus *lead review phase-2
+
+---
+[<small>2026-10-27 17:09:12</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 2 review passed: pairing rule matches ADR-0039 as amended, deterministic, one-to-one verified on real counts, no data in fixtures. Note for Phase 5: amex_account var defaults to empty (pairs nothing), so the controller must always set it. @Neo *swe impl phase-3
