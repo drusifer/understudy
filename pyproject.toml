@@ -4,6 +4,7 @@ version = "0.1.0"
 requires-python = "==3.12.15.*"
 dependencies = [
     "duckdb==1.5.6",
+    "mcp==2.3.0",
     "sqlmesh[duckdb]==0.236.3",
 ]
 

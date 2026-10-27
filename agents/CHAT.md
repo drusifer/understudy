@@ -62,3 +62,68 @@ To address all issues, run:
 npm audit fix
 
 Run `npm audit` for details.
+
+---
+[<small>2026-10-27 16:51:13</small>] [**Smith**]->[**Cypher**] *user reject*:
+ *user reject REASON: UND-53 (8 pts, 7 AC) hides two stories (place in existing category / name a new one); UND-51 AC1 'described as a payment or transfer' has no testable rule; dependencies and 'same merchant' undefined. rubric STORIES: OUT=A TEST=W FAIL=A SCOPE=A SIZE=W DESIGN=A | FIX: split UND-53; state the transfer-recognition rule and transfer-label counts; add Depends-on lines; define merchant key. @Cypher revise stories.
+
+---
+[<small>2026-10-27 16:51:55</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Cypher: stories revised per Smith's rejection (UND-53 split into 53+55, UND-51 rule + transfer-label counts, Depends-on lines, merchant key; 29 pts). @Smith *user review sprint 17
+
+---
+[<small>2026-10-27 16:51:55</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ *user approve. Sprint 17 stories re-reviewed: every cited fix present, 29 pts adds up, criteria testable. rubric STORIES: OUT=A TEST=A FAIL=A SCOPE=A SIZE=A DESIGN=A. Note for Morpheus: open questions (Jev call cap, 27 unpaired payments, scale, MCC licence) remain the owner's or yours. @Morpheus *lead arch sprint
+
+---
+[<small>2026-10-27 16:53:40</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Architecture complete (docs/sprints/ARCH_SPRINT17.md). SQL owns pairing/transfers/refunds; Python MCP source servers; Jev for refund originals, category fit+choice, MCC naming. No new language or make target. Phase 0 spike decides controller language (python-statemachine YAML, typesafe-sdk probabilities, mcp SDK, MCC licence). Self-check rubric ARCH: BOUND=A FLOW=A FAIL=A USER=A DECS=A FEAS=A. @Smith *user feedback arch sprint 17
+
+---
+[<small>2026-10-27 16:53:55</small>] [**Smith**]->[**Mouse**] *user approve*:
+ *user approve. Gate 2: arch reviewed; added the missing failure mode (Amex account not detectable or tied, with --amex-account refusal text) and flagged review.csv -> result.jsonl as a breaking change. rubric ARCH: BOUND=A FLOW=A FAIL=A USER=S DECS=A FEAS=A. Phase 0 spike must come first. @Mouse *sm plan sprint
+
+---
+[<small>2026-10-27 16:54:30</small>] [**Mouse**]->[**all**] *phase 0*:
+ *phase 0
+
+---
+[<small>2026-10-27 16:54:30</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint planned: Phase 0 spike, then 5 phases (UND-49 sources, 50 purchases, 51+52 transfers/refunds, 53+55 categories, 54 output) each impl/UAT/review, plus closeout. Self-check rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-10-27 16:54:39</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Sprint plan approved: phases are 1-3 tasks, each story mapped to a typed loop, Phase 0 gates the controller language. rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A. Phase 0 ready. @Neo *spike phase-0
+
+---
+[<small>2026-10-27 16:57:15</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 0 spike done (agents/morpheus/spike_sprint17.md). Q1 python-statemachine YAML runs stages+guards+failure (gap: no tags). Q2 typesafe-sdk returns probabilities per option. Q3 mcp 2.x pages 14.5k rows in 1.2s (pin version). Q4 MCC = MIT iso18245 pkg (932 codes, ~319 real in 14 groups). Decision: Python controller replaces Node ETL (ADR-0038/0039). @Neo *swe impl phase-1
+
+---
+[<small>2026-10-27 16:59:19</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-py | /home/drusifer/Projects/understudy-sprint-17/build/build.out
+................
+----------------------------------------------------------------------
+Ran 16 tests in 3.397s
+
+OK
+
+---
+[<small>2026-10-27 17:00:10</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 1 impl done: Python MCP source servers + hydration. 16 py tests pass; real files: Monarch 14,522 / Amex 4,321 records (counts only, snapshots deleted). @Trin *qa uat phase-1
+
+---
+[<small>2026-10-27 17:00:10</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 1 passed (UND-49 AC1-5). Review found+fixed one bug (f-string docstring left a tool undescribed). @Morpheus *lead review phase-1
+
+---
+[<small>2026-10-27 17:01:56</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy-sprint-17/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+5:01PM INF 1 commits scanned.
+5:01PM INF scanned ~67857 bytes (67.86 KB) in 260ms
+5:01PM INF no leaks found
+
+---
+[<small>2026-10-27 17:02:02</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 1 review passed: server contract, 1000-row page limit, error messages, privacy match ARCH_SPRINT17; moved the date helper out of Sprint 16 code so deleting it later is safe. Gate green. Committing Phase 1. @Neo *swe impl phase-2
