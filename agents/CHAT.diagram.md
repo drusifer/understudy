@@ -50,4 +50,6 @@ sequenceDiagram
     Note right of Cypher: "Checkpoint: Sprint 17<br/>phases 0-2 done and<br/>committed on sprint-17<br/>(not pushed). Stopped<br/>before Phase 3:<br/>Monarch's card account<br/>switches sign…"
     Cypher->>All: "decision"
     Note right of Cypher: "Owner: keep the run to<br/>2026 YTD, use fresh<br/>exports. Period rule<br/>added: default start =<br/>Amex export's first<br/>date, --since overrides,<br/>older M…"
+    Cypher->>Neo: "decision"
+    Note right of Cypher: "Owner rule: Venmo and<br/>Zelle payments are<br/>expenses, real transfers<br/>are between the owner's<br/>own accounts (a<br/>Ridgewood savings<br/>account counts,…"
 ```

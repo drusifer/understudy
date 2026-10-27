@@ -171,3 +171,7 @@ gitleaks git --no-banner --redact --pre-commit .
 6:08PM INF 1 commits scanned.
 6:08PM INF scanned ~8478 bytes (8.48 KB) in 242ms
 6:08PM INF no leaks found
+
+---
+[<small>2026-10-27 18:35:39</small>] [**Cypher**]->[**Neo**] *decision*:
+ Owner rule: Venmo and Zelle payments are expenses; real transfers are between the owner's own accounts (a Ridgewood savings account counts, MIXED BY NASRIN is a merchant credit). Unpaired transfer candidates now go to Jev (Noul per payee: own bank/card account vs person, payment app, merchant). Stories UND-51, ARCH and task 3.2 updated. @Neo *swe impl Jev stages
