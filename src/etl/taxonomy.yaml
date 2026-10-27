@@ -1,0 +1,122 @@
+version: household-transactions-v1
+categories:
+  - name: Home
+    subcategories:
+      - name: Rent or mortgage
+        guidance: Rent, mortgage principal, or a housing payment.
+      - name: Repairs
+        guidance: Home maintenance, repairs, or contractor work.
+      - name: Furnishings
+        guidance: Furniture, fixtures, and home decor.
+      - name: Household supplies
+        guidance: Cleaning, kitchen, and other household consumables.
+  - name: Bills & Utilities
+    subcategories:
+      - name: Electricity
+        guidance: Electric utility service.
+      - name: Water
+        guidance: Water or sewer utility service.
+      - name: Gas
+        guidance: Natural gas, heating fuel, or household propane.
+      - name: Internet
+        guidance: Home internet service.
+      - name: Phone
+        guidance: Mobile or landline service.
+  - name: Food & Dining
+    subcategories:
+      - name: Groceries
+        guidance: Food and household goods bought for home consumption.
+      - name: Restaurants
+        guidance: Prepared meals, takeout, or restaurant delivery.
+      - name: Coffee
+        guidance: Coffee shops, cafes, and coffee purchases.
+  - name: Transportation
+    subcategories:
+      - name: Fuel
+        guidance: Gasoline, charging, or other vehicle fuel.
+      - name: Maintenance
+        guidance: Vehicle repair, service, tires, or parts.
+      - name: Parking and tolls
+        guidance: Parking, road tolls, or traffic-related fees.
+      - name: Transit
+        guidance: Bus, rail, subway, ferry, or other public transit.
+      - name: Rideshare
+        guidance: Taxi, rideshare, or car service.
+  - name: Travel
+    subcategories:
+      - name: Airfare
+        guidance: Passenger airline tickets and flight changes.
+      - name: Lodging
+        guidance: Hotels, short-term rentals, and other overnight stays.
+      - name: Rental car
+        guidance: Rental vehicles and related rental charges.
+      - name: Baggage
+        guidance: Checked bags, seat fees, or other airline add-ons.
+      - name: Travel meals
+        guidance: Food purchased while away from home on a trip.
+  - name: Healthcare
+    subcategories:
+      - name: Medical
+        guidance: Doctor, hospital, urgent care, or other medical services.
+      - name: Dental
+        guidance: Dental care and dental procedures.
+      - name: Vision
+        guidance: Eye exams, glasses, contacts, or vision care.
+      - name: Pharmacy
+        guidance: Prescriptions and pharmacy purchases.
+  - name: Shopping
+    subcategories:
+      - name: Clothing
+        guidance: Apparel, shoes, and accessories.
+      - name: Electronics
+        guidance: Consumer electronics and computer equipment.
+      - name: General merchandise
+        guidance: Retail purchases that do not fit a more specific shopping type.
+  - name: Entertainment
+    subcategories:
+      - name: Events
+        guidance: Concerts, movies, sports, museums, and ticketed events.
+      - name: Streaming
+        guidance: Video, music, or other digital media subscriptions.
+      - name: Hobbies
+        guidance: Recreation, games, crafts, or hobby supplies.
+  - name: Income
+    subcategories:
+      - name: Pay
+        guidance: Salary, wages, or other employment income.
+      - name: Interest
+        guidance: Interest earned on deposits or investments.
+      - name: Refund
+        guidance: Merchant refund, rebate, or reimbursement received.
+  - name: Transfers
+    subcategories:
+      - name: Account transfer
+        guidance: Money moved between the owner's accounts.
+      - name: Credit-card payment
+        guidance: Payment from a bank account to a credit card account.
+  - name: Fees & Interest
+    subcategories:
+      - name: Bank fee
+        guidance: Bank service, overdraft, or ATM fee.
+      - name: Annual fee
+        guidance: Annual fee for a bank or credit-card account.
+      - name: Interest
+        guidance: Interest charged on borrowing or a card balance.
+  - name: Gifts & Donations
+    subcategories:
+      - name: Gift
+        guidance: Gift purchase or money given to another person.
+      - name: Charity
+        guidance: Charitable contribution or donation.
+  - name: Personal & Family
+    subcategories:
+      - name: Education
+        guidance: Tuition, school costs, books, or learning services.
+      - name: Childcare
+        guidance: Daycare, babysitting, or other childcare services.
+      - name: Personal care
+        guidance: Hair, salon, cosmetics, or personal wellness services.
+  - name: Misc
+    subcategories:
+      - name: Other or not yet classified
+        guidance: Use when no listed category and subcategory reasonably fit.

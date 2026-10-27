@@ -1,5 +1,25 @@
 # Changelog
 
+## Sprint 16 — staged local ETL with Jev-guided categories (2026-10-27, branch `sprint-16`, not yet merged)
+
+- **`understudy etl run --monarch <csv> --amex <csv>`**: validates both exports, keeps a copy of each
+  for the run, converts every row to a JSONL record that keeps its source and row number, and
+  reconciles with SQLMesh on DuckDB. A date and amount that occurs once on each side becomes one
+  row with both source rows; anything else stays separate, marked ambiguous when it repeats.
+  ADR-0037.
+- **Jev categorises each distinct merchant once** from a fixed 46-pair taxonomy that always holds
+  `Misc / Other or not yet classified`; the choice is reused for every row with that merchant, and an
+  off-list or empty answer becomes `Misc` marked for review.
+- **A review file and a summary** (counts only, no transaction contents) under ignored
+  `build/runs/<run-id>/`. A failed stage, Jev being unreachable included, leaves no summary or review
+  file. A synthetic run of 4,700 pairs (9,400 rows) completes locally in about 10 seconds.
+- **Python joins the toolchain** (approved by the owner and Tank 2026-10-17): CPython 3.12, uv, SQLMesh
+  and DuckDB, pinned and isolated; `test-py`, `test-etl` and `probe-etl` make targets.
+- **Known limit**: on the owner's real files it matches only 26 rows, because it pairs same-sign
+  amounts and the Amex export and Monarch show the same purchase with opposite signs. The
+  sign-flipped match, transfers, refunds and new category names are planned for Sprint 17.
+- `make run` and `make test-live` read API keys from a gitignored `.env`; `data/` is gitignored.
+
 ## Sprint 15 — flair and real gauges (2026-10-17, branch `sprint-15`, not yet merged)
 
 - **Five gauges** from the run: steps of the limit, Jev's confidence, shortlist left, Jev scores

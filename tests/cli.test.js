@@ -74,7 +74,7 @@ test('a bad --steps is refused naming the flag and the value', async () => {
 test('mistakes in the command line are refused with what to type instead', async () => {
   const cases = [
     [[], /usage: understudy run <sketch>/],
-    [['dance'], /no command "dance" - commands: run, check, library/],
+    [['dance'], /no command "dance" - commands: run, check, library, watch, dashboard, etl/],
     [['run'], /run needs a sketch, e.g. understudy run examples\/cli/],
     [['run', 'a', 'b'], /run takes one sketch \(got "a", "b"\)/],
     [['run', 'examples/cli', '--headed'], /no option "--headed" for run/],
@@ -93,7 +93,26 @@ test('--help prints the usage on stdout and exits 0', async () => {
   assert.match(result.stdout, /usage: understudy run <sketch> \[--steps N\]/);
   assert.match(result.stdout, /understudy check <sketch>/);
   assert.match(result.stdout, /understudy library \[<sketch>\]/);
+  assert.match(result.stdout, /understudy etl run --monarch <csv> --amex <csv>/);
   assert.match(result.stdout, /<sketch> is a directory holding sketch\.yaml/);
+});
+
+test('etl run requires both named CSV inputs and passes them to the stage runner', async () => {
+  const seen = [];
+  const commands = { etl: async (options) => { seen.push(options); options.stdout.write('etl complete\n'); } };
+  const result = await cli(['etl', 'run', '--monarch', 'monarch.csv', '--amex=amex.csv'], { commands, environment: { TYPESAFE_API_KEY: 'test-key' } });
+  assert.equal(result.code, 0);
+  assert.equal(result.stdout, 'etl complete\n');
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0].monarchPath, 'monarch.csv');
+  assert.equal(seen[0].amexPath, 'amex.csv');
+  assert.equal(seen[0].environment.TYPESAFE_API_KEY, 'test-key');
+  const missing = await cli(['etl', 'run', '--monarch', 'monarch.csv'], { commands, environment: {} });
+  assert.equal(missing.code, 2);
+  assert.equal(missing.stderr, 'understudy: understudy etl run needs --amex <csv>\n');
+  const noKey = await cli(['etl', 'run', '--monarch', 'monarch.csv', '--amex', 'amex.csv'], { commands, environment: {} });
+  assert.equal(noKey.code, 2);
+  assert.equal(noKey.stderr, 'understudy: understudy etl run needs a TypeSafe key: set TYPESAFE_API_KEY\n');
 });
 
 test('a run that fails after starting exits 1 with its message; anything unexpected exits 1 too', async () => {

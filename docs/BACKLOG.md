@@ -4,6 +4,28 @@ Groomed by Cypher from the sprint 1-3 retros (2026-10-15). Owner, 2026-10-15: re
 a goal - no migration work. README done in the post-sprint docs groom. Not yet sized or ordered beyond
 "Next" vs "Later".
 
+## Sprint 16 (owner, 2026-10-17) - staged local ETL with Jev-guided categories - DONE (launched 2026-10-27)
+- UND-46..48: Monarch and Amex CSVs reconciled with SQLMesh and DuckDB, merchants categorised by Jev
+  from a fixed taxonomy, a review file and a summary. ADR-0037.
+
+## Next (from the sprint 16 retro and the owner, 2026-10-27)
+- Sprint 17 stories drafted in `docs/sprints/USER_STORIES_SPRINT17.md` (UND-49..54): the source servers
+  that serve each export as JSONL, the sign-flipped match, transfers kept as two linked records,
+  refunds linked to their merchant, categories with a Noul check and MCC names for new ones, and a
+  JSONL result. Needs Smith Gate 1 and an architecture.
+- Python for all of understudy (owner, 2026-10-27): its own epic. Statecharts on `python-statemachine`'s
+  YAML, ETL stays SQL on DuckDB, Jev through `typesafe-sdk`. Risks: `elkjs` flow layout and `xstate` have no
+  Python equivalent; check the SDK's per-answer probabilities and the YAML coverage of `turn:` first.
+  See `agents/cypher/platform_decision_2026-10-27.md`.
+- The owner's workbook comparison (4,666 of 4,672 IDs matched) needs a baseline or crosswalk before a
+  category score means anything: its `Category` and `Category_Ontology` disagree on 2,522 rows. (Neo)
+- A `judge-trace` make target is missing from this worktree's Makefile although the Trin skill expects it. (Trin)
+- A real-shaped test fixture with sign-flipped pairs and transfers, so a matching rule is tested before real data. (Trin)
+- Record ADRs for Python-for-all and no-XML; add an ETL section to `docs/USER_GUIDE.md`. (Oracle)
+- Commit at each phase gate as the SDLC says, and run `git status` before a sprint starts. (Mouse)
+- ETL results as JSONL (owner's JSONL-in/out principle), the run visible in the dashboard, and a way to pin Jev's
+  category choices between runs. (Smith)
+
 ## Sprint 2
 Done - see `CHANGELOG.md` (HTTP target; hookless pages with the generic page app).
 

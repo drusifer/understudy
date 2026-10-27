@@ -39,6 +39,7 @@ build/Release
 
 # Dependency directories
 node_modules/
+.venv/
 jspm_packages/
 
 # Snowpack dependency directory (https://snowpack.dev/)
@@ -159,3 +160,7 @@ build/
 
 # household CSV exports (Monarch, Amex): private financial data, never committed
 data/
+
+# Python bytecode
+__pycache__/
+*.pyc

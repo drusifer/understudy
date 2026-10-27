@@ -10,6 +10,14 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+## ADR-0037: SQLMesh owns deterministic ETL; Understudy coordinates Jev decisions
+
+*   **Status**: Accepted · **Deciders**: Morpheus, owner, Tank · **Date**: 2026-10-17 · **Related**: STORY-UND-46, STORY-UND-47, STORY-UND-48; [Sprint 16 architecture](sprints/ARCH_SPRINT16.md)
+*   **Context**: Sprint 16 reproduces a local Monarch and Amex cleanup workflow over roughly 4,700 reconciled transactions. SQL joins and transformations are standard ETL; Understudy must stage data-dependent steps and apply Jev's bounded category choices without using its limited answer-row memory as a transaction store.
+*   **Options**: (1) SQLMesh models in SQL with YAML project configuration and local DuckDB: mature relational transforms with a run-scoped external decision table, at the cost of an isolated Python toolchain and a JSONL hydration stage; (2) dbt with DuckDB: familiar SQL/YAML models, but it also requires Python and offers no advantage for the sequential Jev handoff in this small local run; (3) custom Node joins/maps: fewer runtime components, but Understudy would own and maintain bespoke relational operations for reconciliation, grouping, and output.
+*   **Decision**: (1) is accepted. Understudy validates and snapshots the local CSV exports, converts each flat row to an internal JSONL record with normalized fields and source provenance, then SQLMesh loads the JSONL records into DuckDB and owns deterministic relational transforms. Understudy coordinates named hydration and decision stages, asks Jev to choose from the fixed category/subcategory taxonomy (including Misc), and stores accepted merchant mappings in a run-scoped relation for reuse. This does not add arbitrary or nested JSONL input. CSV pagination and fetch mechanics remain below ETL operations if future MCP sources are added. Google Sheets/MCP I/O is deferred. Tank and the owner approved the isolated Python/SQLMesh mechanism; the Phase 0 clean setup and sequential SQLMesh/Node/DuckDB handoff probe passed.
+*   **Consequences**: + uses a mature SQL engine for joins and row transforms while keeping qualitative decisions bounded and auditable. − introduces Python alongside Node and a second toolchain; CSV-to-JSONL hydration and SQLMesh JSONL loading add a staged interchange step. Synthetic end-to-end and SQLMesh model tests verify reconciliation, taxonomy mapping, review output, and failure behavior; private production CSVs and live Jev were not used for acceptance.
+
 ## ADR-0036: Gauges read the run's own lines; flair is visibly decoration
 
 *   **Status**: Accepted · **Deciders**: owner, Morpheus · **Date**: 2026-10-17 · **Related**: UND-42

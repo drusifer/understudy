@@ -22,3 +22,8 @@ Branch sprint-5 from 51fa684. 29 pts, 7 phases: 1 several servers (UND-20); 2 ev
 ## Sprint 6 - The dashboard (planned 2026-10-16)
 Branch sprint-6 from 965bade. 25 pts, 7 phases: 1 switch/when; 2 server+rack; 3 play/stop; 4 controls page;
 5 tube+printer; 6 access panels+save+factory; 7 docs+browser tests. Close as usual.
+
+## Sprint 16 — Staged Local ETL with Jev-Guided Categories (planned 2026-10-17)
+Branch `sprint-16`, 18 pts, Tier 1. Phase 0: Tank feasibility review and Python mechanism approval; setup only after approval, before Neo work. Phase 1: local CSV validation/snapshot and SQLMesh reconciliation; Phase 2: Jev taxonomy/map, final models, and review output. Sheets/MCP deferred; private CSVs excluded. Close includes Tank `sdlc-check`, Oracle groom, Smith UAT, retros, Cypher launch. Board: `task.md`.
+
+Plan approved by Morpheus (`PLAN: SIZE=A GATE=S VERIF=A ALIGN=S OWNER=S`). Phase 0 mechanism approved by owner and Tank; pinned CPython/uv, SQLMesh, and matching DuckDB clients installed cleanly. `bobp make distclean`, fresh `install`, `check`, second `install`, and synthetic sequential SQLMesh/Node/Python handoff probe passed. Phase 1 is active; private CSVs were not read.

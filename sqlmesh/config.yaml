@@ -1,0 +1,12 @@
+gateways:
+  local:
+    connection:
+      type: duckdb
+      database: "{{ env_var('UNDERSTUDY_ETL_DATABASE', ':memory:') }}"
+default_gateway: local
+model_defaults:
+  dialect: duckdb
+  start: 2026-01-01
+variables:
+  monarch_jsonl: "{{ env_var('UNDERSTUDY_ETL_MONARCH_JSONL', '') }}"
+  amex_jsonl: "{{ env_var('UNDERSTUDY_ETL_AMEX_JSONL', '') }}"

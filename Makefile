@@ -6,9 +6,9 @@
 #
 # Adding a task: add the npm script first, then a one-line target here.
 
-.PHONY: help install install-browser test test-browser test-live lint check secrets hooks push run clean distclean
+.PHONY: help install install-js lock-js install-py lock-py install-browser test test-js test-py test-etl probe-etl test-browser test-live lint check secrets hooks push run clean distclean
 
-NEED_INSTALL = @test -d node_modules || { echo "No node_modules - run 'make install' first"; exit 1; }
+NEED_INSTALL = @test -d node_modules || { echo "No node_modules - run 'bobp make install' first"; exit 1; }
 
 # Live targets (run, test-live) read API keys from .env (gitignored; `export NAME=value` lines);
 # test never does, so it can never reach a paid or networked service.
@@ -18,15 +18,46 @@ help: ## List targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
 
 install: ## Install dependencies exactly as locked (network)
+	$(MAKE) install-js
+	$(MAKE) install-py
+
+install-js: ## Install Node dependencies exactly as locked (network)
 	@if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+lock-js: ## Refresh the npm lockfile from package.json (network)
+	npm install --package-lock-only --ignore-scripts
+
+install-py: ## Install the pinned Python environment from uv.lock (network on first setup)
+	@if [ ! -f uv.lock ]; then uv lock --python 3.12.15; fi
+	uv sync --locked
+
+lock-py: ## Refresh uv.lock from pyproject.toml (network)
+	uv lock --python 3.12.15
 
 install-browser: ## Download Playwright's Chromium for the web target (network; lands in ~/.cache/ms-playwright)
 	$(NEED_INSTALL)
 	npx playwright install chromium
 
 test: ## Run the unit tests (node:test); ARGS="--test-name-pattern=x" to filter
+	$(MAKE) test-js
+	$(MAKE) test-py
+	$(MAKE) test-etl
+
+test-js: ## Run JavaScript unit tests
 	$(NEED_INSTALL)
-	npm test -- $(ARGS)
+	npm run test:js -- $(ARGS)
+
+test-py: ## Run Python unit tests
+	@test -x .venv/bin/python || { echo "No .venv - run 'bobp make install' first"; exit 1; }
+	.venv/bin/python -m unittest discover -s tests/python -p 'test_*.py'
+
+test-etl: ## Run SQLMesh model unit tests against synthetic fixtures
+	@test -x .venv/bin/sqlmesh || { echo "No SQLMesh - run 'bobp make install' first"; exit 1; }
+	cd sqlmesh && ../.venv/bin/sqlmesh test --local
+
+probe-etl: ## Verify SQLMesh and Node DuckDB share a run-scoped database sequentially
+	@test -x .venv/bin/python || { echo "No .venv - run 'bobp make install' first"; exit 1; }
+	node scripts/etl-handoff-probe.mjs
 
 test-browser: ## Browser tests: the watch page driven in headless Chromium against real runs with a Jev double (no key, no cost); needs Chromium (make install-browser)
 	$(NEED_INSTALL)
@@ -67,7 +98,9 @@ push: check ## Commit everything (MSG="...") and push the current branch + its t
 	@scripts/push.sh $(ARGS)
 
 clean: ## Remove build outputs and caches
-	rm -rf build coverage .eslintcache
+	@mkdir -p build
+	@find build -mindepth 1 -maxdepth 1 ! -name build.out -exec rm -rf {} +
+	rm -rf coverage .eslintcache
 
 distclean: clean ## Also remove node_modules
-	rm -rf node_modules
+	rm -rf node_modules .venv

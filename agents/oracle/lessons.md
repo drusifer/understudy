@@ -393,3 +393,50 @@ test that every other line is identical.
 ### References
 - **Commit:** 88287b1
 - **Files:** `src/dashboard/settings.mjs`, `tests/settings.test.js`
+
+## [2026-10-27] Check the worktree before saying it is clean, and read a file before overwriting it
+
+> **Tags:** #Process #Git #Cypher
+
+### Context
+Sprint 16 planning was restarted from a sprint branch whose worktree looked clean because it sat at the
+same commit as `main`. It held ten days of uncommitted work, including the approved stories file.
+
+### The Issue
+Cleanliness was inferred from `git worktree list`, never from `git status`. A story file was then written
+over without being read first; it was untracked, so git could not restore it, and the stories had to be
+rebuilt from other documents.
+
+### The Solution
+Ran `git status` in the worktree, found the existing sprint, restored the stories from the architecture,
+UAT plan and task board, and moved the new draft to its own file.
+
+### The Rule (The "Lesson")
+Before planning in or reporting on a branch or worktree, run `git status` there. Before writing a file that
+may exist, Read it; if it is untracked, copy it aside first.
+
+### References
+- **Files:** `docs/sprints/USER_STORIES_SPRINT16.md`, `docs/sprints/USER_STORIES_SPRINT17.md`
+
+## [2026-10-27] Test a matching rule on aggregate real data before writing criteria
+
+> **Tags:** #Process #ETL #Cypher #Morpheus
+
+### Context
+Sprint 16's reconciliation pairs rows with the same date and the same amount. The synthetic fixtures passed
+and the sprint was accepted.
+
+### The Issue
+On the owner's real files it matched 26 rows. The Amex export and Monarch record the same purchase with
+opposite signs, so about 4,200 real overlaps were never paired. Nothing before the real-data run could show it.
+
+### The Solution
+Counted matches on the real files with signs flipped (aggregates only, no transaction text) and planned the
+sign-flipped match, transfers and refunds as Sprint 17.
+
+### The Rule (The "Lesson")
+When a story depends on how two real data sources relate, count the candidate matches on the real data
+(aggregates only) before writing the acceptance criteria, and give the test fixture the same shape.
+
+### References
+- **Files:** `docs/sprints/USER_STORIES_SPRINT17.md`, `docs/sprints/ARCH_SPRINT16.md`

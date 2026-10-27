@@ -15,10 +15,16 @@
 - No architecture/story artifacts drafted yet. Main worktree is on `main` with prior dashboard, test-guidance, chat, and persona edits uncommitted; sprint branch handling must avoid sweeping those into this work.
 
 ## Current Task
-- Status: Architecture discovery complete (100%); sprint story/architecture/plan not started.
-- Proposed slicing: first prove generic row-source/sink interfaces and composite join plus on-the-fly Jev-derived merchant/category mappings on transaction + Amex enrichment. The pipeline must stream/chunk beyond 500 rows, retain run-scoped discovered mappings, and record row-level evidence/provenance. Follow with calendar/trip grouping, travel tagging, and pivot/entity consolidation.
+- Status: Sprint 16 Phase 1 and Phase 2 reviews passed. Phase 2 UAT passed; closeout is pending.
+- Phase 1 review: Owner redirected hydration to CSV → internal flat JSONL → SQLMesh. The converter preserves normalized transaction fields, source name, source row number, and the full original flat source row. Users still provide CSV; arbitrary or nested JSONL is not supported. Tank's approved Python environment is in use; SQLMesh JSONL loading was verified in a synthetic CLI run.
+- Phase 1 gates: Trin UAT passed (2 Monarch + 2 Amex input rows; 1 match, 2 unmatched; ambiguous and invalid-key model cases; missing-file exit before run creation). JS 303, Python 3, SQLMesh model test, and lint pass. No Phase 1 defects found. `bobp make judge-trace` is absent from this worktree's Makefile and is recorded as a tooling gap, not a feature blocker.
+- Phase 2 review: Trin UAT passed using synthetic data (JS 309, SQLMesh category model, end-to-end with Jev double); final lint passed after fixing comparator and switch-case lint issues. Code matches ADR-0037: CSV snapshots -> internal flat JSONL -> SQLMesh/DuckDB reconciliation -> distinct bounded Jev taxonomy decisions -> run-scoped map -> final SQL and review export. No live Jev or personal CSV used.
+- Phase 2 architecture doc review found stale planning claims; fixed command shape, runtime approval/probe status, restart behavior (clean new run only), accepted decisions, and ADR consequences. No code defects found. UAT plan now records Phase 2 UAT and Morpheus review as passed.
+- Artifacts updated: `docs/sprints/ARCH_SPRINT16.md`, ADR-0037 in `docs/DECISIONS.md`, `docs/sprints/UAT_PLAN_SPRINT16.md`, and `task.md`.
+- Review verdict: PASS, no changes requested before Phase 2.
 
 ## Next Steps
-1. Owner accepts SQL + YAML config and confirms staged hydration. Next, shape a spike for source hydration stages, dynamic data-demand transitions, DuckDB snapshots and SQLMesh execution; also specify how novel qualitative categories/maps can be proposed within Jev's bounded-choice capability.
-2. Before writing Sprint 16 artifacts, isolate the sprint branch from existing uncommitted dashboard changes, then follow the required Cypher story → Smith gate → Morpheus architecture → Smith gate → Mouse plan → Morpheus review sequence.
-3. Keep Google Sheets behind a source/sink adapter. Do not use the full household export in repo tests or commits.
+1. Mouse updates `task.md`: Phase 2 Tasks 2.2 and 2.3 are complete, with references to the UAT verdict and review; then proceed with sprint closeout tasks.
+2. Tank runs the required clean setup and `bobp make check`, recording results in `docs/SDLC.md`.
+3. Oracle grooms the sprint artifacts and archives the chat report; Smith runs the owner-facing acceptance gate; personas record retrospectives and backlog items; Cypher posts launch only after gates pass.
+4. Keep private CSV/transaction data under ignored `build/runs/`; do not add owner exports to git or CHAT.
