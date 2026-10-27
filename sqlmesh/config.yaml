@@ -12,3 +12,5 @@ variables:
   amex_jsonl: "{{ env_var('UNDERSTUDY_ETL_AMEX_JSONL', '') }}"
   amex_account: "{{ env_var('UNDERSTUDY_ETL_AMEX_ACCOUNT', '') }}"
   period_start: "{{ env_var('UNDERSTUDY_ETL_PERIOD_START', '') }}"
+  calendar_start: "2024-01-01"
+  calendar_end: "2030-12-31"

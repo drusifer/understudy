@@ -14,8 +14,8 @@ When this sprint is done, the owner can point understudy at their Monarch and Am
 ## Assumptions made for the owner
 
 1. **Two sources only.** Monarch (14,522 rows, 2023-12-30 to 2026-10-17, six accounts) and Amex (4,321 rows, 2026-01-01 to 2026-10-16). Monarch rows for the other accounts (Ridgewood, Citi, Student Advantage and so on) are read and reconciled, but there is no export for them to merge with. If wrong: a third source needs its own source server, the same shape as the first two.
-2. **Match rule for the same purchase:** same amount with the sign flipped (Amex charges are positive, Monarch's are negative), on the same date first and then within three days. Measured in Phase 2 on the real files: 4,276 of 4,321 Amex rows pair this way (4,207 same date, 69 within three days); a first estimate of 4,229 had used a looser many-to-many count. If wrong: Morpheus changes the window or adds the statement text.
-3. **A transfer pairs on opposite amount in a different account within 3 days.** In the real files 43 of 70 rows Monarch labels "Credit Card Payment" pair this way. Monarch's own transfer labels are inconsistent ("Food & Dining: Credit Card Payment", "Transportation: Transfers"), so the label alone does not decide. If wrong: the window or the rule changes, the stories do not.
+2. **Match rule for the same purchase:** same amount with the sign flipped (Amex charges are positive, Monarch's are negative), on the same date first and then within three business days (owner: weekends and bank holidays should not count). Measured on the fresh real files: 4,460 of 4,489 Amex rows pair this way (4,392 same date, 68 within three business days); a first estimate of 4,229 had used a looser many-to-many count on older files. If wrong: Morpheus changes the window or adds the statement text.
+3. **A transfer pairs on opposite amount in a different account within 3 business days** (Monday to Friday, not a US federal holiday; owner, 2026-10-27). In the real files 43 of 70 rows Monarch labels "Credit Card Payment" pair this way. Monarch's own transfer labels are inconsistent ("Food & Dining: Credit Card Payment", "Transportation: Transfers"), so the label alone does not decide. If wrong: the window or the rule changes, the stories do not.
 4. **A refund with no findable original charge** (for example the purchase was before 2026-01-01) still counts against its merchant, without a link. If wrong: such refunds go to the review list instead.
 5. **One Jev decision per distinct merchant**, reused for every row of that merchant in the run, so cost follows the number of merchants, not rows. If wrong: cost grows with rows.
 6. **Nothing is written back** to Monarch or Amex. The result is a new file.
@@ -50,8 +50,8 @@ When this sprint is done, the owner can point understudy at their Monarch and Am
 **As the** owner, **I want** a purchase that appears in both exports to become one record, **so that** my spending is counted once.
 
 ### Acceptance Criteria
-1. An Amex row and a Monarch row on the Amex card with the same date and the same amount (signs opposite) become one record that carries both source rows. A row left over after that pairs with a same-amount row one to three days apart (the two exports often post a charge a day or two apart), nearest date first; a same-date pair is never given up for a nearer-in-time one.
-2. Against the real files, 4,276 of the 4,321 Amex rows are matched (4,207 on the same date, 69 within three days); the other 45 are listed as unmatched with their date, description and amount, and still appear once in the result.
+1. An Amex row and a Monarch row on the Amex card with the same date and the same amount (signs opposite) become one record that carries both source rows. A row left over after that pairs with a same-amount row up to three business days apart (the two exports often post a charge a day or two apart; weekends and US federal holidays do not count, so a Friday charge posted the Tuesday after a Monday holiday is one business day), nearest date first; a same-date pair is never given up for a nearer-in-time one.
+2. Against the fresh real files (2026-10-27), 4,460 of the 4,489 Amex rows are matched (4,392 on the same date, 68 within three business days); the other 29 are listed as unmatched with their date, description and amount, and still appear once in the result.
 3. Two real purchases with the same date and amount (two coffees at $4.50) stay two records: each source row is matched at most once, to one counterpart.
 4. A Monarch row that has no Amex counterpart (any other account, or an Amex row from before the export began) appears once, unchanged.
 5. Running the same files twice gives the same matches.
@@ -66,11 +66,11 @@ When this sprint is done, the owner can point understudy at their Monarch and Am
 **As the** owner, **I want** a payment from one account to another, such as a Ridgewood debit paying the Amex bill, recognised as a transfer, **so that** it is not counted as spending on either side.
 
 ### Acceptance Criteria
-1. A record is a transfer candidate when its Monarch category contains "transfer" or "payment" (capital letters ignored, so "Credit Card Payment", "Food & Dining: Credit Card Payment", "Transportation: Transfers" and "Loan Repayment" all count) or its Amex description contains "payment". Two candidates in different accounts, with opposite amounts, within 3 days of each other, are linked to each other and both marked as a transfer. Neither is deleted.
+1. A record is a transfer candidate when its Monarch category contains "transfer" or "payment" (capital letters ignored, so "Credit Card Payment", "Food & Dining: Credit Card Payment", "Transportation: Transfers" and "Loan Repayment" all count) or its Amex description contains "payment received" (Amex's wording for a payment to the card; a merchant whose name merely contains "payment" is not a transfer). Two candidates in different accounts, with opposite amounts, within 3 business days of each other (Monday to Friday, not a US federal holiday), are linked to each other and both marked as a transfer. Neither is deleted.
 2. Marked transfers are left out of the spending summary; the summary says how many transfers and what total they carry.
 3. Against the real files, 43 of the 70 rows Monarch labels "Credit Card Payment" (with or without a group prefix) are paired. The other 27 appear in a review list with date, account and amount, and are not counted as spending until reviewed.
 4. For the other transfer labels in the real files (132 rows labelled "Transfer", 99 labelled "Transportation: Transfers"), the summary says how many were paired and how many went to the review list; none is counted as spending unless it was paired.
-5. A refund is never marked as a transfer: Amex's 114 credits whose description does not say payment stay as spending credits.
+5. A refund is never marked as a transfer: Amex credits whose description does not say "payment received" stay as spending credits (refunds).
 6. Two payments of the same amount in the same week pair one-to-one, not both to the same partner.
 
 ---

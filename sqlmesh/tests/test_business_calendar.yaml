@@ -1,0 +1,19 @@
+weekends_and_holidays_share_the_index_of_the_business_day_before_them:
+  model: etl.business_calendar
+  vars:
+    calendar_start: '2026-05-21'
+    calendar_end: '2026-05-27'
+  inputs:
+    etl.us_federal_holidays:
+      rows:
+        - { holiday_date: '2026-05-25', holiday_name: Memorial Day }
+  outputs:
+    query:
+      rows:
+        - { day: '2026-05-21', is_business_day: true, business_day_index: 1 }
+        - { day: '2026-05-22', is_business_day: true, business_day_index: 2 }
+        - { day: '2026-05-23', is_business_day: false, business_day_index: 2 }
+        - { day: '2026-05-24', is_business_day: false, business_day_index: 2 }
+        - { day: '2026-05-25', is_business_day: false, business_day_index: 2 }
+        - { day: '2026-05-26', is_business_day: true, business_day_index: 3 }
+        - { day: '2026-05-27', is_business_day: true, business_day_index: 4 }

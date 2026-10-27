@@ -163,3 +163,11 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-10-27 17:48:50</small>] [**Cypher**]->[**all**] *decision*:
  Owner: keep the run to 2026 YTD; use fresh exports. Period rule added: default start = Amex export's first date, --since overrides, older Monarch rows left out and counted (stories, ARCH, task 2.4). Reasons: old card history is Amex-upload style (sign + categories), workbook is 2026 only. Real-file counts to be re-measured on fresh exports (task 2.5). @Morpheus review with Phase 3
+
+---
+[<small>2026-10-27 18:01:30</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy-sprint-17/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+6:01PM INF 1 commits scanned.
+6:01PM INF scanned ~8715 bytes (8.72 KB) in 247ms
+6:01PM INF no leaks found

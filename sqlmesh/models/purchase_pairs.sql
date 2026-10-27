@@ -94,8 +94,9 @@ same_date_pairs AS (
   UNION ALL
   SELECT * FROM order_pairs
 ),
--- Pass 3: what is still unpaired pairs when the amount is equal and the dates are one to three
--- days apart (a charge often posts a day or two apart in the two exports), nearest date first.
+-- Pass 3: what is still unpaired pairs when the amount is equal and the dates differ by up to
+-- three business days (a charge often posts a day or two apart in the two exports, and a
+-- weekend or bank holiday does not count), nearest date first.
 -- Each Amex row takes its nearest Monarch candidate, then each Monarch row keeps its nearest
 -- taker, so a row is used at most once and a tie stays unpaired.
 monarch_rest AS (
@@ -112,11 +113,14 @@ near_candidates AS (
   SELECT
     m.source_row_number AS monarch_row,
     a.source_row_number AS amex_row,
-    abs(date_diff('day', m.transaction_date, a.transaction_date)) AS day_gap
+    abs(cm.business_day_index - ca.business_day_index) AS day_gap
   FROM monarch_rest AS m
   JOIN amex_rest AS a
     ON m.charge_key = a.charge_key
-    AND abs(date_diff('day', m.transaction_date, a.transaction_date)) BETWEEN 1 AND 3
+    AND m.transaction_date <> a.transaction_date
+  JOIN etl.business_calendar AS cm ON cm.day = m.transaction_date
+  JOIN etl.business_calendar AS ca ON ca.day = a.transaction_date
+  WHERE abs(cm.business_day_index - ca.business_day_index) <= 3
 ),
 amex_choice AS (
   SELECT *, row_number() OVER (PARTITION BY amex_row ORDER BY day_gap, monarch_row) AS amex_rank

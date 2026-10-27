@@ -3,6 +3,8 @@ pairs_a_charge_with_its_sign_flipped_copy_and_keeps_both_source_rows:
   vars:
     amex_account: Card (...1111)
   inputs:
+    etl.business_calendar:
+      rows: []
     etl.raw_monarch:
       rows:
         - { source_row_number: 1, source: monarch, transaction_date: '2026-01-02', amount: -12.50, merchant: Cafe Local, statement: CAFE LOCAL 123, account: Card (...1111), raw_record: '{"Id":"m1"}' }
@@ -19,6 +21,8 @@ two_real_purchases_of_one_amount_stay_two_records_matched_by_statement_text:
   vars:
     amex_account: Card (...1111)
   inputs:
+    etl.business_calendar:
+      rows: []
     etl.raw_monarch:
       rows:
         - { source_row_number: 1, source: monarch, transaction_date: '2026-01-02', amount: -4.50, merchant: Coffee B, statement: COFFEE B, account: Card (...1111), raw_record: '{"Id":"m1"}' }
@@ -38,6 +42,8 @@ a_coincidence_in_another_account_is_not_paired_and_unmatched_rows_appear_once:
   vars:
     amex_account: Card (...1111)
   inputs:
+    etl.business_calendar:
+      rows: []
     etl.raw_monarch:
       rows:
         - { source_row_number: 1, source: monarch, transaction_date: '2026-01-05', amount: -20.00, merchant: Gas Station, statement: GAS, account: Checking (...2222), raw_record: '{"Id":"m1"}' }
@@ -59,6 +65,8 @@ unequal_counts_pair_what_they_can_and_leave_the_extra_row_single:
   vars:
     amex_account: Card (...1111)
   inputs:
+    etl.business_calendar:
+      rows: []
     etl.raw_monarch:
       rows:
         - { source_row_number: 1, source: monarch, transaction_date: '2026-01-02', amount: -4.50, merchant: Coffee, statement: COFFEE, account: Card (...1111), raw_record: '{"Id":"m1"}' }
@@ -72,11 +80,41 @@ unequal_counts_pair_what_they_can_and_leave_the_extra_row_single:
         - { match_status: paired, pair_method: exact, transaction_date: '2026-01-02', amount: -4.50, merchant: Coffee, account: Card (...1111), monarch_source_row: 1, amex_source_row: 1, monarch_raw: '{"Id":"m1"}', amex_raw: '{"Reference":"a1"}' }
         - { match_status: monarch_only, pair_method: null, transaction_date: '2026-01-02', amount: -4.50, merchant: Coffee, account: Card (...1111), monarch_source_row: 2, amex_source_row: null, monarch_raw: '{"Id":"m2"}', amex_raw: null }
 
+a_charge_before_a_bank_holiday_weekend_pairs_with_the_row_posted_the_tuesday_after:
+  model: etl.purchase_pairs
+  vars:
+    amex_account: Card (...1111)
+  inputs:
+    etl.business_calendar:
+      rows:
+        - { day: '2026-05-22', is_business_day: true, business_day_index: 200 }
+        - { day: '2026-05-26', is_business_day: true, business_day_index: 201 }
+        - { day: '2026-06-05', is_business_day: true, business_day_index: 210 }
+    etl.raw_monarch:
+      rows:
+        - { source_row_number: 1, source: monarch, transaction_date: '2026-05-22', amount: -20.00, merchant: Lunch, statement: LUNCH, account: Card (...1111), raw_record: '{"Id":"m1"}' }
+        - { source_row_number: 2, source: monarch, transaction_date: '2026-05-22', amount: -33.00, merchant: Dinner, statement: DINNER, account: Card (...1111), raw_record: '{"Id":"m2"}' }
+    etl.raw_amex:
+      rows:
+        - { source_row_number: 1, source: amex, transaction_date: '2026-05-26', amount: 20.00, merchant: LUNCH, account: '-11111', raw_record: '{"Reference":"a1"}' }
+        - { source_row_number: 2, source: amex, transaction_date: '2026-06-05', amount: 33.00, merchant: DINNER, account: '-11111', raw_record: '{"Reference":"a2"}' }
+  outputs:
+    query:
+      rows:
+        - { match_status: monarch_only, pair_method: null, transaction_date: '2026-05-22', amount: -33.00, merchant: Dinner, account: Card (...1111), monarch_source_row: 2, amex_source_row: null, monarch_raw: '{"Id":"m2"}', amex_raw: null }
+        - { match_status: paired, pair_method: near_date, transaction_date: '2026-05-22', amount: -20.00, merchant: Lunch, account: Card (...1111), monarch_source_row: 1, amex_source_row: 1, monarch_raw: '{"Id":"m1"}', amex_raw: '{"Reference":"a1"}' }
+        - { match_status: amex_only, pair_method: null, transaction_date: '2026-06-05', amount: -33.00, merchant: DINNER, account: '-11111', monarch_source_row: null, amex_source_row: 2, monarch_raw: null, amex_raw: '{"Reference":"a2"}' }
+
 a_row_posted_a_day_apart_pairs_only_after_same_date_pairs_and_picks_the_nearest_date:
   model: etl.purchase_pairs
   vars:
     amex_account: Card (...1111)
   inputs:
+    etl.business_calendar:
+      rows:
+        - { day: '2026-03-03', is_business_day: true, business_day_index: 102 }
+        - { day: '2026-03-04', is_business_day: true, business_day_index: 103 }
+        - { day: '2026-03-20', is_business_day: true, business_day_index: 115 }
     etl.raw_monarch:
       rows:
         - { source_row_number: 1, source: monarch, transaction_date: '2026-03-01', amount: -9.99, merchant: Streaming, statement: STREAMING, account: Card (...1111), raw_record: '{"Id":"m1"}' }
@@ -99,6 +137,8 @@ rows_before_the_period_start_are_left_out_of_both_sources_but_undated_rows_are_k
     amex_account: Card (...1111)
     period_start: '2026-01-01'
   inputs:
+    etl.business_calendar:
+      rows: []
     etl.raw_monarch:
       rows:
         - { source_row_number: 1, source: monarch, transaction_date: '2025-12-30', amount: 40.00, merchant: Old Import, statement: OLD, account: Card (...1111), raw_record: '{"Id":"m1"}' }
@@ -119,6 +159,8 @@ period_scope_counts_what_each_source_holds_and_what_the_period_leaves_out:
   vars:
     period_start: '2026-01-01'
   inputs:
+    etl.business_calendar:
+      rows: []
     etl.raw_monarch:
       rows:
         - { source_row_number: 1, source: monarch, transaction_date: '2025-12-30', amount: 40.00, merchant: Old, statement: OLD, account: Card (...1111), raw_record: '{}' }
@@ -139,6 +181,8 @@ rows_that_differ_in_text_pair_by_order_and_a_row_without_a_date_is_kept_as_inval
   vars:
     amex_account: Card (...1111)
   inputs:
+    etl.business_calendar:
+      rows: []
     etl.raw_monarch:
       rows:
         - { source_row_number: 1, source: monarch, transaction_date: '2026-01-02', amount: -7.00, merchant: Shop, statement: SHOP NUMBER ONE, account: Card (...1111), raw_record: '{"Id":"m1"}' }

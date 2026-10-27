@@ -40,7 +40,7 @@
 ### Phase 3: Transfers and refunds (UND-51, UND-52)
 *Phase goal: Transfer legs are paired and kept out of spending; refunds link to an original charge or are marked without one.*
 
-- [ ] **Task 3.1:** Implement: `transfer_pairs` SQL (label/description rule, 3 days, one-to-one nearest date) with the spending summary exclusion and the other-labels counts; `refund_candidates` SQL (same merchant key, earlier, amount at least the refund's). (*Owner: Neo | Verification: SQLMesh model tests for pairing, same-amount same-week, refunds not marked transfers, no later-dated original; `bobp make test`.*)
+- [x] **Task 3.1 (done 2026-10-27; business days added at the owner's suggestion, holidays from the `holidays` package; the transfer label rule is still open, see CHAT):** Implement: `transfer_pairs` SQL (label/description rule, 3 days, one-to-one nearest date) with the spending summary exclusion and the other-labels counts; `refund_candidates` SQL (same merchant key, earlier, amount at least the refund's). (*Owner: Neo | Verification: SQLMesh model tests for pairing, same-amount same-week, refunds not marked transfers, no later-dated original; `bobp make test`.*)
 - [ ] **Task 3.2:** Implement: the refund Jev stage (Choice among the five most recent originals, answer validated against the list, stored with confidence) using a Jev double in tests. (*Owner: Neo | Verification: unit tests for off-list answer, single and multiple candidates, no candidate.*)
 - [ ] **Task 3.3:** UAT and review: UND-51 AC 1-6 and UND-52 AC 1-4 on synthetic data; Morpheus reviews the SQL and the Jev stage together. (*Owner: Trin, then Morpheus | Verification: UAT rows and verdict recorded; commit `Phase 3: ...`.*)
 
