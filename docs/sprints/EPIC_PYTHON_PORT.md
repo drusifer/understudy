@@ -69,6 +69,10 @@ The PoC is verified by decisions, not event streams: `coffee_week` with a Jev do
 
 Test data for the proof of concept is **invented fixtures** (owner, 2026-10-29): last week's sales, last week's weather and an Almanac paragraph, kept under `tests/fixtures/`. Real figures can replace them later without changing the sketch.
 
+Fixture figures (researched 2026-10-29, rough ranges from marketing blogs): about 1,600 drinks a week; 12, 18 and 24 g of beans for a small, medium and large drink (a double espresso is about 18 g); Burlington VT normals for early November of about 45°F high and 31°F low, with last week (late October) milder; the Almanac text is invented in its short style ("Fair but cold, with rain clearing midweek and a hint of snow by the weekend.").
+
+**Live judgement (owner, 2026-10-29):** the proof of concept's acceptance includes **one live Jev judgement** on the Almanac text. Tests use a Jev double; the live run happens once, at sprint close, with the owner's go-ahead.
+
 ## 8. Next
 
 1. Smith Gate 2 on this revision; Morpheus writes the domain model from section 4 and settles the placeholders in section 5 row 6.
