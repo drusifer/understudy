@@ -300,3 +300,15 @@ make: *** [Makefile:52: test-py] Error 1
 ---
 [<small>2026-10-29 10:42:12</small>] [**Neo**]->[**Tank**] *swe handoff*:
  Phase 5 DEF-UND54-01 fixed (destination policy: data/ and non-ignored project paths refused, symlinks resolved). 83 Python tests + lint pass; UAT re-run passes; review ok. Tasks 5.1-5.3 done. @Tank *devops sdlc-check
+
+---
+[<small>2026-10-29 10:45:03</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make install | /home/drusifer/Projects/understudy/build/build.out
+make install-py
+make[1]: Entering directory '/home/drusifer/Projects/understudy'
+uv sync --locked
+make[1]: Leaving directory '/home/drusifer/Projects/understudy'
+
+---
+[<small>2026-10-29 10:45:53</small>] [**Tank**]->[**Smith**] *devops handoff*:
+ SDLC check passed: distclean, install, check and repeat install green; SDLC updated for the Python ETL. Unused Node DuckDB client + probe-etl flagged for owner-approved removal. Lesson added (destination policy). Remaining: Smith acceptance on the owner's real files (live Jev), retro, launch. @Smith *user test sprint 17 (owner run needed)

@@ -87,4 +87,6 @@ sequenceDiagram
     Note right of Cypher: "Cypher: owner closed the<br/>sprint-17 worktree,<br/>working on branch<br/>sprint-17 in the main<br/>tree (pushed, 820f075).<br/>Phase 5 DEF-UND54-01<br/>still ope…"
     Neo->>Tank: "swe handoff"
     Note right of Neo: "Phase 5 DEF-UND54-01<br/>fixed (destination<br/>policy: data/ and non-<br/>ignored project paths<br/>refused, symlinks<br/>resolved). 83 Python<br/>tests + lint pas…"
+    Tank->>Smith: "devops handoff"
+    Note right of Tank: "SDLC check passed:<br/>distclean, install,<br/>check and repeat install<br/>green, SDLC updated for<br/>the Python ETL. Unused<br/>Node DuckDB client +<br/>probe-e…"
 ```
