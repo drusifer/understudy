@@ -122,14 +122,14 @@ class _Run:
         command = [str(SQLMESH), "plan", "dev", "--auto-apply", "--skip-tests"]
         for select in selects:
             command += ["--select-model", select]
-        result = subprocess.run(command, cwd=self.project, env=self.environment, capture_output=True, text=True)
+        result = subprocess.run(command, cwd=self.project, env=self.environment, capture_output=True, text=True, check=False)
         with (self.directory / "sqlmesh.log").open("a", encoding="utf-8") as log:
             log.write(f"=== {' '.join(selects)}\n{result.stdout}\n{result.stderr}\n")
         if result.returncode:
             raise EtlError(f"SQLMesh failed for {', '.join(selects)}; see {self.directory / 'sqlmesh.log'}")
 
 
-async def run(*, monarch: Path, amex: Path, out: Path, jev, amex_account: str | None = None,
+async def run(*, monarch: Path, amex: Path, out: Path, jev, amex_account: str | None = None,  # noqa: PLR0913 - keyword-only entry point
               since: str | None = None, announce=print) -> dict:
     """Run the ETL over the two exports and return {"directory": <run folder>, "summary": {...}}."""
     out = Path(out).resolve()
@@ -194,31 +194,16 @@ async def run(*, monarch: Path, amex: Path, out: Path, jev, amex_account: str | 
             {k: c[k] for k in NEW_CATEGORY} for c in facts["placement"]["new_categories"]])
 
     async def do_output():
-        state.plan("+etl.final_records")
-        result, summary = run_dir / "result.jsonl", run_dir / "summary.json"
-        partial = run_dir / "result.jsonl.part"
-        partial_sql = str(partial).replace("'", "''")
-        with duckdb.connect(str(state.database)) as connection:
-            connection.execute(f"""COPY (
-              SELECT f.record_id, transaction_date, amount, f.merchant, account, kind, transfer_partner_id,
-                     refund_original_id, refund_link_status, f.category, category_source, category_status,
-                     match_status, pair_method,
-                     CASE WHEN kind IN ('purchase', 'refund', 'credit') THEN m.confidence END AS category_confidence,
-                     CASE WHEN refund_link_status = 'chosen' THEN r.confidence END AS refund_confidence,
-                     {{'monarch': TRY_CAST(monarch_raw AS JSON), 'amex': TRY_CAST(amex_raw AS JSON)}} AS source_rows
-              FROM etl__dev.final_records AS f
-              LEFT JOIN etl__dev.merchant_category AS m
-                ON m.merchant_key = regexp_replace(lower(trim(f.merchant)), '\\s+', ' ', 'g')
-              LEFT JOIN etl__dev.refund_choice AS r ON r.refund_id = f.record_id
-              ORDER BY transaction_date NULLS LAST, f.record_id
-            ) TO '{partial_sql}' (FORMAT JSON)""")
-        summary_data = _summary(state, facts, found, gated)
-        summary.write_text(json.dumps(summary_data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-        partial.replace(result)
-        facts["summary"] = summary_data
+        facts["summary"] = _publish(state, facts, found, gated)
 
     stages = {"hydrate": do_hydrate, "pair": do_pair, "transfers": do_transfers, "plan_spending": do_plan_spending,
               "refunds": do_refunds, "categories": do_categories, "output": do_output}
+    await _run_stages(stages, state, announce)
+    return {"directory": str(run_dir), "summary": facts["summary"]}
+
+
+async def _run_stages(stages: dict, state: _Run, announce) -> None:
+    """Walk the stages in order on the state machine; a failed stage publishes nothing."""
     machine = MACHINE()
     for name, stage in stages.items():
         if name not in {s.id for s in machine.configuration}:
@@ -229,7 +214,7 @@ async def run(*, monarch: Path, amex: Path, out: Path, jev, amex_account: str | 
         except Exception as error:
             machine.send("fail")
             for output in ("result.jsonl", "result.jsonl.part", "summary.json"):
-                (run_dir / output).unlink(missing_ok=True)
+                (state.directory / output).unlink(missing_ok=True)
             state.manifest.update(status="failed", failed_stage=name, error=str(error))
             state.save_manifest()
             raise
@@ -238,7 +223,36 @@ async def run(*, monarch: Path, amex: Path, out: Path, jev, amex_account: str | 
         state.save_manifest()
     state.manifest["status"] = "complete"
     state.save_manifest()
-    return {"directory": str(run_dir), "summary": facts["summary"]}
+
+
+def _publish(state: _Run, facts: dict, found: dict, gated: GatedJev) -> dict:
+    """Run the final SQL, then write summary.json and result.jsonl (the last step, so a failure publishes no result)."""
+    state.plan("+etl.final_records")
+    partial = state.directory / "result.jsonl.part"
+    _copy_result(state, partial)
+    summary = _summary(state, facts, found, gated)
+    (state.directory / "summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    partial.replace(state.directory / "result.jsonl")
+    return summary
+
+
+def _copy_result(state: _Run, destination: Path) -> None:
+    """Write the final records as JSONL in a fixed order, so a repeat run is byte-identical."""
+    destination_sql = str(destination).replace("'", "''")
+    with duckdb.connect(str(state.database)) as connection:
+        connection.execute(f"""COPY (
+          SELECT f.record_id, transaction_date, amount, f.merchant, account, kind, transfer_partner_id,
+                 refund_original_id, refund_link_status, f.category, category_source, category_status,
+                 match_status, pair_method,
+                 CASE WHEN kind IN ('purchase', 'refund', 'credit') THEN m.confidence END AS category_confidence,
+                 CASE WHEN refund_link_status = 'chosen' THEN r.confidence END AS refund_confidence,
+                 {{'monarch': TRY_CAST(monarch_raw AS JSON), 'amex': TRY_CAST(amex_raw AS JSON)}} AS source_rows
+          FROM etl__dev.final_records AS f
+          LEFT JOIN etl__dev.merchant_category AS m
+            ON m.merchant_key = regexp_replace(lower(trim(f.merchant)), '\\s+', ' ', 'g')
+          LEFT JOIN etl__dev.refund_choice AS r ON r.refund_id = f.record_id
+          ORDER BY transaction_date NULLS LAST, f.record_id
+        ) TO '{destination_sql}' (FORMAT JSON)""")
 
 
 def _summary(state: _Run, facts: dict, found: dict, gated: GatedJev) -> dict:

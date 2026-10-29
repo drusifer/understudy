@@ -6,10 +6,11 @@ import unittest
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
-from src.etl.cli import main
-from src.etl.controller import _check_writable, EtlError, ROOT
-from src.etl.jev import JevError
 from test_controller import Files
+
+from src.etl.cli import main
+from src.etl.controller import ROOT, EtlError, _check_writable
+from src.etl.jev import JevError
 
 
 class CliTests(unittest.TestCase):

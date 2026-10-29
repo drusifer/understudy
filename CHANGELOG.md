@@ -1,5 +1,11 @@
 # Changelog
 
+## Sprint 18 — tech-debt cleanup (2026-10-29, branch `sprint-18`, not yet merged)
+
+- Removed the dead Sprint 16 ETL code (`csv_to_jsonl.py`, the `reconciled_transactions` and `categorized_transactions` models and their tests), the unused `@duckdb/node-api` dependency and the `probe-etl` target. No compatibility layer.
+- `bobp make lint` now also runs ruff over `src/etl` and `tests/python` (bugbear, simplify, complexity, Pylint, dead-code and more); findings fixed. `run()` in the ETL controller was split (`_run_stages`, `_publish`, `_copy_result`).
+- Merged local `sprint-1` to `sprint-15` branches deleted.
+
 ## Sprint 17 — transaction cleanup (2026-10-29, branch `sprint-17`, not yet merged)
 
 - **Breaking ETL output change:** `result.jsonl` replaces `review.csv`. Each transaction carries

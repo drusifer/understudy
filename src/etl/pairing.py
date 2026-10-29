@@ -85,7 +85,7 @@ def detect_amex_account(
                 f"format = 'newline_delimited', columns = {_COLUMNS}) WHERE account IS NOT NULL ORDER BY account"
             ).fetchall()
         ]
-    counts = {name: matches for name, matches in rows}
+    counts = dict(rows)
     everyone = {name: counts.get(name, 0) for name in accounts}
 
     if override is not None:

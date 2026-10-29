@@ -21,10 +21,6 @@ Since Sprint 17 the whole ETL is Python (ADR-0038): a `python-statemachine` YAML
 The Node ETL (`src/etl/*.mjs`) is deleted; `src/cli.mjs` only launches the Python CLI. The run database is
 opened by one process at a time. Private run output is refused under `data/` and any non-git-ignored
 project path (UND-54 AC4).
-
-Leftover from Sprint 16, pending owner approval (a dependency/target removal is a mechanism change):
-`@duckdb/node-api` 1.5.6-r.1, `scripts/etl-handoff-probe.mjs` and `probe-etl` are no longer used by the ETL.
-
 Other required tools: `make`, `bobp` (agents run every target through `bobp make <target>`),
 `gitleaks` on `PATH` for `make secrets` / `make check` and the pre-commit hook.
 
@@ -56,11 +52,10 @@ repeating their commands. `bobp make help` lists them.
 | `test` | `test-js` + `test-py` | both language suites; no Jev or browser calls |
 | `test-js` | JavaScript `node:test` suite | `ARGS` supports Node test filtering |
 | `test-py` | `python -m unittest discover -s tests/python` | offline tests for Python tooling and ETL helpers |
-| `probe-etl` | synthetic SQLMesh CSV load followed by Node DuckDB write and Python reopen | Phase 0 handoff smoke check; uses temporary synthetic data only |
 | `test-browser` | `npm run test:browser` → `node --test tests/browser/*.test.js` (one file at a time) | the watch page driven in headless Chromium against real runs of the examples with a Jev double - no key, no cost; needs Chromium (`make install-browser`); `make test` stays browser-free (ADR-0006) |
 | `test-live` | `understudy run <sketch> --steps 30` for every `examples/*/`, each run's final `outcome` checked (`done`), then `examples/evening` again with `BOX_STATE=full` (`walked-away`); serves the box office over HTTP with a throwaway token (`MCP_TOKEN`, `BOX_PORT`, default 8765) for `examples/mcp-remote` and stops it after | live Jev (paid) and, for web examples, Chromium; UAT only |
 | `run` | `node bin/understudy.mjs $(ARGS)` | e.g. `ARGS="check examples/cli"` |
-| `lint` | `npm run lint` → eslint over `src/**/*.mjs`, `tests/**` | config `eslint.config.js` (recommended + unicorn + sonarjs, as in recard) |
+| `lint` | `npm run lint` → eslint over `src/**/*.mjs`, `tests/**`; then `.venv/bin/ruff check src/etl tests/python` | eslint config `eslint.config.js` (recommended + unicorn + sonarjs, as in recard); ruff 0.9.10 pinned in `pyproject.toml` (dev group); rule sets E, W, F, I, B, SIM, UP, N, C4, PERF, RUF, ERA, ARG, C90 (max complexity 12), PL, T20, RET, PTH, line length 135; test doubles and the CLI/MCP stdout are the only per-file ignores |
 | `secrets` | `gitleaks git` over history + uncommitted tracked changes | needs `gitleaks` installed |
 | `hooks` | `git config core.hooksPath .githooks` | installs the gitleaks pre-commit hook |
 | `check` | `test` + `lint` + `secrets` | the full gate |
@@ -191,7 +186,7 @@ Run by Tank at sprint close (`*devops sdlc-check`):
 8. Nothing under `src/` or `tests/` imports from `seed/`.
 
 ---
-*Last verified: 2026-10-29 by Tank (Sprint 17 close: distclean → install → check green; repeated install passed idempotently; Python manifest matches `pyproject.toml`/`uv.lock`; unused Node DuckDB client and `probe-etl` flagged for owner-approved removal).*
+*Last verified: 2026-10-29 by Tank (Sprint 18 close: distclean → install → check green with ruff in `lint`; repeated install passed idempotently; Node DuckDB client and `probe-etl` removed with owner approval; Python manifest matches `pyproject.toml`/`uv.lock`).*
 *Previous verification: 2026-10-17 by Tank (sprint-15 close: clean → check green, browser tests green;
 no dependency or mechanism change. Sprint-14 close: clean → check green, browser tests green;
 routine dependency `elkjs` per §4. Sprint-13 close: clean → check green; no dependency or

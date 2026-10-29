@@ -17,7 +17,8 @@ INSTRUCTIONS = (
     "Is `payee` an account at one of the owner's own banks or card issuers, "
     "so that the money stays with the owner?"
 )
-YES = "The payee is a bank, card issuer or account the owner holds, such as one that shares an institution with an entry in `owner_accounts`."
+YES = ("The payee is a bank, card issuer or account the owner holds, "
+       "such as one that shares an institution with an entry in `owner_accounts`.")
 NO = "The payee is a person, a payment app such as Venmo or Zelle, or a merchant, so the money has left the owner."
 
 
