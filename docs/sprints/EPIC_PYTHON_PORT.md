@@ -73,6 +73,8 @@ Fixture figures (researched 2026-10-29, rough ranges from marketing blogs): abou
 
 **Live judgement (owner, 2026-10-29):** the proof of concept's acceptance includes **one live Jev judgement** on the Almanac text. Tests use a Jev double; the live run happens once, at sprint close, with the owner's go-ahead.
 
+**Interface (owner, 2026-10-29):** the proof of concept is command line only: `understudy run coffee_week.yaml` prints the stages and writes `ingredients.jsonl`. The dashboard is slice C.
+
 ## 8. Next
 
 1. Smith Gate 2 on this revision; Morpheus writes the domain model from section 4 and settles the placeholders in section 5 row 6.
