@@ -16,6 +16,9 @@
 
 import { UsageError, RunError } from './errors.mjs';
 import { genericLibrary } from './library.mjs';
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 
 const KEY = 'TYPESAFE_API_KEY';
 
@@ -32,8 +35,8 @@ const USAGE = `usage: understudy run <sketch> [--steps N] [--input name=value]..
            replay a finished run's log on the watch page
        understudy dashboard <folder> [--port N] [--host ADDR]
            the console: choose a sketch from the folder, set its inputs, press Play
-       understudy etl run --monarch <csv> --amex <csv>
-           snapshot, reconcile, classify merchants with Jev, and export local review rows (needs ${KEY})
+       understudy etl run --monarch <csv> --amex <csv> [--out <folder>] [--since YYYY-MM-DD] [--amex-account <name>]
+           merge purchases, pair transfers, link refunds, place merchants with Jev, and write result.jsonl (needs ${KEY})
 <sketch> is a directory holding sketch.yaml (e.g. examples/cli) or the file itself.
 `;
 /**
@@ -74,6 +77,9 @@ const OPTIONS = {
   pause: { commands: ['run'], read: null },
   monarch: { commands: ['etl'], read: (value) => value, needs: 'a CSV path', example: '--monarch transactions.csv' },
   amex: { commands: ['etl'], read: (value) => value, needs: 'a CSV path', example: '--amex transactions.csv' },
+  out: { commands: ['etl'], read: (value) => value, needs: 'a folder', example: '--out build/runs' },
+  since: { commands: ['etl'], read: (value) => value, needs: 'a date', example: '--since 2026-01-01' },
+  'amex-account': { commands: ['etl'], read: (value) => value, needs: 'an account name', example: '--amex-account "Platinum Card"' },
 };
 
 /**
@@ -151,9 +157,23 @@ const defaultCommands = {
     await dashboard.close();
     stderr.write('understudy: dashboard stopped\n');
   },
-  async etl(options) {
-    const { runEtl } = await loadModule('./etl/run.mjs');
-    return runEtl(options);
+  async etl({ monarchPath, amexPath, out, since, amexAccount, environment, stdout, stderr }) {
+    const root = fileURLToPath(new URL('../', import.meta.url));
+    const pythonArguments = ['-m', 'src.etl.cli', '--monarch', monarchPath, '--amex', amexPath];
+    for (const [name, value] of [['out', out], ['since', since], ['amex-account', amexAccount]]) {
+      if (value !== undefined) pythonArguments.push(`--${name}`, value);
+    }
+    return new Promise((resolve, reject) => {
+      const pythonEnvironment = { ...environment, PYTHONPATH: [root, environment.PYTHONPATH].filter(Boolean).join(path.delimiter) };
+      const child = spawn(`${root}.venv/bin/python`, pythonArguments, { env: pythonEnvironment, stdio: ['ignore', 'pipe', 'pipe'] });
+      child.stdout.on('data', (chunk) => stdout.write(chunk.toString()));
+      child.stderr.on('data', (chunk) => stderr.write(chunk.toString()));
+      child.on('error', (error) => reject(new UsageError(`could not start Python ETL: ${error.message}; run bobp make install`)));
+      child.on('close', (code, signal) => {
+        if (signal) reject(new RunError(`Python ETL stopped by ${signal}`));
+        else resolve(code);
+      });
+    });
   },
 };
 
@@ -186,14 +206,14 @@ const COMMANDS = {
     if (positional.length !== 1) throw new UsageError(positional.length === 0 ? 'dashboard needs a folder of sketches, e.g. understudy dashboard examples' : `dashboard takes one folder (got ${quoted})`);
     await use.dashboard(positional[0], { port, host, environment, stderr });
   },
-  async etl({ positional, monarch, amex }, { use, environment, stdout }) {
+  async etl({ positional, monarch, amex, out, since, 'amex-account': amexAccount }, { use, environment, stdout, stderr }) {
     if (positional.length !== 1 || positional[0] !== 'run') {
       throw new UsageError('usage: understudy etl run --monarch <csv> --amex <csv>');
     }
     if (!monarch) throw new UsageError('understudy etl run needs --monarch <csv>');
     if (!amex) throw new UsageError('understudy etl run needs --amex <csv>');
     if (!environment[KEY]?.trim()) throw new UsageError(`understudy etl run needs a TypeSafe key: set ${KEY}`);
-    await use.etl({ monarchPath: monarch, amexPath: amex, environment, stdout });
+    return use.etl({ monarchPath: monarch, amexPath: amex, out, since, amexAccount, environment, stdout, stderr });
   },
 };
 
@@ -214,8 +234,8 @@ export async function main(argv, { environment = process.env, stdout = process.s
     const parsed = parse(argv);
     const command = COMMANDS[parsed.command];
     if (!command) throw new UsageError(`no command "${parsed.command}" - commands: ${Object.keys(COMMANDS).join(', ')} (see understudy --help)`);
-    await command(parsed, { use: { ...defaultCommands, ...commands }, environment, stdout, stderr });
-    return 0;
+    const code = await command(parsed, { use: { ...defaultCommands, ...commands }, environment, stdout, stderr });
+    return Number.isSafeInteger(code) ? code : 0;
   } catch (error) {
     if (error instanceof UsageError) {
       stderr.write(`understudy: ${error.message}\n`);

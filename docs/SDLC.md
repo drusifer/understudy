@@ -15,11 +15,15 @@ ask `@Tank *devops sdlc <what and why>` — the mechanism and this document chan
 | Local environment | `node_modules/` (gitignored) | `.venv/` (gitignored) |
 | Test runner | `node:test` (built in, no dependency) | `unittest` (built in) |
 
-The ETL stack pins SQLMesh 0.236.3 and DuckDB 1.5.6 in Python, plus
-`@duckdb/node-api` 1.5.6-r.1 in Node (the matching Node package build for DuckDB 1.5.6).
-Keep the Python and Node DuckDB clients on the same
-version. ETL stages share a run database sequentially: SQLMesh must exit before Node opens
-it for writes, and Node must close before SQLMesh resumes.
+Since Sprint 17 the whole ETL is Python (ADR-0038): a `python-statemachine` YAML controller
+(`src/etl/stages.yaml`), SQLMesh 0.236.3 on DuckDB 1.5.6, MCP source servers (`mcp` 2.3.0), `holidays`,
+`iso18245` (MCC names) and `typesafe-sdk` 0.7.5 for Jev, all pinned in `pyproject.toml` and `uv.lock`.
+The Node ETL (`src/etl/*.mjs`) is deleted; `src/cli.mjs` only launches the Python CLI. The run database is
+opened by one process at a time. Private run output is refused under `data/` and any non-git-ignored
+project path (UND-54 AC4).
+
+Leftover from Sprint 16, pending owner approval (a dependency/target removal is a mechanism change):
+`@duckdb/node-api` 1.5.6-r.1, `scripts/etl-handoff-probe.mjs` and `probe-etl` are no longer used by the ETL.
 
 Other required tools: `make`, `bobp` (agents run every target through `bobp make <target>`),
 `gitleaks` on `PATH` for `make secrets` / `make check` and the pre-commit hook.
@@ -187,7 +191,7 @@ Run by Tank at sprint close (`*devops sdlc-check`):
 8. Nothing under `src/` or `tests/` imports from `seed/`.
 
 ---
-*Last verified: 2026-10-17 by Tank (Sprint 16 close: distclean → install → check green; repeated install passed idempotently; Phase 0 SQLMesh/Node/Python DuckDB handoff probe green).*
+*Last verified: 2026-10-29 by Tank (Sprint 17 close: distclean → install → check green; repeated install passed idempotently; Python manifest matches `pyproject.toml`/`uv.lock`; unused Node DuckDB client and `probe-etl` flagged for owner-approved removal).*
 *Previous verification: 2026-10-17 by Tank (sprint-15 close: clean → check green, browser tests green;
 no dependency or mechanism change. Sprint-14 close: clean → check green, browser tests green;
 routine dependency `elkjs` per §4. Sprint-13 close: clean → check green; no dependency or

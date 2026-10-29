@@ -10,6 +10,22 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+## ADR-0039: Purchases pair one-to-one inside a date-and-amount group
+
+*   **Status**: Accepted · **Deciders**: Morpheus, owner · **Date**: 2026-10-27 · **Related**: STORY-UND-50; [Sprint 17 architecture](sprints/ARCH_SPRINT17.md)
+*   **Context**: Sprint 16 paired a Monarch and an Amex row only when their date and amount occurred exactly once on each side and called every repeat ambiguous. On the owner's real files it paired 26 rows, because the two exports record the same purchase with opposite signs, and two real purchases of the same amount on the same day (two coffees) could never pair.
+*   **Options**: (1) pair within each (date, absolute amount) group one-to-one, with the sign flipped, exact merchant text first and source row order only to break ties among otherwise identical rows; (2) keep "repeats are ambiguous" and send them to review: safe but leaves thousands of real duplicates counted twice; (3) ask Jev to judge each pair: matching is arithmetic, and about 4,300 paid calls would answer a deterministic question.
+*   **Decision**: (1), restricted to the Monarch account that is the Amex card (auto-detected as the account holding the most sign-flipped matches, overridable with `--amex-account`). Rows without a counterpart stay single. Added in Phase 2 after the first real-file run: a third pass pairs leftovers when the amount is equal and the dates are one to three days apart (95 of the 114 Amex rows left unpaired by same-date pairing had such a partner), nearest date first, each row used once.
+*   **Consequences**: + the real overlap pairs (fresh files, 2026-10-27: 4,475 of 4,489 Amex rows, 4,392 same date and 83 within three business days; 14 left single); two identical purchases stay two records. The near-date window counts business days (weekends and US federal holidays excluded) and matches in up to five rounds so identical fares all find a partner. − for rows identical in date, amount and merchant text the pairing among equals is arbitrary, which is harmless because nothing observable differs; the 3-day transfer window and label rule are tuned to one household's data.
+
+## ADR-0038: ETL rules are SQL, each export is an MCP source server, the controller is Python
+
+*   **Status**: Accepted · **Deciders**: Morpheus, owner · **Date**: 2026-10-27 · **Related**: STORY-UND-49 to 55; [Sprint 17 architecture](sprints/ARCH_SPRINT17.md); `agents/morpheus/spike_sprint17.md`
+*   **Context**: the owner decided that understudy moves to Python for all, that no new ETL language or state machine representation is invented, and that there is to be no XML. Sprint 16's controller is Node and shares the run database with SQLMesh through a sequential handoff.
+*   **Options**: (1) keep SQL on DuckDB for relational rules, serve each export from a Python MCP server, and write the controller in Python using `python-statemachine`'s YAML, `typesafe-sdk` and `mcp`; (2) keep the Node controller and only add SQL: smallest change, but keeps two runtimes against the owner's direction; (3) SCXML for the stage machine: a W3C standard, rejected by the owner (no XML), and its Python interpreters are abandoned.
+*   **Decision**: (1). The Phase 0 spike showed the stage machine, guards and failure branch run from YAML; `typesafe-sdk` returns per-option probabilities; the `mcp` 2.x SDK pages 14.5k rows over stdio in about a second; the MCC list is the MIT `iso18245` package. The Python controller replaces `src/etl/run.mjs`, `categories.mjs`, `csv.mjs` and the ETL's use of `src/jev.mjs` outright, with no compatibility output (`review.csv` becomes `result.jsonl`).
+*   **Consequences**: + one runtime for the ETL, no Node-DuckDB seam, the rules survive the Python port because they are SQL, a new source is a new server. − Sprint 16's Node ETL code is deleted after one sprint; `python-statemachine`'s schema has no `tags`, so the port epic must find another way to carry `move` and `safe`; `mcp` 2.x is new and renamed APIs (pin it); the licence of the network descriptions bundled in `iso18245` is not verified, so only its ISO descriptions and groups are offered to Jev.
+
 ## ADR-0037: SQLMesh owns deterministic ETL; Understudy coordinates Jev decisions
 
 *   **Status**: Accepted · **Deciders**: Morpheus, owner, Tank · **Date**: 2026-10-17 · **Related**: STORY-UND-46, STORY-UND-47, STORY-UND-48; [Sprint 16 architecture](sprints/ARCH_SPRINT16.md)

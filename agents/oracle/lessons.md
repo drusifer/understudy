@@ -440,3 +440,24 @@ When a story depends on how two real data sources relate, count the candidate ma
 
 ### References
 - **Files:** `docs/sprints/USER_STORIES_SPRINT17.md`, `docs/sprints/ARCH_SPRINT16.md`
+
+---
+
+## [2026-10-29] A shared preflight check needs the policy, not just the permission
+
+> **Tags:** #privacy #testing #Neo #Trin
+
+### Context
+Sprint 17 Phase 5 (UND-54 AC4) said private output must stay out of tracked folders and `data/`. The shared `_check_writable` only tested that the path was a writable directory, so `--out src/` exited 0 (DEF-UND54-01).
+
+### The Issue
+The permission check passed every writable path, and the acceptance test for the policy only ran in UAT, after the phase was called complete.
+
+### The Solution
+Added `_check_destination_policy`: the resolved path is refused under `data/` or when `git check-ignore` does not ignore it; outside paths and ignored `build/` pass. Boundary tests cover data/, tracked folders, ignored build, outside and a symlink into `src/`.
+
+### The Rule (The "Lesson")
+When an acceptance criterion restricts where something may be written, test the forbidden and permitted destinations (including symlinks) with the controller stubbed, in the same task that adds the writable check.
+
+### References
+- **Files:** `src/etl/controller.py`, `tests/python/test_etl_cli.py`, `docs/sprints/UAT_PLAN_SPRINT17.md`

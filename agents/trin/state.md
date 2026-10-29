@@ -1,62 +1,26 @@
-# Agent State
+# Trin State — Sprint 17 Phase 5
 
 ## Context
-
-### Recent Decisions
-- UAT scope covers Phase 1 CSV inputs converted to internal flat JSONL, SQLMesh loading, and deterministic reconciliation. User inputs remain CSV; arbitrary or nested JSONL is not supported.
-- No owner transaction files were read; all acceptance data was synthetic.
-
-### Key Findings
-- Valid CLI run passed: 2 Monarch rows + 2 Amex rows produced 1 matched and 2 unmatched rows; manifest recorded validation, snapshot, CSV-to-JSONL, and SQLMesh stages complete.
-- The generated JSONL preserves both normalized `merchant` and full `raw_record`, including quoted comma value `Cafe, Local`.
-- SQLMesh model fixture passed and verifies one matched pair with both source references, three separate ambiguous rows, two unmatched rows, and two invalid-key rows.
-- Missing Monarch file CLI case exited 2, named the failed source/path, and unit coverage confirms no run manifest was created. Header and converter column failures are covered by JS/Python unit tests.
-- `bobp make test-js`: 303 passed. `bobp make test-py`: 3 passed. `bobp make test-etl`: one model test passed. `bobp make lint`: passed.
-- `bobp make judge-trace DATE=2026-10-17` was attempted, but there is no `judge-trace` Make target in this sprint worktree. No real session trace was produced; noted as an existing process/tooling gap, not a feature blocker.
-- Phase 2 synthetic acceptance passed: JavaScript suite 310/310, including 4,700 matched transactions with five repeated merchants in a single fake-Jev batch; full staged run and review export completed in 10,286 ms. `bobp make check` passed after the scale scenario was added, covering JS, Python, SQLMesh tests, lint, and secret scanning. No personal CSV or live Jev call was used.
-
-### Important Notes
-- Acceptance report: `docs/sprints/UAT_PLAN_SPRINT16.md`.
-- Phase 1 UAT passed; Phase 2 classification/output is not covered by this verdict.
-- Synthetic run directories were removed after verification.
+- User authorized proceeding with UAT and test-plan review, explicitly reinforcing test pyramid and lints.
+- Reviewed UND-54 AC1–5, current UAT plan, controller/CLI tests, Mouse state (stale Sprint 16; task.md remains current), and Oracle lesson about real-data sign conventions.
+- Expanded docs/sprints/UAT_PLAN_SPRINT17.md with a layer-by-layer coverage matrix and six Phase 5 cases. Unit/model coverage owns deterministic rules; existing real MCP/SQLMesh/DuckDB integration owns persistence and output; CLI process smoke owns imports/exit codes. Live Jev quality remains owner acceptance, not proven by doubles.
+- Added three fast CLI unit tests: option forwarding/success JSON with AsyncMock only at controller boundary, run-failure exit/error formatting, and real chmod 0555 preflight refusal before source validation. Added category-confidence assertion to the existing shared controller run; no new end-to-end success/scale scenarios.
+- First QA run passed 81 Python tests, no skips, 84.322s; existing 4,700-pair case ran in 18.40s. The Make target has no supported Python test filter, so existing integration/scale cases were necessarily repeated; future Tank task should add filtering. Prior unchanged 302 JS / 29 SQLMesh evidence was reused.
+- Configured `bobp make lint` passed 2026-10-27 22:52:14 (ESLint). Python has no configured linter. No new lint dependency or gate was added.
+- Important defect DEF-UND54-01 (Major): UND-54 AC4 forbids private output under data/ or tracked source folders. `_check_writable` in src/etl/controller.py:58 checks only directory and OS permissions. `--out <checkout>/src` is accepted by Python CLI. Both CLI and direct controller call this helper, so fix belongs in the common preflight.
+- Added failing UNIT reproduction in tests/python/test_etl_cli.py: test_output_in_a_tracked_source_directory_is_refused_without_starting_the_controller. Controller is an AsyncMock; no files are written into src. Actual exit0 vs expected2.
+- Final run: `bobp make test-py`, 82 tests in 84.444s, 81 pass/1 fail, no skips, 2026-10-27 22:54:36. Captured evidence at agents/trin/phase5_destination_regression.log. Scale case 18.29s.
+- judge-trace target is absent from Makefile/help (already noted by earlier sprint QA); no trace audit or UAT pass claimed. Further acceptance execution halted on the defect.
 
 ## Current Task
-**Status:** Phase 1 and Phase 2 acceptance verification complete; Morpheus review passed. Smith's scale coverage gap is closed; awaiting Smith's final acceptance review.
-**Assigned to:** Trin
-**Started:** 2026-10-17
-
-### Task Description
-Verify Sprint 16 acceptance criteria, negative paths, data preservation, model reconciliation, Jev mapping behavior, and review output.
-
-### Progress
-- [x] Review stories, architecture, recent chat, Oracle lessons/memory, and UAT template.
-- [x] Verify synthetic end-to-end run and inspect staged JSONL/manifest.
-- [x] Verify missing-file CLI behavior, header/column failures, and unique/ambiguous/unmatched/invalid-key model cases.
-- [x] Record observed outcomes in the Sprint 16 UAT plan.
-- [x] Morpheus architecture/code review passed with no Phase 1 defects.
-- [x] Verify Phase 2 category, fallback, repeat-mapping, provenance, and failure outcomes from synthetic tests and UAT evidence.
-- [x] Rerun JavaScript unit tests after lint cleanup; 309 passed. Rerun lint; passed.
-- [x] Update Sprint 16 UAT with Phase 2 verdict, current checks, and private-workload availability limitation.
-- [x] Add a synthetic 4,700-pair acceptance run to close the workload-volume coverage gap; record timing and output counts.
-- [x] Refresh `bobp make check` after adding the scale scenario; all gates pass.
-- [x] Smoke-check incomplete CLI invocation: exit 2 with actionable missing `--amex <csv>` message; no API call or run created.
-
-### Blockers
-No product blocker. The `judge-trace` Make target referenced by Trin guidance is missing; recorded in UAT and not a phase acceptance blocker.
-
-### Oracle Consultations
-None.
+- Status: Phase 5 UAT FAILED; QA investigation complete, targeted fix awaiting diagnosis confirmation per fix skill. Implementation remains uncommitted from prior turn.
+- No production code edits in this QA increment, no live Jev calls, private-data reads, commits, pushes or merges.
+- Modified this increment: tests/python/test_etl_cli.py (new unit coverage + failing regression), tests/python/test_controller.py (confidence assertion), docs/sprints/UAT_PLAN_SPRINT17.md, this state and chat artifacts. New captured log in agents/trin/. Preserve prior Phase 5 source/dependency/CLI/doc changes recorded in agents/neo/state.md.
+- QA does not approve task 5.2 or send a product pass to Smith/Morpheus while the regression fails.
 
 ## Next Steps
-### Immediate Next Action
-Smith: review the 4,700-row acceptance evidence and complete the owner-facing acceptance gate.
-
-### Waiting On
-Phase 1 and Phase 2 UAT have passed. Await Smith's final review and owner acceptance.
-
-### Planned Work
-- [x] Phase 1 UAT and review passed.
-- [x] Phase 2 UAT and Morpheus review passed; Smith acceptance pending.
-
----
-*Last updated: 2026-10-17*
+1. Neo obtains diagnosis confirmation as required by agents/skills/fix/SKILL.md before production edits: destination validation is missing, not a file-permission issue.
+2. Proposed fix: reject project data/ and tracked/unignored project output folders before source reads; keep build/ and explicit external output folders working; resolve symlinks. Add unit allowed/forbidden/symlink cases; do not multiply full pipeline runs for path rules.
+3. Verify the failing regression turns green through the project Makefile, then run the configured lints. Avoid repeating unchanged JS/model suites unless a relevant production change or required gate justifies it.
+4. Resume Trin UAT at UAT-UND-54-04. Execute one actual `bobp make run` missing-input refusal smoke (no Jev call) to close the Make front-door gap. Record results and remaining live-owner limitations. Address missing judge-trace tooling without claiming a trace audit occurred.
+5. On QA pass, checkpoint and hand off to Smith usability review and Morpheus phase review. Mouse owns task.md updates. No publishing without owner instruction.

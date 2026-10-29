@@ -47,18 +47,6 @@ Agents **must** use this for every message posted to CHAT.md:
 
 ---
 
----
-[<small>2026-10-27 16:38:04</small>] [**Cypher**]->[**Smith**] *handoff*:
- Sprint 16 launched and archived. Sprint 17 stories (UND-49..54) are drafted in docs/sprints/USER_STORIES_SPRINT17.md; they wait for the owner to say go. @Smith *user review sprint 17 when asked
+> **Previous sprint archived:** `agents/chat_archive/CHAT_SPRINT_17.md` (2026-10-29 10:57:56) — Sprint 17 (2026-10-27/29) moved the ETL to Python: MCP source servers, SQL pairing of purchases, transfers and refunds, Jev categories with MCC naming, a python-statemachine YAML controller and result.jsonl; the Node ETL was deleted. Smith approved stories and architecture; Phases 1-5 passed; Trin's DEF-UND54-01 (private output allowed under src/) was fixed. Tank's check was green. The owner's real-file run completed (5,074 records); net spending looks large and is in the backlog. Launched; merge awaits the owner.
 
 ---
-[<small>2026-10-27 16:47:32</small>] [**make**]->[**all**] *build*:
- Build PASSED | make install-js | /home/drusifer/Projects/understudy/build/build.out
-run `npm fund` for details
-
-2 vulnerabilities (1 moderate, 1 high)
-
-To address all issues, run:
-npm audit fix
-
-Run `npm audit` for details.

@@ -1,11 +1,11 @@
 # Sprint 17 User Stories: Dedupe, transfers, refunds and new categories
 
-*   **Total Points**: 27 (Tier 1)
-*   **Branch**: `sprint-17` (to be cut from `main` once Sprint 16 is merged)
+*   **Total Points**: 29 (Tier 1)
+*   **Branch**: `sprint-17` (cut from `main` at the Sprint 16 merge, 5786fc8)
 *   **Source**: owner, 2026-10-17 to 2026-10-27, recorded in `agents/CHAT.md` and `agents/morpheus/state.md`: reproduce the household transaction-cleaning procedure with understudy, starting from a Monarch export and an Amex export that overlap.
-*   **Builds on**: Sprint 16 (`USER_STORIES_SPRINT16.md`). Its reconciliation matches only same-sign rows (26 matches on the owner's real files); these stories add the sign-flipped match (4,229 of 4,321 Amex rows), transfers, refunds and new category names.
+*   **Builds on**: Sprint 16 (`USER_STORIES_SPRINT16.md`). Its reconciliation matches only same-sign rows (26 matches on the owner's real files); these stories add the sign-flipped match (4,276 of 4,321 Amex rows, measured), transfers, refunds and new category names.
 *   **Platform**: the owner decided on 2026-10-27 that understudy moves to Python for all (`agents/cypher/platform_decision_2026-10-27.md`). The port is a separate epic; where these stories say "source server" and "sketch", the language they run in is for the architecture to settle.
-*   **Status**: Draft — awaiting Smith Gate 1
+*   **Status**: Revised after Smith's Gate 1 rejection (2026-10-27): UND-53 split, UND-51 recognition rule stated, dependencies and merchant key added — awaiting re-review
 
 ## Goal
 
@@ -14,16 +14,24 @@ When this sprint is done, the owner can point understudy at their Monarch and Am
 ## Assumptions made for the owner
 
 1. **Two sources only.** Monarch (14,522 rows, 2023-12-30 to 2026-10-17, six accounts) and Amex (4,321 rows, 2026-01-01 to 2026-10-16). Monarch rows for the other accounts (Ridgewood, Citi, Student Advantage and so on) are read and reconciled, but there is no export for them to merge with. If wrong: a third source needs its own source server, the same shape as the first two.
-2. **Match rule for the same purchase:** same date and same amount with the sign flipped (Amex charges are positive, Monarch's are negative). In the real files 4,229 of 4,321 Amex rows match this way. If wrong: Morpheus widens the rule (a day either side, or the statement text).
-3. **A transfer pairs on opposite amount in a different account within 3 days.** In the real files 43 of 70 rows Monarch labels "Credit Card Payment" pair this way. Monarch's own transfer labels are inconsistent ("Food & Dining: Credit Card Payment", "Transportation: Transfers"), so the label alone does not decide. If wrong: the window or the rule changes, the stories do not.
+2. **Match rule for the same purchase:** same amount with the sign flipped (Amex charges are positive, Monarch's are negative), on the same date first and then within three business days (owner: weekends and bank holidays should not count). Measured on the fresh real files: 4,475 of 4,489 Amex rows pair this way (4,392 same date, 83 within three business days); a first estimate of 4,229 had used a looser many-to-many count on older files. If wrong: Morpheus changes the window or adds the statement text.
+3. **A transfer pairs on opposite amount in a different account within 3 business days** (Monday to Friday, not a US federal holiday; owner, 2026-10-27). In the real files 43 of 70 rows Monarch labels "Credit Card Payment" pair this way. Monarch's own transfer labels are inconsistent ("Food & Dining: Credit Card Payment", "Transportation: Transfers"), so the label alone does not decide. If wrong: the window or the rule changes, the stories do not.
 4. **A refund with no findable original charge** (for example the purchase was before 2026-01-01) still counts against its merchant, without a link. If wrong: such refunds go to the review list instead.
 5. **One Jev decision per distinct merchant**, reused for every row of that merchant in the run, so cost follows the number of merchants, not rows. If wrong: cost grows with rows.
 6. **Nothing is written back** to Monarch or Amex. The result is a new file.
+7. **The period is 2026 year to date (owner, 2026-10-27).** The run reconciles the period the Amex export covers: its first date onward. Monarch rows before that date are left out and counted in the summary; `--since <date>` changes the start. Why: Monarch's card history before November 2025 was uploaded from Amex files with Amex's sign and category style, there is no Amex export for it, and the owner's own workbook is 2026 only. If wrong: a longer Amex export brings that history into scope and needs a per-row sign rule and a within-Monarch duplicate check.
+8. **Venmo and Zelle payments are expenses (owner, 2026-10-27):** the money goes out, and Monarch's label "Transportation: Transfers" on them is wrong. Real transfers are money moving between the owner's own bank and card accounts (including a savings account Monarch does not track). The run's categories come from Jev's category step and do not copy Monarch's labels. If wrong: the question Jev is asked about unpaired transfers changes.
+9. **The owner uses fresh exports** of both files for the acceptance run; the counts in these stories come from the 2026-10-17 files and will shift. A handful of card rows inside the period carry the older Amex-style categories (2 of 4,339 in the old files); they are treated like any other row.
 
 ---
 
+**Order and dependencies:** UND-49 first. UND-50 needs UND-49. UND-51 and UND-52 each need UND-50 (a purchase is merged before it can be a transfer leg or a refund's original). UND-53 needs UND-49 only. UND-55 needs UND-53. UND-54 comes last and needs all of them. Each story leaves the product usable on its own: after UND-50 the run already counts every purchase once.
+
+**Merchant key (used by UND-52, 53 and 55):** the merchant text with surrounding spaces removed and capital letters ignored, punctuation kept, as in Sprint 16. No fuzzy merging.
+
 ## STORY-UND-49: Read my Monarch and Amex files as JSONL
 **Points:** 3
+**Depends on:** nothing
 
 **As the** owner, **I want** each export to be served as JSONL records by its own source server, **so that** understudy reads them like any other app it plays and later sources (a sheet, another bank) can be added the same way.
 
@@ -32,69 +40,88 @@ When this sprint is done, the owner can point understudy at their Monarch and Am
 2. Each record says which source it came from and which row of the file it was, so any result can be traced to its original row.
 3. Run against the real files, the Monarch server returns 14,522 records and the Amex server returns 4,321 (an Amex row whose details span several lines is still one record).
 4. A file that does not exist, or whose columns are not the expected ones, stops the run before anything is read, saying which file and which column is wrong. Nothing is written.
-5. The repository holds no household data: tests use small made-up files with the same columns, and `data/` is ignored by git.
+5. The repository holds no household data: the automated tests use small made-up files with the same columns, and `data/` is ignored by git. The record counts in criterion 3 are checked by the owner on their own files, not by the test suite.
 
 ---
 
 ## STORY-UND-50: One record per purchase
 **Points:** 5
+**Depends on:** UND-49
 
 **As the** owner, **I want** a purchase that appears in both exports to become one record, **so that** my spending is counted once.
 
 ### Acceptance Criteria
-1. An Amex row and a Monarch row on the Amex card with the same date and the same amount (signs opposite) become one record that carries both source rows.
-2. Against the real files, 4,229 of the 4,321 Amex rows are matched; the other 92 are listed as unmatched with their date, description and amount, and still appear once in the result.
+1. An Amex row and a Monarch row on the Amex card with the same date and the same amount (signs opposite) become one record that carries both source rows. A row left over after that pairs with a same-amount row up to three business days apart (the two exports often post a charge a day or two apart; weekends and US federal holidays do not count, so a Friday charge posted the Tuesday after a Monday holiday is one business day), nearest date first; a same-date pair is never given up for a nearer-in-time one.
+2. Against the fresh real files (2026-10-27), 4,475 of the 4,489 Amex rows are matched (4,392 on the same date, 83 within three business days); the other 14 are listed as unmatched with their date, description and amount, and still appear once in the result.
 3. Two real purchases with the same date and amount (two coffees at $4.50) stay two records: each source row is matched at most once, to one counterpart.
 4. A Monarch row that has no Amex counterpart (any other account, or an Amex row from before the export began) appears once, unchanged.
 5. Running the same files twice gives the same matches.
+6. Monarch rows dated before the period start (by default the Amex export's first date) are left out of the result; the summary says how many Monarch and Amex rows were read, how many fall in the period and how many were left out. `--since <date>` moves the start; a row with no date is kept and listed as invalid.
 
 ---
 
 ## STORY-UND-51: Transfers paired and kept out of spending
 **Points:** 5
+**Depends on:** UND-50
 
 **As the** owner, **I want** a payment from one account to another, such as a Ridgewood debit paying the Amex bill, recognised as a transfer, **so that** it is not counted as spending on either side.
 
 ### Acceptance Criteria
-1. Two records in different accounts, with opposite amounts, within 3 days of each other and described as a payment or transfer, are linked to each other and both marked as a transfer. Neither is deleted.
+1. A record is a transfer candidate when its Monarch category contains "transfer" or "payment" (capital letters ignored, so "Credit Card Payment", "Transfer", "Loan Repayment" and a label with a group prefix such as "Food & Dining: Credit Card Payment" all count; Monarch's labels are not trusted on their own, see criterion 3) or its Amex description contains "payment received" (Amex's wording for a payment to the card; a merchant whose name merely contains "payment" is not a transfer). Two candidates in different accounts, with opposite amounts, within 3 business days of each other (Monday to Friday, not a US federal holiday), are linked to each other and both marked as a transfer. Neither is deleted.
 2. Marked transfers are left out of the spending summary; the summary says how many transfers and what total they carry.
-3. Against the real files, 43 of the 70 rows Monarch labels "Credit Card Payment" are paired. The other 27 appear in a review list with date, account and amount, and are not counted as spending until reviewed.
-4. A refund is never marked as a transfer: Amex's 114 credits that are not payments stay as spending credits.
-5. Two payments of the same amount in the same week pair one-to-one, not both to the same partner.
+3. A transfer candidate that finds no partner is judged by Jev, asked once per distinct payee: is this money moving to or from one of the owner's own bank or card accounts, as opposed to a payment to a person, to a payment app such as Venmo or Zelle, or to a merchant? An answer above 0.7 makes it an external transfer, left out of spending; below 0.3 makes it ordinary spending; in between it is listed for review and counted as spending until reviewed. A payment to Venmo or Zelle is spending (owner), even where Monarch labels it "Transportation: Transfers"; a merchant credit that Monarch labelled "Transfer" is a refund or credit, not a transfer.
+4. The summary says how many transfer candidates were paired, judged external transfers, judged spending and left for review, and the money each group carries. Judged external transfers are listed by payee with their counts so the owner can see what was left out of spending.
+5. A refund is never marked as a transfer: Amex credits whose description does not say "payment received" stay as spending credits (refunds).
+6. Two payments of the same amount in the same week pair one-to-one, not both to the same partner.
 
 ---
 
 ## STORY-UND-52: Refunds go back to the merchant
 **Points:** 3
+**Depends on:** UND-50
 
 **As the** owner, **I want** a refund tied to the purchase it reverses, **so that** a merchant's spending shows what I actually paid.
 
 ### Acceptance Criteria
-1. A refund is linked to an earlier charge from the same merchant whose amount is at least the refund's; the record shows the link and the merchant's spending falls by the refund.
+1. A refund is linked to an earlier charge from the same merchant (the merchant key above) whose amount is at least the refund's; the record shows the link and the merchant's spending falls by the refund.
 2. When more than one earlier charge could be the original, Jev is asked to choose among them, and the record shows which one it chose and how sure it was.
 3. A refund with no earlier charge in the data still counts against its merchant, marked as having no original charge, and is listed in the run summary.
 4. A refund is never linked to a charge dated after it.
 
 ---
 
-## STORY-UND-53: Every merchant gets a category, and a new one when none fits
-**Points:** 8
+## STORY-UND-53: Each merchant is placed in one of my categories, or marked as not fitting
+**Points:** 5
+**Depends on:** UND-49
 
-**As the** owner, **I want** each merchant placed in one of my Monarch categories, and given a new category only when none fits, **so that** the result is categorised without me labelling merchants one at a time.
+**As the** owner, **I want** each merchant placed in one of my Monarch categories when one fits, **so that** most of the result is categorised without me labelling merchants one at a time.
 
 ### Acceptance Criteria
-1. For each distinct merchant, Jev is asked whether it fits any of the existing 180 Monarch categories; an answer below 0.3 sends the merchant to naming, above 0.7 to choosing among the existing categories, and between the two to the review list.
-2. A merchant that fits is placed in the one existing category Jev chooses; the record shows the category and Jev's confidence.
-3. A merchant that does not fit goes to a naming step in the sketch: Jev chooses a group and then a name from the MCC (ISO 18245) description list, and for each candidate name a yes or no question, judged against a written rubric, confirms it is a good name. The merchant is given the best name above 0.7; if none passes, it goes to the review list.
-4. Once a new category is named it is available to every later merchant in the run, and the run lists the new categories it created and which merchants are in each.
-5. The run never makes up a category name: every name in the result is either one of the 180 or one from the MCC list.
-6. Jev is asked once per distinct merchant; the summary says how many Jev decisions were made and how many were reused.
-7. If Jev cannot be reached, the run stops, says so and writes no result.
+1. For each distinct merchant (the merchant key above), Jev is asked whether it fits any of the offered categories: the Monarch labels in use in the run's period, without labels about moving money ("transfer", "payment") and without the Amex-upload style ("Restaurant-Restaurant"); on the 2026 files that is 87 categories (the earlier "180" counted the whole old export, which includes the Amex-style names). Jev sees the merchant's name, its statement texts and a few amounts, never Monarch's own label for the row. An answer above 0.7 means it fits; below 0.3 means it does not fit and the merchant goes to UND-55; between the two it goes to the review list.
+2. A merchant that fits is placed in the one existing category Jev chooses; its records show the category and Jev's confidence.
+3. Jev is asked once per distinct merchant and the answer is reused for every row with that merchant; the summary says how many Jev decisions were made and how many were reused.
+4. If Jev cannot be reached, the run stops at that stage, says so, and writes no result.
+
+---
+
+## STORY-UND-55: A merchant that fits nothing gets a new category with a good name
+**Points:** 5
+**Depends on:** UND-53
+
+**As the** owner, **I want** a merchant that fits none of my categories given a new one with a sensible name, **so that** nothing is forced into the wrong category and I do not have to name each new category myself.
+
+### Acceptance Criteria
+1. For a merchant UND-53 marked as not fitting, Jev chooses a group and then a name from the MCC (ISO 18245) description list; Jev can choose only names on that list.
+2. For each candidate name, Jev answers a yes or no question judged against a written naming rubric (names what is bought, is a common phrase, differs from the offered categories). The merchant is given the best name whose answer is above 0.7; if none passes, the merchant goes to the review list with no new category.
+3. Once a new category is named it is available to every later merchant in the run, and the summary lists the new categories created and how many merchants are in each.
+4. Every category name in the result is either one of the offered categories or one from the MCC list; the run never makes up a name.
+5. If the MCC list cannot be read, the run stops before any naming and says which file is missing; nothing is written.
 
 ---
 
 ## STORY-UND-54: A reconciled JSONL file and a summary
 **Points:** 3
+**Depends on:** UND-49, 50, 51, 52, 53 and 55
 
 **As the** owner, **I want** the run to end with one JSONL file and a short summary, **so that** I can check the result and use it elsewhere.
 
@@ -112,11 +139,12 @@ When this sprint is done, the owner can point understudy at their Monarch and Am
 - Calendar de-duplication, trip grouping, travel tagging and merchant consolidation from the owner's procedure: later sprints.
 - Exports for the Ridgewood, Citi and Student Advantage accounts (their rows come only from Monarch).
 - Writing categories back to Monarch, and promoting learned categories or merchant rules for future runs.
-- Amex history before 2026-01-01 (the export does not have it).
-- Letting Jev write category names: it chooses only from the 180 and the MCC list.
+- Amex history before 2026-01-01 (the export does not have it) and the Monarch card history before it, which came from older Amex uploads with the opposite sign; the period rule leaves it out.
+- Checking for duplicates inside Monarch (older uploads against synced rows): outside the period.
+- Letting Jev write category names: it chooses only from the offered categories and the MCC list.
 
 ## Open Questions
 1. **Jev call limit.** Is there a number of Jev decisions per run that should stop it? Owner. Assumed: the start of the run shows how many distinct merchants it will ask about, and there is no hard cap.
-2. **The 27 unpaired card payments.** Left for review, as written. Owner can say whether to treat them as transfers anyway. Assumed: review.
-3. **Scale.** The owner's earlier boundary was about 4.7k rows; Monarch is 14.5k. Morpheus to confirm the design is comfortable at that size. Assumed: yes.
+2. **Card rows labelled "Credit Card Payment" that go to people or small merchants** (for example a payment of 300 to a person). They have no partner, so Jev judges the payee (criterion 3 of UND-51); assumed it calls them spending. Owner can confirm what they are.
+3. **Scale.** Inside the 2026 period the run handles about 5,000 Monarch rows and 4,500 Amex rows (the whole Monarch file is 14.5k). Assumed comfortable on DuckDB; Morpheus confirms.
 4. **MCC list source and licence.** Morpheus to verify before the sprint depends on it. Assumed: freely usable.

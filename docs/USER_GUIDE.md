@@ -1,5 +1,36 @@
 # understudy User Guide
 
+## Local transaction cleanup
+
+```sh
+bobp make run ARGS="etl run --monarch data/monarch.csv --amex data/amex.csv --since 2026-01-01 --out build/runs"
+```
+
+This needs `TYPESAFE_API_KEY` and the locked Python environment (`bobp make install`).
+The two CSVs must be the complete Monarch and Amex exports with their original column names.
+Each is served through its own local MCP source server; input snapshots retain every source column.
+
+The default period starts at the Amex export's first date; `--since YYYY-MM-DD` overrides it.
+Earlier rows are counted and excluded; undated rows are retained as invalid. The Monarch Amex
+account is detected from opposite-sign matches. If detection ties or finds none, pass
+`--amex-account <distinctive account text>`.
+
+Each run creates a new folder under `build/runs/`, or the folder supplied with `--out`:
+
+- `result.jsonl`: one transaction per line, including original `source_rows`, date, signed amount,
+  merchant, account, category and confidence, transfer partner and refund link and confidence.
+- `summary.json`: source and result counts, merged purchases, transfer counts and amounts,
+  net spending (purchases less refunds, transfers excluded), category counts, and review counts.
+- `run.json`, input snapshots, `run.duckdb`, and `sqlmesh.log`: local run diagnostics.
+
+`result.jsonl` replaces Sprint 16's `review.csv`; consumers must use the new JSONL fields.
+Purchases are negative, refunds positive. Transfer amounts in the summary sum absolute leg
+amounts, so a paired transfer contributes both legs. External transfers are listed by payee.
+Categories are chosen from the offered Monarch labels or the MCC list; uncertain answers remain
+for review. The same inputs and Jev answers produce byte-identical result and summary files.
+A failed stage stops the run and publishes no result. Keep household inputs and outputs in
+ignored `data/` and `build/` folders.
+
 How to install understudy, run a sketch against an app, read what it did, write a sketch for
 your own app, and fix what goes wrong.
 

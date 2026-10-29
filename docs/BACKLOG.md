@@ -185,3 +185,12 @@ Design approved on a clickable mockup - **`docs/design/DASHBOARD.md`** is the br
 - `make test-live` should check each run's final `outcome`, not only the exit code. (Trin)
 - DEF-04: the no-key message repeats "understudy" after the `understudy:` prefix. (Smith)
 - `--quiet` to drop the per-step stderr lines. (Smith)
+
+## From Sprint 17
+
+- Investigate net spending ($433k YTD) and paired transfer legs ($519k): check whether card-payment and transfer legs are counted as spending. (Trin, Smith)
+- Remove `@duckdb/node-api`, `scripts/etl-handoff-probe.mjs` and `probe-etl`, now unused; needs the owner's mechanism approval. (Tank)
+- Add a Python lint target; only JavaScript is linted. (Trin)
+- `judge-trace` target is missing, so Trin could not audit judge traces. (Trin)
+- 270 merchants went to review: let the owner confirm them and feed the choices back. (Cypher)
+- Port the rest of understudy to Python (epic still to frame). (Cypher, Morpheus)
