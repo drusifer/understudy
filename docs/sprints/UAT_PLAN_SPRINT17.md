@@ -198,3 +198,11 @@ No browser coverage is relevant to this CLI. No new end-to-end success or scale 
 **Re-run 2026-10-29 (DEF-UND54-01 fixed):** `_check_destination_policy` in `src/etl/controller.py` refuses `data/` and any project path that `git check-ignore` does not ignore (resolved paths, so symlinks into `src/` are caught); ignored `build/` and outside paths pass. The failing regression now passes, and `test_destination_policy_boundaries` covers data/, tracked `tests/` and `docs/`, ignored `build/runs`, an outside path and a symlink into `src/`. `bobp make test-py`: 83 tests OK (4,700-pair synthetic run 20.03 s); `bobp make lint` exit 0. UND-54-04 now **Pass**. Live Jev and real-file acceptance stay with the owner (Task C.3).
 
 **Phase 5 UAT original verdict: FAILED (superseded by the re-run above).** No production edits made during QA. No private inputs or live Jev calls. Handoff to Neo for the targeted fix; Smith/Morpheus approval and task 5.2 completion remain pending. `rubric UAT: COVER=A STEPS=A FAIL=S DATA=S EVID=A` describes the test plan, not product acceptance.
+
+## Sprint acceptance: the owner's run on the real files (2026-10-29)
+
+`bobp make run ARGS="etl run --monarch data/monarch-2026-ytd.csv --amex data/amex-2026-ytd.csv --since 2026-01-01 --out build/runs"`, live Jev, exit 0, every stage reached `output`. Counts only (no transaction text kept in tracked files): Monarch 5,060 and Amex 4,489 rows read; 5,074 records (4,822 purchases, 121 refunds, 84 credits, 40 transfers, 7 external transfers); 4,475 purchases merged; unpaired Amex 14, Monarch 585; refunds 69 chosen, 29 single, 23 without an original; 819 merchants asked, 549 placed, 270 for review; 913 Jev requests, 4,208 category decisions reused. The 4,276 and 45 targets belong to the older Amex export and do not apply to this file.
+
+Open observations, not blocking: reported net spending ($433,762.41) and paired transfer legs ($519,192.78) look too large for ten months and may include card-payment legs; recorded in `docs/BACKLOG.md`.
+
+`rubric UAT: COVER=A STEPS=A FAIL=S DATA=A EVID=A`. **Smith verdict: approved for launch**, on the owner's instruction to finish the sprint.

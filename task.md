@@ -61,7 +61,7 @@
 ## Sprint Closeout
 
 - [x] **Task C.1:** Tank `*devops sdlc-check`: clean setup, `bobp make check`, SDLC record updated for any added Python packages. (*Owner: Tank | Verification: `bobp make distclean`, `bobp make install`, `bobp make check`; `docs/SDLC.md` records verification.*)
-- [ ] **Task C.2:** Oracle `*ora groom`: ADR-0038 and ADR-0039, USER_GUIDE ETL section, CHANGELOG, lessons, chat archive after launch. (*Owner: Oracle | Verification: artifact rubrics pass; `bobp chat-report --moniker SPRINT_17` after launch.*)
-- [ ] **Task C.3:** Smith `*user test`: end-to-end acceptance against `UAT_PLAN_SPRINT17.md`, with the owner's own run on the real files (the 4,276 and 45 counts). (*Owner: Smith | Verification: UAT rubric verdict and the owner's acceptance in `agents/CHAT.md`.*)
-- [ ] **Task C.4:** All personas post retrospectives and backlog items. (*Owner: All | Verification: each persona's retro in `agents/CHAT.md`.*)
-- [ ] **Task C.5:** Cypher `*pm launch`. (*Owner: Cypher | Verification: launch recorded in `agents/CHAT.md`; merge and push only when the owner asks.*)
+- [x] **Task C.2:** Oracle `*ora groom`: ADR-0038 and ADR-0039, USER_GUIDE ETL section, CHANGELOG, lessons, chat archive after launch. (*Owner: Oracle | Verification: artifact rubrics pass; `bobp chat-report --moniker SPRINT_17` after launch.*)
+- [x] **Task C.3:** Smith `*user test`: end-to-end acceptance against `UAT_PLAN_SPRINT17.md`, with the owner's own run on the real files (the 4,276 and 45 counts). (*Owner: Smith | Verification: UAT rubric verdict and the owner's acceptance in `agents/CHAT.md`.*)
+- [x] **Task C.4:** All personas post retrospectives and backlog items. (*Owner: All | Verification: each persona's retro in `agents/CHAT.md`.*)
+- [x] **Task C.5:** Cypher `*pm launch`. (*Owner: Cypher | Verification: launch recorded in `agents/CHAT.md`; merge and push only when the owner asks.*)

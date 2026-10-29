@@ -1,6 +1,6 @@
 # Changelog
 
-## Sprint 17 — transaction cleanup (in progress)
+## Sprint 17 — transaction cleanup (2026-10-29, branch `sprint-17`, not yet merged)
 
 - **Breaking ETL output change:** `result.jsonl` replaces `review.csv`. Each transaction carries
   its source rows, category and confidence, transfer partner, and refund link and confidence.
