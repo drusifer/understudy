@@ -63,11 +63,11 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 **As the** shop owner, **I want** to write what each kind of customer usually orders, with shares, and some rules that are never broken, **so that** the forecast follows how I actually think about my trade.
 
 ### Acceptance Criteria
-1. A `decide` tree with `if` / `then` / `else` over SQL conditions on a segment's fields returns, for each segment, weighted drink rows whose weights sum to 1 (a leaf listing 0.5, 0.2 and 0.3 is used as written).
+1. A `decide` tree with `if` / `then` / `else` over explicit YAML conditions (`segment: { eq: students }`) on a segment's fields returns, for each segment, weighted drink rows whose weights sum to 1 (a leaf listing 0.5, 0.2 and 0.3 is used as written).
 2. A `forbid` rule drops matching rows (teens: no caffeine) and the remaining weights are renormalised to sum to 1 again; the rule wins over every preference.
 3. If a `forbid` leaves a segment with no rows, the run fails naming the rule and the segment; the sketch can opt in to `on_empty: fallback` or `skip` per stage.
 4. An unknown dimension or option in a leaf is refused as in UND-61, with the nearest valid one.
-5. A weight that is an expression over the segment (`0 if segment = 'night_workers' else 0.3`) is evaluated per segment.
+5. A weight is a number or an `if` / `then` / `else` over the segment (`if: { segment: { eq: night_workers } }`, `then: 0`, `else: 0.3`) and is evaluated per segment; no text is parsed as an expression, and the operators are `eq`, `ne`, `lt`, `le`, `gt`, `ge`, `in`, `not_in` with `all`, `any`, `not` to combine.
 
 ## STORY-UND-64: From weekly sales to ingredients
 **Points:** 3
@@ -124,4 +124,4 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 
 ## Open Questions
 1. The `evidence` / `weight` syntax, subsketch output naming and `ask` / `score` branch syntax: Morpheus proposes in the architecture; the owner confirms before build.
-2. The condition language: SQL expressions over named fields are assumed.
+2. Whether a condition may compare two fields, and whether `between` is needed (owner decided on explicit field/operator/value conditions, 2026-10-29).

@@ -44,7 +44,7 @@ Jev never produces an amount. Its probabilities become weights, and the owner's 
 
 ## 4. Filtering and empty results
 
-* A filter is a SQL condition that drops rows. It can sit on the input rows, on a decider's output (`forbid`), or on the aggregate (`where expected_count >= 1`).
+* A filter is an explicit YAML condition (field, operator, value) that drops rows. It can sit on the input rows, on a decider's output (`forbid`), or on the aggregate (`where expected_count >= 1`).
 * After a `forbid`, the surviving weights are renormalised. `forbid` always wins over a preference.
 * **If a filter empties every row for an input row, the run fails** (default), naming the rule and the input row. The owner can opt in per stage to `on_empty: fallback` (a default row), `skip` (the row adds nothing) or `walk_away` (finish successfully with outcome `none`).
 
@@ -147,9 +147,9 @@ data:
     - { name: night_workers, share: 0.15, age_min: 25 }
     - { name: others,        share: 0.10 }
   recipes:
-    - { when: "size = 'small'",  ingredient: coffee_beans, amount: 12, unit: g }
-    - { when: "size = 'medium'", ingredient: coffee_beans, amount: 18, unit: g }
-    - { when: "size = 'large'",  ingredient: coffee_beans, amount: 24, unit: g }
+    - { size: small,  ingredient: coffee_beans, amount: 12, unit: g }    # a recipe row names the option it applies to
+    - { size: medium, ingredient: coffee_beans, amount: 18, unit: g }
+    - { size: large,  ingredient: coffee_beans, amount: 24, unit: g }
   packs:
     coffee_beans: 1000
 
@@ -167,14 +167,16 @@ machine:
 
     match_orders:                     # one row per SEGMENT
       decide:
-        if: segment = 'students'
+        if:
+          segment: { eq: students }
         then:
           drink:
             - { temp: iced, size: large,  weight: 0.5 }
             - { temp: iced, size: medium, weight: 0.2 }
             - { temp: hot,  size: medium, weight: 0.3 }
         else:
-          if: segment = 'night_workers'
+          if:
+            segment: { eq: night_workers }
           then:
             drink:
               - { temp: hot, size: large, caffeine: high, weight: 1.0 }
@@ -185,12 +187,15 @@ machine:
       also:                           # other deciders, blended with the tree's rows by weight
         - decider: weather            # the subsketch: returns weights on temp
           weight:
-            if: segment = 'night_workers'   # night shift stays on hot coffee, warm or not
+            if:
+              segment: { eq: night_workers }   # night shift stays on hot coffee, warm or not
             then: 0
             else: 0.3
       forbid:
-        - when: age_max <= 17         # teens: the under-18 rule
-          drop: "caffeine <> 'none'"  # weights renormalised; an empty result fails the run
+        - when:                       # teens: the under-18 rule
+            age_max: { le: 17 }
+          drop:                       # weights renormalised; an empty result fails the run
+            caffeine: { ne: none }
       then: to_ingredients
 
     to_ingredients:
@@ -223,6 +228,6 @@ machine:
 * Fetching the Almanac text automatically is out of this epic; the owner pastes it into a file each week.
 * How a subsketch names and exposes its outputs to the parent (`outputs:` is a guess); how `ask` / `score` branches are written.
 * Whether `next:` (an outcome that also continues to another test) is needed, or a leaf always ends its branch.
-* Which condition language: SQL expressions over named fields (assumed) versus something smaller.
+* Decided (owner, 2026-10-29): **conditions are explicit YAML, not text.** A condition is a field, an operator and a value: `if: { segment: { eq: night_workers } }`. Operators: `eq`, `ne`, `lt`, `le`, `gt`, `ge`, `in`, `not_in`; several fields in one condition mean all of them; `all`, `any` and `not` combine conditions. A JSON Schema can validate every condition, and nothing is parsed from a string. Still open: whether a condition may compare two fields, and whether the operator set needs `between`.
 * Event payloads: confirm the Python loop can pass a stage's result to guards (Spike 1, open item 2).
 * How the other old examples (cli, http, web, mcp) translate; they are slice B, after the proof of concept.

@@ -35,7 +35,7 @@ Code mappings are the proposed symbols for the new package; Morpheus confirms th
 | **Decider** | Domain Service | One row in, weighted rows out. Implemented by a decide tree, an ETL lookup, a subsketch or Jev's `ask`. | `Decider` |
 | **Decision Row** | Value Object | One combination of outcome values with a `weight`; the weights for one input sum to 1. | `DecisionRow` |
 | **Blend** | Policy | The single combination rule: the weighted average of deciders' rows, weights normalised. | `blend()` |
-| **Filter** (`forbid`) | Policy | A SQL condition that drops rows; survivors are renormalised; a forbid always wins over a preference. | `forbid()` |
+| **Filter** (`forbid`) | Policy | An explicit YAML condition (field, operator, value) that drops rows; survivors are renormalised; a forbid always wins over a preference. | `forbid()` |
 | **Empty Result** | Policy | A filter that empties every row for an input fails the run, unless the stage says `fallback`, `skip` or `walk_away`. | `OnEmpty` |
 | **Segment** | Value Object | A group of customers with a share of the trade, from the owner's rough demographics. | `Segment` |
 | **Rubric** | Value Object | An ordered list of levels Jev picks among when reading supplied text. | `Rubric` |

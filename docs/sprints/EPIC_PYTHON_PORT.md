@@ -42,7 +42,7 @@ A second problem sits underneath: the player is built to *play an app* like a pe
 * **Outcome / Dimension**: a declared enumeration or discrete numeric steps; candidates may be read from source rows.
 * **Decider**: one row in, rows out, each a full combination plus a `weight` (summing to 1). Implemented by a `decide` tree, an ETL lookup, a subsketch or Jev's `ask`.
 * **Blend**: the single combination rule, a weighted average of deciders' rows. **Filter / forbid**: drops rows, renormalises; empty result fails unless `on_empty` says `fallback`, `skip` or `walk_away`.
-* **Input**: a fader, switch, count or choice the person sets, as today. **Weight**: an expression over properties of a stage's input.
+* **Input**: a fader, switch, count or choice the person sets, as today. **Weight**: a number, or an `if` / `then` / `else` over properties of a stage's input. Conditions are explicit YAML (field, operator, value), never text.
 * **Jev**: chooses among the owner's options (`ask`); its probabilities become weights.
 * Kept from before, for the dashboard and docs: Console, Watch page, Run event stream.
 
