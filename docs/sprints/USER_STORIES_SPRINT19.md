@@ -124,4 +124,4 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 
 ## Open Questions
 1. The `evidence` / `weight` syntax, subsketch output naming and `ask` / `score` branch syntax: Morpheus proposes in the architecture; the owner confirms before build.
-2. Whether a condition may compare two fields, and whether `between` is needed (owner decided on explicit field/operator/value conditions, 2026-10-29).
+2. None on conditions: explicit field/operator/value, compared with a fixed value only, no field-to-field comparison and no `between` (owner, 2026-10-29).
