@@ -67,6 +67,8 @@ A second problem sits underneath: the player is built to *play an app* like a pe
 
 The PoC is verified by decisions, not event streams: `coffee_week` with a Jev double must produce the expected ingredient file for fixed fixtures, and the age rule must never be broken. For slice B, each translated example must make the same decisions as its Node original with the same Jev double (the Node run is the oracle until Sprint D deletes it). The event stream shape is free to change.
 
+Test data for the proof of concept is **invented fixtures** (owner, 2026-10-29): last week's sales, last week's weather and an Almanac paragraph, kept under `tests/fixtures/`. Real figures can replace them later without changing the sketch.
+
 ## 8. Next
 
 1. Smith Gate 2 on this revision; Morpheus writes the domain model from section 4 and settles the placeholders in section 5 row 6.
