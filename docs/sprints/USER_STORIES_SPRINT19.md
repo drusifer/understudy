@@ -44,7 +44,7 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 2. Every mistake names the file, the path inside it (`machine.states.match_orders.decide.then.drink[1]`), the bad value and the nearest good one.
 3. A decider that returns an option not in `outcomes` is refused at check time when it is written in the sketch, and at run time when it comes from a source, naming the stage.
 4. A required source file that does not exist stops the run before any stage starts, and no output file is created.
-5. A quoted slice such as `"70:100"` is accepted; the same text unquoted is refused with a message saying to quote it.
+5. A slice such as `70:100` is accepted in a condition (`in: [70:100]`, start included, stop excluded) and in a score; the sketch is read as YAML 1.2, so `70:30` stays text and is never turned into a number.
 
 ## STORY-UND-62: Run the owner's state machine
 **Points:** 3
