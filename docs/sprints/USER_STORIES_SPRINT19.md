@@ -67,7 +67,7 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 2. A `forbid` rule drops matching rows (teens: no caffeine) and the remaining weights are renormalised to sum to 1 again; the rule wins over every preference.
 3. If a `forbid` leaves a segment with no rows, the run fails naming the rule and the segment; the sketch can opt in to `on_empty: fallback` or `skip` per stage.
 4. An unknown dimension or option in a leaf is refused as in UND-61, with the nearest valid one.
-5. A weight is a number or an `if` / `then` / `else` over the segment (`if: { segment: { eq: night_workers } }`, `then: 0`, `else: 0.3`) and is evaluated per segment; no text is parsed as an expression, and the operators are `eq`, `ne`, `lt`, `le`, `gt`, `ge`, `in`, `not_in` with `all`, `any`, `not` to combine.
+5. A weight is a number or an `if` / `then` / `else` over the segment (`if: { segment: { eq: night_workers } }`, `then: 0`, `else: 0.3`) and is evaluated per segment; no text is parsed as an expression, and the operators are `eq`, `ne`, `lt`, `le`, `gt`, `ge`, `in`, `not_in` with `and`, `or`, `not` to combine (several fields in one condition mean `and`).
 
 ## STORY-UND-64: From weekly sales to ingredients
 **Points:** 3
