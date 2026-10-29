@@ -61,7 +61,7 @@ def _map_columns(columns: list[str], source: str, path: Path) -> dict[str, str |
 
 
 @lru_cache(maxsize=8)
-def _load_cached(path_text: str, source: str, modified_ns: int, size: int):
+def _load_cached(path_text: str, source: str, modified_ns: int, size: int):  # noqa: ARG001 - cache key: a changed file reloads
     path = Path(path_text)
     display = _display(source)
     try:

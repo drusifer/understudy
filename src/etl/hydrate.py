@@ -2,7 +2,6 @@
 
 import hashlib
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -36,24 +35,23 @@ async def hydrate(source: str, path: Path, destination: Path) -> dict:
     rows, pages = 0, 0
     digest = hashlib.sha256()
     try:
-        async with stdio_client(parameters) as (read, write):
-            async with ClientSession(read, write) as session:
-                await session.initialize()
-                info = json.loads(_text(await session.call_tool("describe", {})))
-                with partial.open("wb") as output:
-                    while True:
-                        page = _text(await session.call_tool("read_transactions", {"offset": rows, "limit": PAGE_LIMIT}))
-                        lines = [line for line in page.split("\n") if line]
-                        if not lines:
-                            break
-                        data = ("\n".join(lines) + "\n").encode("utf-8")
-                        output.write(data)
-                        digest.update(data)
-                        rows += len(lines)
-                        pages += 1
+        async with stdio_client(parameters) as (read, write), ClientSession(read, write) as session:
+            await session.initialize()
+            info = json.loads(_text(await session.call_tool("describe", {})))
+            with partial.open("wb") as output:
+                while True:
+                    page = _text(await session.call_tool("read_transactions", {"offset": rows, "limit": PAGE_LIMIT}))
+                    lines = [line for line in page.split("\n") if line]
+                    if not lines:
+                        break
+                    data = ("\n".join(lines) + "\n").encode("utf-8")
+                    output.write(data)
+                    digest.update(data)
+                    rows += len(lines)
+                    pages += 1
         if rows != info["rows"]:
             raise RuntimeError(f"{source} source served {rows} of {info['rows']} rows")
-        os.replace(partial, destination)
+        partial.replace(destination)
     except BaseException:
         partial.unlink(missing_ok=True)
         raise

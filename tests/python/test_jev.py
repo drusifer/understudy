@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 from typesafe_sdk import TypeSafeAPIConnectionError
 
-from src.etl.jev import Chosen, ChoiceSpec, GatedJev, JevError, NoulSpec, TypeSafeJev
+from src.etl.jev import ChoiceSpec, Chosen, GatedJev, JevError, NoulSpec, TypeSafeJev
 
 
 class FakeClient:
@@ -53,9 +53,8 @@ class GatedJevTests(unittest.TestCase):
 
         async def go():
             gated = GatedJev(Failing(), concurrency=2)
-            results = await asyncio.gather(
+            return await asyncio.gather(
                 *(gated.decide(state={}, instructions="?", yes="a", no="b") for _ in range(20)), return_exceptions=True)
-            return results
 
         results = asyncio.run(go())
         self.assertTrue(all(isinstance(r, JevError) for r in results))

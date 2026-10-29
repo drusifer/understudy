@@ -50,3 +50,7 @@ Agents **must** use this for every message posted to CHAT.md:
 > **Previous sprint archived:** `agents/chat_archive/CHAT_SPRINT_17.md` (2026-10-29 10:57:56) — Sprint 17 (2026-10-27/29) moved the ETL to Python: MCP source servers, SQL pairing of purchases, transfers and refunds, Jev categories with MCC naming, a python-statemachine YAML controller and result.jsonl; the Node ETL was deleted. Smith approved stories and architecture; Phases 1-5 passed; Trin's DEF-UND54-01 (private output allowed under src/) was fixed. Tank's check was green. The owner's real-file run completed (5,074 records); net spending looks large and is in the backlog. Launched; merge awaits the owner.
 
 ---
+
+> **Previous sprint archived:** `agents/chat_archive/CHAT_SPRINT_18.md` (2026-10-29 15:06:17) — Sprint 18 (2026-10-29), tech-debt cleanup under no-back-compat, YAGNY and DRY: deleted dead Sprint 16 ETL code, the unused Node DuckDB client and probe-etl; added ruff with a broad rule set to make lint (owner asked mid-sprint) and split the ETL run() it flagged; deleted merged sprint-1..15 branches. The sprint-16 worktree and sprint-16/17 branches remain pending the owner. Launched; merge awaits the owner.
+
+---

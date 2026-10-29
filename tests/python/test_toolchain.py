@@ -1,6 +1,7 @@
 import unittest
 
 import duckdb
+
 import sqlmesh
 
 

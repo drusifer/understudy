@@ -12,5 +12,27 @@ dependencies = [
     "typesafe-sdk==0.7.5",
 ]
 
+[dependency-groups]
+dev = ["ruff==0.9.10"]
+
+[tool.ruff]
+line-length = 135
+target-version = "py312"
+
+[tool.ruff.lint]
+# pyflakes, pycodestyle, import order, bugbear, simplify, pyupgrade, naming, comprehensions,
+# performance, ruff's own, dead code (ERA, ARG), complexity (C90) and the Pylint checks
+select = ["E", "W", "F", "I", "B", "SIM", "UP", "N", "C4", "PERF", "RUF", "ERA", "ARG", "C90", "PL", "T20", "RET", "PTH"]
+
+[tool.ruff.lint.per-file-ignores]
+# test doubles must match the signatures they stand in for; tests print and take many fixtures
+"tests/python/*" = ["ARG", "PLR0913", "T201", "SIM117"]
+# the MCP source server and the CLI speak on stdout
+"src/etl/source_server.py" = ["T201"]
+"src/etl/cli.py" = ["T201"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 12
+
 [tool.uv]
 package = false

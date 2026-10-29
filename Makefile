@@ -6,7 +6,7 @@
 #
 # Adding a task: add the npm script first, then a one-line target here.
 
-.PHONY: help install install-js lock-js install-py lock-py install-browser test test-js test-py test-etl probe-etl test-browser test-live lint check secrets hooks push run clean distclean
+.PHONY: help install install-js lock-js install-py lock-py install-browser test test-js test-py test-etl test-browser test-live lint check secrets hooks push run clean distclean
 
 NEED_INSTALL = @test -d node_modules || { echo "No node_modules - run 'bobp make install' first"; exit 1; }
 
@@ -55,10 +55,6 @@ test-etl: ## Run SQLMesh model unit tests against synthetic fixtures
 	@test -x .venv/bin/sqlmesh || { echo "No SQLMesh - run 'bobp make install' first"; exit 1; }
 	cd sqlmesh && ../.venv/bin/sqlmesh test --local
 
-probe-etl: ## Verify SQLMesh and Node DuckDB share a run-scoped database sequentially
-	@test -x .venv/bin/python || { echo "No .venv - run 'bobp make install' first"; exit 1; }
-	node scripts/etl-handoff-probe.mjs
-
 test-browser: ## Browser tests: the watch page driven in headless Chromium against real runs with a Jev double (no key, no cost); needs Chromium (make install-browser)
 	$(NEED_INSTALL)
 	npm run test:browser
@@ -79,9 +75,11 @@ run: ## Run the understudy command: ARGS="run examples/cli" | "check <sketch>" |
 	@test -f bin/understudy.mjs || { echo "bin/understudy.mjs does not exist yet (sprint 1, phase 2)"; exit 1; }
 	@$(LOAD_ENV) node bin/understudy.mjs $(ARGS)
 
-lint: ## eslint over src/ and tests/
+lint: ## eslint over src/ and tests/, ruff over the Python ETL
 	$(NEED_INSTALL)
 	npm run lint
+	@test -x .venv/bin/ruff || { echo "No .venv - run 'bobp make install' first"; exit 1; }
+	.venv/bin/ruff check src/etl tests/python
 
 secrets: ## gitleaks: every commit + uncommitted changes to tracked files
 	@command -v gitleaks >/dev/null || { echo "gitleaks is not installed - see https://github.com/gitleaks/gitleaks#installing"; exit 1; }
