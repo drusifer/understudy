@@ -101,6 +101,8 @@ machine:
       outputs: [temp_shift]           # expected level -> how far demand moves between hot and iced
 ```
 
+`temp_shift` is the probability-weighted average of the levels' shifts in the **iced share** of drinks (owner, 2026-10-29): much colder -0.20, a little colder -0.10, about the same 0, a little warmer +0.10, much warmer +0.20. The numbers live in the sketch's `data`, so the owner can change them.
+
 ### `coffee_week.yaml`
 
 ```yaml
@@ -201,7 +203,7 @@ machine:
 
 ## 8. Open questions
 
-* How the expected Almanac level becomes `temp_shift`, and the `evidence:` / `weight` syntax (placeholders above).
+* The `evidence:` / `weight` syntax (placeholder above); whether the temperature shift applies to every segment equally.
 * Fetching the Almanac text automatically is out of this epic; the owner pastes it into a file each week.
 * How a subsketch names and exposes its outputs to the parent (`outputs:` is a guess); how `ask` / `score` branches are written.
 * Whether `next:` (an outcome that also continues to another test) is needed, or a leaf always ends its branch.
