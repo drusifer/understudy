@@ -60,7 +60,7 @@ Jev never produces an amount. Its probabilities become weights, and the owner's 
 
 ## 6. Worked example: weekly coffee ingredients (the proof of concept)
 
-The shop owner has only **last week's total sales**, not customer histories, and works from **rough demographics**: groups of customers with a share of the trade. The owner's logic: (1) split the expected drinks by segment; (2) match each segment to the drinks it prefers, as weighted leaves of a `decide` tree, with hard rules such as no caffeine under 18; (3) convert the expected drinks to ingredient counts and output. A `weather_change` subsketch has Jev read the Farmers' Almanac forecast against last week's observed weather and report how much warmer or colder next week will be; that shifts the hot/iced weights.
+The shop owner has only **last week's total sales**, not customer histories, and works from **rough demographics**: groups of customers with a share of the trade. The owner's logic: (1) split the expected drinks by segment; (2) match each segment to the drinks it prefers, as weighted leaves of a `decide` tree, with hard rules such as no caffeine under 18; (3) convert the expected drinks to ingredient counts and output. A `weather_change` subsketch has Jev read the Farmers' Almanac forecast against last week's observed weather and report how much warmer or colder next week will be; each level carries its own hot/iced weights, and the result is blended in as one more decider.
 
 ### `weather_change.yaml` (subsketch)
 
@@ -98,10 +98,24 @@ machine:
       then: done
     done:
       final: true
-      outputs: [temp_shift]           # expected level -> how far demand moves between hot and iced
+      outputs: [temp]                 # a decider: weights on the temp dimension
 ```
 
-`temp_shift` is the probability-weighted average of the levels' shifts in the **iced share** of drinks (owner, 2026-10-29): much colder -0.20, a little colder -0.10, about the same 0, a little warmer +0.10, much warmer +0.20. The numbers live in the sketch's `data`, so the owner can change them.
+**No "shift by x" operator** (owner, 2026-10-29: it broke the contract). The weather judgement is a decider like any other. Each Almanac level carries its own hot/iced weights, written by the owner in the subsketch's `data`, and the subsketch returns the probability-weighted mix of those rows as weights on `temp`:
+
+```yaml
+data:
+  weather_temp:
+    much_colder:     { hot: 0.90, iced: 0.10 }
+    a_little_colder: { hot: 0.75, iced: 0.25 }
+    about_the_same:  { hot: 0.60, iced: 0.40 }
+    a_little_warmer: { hot: 0.45, iced: 0.55 }
+    much_warmer:     { hot: 0.30, iced: 0.70 }
+```
+
+The parent blends it with the segment's own preference by weight (`also:`). These numbers replace the earlier "-0.20 to +0.20 shift" figures.
+
+**No expression language** (owner, 2026-10-29): a weight is a number, or a conditional written with the same `if` / `then` / `else` the owner uses for decisions. Nothing is parsed that is not a structure.
 
 ### `coffee_week.yaml`
 
@@ -168,10 +182,12 @@ machine:
             drink:
               - { temp: hot,  size: medium, weight: 0.6 }
               - { temp: iced, size: medium, weight: 0.4 }
-      evidence:                       # ? the weather judgement nudges the temp weights
-        weather:
-          shift: weather.temp_shift
-          weight: 0 if segment = 'night_workers' else 0.3   # night shift stays on hot coffee, warm or not
+      also:                           # other deciders, blended with the tree's rows by weight
+        - decider: weather            # the subsketch: returns weights on temp
+          weight:
+            if: segment = 'night_workers'   # night shift stays on hot coffee, warm or not
+            then: 0
+            else: 0.3
       forbid:
         - when: age_max <= 17         # teens: the under-18 rule
           drop: "caffeine <> 'none'"  # weights renormalised; an empty result fails the run
@@ -203,7 +219,7 @@ machine:
 
 ## 8. Open questions
 
-* The `evidence:` / `weight` syntax (placeholder above). Decided: the temperature shift does not apply to every segment equally; night workers prefer hot coffee even when it is warmer, expressed as weight 0 for that segment (owner, 2026-10-29).
+* Decided (owner, 2026-10-29): the weather is a decider blended in by weight (`also:`), not a shift; night workers get weight 0 for it (they prefer hot coffee even when it is warmer); weights are numbers or `if`/`then`/`else`, not expressions. Still open: the exact spelling of `also:`.
 * Fetching the Almanac text automatically is out of this epic; the owner pastes it into a file each week.
 * How a subsketch names and exposes its outputs to the parent (`outputs:` is a guess); how `ask` / `score` branches are written.
 * Whether `next:` (an outcome that also continues to another test) is needed, or a leaf always ends its branch.
