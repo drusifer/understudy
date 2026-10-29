@@ -18,7 +18,7 @@ A second problem sits underneath: the player is built to *play an app* like a pe
 
 | Sprint | Slice | Ends with |
 |---|---|---|
-| A (Sprint 19) | Proof of concept: the coffee example end to end. Sketch loader, Python main loop running the user's python-statemachine YAML, sources and sinks (file, mcp), the decider contract and weighted blend, filters, a subsketch, outputs. | `coffee_week` runs on a Jev double and a live Jev, and produces `ingredients.jsonl` |
+| A (Sprint 19) | Proof of concept: the coffee example end to end. Sketch loader, Python main loop running the user's python-statemachine YAML, file sources and sinks, the decider contract and weighted blend, filters, a subsketch, outputs. | `coffee_week` runs on a Jev double and a live Jev, and produces `ingredients.jsonl` |
 | B | Translate the remaining examples into the new model (evening with a seating subsketch, then cli, http, web, mcp); the play-an-app targets become sources, sinks and Jev `ask`. | all examples run from Python, each making the same decisions as before with a Jev double |
 | C | Dashboard and watch servers (HTTP + SSE), flow layout, rack, settings, over the new model. | console and watch page served by Python |
 | D | Delete the Node code, `package.json`, eslint and the Node test runner; Python-only SDLC. | one toolchain |
@@ -29,6 +29,7 @@ A second problem sits underneath: the player is built to *play an app* like a pe
 * No built-in loop state machine, no `turn:` tags or invoke, no scoring formula (`position ^ weight`): decisions are `if`/`else` filters plus one weighted blend.
 * No new statechart format, no new ETL language, no XML. SQL on DuckDB; python-statemachine YAML.
 * No browser-side rewrite: `page.mjs` files and theme CSS stay JavaScript/CSS.
+* Sources and sinks are **files only** in this epic (owner, 2026-10-29). MCP and HTTP source kinds are not built; examples that need a live server (evening's box office and ratings, mcp, http) are translated against file fixtures or deferred. The Sprint 17 MCP source servers keep working for the ETL.
 * No free-form numeric or free-text outcomes; Jev never writes values.
 * Sources are read-only; side effects live in stages only.
 * The dashboard does not gain ETL views in this epic.

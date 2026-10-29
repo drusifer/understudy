@@ -50,6 +50,7 @@ Jev never produces an amount. Its probabilities become weights, and the owner's 
 
 ## 5. Sources, sinks, subsketches
 
+* **For this epic every source and sink is a file** (owner, 2026-10-29). `kind: mcp` (and http) are designed for but not built; the interface below is what a later kind implements. The weather inputs are files (last week's observations, the pasted Almanac text).
 * **Sources and sinks are named in the sketch**, with `kind`, `path`/`server` and `params` in place. **No separate `bind` section and no `extends`.** Every kind implements `describe()` and `read(params)` (JSONL, paged); a sink implements `write(params, jsonl)`. The Sprint 17 MCP source servers are the first instance.
 * **Sources are read-only.** A side effect (booking, a hold) is a stage `do:`, never a source.
 * **Defaults:** a bare path is a JSONL file; each `kind` supplies its own defaults; a source may default its params and a caller overrides only what differs. A required value with no sensible default fails with a clear error.
@@ -71,10 +72,7 @@ inputs:
   place: text
 
 sources:
-  last_week:                          # what the weather actually was
-    kind: mcp
-    server: ./weather_server          # {"day": "Mon", "high": 48, "low": 36, "rain": "none"}
-    params: { place: inputs.place, week: previous }
+  last_week: last_week_weather.jsonl  # what the weather actually was: {"day": "Mon", "high": 48, "low": 36, "rain": "none"}
   almanac:                            # what is forecast for next week
     kind: file
     path: next_week_almanac.jsonl     # {"week": "2026-W44", "text": "Chilly and damp, with a hint of snow late in the week."}
@@ -203,9 +201,8 @@ machine:
 
 ## 8. Open questions
 
-* Where last week's observed weather comes from (a real weather source, the shop's own record, or last week's Almanac text, which would be a forecast rather than what happened). The PoC may use a fixture.
 * How the expected Almanac level becomes `temp_shift`, and the `evidence:` / `weight` syntax (placeholders above).
-* Getting the Almanac text: start with a file the owner pastes in each week; a fetching source is later and needs its terms of use checked.
+* Fetching the Almanac text automatically is out of this epic; the owner pastes it into a file each week.
 * How a subsketch names and exposes its outputs to the parent (`outputs:` is a guess); how `ask` / `score` branches are written.
 * Whether `next:` (an outcome that also continues to another test) is needed, or a leaf always ends its branch.
 * Which condition language: SQL expressions over named fields (assumed) versus something smaller.
