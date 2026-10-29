@@ -1,5 +1,17 @@
 # Changelog
 
+## Sprint 17 — transaction cleanup (in progress)
+
+- **Breaking ETL output change:** `result.jsonl` replaces `review.csv`. Each transaction carries
+  its source rows, category and confidence, transfer partner, and refund link and confidence.
+  The Node ETL has been replaced by a Python controller using a YAML state machine.
+- Purchases pair one to one with opposite signs, first on the same date and then within three
+  business days. Transfers stay in the result but are excluded from net spending. Refunds link
+  to earlier charges. Jev judges unpaired transfer payees, including Venmo and Zelle payments.
+- Categories come from the period's Monarch labels, with new names chosen from the MCC list.
+  `--since`, `--amex-account`, and `--out` control the period, account and destination.
+  Default period starts at the Amex export's earliest date. Jev failures stop publication.
+
 ## Sprint 16 — staged local ETL with Jev-guided categories (2026-10-27, branch `sprint-16`, not yet merged)
 
 - **`understudy etl run --monarch <csv> --amex <csv>`**: validates both exports, keeps a copy of each

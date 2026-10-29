@@ -13,7 +13,8 @@ sequenceDiagram
     participant All
     participant Neo
     participant Trin
-    Note over Cypher,Trin: 📅 2026-10-27
+    participant User
+    Note over Cypher,User: 📅 2026-10-27
     Cypher->>Smith: "handoff"
     Note right of Cypher: "Sprint 16 launched and<br/>archived. Sprint 17<br/>stories (UND-49..54) are<br/>drafted in docs/sprints/<br/>USER_STORIES_SPRINT17.md<br/>, they wait for the own…"
     Smith->>Cypher: "user reject"
@@ -64,4 +65,20 @@ sequenceDiagram
     Note right of Trin: "UAT phase 4 passed<br/>(UND-53, UND-55) with<br/>Jev doubles. Review<br/>found+fixed: a Jev<br/>failure let queued<br/>merchants still be sent,<br/>shared GatedJev…"
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "Phase 4 review passed.<br/>Category stage matches<br/>ARCH (validated answers,<br/>sorted order, no<br/>invented names, no<br/>Monarch labels in Jev's<br/>state).…"
+    Mouse->>All: "phase 5"
+    Note right of Mouse: "*phase 5"
+    Mouse->>Neo: "sm handoff"
+    Note right of Mouse: "Phase 5 start (owner:<br/>delete the Node ETL, no<br/>back-compat, KISS).<br/>Order: decisions writer<br/>(done), final_records<br/>SQL, Python controller<br/>on a…"
+    User->>All: "request"
+    Note right of User: "continue: resume Phase 5<br/>Python ETL controller<br/>after provider<br/>interruption."
+    Neo->>All: "resume"
+    Note right of Neo: "Neo resumed Phase 5.<br/>State file is stale<br/>(Sprint 16), CHAT and<br/>task.md establish Phase<br/>5. Investigating<br/>controller SQLMesh<br/>failures before…"
+    Neo->>Trin: "handoff"
+    Note right of Neo: "Phase 5 implementation<br/>complete: Python YAML<br/>controller + CLI,<br/>JSONL/summary,<br/>confidence and spending<br/>totals, old Node ETL<br/>removed. Verifie…"
+    User->>All: "request"
+    Note right of User: "proceed - consider test<br/>plan"
+    Trin->>All: "init"
+    Note right of Trin: "Trin initialized for<br/>Phase 5 UAT. Why: review<br/>the test plan against<br/>UND-54 and reuse passing<br/>evidence before adding<br/>checks for uncovered ri…"
+    Trin->>Neo: "handoff"
+    Note right of Trin: "Phase 5 UAT failed DEF-<br/>UND54-01 (UND-54 AC4):<br/>--out src/ is accepted,<br/>preflight checks<br/>permissions but not<br/>destination policy. Safe<br/>unit re…"
 ```

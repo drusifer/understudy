@@ -4,11 +4,11 @@
 * **Author**: Trin (*qa)
 * **Date**: 2026-10-27
 * **Branch**: `sprint-17`
-* **Status**: Phases 1 to 4 UAT passed; later phases not yet run
+* **Status**: Phase 5 UAT FAILED — destination-policy defect DEF-UND54-01; phases 1 to 4 retain their prior verdicts
 
 ## 1. Scope
 
-* **User stories covered so far:** `STORY-UND-49`. Later phases add `UND-50` to `UND-55` below as they are tested.
+* **User stories covered:** `UND-49` to `UND-55`; Phase 5 completes the output contract and persistence checks. Live Jev quality and owner acceptance remain separate from synthetic verification.
 * **Environment:** Sprint 17 worktree, CPython 3.12.15, `mcp` 2.3.0, Node 24. Synthetic CSVs in temporary directories; the owner's real files were read locally for counts only and no snapshot was kept.
 
 ## 2. Phase 1: source servers and hydration (UND-49)
@@ -129,3 +129,70 @@
 * **Phase 4 UAT verdict:** **PASSED** for the SQL inputs and the stages with doubles. Open: a live Jev trial on a small sample; persistence of the decision rows (controller, Phase 5).
 
 *Self-check: rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A (phases 1 to 4; the plan grows with each phase).*
+
+## 6. Phase 5 test plan: JSONL result and summary (UND-54)
+
+### Coverage by layer
+
+| Layer | What it proves | Evidence | Why this layer |
+|---|---|---|---|
+| Unit / model | Source validation, account selection and period boundaries, one-to-one purchase/transfer rules, refund candidate rules, Jev probability boundaries and off-list answers, category reuse, decision persistence | `test_sources.py`, `test_pairing.py`, `test_transfers.py`, `test_refunds.py`, `test_categorize.py`, `test_decisions.py`; SQLMesh fixtures | Deterministic rules belong here; CLI runs would obscure boundary failures and multiply runtime. |
+| CLI unit | Python forwards parsed paths, period and account to the controller, emits result JSON, and returns exit 1 for run failures or exit 2 for preflight refusals | `test_etl_cli.py`; Node option parsing in `tests/cli.test.js` | Replace only the controller boundary with an `AsyncMock`; do not launch MCP/SQLMesh or contact Jev to verify argument wiring. |
+| Controller integration | Real MCP source processes, real SQLMesh/DuckDB, stored decision tables, final JSONL and summary, confidence joins, transfer exclusions, identical bytes, and failure cleanup | Existing shared `ControllerTests` run and `FailureTests`; Jev double is the external-service boundary | Persistence, SQL generation, subprocess arguments and publication require the real components. Multiple assertions share one happy-path run. |
+| Volume | 4,700 synthetic opposite-sign pairs produce 4,700 rows and reuse one merchant decision 4,699 times | Existing `ScaleTests` | One representative volume run; not a duplicate of every business-rule case. |
+| CLI process smoke | The actual Node-to-Python bridge preserves exit 2 on missing input, without a traceback or paid request | Existing `tests/cli.test.js` Python bridge case; `bobp make run` refusal below | Confirms process/import/exit wiring that mocked argument tests cannot establish. |
+| Live owner acceptance | Actual Jev quality for real payees, refund choices and categories | Held for owner direction | Doubles prove contracts and deterministic handling, not the quality of Jev judgments. |
+
+No browser coverage is relevant to this CLI. No new end-to-end success or scale run is added for UAT: reuse the existing integration/volume tests, add only uncovered unit assertions. The Python Make target currently runs all Python tests and has no supported file/pattern filter; its invocation necessarily includes existing integration cases. This is a tooling limitation, not a reason to add more full-system tests. JavaScript and SQLMesh suites passed before handoff and are unchanged in this UAT increment; reuse their 302/29 passing results. Run the configured `lint` gate after test edits; it covers JavaScript, while Python currently has no configured linter.
+
+### `UAT-UND-54-01` One JSONL record, links, source rows and confidence
+* **Story/AC:** UND-54 AC 1; UND-52 AC 2; UND-53 AC 2.
+* **Preconditions:** temporary synthetic `Files` fixture in `test_controller.py`: 13 Monarch rows, 7 Amex rows, original headers; Jev double only.
+* **Command:** `bobp make test-py` (`ControllerTests`).
+* **Expected:** 12 result records after excluding one earlier Monarch row and merging seven pairs; 6 purchases, 2 transfer legs, 1 external transfer, 2 refunds, 1 credit. Paired records carry both original source rows; single-source records carry a null counterpart. Transfer links are reciprocal. Store refund links to the earlier 45.00 charge with confidence 0.8; a placed existing category also carries confidence 0.8.
+* **Result:** Pass, 2026-10-27 22:51:32: Python suite 81/81, including category confidence 0.8. The assertion shares the existing controller fixture; no additional integration scenario was added.
+
+### `UAT-UND-54-02` Summary totals agree with the fixture
+* **Story/AC:** UND-54 AC 2; UND-51 AC 2, 4.
+* **Command:** `bobp make test-py` (`ControllerTests.test_the_summary_counts_without_naming_transactions`).
+* **Expected:** 12 records; 2 paired transfer legs totaling 1,000.00 across both legs; external savings payee count 1; net spending 661.20 after refunds, excluding transfers; 1 direct and 1 Jev-chosen refund; MCC-named category listed; transaction descriptions excluded from summary.
+* **Result:** Pass in the 81-test UAT run. Summary arithmetic and counts match the synthetic fixture. Prior 29/29 model-test evidence is reused for unchanged SQL.
+
+### `UAT-UND-54-03` Repeat output is byte-identical and scale reuses decisions
+* **Story/AC:** UND-54 AC 3; UND-53 AC 3.
+* **Command:** `bobp make test-py` (`ControllerTests.test_a_rerun_with_the_same_files_and_answers_is_byte_identical`, `ScaleTests`).
+* **Expected:** result.jsonl and summary.json match byte for byte between identical inputs/answers, including a relative output path; 4,700 synthetic pairs produce 4,700 records with one Jev request and 4,699 reused decisions.
+* **Result:** Pass in the 81-test UAT run: byte-identical JSONL and summary; 4,700-pair run 18.40 seconds. Pre-handoff time was 18.54 seconds. The current target repeated this existing volume case because it lacks filtering, not because UAT required another scale scenario.
+
+### `UAT-UND-54-04` Destination and CLI options reach the controller
+* **Story/AC:** UND-54 AC 4; UND-50 AC 6.
+* **Commands:** `bobp make test-py` (`CliTests.test_options_reach_the_controller_and_success_is_json`); prior passing Node CLI option test.
+* **Expected:** `--monarch`, `--amex`, `--out`, `--since 2026-01-01`, `--amex-account Platinum` reach the Python controller unchanged except typed paths; stdout is one JSON result and exit 0. The existing controller integration proves a supplied temporary destination receives actual files; the CLI unit test proves forwarding rather than rerunning the pipeline.
+* **Result:** **FAIL, DEF-UND54-01.** Option forwarding passes, but the same AC prohibits private output in tracked folders or `data/`, while production preflight checks only writability. Unit regression `CliTests.test_output_in_a_tracked_source_directory_is_refused_without_starting_the_controller` supplies tracked `src/` as `--out` and stubs the controller, so no source-tree output is written. Actual exit **0**, expected **2**; controller invocation is accepted. Reproduced 22:54:36 in `bobp make test-py`: 82 tests, 81 passed, 1 failed. Successful live Jev invocation through the Make front door remains an owner acceptance step.
+
+### `UAT-UND-54-05` Preflight refusal leaves sources unread and output untouched
+* **Story/AC:** UND-54 AC 5.
+* **Commands:** `bobp make test-py` (`CliTests.test_a_read_only_directory_is_refused_before_source_validation`, existing non-directory/missing-source/bad-date cases).
+* **Expected:** a real chmod 0555 directory and a child below it are refused with `cannot write`, exit 2, before source validation or constructing Jev; directory remains empty and permissions restored during cleanup. A regular-file destination is also refused. Root skips the permission test because it bypasses POSIX permissions.
+* **Result:** Pass in the 81-test UAT run, with no skips: real read-only directory refusal occurs before source validation, no output is created, permissions restored. This verifies filesystem permissions, not the separate destination-policy rule in AC4.
+
+### `UAT-UND-54-06` Failed stages publish nothing and errors retain their exit codes
+* **Story/AC:** UND-53 AC 4; UND-54 output integrity.
+* **Command:** `bobp make test-py` (`FailureTests`, `CliTests.test_a_controller_failure_is_exit_one_with_one_actionable_error_line`).
+* **Expected:** Jev failure leaves no result or summary; a failure after writing staged JSONL removes result.jsonl.part as well and marks `failed_stage: output` in run.json. Python CLI returns 1 and exactly `understudy: Jev unavailable` on stderr for a controller failure, with empty stdout. Missing-source CLI process returns 2, no traceback, no run files.
+* **Result:** Pass in the 81-test UAT run; the existing real SQLMesh/output cleanup checks pass, with the CLI error-format assertion added at unit level.
+
+### Phase 5 gate evidence
+* Python acceptance increment at 22:51:32: `Ran 81 tests in 84.322s`, `OK`, no skips. Final regression run at 22:54:36: `Ran 82 tests in 84.444s`, `FAILED (failures=1)`, no skips. Failure: `AssertionError: 0 != 2 : private run output must not be accepted under tracked src/`. Captured log: `agents/trin/phase5_destination_regression.log`.
+* Project lint at 22:52:14: `bobp make lint`, exit 0, no ESLint findings. This configured gate covers JavaScript; Python has no configured lint target.
+* Make-front-door refusal smoke: deferred because UAT halted on the destination-policy defect. Prior actual Node-to-Python refusal test passed in the 302-test JavaScript suite.
+* Judge trace: no `judge-trace` target listed in this worktree. No trace audit or UAT pass claimed; address the unavailable target before eventual pass sign-off.
+* Owner acceptance: live Jev judgments and private-data quality remain unverified by this synthetic gate.
+
+### Defect and next gate
+
+| Defect | Severity | Requirement / reproduction | Diagnosis | Next action |
+|---|---|---|---|---|
+| DEF-UND54-01 | Major | UND-54 AC4; unit test accepts `--out <checkout>/src`, actual 0 versus expected 2 | Shared `_check_writable` in `src/etl/controller.py` verifies existence/directory/OS permission only; it has no destination-policy restriction. Both CLI and direct controller use it. | Neo: after diagnosis confirmation, reject project `data/` and tracked/unignored project destinations, preserve ignored build and owner-specified external destinations, including resolved-path checks. Retain the failing unit regression and add permitted/forbidden/symlink boundary tests at unit level before one integration smoke. |
+
+**Phase 5 UAT verdict: FAILED.** No production edits made during QA. No private inputs or live Jev calls. Handoff to Neo for the targeted fix; Smith/Morpheus approval and task 5.2 completion remain pending. `rubric UAT: COVER=A STEPS=A FAIL=S DATA=S EVID=A` describes the test plan, not product acceptance.

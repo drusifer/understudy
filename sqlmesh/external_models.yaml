@@ -10,6 +10,24 @@
     taxonomy_version: text
     decision_model: text
     review_required: boolean
+- name: etl__dev.refund_choice
+  description: Jev's choice of original charge for a refund with several possible originals, written by Understudy.
+  columns:
+    refund_id: text
+    candidate_id: text
+    status: text
+    confidence: double
+- name: etl__dev.merchant_category
+  description: The category placed for each distinct merchant (or left for review), written by Understudy.
+  columns:
+    merchant_key: text
+    merchant: text
+    category: text
+    source: text
+    status: text
+    fit_probability: double
+    confidence: double
+    suggestion: text
 - name: etl__dev.transfer_judgment
   description: Jev's judgment per distinct payee of an unpaired transfer candidate, written by Understudy (external_transfer, spending or review).
   columns:

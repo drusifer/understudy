@@ -224,3 +224,63 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-10-27 19:01:57</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
  Phase 4 review passed. Category stage matches ARCH (validated answers, sorted order, no invented names, no Monarch labels in Jev's state). Decision rows are returned, not yet persisted (Phase 5 controller). @Neo *swe impl phase-5
+
+---
+[<small>2026-10-27 19:08:33</small>] [**Mouse**]->[**all**] *phase 5*:
+ *phase 5
+
+---
+[<small>2026-10-27 19:08:33</small>] [**Mouse**]->[**Neo**] *sm handoff*:
+ Phase 5 start (owner: delete the Node ETL, no back-compat, KISS). Order: decisions writer (done), final_records SQL, Python controller on a python-statemachine YAML, CLI, then switch the command and delete the Node code. @Neo *swe impl phase-5
+
+---
+[<small>2026-10-27 19:12:41</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make install-py | /home/drusifer/Projects/understudy-sprint-17/build/build.out
+uv sync --locked
+Resolved 89 packages in 0.99ms
+Installed 2 packages in 12ms
++ python-statemachine==3.2.2
++ pyyaml==6.0.3
+
+---
+[<small>2026-10-27 19:34:56</small>] [**User**]->[**all**] *request*:
+ continue: resume Phase 5 Python ETL controller after provider interruption.
+
+---
+[<small>2026-10-27 19:35:05</small>] [**Neo**]->[**all**] *resume*:
+ Neo resumed Phase 5. State file is stale (Sprint 16); CHAT and task.md establish Phase 5. Investigating controller SQLMesh failures before CLI replacement. No live Jev calls.
+
+---
+[<small>2026-10-27 19:43:37</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-js | /home/drusifer/Projects/understudy-sprint-17/build/build.out
+ℹ tests 302
+ℹ suites 0
+ℹ pass 302
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17533.57578
+
+---
+[<small>2026-10-27 19:43:47</small>] [**Neo**]->[**Trin**] *handoff*:
+ Phase 5 implementation complete: Python YAML controller + CLI, JSONL/summary, confidence and spending totals; old Node ETL removed. Verified 302 JS, 78 Python, 29 SQLMesh tests + lint; 4,700 pairs in 18.54s with 1 Jev double request. State saved. Why: output contract and failure cleanup now verified. @Trin *qa uat phase-5
+
+---
+[<small>2026-10-27 22:47:33</small>] [**User**]->[**all**] *request*:
+ proceed - consider test plan
+
+---
+[<small>2026-10-27 22:47:41</small>] [**Trin**]->[**all**] *init*:
+ Trin initialized for Phase 5 UAT. Why: review the test plan against UND-54 and reuse passing evidence before adding checks for uncovered risks. No live Jev calls.
+
+---
+[<small>2026-10-27 22:54:36</small>] [**make**]->[**all**] *build*:
+ Build FAILED exit=2 | make test-py | /home/drusifer/Projects/understudy-sprint-17/build/build.out
+Synthetic 4,700-pair controller run: 18.29s
+dispatcher
+make: *** [Makefile:52: test-py] Error 1
+
+---
+[<small>2026-10-27 22:56:02</small>] [**Trin**]->[**Neo**] *handoff*:
+ Phase 5 UAT failed DEF-UND54-01 (UND-54 AC4): --out src/ is accepted; preflight checks permissions but not destination policy. Safe unit reproduction stubs controller: actual exit0, expected2. 82 Python tests: 81 pass/1 fail; lint passed. No production edits. Evidence + plan in UAT_PLAN_SPRINT17.md and Trin state. Why: private output must stay outside tracked/data folders. @Neo *fix output destination policy; obtain diagnosis confirmation first.

@@ -100,12 +100,15 @@ test('--help prints the usage on stdout and exits 0', async () => {
 test('etl run requires both named CSV inputs and passes them to the stage runner', async () => {
   const seen = [];
   const commands = { etl: async (options) => { seen.push(options); options.stdout.write('etl complete\n'); } };
-  const result = await cli(['etl', 'run', '--monarch', 'monarch.csv', '--amex=amex.csv'], { commands, environment: { TYPESAFE_API_KEY: 'test-key' } });
+  const result = await cli(['etl', 'run', '--monarch', 'monarch.csv', '--amex=amex.csv', '--out', 'build/results', '--since', '2026-01-01', '--amex-account', 'Platinum'], { commands, environment: { TYPESAFE_API_KEY: 'test-key' } });
   assert.equal(result.code, 0);
   assert.equal(result.stdout, 'etl complete\n');
   assert.equal(seen.length, 1);
   assert.equal(seen[0].monarchPath, 'monarch.csv');
   assert.equal(seen[0].amexPath, 'amex.csv');
+  assert.equal(seen[0].out, 'build/results');
+  assert.equal(seen[0].since, '2026-01-01');
+  assert.equal(seen[0].amexAccount, 'Platinum');
   assert.equal(seen[0].environment.TYPESAFE_API_KEY, 'test-key');
   const missing = await cli(['etl', 'run', '--monarch', 'monarch.csv'], { commands, environment: {} });
   assert.equal(missing.code, 2);
@@ -113,6 +116,15 @@ test('etl run requires both named CSV inputs and passes them to the stage runner
   const noKey = await cli(['etl', 'run', '--monarch', 'monarch.csv', '--amex', 'amex.csv'], { commands, environment: {} });
   assert.equal(noKey.code, 2);
   assert.equal(noKey.stderr, 'understudy: understudy etl run needs a TypeSafe key: set TYPESAFE_API_KEY\n');
+});
+
+test('the Python ETL bridge preserves a missing-input refusal without calling Jev', async () => {
+  const result = await cli(['etl', 'run', '--monarch', '/missing-monarch.csv', '--amex', '/missing-amex.csv'],
+    { environment: { ...process.env, TYPESAFE_API_KEY: 'test-key' } });
+  assert.equal(result.code, 2);
+  assert.match(result.stderr, /understudy: .*missing-monarch/);
+  assert.doesNotMatch(result.stderr, /Traceback|unexpected error/);
+  assert.equal(result.stdout, '');
 });
 
 test('a run that fails after starting exits 1 with its message; anything unexpected exits 1 too', async () => {

@@ -44,6 +44,16 @@ def _describe(counts: dict[str, int]) -> str:
     return ", ".join(f"{name} ({count} matches)" for name, count in sorted(merged.items()))
 
 
+def first_date(jsonl: Path) -> str | None:
+    """The earliest transaction date (ISO text) in a staged JSONL file, or None if no row has one."""
+    with duckdb.connect(":memory:") as connection:
+        (earliest,) = connection.execute(
+            f"SELECT min(TRY_CAST(transaction_date AS DATE)) "
+            f"FROM read_json({_literal(jsonl)}, format = 'newline_delimited', columns = {_COLUMNS})"
+        ).fetchone()
+    return earliest.isoformat() if earliest else None
+
+
 def detect_amex_account(
     monarch_jsonl: Path, amex_jsonl: Path, override: str | None = None, since: str | None = None
 ) -> dict:

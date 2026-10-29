@@ -57,14 +57,17 @@ bobp make run ARGS="check examples/cli"             # check a sketch without sta
 bobp make run ARGS="dashboard examples"             # the operations console for every example
 ```
 
-Sprint 16 also includes a local transaction cleanup run. It snapshots two Monarch/Amex CSV
-exports, converts their flat rows to an internal JSONL format, reconciles overlaps in DuckDB,
-asks Jev to choose from the fixed category/subcategory taxonomy, and writes a review CSV under
-`build/runs/<run-id>/`:
+The local transaction cleanup run reads Monarch and Amex exports through Python MCP source
+servers, merges sign-flipped purchases in DuckDB, pairs transfers, links refunds, and asks Jev
+to place merchants in the offered categories or name new ones from the MCC list. It writes
+`result.jsonl` and `summary.json` under `build/runs/<run-id>/`:
 
 ```sh
 bobp make run ARGS="etl run --monarch inputs/monarch.csv --amex inputs/amex.csv"
 ```
+
+Use `--since 2026-01-01` to set the period, `--amex-account <text>` to select the Monarch card
+account when detection is unclear, and `--out <folder>` to choose the output folder.
 
 Always go through `bobp make <target>` - it is the front door for people and agents alike.
 `bobp make help` lists the targets.

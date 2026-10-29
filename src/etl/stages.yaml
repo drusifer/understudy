@@ -1,0 +1,38 @@
+name: etl_run
+description: >-
+  The ETL's stages in order. Each stage runs only when the one before it finished; any stage can
+  fail, and a failed run publishes no result. Python-statemachine's own YAML representation.
+states:
+  hydrate:
+    initial: true
+    transitions:
+      - { event: ok, target: pair }
+      - { event: fail, target: failed }
+  pair:
+    transitions:
+      - { event: ok, target: transfers }
+      - { event: fail, target: failed }
+  transfers:
+    transitions:
+      - { event: ok, target: plan_spending }
+      - { event: fail, target: failed }
+  plan_spending:
+    transitions:
+      - { event: ok, target: refunds }
+      - { event: fail, target: failed }
+  refunds:
+    transitions:
+      - { event: ok, target: categories }
+      - { event: fail, target: failed }
+  categories:
+    transitions:
+      - { event: ok, target: output }
+      - { event: fail, target: failed }
+  output:
+    transitions:
+      - { event: ok, target: done }
+      - { event: fail, target: failed }
+  done:
+    final: true
+  failed:
+    final: true
