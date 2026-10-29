@@ -1,29 +1,62 @@
 # Design: the sketch model for the Python port
 
-* **Status**: DESIGN NOTES from the owner conversation of 2026-10-29. Not decided, not built. Input to the Python port epic (`EPIC_PYTHON_PORT.md`) and to the first slice's stories.
+* **Status**: AGREED with the owner in conversation, 2026-10-29. Not yet reviewed by Smith/Morpheus; not built. Basis of the Python port epic (`EPIC_PYTHON_PORT.md`) and of the coffee proof of concept.
 * **Rules**: no back-compat, YAGNY, DRY, no new language (SQL on DuckDB; `python-statemachine` YAML), Jev chooses and never writes.
 
 ## 1. What changed in our thinking
 
-* **There is no single state machine for all sketches.** Users build and compose their own state machines for the task at hand. Spike 1 (`SPIKE_PYTHON_STATEMACHINE.md`) found that `tags`, state `description` and `invoke`/`onDone` do not map onto python-statemachine; they only existed to carry the old built-in `turn:` plumbing, so the problem mostly goes away.
+* **There is no single state machine for all sketches.** Users build and compose their own state machines for the task at hand. The old built-in `turn:` machine (tags, invoke/onDone, the look/play loop) goes away; Spike 1 (`SPIKE_PYTHON_STATEMACHINE.md`) found those features do not map onto python-statemachine, and nothing needs them now.
 * **The main loop is plain Python.** It feeds sources to the user's machine as events and runs the step the current state names. No built-in loop machine (YAGNY).
-* **The platform is for automation, not chat.** Understudy models a decision: the owner writes down how they decide.
+* **Understudy is a platform for automation, not a chat bot.** A sketch models a decision the way the owner of the shop would make it.
 
 ## 2. Division of labour
 
 | Role | Does | Where it lives |
 |---|---|---|
 | Machine | control flow: which stage runs next, branching on the data | the sketch's `machine` (python-statemachine YAML) |
-| ETL and SQL | quantitative analysis: counts, trends, conversions | stages (`etl.*`, `convert.*`), DuckDB |
-| `decide` trees | the owner's deterministic logic | `decide:` (if/then/else, SQL conditions) |
-| Weights | how much to trust each input, computed from properties of the input | `weight:` expressions on a stage |
-| Jev | qualitative judgement only: picks one of the owner's listed options, or gives a probability | `ask:` nodes and named qualitative facts |
+| ETL and SQL | quantitative analysis: counts, trends, adjacency, conversions | stages (`etl.*`, `convert.*`), DuckDB |
+| `decide` trees | the owner's deterministic logic | `decide:` (if / then / else, SQL conditions) |
+| Weights | how much each decider or source counts, as expressions over properties of its input | `weight:` |
+| Jev | qualitative judgement only: picks one of the owner's listed options, or gives probabilities | `ask:` nodes |
 
-Jev never produces an amount; the owner's rules decide what a Jev answer means.
+Jev never produces an amount. Its probabilities become weights, and the owner's rules decide what they mean.
 
-## 3. Worked example: weekly coffee ingredients
+## 3. The decider contract
 
-Owner's logic: (1) count last week's customers by type; (2) match types to preferred orders with `decide` logic (for example under 18 gets no caffeine); (3) convert probable orders to ingredient counts and output. A `weather_change` subsketch compares next week's weather with last week's and feeds the choice of hot versus iced.
+**One row in, rows out.** Each output row is a full combination of outcome values plus a `weight`; the weights for one input row sum to 1.
+
+```jsonl
+{"temp": "iced", "size": "large",  "milk": "oat",   "weight": 0.30}
+{"temp": "iced", "size": "medium", "milk": "oat",   "weight": 0.24}
+{"temp": "hot",  "size": "medium", "milk": "whole", "weight": 0.46}
+```
+
+* **Outcomes are declared** by the sketch; a decider cannot invent a key. Unknown dimension or option is an error naming the decider, the bad key and the nearest valid one. Missing option means weight 0.
+* **A dimension is either an enumeration** (`temp: [hot, iced]`; a boolean is a two-option list) **or discrete numeric steps** (`sugar_spoons: { range: [0, 3], step: 1 }`, which expands to a list). No free-form number, no free text.
+* **Candidates may come from source rows** instead of a fixed list (`outcomes: { showing: { from: showings, key: id } }`); the keys are then read at run time and still checked.
+* **Everything implements the same contract:** a `decide` tree (its leaf is the weights), an ETL lookup (history), a subsketch (weather), and Jev's `ask` (its probabilities).
+* **One combination rule: the weighted blend.** The engine runs each decider, takes the weighted average of their rows (weights normalised) and goes on. Example: history says iced 0.30 (weight 0.8), weather 0.90 (0.3), the owner's rule 1.00 (0.2); the blend is 0.54 iced, so 40 students give about 22 iced and 18 hot.
+* **There is no scoring formula.** The old evening engine multiplied `position ^ weight` factors (ADR-0018, ADR-0030); that is dropped. Vetoes are explicit `if`/`else` filters the owner can read, not hidden zeros.
+* **Ordered lists and slices:** a list is always an order, first is best, and its position scores `(n - i) / n` (E, F, D give 1, 0.67, 0.33; unlisted 0). An interval is a Python-style slice written as a **quoted** string (`"70:100"`, `"0.3:1"`; unquoted `70:100` is a base-60 number in YAML 1.1), scored linearly and clamped, either direction. These give a leaf its weight.
+
+## 4. Filtering and empty results
+
+* A filter is a SQL condition that drops rows. It can sit on the input rows, on a decider's output (`forbid`), or on the aggregate (`where expected_count >= 1`).
+* After a `forbid`, the surviving weights are renormalised. `forbid` always wins over a preference.
+* **If a filter empties every row for an input row, the run fails** (default), naming the rule and the input row. The owner can opt in per stage to `on_empty: fallback` (a default row), `skip` (the row adds nothing) or `walk_away` (finish successfully with outcome `none`).
+
+## 5. Sources, sinks, subsketches
+
+* **Sources and sinks are named in the sketch**, with `kind`, `path`/`server` and `params` in place. **No separate `bind` section and no `extends`.** Every kind implements `describe()` and `read(params)` (JSONL, paged); a sink implements `write(params, jsonl)`. The Sprint 17 MCP source servers are the first instance.
+* **Sources are read-only.** A side effect (booking, a hold) is a stage `do:`, never a source.
+* **Defaults:** a bare path is a JSONL file; each `kind` supplies its own defaults; a source may default its params and a caller overrides only what differs. A required value with no sensible default fails with a clear error.
+* **Tests override sources from the command line** (`--source customers.path=fixtures/x.jsonl`); the sketch file does not change.
+* **A subsketch** has its own inputs, sources and outputs. The parent passes inputs with `with:` and sees only the named outputs. **A subsketch's inputs appear on the dashboard only if the parent lists them** (`expose: [row, centre]`); the author of the parent decides.
+* **Data gaps** are filled by exposing more from the source or by an ETL stage (for example adjacent free seats from a seat map, in SQL).
+
+## 6. Worked example: weekly coffee ingredients (the proof of concept)
+
+The owner's logic: (1) count last week's customers by type; (2) match types to preferred orders with `decide` logic (under 18 gets no caffeine); (3) convert probable orders to ingredient counts and output. A `weather_change` subsketch compares next week's weather with last week's and feeds the hot versus iced shift.
 
 ### `weather_change.yaml` (subsketch)
 
@@ -31,22 +64,18 @@ Owner's logic: (1) count last week's customers by type; (2) match types to prefe
 name: weather_change
 description: Next week's weather compared with the previous week's.
 
+inputs:
+  place: text
+
 sources:
   next:
     kind: mcp
     server: ./weather_server
-    params: { place: Burlington VT, week: next }
+    params: { place: inputs.place, week: next }
   previous:
     kind: mcp
     server: ./weather_server
-    params: { place: Burlington VT, week: previous }
-
-inputs:
-  place: text
-
-sinks:
-  forecast: { kind: result }      # returned to the caller
-  diff:     { kind: result }
+    params: { place: inputs.place, week: previous }
 
 machine:
   initial: compare
@@ -56,32 +85,34 @@ machine:
       then: done
     done:
       final: true
+      outputs: [forecast, diff]
 ```
 
 ### `coffee_week.yaml`
 
 ```yaml
 name: coffee_week
-description: >
-  From last week's customers, work out what to order for next week.
+description: From last week's customers, work out what to order for next week.
 
 sources:
-  customers: last_week_customers.jsonl     # a bare path means kind: file, format: jsonl
+  customers: last_week_customers.jsonl
 
 sinks:
   ingredients:
     kind: file
     path: out/ingredients.jsonl
 
+outcomes:
+  temp:     [hot, iced]
+  size:     [small, medium, large]
+  caffeine: [none, regular, high]
+
 data:
   place: Burlington VT
   recipes:
-    - { drink: size:medium,    ingredient: coffee_beans,  amount: 18,  unit: g }
-    - { drink: milk:oat,       ingredient: oat_milk,      amount: 200, unit: ml }
-    - { drink: flavor:vanilla, ingredient: vanilla_syrup, amount: 15,  unit: ml }
+    - { when: "size = 'medium'", ingredient: coffee_beans, amount: 18, unit: g }
   packs:
     coffee_beans: 1000
-    oat_milk: 1000
 
 questions:
   customer_type:
@@ -97,9 +128,7 @@ machine:
       then: count_customers
 
     count_customers:
-      do: etl.count_by_type           # SQL: how many of each type last week
-      weight:
-        history: 0.8 if weeks >= 4 else 0.4
+      do: etl.count_by_type
       transitions:
         - if: customers < 20
           to: quiet_week
@@ -125,11 +154,14 @@ machine:
               student:      { drink: { size: large, temp: iced } }
               night_worker: { drink: { size: large, temp: hot } }
               other:        { drink: { size: medium } }
-      adjust:
-        if: weather.diff.avg_high > 5
-        then:
-          shift: { temp: iced }
-          weight: 0.3
+      forbid:
+        - when: age < 18
+          drop: "caffeine <> 'none'"
+      evidence:
+        history:
+          weight: 0.8 if weeks >= 4 else 0.4
+        weather:
+          weight: 0.3 if weather.diff.avg_high > 5 else 0.0
       then: to_ingredients
 
     to_ingredients:
@@ -145,26 +177,16 @@ machine:
       final: true
 ```
 
-## 4. Decisions so far (owner, 2026-10-29)
+## 7. The evening example in this model
 
-1. A state machine per sketch, written by the user; the loop that runs it is Python code.
-2. Decisions are written as nested `if` / `then` / `else` (not a flat rule list). A node is one of: a SQL condition with `then`/`else`; an `ask` (Jev picks one of the listed branches); or an outcome (`drink`, `use`).
-3. The machine chooses which stages apply; a stage is ETL, a `decide` tree or a conversion. Weights attach to a stage and are expressions over properties of its input.
-4. A sketch may use a **subsketch**: its own inputs and outputs, bound by the parent through `with:`; the parent sees only the named outputs (`weather.diff.avg_high`).
-5. **Sources and sinks** are named in the sketch with `kind`, `path`/`server` and `params` written in place. **No separate `bind` section.** Interface for every kind: `describe()` and `read(params)` returning JSONL, paged; a sink is `write(params, jsonl)`. The Sprint 17 MCP source servers are the first instance.
-6. **Defaults:** the `kind` supplies its own defaults (a bare path is a JSONL file; an MCP source defaults the tool and paging); a source may default its params and a caller overrides only what differs. A required value with no sensible default must fail with a clear error. **No `extends`** (decided against: YAGNY).
-7. Tests override a source from the command line (`--source customers.path=fixtures/x.jsonl`); the sketch file does not change.
+* `gates` become filters; the evenings switch stays as a `when:`. `scores` become deciders whose leaves take weights from ordered lists and slices. `shortlist` keeps the top 5 by blended weight. `pick` is a final `ask`. `target`, `calls` and `turn:` are gone.
+* **Seating is a subsketch** (`seating.yaml`): inputs `showing`, `tickets`, `row`, `centre`; a read-only `seats` source; an ETL stage that turns the seat map into candidate blocks of adjacent free seats at least `tickets` long; a `decide` stage; a final `ask`; a `reserve` stage that is the only side effect; outputs the `hold`. The parent pays only with `hold: seating.hold`, so Jev can never pay for something it invented. A subsketch that finds nothing finishes with outcome `none`, and the parent routes that to `walk_away`.
 
-## 5. Open questions
+## 8. Open questions
 
-* How `weight` combines with a `then` outcome (the example is a placeholder).
-* How the subsketch's outputs are named and exposed to the parent (`weather.diff...`, `kind: result` are guesses).
+* The `evidence:` / `weight` syntax and how the blend is stated in a stage (the example above is a placeholder).
+* How a subsketch names and exposes its outputs to the parent (`weather.diff...`, `outputs:` are guesses).
 * Whether `next:` (an outcome that also continues to another test) is needed, or a leaf always ends its branch.
-* Rule order and conflicts: `forbid` should always win over `prefer`.
-* Which condition language: SQL expressions over named fields (assumed) versus something smaller.
+* Which condition language: SQL expressions over named fields (assumed) versus something smaller; how `ask` branches are written.
 * Event payloads: confirm the Python loop can pass a stage's result to guards (Spike 1, open item 2).
-* How this model absorbs the old play-an-app sketches (process, http, mcp, page targets): presumably as sources and sinks plus a Jev `ask` step; to be settled in slice A.
-
-## 6. Next
-
-Fold these decisions into the epic's domain model (Morpheus), then plan slice A around this shape instead of porting the old `turn:` machine.
+* How the other old examples (cli, http, web, mcp) translate; they are slice B, after the proof of concept.
