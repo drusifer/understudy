@@ -114,7 +114,7 @@ data:
     much_warmer:     { hot: 0.30, iced: 0.70 }
 ```
 
-The parent blends it with the segment's own preference by weight (`also:`). These numbers replace the earlier "-0.20 to +0.20 shift" figures.
+The parent blends it with the segment's own preference by weight (a `blend:` entry). These numbers replace the earlier "-0.20 to +0.20 shift" figures.
 
 **No expression language** (owner, 2026-10-29): a weight is a number, or a conditional written with the same `if` / `then` / `else` the owner uses for decisions. Nothing is parsed that is not a structure.
 
@@ -167,25 +167,25 @@ machine:
       then: match_orders
 
     match_orders:                     # one row per SEGMENT
-      decide:
-        if:
-          segment: { eq: students }
-        then:
-          drink:
-            - { temp: iced, size: large,  weight: 0.5 }
-            - { temp: iced, size: medium, weight: 0.2 }
-            - { temp: hot,  size: medium, weight: 0.3 }
-        else:
-          if:
-            segment: { eq: night_workers }
-          then:
-            drink:
-              - { temp: hot, size: large, caffeine: high, weight: 1.0 }
-          else:
-            drink:
-              - { temp: hot,  size: medium, weight: 0.6 }
-              - { temp: iced, size: medium, weight: 0.4 }
-      also:                           # other deciders, blended with the tree's rows by weight
+      blend:                          # every decider is an entry with a weight (default 1); the stage is their weighted average
+        - decide:                     # the owner's tree for what each segment prefers
+            if:
+              segment: { eq: students }
+            then:
+              drink:
+                - { temp: iced, size: large,  weight: 0.5 }
+                - { temp: iced, size: medium, weight: 0.2 }
+                - { temp: hot,  size: medium, weight: 0.3 }
+            else:
+              if:
+                segment: { eq: night_workers }
+              then:
+                drink:
+                  - { temp: hot, size: large, caffeine: high, weight: 1.0 }
+              else:
+                drink:
+                  - { temp: hot,  size: medium, weight: 0.6 }
+                  - { temp: iced, size: medium, weight: 0.4 }
         - decider: weather            # the subsketch: returns weights on temp
           weight:
             if:
@@ -225,8 +225,7 @@ machine:
 
 ## 8. Open questions
 
-* Decided (owner, 2026-10-29): the weather is a decider blended in by weight (`also:`), not a shift; night workers get weight 0 for it (they prefer hot coffee even when it is warmer); weights are numbers or `if`/`then`/`else`, not expressions. Still open: the exact spelling of `also:`.
-* Fetching the Almanac text automatically is out of this epic; the owner pastes it into a file each week.
+* Decided (owner, 2026-10-29): a stage lists its deciders under `blend:` (the decide tree is one inline entry, weight defaults to 1; a decider is named only if a second stage needs it), and the weather is one such decider, not a shift; night workers get weight 0 for it (they prefer hot coffee even when it is warmer); weights are numbers or `if`/`then`/`else`, not expressions.* Fetching the Almanac text automatically is out of this epic; the owner pastes it into a file each week.
 * How a subsketch names and exposes its outputs to the parent (`outputs:` is a guess); how `ask` / `score` branches are written.
 * Whether `next:` (an outcome that also continues to another test) is needed, or a leaf always ends its branch.
 * Decided (owner, 2026-10-29): **conditions are explicit YAML, not text.** A condition is a field, an operator and a value: `if: { segment: { eq: night_workers } }`. Operators: `eq`, `ne`, `lt`, `le`, `gt`, `ge`, `in`, `not_in` (the last two take a list of values or a slice), `has` (the field contains the value); several fields in one condition mean all of them (an implicit `and`); `and` (a list, for grouping), `or` (a list) and `not` combine conditions, as in Python (owner, 2026-10-29). Example: `if: { or: [ { genre: { eq: horror }, tomato: { ge: 70 } }, { tomato: { gt: 90 } } ] }`. **Contains is `has`** (owner, 2026-10-29): `merchant: { has: coffee }` means Python's `"coffee" in merchant`, for a string (substring) or a list field (element). `in` keeps meaning "the field is inside this" (a list or a slice), so the file reads the same whatever the data. A JSON Schema can validate every condition, and nothing is parsed from a string. A condition compares a field only with a fixed value, never with another field (owner, 2026-10-29: YAGNY, nothing needs it). `between` is not an operator; use `ge` and `le` together. Revisit if a real sketch needs either.
