@@ -79,3 +79,7 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-29 15:18:44</small>] [**Neo**]->[**Morpheus**] *spike handoff*:
  Spike 1 done (partial): the turn machine ports to python-statemachine YAML (states, events, named guards); tags, description and invoke/onDone do not, so they move beside the machine (tags map, library action + event). Open: guard params. Spikes 2 (layout) and 3 (Playwright) still to run. docs/sprints/SPIKE_PYTHON_STATEMACHINE.md @Morpheus *lead domain model + review spike
+
+---
+[<small>2026-10-29 17:39:15</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Epic revised to the new sketch model (docs/sprints/EPIC_PYTHON_PORT.md, DESIGN_SKETCH_MODEL.md); slice A = coffee proof of concept = Sprint 19. @Smith *user review epic gate 2
