@@ -1,6 +1,6 @@
 # Epic: Python port of understudy, and a new sketch model
 
-* **Status**: Appetite set by the owner 2026-10-29: 4 sprints, sliced A-D (section 2). Smith Gate 1 (problem) approved. The epic was REVISED the same day after the owner reshaped the sketch model (`DESIGN_SKETCH_MODEL.md`): this is no longer a straight port. Revised version awaits Smith Gate 2 and Morpheus's domain model.
+* **Status**: Appetite set by the owner 2026-10-29: 4 sprints, sliced A-D (section 2). Smith Gate 1 (problem) approved. The epic was REVISED the same day after the owner reshaped the sketch model (`DESIGN_SKETCH_MODEL.md`): this is no longer a straight port. Domain model written (`docs/DOMAIN.md`), Tank feasibility passed and Smith Gate 2 approved on 2026-10-29. The epic is shaped; syntax placeholders (section 5, row 6) are settled in the Sprint 19 architecture.
 * **Owner decision (2026-10-27)**: Python for all of understudy; Node replaced outright, no back-compat, no dual runtime (`agents/cypher/platform_decision_2026-10-27.md`).
 * **Rules**: no back-compat, YAGNY, DRY, use libraries, Jev chooses and never writes.
 

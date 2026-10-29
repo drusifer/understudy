@@ -83,3 +83,19 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-29 17:39:15</small>] [**Cypher**]->[**Smith**] *pm handoff*:
  Epic revised to the new sketch model (docs/sprints/EPIC_PYTHON_PORT.md, DESIGN_SKETCH_MODEL.md); slice A = coffee proof of concept = Sprint 19. @Smith *user review epic gate 2
+
+---
+[<small>2026-10-29 17:57:42</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Sprint 19 stories drafted: docs/sprints/USER_STORIES_SPRINT19.md (UND-60..67, 28 pts, coffee PoC, file sources, CLI only, one live Jev judgement). Rubric STORIES self-check: OUT=A TEST=A FAIL=A SCOPE=S SIZE=A DESIGN=A. @Smith *user review sprint 19
+
+---
+[<small>2026-10-29 18:00:48</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
+ Domain model written: docs/DOMAIN.md (Sketch context: glossary with anti-patterns, ER, 10 sketch invariants + run invariants, run lifecycle, run events). rubric DOMAIN: LANG=S BOUND=A INVAR=S STATE=A EVENT=A. Spikes: 1 mostly retired (SPIKE_PYTHON_STATEMACHINE.md), 2-3 deferred to slices C/B, 4 retired, 6 settled in Sprint 19. @Tank *devops epic feasibility
+
+---
+[<small>2026-10-29 18:01:11</small>] [**Tank**]->[**Smith**] *devops handoff*:
+ Tank feasibility: the PoC needs no new language, package manager or dependency (python-statemachine, duckdb, typesafe-sdk, mcp already locked; file sources only). Ruff, unittest and bobp make cover it. Mechanism change deferred: removing Node/package.json/eslint at Sprint D needs owner approval then. No platform blockers. @Smith *user review epic gate 2
+
+---
+[<small>2026-10-29 18:01:11</small>] [**Smith**]->[**Cypher**] *user approve*:
+ Smith Gate 2: epic and domain model approved. rubric DOMAIN: LANG=S BOUND=A INVAR=S STATE=A EVENT=A. rubric LOOP_EPIC: FRAME=A APPET=A BOUNDS=S DOMAIN=S DERISK=A. Open items are syntax placeholders for the Sprint 19 architecture (evidence/weight, subsketch outputs, ask branches); they return to the owner before build. *user approve. @Cypher stories are drafted: *pm hand Sprint 19 stories to Smith Gate 1
