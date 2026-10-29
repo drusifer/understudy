@@ -4,7 +4,7 @@
 * **Author**: Trin (*qa)
 * **Date**: 2026-10-27
 * **Branch**: `sprint-17`
-* **Status**: Phase 5 UAT FAILED — destination-policy defect DEF-UND54-01; phases 1 to 4 retain their prior verdicts
+* **Status**: Phase 5 UAT re-run PASSED 2026-10-29 after the DEF-UND54-01 fix (destination policy in `_check_destination_policy`); phases 1 to 4 retain their prior verdicts
 
 ## 1. Scope
 
@@ -195,4 +195,6 @@ No browser coverage is relevant to this CLI. No new end-to-end success or scale 
 |---|---|---|---|---|
 | DEF-UND54-01 | Major | UND-54 AC4; unit test accepts `--out <checkout>/src`, actual 0 versus expected 2 | Shared `_check_writable` in `src/etl/controller.py` verifies existence/directory/OS permission only; it has no destination-policy restriction. Both CLI and direct controller use it. | Neo: after diagnosis confirmation, reject project `data/` and tracked/unignored project destinations, preserve ignored build and owner-specified external destinations, including resolved-path checks. Retain the failing unit regression and add permitted/forbidden/symlink boundary tests at unit level before one integration smoke. |
 
-**Phase 5 UAT verdict: FAILED.** No production edits made during QA. No private inputs or live Jev calls. Handoff to Neo for the targeted fix; Smith/Morpheus approval and task 5.2 completion remain pending. `rubric UAT: COVER=A STEPS=A FAIL=S DATA=S EVID=A` describes the test plan, not product acceptance.
+**Re-run 2026-10-29 (DEF-UND54-01 fixed):** `_check_destination_policy` in `src/etl/controller.py` refuses `data/` and any project path that `git check-ignore` does not ignore (resolved paths, so symlinks into `src/` are caught); ignored `build/` and outside paths pass. The failing regression now passes, and `test_destination_policy_boundaries` covers data/, tracked `tests/` and `docs/`, ignored `build/runs`, an outside path and a symlink into `src/`. `bobp make test-py`: 83 tests OK (4,700-pair synthetic run 20.03 s); `bobp make lint` exit 0. UND-54-04 now **Pass**. Live Jev and real-file acceptance stay with the owner (Task C.3).
+
+**Phase 5 UAT original verdict: FAILED (superseded by the re-run above).** No production edits made during QA. No private inputs or live Jev calls. Handoff to Neo for the targeted fix; Smith/Morpheus approval and task 5.2 completion remain pending. `rubric UAT: COVER=A STEPS=A FAIL=S DATA=S EVID=A` describes the test plan, not product acceptance.

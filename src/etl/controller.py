@@ -55,10 +55,23 @@ class EtlError(Exception):
     """The run cannot continue; the message says why."""
 
 
+def _check_destination_policy(out: Path) -> None:
+    """Private output stays out of tracked folders and `data/`; ignored folders and outside paths pass."""
+    resolved = out.resolve()
+    if not resolved.is_relative_to(ROOT):
+        return
+    if resolved.is_relative_to(ROOT / "data"):
+        raise EtlError(f"cannot write to {out}: private output does not belong in data/")
+    ignored = subprocess.run(["git", "check-ignore", "-q", str(resolved)], cwd=ROOT, check=False).returncode == 0
+    if not ignored:
+        raise EtlError(f"cannot write to {out}: it is inside the project and not git-ignored (use build/ or a path outside)")
+
+
 def _check_writable(out: Path) -> None:
     """Refuse before reading anything when the run could not be written, changing nothing."""
     if out.exists() and not out.is_dir():
         raise EtlError(f"cannot write to {out}: it is not a directory")
+    _check_destination_policy(out)
     nearest = out
     while not nearest.exists():
         nearest = nearest.parent

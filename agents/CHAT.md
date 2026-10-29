@@ -284,3 +284,19 @@ make: *** [Makefile:52: test-py] Error 1
 ---
 [<small>2026-10-27 22:56:02</small>] [**Trin**]->[**Neo**] *handoff*:
  Phase 5 UAT failed DEF-UND54-01 (UND-54 AC4): --out src/ is accepted; preflight checks permissions but not destination policy. Safe unit reproduction stubs controller: actual exit0, expected2. 82 Python tests: 81 pass/1 fail; lint passed. No production edits. Evidence + plan in UAT_PLAN_SPRINT17.md and Trin state. Why: private output must stay outside tracked/data folders. @Neo *fix output destination policy; obtain diagnosis confirmation first.
+
+---
+[<small>2026-10-29 10:38:10</small>] [**Cypher**]->[**Neo**] *handoff*:
+ Cypher: owner closed the sprint-17 worktree; working on branch sprint-17 in the main tree (pushed, 820f075). Phase 5 DEF-UND54-01 still open. @Neo *fix output destination policy
+
+---
+[<small>2026-10-29 10:41:44</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make lint | /home/drusifer/Projects/understudy/build/build.out
+
+> understudy@0.1.0 lint
+> eslint --no-error-on-unmatched-pattern 'src/**/*.mjs' 'bin/**/*.mjs' 'examples/**/*.mjs' 'examples/**/*.js' 'tests/**/*.js' 'tests/**/*.mjs'
+
+
+---
+[<small>2026-10-29 10:42:12</small>] [**Neo**]->[**Tank**] *swe handoff*:
+ Phase 5 DEF-UND54-01 fixed (destination policy: data/ and non-ignored project paths refused, symlinks resolved). 83 Python tests + lint pass; UAT re-run passes; review ok. Tasks 5.1-5.3 done. @Tank *devops sdlc-check

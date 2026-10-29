@@ -26,6 +26,18 @@ class CliTests(unittest.TestCase):
             controller.assert_not_awaited()
             self.assertEqual(stdout.getvalue(), "")
 
+    def test_destination_policy_boundaries(self):
+        for refused in (ROOT / "data" / "run", ROOT / "tests", ROOT / "docs" / "new-run"):
+            with self.subTest(refused=refused), self.assertRaisesRegex(EtlError, "cannot write"):
+                _check_writable(refused)
+        _check_writable(ROOT / "build" / "runs")
+        with tempfile.TemporaryDirectory() as directory:
+            _check_writable(Path(directory) / "outside")
+            link = Path(directory) / "link"
+            link.symlink_to(ROOT / "src")
+            with self.assertRaisesRegex(EtlError, "cannot write"):
+                _check_writable(link / "run")
+
     def test_options_reach_the_controller_and_success_is_json(self):
         with tempfile.TemporaryDirectory() as directory:
             files = Files(directory)

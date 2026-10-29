@@ -54,9 +54,9 @@
 ### Phase 5: JSONL result and summary (UND-54)
 *Phase goal: One JSONL file and a counts-only summary, byte-identical on a repeat.*
 
-- [ ] **Task 5.1:** Implement: `final_records` SQL, `COPY` to `result.jsonl` in a fixed order, the Sprint 17 summary counts, `--out` with the unwritable-path refusal, removal of `review.csv`. (*Owner: Neo | Verification: end-to-end test on synthetic data with a Jev double: record fields, counts, byte-identical rerun, unwritable output, `bobp make test`.*)
-- [ ] **Task 5.2:** UAT: UND-54 AC 1-5, plus a 4,700-pair synthetic scale run as in Sprint 16. (*Owner: Trin | Verification: UAT rows for `UND-54`, timing recorded.*)
-- [ ] **Task 5.3:** Review: output contract, privacy, the breaking change noted in CHANGELOG and USER_GUIDE. (*Owner: Morpheus | Verification: verdict recorded; commit `Phase 5: ...`.*)
+- [x] **Task 5.1:** Implement: `final_records` SQL, `COPY` to `result.jsonl` in a fixed order, the Sprint 17 summary counts, `--out` with the unwritable-path refusal, removal of `review.csv`. (*Owner: Neo | Verification: end-to-end test on synthetic data with a Jev double: record fields, counts, byte-identical rerun, unwritable output, `bobp make test`.*)
+- [x] **Task 5.2:** UAT: UND-54 AC 1-5, plus a 4,700-pair synthetic scale run as in Sprint 16. (*Owner: Trin | Verification: UAT rows for `UND-54`, timing recorded.*)
+- [x] **Task 5.3:** Review: output contract, privacy, the breaking change noted in CHANGELOG and USER_GUIDE. (*Owner: Morpheus | Verification: verdict recorded; commit `Phase 5: ...`.*)
 
 ## Sprint Closeout
 

@@ -14,7 +14,8 @@ sequenceDiagram
     participant Neo
     participant Trin
     participant User
-    Note over Cypher,User: 📅 2026-10-27
+    participant Tank
+    Note over Cypher,Tank: 📅 2026-10-27
     Cypher->>Smith: "handoff"
     Note right of Cypher: "Sprint 16 launched and<br/>archived. Sprint 17<br/>stories (UND-49..54) are<br/>drafted in docs/sprints/<br/>USER_STORIES_SPRINT17.md<br/>, they wait for the own…"
     Smith->>Cypher: "user reject"
@@ -81,4 +82,9 @@ sequenceDiagram
     Note right of Trin: "Trin initialized for<br/>Phase 5 UAT. Why: review<br/>the test plan against<br/>UND-54 and reuse passing<br/>evidence before adding<br/>checks for uncovered ri…"
     Trin->>Neo: "handoff"
     Note right of Trin: "Phase 5 UAT failed DEF-<br/>UND54-01 (UND-54 AC4):<br/>--out src/ is accepted,<br/>preflight checks<br/>permissions but not<br/>destination policy. Safe<br/>unit re…"
+    Note over Cypher,Tank: 📅 2026-10-29
+    Cypher->>Neo: "handoff"
+    Note right of Cypher: "Cypher: owner closed the<br/>sprint-17 worktree,<br/>working on branch<br/>sprint-17 in the main<br/>tree (pushed, 820f075).<br/>Phase 5 DEF-UND54-01<br/>still ope…"
+    Neo->>Tank: "swe handoff"
+    Note right of Neo: "Phase 5 DEF-UND54-01<br/>fixed (destination<br/>policy: data/ and non-<br/>ignored project paths<br/>refused, symlinks<br/>resolved). 83 Python<br/>tests + lint pas…"
 ```
