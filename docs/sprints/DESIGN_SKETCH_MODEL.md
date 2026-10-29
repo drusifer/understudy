@@ -171,7 +171,7 @@ machine:
       evidence:                       # ? the weather judgement nudges the temp weights
         weather:
           shift: weather.temp_shift
-          weight: 0.3
+          weight: 0 if segment = 'night_workers' else 0.3   # night shift stays on hot coffee, warm or not
       forbid:
         - when: age_max <= 17         # teens: the under-18 rule
           drop: "caffeine <> 'none'"  # weights renormalised; an empty result fails the run
@@ -203,7 +203,7 @@ machine:
 
 ## 8. Open questions
 
-* The `evidence:` / `weight` syntax (placeholder above); whether the temperature shift applies to every segment equally.
+* The `evidence:` / `weight` syntax (placeholder above). Decided: the temperature shift does not apply to every segment equally; night workers prefer hot coffee even when it is warmer, expressed as weight 0 for that segment (owner, 2026-10-29).
 * Fetching the Almanac text automatically is out of this epic; the owner pastes it into a file each week.
 * How a subsketch names and exposes its outputs to the parent (`outputs:` is a guess); how `ask` / `score` branches are written.
 * Whether `next:` (an outcome that also continues to another test) is needed, or a leaf always ends its branch.
