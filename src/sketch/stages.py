@@ -24,7 +24,7 @@ JOIN_SQL = """
     FROM probs AS p JOIN weights AS w USING (level) GROUP BY w.option ORDER BY w.option
 """
 RECIPE_SQL = """
-    SELECT r.ingredient, r.unit, sum(d.drinks * r.amount) AS amount
+    SELECT r.ingredient, r.unit, sum(d.drinks * d.weight * r.amount) AS amount
     FROM shares AS d JOIN recipes AS r ON d.dimension = r.dimension AND d.option = r.option
     GROUP BY r.ingredient, r.unit ORDER BY r.ingredient
 """
@@ -88,25 +88,22 @@ async def declared_outcomes(context) -> dict:
 
 
 async def blend(context) -> list[dict]:
-    """For each input row (a segment), the blended weight of every option per dimension, as drink counts."""
+    """For each input row, the blended weight of every option per dimension: the row's own fields plus
+    `dimension`, `option` and `weight`."""
     state, outcomes = context.state, await declared_outcomes(context)
     deciders = {}
     for entry in state["blend"]:
         if "from" in entry:
             deciders[entry["from"]] = context.results[entry["from"]]
             _validate(deciders[entry["from"]], entry["from"], outcomes, context.name)
-    shares: list[dict] = []
-    summary: dict = {}
+    weighted: list[dict] = []
     for row in context.last:
         distribution = decide_input(state, row, deciders, allowed=outcomes)
         # options read from rows are known only now, so what the blend produced is checked against them
         _validate([{d: o} for d, options in distribution.items() for o in options], "the blend", outcomes, context.name)
-        summary[row["segment"]] = {d: {o: round(w, 6) for o, w in options.items()} for d, options in distribution.items()}
-        shares += [{"segment": row["segment"], "dimension": d, "option": o, "drinks": row["drinks"] * w}
-                   for d, options in distribution.items() for o, w in options.items()]
-    context.summary["drinks_per_segment"] = {row["segment"]: round(row["drinks"], 6) for row in context.last}
-    context.summary["shares_per_segment"] = summary
-    return shares
+        weighted += [{**row, "dimension": d, "option": o, "weight": w}
+                     for d, options in distribution.items() for o, w in options.items()]
+    return weighted
 
 
 async def convert_recipes(context) -> list[dict]:
@@ -119,6 +116,11 @@ async def convert_recipes(context) -> list[dict]:
             raise ValueError(f"a recipe names one option, such as size: medium (got {named})")
         ((dimension, option),) = named.items()
         recipes.append({"dimension": dimension, "option": option, **{k: recipe[k] for k in RECIPE_FIELDS}})
+    context.summary["drinks_per_segment"] = {row["segment"]: round(row["drinks"], 6) for row in context.last}
+    context.summary["shares_per_segment"] = {}
+    for row in context.last:
+        options = context.summary["shares_per_segment"].setdefault(row["segment"], {}).setdefault(row["dimension"], {})
+        options[row["option"]] = round(row["weight"], 6)
     totals = query(context.directory, RECIPE_SQL, {"shares": context.last, "recipes": recipes})
     packs = context.sketch.data[use["packs"]]
     rows = []
