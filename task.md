@@ -45,9 +45,9 @@
 ### Phase 5: Replace the old Node commands (UND-60 AC8)
 *Phase goal: `understudy run` and `understudy check` are the Python commands; the old Node run and check are gone.*
 
-- [ ] **Task 5.1:** `*refactor` Point `run` and `check` in `src/cli.mjs` at the Python package; delete the old Node `run`/`check` implementations (`src/run.mjs`, `src/sketch.mjs`, `src/machine.mjs`, `src/engine.mjs` and what only they use) and their tests; update the usage text. (*Owner: Neo | Verification: `bobp make test-js` passes on what remains; `tests/cli.test.js` covers the launcher and exit codes; `git grep` finds no use of the deleted modules.*)
-- [ ] **Task 5.2:** UAT: `understudy run` and `understudy check` through the Node launcher; the other old commands fail with an error that says they are being rebuilt, not a stack trace. (*Owner: Trin | Verification: UAT rows for UND-60 AC1, AC2, AC8.*)
-- [ ] **Task 5.3:** Review against ADR-0045 and the epic's purge list (what is gone, what remains and why). (*Owner: Morpheus | Verification: verdict; commit `Phase 5: ...`.*)
+- [x] **Task 5.1:** `*refactor` Point `run` and `check` in `src/cli.mjs` at the Python package; delete the old Node `run`/`check` implementations (`src/run.mjs`, `src/sketch.mjs`, `src/machine.mjs`, `src/engine.mjs` and what only they use) and their tests; update the usage text. (*Owner: Neo | Verification: `bobp make test-js` passes on what remains; `tests/cli.test.js` covers the launcher and exit codes; `git grep` finds no use of the deleted modules.*)
+- [x] **Task 5.2:** UAT: `understudy run` and `understudy check` through the Node launcher; the other old commands fail with an error that says they are being rebuilt, not a stack trace. (*Owner: Trin | Verification: UAT rows for UND-60 AC1, AC2, AC8.*)
+- [x] **Task 5.3:** Review against ADR-0045 and the epic's purge list (what is gone, what remains and why). (*Owner: Morpheus | Verification: verdict; commit `Phase 5: ...`.*)
 
 ### Phase 6: Sources, capture and replay (UND-60 AC5-7, UND-65 groundwork)
 *Phase goal: file and Jev sources, one `--replay` flag, test and live data never mixed.*

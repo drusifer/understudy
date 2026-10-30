@@ -13,7 +13,6 @@
   "scripts": {
     "test": "node --test tests/*.test.js",
     "test:js": "node --test tests/*.test.js",
-    "test:browser": "node --test --test-concurrency=1 tests/browser/*.test.js",
     "lint": "eslint --no-error-on-unmatched-pattern 'src/**/*.mjs' 'bin/**/*.mjs' 'examples/**/*.mjs' 'examples/**/*.js' 'tests/**/*.js' 'tests/**/*.mjs'"
   },
   "dependencies": {
@@ -21,19 +20,10 @@
     "@fontsource/cinzel": "^5.3.0",
     "@fontsource/dotgothic16": "^5.3.1",
     "@fontsource/spectral": "^5.3.0",
-    "@fontsource/vt323": "^5.3.0",
-    "@modelcontextprotocol/sdk": "^1.32.1",
-    "@typesafe-ai/sdk": "^0.6.0",
-    "elkjs": "^0.12.0",
-    "lru-cache": "^11.5.3",
-    "playwright": "^1.62.1",
-    "xstate": "^5.33.2",
-    "yaml": "^2.9.0",
-    "zod": "^4.6.7"
+    "@fontsource/vt323": "^5.3.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "ajv": "^8.20.0",
     "eslint": "^10.9.1",
     "eslint-plugin-sonarjs": "^4.2.0",
     "eslint-plugin-unicorn": "^73.0.0"

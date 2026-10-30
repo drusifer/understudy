@@ -1,15 +1,12 @@
-// Sprint 1 UND-4, UND-5 AC3, ADR-U5: the `understudy` command - its
-// arguments, its exit codes (0 done, 1 failed after starting, 2 refused
-// before starting) and its messages, which never carry a stack trace.
+// The `understudy` command: a launcher for the Python package. Its arguments, its exit codes (0 done, 1 failed
+// after starting, 2 refused before starting) and its messages, which never carry a stack trace.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
 import { main } from '../src/cli.mjs';
 import { RunError } from '../src/errors.mjs';
 
-const BIN = fileURLToPath(new URL('../bin/understudy.mjs', import.meta.url));
 const KEY = { TYPESAFE_API_KEY: 'test-key' };
+const COFFEE = 'tests/fixtures/coffee/coffee_week.yaml';
 
 function streams() {
   const out = { stdout: '', stderr: '' };
@@ -22,94 +19,90 @@ async function cli(argv, { environment = KEY, commands = {} } = {}) {
   return { code, ...io.out };
 }
 
-test('run without a TypeSafe key is refused before anything starts, naming the variable', async () => {
-  let isStarted = false;
-  for (const environment of [{}, { TYPESAFE_API_KEY: '  ' }]) {
-    const result = await cli(['run', 'examples/cli'], { environment, commands: { run: async () => { isStarted = true; } } });
-    assert.equal(result.code, 2);
-    assert.equal(result.stderr, 'understudy: understudy run needs a TypeSafe key: set TYPESAFE_API_KEY\n');
-  }
-  assert.equal(isStarted, false);
-});
-
-test('the real command refuses a keyless run the same way, with no stack trace', () => {
-  const environment = { ...process.environment };
-  delete environment.TYPESAFE_API_KEY;
-  const result = spawnSync(process.execPath, [BIN, "run", "examples/cli"], { env: environment, encoding: 'utf8' });
-  assert.equal(result.status, 2);
-  assert.equal(result.stderr, 'understudy: understudy run needs a TypeSafe key: set TYPESAFE_API_KEY\n');
-});
-
-test('check does not need the key', async () => {
+test('run passes the sketch, each --source and --out to the Python package', async () => {
   const seen = [];
-  const result = await cli(['check', 'examples/cli'], { environment: {}, commands: { check: async (directory) => { seen.push(directory); return 'examples/cli: sketch OK'; } } });
+  const commands = { run: async (options) => { seen.push(options); options.stdout.write('stage a\n'); return 0; } };
+  const result = await cli(['run', 'coffee_week.yaml', '--source', 'sales.path=a.jsonl', '--source=news=b.jsonl', '--out', 'build/runs'], { commands, environment: {} });
   assert.equal(result.code, 0);
-  assert.deepEqual(seen, ['examples/cli']);
-  assert.equal(result.stdout, 'examples/cli: sketch OK\n');
+  assert.equal(result.stdout, 'stage a\n');
+  assert.equal(seen[0].sketch, 'coffee_week.yaml');
+  assert.deepEqual(seen[0].source, ['sales.path=a.jsonl', 'news=b.jsonl']);
+  assert.equal(seen[0].out, 'build/runs');
 });
 
-test('run passes the sketch and --steps N / --steps=N; without it the sketch or the default decides', async () => {
-  const calls = [];
-  const commands = { run: async (directory, options) => { calls.push([directory, options.steps]); } };
-  assert.equal((await cli(['run', 'examples/cli'], { commands })).code, 0);
-  assert.equal((await cli(['run', 'examples/cli', '--steps', '7'], { commands })).code, 0);
-  assert.equal((await cli(['run', '--steps=3', 'examples/web'], { commands })).code, 0);
-  assert.deepEqual(calls, [['examples/cli', undefined], ['examples/cli', 7], ['examples/web', 3]]);
+test('run needs no key here: whether Jev is needed is the sketch\'s business, decided in Python', async () => {
+  const result = await cli(['run', 'coffee_week.yaml'], { environment: {}, commands: { run: async () => 0 } });
+  assert.equal(result.code, 0);
 });
 
-test('--steps with no number says so', async () => {
-  const result = await cli(['run', 'examples/cli', '--steps'], { commands: { run: async () => {} } });
+test('check passes the sketch and the exit code through', async () => {
+  const seen = [];
+  const result = await cli(['check', 'coffee_week.yaml'], { environment: {}, commands: { check: async (options) => { seen.push(options.sketch); return 2; } } });
   assert.equal(result.code, 2);
-  assert.equal(result.stderr, 'understudy: --steps needs a number, e.g. --steps 20\n');
+  assert.deepEqual(seen, ['coffee_week.yaml']);
 });
 
-test('a bad --steps is refused naming the flag and the value', async () => {
-  for (const value of ['0', '-2', '1.5', 'many']) {
-    const result = await cli(['run', 'examples/cli', '--steps', value], { commands: { run: async () => {} } });
-    assert.equal(result.code, 2, value);
-    assert.equal(result.stderr, `understudy: --steps must be a positive whole number (got "${value}")\n`);
-  }
+test('the real command checks a sketch through Python', async () => {
+  const result = await cli(['check', COFFEE], { environment: process.env });
+  assert.equal(result.code, 0);
+  assert.equal(result.stdout, 'ok: coffee_week\n');
+  assert.equal(result.stderr, '');
+});
+
+test('the real command refuses a wrong sketch with one understudy line and no stack trace', async () => {
+  const result = await cli(['run', 'tests/fixtures/coffee/missing.yaml'], { environment: process.env });
+  assert.equal(result.code, 2);
+  assert.match(result.stderr, /understudy: .*missing\.yaml/);
+  assert.doesNotMatch(result.stderr, /Traceback|\n {4}at /);
+  assert.equal(result.stdout, '');
 });
 
 test('mistakes in the command line are refused with what to type instead', async () => {
   const cases = [
-    [[], /usage: understudy run <sketch>/],
-    [['dance'], /no command "dance" - commands: run, check, library, watch, dashboard, etl/],
-    [['run'], /run needs a sketch, e.g. understudy run examples\/cli/],
+    [[], /usage: understudy run <sketch\.yaml>/],
+    [['dance'], /no command "dance" - commands: run, check, etl/],
+    [['run'], /run needs a sketch, e\.g\. understudy run coffee_week\.yaml/],
     [['run', 'a', 'b'], /run takes one sketch \(got "a", "b"\)/],
-    [['run', 'examples/cli', '--headed'], /no option "--headed" for run/],
+    [['run', 'a.yaml', '--headed'], /no option "--headed" for run/],
+    [['run', 'a.yaml', '--source'], /--source needs name\.path=file/],
+    [['run', 'a.yaml', '--source', 'bare'], /--source needs name\.path=file, e\.g\. --source sales\.path=sales\.jsonl \(got "bare"\)/],
+    [['check', 'a.yaml', '--out', 'x'], /no option "--out" for check/],
   ];
   for (const [argv, message] of cases) {
-    const result = await cli(argv, { commands: { run: async () => {} } });
+    const result = await cli(argv, { commands: { run: async () => 0, check: async () => 0 } });
     assert.equal(result.code, 2, argv.join(' '));
     assert.match(result.stderr, message);
     assert.doesNotMatch(result.stderr, /\n {4}at /, 'no stack trace');
   }
 });
 
+test('the old commands say they are being rebuilt instead of failing', async () => {
+  for (const command of ['library', 'watch', 'dashboard']) {
+    const result = await cli([command, 'examples']);
+    assert.equal(result.code, 2);
+    assert.equal(result.stderr, `understudy: ${command} is being rebuilt for the new sketch model (see docs/sprints/EPIC_PYTHON_PORT.md)\n`);
+  }
+});
+
 test('--help prints the usage on stdout and exits 0', async () => {
   const result = await cli(['--help']);
   assert.equal(result.code, 0);
-  assert.match(result.stdout, /usage: understudy run <sketch> \[--steps N\]/);
-  assert.match(result.stdout, /understudy check <sketch>/);
-  assert.match(result.stdout, /understudy library \[<sketch>\]/);
+  assert.match(result.stdout, /usage: understudy run <sketch\.yaml> \[--source name\.path=file\]\.\.\./);
+  assert.match(result.stdout, /understudy check <sketch\.yaml>/);
   assert.match(result.stdout, /understudy etl run --monarch <csv> --amex <csv>/);
-  assert.match(result.stdout, /<sketch> is a directory holding sketch\.yaml/);
 });
 
 test('etl run requires both named CSV inputs and passes them to the stage runner', async () => {
   const seen = [];
   const commands = { etl: async (options) => { seen.push(options); options.stdout.write('etl complete\n'); } };
-  const result = await cli(['etl', 'run', '--monarch', 'monarch.csv', '--amex=amex.csv', '--out', 'build/results', '--since', '2026-01-01', '--amex-account', 'Platinum'], { commands, environment: { TYPESAFE_API_KEY: 'test-key' } });
+  const result = await cli(['etl', 'run', '--monarch', 'monarch.csv', '--amex=amex.csv', '--out', 'build/results', '--since', '2026-01-01', '--amex-account', 'Platinum'], { commands });
   assert.equal(result.code, 0);
   assert.equal(result.stdout, 'etl complete\n');
-  assert.equal(seen.length, 1);
   assert.equal(seen[0].monarchPath, 'monarch.csv');
   assert.equal(seen[0].amexPath, 'amex.csv');
   assert.equal(seen[0].out, 'build/results');
   assert.equal(seen[0].since, '2026-01-01');
   assert.equal(seen[0].amexAccount, 'Platinum');
-  assert.equal(seen[0].environment.TYPESAFE_API_KEY, 'test-key');
   const missing = await cli(['etl', 'run', '--monarch', 'monarch.csv'], { commands, environment: {} });
   assert.equal(missing.code, 2);
   assert.equal(missing.stderr, 'understudy: understudy etl run needs --amex <csv>\n');
@@ -128,95 +121,10 @@ test('the Python ETL bridge preserves a missing-input refusal without calling Je
 });
 
 test('a run that fails after starting exits 1 with its message; anything unexpected exits 1 too', async () => {
-  const failed = await cli(['run', 'examples/cli'], { commands: { run: async () => { throw new RunError('node app.mjs exited with code 3 before the end state'); } } });
+  const failed = await cli(['run', 'a.yaml'], { commands: { run: async () => { throw new RunError('python stopped by SIGKILL'); } } });
   assert.equal(failed.code, 1);
-  assert.equal(failed.stderr, 'understudy: node app.mjs exited with code 3 before the end state\n');
-  const broken = await cli(['run', 'examples/cli'], { commands: { run: async () => { throw new TypeError('x is undefined'); } } });
+  assert.equal(failed.stderr, 'understudy: python stopped by SIGKILL\n');
+  const broken = await cli(['run', 'a.yaml'], { commands: { run: async () => { throw new TypeError('x is undefined'); } } });
   assert.equal(broken.code, 1);
   assert.equal(broken.stderr, 'understudy: unexpected error: x is undefined\n');
-});
-
-test('library lists every generic name grouped by kind, one line each with its meaning', async () => {
-  const result = await cli(['library'], { environment: {} });
-  assert.equal(result.code, 0);
-  const lines = result.stdout.split('\n');
-  assert.equal(lines[0], 'guards:');
-  assert.ok(lines.includes('actions:'));
-  assert.ok(lines.includes('actors:'));
-  assert.ok(lines.some((line) => /^ {2}changed - the app's view/.test(line)));
-  assert.ok(lines.some((line) => /^ {2}look - /.test(line)));
-  assert.ok(lines.some((line) => /^ {2}play - /.test(line)));
-});
-
-test('--watch and --port reach the run; --port without --watch, or a bad port, is refused', async () => {
-  const calls = [];
-  const commands = { run: async (location, options) => { calls.push(options.watch); } };
-  assert.equal((await cli(['run', 'examples/cli', '--watch'], { commands })).code, 0);
-  assert.equal((await cli(['run', 'examples/cli', '--watch', '--port', '4180'], { commands })).code, 0);
-  assert.equal((await cli(['run', 'examples/cli', '--port=4181', '--watch'], { commands })).code, 0);
-  assert.equal((await cli(['run', 'examples/cli'], { commands })).code, 0);
-  assert.deepEqual(calls, [{ port: undefined, host: undefined, paused: false }, { port: 4180, host: undefined, paused: false }, { port: 4181, host: undefined, paused: false }, null]);
-  const lonely = await cli(['run', 'examples/cli', '--port', '4180'], { commands });
-  assert.equal(lonely.code, 2);
-  assert.equal(lonely.stderr, 'understudy: --port needs --watch (it is the watch page\'s port)\n');
-  const bad = await cli(['run', 'examples/cli', '--watch', '--port', '99999'], { commands });
-  assert.equal(bad.stderr, 'understudy: --port must be a port number from 1 to 65535 (got "99999")\n');
-  assert.match((await cli(['check', 'examples/cli', '--watch'], { commands })).stderr, /no option "--watch" for check/);
-});
-
-test('--pause reaches the run with --watch, and is refused without it', async () => {
-  const calls = [];
-  const commands = { run: async (location, options) => { calls.push(options.watch); } };
-  assert.equal((await cli(['run', 'examples/cli', '--watch', '--pause'], { commands })).code, 0);
-  assert.deepEqual(calls, [{ port: undefined, host: undefined, paused: true }]);
-  const lonely = await cli(['run', 'examples/cli', '--pause'], { commands });
-  assert.equal(lonely.code, 2);
-  assert.equal(lonely.stderr, 'understudy: --pause needs --watch (the page is where you step it)\n');
-});
-
-test('watch takes one log (and --port); nothing else', async () => {
-  const calls = [];
-  const commands = { watch: async (file, options) => { calls.push([file, options.port, options.host]); } };
-  assert.equal((await cli(['watch', 'build/runs/x/1.jsonl', '--port', '4190'], { commands })).code, 0);
-  assert.deepEqual(calls, [['build/runs/x/1.jsonl', 4190, undefined]]);
-  assert.match((await cli(['watch'], { commands })).stderr, /watch needs a run log, e\.g\. understudy watch build\/runs\/coffee-cli\/<time>\.jsonl/);
-  assert.match((await cli(['watch', 'a', 'b'], { commands })).stderr, /watch takes one log \(got "a", "b"\)/);
-  assert.match((await cli(['watch', 'a', '--pause'], { commands })).stderr, /no option "--pause" for watch/);
-});
-
-test('--host reaches the run and the replay; on run it needs --watch', async () => {
-  const runs = [];
-  const watches = [];
-  const commands = {
-    run: async (location, options) => { runs.push(options.watch); },
-    watch: async (file, options) => { watches.push(options.host); },
-  };
-  assert.equal((await cli(['run', 'examples/cli', '--watch', '--host', '0.0.0.0'], { commands })).code, 0);
-  assert.deepEqual(runs, [{ port: undefined, host: '0.0.0.0', paused: false }]);
-  assert.equal((await cli(['watch', 'x.jsonl', '--host=localhost'], { commands })).code, 0);
-  assert.deepEqual(watches, ['localhost']);
-  const lonely = await cli(['run', 'examples/cli', '--host', '0.0.0.0'], { commands });
-  assert.equal(lonely.stderr, 'understudy: --host needs --watch (it is where the watch page listens)\n');
-});
-
-test('--input is repeatable and reaches the run as name=value pairs; a bare word is refused (UND-24 AC2)', async () => {
-  const calls = [];
-  const commands = { run: async (directory, options) => { calls.push(options.inputs); } };
-  assert.equal((await cli(['run', 'examples/evening', '--input', 'mood=romantic', '--input=centre=1'], { commands })).code, 0);
-  assert.equal((await cli(['run', 'examples/evening'], { commands })).code, 0);
-  assert.deepEqual(calls, [['mood=romantic', 'centre=1'], []]);
-  const bad = await cli(['run', 'examples/evening', '--input', 'romantic'], { commands });
-  assert.equal(bad.code, 2);
-  assert.equal(bad.stderr, 'understudy: --input needs name=value, e.g. --input mood=romantic (got "romantic")\n');
-});
-
-test('dashboard takes one folder and --port/--host; nothing else (UND-27)', async () => {
-  const calls = [];
-  const commands = { dashboard: async (folder, options) => { calls.push([folder, options.port, options.host]); } };
-  assert.equal((await cli(['dashboard', 'examples', '--port', '4180', '--host', '0.0.0.0'], { commands })).code, 0);
-  assert.deepEqual(calls, [['examples', 4180, '0.0.0.0']]);
-  const none = await cli(['dashboard'], { commands });
-  assert.equal(none.code, 2);
-  assert.equal(none.stderr, 'understudy: dashboard needs a folder of sketches, e.g. understudy dashboard examples\n');
-  assert.equal((await cli(['dashboard', 'examples', '--steps', '3'], { commands })).stderr, 'understudy: no option "--steps" for dashboard - see understudy --help\n');
 });

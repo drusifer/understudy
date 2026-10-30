@@ -84,4 +84,14 @@ sequenceDiagram
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "Phase 4 review passed<br/>against ADR-0040 and<br/>invariants 1, 9, 10: one<br/>shared runner (a<br/>duplicate removed, not<br/>added), outputs<br/>published last,…"
     Note over Mouse,Trin: "Phase 4 summary<br/>Neo: Phase 4 impl done:<br/>machine.py, run.py<br/>(folder, run.json,<br/>events.jsonl, outputs<br/>last), cli.py<br/>(run/check, exit 0/1/2),<br/>the ETL and sketches…<br/>Trin: UAT phase 4 passed<br/>(UND-62 AC1-4, UND-60<br/>AC1-4). rubric UAT:<br/>COVER=A STEPS=A FAIL=S<br/>DATA=A EVID=A. @Morpheus<br/>*lead review phase-4<br/>Morpheus: Phase 4 review<br/>passed against ADR-0040<br/>and invariants 1, 9, 10:<br/>one shared runner (a<br/>duplicate removed, not<br/>added), outputs<br/>published last,…"
+    Note over Mouse,Trin: 📅 2026-10-30
+    Mouse->>All: "phase 5"
+    Note right of Mouse: "Phase 5"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 5 impl done:<br/>src/cli.mjs is a<br/>launcher (run, check,<br/>etl via one Python<br/>spawner), old commands<br/>say they are being<br/>rebuilt, the old Nod…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 5 passed<br/>(UND-60 AC1, AC2, AC8).<br/>rubric UAT: COVER=A<br/>STEPS=A FAIL=A DATA=A<br/>EVID=A. @Morpheus *lead<br/>review phase-5"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 5 review passed<br/>against ADR-0045 and the<br/>purge list: Node<br/>run/check and the whole<br/>old player are gone (not<br/>just run/check: nothing<br/>el…"
+    Note over Mouse,Trin: "Phase 5 summary<br/>Trin: UAT phase 5 passed<br/>(UND-60 AC1, AC2, AC8).<br/>rubric UAT: COVER=A<br/>STEPS=A FAIL=A DATA=A<br/>EVID=A. @Morpheus *lead<br/>review phase-5<br/>Morpheus: Phase 5 review<br/>passed against ADR-0045<br/>and the purge list: Node<br/>run/check and the whole<br/>old player are gone (not<br/>just run/check: nothing<br/>el…"
 ```

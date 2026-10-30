@@ -229,3 +229,27 @@ dispatcher
 ---
 [<small>2026-10-29 23:56:14</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
  Phase 4 review passed against ADR-0040 and invariants 1, 9, 10: one shared runner (a duplicate removed, not added), outputs published last, output policy reused from src/paths. @Neo *swe impl phase-5
+
+---
+[<small>2026-10-30 00:01:48</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+12:01AM INF no leaks found
+12:01AM INF 1 commits scanned.
+12:01AM INF scanned ~10323 bytes (10.32 KB) in 257ms
+12:01AM INF no leaks found
+
+---
+[<small>2026-10-30 00:02:07</small>] [**Mouse**]->[**all**] *phase 5*:
+ Phase 5
+
+---
+[<small>2026-10-30 00:02:07</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 5 impl done: src/cli.mjs is a launcher (run, check, etl via one Python spawner); old commands say they are being rebuilt; the old Node player, 41 test files, browser tests, 3 make targets and 9 npm deps are deleted (git history keeps them). check green. @Trin *qa uat phase-5
+
+---
+[<small>2026-10-30 00:02:07</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 5 passed (UND-60 AC1, AC2, AC8). rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A. @Morpheus *lead review phase-5
+
+---
+[<small>2026-10-30 00:02:07</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 5 review passed against ADR-0045 and the purge list: Node run/check and the whole old player are gone (not just run/check: nothing else could work without them), browser assets kept for slice C, examples and old schema left for slice B on purpose. @Neo *swe impl phase-6

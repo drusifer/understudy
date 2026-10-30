@@ -104,3 +104,22 @@
 * `rubric UAT: COVER=A STEPS=A FAIL=S DATA=A EVID=A`.
 
 **Phase 4 UAT verdict: PASSED.**
+
+## 5. Phase 5: replace the old Node commands (UND-60 AC 8)
+
+### `UAT-UND-60-02` `understudy run` and `understudy check` are the Python commands
+* **Story/AC:** UND-60 AC 1, 2, 8.
+* **Command:** `bobp make test-js` (`tests/cli.test.js`, 12 tests) and `bobp make check`.
+* **Expected:** through the Node launcher, `check` on the coffee sketch prints `ok: coffee_week` and exits 0; `run` on a missing sketch exits 2 with one `understudy:` line naming the file and no stack trace; `--source`, `--out` and the exit code reach and return from Python; the command line mistakes are refused with what to type instead.
+* **Result:** Pass. The launcher runs the real Python package in two of the tests (a clean check, a refused run); the other tests inject the command and prove the arguments and exit codes.
+
+### `UAT-UND-60-03` The old commands fail clearly, and the old player is gone
+* **Story/AC:** UND-60 AC 8.
+* **Expected:** `library`, `watch` and `dashboard` say `<command> is being rebuilt for the new sketch model (see docs/sprints/EPIC_PYTHON_PORT.md)` and exit 2; the Node `run`/`check` implementations and everything that only they used are deleted, with their tests, the browser tests and the `test-browser`, `test-live` and `install-browser` targets; unused npm dependencies are removed.
+* **Result:** Pass. `src/` Node now holds the launcher (`cli.mjs`), `errors.mjs` and the dashboard's browser files (kept for slice C); 41 Node test files and the old fixtures are deleted; `xstate`, `yaml`, `@typesafe-ai/sdk`, `playwright`, `@modelcontextprotocol/sdk`, `zod`, `lru-cache`, `elkjs` and `ajv` are removed from `package.json`; the SDLC rows and dependency list are updated. Left for later slices on purpose: `examples/` and `schema/sketch.schema.json` (slice B), `docs/SKETCHES.md` and `docs/MCP_GUIDE.md` (rewritten in the groom).
+
+### Phase 5 gate evidence
+* `bobp make check` passed: JavaScript tests 19/19, Python tests, SQLMesh model tests, eslint, ruff and the secret scan.
+* `rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A`.
+
+**Phase 5 UAT verdict: PASSED.**
