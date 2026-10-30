@@ -3,7 +3,17 @@ import unittest
 from types import SimpleNamespace
 
 from src.sketch.registry import STAGES
-from src.sketch.stages_rows import adjacent_runs, prefer_middle, prefer_order, reduce_max, reduce_min, weigh
+from src.sketch.stages_rows import (
+    adjacent_runs,
+    join,
+    prefer_middle,
+    prefer_order,
+    reduce_max,
+    reduce_min,
+    unpair,
+    weigh,
+    where,
+)
 
 SEATS = [{"showing": "19:30", "row": "E", "number": n, "free": n in (3, 4, 5, 8, 9)} for n in range(1, 11)] + [
     {"showing": "19:30", "row": "F", "number": n, "free": True} for n in range(1, 7)
@@ -21,6 +31,53 @@ def context(**sources):
 
 def run(stage, *args, **kwargs):
     return asyncio.run(stage(*args, **kwargs))
+
+
+SHOWINGS = [{"title": "A", "starts": "15:00", "tomato": 95}, {"title": "B", "starts": "19:30", "tomato": 60},
+            {"title": "C", "starts": "21:15", "tomato": 80}, {"title": "A", "starts": "20:00", "tomato": 95}]
+
+
+class WhereTests(unittest.TestCase):
+    def kept(self, keep):
+        return [(r["title"], r["starts"]) for r in run(where, context(showings=SHOWINGS), "showings", keep)]
+
+    def test_it_keeps_the_rows_that_satisfy_the_condition(self):
+        self.assertEqual(self.kept({"tomato": {"ge": 80}}), [("A", "15:00"), ("C", "21:15"), ("A", "20:00")])
+
+    def test_times_are_ordered_as_times_not_as_text(self):
+        self.assertEqual(self.kept({"starts": {"ge": "17:00"}}), [("B", "19:30"), ("C", "21:15"), ("A", "20:00")])
+
+    def test_and_or_work_as_everywhere(self):
+        keep = {"and": [{"starts": {"ge": "17:00"}}, {"or": [{"title": {"eq": "C"}}, {"tomato": {"lt": 70}}]}]}
+        self.assertEqual(self.kept(keep), [("B", "19:30"), ("C", "21:15")])
+
+
+SCORES = [{"title": "A", "audience": 0.9}, {"title": "C", "audience": 0.4}]
+
+
+class JoinTests(unittest.TestCase):
+    def joined(self):
+        return run(join, context(showings=SHOWINGS, scores=SCORES), "showings", "scores", "title")
+
+    def test_a_showing_gets_its_films_fields(self):
+        self.assertEqual([(r["title"], r["starts"], r["audience"]) for r in self.joined()],
+                         [("A", "15:00", 0.9), ("C", "21:15", 0.4), ("A", "20:00", 0.9)])
+
+    def test_a_showing_with_no_match_is_dropped(self):
+        self.assertNotIn("B", [r["title"] for r in self.joined()])
+
+    def test_the_source_rows_own_value_wins_a_clash(self):
+        rows = run(join, context(left=[{"k": 1, "v": "mine"}], right=[{"k": 1, "v": "theirs", "w": 2}]), "left", "right", "k")
+        self.assertEqual(rows, [{"k": 1, "v": "mine", "w": 2}])
+
+
+class UnpairTests(unittest.TestCase):
+    def test_each_pair_becomes_the_input_row_plus_what_it_output(self):
+        pairs = [{"input": {"title": "A"}, "output": [{"audience": 0.9}]},
+                 {"input": {"title": "B"}, "output": [{"audience": 0.1}]},
+                 {"input": {"title": "C"}, "output": []}]
+        self.assertEqual(run(unpair, context(pairs=pairs), "pairs"),
+                         [{"title": "A", "audience": 0.9}, {"title": "B", "audience": 0.1}])
 
 
 class AdjacentRunsTests(unittest.TestCase):

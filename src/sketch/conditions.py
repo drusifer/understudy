@@ -4,16 +4,29 @@
     temp:    { in: [80:90] }          # a slice: start included, stop excluded
     or: [ { genre: { eq: horror } }, { tomato: { gt: 90 } } ]
 
-Several fields in one mapping mean `and`. A condition compares a field with a fixed value only.
+Several fields in one mapping mean `and`. A condition compares a field with a fixed value only. `lt le gt ge` order
+numbers, and also dates, times and datetimes, which `dateparser` reads from text (`starts: { ge: "17:00" }`).
 """
 
 import re
+from datetime import datetime
 from difflib import get_close_matches
+from functools import lru_cache
+from operator import ge, gt, le, lt
+
+import dateparser
 
 from src.sketch.vocabulary import COMBINATORS, OPERATORS
 
 SLICE = re.compile(r"^-?\d+(\.\d+)?:-?\d+(\.\d+)?$")
 NUMERIC = ("lt", "le", "gt", "ge")
+TODAY = datetime(2000, 1, 1)  # a fixed day, so "19:30" and "17:00" are compared the same way on every run
+
+
+@lru_cache(maxsize=1024)
+def when(value) -> datetime | None:
+    """The date, time or datetime `dateparser` reads from a string (a bare time lands on a fixed day); None otherwise."""
+    return dateparser.parse(value, settings={"RELATIVE_BASE": TODAY}) if isinstance(value, str) else None
 
 
 def is_slice(value) -> bool:
@@ -31,7 +44,7 @@ def _nearest(word: str, choices) -> str:
 
 def _operand_problem(operator: str, value) -> str | None:
     if operator in NUMERIC:
-        return None if _number(value) else f"{operator} needs a number, not {value!r}"
+        return None if _number(value) or when(value) else f"{operator} needs a number, date or time, not {value!r}"
     if operator in ("in", "not_in"):
         if is_slice(value):
             return None
@@ -61,13 +74,23 @@ def _has(actual, operand) -> bool:
     return isinstance(actual, list | tuple) and operand in actual
 
 
+def _ordered(compare):
+    """Order two numbers, or two dates/times read from text; anything else never matches."""
+    def ordered(actual, operand) -> bool:
+        if _number(actual) and _number(operand):
+            return compare(actual, operand)
+        left, right = when(actual), when(operand)
+        return left is not None and right is not None and compare(left, right)
+    return ordered
+
+
 COMPARATORS = {
     "eq": lambda actual, operand: actual == operand,
     "ne": lambda actual, operand: actual != operand,
-    "lt": lambda actual, operand: _number(actual) and actual < operand,
-    "le": lambda actual, operand: _number(actual) and actual <= operand,
-    "gt": lambda actual, operand: _number(actual) and actual > operand,
-    "ge": lambda actual, operand: _number(actual) and actual >= operand,
+    "lt": _ordered(lt),
+    "le": _ordered(le),
+    "gt": _ordered(gt),
+    "ge": _ordered(ge),
     "in": _is_member,
     "not_in": lambda actual, operand: not _is_member(actual, operand),
     "has": _has,

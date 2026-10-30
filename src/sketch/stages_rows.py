@@ -6,11 +6,34 @@ of fields, and `reduce.max` / `reduce.min` keep the best rows by a field (decisi
 its rows from a named source, which may itself be computed by a stage.
 """
 
+from src.sketch.conditions import holds
 from src.sketch.registry import Source, stage
 
 
 def _matching(rows: list[dict], match: dict | None) -> list[dict]:
     return [row for row in rows if all(row.get(field) == value for field, value in (match or {}).items())]
+
+
+@stage("map.where")
+async def where(context, source: Source, keep: dict) -> list[dict]:
+    """The rows of `source` that satisfy the condition `keep` (the same explicit YAML conditions as everywhere)."""
+    return [row for row in await context.read(source) if holds(keep, row)]
+
+
+@stage("map.join")
+async def join(context, source: Source, other: Source, on: str) -> list[dict]:
+    """Each row of `source` plus the fields of the row of `other` that has the same `on` value (the first, if several).
+    A row with no match is dropped; where both have a field the row of `source` wins."""
+    matching: dict = {}
+    for row in await context.read(other):
+        matching.setdefault(row[on], row)
+    return [{**matching[row[on]], **row} for row in await context.read(source) if row[on] in matching]
+
+
+@stage("map.unpair")
+async def unpair(context, source: Source) -> list[dict]:
+    """Flat rows from an `each` result: for every `{input, output}` pair, the input row plus each row it output."""
+    return [{**pair["input"], **output} for pair in await context.read(source) for output in pair["output"]]
 
 
 @stage("map.adjacent_runs")
