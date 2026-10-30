@@ -1,0 +1,54 @@
+name: seating
+description: >
+  Seats side by side for a party, in the rows the owner likes, as central as they come. Give it the showing, the
+  number of tickets, and how much the row and the centre matter (0.0 to 1.0).
+
+sources:
+  seats: seats.jsonl                    # { showing, row, number, free }: every seat of every showing
+  runs:                                 # blocks of adjacent free seats, as long as the party
+    kind: stage
+    do: { map: { action: adjacent_runs } }
+    with:
+      source: seats
+      group: row
+      order: number
+      length: {{ tickets | default(2) }}
+      match: { showing: "{{ showing | default('19:30') }}", free: true }
+  by_row:                               # each block scored for its row: E, then F, then D
+    kind: stage
+    do: { map: { action: prefer_order } }
+    with: { rows: runs, field: row, order: [E, F, D], into: row_score }
+  by_centre:                            # and for how central it sits in its row
+    kind: stage
+    do: { map: { action: prefer_middle } }
+    with:
+      rows: by_row
+      extent: seats
+      group: row
+      order: number
+      into: centre_score
+      match: { showing: "{{ showing | default('19:30') }}" }
+  scored:                               # the owner's weights decide which matters more
+    kind: stage
+    do: { map: { action: weigh } }
+    with:
+      source: by_centre
+      by: { row_score: {{ row | default(0.7) }}, centre_score: {{ centre | default(1.0) }} }
+      into: score
+
+sinks:
+  hold: hold.jsonl
+
+machine:
+  initial: best
+  states:
+    best:
+      do: { reduce: { action: max } }
+      with: { source: scored, field: score, take: 5 }
+      then: write
+    write:
+      do: { sink: { name: hold } }
+      then: done
+    done:
+      final: true
+      outputs: [hold]

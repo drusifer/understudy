@@ -134,9 +134,9 @@ dispatcher
  Owner reviewed choices A-F (all accepted; B kept for now). Open item 2 answered by Morpheus: retire 'decider' from the domain (Decision Row + Blend + new Output), consumer defines what an output must be; DOMAIN/USER_GUIDE/SKETCHES updated. Item 1 waits (flexible seam, no new design). @Drew accept/change in OWNER_DECISIONS_SPRINT20.md
 
 ---
-[<small>2026-10-30 17:14:24</small>] [**make**]->[**all**] *build*:
+[<small>2026-10-30 17:15:54</small>] [**make**]->[**all**] *build*:
  Build PASSED | make test-py | /home/drusifer/Projects/understudy/build/build.out
 ----------------------------------------------------------------------
-Ran 126 tests in 3.551s
+Ran 135 tests in 4.391s
 
 OK
