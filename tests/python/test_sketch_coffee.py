@@ -60,7 +60,8 @@ class RegistryTests(unittest.TestCase):
     def test_the_stages_are_the_functions_decorated_with_stage(self):
         self.assertEqual(set(STAGES), {
             "map.split_by_share", "map.join_weights", "map.recipes", "reduce.blend",
-            "map.adjacent_runs", "map.prefer_order", "map.prefer_middle"})
+            "map.adjacent_runs", "map.prefer_order", "map.prefer_middle",
+            "map.weigh", "reduce.max", "reduce.min"})
 
     def test_a_stage_declares_its_with_keys_by_its_signature(self):
         self.assertEqual(STAGES["map.split_by_share"].params, {

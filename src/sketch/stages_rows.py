@@ -1,8 +1,9 @@
-"""General stages over rows: find runs of consecutive numbers, and weigh candidates 0.0 to 1.0.
+"""General stages over rows: find runs of consecutive numbers, score candidates, and keep the highest or lowest.
 
 They know nothing about cinemas. `map.adjacent_runs` finds consecutive seat numbers, consecutive days or consecutive
-invoice numbers alike; the `prefer_*` stages turn a field into the weighted rows a `blend` combines with the sketch's
-own weights (decision 26).
+invoice numbers alike. The `prefer_*` maps add a 0.0 to 1.0 score field to each row, `map.weigh` adds the weighted sum
+of fields, and `reduce.max` / `reduce.min` keep the best rows by a field (decisions 26, 30 and 31). Every stage reads
+its rows from a named source, which may itself be computed by a stage.
 """
 
 from src.sketch.registry import Source, stage
@@ -32,29 +33,50 @@ async def adjacent_runs(  # noqa: PLR0913 - the stage's with: keys
 
 
 @stage("map.prefer_order")
-async def prefer_order(context, field: str, order: list, key: str, outcome: str) -> list[dict]:
-    """Weighted rows for the previous stage's rows: the first value of `order` weighs 1.0, the next less, and a value
-    not listed 0. Each row becomes `{<outcome>: row[key], weight}`."""
+async def prefer_order(context, rows: Source, field: str, order: list, into: str) -> list[dict]:
+    """Each row of `rows` plus a score in `into`: the first value of `order` scores 1.0, the next less, and a value not
+    listed 0."""
     return [
-        {outcome: row[key], "weight": (len(order) - order.index(row[field])) / len(order) if row[field] in order else 0.0}
-        for row in context.last
+        {**row, into: (len(order) - order.index(row[field])) / len(order) if row[field] in order else 0.0}
+        for row in await context.read(rows)
     ]
 
 
 @stage("map.prefer_middle")
 async def prefer_middle(  # noqa: PLR0913 - the stage's with: keys
-    context, source: Source, group: str, order: str, key: str, outcome: str, match: dict | None = None,
+    context, rows: Source, extent: Source, group: str, order: str, into: str, match: dict | None = None,
 ) -> list[dict]:
-    """Weighted rows for the previous stage's runs (see `adjacent_runs`): 1.0 for a run centred in its group, falling
-    to 0.0 at the group's end. The group's extent is the lowest and highest `order` among the source rows that `match`."""
-    extent: dict = {}
-    for row in _matching(await context.read(source), match):
-        low, high = extent.get(row[group], (row[order], row[order]))
-        extent[row[group]] = (min(low, row[order]), max(high, row[order]))
-    weighted = []
-    for run in context.last:
-        low, high = extent[run[group]]
+    """Each row of `rows` (runs, see `adjacent_runs`) plus a score in `into`: 1.0 for a run centred in its group, falling
+    to 0.0 at the group's end. A group's extent is the lowest and highest `order` among the `extent` rows that `match`."""
+    ends: dict = {}
+    for row in _matching(await context.read(extent), match):
+        low, high = ends.get(row[group], (row[order], row[order]))
+        ends[row[group]] = (min(low, row[order]), max(high, row[order]))
+    scored = []
+    for run in await context.read(rows):
+        low, high = ends[run[group]]
         half = (high - low) / 2
         distance = abs((run["first"] + run["last"]) / 2 - (low + high) / 2)
-        weighted.append({outcome: run[key], "weight": max(0.0, 1 - distance / half) if half else 1.0})
-    return weighted
+        scored.append({**run, into: max(0.0, 1 - distance / half) if half else 1.0})
+    return scored
+
+
+@stage("map.weigh")
+async def weigh(context, source: Source, by: dict, into: str) -> list[dict]:
+    """Each row of `source` plus `into`: the sum of its `by` fields, each times its weight."""
+    return [
+        {**row, into: sum(weight * row[field] for field, weight in by.items())}
+        for row in await context.read(source)
+    ]
+
+
+@stage("reduce.max")
+async def reduce_max(context, source: Source, field: str, take: int = 1) -> list[dict]:
+    """The `take` rows of `source` with the highest `field`, highest first. Equal values keep the order they had."""
+    return sorted(await context.read(source), key=lambda row: -row[field])[:take]
+
+
+@stage("reduce.min")
+async def reduce_min(context, source: Source, field: str, take: int = 1) -> list[dict]:
+    """The `take` rows of `source` with the lowest `field`, lowest first. Equal values keep the order they had."""
+    return sorted(await context.read(source), key=lambda row: row[field])[:take]

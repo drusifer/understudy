@@ -48,6 +48,10 @@ Recorded by Cypher from the conversation, in the owner's words where possible. *
 | 28 | **`blend` is a reducer** (many weighted rows to one distribution), not a state key: a stage of type `reduce`, with `blend` and (later) `pick_best` as its actions. | "i think blend is a reducer no?"; "yes" |
 | 29 | **The other stage type is `map`** (rows in, rows out). `etl` and `convert` are replaced by `map`. Stage types are now `map`, `reduce`, `sink`, `sketch`. | "the other type is map right?"; "good this is a great fix" |
 
+| 30 | **`pick_best` is a `reduce` stage:** it scores each row as the weighted sum of named fields (`by: { field: weight }`), sorts best first and keeps `take` rows. Its rows come from a named source (which may be a stage source), not from the previous stage. The scoring maps (`prefer_order`, `prefer_middle`) add a score field to each row instead of returning weighted rows. | "yes" (to `pick_best` as a `reduce` stage) |
+
+| 31 | **`max` and `min` are the general reducers; there is no `pick_best`.** `map.weigh` adds a weighted sum of fields (`by: { field: weight }`, `into`); `reduce.max` and `reduce.min` keep the `take` rows with the highest or lowest `field`. Supersedes the stage in decision 30 (the scoring maps still add score fields). `sum`, `count` and `mean` would fit the same slot. | "maybe min/max are more appropriate as general reducers?"; "yes i think the new map reduce is the general case that solves this" |
+
 ## Decided by Claude while the owner was asleep (2026-10-30), for the owner to review
 
 The owner said: "do your best to finish without me. It is done when there is nothing left to take away." Each choice below took the smaller option. Overturn any of them.

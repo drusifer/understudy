@@ -60,7 +60,7 @@ A state's `do:` names a stage **type** as a key (a closed set the schema owns) a
 | `do:` | field | meaning |
 |---|---|---|
 | `map` | `action` | rows in, rows out: a library operation written in Python with `@stage` (below) |
-| `reduce` | `action` | many rows to fewer (`blend`, later `pick_best`), written the same way |
+| `reduce` | `action` | many rows to fewer (`blend`, `max`, `min`), written the same way |
 | `sink` | `name` | write the rows of the previous stage to a declared sink |
 | `sketch` | `file` | run another sketch (`<file>.yaml` beside this one) |
 
@@ -69,6 +69,11 @@ A state's `do:` names a stage **type** as a key (a closed set the schema owns) a
 | `map: { action: split_by_share }` | `source`, `field`, `segments` | splits a total (the sum of `field` over the source's rows) across `data.<segments>` by each segment's `share`: rows `{segment, share, age_min, age_max, drinks}` |
 | `map: { action: join_weights }` | `probabilities`, `weights` | joins a Jev source's probability per level with `data.<weights>` (level to option weights) into weighted rows on the dimension the sketch lists in `outputs` |
 | `map: { action: recipes }` | `recipes`, `packs` | turns drink counts into ingredient amounts from `data.<recipes>` (rows `{<dimension>: <option>, ingredient, amount, unit}`), rounded up to whole packs from `data.<packs>` |
+| `map: { action: adjacent_runs }` | `source`, `group`, `order`, `length`, `match` | every run of `length` consecutive `order` numbers in a `group`, from the rows that `match` (E3 E4 E5 gives E3-4 and E4-5 for 2): `{<group>, first, last, run}` |
+| `map: { action: prefer_order }` | `rows`, `field`, `order`, `into` | adds `into`: 1.0 for the first value of `order`, less for the next, 0 for one not listed |
+| `map: { action: prefer_middle }` | `rows`, `extent`, `group`, `order`, `into`, `match` | adds `into` to runs: 1.0 centred in their group, 0.0 at its end |
+| `map: { action: weigh }` | `source`, `by`, `into` | adds `into`: the sum of the `by` fields, each times its weight |
+| `reduce: { action: max }`, `min` | `source`, `field`, `take` | the `take` rows (default 1) with the highest (lowest) `field`, best first |
 | `sink: { name: <sink> }` | | writes the rows of the stage before it to the sink file |
 | `sketch: { file: <file> }` | | runs `<file>.yaml` beside this one as a nested run and gives back the weighted rows its `outputs` name; `with:` passes it values (see Subsketches) |
 | `reduce: { action: blend }` | `entries`, `forbid`, `on_empty`, `shortlist` | see Deciding, below |
