@@ -36,7 +36,7 @@ class BlockTests(SeatingCase):
 
     def test_a_party_of_three_only_gets_blocks_of_three(self):
         found = self.seat(tickets=3, row=0, centre=0)
-        self.assertTrue(all(hold["last"] - hold["first"] == 2 for hold in found))
+        self.assertTrue(found and all(len(range(hold["first"], hold["last"] + 1)) == 3 for hold in found))  # noqa: PLR2004
 
     def test_a_taken_seat_splits_a_row(self):
         everything = [hold["run"] for hold in self.seat(tickets=2, row=1, centre=1)]
