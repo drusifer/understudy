@@ -1,0 +1,14 @@
+Date,Merchant,Category,Account,Original Statement,Notes,Amount,Tags,Owner,Reviewed,Id
+2025-12-30,Old Shop,"Restaurant-Restaurant",Platinum Card (...1111),OLD SHOP,,40.00,,Me,,m0
+2026-02-01,Store,"Shopping & Retail: General",Platinum Card (...1111),STORE,,-50.00,,Me,,m1
+2026-02-15,Store,"Shopping & Retail: General",Platinum Card (...1111),STORE,,-45.00,,Me,,m2
+2026-03-01,Shoe Shop,"Shopping & Retail: Clothing",Platinum Card (...1111),SHOE SHOP,,-30.00,,Me,,m3
+2026-03-05,Dunkin',"Food & Dining: Coffee & Cafes",Platinum Card (...1111),DUNKIN',,-4.50,,Me,,m4
+2026-03-06,Dunkin',"Food & Dining: Coffee & Cafes",Platinum Card (...1111),DUNKIN',,-6.70,,Me,,m5
+2026-03-10,Shoe Shop,"Shopping & Retail: Clothing",Platinum Card (...1111),SHOE SHOP,,30.00,,Me,,m6
+2026-03-12,Store,"Shopping & Retail: General",Platinum Card (...1111),STORE,,45.00,,Me,,m7
+2026-03-02,Payment Thank You,"Credit Card Payment",Platinum Card (...1111),PAYMENT THANK YOU,,500.00,,Me,,m8
+2026-03-01,Amex Payment,"Credit Card Payment",Checking (...2222),AMEX PAYMENT,,-500.00,,Me,,m9
+2026-03-04,Venmo,"Transportation: Transfers",Checking (...2222),VENMO,,-600.00,,Me,,m10
+2026-03-03,Ridgewood Savings Bank,"Transfer",Checking (...2222),RIDGEWOOD SAVINGS BANK,,-70.00,,Me,,m11
+2026-03-05,Employer,"Income: Paychecks",Checking (...2222),EMPLOYER,,2000.00,,Me,,m12
