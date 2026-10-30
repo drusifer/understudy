@@ -45,6 +45,9 @@ Recorded by Cypher from the conversation, in the owner's words where possible. *
 
 | 27 | **A stage can be a source: it is a new source type** (a third `kind:` beside `file` and `jev`), declared with the same `do:` and `with:` a state has: `runs: { kind: stage, do: { etl: { action: adjacent_runs } }, with: { ... } }`. Computed once, on first read, by name. | "it is a new source type"; "yes" (to `kind: stage` with `do:` and `with:`) |
 
+| 28 | **`blend` is a reducer** (many weighted rows to one distribution), not a state key: a stage of type `reduce`, with `blend` and (later) `pick_best` as its actions. | "i think blend is a reducer no?"; "yes" |
+| 29 | **The other stage type is `map`** (rows in, rows out). `etl` and `convert` are replaced by `map`. Stage types are now `map`, `reduce`, `sink`, `sketch`. | "the other type is map right?"; "good this is a great fix" |
+
 ## Decided by Claude while the owner was asleep (2026-10-30), for the owner to review
 
 The owner said: "do your best to finish without me. It is done when there is nothing left to take away." Each choice below took the smaller option. Overturn any of them.
