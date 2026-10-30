@@ -43,6 +43,54 @@ def _operand_problem(operator: str, value) -> str | None:
     return None if isinstance(value, str | int | float | bool) else f"{operator} needs a single value, not {value!r}"
 
 
+def _slice_bounds(value: str) -> tuple[float, float]:
+    start, stop = value.split(":")
+    return float(start), float(stop)
+
+
+def _is_member(actual, operand) -> bool:
+    if is_slice(operand) or (isinstance(operand, list) and len(operand) == 1 and is_slice(operand[0])):
+        start, stop = _slice_bounds(operand if isinstance(operand, str) else operand[0])
+        return _number(actual) and start <= actual < stop
+    return actual in operand
+
+
+def _has(actual, operand) -> bool:
+    if isinstance(actual, str):
+        return str(operand) in actual
+    return isinstance(actual, list | tuple) and operand in actual
+
+
+COMPARATORS = {
+    "eq": lambda actual, operand: actual == operand,
+    "ne": lambda actual, operand: actual != operand,
+    "lt": lambda actual, operand: _number(actual) and actual < operand,
+    "le": lambda actual, operand: _number(actual) and actual <= operand,
+    "gt": lambda actual, operand: _number(actual) and actual > operand,
+    "ge": lambda actual, operand: _number(actual) and actual >= operand,
+    "in": _is_member,
+    "not_in": lambda actual, operand: not _is_member(actual, operand),
+    "has": _has,
+}
+
+
+def holds(condition: dict, row: dict) -> bool:
+    """Whether the row satisfies the condition. A field the row does not have never matches, whatever the operator."""
+    for key, value in condition.items():
+        if key == "and":
+            matched = all(holds(item, row) for item in value)
+        elif key == "or":
+            matched = any(holds(item, row) for item in value)
+        elif key == "not":
+            matched = not holds(value, row)
+        else:
+            (operator, operand), = value.items()
+            matched = key in row and COMPARATORS[operator](row[key], operand)
+        if not matched:
+            return False
+    return True
+
+
 def problems(condition, path: str) -> list[tuple[str, str]]:
     """What is wrong with a condition, as (path, message) pairs; empty when it is fine."""
     if not isinstance(condition, dict) or not condition:

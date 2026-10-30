@@ -133,7 +133,7 @@
         "with": { "type": "object" },
         "blend": { "type": "array", "items": { "$ref": "#/$defs/blendEntry" }, "minItems": 1 },
         "forbid": { "type": "array", "items": { "$ref": "#/$defs/forbid" } },
-        "on_empty": { "enum": ["fail", "fallback", "skip", "walk_away"] },
+        "on_empty": { "enum": ["fail", "fallback", "skip"] },
         "then": { "type": "string", "minLength": 1 },
         "transitions": { "type": "array", "items": { "$ref": "#/$defs/transition" }, "minItems": 1 },
         "final": { "type": "boolean" },

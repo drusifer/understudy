@@ -66,4 +66,13 @@ sequenceDiagram
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "Phase 2 review passed<br/>against ADR-0042 and<br/>invariants 1, 2, 7:<br/>explicit conditions,<br/>YAML 1.2, JSON Schema<br/>for shape plus Python<br/>for names,…"
     Note over Mouse,Trin: "Phase 2 summary<br/>Neo: Phase 2 impl done:<br/>src/sketch (model,<br/>vocabulary, conditions,<br/>loader, check), schema/d<br/>ecision_sketch.schema.js<br/>on, coffee fixtures. 21<br/>tests…<br/>Trin: UAT phase 2 passed<br/>(UND-61 AC1-5, run-time<br/>option check follows in<br/>phase 7, no-output-on-<br/>missing-file end to end<br/>in phase 4). rubric UAT:<br/>C…<br/>Morpheus: Phase 2 review<br/>passed against ADR-0042<br/>and invariants 1, 2, 7:<br/>explicit conditions,<br/>YAML 1.2, JSON Schema<br/>for shape plus Python<br/>for names,…"
+    Mouse->>All: "phase 3"
+    Note right of Mouse: "Phase 3"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 3 impl done:<br/>conditions (all<br/>operators, slices,<br/>and/or/not), decide<br/>trees and weights, blend<br/>per dimension, forbid<br/>with fail/skip/fal…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 3 passed<br/>(UND-63 AC1-5, 64-case<br/>grid proves no caffeine<br/>for under-18). rubric<br/>UAT: COVER=A STEPS=A<br/>FAIL=S DATA=A EVID=A.<br/>@Morpheu…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 3 review passed<br/>against ADR-0041/0044<br/>and invariants 3-5: one<br/>blend rule, forbid wins,<br/>weights sum checked.<br/>Design note recorded:<br/>ble…"
+    Note over Mouse,Trin: "Phase 3 summary<br/>Neo: Phase 3 impl done:<br/>conditions (all<br/>operators, slices,<br/>and/or/not), decide<br/>trees and weights, blend<br/>per dimension, forbid<br/>with fail/skip/fal…<br/>Trin: UAT phase 3 passed<br/>(UND-63 AC1-5, 64-case<br/>grid proves no caffeine<br/>for under-18). rubric<br/>UAT: COVER=A STEPS=A<br/>FAIL=S DATA=A EVID=A.<br/>@Morpheu…<br/>Morpheus: Phase 3 review<br/>passed against<br/>ADR-0041/0044 and<br/>invariants 3-5: one<br/>blend rule, forbid wins,<br/>weights sum checked.<br/>Design note recorded:<br/>ble…"
 ```

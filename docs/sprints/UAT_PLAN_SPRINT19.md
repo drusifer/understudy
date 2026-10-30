@@ -45,3 +45,36 @@
 * `rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A`.
 
 **Phase 2 UAT verdict: PASSED.**
+
+## 3. Phase 3: decide, blend, forbid (UND-63)
+
+### `UAT-UND-63-01` A tree gives each segment its weighted rows, as written
+* **Story/AC:** UND-63 AC 1.
+* **Command:** `bobp make test-py ARGS="test_sketch*.py"` (`DecideTests`, `ConditionTests`).
+* **Expected:** students reach the 0.5 / 0.2 / 0.3 leaf and the weights are used as written; night workers reach their own leaf; any other segment reaches the else leaf; a branch with no `else` is no opinion.
+* **Result:** Pass. Every operator (`eq ne lt le gt ge in not_in has`), `and`/`or`/`not`, several fields meaning `and`, and slices (80 in, 90 out of `80:90`) behave as specified; a field a row lacks never matches.
+
+### `UAT-UND-63-02` A forbid rule drops and renormalises, and always wins
+* **Story/AC:** UND-63 AC 2.
+* **Expected:** under-18 segments lose every caffeine option; the survivors add up to 1; a rule that does not apply changes nothing.
+* **Result:** Pass. `{none: 0.5, high: 0.5}` becomes `{none: 1}` for teens. A grid test over 64 combinations of leaf weights and decider weights never leaves `high` in a teen's caffeine and every dimension adds up to 1.
+
+### `UAT-UND-63-03` An emptied row fails, or opts in to skip or fallback
+* **Story/AC:** UND-63 AC 3.
+* **Expected:** by default the run fails naming the rule and the segment; `on_empty: skip` removes the dimension; `on_empty: fallback` spreads over the options the rule allows and fails if none is allowed.
+* **Result:** Pass. Message: `forbid rule 0 left teens with no option for 'caffeine'`. Found and fixed during build: an option kept with weight 0 caused a division by zero; zero-weight options are now dropped before renormalising.
+
+### `UAT-UND-63-04` Unknown dimension or option in a leaf
+* **Story/AC:** UND-63 AC 4.
+* **Result:** Pass at check time (Phase 2: `larg` suggests `large`).
+
+### `UAT-UND-63-05` A weight is a number or if/then/else per segment
+* **Story/AC:** UND-63 AC 5.
+* **Expected:** `0 if night_workers else 0.3` per segment; nested ifs; a missing `else` is 0; no text is parsed.
+* **Result:** Pass. Students get the weather nudge (blend of tree and weather by 1 : 0.3), night workers stay on hot coffee exactly (weather weight 0).
+
+### Phase 3 gate evidence
+* `Ran 39 tests ... OK` (Phases 2 and 3); ruff clean. Design decisions made during the build and recorded in `DESIGN_SKETCH_MODEL.md`: the blend works per dimension; `walk_away` is not in this sprint's `on_empty` values.
+* `rubric UAT: COVER=A STEPS=A FAIL=S DATA=A EVID=A`.
+
+**Phase 3 UAT verdict: PASSED.**

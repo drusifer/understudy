@@ -24,16 +24,16 @@
 ### Phase 2: Load and check a sketch (UND-61)
 *Phase goal: a wrong sketch is refused before anything runs, naming file, path, value and the nearest good one.*
 
-- [ ] **Task 2.1:** `*impl` `src/sketch/model.py`, `loader.py` (ruamel YAML 1.2, relative paths, `--source` overrides), `check.py` and `schema/decision_sketch.schema.json`. (*Owner: Neo | Verification: unit tests for every UND-61 AC: bad sketch, nearest-good message, segment shares, missing source file, slices read as text (`70:30` stays text), outcome checks.*)
-- [ ] **Task 2.2:** UAT: UND-61 AC 1-5 on the coffee sketch and deliberately broken copies. (*Owner: Trin | Verification: UAT rows in `docs/sprints/UAT_PLAN_SPRINT19.md`.*)
-- [ ] **Task 2.3:** Review against ADR-0042 and the domain invariants 1, 2, 7. (*Owner: Morpheus | Verification: verdict; commit `Phase 2: ...`.*)
+- [x] **Task 2.1:** `*impl` `src/sketch/model.py`, `loader.py` (ruamel YAML 1.2, relative paths, `--source` overrides), `check.py` and `schema/decision_sketch.schema.json`. (*Owner: Neo | Verification: unit tests for every UND-61 AC: bad sketch, nearest-good message, segment shares, missing source file, slices read as text (`70:30` stays text), outcome checks.*)
+- [x] **Task 2.2:** UAT: UND-61 AC 1-5 on the coffee sketch and deliberately broken copies. (*Owner: Trin | Verification: UAT rows in `docs/sprints/UAT_PLAN_SPRINT19.md`.*)
+- [x] **Task 2.3:** Review against ADR-0042 and the domain invariants 1, 2, 7. (*Owner: Morpheus | Verification: verdict; commit `Phase 2: ...`.*)
 
 ### Phase 3: Decide, blend, forbid (UND-63)
 *Phase goal: the owner's logic produces weighted rows, hard rules always win.*
 
-- [ ] **Task 3.1:** `*impl` `conditions.py` (operators `eq ne lt le gt ge in not_in has`, `and or not`, slices), `decide.py` (trees, weights as number or `if/then/else`), `blend.py` (weighted average, `forbid`, renormalise, `on_empty`, default fail). (*Owner: Neo | Verification: unit tests for every UND-63 AC, operator tables, a `forbid` that empties a segment fails naming rule and segment, weights sum to 1 after every step.*)
-- [ ] **Task 3.2:** UAT: UND-63 AC 1-5. (*Owner: Trin | Verification: UAT rows; the under-18 rule never broken in any combination.*)
-- [ ] **Task 3.3:** Review against ADR-0041 and ADR-0044, invariants 3 to 5. (*Owner: Morpheus | Verification: verdict; commit `Phase 3: ...`.*)
+- [x] **Task 3.1:** `*impl` `conditions.py` (operators `eq ne lt le gt ge in not_in has`, `and or not`, slices), `decide.py` (trees, weights as number or `if/then/else`), `blend.py` (weighted average, `forbid`, renormalise, `on_empty`, default fail). (*Owner: Neo | Verification: unit tests for every UND-63 AC, operator tables, a `forbid` that empties a segment fails naming rule and segment, weights sum to 1 after every step.*)
+- [x] **Task 3.2:** UAT: UND-63 AC 1-5. (*Owner: Trin | Verification: UAT rows; the under-18 rule never broken in any combination.*)
+- [x] **Task 3.3:** Review against ADR-0041 and ADR-0044, invariants 3 to 5. (*Owner: Morpheus | Verification: verdict; commit `Phase 3: ...`.*)
 
 ### Phase 4: Run the owner's machine (UND-62, UND-60 AC1-4)
 *Phase goal: the Python package runs a sketch's machine, writes a run folder and answers on the command line.*

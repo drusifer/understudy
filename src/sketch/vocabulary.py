@@ -2,7 +2,7 @@
 
 OPERATORS = ("eq", "ne", "lt", "le", "gt", "ge", "in", "not_in", "has")
 COMBINATORS = ("and", "or", "not")
-ON_EMPTY = ("fail", "fallback", "skip", "walk_away")
+ON_EMPTY = ("fail", "fallback", "skip")  # `walk_away` arrives with the evening example (slice B)
 
 # stage name -> {`with` key: what the value must be}: a source name, a key under `data`, or plain text
 STAGES = {
