@@ -32,7 +32,7 @@ Code mappings are the proposed symbols for the new package; Morpheus confirms th
 | **Sink** | Value Object | A named output that accepts JSONL. | `Sink` |
 | **Input** | Value Object | A value the person sets for a run (a fader, switch, count or choice), or passes to a subsketch. | `Input` |
 | **Outcome** (dimension) | Value Object | A declared dimension of a decision: an enumeration, or discrete numeric steps. Candidates may be read from source rows. | `Outcome` |
-| **Decider** | Domain Service | One row in, weighted rows out. Implemented by a decide tree, an ETL lookup, a subsketch or Jev's `ask`. | `Decider` |
+| **Decider** | Domain Service | One row in, weighted rows out. Implemented by a decide tree, an ETL lookup, a subsketch or a Jev source. | `Decider` |
 | **Decision Row** | Value Object | One combination of outcome values with a `weight`; the weights for one input sum to 1. | `DecisionRow` |
 | **Blend** | Policy | The single combination rule: the weighted average of deciders' rows, weights normalised. | `blend()` |
 | **Filter** (`forbid`) | Policy | An explicit YAML condition (field, operator, value) that drops rows; survivors are renormalised; a forbid always wins over a preference. | `forbid()` |

@@ -37,7 +37,7 @@ Jev never produces an amount. Its probabilities become weights, and the owner's 
 * **Outcomes are declared** by the sketch; a decider cannot invent a key. Unknown dimension or option is an error naming the decider, the bad key and the nearest valid one. Missing option means weight 0.
 * **A dimension is either an enumeration** (`temp: [hot, iced]`; a boolean is a two-option list) **or discrete numeric steps** (`sugar_spoons: { range: [0, 3], step: 1 }`, which expands to a list). No free-form number, no free text.
 * **Candidates may come from source rows** instead of a fixed list (`outcomes: { showing: { from: showings, key: id } }`); the keys are then read at run time and still checked.
-* **Everything implements the same contract:** a `decide` tree (its leaves carry weights), an ETL lookup, a subsketch, and Jev's `ask` (its probabilities).
+* **Everything implements the same contract:** a `decide` tree (its leaves carry weights), an ETL lookup, a subsketch, and a Jev source (its probabilities).
 * **One combination rule: the weighted blend.** The engine runs each decider, takes the weighted average of their rows (weights normalised) and goes on. Example: one source says iced 0.30 (weight 0.8), another 0.90 (0.3), the owner's rule 1.00 (0.2); the blend is 0.54 iced.
 * **There is no scoring formula.** The old evening engine multiplied `position ^ weight` factors (ADR-0018, ADR-0030); that is dropped. Vetoes are explicit `if`/`else` filters the owner can read, not hidden zeros.
 * **Ordered lists and slices:** a list is always an order, first is best, and its position scores `(n - i) / n` (E, F, D give 1, 0.67, 0.33; unlisted 0). An interval is a Python-style slice (`70:100`, `0.3:1`), scored linearly and clamped, either direction. These give a leaf its weight. **Sketches are read with a YAML 1.2 parser (ruamel.yaml, already installed with SQLMesh), never PyYAML:** PyYAML reads an unquoted `70:30` as the base-60 number 4230, while ruamel keeps it as the text `70:30`, so slices need no quotes (tested 2026-10-29).
@@ -51,7 +51,8 @@ Jev never produces an amount. Its probabilities become weights, and the owner's 
 
 ## 5. Sources, sinks, subsketches
 
-* **For this epic every source and sink is a file** (owner, 2026-10-29). `kind: mcp` (and http) are designed for but not built; the interface below is what a later kind implements. The weather inputs are files (last week's observations, the pasted Almanac text).
+* **Jev is a source kind** (`kind: jev`, owner, 2026-10-29), following the same conventions as a file or a future MCP source: config in place, rows out. A Choice question takes `instructions` (the prompt text) and `criteria` (option to meaning), which together are the rubric; `state` is the data Jev reads, a plain dict built from other sources by `from:`. Reading it returns one JSONL row per option with its probability. This maps onto `typesafe-sdk`'s `Choice(instructions, criteria)` and `system_one(state=…)` as wrapped in `src/etl/jev.py`. A `noul` question (yes/no probability) follows the same shape.
+* **For this epic every other source and sink is a file** (owner, 2026-10-29). `kind: mcp` (and http) are designed for but not built; the interface below is what a later kind implements. The weather inputs are files (last week's observations, the pasted Almanac text).
 * **Sources and sinks are named in the sketch**, with `kind`, `path`/`server` and `params` in place. **No separate `bind` section and no `extends`.** Every kind implements `describe()` and `read(params)` (JSONL, paged); a sink implements `write(params, jsonl)`. The Sprint 17 MCP source servers are the first instance.
 * **Sources are read-only.** A side effect (booking, a hold) is a stage `do:`, never a source.
 * **Defaults:** a bare path is a JSONL file; each `kind` supplies its own defaults; a source may default its params and a caller overrides only what differs. A required value with no sensible default fails with a clear error.
@@ -73,24 +74,28 @@ sources:                              # the Almanac's own descriptions, pasted i
   last_week: last_week_almanac.jsonl  # {"week": "2026-W43", "text": "Mild and breezy, highs near 55."}
   next_week: next_week_almanac.jsonl  # {"week": "2026-W44", "text": "Chilly and damp, with a hint of snow late in the week."}
 
-rubrics:                              # what Jev reads; no weights here
-  weather_change:
-    instructions: >
+  weather_change:                     # Jev is read like any other source (owner, 2026-10-29)
+    kind: jev
+    question: choice
+    instructions: >                   # the rubric is the prompt text ...
       Compare the Almanac's description of next week with its description of last week.
       How much warmer or colder is next week?
-    levels:
-      much_colder: { means: Clearly and markedly colder than last week, for example snow or a hard freeze where last week was mild. }
-      colder:      { means: Noticeably cooler than last week. }
-      same:        { means: About the same as last week, or no real change described. }
-      warmer:      { means: Noticeably milder than last week. }
-      much_warmer: { means: Clearly and markedly warmer than last week, for example a warm spell after a cold week. }
+    criteria:                         # ... plus what each level means; no weights here
+      much_colder: Clearly and markedly colder than last week, for example snow or a hard freeze where last week was mild.
+      colder:      Noticeably cooler than last week.
+      same:        About the same as last week, or no real change described.
+      warmer:      Noticeably milder than last week.
+      much_warmer: Clearly and markedly warmer than last week, for example a warm spell after a cold week.
+    state:                            # the data Jev reads: a plain dict built from other sources
+      last_week: { from: last_week }
+      next_week: { from: next_week }
+    # reading it returns JSONL, one row per level: {"level": "colder", "probability": 0.55}
 
 machine:
   initial: judge
   states:
     judge:
-      ask: weather_change             # reads both sources, answers with one level's probabilities
-      from: [last_week, next_week]
+      do: etl.join_weights            # joins the level probabilities with data.weather_temp
       then: done
     done:
       final: true
@@ -219,7 +224,7 @@ machine:
 ## 8. Open questions
 
 * Decided (owner, 2026-10-29): a stage lists its deciders under `blend:` (the decide tree is one inline entry, weight defaults to 1; a decider is named only if a second stage needs it), and the weather is one such decider, not a shift; night workers get weight 0 for it (they prefer hot coffee even when it is warmer); weights are numbers or `if`/`then`/`else`, not expressions.* Fetching the Almanac text automatically is out of this epic; the owner pastes it into a file each week.
-* Decided (owner, 2026-10-29): a subsketch that acts as a decider declares `returns: { decider: [<dimensions>] }`; the parent refers to it as `decider: <name>` and the checker verifies it returns weights on declared outcomes. Still open: how `ask` / `score` branches are written.
+* Decided (owner, 2026-10-29): a subsketch that acts as a decider declares `returns: { decider: [<dimensions>] }`; the parent refers to it as `decider: <name>` and the checker verifies it returns weights on declared outcomes. A Jev question is not a machine keyword: it is a `kind: jev` source read like any other, so there is no `ask:` syntax to settle.
 * Whether `next:` (an outcome that also continues to another test) is needed, or a leaf always ends its branch.
 * Decided (owner, 2026-10-29): **conditions are explicit YAML, not text.** A condition is a field, an operator and a value: `if: { segment: { eq: night_workers } }`. Operators: `eq`, `ne`, `lt`, `le`, `gt`, `ge`, `in`, `not_in` (the last two take a list of values or a slice), `has` (the field contains the value); several fields in one condition mean all of them (an implicit `and`); `and` (a list, for grouping), `or` (a list) and `not` combine conditions, as in Python (owner, 2026-10-29). Example: `if: { or: [ { genre: { eq: horror }, tomato: { ge: 70 } }, { tomato: { gt: 90 } } ] }`. **Contains is `has`** (owner, 2026-10-29): `merchant: { has: coffee }` means Python's `"coffee" in merchant`, for a string (substring) or a list field (element). `in` keeps meaning "the field is inside this" (a list or a slice), so the file reads the same whatever the data. A JSON Schema can validate every condition, and nothing is parsed from a string. A condition compares a field only with a fixed value, never with another field (owner, 2026-10-29: YAGNY, nothing needs it). `between` is not an operator; use `ge` and `le` together. Revisit if a real sketch needs either.
 * Event payloads: confirm the Python loop can pass a stage's result to guards (Spike 1, open item 2).

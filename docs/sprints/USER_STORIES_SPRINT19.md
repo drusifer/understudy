@@ -16,7 +16,7 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 2. **Files only.** Every source and sink is a file (owner, 2026-10-29); MCP and HTTP kinds are not built.
 3. **Command line only.** No dashboard (owner, 2026-10-29).
 4. **The weather is a decider, not a shift** (owner, 2026-10-29): each of the five Almanac levels carries hot/iced weights (much colder 0.90/0.10 … much warmer 0.30/0.70), the subsketch returns their probability-weighted mix on `temp`, and the parent blends it by weight; night workers get weight 0. Weights are numbers or `if` / `then` / `else`, never expressions.
-5. **Syntax still open:** the `evidence`/`weight` form, how a subsketch names its outputs and how `ask`/`score` branches are written are decided by Morpheus in the architecture, then confirmed by the owner. If a choice changes how the owner writes the sketch, it returns to the owner before it is built.
+5. **The syntax is settled** with the owner (`DESIGN_SKETCH_MODEL.md`): `blend:` for a stage's deciders, explicit YAML conditions, `returns: { decider: [...] }` for a subsketch, and a Jev question as a `kind: jev` source with `instructions`, `criteria` and `state`. Morpheus writes it down in the architecture; a change to how the owner writes a sketch returns to the owner before it is built.
 6. **One live Jev judgement** at sprint close, with the owner's go-ahead; everything else uses a Jev double.
 
 ---
@@ -123,5 +123,5 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 - A scoring formula or the old `position ^ weight` rule; vetoes are explicit filters.
 
 ## Open Questions
-1. The `evidence` / `weight` syntax, subsketch output naming and `ask` / `score` branch syntax: Morpheus proposes in the architecture; the owner confirms before build.
+1. None on syntax (settled 2026-10-29). Morpheus confirms the module layout and the JSON Schema for sketches in the architecture.
 2. None on conditions: explicit field/operator/value, compared with a fixed value only, no field-to-field comparison and no `between` (owner, 2026-10-29).

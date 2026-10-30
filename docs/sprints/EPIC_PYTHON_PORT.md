@@ -43,7 +43,7 @@ A second problem sits underneath: the player is built to *play an app* like a pe
 * **Decider**: one row in, rows out, each a full combination plus a `weight` (summing to 1). Implemented by a `decide` tree, an ETL lookup, a subsketch or Jev's `ask`.
 * **Blend**: the single combination rule, a weighted average of deciders' rows. **Filter / forbid**: drops rows, renormalises; empty result fails unless `on_empty` says `fallback`, `skip` or `walk_away`.
 * **Input**: a fader, switch, count or choice the person sets, as today. **Weight**: a number, or an `if` / `then` / `else` over properties of a stage's input. Conditions are explicit YAML (field, operator, value), never text.
-* **Jev**: chooses among the owner's options (`ask`); its probabilities become weights.
+* **Jev**: read like any other source (`kind: jev`): a rubric (instructions plus criteria) and the data it reads go in, a probability per option comes out; the probabilities become weights.
 * Kept from before, for the dashboard and docs: Console, Watch page, Run event stream.
 
 ## 5. Rabbit holes and spikes
@@ -55,7 +55,7 @@ A second problem sits underneath: the player is built to *play an app* like a pe
 | 3 | Playwright for Python for browser tests and the `page` target. | Not needed until B/C. | Deferred |
 | 4 | Jev probabilities. | RETIRED: `typesafe-sdk` returns per-option probabilities; reuse `src/etl/jev.py`. | Retired |
 | 5 | Can the evening example (and the old play-an-app sketches) be expressed in the new model without losing criteria? | Walked through with the owner: all criteria map (filters, ordered lists, slices, ask, seating as a subsketch with ETL for adjacency). | Re-check in slice B |
-| 6 | The syntax of stages, `evidence`/`weight`, subsketch outputs and `ask` branches. | Placeholders in `DESIGN_SKETCH_MODEL.md` section 8. | Settle in the PoC |
+| 6 | Syntax of stages, blending, conditions, subsketch outputs and Jev questions. | Settled with the owner 2026-10-29 in `DESIGN_SKETCH_MODEL.md` (`blend:`, explicit YAML conditions, `returns: { decider: [...] }`, `kind: jev` source). | Retired; the architecture only writes it down |
 
 ## 6. Platform feasibility (Tank)
 
