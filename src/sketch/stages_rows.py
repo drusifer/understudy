@@ -46,7 +46,7 @@ async def prefer_order(context, rows: Source, field: str, order: list, into: str
 async def prefer_middle(  # noqa: PLR0913 - the stage's with: keys
     context, rows: Source, extent: Source, group: str, order: str, into: str, match: dict | None = None,
 ) -> list[dict]:
-    """Each row of `rows` (runs, see `adjacent_runs`) plus a score in `into`: 1.0 for a run centred in its group, falling
+    """Each row of `rows` (runs, see `adjacent_runs`) plus a score in `into`: 1.0 for a run centerd in its group, falling
     to 0.0 at the group's end. A group's extent is the lowest and highest `order` among the `extent` rows that `match`."""
     ends: dict = {}
     for row in _matching(await context.read(extent), match):

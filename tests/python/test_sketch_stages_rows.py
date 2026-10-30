@@ -61,13 +61,13 @@ class PreferMiddleTests(unittest.TestCase):
     def test_a_run_in_the_middle_of_the_row_scores_most_and_the_ends_least(self):
         runs = [{"row": "E", "first": 5, "last": 6, "run": "E5-6"}, {"row": "E", "first": 1, "last": 2, "run": "E1-2"},
                 {"row": "E", "first": 9, "last": 10, "run": "E9-10"}]
-        scored = run(prefer_middle, context(runs=runs), "runs", "seats", "row", "number", "centre_score",
+        scored = run(prefer_middle, context(runs=runs), "runs", "seats", "row", "number", "center_score",
                      {"showing": "19:30", "row": "E"})
-        self.assertEqual({r["run"]: round(r["centre_score"], 3) for r in scored}, {"E5-6": 1.0, "E1-2": 0.111, "E9-10": 0.111})
+        self.assertEqual({r["run"]: round(r["center_score"], 3) for r in scored}, {"E5-6": 1.0, "E1-2": 0.111, "E9-10": 0.111})
 
 
-ROWS = [{"run": "A", "row_score": 1.0, "centre_score": 0.2}, {"run": "B", "row_score": 0.5, "centre_score": 1.0},
-        {"run": "C", "row_score": 0.0, "centre_score": 0.6}]
+ROWS = [{"run": "A", "row_score": 1.0, "center_score": 0.2}, {"run": "B", "row_score": 0.5, "center_score": 1.0},
+        {"run": "C", "row_score": 0.0, "center_score": 0.6}]
 
 
 class WeighTests(unittest.TestCase):
@@ -75,10 +75,10 @@ class WeighTests(unittest.TestCase):
         return {r["run"]: round(r["score"], 3) for r in run(weigh, context(rows=ROWS), "rows", by, "score")}
 
     def test_each_row_gets_the_weighted_sum_of_its_fields(self):
-        self.assertEqual(self.weighed({"row_score": 0.5, "centre_score": 0.5}), {"A": 0.6, "B": 0.75, "C": 0.3})
+        self.assertEqual(self.weighed({"row_score": 0.5, "center_score": 0.5}), {"A": 0.6, "B": 0.75, "C": 0.3})
 
     def test_the_weights_decide_which_field_matters(self):
-        self.assertEqual(self.weighed({"row_score": 1.0, "centre_score": 0.0}), {"A": 1.0, "B": 0.5, "C": 0.0})
+        self.assertEqual(self.weighed({"row_score": 1.0, "center_score": 0.0}), {"A": 1.0, "B": 0.5, "C": 0.0})
 
     def test_the_rows_keep_their_own_fields(self):
         (row, *_) = run(weigh, context(rows=ROWS), "rows", {"row_score": 1.0}, "score")
@@ -90,11 +90,11 @@ class MaxMinTests(unittest.TestCase):
         return [r["run"] for r in run(reducer, context(rows=ROWS), "rows", field, take)]
 
     def test_max_keeps_the_highest_first_and_min_the_lowest_first(self):
-        self.assertEqual(self.kept(reduce_max, "centre_score"), ["B"])
-        self.assertEqual(self.kept(reduce_min, "centre_score"), ["A"])
+        self.assertEqual(self.kept(reduce_max, "center_score"), ["B"])
+        self.assertEqual(self.kept(reduce_min, "center_score"), ["A"])
 
     def test_take_keeps_the_best_n_and_fewer_rows_keep_them_all(self):
-        self.assertEqual(self.kept(reduce_max, "centre_score", take=2), ["B", "C"])
+        self.assertEqual(self.kept(reduce_max, "center_score", take=2), ["B", "C"])
         self.assertEqual(self.kept(reduce_max, "row_score", take=10), ["A", "B", "C"])
 
     def test_they_are_reduce_stages_with_take_defaulting_to_one(self):

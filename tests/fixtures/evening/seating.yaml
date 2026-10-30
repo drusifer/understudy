@@ -1,7 +1,7 @@
 name: seating
 description: >
   Seats side by side for a party, in the rows the owner likes, as central as they come. Give it the showing, the
-  number of tickets, and how much the row and the centre matter (0.0 to 1.0).
+  number of tickets, and how much the row and the center matter (0.0 to 1.0).
 
 sources:
   seats: seats.jsonl                    # { showing, row, number, free }: every seat of every showing
@@ -18,7 +18,7 @@ sources:
     kind: stage
     do: { map: { action: prefer_order } }
     with: { rows: runs, field: row, order: [E, F, D], into: row_score }
-  by_centre:                            # and for how central it sits in its row
+  by_center:                            # and for how central it sits in its row
     kind: stage
     do: { map: { action: prefer_middle } }
     with:
@@ -26,14 +26,14 @@ sources:
       extent: seats
       group: row
       order: number
-      into: centre_score
+      into: center_score
       match: { showing: "{{ showing | default('19:30') }}" }
   scored:                               # the owner's weights decide which matters more
     kind: stage
     do: { map: { action: weigh } }
     with:
-      source: by_centre
-      by: { row_score: {{ row | default(0.7) }}, centre_score: {{ centre | default(1.0) }} }
+      source: by_center
+      by: { row_score: {{ row | default(0.7) }}, center_score: {{ center | default(1.0) }} }
       into: score
 
 sinks:

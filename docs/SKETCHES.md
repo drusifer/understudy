@@ -71,7 +71,7 @@ A state's `do:` names a stage **type** as a key (a closed set the schema owns) a
 | `map: { action: recipes }` | `recipes`, `packs` | turns drink counts into ingredient amounts from `data.<recipes>` (rows `{<dimension>: <option>, ingredient, amount, unit}`), rounded up to whole packs from `data.<packs>` |
 | `map: { action: adjacent_runs }` | `source`, `group`, `order`, `length`, `match` | every run of `length` consecutive `order` numbers in a `group`, from the rows that `match` (E3 E4 E5 gives E3-4 and E4-5 for 2): `{<group>, first, last, run}` |
 | `map: { action: prefer_order }` | `rows`, `field`, `order`, `into` | adds `into`: 1.0 for the first value of `order`, less for the next, 0 for one not listed |
-| `map: { action: prefer_middle }` | `rows`, `extent`, `group`, `order`, `into`, `match` | adds `into` to runs: 1.0 centred in their group, 0.0 at its end |
+| `map: { action: prefer_middle }` | `rows`, `extent`, `group`, `order`, `into`, `match` | adds `into` to runs: 1.0 centered in their group, 0.0 at its end |
 | `map: { action: weigh }` | `source`, `by`, `into` | adds `into`: the sum of the `by` fields, each times its weight |
 | `reduce: { action: max }`, `min` | `source`, `field`, `take` | the `take` rows (default 1) with the highest (lowest) `field`, best first |
 | `reduce: { action: any }` | `source` | one row, `{any: true}` if the source has any row, `{any: false}` if none (for a guard) |

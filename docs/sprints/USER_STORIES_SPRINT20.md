@@ -57,7 +57,7 @@ When this sprint is done, the owner's two real pipelines are sketches in the new
 
 ### Acceptance Criteria
 1. On a seat map fixture with free seats `E3 E4 E5` and `E8 E9` in row E, `tickets=2` yields the blocks `E3-E4`, `E4-E5` and `E8-E9` as candidates; `tickets=3` yields only `E3-E5`.
-2. The seating sketch takes the showing, tickets, row weight and centre weight, and returns one hold. With centre weight 10 it holds the block nearest the middle of the row; with centre 0 and the row order E, F, D it holds a row E block whatever its position.
+2. The seating sketch takes the showing, tickets, row weight and center weight, and returns one hold. With center weight 10 it holds the block nearest the middle of the row; with center 0 and the row order E, F, D it holds a row E block whatever its position.
 3. A caller can use only the hold the subsketch returned: `check` rejects a parent that names a hold the subsketch does not declare, with the name in the message.
 4. When no block is long enough, the subsketch finishes with outcome `none` and the parent receives it as such.
 5. A seat map fixture that is missing or has no `seat` column fails `check` naming the file and the column; nothing is written.
@@ -71,7 +71,7 @@ When this sprint is done, the owner's two real pipelines are sketches in the new
 
 ### Acceptance Criteria
 1. `understudy check` passes on the evening sketch; `understudy run` with a Jev double and the committed fixtures books a showing and a hold that obey my rules: evening only, horror scoring 70 or more or anything above 90, seats together in row E, F or D, central.
-2. Values shape the decision, each with a test: `--with evenings=off` admits a 15:00 showing that is otherwise dropped; `--with tickets=3` books a block of three; `--with centre=0` and `--with centre=1` (a weight, 0.0 to 1.0) book different named blocks on the same fixture; `--with mood=romantic` is shown to the Jev double in its request.
+2. Values shape the decision, each with a test: `--with evenings=off` admits a 15:00 showing that is otherwise dropped; `--with tickets=3` books a block of three; `--with center=0` and `--with center=1` (a weight, 0.0 to 1.0) book different named blocks on the same fixture; `--with mood=romantic` is shown to the Jev double in its request.
 3. The final pick is made by Jev from a shortlist of at most five; a Jev double that answers with an option outside the list is refused and the run fails naming the option.
 4. When no showing qualifies (fixture with only afternoon horror at 60) or seating returns `none`, the run exits 0, prints `walked away at <stage>` and writes no booking.
 5. A missing or malformed fixture fails `check` naming the file and the field; no booking is written.

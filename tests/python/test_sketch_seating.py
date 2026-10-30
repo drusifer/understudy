@@ -35,11 +35,11 @@ class BlockTests(SeatingCase):
         self.assertTrue(found and all(hold["last"] - hold["first"] == 1 for hold in found))
 
     def test_a_party_of_three_only_gets_blocks_of_three(self):
-        found = self.seat(tickets=3, row=0, centre=0)
+        found = self.seat(tickets=3, row=0, center=0)
         self.assertTrue(found and all(len(range(hold["first"], hold["last"] + 1)) == 3 for hold in found))  # noqa: PLR2004
 
     def test_a_taken_seat_splits_a_row(self):
-        everything = [hold["run"] for hold in self.seat(tickets=2, row=1, centre=1)]
+        everything = [hold["run"] for hold in self.seat(tickets=2, row=1, center=1)]
         self.assertNotIn("E5-6", everything)
         self.assertNotIn("E6-7", everything)
 
@@ -68,18 +68,18 @@ class NothingFitsTests(SeatingCase):
 
 
 class WeightTests(SeatingCase):
-    def test_when_only_the_centre_matters_a_block_centred_in_its_row_comes_first(self):
-        best = self.seat(tickets=2, row=0, centre=1)[0]
-        self.assertEqual((best["run"], best["centre_score"]), ("D2-3", 1.0))   # D has four seats, so 2-3 is dead centre
+    def test_when_only_the_center_matters_a_block_centerd_in_its_row_comes_first(self):
+        best = self.seat(tickets=2, row=0, center=1)[0]
+        self.assertEqual((best["run"], best["center_score"]), ("D2-3", 1.0))   # D has four seats, so 2-3 is dead center
 
     def test_when_the_row_matters_a_little_the_central_row_e_block_wins(self):
-        self.assertEqual(self.runs(tickets=2, row=0.3, centre=1)[0], "E4-5")
+        self.assertEqual(self.runs(tickets=2, row=0.3, center=1)[0], "E4-5")
 
     def test_when_only_the_row_matters_a_row_e_block_comes_first_wherever_it_sits(self):
-        self.assertEqual(self.runs(tickets=2, row=1, centre=0)[0], "E1-2")
+        self.assertEqual(self.runs(tickets=2, row=1, center=0)[0], "E1-2")
 
     def test_the_holds_are_best_first_and_carry_their_score(self):
-        scores = [hold["score"] for hold in self.seat(tickets=2, row=0.7, centre=1.0)]
+        scores = [hold["score"] for hold in self.seat(tickets=2, row=0.7, center=1.0)]
         self.assertEqual(scores, sorted(scores, reverse=True))
 
     def test_at_most_five_holds_are_kept(self):

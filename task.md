@@ -38,7 +38,7 @@
 ### Phase 4: The evening (UND-70)
 *Phase goal: the evening books like the owner, or walks away.*
 
-- [ ] **Task 4.1:** `*impl` `examples/evening/evening.yaml` and fixtures, replacing the old example outright; scaled-weight stage for tomato and centre; every input case in UND-70 AC2. (*Owner: Neo | Verification: unit tests for every UND-70 AC; `understudy check` and a Jev-double run pass.*)
+- [ ] **Task 4.1:** `*impl` `examples/evening/evening.yaml` and fixtures, replacing the old example outright; scaled-weight stage for tomato and center; every input case in UND-70 AC2. (*Owner: Neo | Verification: unit tests for every UND-70 AC; `understudy check` and a Jev-double run pass.*)
 - [ ] **Task 4.2:** UAT: UND-70 AC 1-6, walk-away and replay included. (*Owner: Trin | Verification: UAT rows; full suite green.*)
 - [ ] **Task 4.3:** Review. (*Owner: Morpheus | Verification: verdict; commit `Phase 4: ...`.*)
 
