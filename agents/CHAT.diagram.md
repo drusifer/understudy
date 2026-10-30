@@ -37,4 +37,6 @@ sequenceDiagram
     Note right of Morpheus: "Syntax decisions with<br/>owner (ADR-0050): no<br/>inputs block, every<br/>sketch is a Jinja2<br/>template over standard<br/>YAML 1.2, values come<br/>from --with…"
     Cypher->>All: "checkpoint"
     Note right of Cypher: "Sprint 20 phase 1 code<br/>committed locally<br/>(ef98618): Jinja2 +<br/>--with/with, each,<br/>outcome, outputs/from<br/>(decider keyword gone).<br/>179 tests, li…"
+    Morpheus->>All: "lead"
+    Note right of Morpheus: "Owner reviewed choices<br/>A-F (all accepted, B<br/>kept for now). Open item<br/>2 answered by Morpheus:<br/>retire 'decider' from<br/>the domain (Decision<br/>Row…"
 ```

@@ -68,7 +68,7 @@ The owner said: "do your best to finish without me. It is done when there is not
   * *Given* a child that declares no `outputs`, *when* the parent blends from it, *then* `check` refuses it by name.
 * **What this costs:** nothing in code (no `Decider` class existed); only the domain document and the prose that said "decider".
 
-Owner's reply: _(accept / change)_
+Owner's reply (2026-10-30): **accepted** ("great!"). Decision 21: "decider" is retired from the domain model; the terms are Decision Row, Blend and Output.
 
 ## Working tree
 
