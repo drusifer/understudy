@@ -9,9 +9,10 @@ from unittest.mock import patch
 
 from jev_double import JevDouble
 
-from src.etl.controller import EtlError, run
-from src.etl.jev import Chosen, JevError
+from src.etl.controller import run
 from src.etl.sources import SourceError
+from src.jev import Chosen, JevError
+from src.paths import OutputPathError
 
 MONARCH_HEADER = "Date,Merchant,Category,Account,Original Statement,Notes,Amount,Tags,Owner,Reviewed,Id\n"
 CARD, CHECKING = "Platinum Card (...1111)", "Checking (...2222)"
@@ -212,7 +213,7 @@ class FailureTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             files = Files(directory)
             files.out.write_text("not a directory")
-            with self.assertRaises(EtlError) as caught:
+            with self.assertRaises(OutputPathError) as caught:
                 go(files)
             self.assertIn("cannot write", str(caught.exception))
 

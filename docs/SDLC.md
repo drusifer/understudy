@@ -17,7 +17,7 @@ ask `@Tank *devops sdlc <what and why>` — the mechanism and this document chan
 
 Since Sprint 17 the whole ETL is Python (ADR-0038): a `python-statemachine` YAML controller
 (`src/etl/stages.yaml`), SQLMesh 0.236.3 on DuckDB 1.5.6, MCP source servers (`mcp` 2.3.0), `holidays`,
-`iso18245` (MCC names) and `typesafe-sdk` 0.7.5 for Jev, all pinned in `pyproject.toml` and `uv.lock`.
+`iso18245` (MCC names) and `typesafe-sdk` 0.7.5 for Jev, all pinned in `pyproject.toml` and `uv.lock`. Since Sprint 19 the decision-sketch package `src/sketch` also pins `ruamel.yaml` 0.19.1 (sketches are read as YAML 1.2, so `70:30` stays text) and `jsonschema` 4.26.0 (the sketch JSON Schema); the capture cache lives in git-ignored `.understudy/`.
 The Node ETL (`src/etl/*.mjs`) is deleted; `src/cli.mjs` only launches the Python CLI. The run database is
 opened by one process at a time. Private run output is refused under `data/` and any non-git-ignored
 project path (UND-54 AC4).
@@ -48,14 +48,11 @@ repeating their commands. `bobp make help` lists them.
 | `install-py` | `uv sync --locked` | exact Python lockfile install into `.venv`; touches the network on first setup |
 | `lock-js` | `npm install --package-lock-only --ignore-scripts` | updates the npm lockfile after a manifest change; touches the network |
 | `lock-py` | `uv lock --python 3.12.15` | updates `uv.lock` after a Python manifest change; touches the network |
-| `install-browser` | `npx playwright install chromium` | needed only for web targets; touches the network; see §9 |
 | `test` | `test-js` + `test-py` | both language suites; no Jev or browser calls |
 | `test-js` | JavaScript `node:test` suite | `ARGS` supports Node test filtering |
-| `test-py` | `python -m unittest discover -s tests/python` | offline tests for Python tooling and ETL helpers |
-| `test-browser` | `npm run test:browser` → `node --test tests/browser/*.test.js` (one file at a time) | the watch page driven in headless Chromium against real runs of the examples with a Jev double - no key, no cost; needs Chromium (`make install-browser`); `make test` stays browser-free (ADR-0006) |
-| `test-live` | `understudy run <sketch> --steps 30` for every `examples/*/`, each run's final `outcome` checked (`done`), then `examples/evening` again with `BOX_STATE=full` (`walked-away`); serves the box office over HTTP with a throwaway token (`MCP_TOKEN`, `BOX_PORT`, default 8765) for `examples/mcp-remote` and stops it after | live Jev (paid) and, for web examples, Chromium; UAT only |
-| `run` | `node bin/understudy.mjs $(ARGS)` | e.g. `ARGS="check examples/cli"` |
-| `lint` | `npm run lint` → eslint over `src/**/*.mjs`, `tests/**`; then `.venv/bin/ruff check src/etl tests/python` | eslint config `eslint.config.js` (recommended + unicorn + sonarjs, as in recard); ruff 0.9.10 pinned in `pyproject.toml` (dev group); rule sets E, W, F, I, B, SIM, UP, N, C4, PERF, RUF, ERA, ARG, C90 (max complexity 12), PL, T20, RET, PTH, line length 135; test doubles and the CLI/MCP stdout are the only per-file ignores |
+| `test-py` | `python -m unittest discover -s tests/python` | offline tests for the Python ETL and sketch package; `ARGS="test_sketch*.py"` runs only the files matching that pattern |
+| `run` | `node bin/understudy.mjs $(ARGS)` (a launcher: `run` and `check` start the Python package `src/sketch`, `etl run` starts `src/etl`) | e.g. `ARGS="run tests/fixtures/coffee/coffee_week.yaml --replay"`; a live run reads `TYPESAFE_API_KEY` from `.env` |
+| `lint` | `npm run lint` → eslint over `src/**/*.mjs`, `tests/**`; then `.venv/bin/ruff check src/etl src/sketch src/jev.py src/paths.py tests/python` | eslint config `eslint.config.js` (recommended + unicorn + sonarjs, as in recard); ruff 0.9.10 pinned in `pyproject.toml` (dev group); rule sets E, W, F, I, B, SIM, UP, N, C4, PERF, RUF, ERA, ARG, C90 (max complexity 12), PL, T20, RET, PTH, line length 135; test doubles and the CLI/MCP stdout are the only per-file ignores |
 | `secrets` | `gitleaks git` over history + uncommitted tracked changes | needs `gitleaks` installed |
 | `hooks` | `git config core.hooksPath .githooks` | installs the gitleaks pre-commit hook |
 | `check` | `test` + `lint` + `secrets` | the full gate |
@@ -77,17 +74,12 @@ Standard targets deliberately absent:
 - **Who:** Neo adds and bumps dependencies, in the story whose code first imports them. A
   different package manager, a Node version change or a new language is a mechanism change — Tank's.
 - Never hand-edit either lockfile; do not use multiple lockfiles for one package manager.
-- Declare only what the code imports. Runtime today: `xstate`, `yaml`, `@typesafe-ai/sdk`
-  (Jev), `playwright` (page target; locked at 1.62.1 so its Chromium download is shared with
-  recard's), `@modelcontextprotocol/sdk` (mcp target client; the example server) and `zod` (the
-  example server's tool schemas; the SDK's peer) - both added in sprint 3; `lru-cache` (a deciding sketch's answered calls,
-  fixed size, least recently used forgotten) - added in sprint 5. `@fontsource/cinzel`, `@fontsource/spectral`,
-  `@fontsource/vt323`, `@fontsource/dotgothic16` (the dashboard's fonts, OFL, served locally so the
-  page fetches nothing from the internet) - added in sprint 6; `@fontsource/antonio` (the starship
-  theme's lettering, OFL) - added in sprint 9. Dev: `ajv` (tests check `schema/sketch.schema.json`
-  against the examples) - added in sprint 10. `elkjs` (the dashboard lays the statechart out as a
-  layered flow, on the server) - added in sprint 14. Expected later:
-  `@xstate/graph ^3.0.4`.
+- Declare only what the code imports. Node runtime today: only the dashboard's fonts, `@fontsource/cinzel`,
+  `@fontsource/spectral`, `@fontsource/vt323`, `@fontsource/dotgothic16` and `@fontsource/antonio` (OFL, served
+  locally so the page fetches nothing from the internet), kept for the dashboard rebuild (slice C). Sprint 19
+  removed `xstate`, `yaml`, `@typesafe-ai/sdk`, `playwright`, `@modelcontextprotocol/sdk`, `zod`, `lru-cache`,
+  `elkjs` and dev `ajv`: the old Node player they served is deleted, and the Python package (`ruamel.yaml`,
+  `jsonschema`, `python-statemachine`, `typesafe-sdk`, `mcp`, `duckdb`) replaces it.
 
 ## 5. Quality gates
 
@@ -95,7 +87,7 @@ Standard targets deliberately absent:
 |---|---|---|
 | Tests | `bobp make test` | every handoff to Trin; sprint close |
 | Lint | `make lint` | every handoff to Trin; sprint close |
-| Live Jev runs | `make test-live` with `TYPESAFE_API_KEY` | UAT only; small runs with a step cap (owner, 2026-10-15). `make test` never calls Jev — it uses a judge test double. |
+| Live Jev runs | `bobp make run ARGS="run <sketch>"` with `TYPESAFE_API_KEY` | UAT only, one run with the owner's go-ahead (Sprint 19). `make test` never calls Jev: tests use a Jev double or `--replay` captures. |
 | Secret scan | `make secrets` | every commit (pre-commit hook, if `make hooks` was run); sprint close |
 | All of the above | `make check` | sprint close |
 
@@ -165,10 +157,7 @@ None — everything runs locally on the dev Pi. A CI job, if added, must run
 - eslint rules turned off, all matching recard's config for the same reasons:
   `unicorn/filename-case` (camelCase files), `unicorn/no-null` (JSON-safe sentinel),
   `unicorn/consistent-class-member-order`, `unicorn/no-break-in-nested-loop`.
-- Playwright's Chromium is downloaded by `make install-browser` into Playwright's default
-  `~/.cache/ms-playwright`, outside the project (same as recard): browsers are large and shared
-  across projects. `make test` never launches it; only `test-live` and web runs do.
-- Network targets: `install`, `lock-js`, `install-js`, `install-py`, `install-browser` and `push`.
+- Network targets: `install`, `lock-js`, `install-js`, `lock-py`, `install-py` and `push`.
 - The lint script passes `--no-error-on-unmatched-pattern` because `tests/**/*.mjs` is empty today.
 
 ## 10. Conformance check
@@ -186,7 +175,7 @@ Run by Tank at sprint close (`*devops sdlc-check`):
 8. Nothing under `src/` or `tests/` imports from `seed/`.
 
 ---
-*Last verified: 2026-10-29 by Tank (Sprint 18 close: distclean → install → check green with ruff in `lint`; repeated install passed idempotently; Node DuckDB client and `probe-etl` removed with owner approval; Python manifest matches `pyproject.toml`/`uv.lock`).*
+*Last verified: 2026-10-30 by Tank (Sprint 19 close: distclean → install → check green; repeated install passed idempotently; Python manifest matches `pyproject.toml`/`uv.lock` including `ruamel.yaml` and `jsonschema`; the old Node player, its tests, the `test-browser`/`test-live`/`install-browser` targets and nine npm dependencies removed with the owner's decisions (one kind of sketch, old commands may break)).*
 *Previous verification: 2026-10-17 by Tank (sprint-15 close: clean → check green, browser tests green;
 no dependency or mechanism change. Sprint-14 close: clean → check green, browser tests green;
 routine dependency `elkjs` per §4. Sprint-13 close: clean → check green; no dependency or

@@ -10,8 +10,7 @@ from mcp.client.stdio import stdio_client
 
 from src.etl import sources
 from src.etl.sources import PAGE_LIMIT
-
-ROOT = Path(__file__).resolve().parents[2]
+from src.paths import ROOT
 
 
 def _text(result) -> str:

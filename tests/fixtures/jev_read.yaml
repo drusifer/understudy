@@ -1,0 +1,29 @@
+name: jev_read
+description: A sketch that reads one Jev source, to test reading, capture and replay.
+
+sources:
+  notes: notes.jsonl
+  mood:
+    kind: jev
+    question: choice
+    instructions: How does the customer feel about the notes?
+    criteria:
+      happy: Smiling, pleased.
+      sad: Frowning, disappointed.
+    state:
+      notes: { from: notes }
+
+sinks:
+  out: out.jsonl
+
+machine:
+  initial: ask
+  states:
+    ask:
+      do: test.read
+      then: write
+    write:
+      do: sink.out
+      then: done
+    done:
+      final: true

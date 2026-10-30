@@ -1,83 +1,46 @@
-// Sprint 1 (UND-4, UND-5 AC3, ADR-U5): the `understudy` command.
+// The `understudy` command: a launcher. The work is done by the Python package (src/sketch for sketches,
+// src/etl for the household ETL); this file reads the command line, starts Python and passes its output and
+// exit code through.
 //
-//   understudy run <sketch> [--steps N] [--input name=value]... [--watch [--port N] [--pause]]
-//                                         play the sketch against its app (needs TYPESAFE_API_KEY)
-//   understudy check <sketch>             load and check the sketch, start nothing
-//   understudy library [<sketch>]         every name a sketch may use, with its meaning
-//   understudy watch <log> [--port N]     replay a finished run on the watch page (sprint 4)
-//   understudy dashboard <folder> [--port N] [--host ADDR]
-//                                         the console over a folder of sketches (sprint 6)
-//
-// <sketch> is a directory holding sketch.yaml, or the file itself (ADR-0011).
+//   understudy run <sketch.yaml> [--source name.path=file]... [--out folder] [--replay[=run-id|folder]]
+//                                         run the sketch and write its outputs; --replay reads the
+//                                         captured Jev answers instead of calling Jev
+//   understudy check <sketch.yaml> [--source name.path=file]...
+//                                         load and check the sketch, run nothing
+//   understudy etl run --monarch <csv> --amex <csv> [--out <folder>] [--since YYYY-MM-DD] [--amex-account <name>]
 //
 // Exit codes are the same for every command: 0 done, 1 the run failed
 // after starting, 2 refused before starting. Every failure is one
 // `understudy: <message>` line on stderr - never a stack trace.
 
 import { UsageError, RunError } from './errors.mjs';
-import { genericLibrary } from './library.mjs';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const KEY = 'TYPESAFE_API_KEY';
+const REBUILDING = new Set(['library', 'watch', 'dashboard']);
 
-const USAGE = `usage: understudy run <sketch> [--steps N] [--input name=value]... [--watch [--port N] [--host ADDR] [--pause]]
-           play the sketch against its app (needs ${KEY});
-           --input sets one of the sketch's inputs (repeatable), e.g. --input mood=romantic;
-           --watch serves a live view of the run on 127.0.0.1 (--host 0.0.0.0: every interface);
-           --pause starts it paused
-       understudy check <sketch>
-           check the sketch without starting anything
-       understudy library [<sketch>]
-           list every name a sketch may use, with its meaning
-       understudy watch <log.jsonl> [--port N] [--host ADDR]
-           replay a finished run's log on the watch page
-       understudy dashboard <folder> [--port N] [--host ADDR]
-           the console: choose a sketch from the folder, set its inputs, press Play
+const USAGE = `usage: understudy run <sketch.yaml> [--source name.path=file]... [--out folder] [--replay[=run-id|folder]]
+           run the sketch: its machine, its rules, its sources, and write its outputs under build/runs/;
+           --source replaces one file source for this run only;
+           --replay reads the last captured Jev answers (no key, no network), or those of a named run or folder
+       understudy check <sketch.yaml> [--source name.path=file]...
+           check the sketch without running anything
        understudy etl run --monarch <csv> --amex <csv> [--out <folder>] [--since YYYY-MM-DD] [--amex-account <name>]
            merge purchases, pair transfers, link refunds, place merchants with Jev, and write result.jsonl (needs ${KEY})
-<sketch> is a directory holding sketch.yaml (e.g. examples/cli) or the file itself.
 `;
-/**
- * The listing `understudy library` prints: kinds in order, one
- * `  name - doc` line per name. `extra` is the names a sketch's hooks add.
- */
-export function libraryListing(extra = null) {
-  const lines = [];
-  const sections = [['', genericLibrary({})], ...(extra ? [[`${extra.name} `, extra.library]] : [])];
-  for (const [prefix, library] of sections) {
-    for (const kind of ['guards', 'actions', 'actors']) {
-      const entries = Object.entries(library[kind] ?? {});
-      if (entries.length === 0) continue;
-      lines.push(`${prefix}${kind}:`, ...entries.map(([name, entry]) => `  ${name} - ${entry.doc}`));
-    }
-  }
-  return `${lines.join('\n')}\n`;
-}
 
-// Each option: the commands that take it, and how its value is read
-// (`null` for a flag).
+// Each option: the commands that take it, and how its value is read.
 const OPTIONS = {
-  steps: { commands: ['run'], read: (value) => {
-    if (!/^[1-9]\d*$/.test(value)) throw new UsageError(`--steps must be a positive whole number (got "${value}")`);
-    return Number(value);
-  }, needs: 'a number', example: '--steps 20' },
-  port: { commands: ['run', 'watch', 'dashboard'], read: (value) => {
-    const port = Number(value);
-    if (!/^\d+$/.test(value) || port < 1 || port > 65_535) throw new UsageError(`--port must be a port number from 1 to 65535 (got "${value}")`);
-    return port;
-  }, needs: 'a port number', example: '--port 4173' },
-  host: { commands: ['run', 'watch', 'dashboard'], read: (value) => value, needs: 'an address', example: '--host 0.0.0.0' },
-  input: { commands: ['run'], read: (value) => {
-    if (!/^[\w-]+=./s.test(value)) throw new UsageError(`--input needs name=value, e.g. --input mood=romantic (got "${value}")`);
+  source: { commands: ['run', 'check'], read: (value) => {
+    if (!/^[\w-]+(\.path)?=./s.test(value)) throw new UsageError(`--source needs name.path=file, e.g. --source sales.path=sales.jsonl (got "${value}")`);
     return value;
-  }, needs: 'name=value', example: '--input mood=romantic', isRepeated: true },
-  watch: { commands: ['run'], read: null },
-  pause: { commands: ['run'], read: null },
+  }, needs: 'name.path=file', example: '--source sales.path=sales.jsonl', isRepeated: true },
+  replay: { commands: ['run'], read: (value) => value, isOptionalValue: true, needs: 'a run id or folder', example: '--replay=run-20261029T120000-ab12cd34' },
   monarch: { commands: ['etl'], read: (value) => value, needs: 'a CSV path', example: '--monarch transactions.csv' },
   amex: { commands: ['etl'], read: (value) => value, needs: 'a CSV path', example: '--amex transactions.csv' },
-  out: { commands: ['etl'], read: (value) => value, needs: 'a folder', example: '--out build/runs' },
+  out: { commands: ['run', 'etl'], read: (value) => value, needs: 'a folder', example: '--out build/runs' },
   since: { commands: ['etl'], read: (value) => value, needs: 'a date', example: '--since 2026-01-01' },
   'amex-account': { commands: ['etl'], read: (value) => value, needs: 'an account name', example: '--amex-account "Platinum Card"' },
 };
@@ -89,7 +52,7 @@ function option(command, rest, index) {
   const [flag, inline] = rest[index].slice(2).split(/=(.*)/s, 2);
   const known = OPTIONS[flag];
   if (!known?.commands.includes(command)) throw new UsageError(`no option "--${flag}" for ${command} - see understudy --help`);
-  if (known.read === null) return { name: flag, value: true, used: 0 };
+  if (inline === undefined && known.isOptionalValue) return { name: flag, value: true, used: 0 };
   const value = inline ?? rest[index + 1];
   if (!value) throw new UsageError(`--${flag} needs ${known.needs}, e.g. ${known.example}`);
   return { name: flag, value: known.read(value), used: inline === undefined ? 1 : 0, isRepeated: known.isRepeated === true };
@@ -108,72 +71,50 @@ function parse(argv) {
     options[name] = isRepeated ? [...options[name] ?? [], value] : value;
     index += used;
   }
-  if (command === 'run' && options.port !== undefined && !options.watch) throw new UsageError('--port needs --watch (it is the watch page\'s port)');
-  if (command === 'run' && options.host !== undefined && !options.watch) throw new UsageError('--host needs --watch (it is where the watch page listens)');
-  if (command === 'run' && options.pause && !options.watch) throw new UsageError('--pause needs --watch (the page is where you step it)');
   return { command, positional, ...options };
 }
 
-function oneSketch(command, positional, { isOptional = false } = {}) {
+function oneSketch(command, positional) {
   const quoted = positional.map((each) => JSON.stringify(each)).join(', ');
   if (positional.length > 1) throw new UsageError(`${command} takes one sketch (got ${quoted})`);
-  if (!isOptional && positional.length === 0) throw new UsageError(`${command} needs a sketch, e.g. understudy ${command} examples/cli`);
+  if (positional.length === 0) throw new UsageError(`${command} needs a sketch, e.g. understudy ${command} coffee_week.yaml`);
   return positional[0];
 }
 
-async function loadModule(name) {
-  return import(name);
+/**
+ * Starts a Python module of this project and passes its output and exit code through.
+ * Resolves the exit code.
+ */
+function runPython(module, pythonArguments, { environment, stdout, stderr }) {
+  const root = fileURLToPath(new URL('../', import.meta.url));
+  return new Promise((resolve, reject) => {
+    const pythonEnvironment = { ...environment, PYTHONPATH: [root, environment.PYTHONPATH].filter(Boolean).join(path.delimiter) };
+    const child = spawn(`${root}.venv/bin/python`, ['-m', module, ...pythonArguments], { env: pythonEnvironment, stdio: ['ignore', 'pipe', 'pipe'] });
+    child.stdout.on('data', (chunk) => stdout.write(chunk.toString()));
+    child.stderr.on('data', (chunk) => stderr.write(chunk.toString()));
+    child.on('error', (error) => reject(new UsageError(`could not start Python: ${error.message}; run bobp make install`)));
+    child.on('close', (code, signal) => {
+      if (signal) reject(new RunError(`${module} stopped by ${signal}`));
+      else resolve(code);
+    });
+  });
 }
 
 const defaultCommands = {
-  async run(location, options) {
-    const { runSketch } = await loadModule('./run.mjs');
-    return runSketch(location, options);
+  async run({ sketch, source, out, replay, ...io }) {
+    const pythonArguments = ['run', sketch, ...(source ?? []).flatMap((each) => ['--source', each]), ...(out ? ['--out', out] : [])];
+    if (replay !== undefined) pythonArguments.push(replay === true ? '--replay' : `--replay=${replay}`);
+    return runPython('src.sketch.cli', pythonArguments, io);
   },
-  async check(location) {
-    const { checkSketch } = await loadModule('./sketch.mjs');
-    return checkSketch(location);
+  async check({ sketch, source, ...io }) {
+    return runPython('src.sketch.cli', ['check', sketch, ...(source ?? []).flatMap((each) => ['--source', each])], io);
   },
-  async sketchLibrary(location) {
-    const { sketchLibrary } = await loadModule('./sketch.mjs');
-    return sketchLibrary(location);
-  },
-  async watch(file, { port, host, stderr }) {
-    const { readLog } = await loadModule('./watch/replay.mjs');
-    const { startWatch, logSource } = await loadModule('./watch/server.mjs');
-    const lines = readLog(file);
-    const server = await startWatch({ port, host, mode: 'replay', source: logSource(lines) });
-    stderr.write(`understudy: replaying ${file} at ${server.urls.join(' or ')} - Ctrl-C to stop\n`);
-    // UND-16 AC5: serve until Ctrl-C, then stop cleanly (exit 0).
-    await new Promise((resolve) => process.once('SIGINT', resolve));
-    await server.close();
-  },
-  async dashboard(folder, { port, host, environment, stderr }) {
-    const { serveDashboard } = await loadModule('./dashboard/console.mjs');
-    const dashboard = await serveDashboard({ folder, port, host, environment, stderr });
-    stderr.write(`understudy: dashboard at ${dashboard.urls.join(' or ')} - Ctrl-C to stop\n`);
-    // UND-27 AC5: serve until Ctrl-C, then stop any run and close (exit 0).
-    await new Promise((resolve) => process.once('SIGINT', resolve));
-    await dashboard.close();
-    stderr.write('understudy: dashboard stopped\n');
-  },
-  async etl({ monarchPath, amexPath, out, since, amexAccount, environment, stdout, stderr }) {
-    const root = fileURLToPath(new URL('../', import.meta.url));
-    const pythonArguments = ['-m', 'src.etl.cli', '--monarch', monarchPath, '--amex', amexPath];
+  async etl({ monarchPath, amexPath, out, since, amexAccount, ...io }) {
+    const pythonArguments = ['--monarch', monarchPath, '--amex', amexPath];
     for (const [name, value] of [['out', out], ['since', since], ['amex-account', amexAccount]]) {
       if (value !== undefined) pythonArguments.push(`--${name}`, value);
     }
-    return new Promise((resolve, reject) => {
-      const pythonEnvironment = { ...environment, PYTHONPATH: [root, environment.PYTHONPATH].filter(Boolean).join(path.delimiter) };
-      const child = spawn(`${root}.venv/bin/python`, pythonArguments, { env: pythonEnvironment, stdio: ['ignore', 'pipe', 'pipe'] });
-      child.stdout.on('data', (chunk) => stdout.write(chunk.toString()));
-      child.stderr.on('data', (chunk) => stderr.write(chunk.toString()));
-      child.on('error', (error) => reject(new UsageError(`could not start Python ETL: ${error.message}; run bobp make install`)));
-      child.on('close', (code, signal) => {
-        if (signal) reject(new RunError(`Python ETL stopped by ${signal}`));
-        else resolve(code);
-      });
-    });
+    return runPython('src.etl.cli', pythonArguments, io);
   },
 };
 
@@ -184,27 +125,11 @@ const HELP = new Set(['--help', '-h', 'help']);
  * stdout; failures are thrown.
  */
 const COMMANDS = {
-  async run({ positional, steps, input = [], watch, port, host, pause }, { use, environment, stdout, stderr }) {
-    // UND-4: Jev is required, so a run without its key never starts.
-    if (!environment[KEY]?.trim()) throw new UsageError(`understudy run needs a TypeSafe key: set ${KEY}`);
-    await use.run(oneSketch('run', positional), { steps, inputs: input, stdout, stderr, environment, watch: watch ? { port, host, paused: pause === true } : null });
+  async run({ positional, source, out, replay }, { use, environment, stdout, stderr }) {
+    return use.run({ sketch: oneSketch('run', positional), source, out, replay, environment, stdout, stderr });
   },
-  async check({ positional }, { use, stdout }) {
-    stdout.write(`${await use.check(oneSketch('check', positional))}\n`);
-  },
-  async library({ positional }, { use, stdout }) {
-    const location = oneSketch('library', positional, { isOptional: true });
-    stdout.write(libraryListing(location ? await use.sketchLibrary(location) : null));
-  },
-  async watch({ positional, port, host }, { use, stderr }) {
-    const quoted = positional.map((each) => JSON.stringify(each)).join(', ');
-    if (positional.length !== 1) throw new UsageError(positional.length === 0 ? 'watch needs a run log, e.g. understudy watch build/runs/coffee-cli/<time>.jsonl' : `watch takes one log (got ${quoted})`);
-    await use.watch(positional[0], { port, host, stderr });
-  },
-  async dashboard({ positional, port, host }, { use, environment, stderr }) {
-    const quoted = positional.map((each) => JSON.stringify(each)).join(', ');
-    if (positional.length !== 1) throw new UsageError(positional.length === 0 ? 'dashboard needs a folder of sketches, e.g. understudy dashboard examples' : `dashboard takes one folder (got ${quoted})`);
-    await use.dashboard(positional[0], { port, host, environment, stderr });
+  async check({ positional, source }, { use, environment, stdout, stderr }) {
+    return use.check({ sketch: oneSketch('check', positional), source, environment, stdout, stderr });
   },
   async etl({ positional, monarch, amex, out, since, 'amex-account': amexAccount }, { use, environment, stdout, stderr }) {
     if (positional.length !== 1 || positional[0] !== 'run') {
@@ -219,10 +144,10 @@ const COMMANDS = {
 
 /**
  * Runs one command line; resolves the exit code. Streams and commands are
- * injectable so tests never start a real app or call Jev.
+ * injectable so tests never start Python or call Jev.
  * @param {string[]} argv
  * @param {{ environment?: object, stdout?: { write: Function }, stderr?: { write: Function },
- *   commands?: { run?: Function, check?: Function, sketchLibrary?: Function, watch?: Function } }} [io]
+ *   commands?: { run?: Function, check?: Function, etl?: Function } }} [io]
  */
 export async function main(argv, { environment = process.env, stdout = process.stdout, stderr = process.stderr, commands = {} } = {}) {
   try {
@@ -231,6 +156,9 @@ export async function main(argv, { environment = process.env, stdout = process.s
       return 0;
     }
     if (argv.length === 0) throw new UsageError(USAGE.trimEnd());
+    if (REBUILDING.has(argv[0])) {
+      throw new UsageError(`${argv[0]} is being rebuilt for the new sketch model (see docs/sprints/EPIC_PYTHON_PORT.md)`);
+    }
     const parsed = parse(argv);
     const command = COMMANDS[parsed.command];
     if (!command) throw new UsageError(`no command "${parsed.command}" - commands: ${Object.keys(COMMANDS).join(', ')} (see understudy --help)`);

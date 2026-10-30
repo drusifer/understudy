@@ -1,0 +1,232 @@
+# Design: the sketch model for the Python port
+
+* **Status**: AGREED with the owner in conversation, 2026-10-29, and BUILT in Sprint 19. This is the record of how the model was shaped; where the examples below differ in detail (sink file names, `with:` keys, recipe rows), `docs/SKETCHES.md` and `tests/fixtures/coffee/` are the truth. Basis of the Python port epic (`EPIC_PYTHON_PORT.md`) and of the coffee proof of concept.
+* **Rules**: no back-compat, YAGNY, DRY, no new language (SQL on DuckDB; `python-statemachine` YAML), Jev chooses and never writes.
+
+## 1. What changed in our thinking
+
+* **There is no single state machine for all sketches.** Users build and compose their own state machines for the task at hand. The old built-in `turn:` machine (tags, invoke/onDone, the look/play loop) goes away; Spike 1 (`SPIKE_PYTHON_STATEMACHINE.md`) found those features do not map onto python-statemachine, and nothing needs them now.
+* **The main loop is plain Python.** It feeds sources to the user's machine as events and runs the step the current state names. No built-in loop machine (YAGNY).
+* **Understudy is a platform for automation, not a chat bot.** A sketch models a decision the way the owner of the shop would make it.
+* **The owner knows how to decide.** The sketch lets them write their deterministic logic down; ETL and weights do the quantitative analysis; Jev is saved for qualitative assessment.
+
+## 2. Division of labour
+
+| Role | Does | Where it lives |
+|---|---|---|
+| Machine | control flow: which stage runs next, branching on the data | the sketch's `machine` (python-statemachine YAML) |
+| ETL and SQL | quantitative analysis: totals, splits, adjacency, conversions | stages (`etl.*`, `convert.*`), DuckDB |
+| `decide` trees | the owner's deterministic logic | `decide:` (if / then / else, SQL conditions) |
+| Weights | how much each decider or source counts, as expressions over properties of its input | `weight:` |
+| Jev | qualitative judgement only: reads supplied text against a rubric and picks a level, or picks one of the owner's listed options | `ask:` / `score:` nodes |
+
+Jev never produces an amount. Its probabilities become weights, and the owner's rules decide what they mean.
+
+**A Jev step is worth having only if** (a) it reads text or other material the sketch supplies (it has no memory of the shop), and (b) it answers against a rubric of defined levels. Ideas that failed this test and are not in the PoC: local events with no rubric, "how much would students like the special" (no data to ground it). A possible later use: a source of customer feedback comments, judged per drink on a four-level rubric, nudging that drink's weight.
+
+## 3. The decider contract
+
+**One row in, rows out.** Each output row is a full combination of outcome values plus a `weight`; the weights for one input row sum to 1.
+
+```jsonl
+{"temp": "iced", "size": "large",  "milk": "oat",   "weight": 0.30}
+{"temp": "iced", "size": "medium", "milk": "oat",   "weight": 0.24}
+{"temp": "hot",  "size": "medium", "milk": "whole", "weight": 0.46}
+```
+
+* **Outcomes are declared** by the sketch; a decider cannot invent a key. Unknown dimension or option is an error naming the decider, the bad key and the nearest valid one. Missing option means weight 0.
+* **A dimension is either an enumeration** (`temp: [hot, iced]`; a boolean is a two-option list) **or discrete numeric steps** (`sugar_spoons: { range: [0, 3], step: 1 }`, which expands to a list). No free-form number, no free text.
+* **Candidates may come from source rows** instead of a fixed list (`outcomes: { showing: { from: showings, key: id } }`); the keys are then read at run time and still checked.
+* **Everything implements the same contract:** a `decide` tree (its leaves carry weights), an ETL lookup, a subsketch, and a Jev source (its probabilities).
+* **One combination rule: the weighted blend, per dimension** (Morpheus, Sprint 19 phase 3). Rows may name only some dimensions (the weather decider knows only `temp`; a leaf may leave `caffeine` out), so the engine blends each dimension separately: the weighted average, weights normalised, across the deciders that name that dimension; a decider with weight 0 has no say, and a dimension only one decider names keeps its own shares. The result is a share per option per dimension, which is what single-option recipes need; joint combinations (a recipe on large plus oat) are not built yet and would need joint rows (revisit in slice B). Example: one source says iced 0.30 (weight 0.8), another 0.90 (0.3), the owner's rule 1.00 (0.2); the blend is 0.54 iced.
+* **There is no scoring formula.** The old evening engine multiplied `position ^ weight` factors (ADR-0018, ADR-0030); that is dropped. Vetoes are explicit `if`/`else` filters the owner can read, not hidden zeros.
+* **Ordered lists and slices:** a list is always an order, first is best, and its position scores `(n - i) / n` (E, F, D give 1, 0.67, 0.33; unlisted 0). An interval is a Python-style slice (`70:100`, `0.3:1`), scored linearly and clamped, either direction. These give a leaf its weight. **Sketches are read with a YAML 1.2 parser (ruamel.yaml, already installed with SQLMesh), never PyYAML:** PyYAML reads an unquoted `70:30` as the base-60 number 4230, while ruamel keeps it as the text `70:30`, so slices need no quotes (tested 2026-10-29).
+* **Intervals in conditions use `in`** (owner, 2026-10-29): `in` takes a list of values or a slice, so `if: { temp: { in: [80:90] } }` with `then: 0.54` selects a band. A slice follows Python: start included, stop excluded (`80:90` and `90:100` meet without overlap).
+
+## 4. Filtering and empty results
+
+* A filter is an explicit YAML condition (field, operator, value) that drops rows. It can sit on the input rows, on a decider's output (`forbid`), or on the aggregate (`where expected_count >= 1`).
+* After a `forbid`, the surviving weights are renormalised. `forbid` always wins over a preference.
+* **If a filter empties every row for an input row, the run fails** (default), naming the rule and the input row. The owner can opt in per stage to `on_empty: fallback` (a default row), `skip` (the row adds nothing) or `walk_away` (finish successfully with outcome `none`).
+
+## 5. Sources, sinks, subsketches
+
+* **Jev is a source kind** (`kind: jev`, owner, 2026-10-29), following the same conventions as a file or a future MCP source: config in place, rows out. A Choice question takes `instructions` (the prompt text) and `criteria` (option to meaning), which together are the rubric; `state` is the data Jev reads, a plain dict built from other sources by `from:`. Reading it returns one JSONL row per option with its probability. This maps onto `typesafe-sdk`'s `Choice(instructions, criteria)` and `system_one(state=…)` as wrapped in `src/etl/jev.py`. A `noul` question (yes/no probability) follows the same shape.
+* **For this epic every other source and sink is a file** (owner, 2026-10-29). `kind: mcp` (and http) are designed for but not built; the interface below is what a later kind implements. The weather inputs are files (last week's observations, the pasted Almanac text).
+* **Sources and sinks are named in the sketch**, with `kind`, `path`/`server` and `params` in place. **No separate `bind` section and no `extends`.** Every kind implements `describe()` and `read(params)` (JSONL, paged); a sink implements `write(params, jsonl)`. The Sprint 17 MCP source servers are the first instance.
+* **Sources are read-only.** A side effect (booking, a hold) is a stage `do:`, never a source.
+* **Defaults:** a bare path is a JSONL file; each `kind` supplies its own defaults; a source may default its params and a caller overrides only what differs. A required value with no sensible default fails with a clear error.
+* **Tests override sources from the command line** (`--source sales.path=fixtures/x.jsonl`); the sketch file does not change.
+* **Capture and replay make testing first class** (owner, 2026-10-29). Every non-file source (Jev now, MCP and others later) captures what a live read returned, after a complete and successful read, into a local cache with metadata: run id, source name and kind, request hash, capture time. One flag, `--replay [run-id]`, makes every such source read its capture instead of going live, so test and live data never mix in one run. Replay never falls back to live. Rules: (1) each source keeps a few samples (the last 5 runs, dropped together so they stay in step); (2) a replay uses **one run**, the latest live run that captured every non-file source in the sketch, so all sources come from the same moment; if no run covers them all (a live run failed halfway, or a source was added since) the replay stops naming the missing source and saying to do a live run first; `--replay <run-id>` picks a specific run; (3) the request hash is kept so a replay can mark `stale: true` in `summary.json` when the sketch or rubric changed since that run (visible, the run continues; open: warn or fail); (4) the run's `summary.json` records `mode: live` or `mode: replay`; (5) the cache is git-ignored (it holds real data) and committed test fixtures are copies in the same format, replayed with `--replay <dir>`; (6) the samples are available to a source implementation that wants to cache for its own reasons (expensive sources, expiry), but that is a separate, source-specific thing and not part of replay. A source that is read several times with different params in one run is not handled yet (YAGNY).
+* **A subsketch** has its own inputs, sources and outputs. The parent passes inputs with `with:` and sees only the named outputs. **A subsketch's inputs appear on the dashboard only if the parent lists them** (`expose: [row, centre]`); the author of the parent decides.
+* **Data gaps** are filled by exposing more from the source or by an ETL stage (for example adjacent free seats from a seat map, in SQL).
+
+## 6. Worked example: weekly coffee ingredients (the proof of concept)
+
+The shop owner has only **last week's total sales**, not customer histories, and works from **rough demographics**: groups of customers with a share of the trade. The owner's logic: (1) split the expected drinks by segment; (2) match each segment to the drinks it prefers, as weighted leaves of a `decide` tree, with hard rules such as no caffeine under 18; (3) convert the expected drinks to ingredient counts and output. A `weather_change` subsketch has Jev read the Farmers' Almanac's descriptions of last week and next week and report how much warmer or colder next week will be (much colder, colder, same, warmer, much warmer); each level carries its own hot/iced weights, and the result is blended in as one more decider.
+
+### `weather_change.yaml` (subsketch)
+
+```yaml
+name: weather_change
+description: How much warmer or colder next week will be than last week.
+
+sources:                              # the Almanac's own descriptions, pasted into files each week
+  last_week: last_week_almanac.jsonl  # {"week": "2026-W43", "text": "Mild and breezy, highs near 55."}
+  next_week: next_week_almanac.jsonl  # {"week": "2026-W44", "text": "Chilly and damp, with a hint of snow late in the week."}
+
+  weather_change:                     # Jev is read like any other source (owner, 2026-10-29)
+    kind: jev
+    question: choice
+    instructions: >                   # the rubric is the prompt text ...
+      Compare the Almanac's description of next week with its description of last week.
+      How much warmer or colder is next week?
+    criteria:                         # ... plus what each level means; no weights here
+      much_colder: Clearly and markedly colder than last week, for example snow or a hard freeze where last week was mild.
+      colder:      Noticeably cooler than last week.
+      same:        About the same as last week, or no real change described.
+      warmer:      Noticeably milder than last week.
+      much_warmer: Clearly and markedly warmer than last week, for example a warm spell after a cold week.
+    state:                            # the data Jev reads: a plain dict built from other sources
+      last_week: { from: last_week }
+      next_week: { from: next_week }
+    # reading it returns JSONL, one row per level: {"level": "colder", "probability": 0.55}
+
+machine:
+  initial: judge
+  states:
+    judge:
+      do: etl.join_weights            # joins the level probabilities with data.weather_temp
+      then: done
+    done:
+      final: true
+      returns: { decider: [temp] }    # a decider: weights on the temp dimension (owner, 2026-10-29)
+```
+
+**No "shift by x" operator, and no second tree** (owner, 2026-10-29). Jev gets the Almanac's two descriptions (last week's and next week's) and answers with one of five relative levels: much colder, colder, same, warmer, much warmer. The levels are the leaves. The rubric (what each level means) is separate from the owner's weights (what each level means for hot versus iced), and Jev never sees the weights. The subsketch returns the probability-weighted mix of the weights as weights on `temp`:
+
+```yaml
+data:
+  weather_temp:                       # the owner's, per level; not shown to Jev
+    much_colder: { hot: 0.90, iced: 0.10 }
+    colder:      { hot: 0.75, iced: 0.25 }
+    same:        { hot: 0.60, iced: 0.40 }
+    warmer:      { hot: 0.45, iced: 0.55 }
+    much_warmer: { hot: 0.30, iced: 0.70 }
+```
+
+The parent blends it with the segment's own preference by weight (a `blend:` entry). These numbers replace the earlier "-0.20 to +0.20 shift" figures. Last week's weather is the Almanac's description of that week, not observed figures, and there is no `place` input: the pasted files already cover the region.
+
+**No expression language** (owner, 2026-10-29): a weight is a number, or a conditional written with the same `if` / `then` / `else` the owner uses for decisions. Nothing is parsed that is not a structure.
+
+### `coffee_week.yaml`
+
+```yaml
+name: coffee_week
+description: >
+  From last week's total sales and a rough picture of who the customers are,
+  work out what to order for next week.
+
+sources:
+  sales: last_week_sales.jsonl        # one row: {"week": "2026-W43", "drinks": 1200}
+
+sinks:
+  ingredients:
+    kind: file
+    path: out/ingredients.jsonl       # {"ingredient": "coffee_beans", "amount": 3000, "unit": "g"}
+
+outcomes:
+  temp:     [hot, iced]
+  size:     [small, medium, large]
+  caffeine: [none, regular, high]
+
+data:
+  segments:                           # rough demographics, not individuals
+    - { name: students,      share: 0.30, age_max: 24 }
+    - { name: teens,         share: 0.10, age_max: 17 }
+    - { name: commuters,     share: 0.35, age_min: 25 }
+    - { name: night_workers, share: 0.15, age_min: 25 }
+    - { name: others,        share: 0.10 }
+  recipes:
+    - { size: small,  ingredient: coffee_beans, amount: 12, unit: g }    # a recipe row names the option it applies to
+    - { size: medium, ingredient: coffee_beans, amount: 18, unit: g }
+    - { size: large,  ingredient: coffee_beans, amount: 24, unit: g }
+  packs:
+    coffee_beans: 1000
+
+machine:
+  initial: weather
+  states:
+    weather:
+      do: sketch.weather_change
+      then: split_trade
+
+    split_trade:                      # SQL: sales.drinks x segment share = drinks per segment
+      do: etl.split_by_share
+      then: match_orders
+
+    match_orders:                     # one row per SEGMENT
+      blend:                          # every decider is an entry with a weight (default 1); the stage is their weighted average
+        - decide:                     # the owner's tree for what each segment prefers
+            if:
+              segment: { eq: students }
+            then:
+              drink:
+                - { temp: iced, size: large,  weight: 0.5 }
+                - { temp: iced, size: medium, weight: 0.2 }
+                - { temp: hot,  size: medium, weight: 0.3 }
+            else:
+              if:
+                segment: { eq: night_workers }
+              then:
+                drink:
+                  - { temp: hot, size: large, caffeine: high, weight: 1.0 }
+              else:
+                drink:
+                  - { temp: hot,  size: medium, weight: 0.6 }
+                  - { temp: iced, size: medium, weight: 0.4 }
+        - decider: weather            # the subsketch: returns weights on temp
+          weight:
+            if:
+              segment: { eq: night_workers }   # night shift stays on hot coffee, warm or not
+            then: 0
+            else: 0.3
+      forbid:
+        - when:                       # teens: the under-18 rule
+            age_max: { le: 17 }
+          drop:                       # weights renormalised; an empty result fails the run
+            caffeine: { ne: none }
+      then: to_ingredients
+
+    to_ingredients:
+      do: convert.recipes             # sum(weight x segment drinks) per option, times each recipe
+      rounding: { pack: data.packs }
+      then: write
+
+    write:
+      do: sink.ingredients
+      then: done
+
+    done:
+      final: true
+```
+
+**Decisions behind this example (owner, 2026-10-29):**
+* Per-customer history is contrived; the input is last week's total sales, and a decider's row is a **segment** with a share of the trade.
+* Jev's one job is reading the Almanac forecast against last week's weather on a five-level rubric. Events and "how would students like a special" were rejected: no rubric, no grounding.
+* The comparison is **next week's forecast against last week's weather**, not against a seasonal normal.
+* Weighted leaves came back: a segment's preference is a set of shares, not one drink.
+
+## 7. The evening example in this model
+
+* `gates` become filters; the evenings switch stays as a `when:`. `scores` become deciders whose leaves take weights from ordered lists and slices. `shortlist` keeps the top 5 by blended weight. `pick` is a final `ask`. `target`, `calls` and `turn:` are gone.
+* **Seating is a subsketch** (`seating.yaml`): inputs `showing`, `tickets`, `row`, `centre`; a read-only `seats` source; an ETL stage that turns the seat map into candidate blocks of adjacent free seats at least `tickets` long; a `decide` stage; a final `ask`; a `reserve` stage that is the only side effect; outputs the `hold`. The parent pays only with `hold: seating.hold`, so Jev can never pay for something it invented. A subsketch that finds nothing finishes with outcome `none`, and the parent routes that to `walk_away`.
+
+## 8. Open questions
+
+* Decided (owner, 2026-10-29): a stage lists its deciders under `blend:` (the decide tree is one inline entry, weight defaults to 1; a decider is named only if a second stage needs it), and the weather is one such decider, not a shift; night workers get weight 0 for it (they prefer hot coffee even when it is warmer); weights are numbers or `if`/`then`/`else`, not expressions.* Fetching the Almanac text automatically is out of this epic; the owner pastes it into a file each week.
+* Decided (owner, 2026-10-29): a subsketch that acts as a decider declares `returns: { decider: [<dimensions>] }`; the parent refers to it as `decider: <name>` and the checker verifies it returns weights on declared outcomes. A Jev question is not a machine keyword: it is a `kind: jev` source read like any other, so there is no `ask:` syntax to settle.
+* Whether `next:` (an outcome that also continues to another test) is needed, or a leaf always ends its branch.
+* Decided (owner, 2026-10-29): **conditions are explicit YAML, not text.** A condition is a field, an operator and a value: `if: { segment: { eq: night_workers } }`. Operators: `eq`, `ne`, `lt`, `le`, `gt`, `ge`, `in`, `not_in` (the last two take a list of values or a slice), `has` (the field contains the value); several fields in one condition mean all of them (an implicit `and`); `and` (a list, for grouping), `or` (a list) and `not` combine conditions, as in Python (owner, 2026-10-29). Example: `if: { or: [ { genre: { eq: horror }, tomato: { ge: 70 } }, { tomato: { gt: 90 } } ] }`. **Contains is `has`** (owner, 2026-10-29): `merchant: { has: coffee }` means Python's `"coffee" in merchant`, for a string (substring) or a list field (element). `in` keeps meaning "the field is inside this" (a list or a slice), so the file reads the same whatever the data. A JSON Schema can validate every condition, and nothing is parsed from a string. A condition compares a field only with a fixed value, never with another field (owner, 2026-10-29: YAGNY, nothing needs it). `between` is not an operator; use `ge` and `le` together. Revisit if a real sketch needs either.
+* Event payloads: confirm the Python loop can pass a stage's result to guards (Spike 1, open item 2).
+* How the other old examples (cli, http, web, mcp) translate; they are slice B, after the proof of concept.

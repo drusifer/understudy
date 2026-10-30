@@ -4,7 +4,7 @@ import unittest
 from jev_double import JevDouble
 
 from src.etl.categorize import place_merchants
-from src.etl.jev import Chosen, JevError
+from src.jev import Chosen, JevError
 
 CATEGORIES = ["Food & Dining: Groceries", "Food & Dining: Coffee & Cafes", "Transportation: Public Transit"]
 MCC = {

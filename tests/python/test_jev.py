@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 from typesafe_sdk import TypeSafeAPIConnectionError
 
-from src.etl.jev import ChoiceSpec, Chosen, GatedJev, JevError, NoulSpec, TypeSafeJev
+from src.jev import ChoiceSpec, Chosen, GatedJev, JevError, NoulSpec, TypeSafeJev
 
 
 class FakeClient:

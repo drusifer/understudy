@@ -1,6 +1,6 @@
 """A scripted Jev for tests: no network, no cost, and it counts the requests it was asked."""
 
-from src.etl.jev import ChoiceSpec, Chosen
+from src.jev import ChoiceSpec, Chosen
 
 
 class JevDouble:

@@ -3,8 +3,8 @@ import unittest
 
 from jev_double import JevDouble
 
-from src.etl.jev import JevError
 from src.etl.refunds import decide_refunds
+from src.jev import JevError
 
 
 def row(refund_id, refund_date, refund_amount, merchant, candidate_id, candidate_date, candidate_amount, rank, count, status):

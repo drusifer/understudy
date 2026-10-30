@@ -9,8 +9,8 @@ from unittest.mock import AsyncMock, patch
 from test_controller import Files
 
 from src.etl.cli import main
-from src.etl.controller import ROOT, EtlError, _check_writable
-from src.etl.jev import JevError
+from src.jev import JevError
+from src.paths import ROOT, OutputPathError, check_writable
 
 
 class CliTests(unittest.TestCase):
@@ -26,18 +26,6 @@ class CliTests(unittest.TestCase):
             self.assertEqual(code, 2, "private run output must not be accepted under tracked src/")
             controller.assert_not_awaited()
             self.assertEqual(stdout.getvalue(), "")
-
-    def test_destination_policy_boundaries(self):
-        for refused in (ROOT / "data" / "run", ROOT / "tests", ROOT / "docs" / "new-run"):
-            with self.subTest(refused=refused), self.assertRaisesRegex(EtlError, "cannot write"):
-                _check_writable(refused)
-        _check_writable(ROOT / "build" / "runs")
-        with tempfile.TemporaryDirectory() as directory:
-            _check_writable(Path(directory) / "outside")
-            link = Path(directory) / "link"
-            link.symlink_to(ROOT / "src")
-            with self.assertRaisesRegex(EtlError, "cannot write"):
-                _check_writable(link / "run")
 
     def test_options_reach_the_controller_and_success_is_json(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -76,8 +64,8 @@ class CliTests(unittest.TestCase):
             out.mkdir()
             out.chmod(0o555)
             try:
-                with self.assertRaisesRegex(EtlError, "cannot write"):
-                    _check_writable(out / "new-run-parent")
+                with self.assertRaisesRegex(OutputPathError, "cannot write"):
+                    check_writable(out / "new-run-parent")
                 with patch("src.etl.cli.describe", side_effect=AssertionError("source must not be read")):
                     stderr = io.StringIO()
                     code = main(["--monarch", "missing", "--amex", "missing", "--out", str(out)],

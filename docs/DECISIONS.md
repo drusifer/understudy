@@ -10,6 +10,54 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+## ADR-0045: `understudy run` and `understudy check` are the Python commands, now
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus · **Date**: 2026-10-29 · **Related**: STORY-UND-60; [Sprint 19 architecture](sprints/ARCH_SPRINT19.md)
+*   **Context**: the owner wants one kind of sketch and no duplicates; the old Node `run` and `check` could break. A `sketch` subcommand beside the old `run` was proposed and rejected.
+*   **Options**: (1) the Node launcher's `run` and `check` start the Python package and the old Node player is deleted; (2) a new subcommand beside the old command until the end of the epic; (3) one command that picks by file type.
+*   **Decision**: (1). `src/cli.mjs` is a launcher (`run`, `check`, `etl run`) through one Python spawner. Everything the old `run` and `check` needed, which turned out to be the whole old player, was deleted in Phase 5: targets, apps, the watch page's server, the dashboard's server, the XState machine, nine npm dependencies and 41 Node test files. `library`, `watch` and `dashboard` answer that they are being rebuilt.
+*   **Consequences**: + one command, one format, one runtime for sketches; git history keeps the old player. − the six old examples, the dashboard and the watch page do not run until slices B and C rebuild them; the dashboard's browser files are kept for slice C.
+
+## ADR-0044: Weights are numbers or if/then/else
+
+*   **Status**: Accepted · **Deciders**: owner · **Date**: 2026-10-29 · **Related**: STORY-UND-63; supersedes ADR-0030
+*   **Context**: a decider's weight sometimes depends on the input (night workers ignore the weather). A `0 if segment = 'night_workers' else 0.3` string would need a parser and mixes two syntaxes.
+*   **Options**: (1) a number, or the same `if`/`then`/`else` the owner uses for decisions; (2) SQL expressions evaluated by DuckDB; (3) a small expression language.
+*   **Decision**: (1) (owner: "use 2"). No text is parsed that is not a YAML structure; a missing `else` is 0.
+*   **Consequences**: + nothing to learn or parse; the JSON Schema covers it. − more lines than a one-line expression.
+
+## ADR-0043: Jev is a source kind, and non-file sources capture and replay
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus · **Date**: 2026-10-29 · **Related**: STORY-UND-60, STORY-UND-65; [Sprint 19 architecture](sprints/ARCH_SPRINT19.md)
+*   **Context**: a Jev judgement needs a rubric and data to read, and tests and live runs must never mix. Jev first appeared as a special `ask` step.
+*   **Options**: (1) `kind: jev` source like a file or a future MCP source, with `instructions` and `criteria` as the rubric and `state` built from other sources, plus capture of every non-file source and one `--replay` flag; (2) a machine keyword for asking Jev; (3) a Jev double only in tests.
+*   **Decision**: (1). A live read is captured under git-ignored `.understudy/cache/<run-id>/` with the run id, request hash and time, the last 5 runs kept together; `--replay [run-id|folder]` uses the latest run that captured every non-file source and never falls back to live; a request hash that no longer matches marks the run `stale` and carries on; `summary.json` says `mode`.
+*   **Consequences**: + one testing mechanism for every future non-file source; the one real Jev answer is committed as `tests/fixtures/coffee/replay/`. − the capture holds real data (git-ignored); a source read several times with different params is not handled.
+
+## ADR-0042: Conditions are explicit YAML, and sketches are read as YAML 1.2
+
+*   **Status**: Accepted · **Deciders**: owner · **Date**: 2026-10-29 · **Related**: STORY-UND-61, STORY-UND-63
+*   **Context**: conditions as strings need a parser; PyYAML reads an unquoted `70:30` as the base-60 number 4230.
+*   **Options**: (1) a field, one operator and a value in YAML (`eq ne lt le gt ge in not_in has`, `and or not`, slices as `a:b`); (2) SQL text; (3) a small expression language.
+*   **Decision**: (1), read with ruamel.yaml (YAML 1.2, so slices stay text). `in` takes a list or a slice (start included, stop excluded); `has` is contains; a field a row lacks never matches; a condition compares a field with a fixed value only.
+*   **Consequences**: + a JSON Schema and the checker validate every condition; no parser. − verbose next to one-line expressions.
+
+## ADR-0041: One decider contract and one combination rule, the weighted blend
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus · **Date**: 2026-10-29 · **Related**: STORY-UND-63; supersedes ADR-0018
+*   **Context**: the old engine multiplied `position ^ weight` factors, so a zero anywhere vetoed a candidate and the formula hid the owner's rules.
+*   **Options**: (1) every decider returns weighted rows and a stage blends them as a weighted average per dimension, with vetoes written as `forbid` filters; (2) keep the multiplicative score; (3) a weighted sum.
+*   **Decision**: (1). A row names only the dimensions it has an opinion on; the blend averages each dimension over the deciders that name it; `forbid` drops options and renormalises and always wins; a filter that empties a row fails the run unless the stage says `skip` or `fallback`. Joint combinations (a recipe on two options) are not built yet.
+*   **Consequences**: + the owner's vetoes are readable rules, not a hidden zero. − no automatic "one weak factor sinks the candidate"; the owner writes down where a weak factor rules a candidate out.
+
+## ADR-0040: A sketch is the owner's own pipeline; the loop is plain Python
+
+*   **Status**: Accepted · **Deciders**: owner, Morpheus · **Date**: 2026-10-29 · **Related**: [Epic](sprints/EPIC_PYTHON_PORT.md); [design notes](sprints/DESIGN_SKETCH_MODEL.md); supersedes ADR-0011
+*   **Context**: understudy is a platform for automation, not an actor that plays an app. There is no single state machine for all sketches.
+*   **Options**: (1) the owner writes their own python-statemachine YAML; the loop is Python (`src/machine_runner.py`, shared with the ETL); (2) one built-in turn machine; (3) a sketch with no machine.
+*   **Decision**: (1). A sketch names sources, sinks, outcomes, data and a machine whose states name stages (ETL on DuckDB, `blend`, a subsketch, a sink); `then` and guarded `transitions` pick the next state. A subsketch declares `returns: { decider: [dimensions] }` and runs as a nested run in the same folder. Outputs are published last.
+*   **Consequences**: + any decision can be written down without code; the ETL and sketches share one loop. − the old turn/play model and its tags and invoke are gone.
+
 ## ADR-0039: Purchases pair one-to-one inside a date-and-amount group
 
 *   **Status**: Accepted · **Deciders**: Morpheus, owner · **Date**: 2026-10-27 · **Related**: STORY-UND-50; [Sprint 17 architecture](sprints/ARCH_SPRINT17.md)
@@ -84,7 +132,7 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ## ADR-0030: A weight input is a share of the full weighting (3)
 
-*   **Status**: Accepted · **Deciders**: owner · **Date**: 2026-10-16 · **Related**: UND-24, ADR-0017
+*   **Status**: Superseded by ADR-0041 and ADR-0044 (Sprint 19) · **Deciders**: owner · **Date**: 2026-10-16 · **Related**: UND-24, ADR-0017
 *   **Context**: the evening's weight inputs moved from [0, 3] to [0, 10] so the faders read 1-10; used straight as exponents, 10 punished anything short of the best far harder (row F 0.67^10 = 0.02 against 0.67^3 = 0.30).
 *   **Options**: (1) the input's share of its range times a full weight of 3; (2) keep the value as the exponent; (3) a per-input `max` field.
 *   **Decision**: (1) - owner: "the slider is the percentage of the weighting applied (so 5 is = 1.5)". `inputs.weightsOf` turns the run's values into weights; `score` takes them as `weights`. A written number is still the exponent itself.
@@ -181,7 +229,7 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ## ADR-0018: Gates, then weighted curves multiplied
 
-*   **Status**: Accepted · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-21, UND-22
+*   **Status**: Superseded by ADR-0041 (Sprint 19) · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-16 · **Related**: UND-21, UND-22
 *   **Context**: owner: what is never accepted vs what is liked more; "the option I want the most has the biggest bearing"; a zero should drop a value.
 *   **Options**: (1) hard gates, then score = position^weight per factor, multiplied (weighted geometric mean); (2) a weighted sum; (3) everything as hard rules.
 *   **Decision**: (1). Gates remove (with why) or hold back (missing fact); while anything is held back the argument offers nothing, unless a value already totals a perfect 1 (owner, 2026-10-16). `range`/`order`/`ask` place a field 0..1; weight 0 turns a factor off; a 0 anywhere removes the value; the shortlist is every total above 0, bounded by `at_most`/`total.at_least`.
@@ -238,7 +286,7 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ## ADR-0011: One `sketch.yaml` per sketch; code only in `hooks.mjs`
 
-*   **Status**: Accepted (replaces the adapter/part layout of sprints 1-2) · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-15 · **Related**: UND-9
+*   **Status**: Superseded by ADR-0040 (Sprint 19); it had replaced the adapter/part layout of sprints 1-2 · **Deciders**: owner, Morpheus, Smith · **Date**: 2026-10-15 · **Related**: UND-9
 *   **Context**: owner: one YAML file per sketch with all configs and params, and it is the only format (no back-compat). Sprints 1-2 split a stand-in over `adapter.mjs`, `part/turn.yaml` and `part/questions.yaml`.
 *   **Options**: (1) `sketch.yaml` (name, description, target, app, player, steps, questions, turn, and for MCP calls/values) + `hooks.mjs` only where the target has no generic app; (2) keep the three files and add a YAML adapter beside the JS one.
 *   **Decision**: (1). `src/sketch.mjs` replaces `part.mjs`; `parseTurn` takes the parsed `turn:`; every error names `sketch.yaml` and the path in it (`turn.states...`, `questions.answer...`); `--steps` beats `steps:`; a directory with `adapter.mjs` or `part/` and no `sketch.yaml` is refused, saying what replaced them.

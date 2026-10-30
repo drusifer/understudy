@@ -2,7 +2,7 @@
 
 import asyncio
 
-from src.etl.jev import GatedJev, Jev, JevError
+from src.jev import GatedJev, Jev, JevError
 
 CONCURRENCY = 8
 INSTRUCTIONS = (

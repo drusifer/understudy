@@ -30,13 +30,14 @@ from src.etl import sources
 from src.etl.categorize import place_merchants
 from src.etl.decisions import store
 from src.etl.hydrate import hydrate
-from src.etl.jev import GatedJev
 from src.etl.mcc import load_mcc
 from src.etl.pairing import detect_amex_account, first_date
 from src.etl.refunds import decide_refunds
 from src.etl.transfers import judge_payees
+from src.jev import GatedJev
+from src.machine_runner import RunRecord, run_machine
+from src.paths import ROOT, check_writable
 
-ROOT = Path(__file__).resolve().parents[2]
 SQLMESH = Path(sys.executable).parent / "sqlmesh"
 MACHINE = load(Path(__file__).with_name("stages.yaml"))
 
@@ -53,30 +54,6 @@ NEW_CATEGORY = {
 
 class EtlError(Exception):
     """The run cannot continue; the message says why."""
-
-
-def _check_destination_policy(out: Path) -> None:
-    """Private output stays out of tracked folders and `data/`; ignored folders and outside paths pass."""
-    resolved = out.resolve()
-    if not resolved.is_relative_to(ROOT):
-        return
-    if resolved.is_relative_to(ROOT / "data"):
-        raise EtlError(f"cannot write to {out}: private output does not belong in data/")
-    ignored = subprocess.run(["git", "check-ignore", "-q", str(resolved)], cwd=ROOT, check=False).returncode == 0
-    if not ignored:
-        raise EtlError(f"cannot write to {out}: it is inside the project and not git-ignored (use build/ or a path outside)")
-
-
-def _check_writable(out: Path) -> None:
-    """Refuse before reading anything when the run could not be written, changing nothing."""
-    if out.exists() and not out.is_dir():
-        raise EtlError(f"cannot write to {out}: it is not a directory")
-    _check_destination_policy(out)
-    nearest = out
-    while not nearest.exists():
-        nearest = nearest.parent
-    if not nearest.is_dir() or not os.access(nearest, os.W_OK):
-        raise EtlError(f"cannot write to {out}")
 
 
 def _plain(value):
@@ -97,15 +74,12 @@ def _mask(name: str) -> str:
 class _Run:
     """One run: its folder, its database and what the stages hand to each other."""
 
-    def __init__(self, directory: Path):
+    def __init__(self, directory: Path, announce):
         self.directory = directory
         self.database = directory / "run.duckdb"
         self.project = directory / "sqlmesh"
         self.environment = {**os.environ, "UNDERSTUDY_ETL_DATABASE": str(self.database)}
-        self.manifest = {"status": "running", "stages": {}}
-
-    def save_manifest(self) -> None:
-        (self.directory / "run.json").write_text(json.dumps(self.manifest, indent=2) + "\n", encoding="utf-8")
+        self.record = RunRecord(directory, announce, cleanup=("result.jsonl", "result.jsonl.part", "summary.json"))
 
     def rows(self, sql: str) -> list[dict]:
         with duckdb.connect(str(self.database), read_only=True) as connection:
@@ -133,13 +107,13 @@ async def run(*, monarch: Path, amex: Path, out: Path, jev, amex_account: str | 
               since: str | None = None, announce=print) -> dict:
     """Run the ETL over the two exports and return {"directory": <run folder>, "summary": {...}}."""
     out = Path(out).resolve()
-    _check_writable(out)
+    check_writable(out)
     for source, path in (("monarch", monarch), ("amex", amex)):
         sources.describe(Path(path), source)
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
     run_dir = out / f"run-{stamp}-{uuid.uuid4().hex[:8]}"
     (run_dir / "inputs").mkdir(parents=True)
-    state, gated = _Run(run_dir), GatedJev(jev)
+    state, gated = _Run(run_dir, announce), GatedJev(jev)
     monarch_jsonl, amex_jsonl = run_dir / "inputs" / "monarch.jsonl", run_dir / "inputs" / "amex.jsonl"
     found: dict = {}
     facts: dict = {}
@@ -198,31 +172,8 @@ async def run(*, monarch: Path, amex: Path, out: Path, jev, amex_account: str | 
 
     stages = {"hydrate": do_hydrate, "pair": do_pair, "transfers": do_transfers, "plan_spending": do_plan_spending,
               "refunds": do_refunds, "categories": do_categories, "output": do_output}
-    await _run_stages(stages, state, announce)
+    await run_machine(MACHINE(), stages, state.record)
     return {"directory": str(run_dir), "summary": facts["summary"]}
-
-
-async def _run_stages(stages: dict, state: _Run, announce) -> None:
-    """Walk the stages in order on the state machine; a failed stage publishes nothing."""
-    machine = MACHINE()
-    for name, stage in stages.items():
-        if name not in {s.id for s in machine.configuration}:
-            raise EtlError(f"stage order and stages.yaml disagree at {name}")
-        announce(f"stage {name}")
-        try:
-            await stage()
-        except Exception as error:
-            machine.send("fail")
-            for output in ("result.jsonl", "result.jsonl.part", "summary.json"):
-                (state.directory / output).unlink(missing_ok=True)
-            state.manifest.update(status="failed", failed_stage=name, error=str(error))
-            state.save_manifest()
-            raise
-        machine.send("ok")
-        state.manifest["stages"][name] = "complete"
-        state.save_manifest()
-    state.manifest["status"] = "complete"
-    state.save_manifest()
 
 
 def _publish(state: _Run, facts: dict, found: dict, gated: GatedJev) -> dict:

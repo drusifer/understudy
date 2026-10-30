@@ -1,0 +1,27 @@
+name: machine_branch
+description: A machine with a branch, to test that a guarded transition is taken only when its condition holds.
+
+sinks:
+  report: report.jsonl
+
+machine:
+  initial: count
+  states:
+    count:
+      do: test.count
+      transitions:
+        - if:
+            drinks: { lt: 500 }
+          to: quiet
+        - to: busy
+    quiet:
+      do: test.mark
+      then: write
+    busy:
+      do: test.mark
+      then: write
+    write:
+      do: sink.report
+      then: done
+    done:
+      final: true

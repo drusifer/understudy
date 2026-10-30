@@ -1,60 +1,50 @@
 # understudy
 
-Stand-ins that play your app the way a person would.
+A platform for automating decisions the way their owner would make them.
 
-An **understudy** looks at a running app, works out whether something is being asked of it,
-lets Jev (the TypeSafe judgment model) pick one of the moves the app
-offers, and makes that move — until its **sketch** says it is done. A sketch is one
-`sketch.yaml`: what to play, a small statechart, and the questions Jev answers. Code only
-where an app needs reading that no built-in app does (`hooks.mjs`). No scripted inputs.
+You write one YAML **sketch**: where the data comes from, what can be decided, your rules as
+`if` / `then` / `else` trees with weights, and the pipeline that connects them. understudy runs it.
+Counting and converting are SQL on DuckDB, your judgement is the decision tree, and **Jev** (the
+TypeSafe judgement model) is kept for the one thing a rule cannot read: a qualitative judgement
+about text you supply, against a rubric you write. Jev only chooses among levels you list and gives
+probabilities; it never writes a value.
 
-You can **watch it think**: `--watch` serves a page that draws the sketch's statechart, lights
-up the state the understudy is in, and lists every Jev decision as it is made - and you can
-pause it and step it one move at a time, or replay any finished run from its log.
-
-![The watch page: the statechart and the decisions of a run of examples/mcp](docs/images/watch.png)
-
-Or run the whole folder from a **console**: `understudy dashboard examples` serves an
-operations console - a rack of sketches, each sketch's inputs as dials, faders, a stepper and
-switches, PLAY or STEP one move at a time, the statechart drawn as a flow on the state tube, five
-gauges of how the run is going, and the run log on a printer. Open the printer's latch to edit the
-sketch's YAML and watch the flow redraw. Three themes - steampunk, professional, starship - each
-in light and dark.
-
-![The dashboard: the evening sketch played to the end, with its gauges](docs/images/dashboard-tube.png)
-
-It plays four kinds of app, with the same sketch format:
-
-- **command-line programs** — reads the terminal output, types the answers;
-- **web pages** — unmodified: read the way a screen reader does, played in headless Chromium;
-- **JSON APIs** — a look is a GET of the app's state, a move is a request;
-- **MCP servers** — local (stdio) or remote (HTTP, token headers), named the way Claude names
-  them; the tools are the moves and Jev chooses their arguments. No code.
+The first sketch is a coffee shop. From last week's total sales and a rough picture of the
+customers (students, commuters, night workers), it works out how much to order for next week. A
+weather subsketch has Jev compare the Farmers' Almanac's descriptions of last week and next week;
+the owner's own weights turn that into more or fewer iced drinks.
 
 ```text
-$ bobp make run ARGS="run examples/cli"
-understudy: playing coffee-cli (node app.mjs) - log build/runs/coffee-cli/2026-10-15T19-55-29.042Z.jsonl
-understudy: step 1 asking -> size:medium (0.95)
-understudy: step 2 asking -> milk:whole (0.73)
-understudy: step 3 asking -> confirm:order (0.96)
+$ bobp make run ARGS="run tests/fixtures/coffee/coffee_week.yaml"
+stage weather
+stage weather_change.judge
+stage split_trade
+stage match_orders
+stage to_ingredients
+stage write
+wrote build/runs/run-20261030T041744-28ee3978/ingredients.jsonl      {"amount": 32000, "ingredient": "coffee_beans", "unit": "g"}
 ```
+
+Every live Jev read is captured, so a run can be replayed offline: `--replay` needs no key and no
+network, and two replays are byte-identical.
+
+> **Status:** understudy is mid-way through moving to Python and this model (the
+> [epic](docs/sprints/EPIC_PYTHON_PORT.md)). The older "play an app like a person" sketches, the
+> six examples and the dashboard are being rebuilt for it; `understudy library`, `watch` and
+> `dashboard` say so for now.
 
 ## Quick start
 
-Needs Node 24, CPython 3.12.15, uv 0.13.0, `make`, the `bobp` CLI (Bob Protocol tooling - it
-wraps every make target and captures its output in `build/build.out`), and a TypeSafe API key.
+Needs CPython 3.12.15 (uv installs it), uv 0.13.0, Node 24 (only for the launcher), `make`, the
+`bobp` CLI (Bob Protocol tooling - it wraps every make target and captures its output in
+`build/build.out`), and, for a live run that asks Jev, a TypeSafe API key.
 
 ```sh
-bobp make install                                   # locked Node and Python environments stay inside the project
-export TYPESAFE_API_KEY=...                    # Jev is required for a run
-bobp make run ARGS="run examples/cli"               # play the coffee-counter program
-bobp make install-browser                           # once, for web targets (skip if Chromium is installed)
-bobp make run ARGS="run examples/web"               # play the sign-up web page
-bobp make run ARGS="run examples/http"              # play the vending machine API
-bobp make run ARGS="run examples/mcp"               # play the box office MCP server
-bobp make run ARGS="run examples/mcp --watch"       # the same, with a live view in your browser
-bobp make run ARGS="check examples/cli"             # check a sketch without starting anything (no key needed)
-bobp make run ARGS="dashboard examples"             # the operations console for every example
+bobp make install                                                  # locked environments, inside the project
+bobp make run ARGS="check tests/fixtures/coffee/coffee_week.yaml"  # check a sketch, run nothing
+bobp make run ARGS="run tests/fixtures/coffee/coffee_week.yaml --replay=tests/fixtures/coffee/replay"   # offline, the real answer
+export TYPESAFE_API_KEY=...                                        # for a live run
+bobp make run ARGS="run tests/fixtures/coffee/coffee_week.yaml"    # live: one Jev request, captured
 ```
 
 The local transaction cleanup run reads Monarch and Amex exports through Python MCP source
@@ -76,43 +66,40 @@ Always go through `bobp make <target>` - it is the front door for people and age
 
 | Read | When you want to |
 |---|---|
-| [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | install, run, watch a run, read the output, write your first sketch, fix errors |
-| [docs/WALKTHROUGH.md](docs/WALKTHROUGH.md) | see the examples taken apart, line by line, with real runs |
-| [docs/MCP_GUIDE.md](docs/MCP_GUIDE.md) | point understudy at an MCP server you already have (yours, or one configured for Claude) |
-| [docs/design/DASHBOARD.md](docs/design/DASHBOARD.md) | how the dashboard looks and why: its parts, the bay behind the printer, the themes |
-| [docs/SKETCHES.md](docs/SKETCHES.md) | the reference: `sketch.yaml`, the four targets, hooks, library names, exit codes; [schema/sketch.schema.json](schema/sketch.schema.json) for editor completion and checking |
+| [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | install, run the coffee example, read the output, replay offline, write a sketch, fix errors |
+| [docs/SKETCHES.md](docs/SKETCHES.md) | the reference: the file, the machine and its stages, deciding and conditions, Jev, subsketches, capture and replay; [schema/decision_sketch.schema.json](schema/decision_sketch.schema.json) for editors |
+| [docs/DOMAIN.md](docs/DOMAIN.md) | the vocabulary and the rules that always hold |
+| [docs/sprints/DESIGN_SKETCH_MODEL.md](docs/sprints/DESIGN_SKETCH_MODEL.md) | how the model was shaped, and why |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | why it is built this way (ADRs) |
 | [docs/SDLC.md](docs/SDLC.md) | how the project is built, tested, changed and released |
 | [CHANGELOG.md](CHANGELOG.md) · [docs/BACKLOG.md](docs/BACKLOG.md) | what shipped · what is next |
 
-Project history: [docs/EXTRACTION_MAP.md](docs/EXTRACTION_MAP.md) (how understudy was lifted
-out of recard's game harness) and the sprint documents in
-[docs/sprints/](docs/sprints/).
+Sprint documents are in [docs/sprints/](docs/sprints/).
 
 ## Repository layout
 
 ```text
 bin/understudy.mjs     the command
-src/                   the core: run loop, sketch loader, statechart, seat, Jev decisions, targets/, apps/, watch/ (the live page)
-examples/cli/          a terminal coffee counter + its sketch and hooks
-examples/web/          a sign-up wizard page (unmodified) + its sketch (no code)
-examples/http/         a vending machine JSON API + its sketch and hooks
-examples/mcp/          a cinema box office MCP server + its sketch (no code)
-examples/mcp-remote/   the same box office by URL and token, named in servers.json
-tests/                 node:test suites (offline: a Jev double, no browser)
+src/cli.mjs            the launcher: `run`, `check` and `etl run` start the Python packages
+src/sketch/            the sketch package: loader, check, machine, decide, blend, stages, sources (file, Jev, capture), run, cli
+src/etl/               the household transaction cleanup (SQLMesh on DuckDB, MCP source servers)
+src/jev.py             the one Jev wrapper (shared)    src/paths.py   the output-path policy (shared)
+src/machine_runner.py  the one state-machine loop (shared by the ETL and sketches)
+src/dashboard/         the dashboard's browser files, kept for the rebuild
+schema/                JSON Schema for sketches
+tests/                 Python unittest suites, the launcher's node:test, fixtures (tests/fixtures/coffee)
+examples/              the older examples, to be rebuilt for the new model
 docs/                  user and project documentation
-seed/                  recard files not yet generalized (not run, not linted)
 agents/                the Bob Protocol team (personas, state, chat) - see AGENTS.md
 ```
 
 ## Development
 
 ```sh
-bobp make test        # unit tests - never calls Jev or launches a browser
-bobp make test-browser  # the watch page in headless Chromium, with a Jev double (no key, no cost)
-bobp make lint        # eslint
+bobp make test        # unit tests (JavaScript launcher, Python, SQLMesh) - never calls Jev
+bobp make test-py ARGS="test_sketch*.py"   # only the sketch tests
+bobp make lint        # eslint and ruff
 bobp make check       # test + lint + gitleaks secret scan (the gate)
-bobp make test-live   # plays every example with real Jev (costs API calls)
 ```
 
 Change process, branching and releases: [docs/SDLC.md](docs/SDLC.md). This repo is worked on

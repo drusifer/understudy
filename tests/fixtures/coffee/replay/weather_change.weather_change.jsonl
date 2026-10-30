@@ -1,0 +1,5 @@
+{"level": "much_colder", "probability": 0.95}
+{"level": "colder", "probability": 0.05}
+{"level": "same", "probability": 0.0}
+{"level": "warmer", "probability": 0.0}
+{"level": "much_warmer", "probability": 0.0}

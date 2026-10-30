@@ -193,3 +193,21 @@ Design approved on a clickable mockup - **`docs/design/DASHBOARD.md`** is the br
 - `judge-trace` target is missing, so Trin could not audit judge traces. (Trin)
 - 270 merchants went to review: let the owner confirm them and feed the choices back. (Cypher)
 - Port the rest of understudy to Python (epic still to frame). (Cypher, Morpheus)
+
+## From Sprint 19
+
+Everything above this heading about the old player (watch page, dashboard, process/http/page/mcp targets, `--steps`, hooks) belongs to code deleted in Sprint 19 (ADR-0045); keep only what carries over to the rebuild.
+
+- Slice B of the epic: translate the old examples into the new model (the evening example with a seating subsketch), or delete them; delete `schema/sketch.schema.json`, the old `examples/`, `seed/` and `docs/design/DASHBOARD.md`'s old-model text when each is replaced. (Cypher, Morpheus)
+- Slice C: rebuild the dashboard and watch page over the run event stream (`events.jsonl`) and the new model; the layout needs an elkjs replacement. (Morpheus, Neo)
+- Slice D: delete the remaining Node (launcher, `package.json`, eslint, `node:test`) and rename nothing: the commands are already `understudy run` and `check`. (Tank)
+- Joint rows: a recipe on two options at once (large and oat) needs joint decider rows; the blend is per dimension today. (Morpheus)
+- `on_empty: walk_away` for a sketch that should end successfully with nothing, needed by the evening example. (Neo)
+- MCP and HTTP source kinds behind the same `describe`/`read` interface; capture and replay already apply to them. (Neo)
+- A source read several times with different params in one run (replay keeps one sample per source). (Neo)
+- Numeric outcome dimensions as discrete steps (`{ range: [0, 3], step: 1 }`). (Morpheus)
+- Fetching the Almanac text instead of a pasted file; check its terms of use first. (Cypher)
+- A way to confirm and feed back the 270 ETL merchants that went to review, and the net spending check from Sprint 17. (Cypher, Trin)
+- `judge-trace` make target is missing; add it or drop the audit step. (Trin)
+- Run the full test suite, not only the focused files, at every phase gate: a new fixtures folder broke a helper that only the full run touched. (Trin)
+- Name captures more kindly in messages: `weather_change.weather_change` (sketch.source) reads oddly. (Smith)
