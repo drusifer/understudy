@@ -10,7 +10,7 @@ from src.sketch.model import Sketch
 from src.sketch.registry import STAGES
 from src.sketch.sources import jev as jev_source
 from src.sketch.sources.capture import CaptureStore, choose_replay, read_capture
-from src.sketch.sources.file import read_jsonl
+from src.sketch.sources.file import read_rows
 from src.sketch.vocabulary import stage_of
 
 
@@ -84,7 +84,7 @@ class Sources:
         if key not in self._read:
             source = sketch.sources[name]
             if source.kind == "file":
-                self._read[key] = read_jsonl(source.path)
+                self._read[key] = read_rows(source.path)
             elif source.kind == "stage":
                 self._read[key] = await self._compute(sketch, name, key)
             else:

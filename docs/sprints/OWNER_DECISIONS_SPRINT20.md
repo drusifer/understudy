@@ -62,6 +62,8 @@ Recorded by Cypher from the conversation, in the owner's words where possible. *
 
 | 36 | **The household's structure and code need not be kept:** it was written before the model was enhanced, so it is redesigned as a sketch from the model's own parts (sources, stages, Jev sources, `each`). Its frozen result (`tests/fixtures/etl/household/`) says what it must mean, not how it is built. A database is not a sketch concept: if SQL stays, it is hidden inside one stage (rows in, rows out). `map.table` / `map.store` and the `Household` wrapper are not the way. | "you don't need to preserve the household structure / code. it was written before we enhanced the model"; "that sounds like a source to me"; "do we need a sql db for this?" |
 
+| 37 | **A file source reads CSV when its name ends in `.csv`** (header row = field names, every value text); otherwise JSONL. No `format:` key (decision 17 stands: no new word). Cleaning (dates, amounts) is a separate stage. | "ok just follow the plan" (the draft in `DESIGN_HOUSEHOLD_SKETCH.md` asked about `format: csv`; Claude took the smaller option) |
+
 ## Decided by Claude while the owner was asleep (2026-10-30), for the owner to review
 
 The owner said: "do your best to finish without me. It is done when there is nothing left to take away." Each choice below took the smaller option. Overturn any of them.
