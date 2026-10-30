@@ -10,21 +10,24 @@
 - **Open ETL items (Sprint 17 backlog):** net spending of $433k YTD looks too large (card-payment/transfer legs counted?), 270 merchants sent to review, Python port of the rest.
 
 ## Current Task
-Status: Sprint 20 in progress on branch `sprint-20` (local only, not pushed). Stories (Smith Gate 1) and architecture (Gate 2) approved, plan approved. **Phase 1 code committed (ef98618) but not yet UAT'd by Trin or reviewed by Morpheus.**
+Status: Sprint 20 PAUSED by the owner on branch `sprint-20` (local only, never pushed). Working tree clean at `460126a`; 240 Python tests green, lint clean at the last full run. Phases 1-4 built; UND-71 started (oracle frozen). **No Trin UAT or Morpheus review has been done on any phase yet.**
 
-### Progress (2026-10-30, branch `sprint-20`, local only, last commit 2dce220, 220 Python tests, lint clean)
+### Progress (2026-10-30)
 - [x] Planning: stories UND-68..73, architecture, task board approved.
-- [x] Phase 1 (UND-68): Jinja2 sketches, `--with` / per-call `with`, unused-name check, `each`, final-state `outcome`, `outputs`.
-- [x] Phase 2 (UND-73): options read from rows `{ from, key }`, `shortlist`, Jev `options`.
-- [x] Stage model (decisions 23-33): `@stage` registry with typed signatures; `do: { map|reduce|sink|sketch: {...} }` + `with:` beside; `blend` is `reduce.blend`; `kind: stage` sources (lazy, once); stages `map.adjacent_runs/prefer_order/prefer_middle/weigh`, `reduce.max/min/any`; single-row guards; `center` (American spelling).
-- [x] Phase 3 (UND-69): `tests/fixtures/evening/seating.yaml` + `seats.jsonl` + `test_sketch_seating.py` (blocks, weights, outcome none).
-- [ ] Trin UAT and Morpheus review of phases 1-3 (not done).
-- [ ] Phase 4 (UND-70 the evening), Phase 5-6 (UND-71 ETL as sketch; freeze expected result first), Phase 7 (UND-72 purge + docs).
+- [x] Phase 1 (UND-68): Jinja2 sketches, `--with` / per-call `with`, unused-name check, `each` (also as a source), final-state `outcome`, `outputs`.
+- [x] Phase 2 (UND-73): options read from rows `{ from, key }`, `shortlist` (both still built, owner never said to remove them), Jev `options: { from: <source>, key }`.
+- [x] Stage model (decisions 23-34): `@stage` registry with typed signatures; `do: { map|reduce|sink|sketch: {...} }` + `with:` beside; `kind: stage` sources (lazy, once); `reduce.blend` (entries/forbid/on_empty/shortlist in `with`); maps `split_by_share join_weights recipes adjacent_runs prefer_order prefer_middle weigh where join unpair expect`; reducers `max min any blend`; single-row guards; dateparser orders times; `center` (American spelling).
+- [x] Phase 3 (UND-69): seating (`examples/evening/seating.yaml`, tests with `tests/fixtures/evening/seats.jsonl`).
+- [x] Phase 4 (UND-70): `examples/evening/{evening,review_score,seating}.yaml` + showings/films/reviews/seats fixtures; `tests/python/test_sketch_evening.py` (scripted Jev). A subsketch ending in `outcome: none` returns no rows; a sink may name a source.
+- [~] Phase 5 (UND-71): ORACLE FROZEN at `tests/fixtures/etl/household/` (`monarch.csv`, `amex.csv`, `expected/result.jsonl` 12 records, `expected/summary.json`) from the current ETL with the scripted Jev in `tests/python/test_controller.py` (`jev()`, `MONARCH`, `AMEX`). Nothing else done.
+- [ ] Phase 6 (UND-71): `household.yaml` over the ETL; Phase 7 (UND-72): purge old Node `examples/` (cli http web mcp mcp-remote, old `examples/evening/{sketch.yaml,boxoffice.mjs,ratings.mjs}`), `seed/`, old `schema/sketch.schema.json`, `etl run`, ETL controller/`stages.yaml`/MCP source servers; docs.
+- [ ] Gates: Trin UAT + Morpheus review for phases 1-5, Tank `sdlc-check` (jinja2 and dateparser added as direct deps via `bobp make lock-py`), Oracle groom, Smith test, retro, Cypher launch.
 
 ## Next Steps
-1. **Read `docs/sprints/OWNER_DECISIONS_SPRINT20.md` first** (decisions 1-33, choices A-H all accepted). Record each new owner answer there at once; check it before asking anything.
-2. Phase 4: move `seating.yaml`/`seats.jsonl` to `examples/evening/`, write `evening.yaml` (showings, films, ratings, reviews fixtures; `each` over films with a Jev review score; weights as `--with`; shortlist of 5 and Jev pick; calls `seating` with `with:`; walk away = final state `outcome`), replacing the old Node example. The unresolved piece: how the evening ranks showings with `map.weigh` + `reduce.max` and joins audience scores to showings by title (a join map is not built; ask the owner before adding one).
-3. Open (owner said wait): shape of non-weights outputs (a `hold`); `from:` as a blend entry key (owner unsure, kept for now).
-4. Then UND-71 (ETL), UND-72 (purge), Trin/Morpheus gates, Tank sdlc-check, Oracle groom, Smith test, retro, Cypher launch. Do not push or merge without the owner.
-5. Owner rules: no back-compat, YAGNI, reuse existing syntax, no new words, one question at a time, define names before using them, Edit tool for edits (no sed/python scripts), `bobp make` only, American spelling, push only via `bobp make push` and only when asked.
-6. Other open threads: net-spending check ($433k), 270 review merchants, old worktree and branches (owner said keep).
+1. **Read `docs/sprints/OWNER_DECISIONS_SPRINT20.md` first** (decisions 1-35; choices A-H accepted). Record each new owner answer there at once; check it before asking anything. Owner is hands-on: expect corrections of vocabulary (see decisions 24, 25, 28, 29).
+2. Wait for the owner to say resume (they paused me mid-UND-71).
+3. UND-71 plan (not started): wrap the ETL steps in `src/etl/controller.py` (hydrate, pair, transfers, plan_spending, refunds, categories, output) as `map` stages in a `household.yaml` machine, keeping SQLMesh (ADR-0046); the run DuckDB is `<run folder>/run.duckdb` and the SQLMesh project copy `<run folder>/sqlmesh`, so stages can share state on disk. Give stages Jev through the run (`Sources.jev`, a `GatedJev`) with capture/replay done by a Jev wrapper (record request hash -> answer under the stage's key); no new YAML syntax. Add `tests/python/test_household_sketch.py` asserting sorted-record equality with `expected/result.jsonl` and equal summary numbers; the CSVs are read by a `hydrate` stage using `src/etl/sources.py` (no `format: csv`). Then the real-file run (5,074 records; counts only; never print private values).
+4. Then UND-72 purge + docs, gates, closeout. Do NOT push or merge without the owner (`bobp make push`).
+5. Open (owner said wait / unsure): shape of non-weights outputs (a `hold`); `from:` as a blend entry key; whether to remove the candidate-outcome (`{from,key}` on an outcome) and `shortlist:` code now that `pick_best` became `reduce.max`.
+6. Owner rules: no back-compat, YAGNI, reuse existing syntax, no new words, one question at a time, define names before using them, Edit tool for edits (no sed/python scripts; I slipped on fixtures), `bobp make` only, American spelling, push only when asked, short replies.
+7. Other open threads: net-spending check ($433k), 270 review merchants, old worktree and branches (owner said keep).
