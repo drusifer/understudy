@@ -43,6 +43,8 @@ Recorded by Cypher from the conversation, in the owner's words where possible. *
 
 | 26 | **Seating's calculations are general Python stages, not SQL in the sketch and not a `pandas` action:** `etl.adjacent_runs` (runs of consecutive numbers in a group) and scoring stages that give each candidate a 0.0 to 1.0 weight (by position in an ordered list, by closeness to the middle). | "adjacent_runs seems simple enough" |
 
+| 27 | **A stage can be a source: it is a new source type** (a third `kind:` beside `file` and `jev`). Exact shape not yet agreed. | "it is a new source type" |
+
 ## Decided by Claude while the owner was asleep (2026-10-30), for the owner to review
 
 The owner said: "do your best to finish without me. It is done when there is nothing left to take away." Each choice below took the smaller option. Overturn any of them.
