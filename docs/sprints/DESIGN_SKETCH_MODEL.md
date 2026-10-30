@@ -61,7 +61,7 @@ Jev never produces an amount. Its probabilities become weights, and the owner's 
 
 ## 6. Worked example: weekly coffee ingredients (the proof of concept)
 
-The shop owner has only **last week's total sales**, not customer histories, and works from **rough demographics**: groups of customers with a share of the trade. The owner's logic: (1) split the expected drinks by segment; (2) match each segment to the drinks it prefers, as weighted leaves of a `decide` tree, with hard rules such as no caffeine under 18; (3) convert the expected drinks to ingredient counts and output. A `weather_change` subsketch has Jev read the Farmers' Almanac forecast against last week's observed weather and report how much warmer or colder next week will be; each level carries its own hot/iced weights, and the result is blended in as one more decider.
+The shop owner has only **last week's total sales**, not customer histories, and works from **rough demographics**: groups of customers with a share of the trade. The owner's logic: (1) split the expected drinks by segment; (2) match each segment to the drinks it prefers, as weighted leaves of a `decide` tree, with hard rules such as no caffeine under 18; (3) convert the expected drinks to ingredient counts and output. A `weather_change` subsketch has Jev read the Farmers' Almanac's descriptions of last week and next week and report how much warmer or colder next week will be (much colder, colder, same, warmer, much warmer); each level carries its own hot/iced weights, and the result is blended in as one more decider.
 
 ### `weather_change.yaml` (subsketch)
 
@@ -69,52 +69,47 @@ The shop owner has only **last week's total sales**, not customer histories, and
 name: weather_change
 description: How much warmer or colder next week will be than last week.
 
-inputs:
-  place: text
+sources:                              # the Almanac's own descriptions, pasted into files each week
+  last_week: last_week_almanac.jsonl  # {"week": "2026-W43", "text": "Mild and breezy, highs near 55."}
+  next_week: next_week_almanac.jsonl  # {"week": "2026-W44", "text": "Chilly and damp, with a hint of snow late in the week."}
 
-sources:
-  last_week: last_week_weather.jsonl  # what the weather actually was: {"day": "Mon", "high": 48, "low": 36, "rain": "none"}
-  almanac:                            # what is forecast for next week
-    kind: file
-    path: next_week_almanac.jsonl     # {"week": "2026-W44", "text": "Chilly and damp, with a hint of snow late in the week."}
-
-questions:
-  change:
-    score: almanac
-    facts: last_week                  # Jev sees last week's numbers alongside the forecast text
+rubrics:                              # what Jev reads; no weights here
+  weather_change:
     instructions: >
-      Compared with last week, how much warmer or colder does this forecast say next week will be?
+      Compare the Almanac's description of next week with its description of last week.
+      How much warmer or colder is next week?
     levels:
-      - Much colder
-      - A little colder
-      - About the same
-      - A little warmer
-      - Much warmer
+      much_colder: { means: Clearly and markedly colder than last week, for example snow or a hard freeze where last week was mild. }
+      colder:      { means: Noticeably cooler than last week. }
+      same:        { means: About the same as last week, or no real change described. }
+      warmer:      { means: Noticeably milder than last week. }
+      much_warmer: { means: Clearly and markedly warmer than last week, for example a warm spell after a cold week. }
 
 machine:
   initial: judge
   states:
     judge:
-      ask: change
+      ask: weather_change             # reads both sources, answers with one level's probabilities
+      from: [last_week, next_week]
       then: done
     done:
       final: true
       returns: { decider: [temp] }    # a decider: weights on the temp dimension (owner, 2026-10-29)
 ```
 
-**No "shift by x" operator** (owner, 2026-10-29: it broke the contract). The weather judgement is a decider like any other. Each Almanac level carries its own hot/iced weights, written by the owner in the subsketch's `data`, and the subsketch returns the probability-weighted mix of those rows as weights on `temp`:
+**No "shift by x" operator, and no second tree** (owner, 2026-10-29). Jev gets the Almanac's two descriptions (last week's and next week's) and answers with one of five relative levels: much colder, colder, same, warmer, much warmer. The levels are the leaves. The rubric (what each level means) is separate from the owner's weights (what each level means for hot versus iced), and Jev never sees the weights. The subsketch returns the probability-weighted mix of the weights as weights on `temp`:
 
 ```yaml
 data:
-  weather_temp:
-    much_colder:     { hot: 0.90, iced: 0.10 }
-    a_little_colder: { hot: 0.75, iced: 0.25 }
-    about_the_same:  { hot: 0.60, iced: 0.40 }
-    a_little_warmer: { hot: 0.45, iced: 0.55 }
-    much_warmer:     { hot: 0.30, iced: 0.70 }
+  weather_temp:                       # the owner's, per level; not shown to Jev
+    much_colder: { hot: 0.90, iced: 0.10 }
+    colder:      { hot: 0.75, iced: 0.25 }
+    same:        { hot: 0.60, iced: 0.40 }
+    warmer:      { hot: 0.45, iced: 0.55 }
+    much_warmer: { hot: 0.30, iced: 0.70 }
 ```
 
-The parent blends it with the segment's own preference by weight (a `blend:` entry). These numbers replace the earlier "-0.20 to +0.20 shift" figures.
+The parent blends it with the segment's own preference by weight (a `blend:` entry). These numbers replace the earlier "-0.20 to +0.20 shift" figures. Last week's weather is the Almanac's description of that week, not observed figures, and there is no `place` input: the pasted files already cover the region.
 
 **No expression language** (owner, 2026-10-29): a weight is a number, or a conditional written with the same `if` / `then` / `else` the owner uses for decisions. Nothing is parsed that is not a structure.
 
@@ -140,7 +135,6 @@ outcomes:
   caffeine: [none, regular, high]
 
 data:
-  place: Burlington VT
   segments:                           # rough demographics, not individuals
     - { name: students,      share: 0.30, age_max: 24 }
     - { name: teens,         share: 0.10, age_max: 17 }
@@ -159,7 +153,6 @@ machine:
   states:
     weather:
       do: sketch.weather_change
-      with: { place: data.place }
       then: split_trade
 
     split_trade:                      # SQL: sales.drinks x segment share = drinks per segment

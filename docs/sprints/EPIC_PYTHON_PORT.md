@@ -67,7 +67,7 @@ A second problem sits underneath: the player is built to *play an app* like a pe
 
 The PoC is verified by decisions, not event streams: `coffee_week` with a Jev double must produce the expected ingredient file for fixed fixtures, and the age rule must never be broken. For slice B, each translated example must make the same decisions as its Node original with the same Jev double (the Node run is the oracle until Sprint D deletes it). The event stream shape is free to change.
 
-Test data for the proof of concept is **invented fixtures** (owner, 2026-10-29): last week's sales, last week's weather and an Almanac paragraph, kept under `tests/fixtures/`. Real figures can replace them later without changing the sketch.
+Test data for the proof of concept is **invented fixtures** (owner, 2026-10-29): last week's sales and two Almanac descriptions (last week's and next week's), kept under `tests/fixtures/`. Real figures can replace them later without changing the sketch.
 
 Fixture figures (researched 2026-10-29, rough ranges from marketing blogs): about 1,600 drinks a week; 12, 18 and 24 g of beans for a small, medium and large drink (a double espresso is about 18 g); Burlington VT normals for early November of about 45°F high and 31°F low, with last week (late October) milder; the Almanac text is invented in its short style ("Fair but cold, with rain clearing midweek and a hint of snow by the weekend.").
 

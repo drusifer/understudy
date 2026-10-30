@@ -12,7 +12,7 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 
 ## Assumptions made for the owner
 
-1. **Fixtures are invented** (owner, 2026-10-29), under `tests/fixtures/coffee/`: about 1,600 drinks last week, five segments with shares summing to 1, Burlington VT weather, a one-line Almanac forecast. Real figures can replace them later.
+1. **Fixtures are invented** (owner, 2026-10-29), under `tests/fixtures/coffee/`: about 1,600 drinks last week, five segments with shares summing to 1, two one-line Almanac descriptions (last week's and next week's). Real figures can replace them later.
 2. **Files only.** Every source and sink is a file (owner, 2026-10-29); MCP and HTTP kinds are not built.
 3. **Command line only.** No dashboard (owner, 2026-10-29).
 4. **The weather is a decider, not a shift** (owner, 2026-10-29): each of the five Almanac levels carries hot/iced weights (much colder 0.90/0.10 … much warmer 0.30/0.70), the subsketch returns their probability-weighted mix on `temp`, and the parent blends it by weight; night workers get weight 0. Weights are numbers or `if` / `then` / `else`, never expressions.
@@ -86,8 +86,8 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 **As the** shop owner, **I want** the weather handled as a small sketch of its own that tells me how much warmer or colder next week will be, **so that** I can reuse it and the parent sketch only sees the answer.
 
 ### Acceptance Criteria
-1. `weather_change` is its own sketch file with its own inputs (`place`) and file sources (last week's observations, the pasted Almanac text); the parent calls it with `with:` and sees only its output, weights on `temp`.
-2. Jev is asked one rubric question over the forecast text, with last week's figures as facts, and answers with a probability for each of the five levels; with the Jev double fixed to "a little warmer" the output is hot 0.45 and iced 0.55, and with mixed probabilities it is their weighted average.
+1. `weather_change` is its own sketch file with two file sources (the pasted Almanac descriptions of last week and next week); the parent calls it and sees only its output, which it declares as `returns: { decider: [temp] }`.
+2. Jev is asked one rubric question over both descriptions and answers with a probability for each of five levels (much colder, colder, same, warmer, much warmer); the rubric holds only what each level means, and the owner's weights per level are separate and never shown to Jev. With the Jev double fixed to "warmer" the output is hot 0.45 and iced 0.55, and with mixed probabilities it is their weighted average.
 3. The parent blends the weather weights with each segment's own preference by the weight the sketch gives; a segment whose weight is 0 (night workers) is unchanged by warm weather.
 4. A Jev failure fails the run (UND-62 AC3); a Jev answer that is not one of the five levels is refused and asked again once, then fails.
 5. The subsketch's inputs appear in the parent only if the parent lists them under `expose`.
@@ -109,7 +109,7 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 **As the** owner, **I want** the Almanac judgement checked against real Jev once, **so that** I know the rubric gives sensible answers.
 
 ### Acceptance Criteria
-1. With the owner's go-ahead, one live run on the fixture forecast ("Fair but cold, with rain clearing midweek and a hint of snow by the weekend.") against last week's milder figures returns probabilities with most of the weight on the colder levels.
+1. With the owner's go-ahead, one live run on the fixture descriptions (last week: "Mild and breezy, highs near 55."; next week: "Fair but cold, with rain clearing midweek and a hint of snow by the weekend.") returns probabilities with most of the weight on the colder levels.
 2. The probabilities and the resulting hot/iced weights are recorded in the UAT plan; if they are not sensible, the rubric wording changes and the run repeats once.
 3. The live run is the only live Jev call in the sprint.
 
