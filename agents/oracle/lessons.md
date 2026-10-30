@@ -461,3 +461,45 @@ When an acceptance criterion restricts where something may be written, test the 
 
 ### References
 - **Files:** `src/etl/controller.py`, `tests/python/test_etl_cli.py`, `docs/sprints/UAT_PLAN_SPRINT17.md`
+
+---
+
+## [2026-10-30] Share the loop before writing a second one
+
+> **Tags:** #dry #architecture #Neo #Morpheus
+
+### Context
+Sprint 19 needed a state-machine loop for sketches. The ETL controller already had one (`_run_stages`), tied to its linear stage list and its own manifest.
+
+### The Issue
+Copying the loop would have left two runners to fix and two ways to say "a failed stage publishes nothing"; the owner's rule is no duplicates and the epic's purge list is the exit gate.
+
+### The Solution
+Generalised the loop first: `src/machine_runner.py` follows whatever state the machine is in, runs the stage that state names, sends `ok`, and records through a small `RunRecord`. The ETL moved onto it (all of its tests passed unchanged) before the sketch package used it; the Jev wrapper and the output-path policy moved to shared modules the same way, in Phase 1.
+
+### The Rule (The "Lesson")
+When a second piece of code needs something the first already does, move it to a shared module and port the first onto it before writing the second; the first's existing tests are the proof the move changed nothing.
+
+### References
+- **Files:** `src/machine_runner.py`, `src/jev.py`, `src/paths.py`, `docs/sprints/ARCH_SPRINT19.md`
+
+---
+
+## [2026-10-30] A test that two vocabularies agree beats a comment that they should
+
+> **Tags:** #testing #design #Trin
+
+### Context
+The checker needs every stage name a sketch may use (`vocabulary.STAGES`); the runner needs the functions (`stages.LIBRARY`). They are two lists of the same names.
+
+### The Issue
+Two lists drift: a stage added to one and not the other would pass the check and fail at run time, or the reverse.
+
+### The Solution
+One test asserts `set(LIBRARY) - {"blend"} == set(STAGES)`, so adding a stage to only one side fails the build.
+
+### The Rule (The "Lesson")
+When two places must list the same names, keep the lists small and add one test that they are equal.
+
+### References
+- **Files:** `src/sketch/vocabulary.py`, `src/sketch/stages.py`, `tests/python/test_sketch_coffee.py`

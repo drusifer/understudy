@@ -1,5 +1,14 @@
 # Changelog
 
+## Sprint 19 — the coffee proof of concept: a new sketch model (2026-10-30, branch `sprint-19`, not yet merged)
+
+- **A new kind of sketch, and the only one.** One YAML file with `sources`, `sinks`, `outcomes`, `data` and a `machine` the owner writes (python-statemachine). Rules are `decide` trees with explicit YAML conditions (`segment: { eq: students }`, `temp: { in: [80:90] }`, `and`/`or`/`not`, `has`), weights are numbers or `if`/`then`/`else`, a stage's deciders are blended per dimension, and `forbid` rules drop options and always win. Counting and converting run as SQL on DuckDB. A subsketch (`do: sketch.<file>`) gives back a decider. See `docs/SKETCHES.md`.
+- **Jev is a source** (`kind: jev`): a rubric (`instructions` plus `criteria`) and the data it reads go in, a probability per level comes out. Every live read of a non-file source is captured, and `--replay [run-id|folder]` runs offline from one complete capture, never going live. `summary.json` records `mode` and `stale`.
+- **`understudy run <sketch.yaml>` and `understudy check <sketch.yaml>`** now start the Python package (`src/sketch`). **Breaking:** the old Node `run`, `check`, targets (process, http, page, mcp), apps, watch page server, dashboard server and XState machine are deleted, with their 41 test files, the browser tests, the `test-browser`, `test-live` and `install-browser` targets and nine npm dependencies. `library`, `watch` and `dashboard` say they are being rebuilt; the six old examples and the dashboard return in later slices of the Python-port epic.
+- **One of everything shared:** `src/machine_runner.py` is the state-machine loop for both the ETL and sketches; the Jev wrapper moved to `src/jev.py` and the output-path policy and project root to `src/paths.py`.
+- The coffee example (`tests/fixtures/coffee/`) runs end to end on invented fixtures: 1,600 drinks across five segments become 32,000 g of coffee beans. One real Jev judgement (a cold forecast after a mild week: `much_colder 0.95`) is committed as `tests/fixtures/coffee/replay/` and replays with no key.
+- `bobp make test-py ARGS="<file pattern>"` runs a subset of the Python tests.
+
 ## Sprint 18 — tech-debt cleanup (2026-10-29, branch `sprint-18`, not yet merged)
 
 - Removed the dead Sprint 16 ETL code (`csv_to_jsonl.py`, the `reconciled_transactions` and `categorized_transactions` models and their tests), the unused `@duckdb/node-api` dependency and the `probe-etl` target. No compatibility layer.
