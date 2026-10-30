@@ -56,6 +56,8 @@ Recorded by Cypher from the conversation, in the owner's words where possible. *
 
 | 33 | **"Center" is American spelling and means the middle of a row** (centered with respect to the screen), measured within each row, not across the room. The word is `center` everywhere: the `--with center=…` value, the `center_score` field, the docs. | "centre looks like a typo; center is the middle of the row (center wrt screen)" |
 
+| 34 | **Three general maps are added for the evening: `map.where`** (keep rows satisfying an explicit YAML condition), **`map.join`** (add fields from another source's rows that share a key), **`map.unpair`** (flatten an `each` result's `{input, output}` pairs). **Dates, times and datetimes are parsed with `dateparser`; durations, if needed, with `pytimeparse2`.** | "+1 to the maps. use dateparser for values that are dates or times or datetimes if we need duration use pytimeparse2" |
+
 ## Decided by Claude while the owner was asleep (2026-10-30), for the owner to review
 
 The owner said: "do your best to finish without me. It is done when there is nothing left to take away." Each choice below took the smaller option. Overturn any of them.
