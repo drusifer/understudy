@@ -67,6 +67,6 @@
 
 - [x] **Task C.1:** Tank `*devops sdlc-check`: `distclean`, `install`, `check`, repeat `install`; SDLC updated. (*Owner: Tank | Verification: all green; `docs/SDLC.md` Last verified line.*)
 - [x] **Task C.2:** Live judgement, with the owner's go-ahead: one live Jev run on the fixture descriptions; the capture copied into `tests/fixtures/` as the committed replay fixture; rubric reworded and rerun once if the answer is not sensible (UND-67). (*Owner: Trin | Verification: probabilities and resulting hot/iced weights in the UAT plan.*)
-- [ ] **Task C.3:** Oracle `*ora groom`: ADR-0040..0045 into `docs/DECISIONS.md`, superseded ADRs marked, USER_GUIDE and CHANGELOG, lessons, chat archive after launch. (*Owner: Oracle | Verification: artifact rubrics pass; `bobp chat-report --moniker SPRINT_19`.*)
-- [ ] **Task C.4:** Smith `*user test`, retros, backlog. (*Owner: Smith, all | Verification: UAT rubric verdict; each persona's retro in `agents/CHAT.md`.*)
-- [ ] **Task C.5:** Cypher `*pm launch`; merge and push only when the owner asks. (*Owner: Cypher | Verification: launch recorded in `agents/CHAT.md`.*)
+- [x] **Task C.3:** Oracle `*ora groom`: ADR-0040..0045 into `docs/DECISIONS.md`, superseded ADRs marked, USER_GUIDE and CHANGELOG, lessons, chat archive after launch. (*Owner: Oracle | Verification: artifact rubrics pass; `bobp chat-report --moniker SPRINT_19`.*)
+- [x] **Task C.4:** Smith `*user test`, retros, backlog. (*Owner: Smith, all | Verification: UAT rubric verdict; each persona's retro in `agents/CHAT.md`.*)
+- [x] **Task C.5:** Cypher `*pm launch`; merge and push only when the owner asks. (*Owner: Cypher | Verification: launch recorded in `agents/CHAT.md`.*)

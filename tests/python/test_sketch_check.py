@@ -18,7 +18,8 @@ class Workspace:
         self._directory = tempfile.TemporaryDirectory()
         self.dir = Path(self._directory.name)
         for item in FIXTURES.iterdir():
-            shutil.copy(item, self.dir / item.name)
+            if item.is_file():
+                shutil.copy(item, self.dir / item.name)
         self.sketch = self.dir / "coffee_week.yaml"
 
     def edit(self, old: str, new: str, file: str = "coffee_week.yaml") -> "Workspace":

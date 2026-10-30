@@ -158,7 +158,7 @@ understudy run coffee_week.yaml --replay=<run-id>     # a named run
 understudy run coffee_week.yaml --replay=tests/fixtures/coffee/replay   # a folder of captures
 ```
 
-If no run covers every source, it stops and names the missing one. If the sketch or rubric changed since the capture, the run prints one line and records `stale: true`, and carries on. `summary.json` records `mode` (`live` or `replay`).
+A replay says so on its first line (`replay: reading captures from <folder>, no live calls`). If no run covers every source, it stops and names the missing one. If the sketch or rubric changed since the capture, the run prints one line and records `stale: true`, and carries on. `summary.json` records `mode` (`live` or `replay`).
 
 ## What a run writes
 

@@ -164,6 +164,8 @@ async def run_sketch(
     files = [f for sink in sketch.sinks.values() for f in (sink.file, f"{sink.file}.part")]
     record = EventedRecord(directory, announce, cleanup=[*files, "summary.json"], mode=capture.mode, sketch=sketch.name)
     record.emit("run_started", sketch=str(sketch.path), mode=capture.mode)
+    if capture.replay_dir:
+        announce(f"replay: reading captures from {capture.replay_dir}, no live calls")
     sources = Sources(capture, directory.name, announce)
     results: dict = {}
     summary: dict = {}

@@ -120,6 +120,7 @@ class ReplayTests(SourcesCase):
         self.go(jev=double())
         code, lines, err = self.go("--replay")
         self.assertEqual((code, err), (0, []))
+        self.assertTrue(lines[0].startswith("replay: reading captures from ") and lines[0].endswith(", no live calls"), lines[0])
         self.assertEqual(self.output_of(lines), [{"level": "happy", "probability": 0.7}, {"level": "sad", "probability": 0.3}])
         summary = self.summary_of(lines)
         self.assertEqual((summary["mode"], summary["stale"], summary["jev_requests"]), ("replay", False, 0))

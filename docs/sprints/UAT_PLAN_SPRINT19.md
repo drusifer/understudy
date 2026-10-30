@@ -190,4 +190,11 @@
 * **Result:** Pass, first time (no rubric rewording was needed). Jev answered `much_colder 0.95`, `colder 0.05`, the other three levels 0. The owner's weights turned that into hot 0.8925 and iced 0.1075 (`0.95 × 0.90 + 0.05 × 0.75` hot), students' iced share came out at 0.5633 (the tree's own 0.7 pulled down by the weather), night workers stayed on hot coffee, and the beans total is 32,000 g.
 * **Fixture:** the capture is committed as `tests/fixtures/coffee/replay/` (the rows and their metadata), so `--replay=tests/fixtures/coffee/replay` reproduces this run with no key and no network; a test does exactly that.
 
+## 9. Smith's acceptance (2026-10-30)
+
+Run as the owner would, through the real `node bin/understudy.mjs`: `check` on the coffee sketch printed `ok: coffee_week` (exit 0); `run ... --replay=tests/fixtures/coffee/replay` ran the six stages offline and wrote `{"amount": 32000, "ingredient": "coffee_beans", "unit": "g"}` (exit 0); a typo in a copy was refused with `machine.states.split_trade.do: unknown stage 'etl.split_by_shar' (did you mean 'etl.split_by_share'?)` (exit 2); `dashboard` said it is being rebuilt (exit 2); a replay from an empty folder said `build/empty has no capture of weather_change.weather_change; do a live run first` (exit 2). HCI heuristics: errors are in plain words with the fix and the nearest name; the system status was visible except one gap, fixed during acceptance as DEF-19-01.
+
+* **DEF-19-01 (minor, fixed):** a replay did not say on the console that it was a replay (only `summary.json` did), so it could be mistaken for a live run. A replay now prints `replay: reading captures from <folder>, no live calls` first; covered by a test.
+* **Found by the gate, fixed:** the check tests' copy helper broke when the committed `replay/` folder appeared next to the fixtures.
+
 **Sprint 19 UAT verdict: PASSED** (all eight stories). `rubric UAT: COVER=A STEPS=A FAIL=S DATA=A EVID=A`.

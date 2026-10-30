@@ -209,3 +209,5 @@ Everything above this heading about the old player (watch page, dashboard, proce
 - Fetching the Almanac text instead of a pasted file; check its terms of use first. (Cypher)
 - A way to confirm and feed back the 270 ETL merchants that went to review, and the net spending check from Sprint 17. (Cypher, Trin)
 - `judge-trace` make target is missing; add it or drop the audit step. (Trin)
+- Run the full test suite, not only the focused files, at every phase gate: a new fixtures folder broke a helper that only the full run touched. (Trin)
+- Name captures more kindly in messages: `weather_change.weather_change` (sketch.source) reads oddly. (Smith)
