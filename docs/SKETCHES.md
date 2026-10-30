@@ -70,7 +70,8 @@ A state's `do:` names a stage **type** as a key (a closed set the schema owns) a
 | `map: { action: join_weights }` | `probabilities`, `weights` | joins a Jev source's probability per level with `data.<weights>` (level to option weights) into weighted rows on the dimension the sketch lists in `outputs` |
 | `map: { action: recipes }` | `recipes`, `packs` | turns drink counts into ingredient amounts from `data.<recipes>` (rows `{<dimension>: <option>, ingredient, amount, unit}`), rounded up to whole packs from `data.<packs>` |
 | `map: { action: where }` | `source`, `keep` | the rows that satisfy the condition `keep` (the same explicit conditions as everywhere) |
-| `map: { action: join }` | `source`, `other`, `on` | each row plus the fields of the row of `other` with the same `on` value; a row with no match is dropped |
+| `map: { action: join }` | `source`, `other`, `on`, `other_on` | each row plus the fields of the row of `other` whose `other_on` (default `on`) equals its `on`; a row with no match is dropped |
+| `map: { action: expect }` | `probabilities`, `values`, `into` | one row `{<into>: number}`: your numbers per level (`data.<values>`) averaged by a Jev reading's probabilities |
 | `map: { action: unpair }` | `source` | flat rows from an `each` result: each `{input, output}` pair becomes the input row plus each row it output |
 | `map: { action: adjacent_runs }` | `source`, `group`, `order`, `length`, `match` | every run of `length` consecutive `order` numbers in a `group`, from the rows that `match` (E3 E4 E5 gives E3-4 and E4-5 for 2): `{<group>, first, last, run}` |
 | `map: { action: prefer_order }` | `rows`, `field`, `order`, `into` | adds `into`: 1.0 for the first value of `order`, less for the next, 0 for one not listed |
@@ -251,7 +252,7 @@ pick:
   kind: jev
   question: choice
   instructions: Choose the showing you would enjoy most.
-  options: { from: rank, key: option }          # the options of the stage `rank`'s result
+  options: { from: ranked, key: title }         # the `title` of every row of the source `ranked` (a file or a stage source)
   state: {}
 ```
 

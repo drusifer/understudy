@@ -21,11 +21,15 @@ SKETCH = """\
 name: pick
 sources:
   showings: showings.jsonl
+  ranked:                               # the two best showings, computed by a stage
+    kind: stage
+    do: { reduce: { action: max } }
+    with: { source: showings, field: weight, take: 2 }
   pick:
     kind: jev
     question: choice
     instructions: Choose the showing you would enjoy most.
-    options: { from: rank, key: option }
+    options: { from: ranked, key: title }
     state: {}
 sinks:
   chosen: chosen.jsonl
@@ -57,7 +61,7 @@ machine:
     done:
       final: true
 """
-SHOWINGS = '{"title": "Alien"}\n{"title": "Brazil"}\n{"title": "Cube"}\n'
+SHOWINGS = '{"title": "Alien", "weight": 0.5}\n{"title": "Brazil", "weight": 0.3}\n{"title": "Cube", "weight": 0.2}\n'
 
 
 async def start(context):
@@ -123,7 +127,7 @@ class JevPickTests(CandidateCase):
     def test_jev_chooses_among_the_shortlist_and_only_those_are_offered(self):
         result, jev = self.run_it(self.write(), answer="Brazil")
         (request,) = jev.requests
-        self.assertEqual(list(request[3]), ["Alien", "Brazil"])       # Cube was cut by the shortlist
+        self.assertEqual(list(request[3]), ["Alien", "Brazil"])       # Cube was cut: only the two best are offered
         row = result.outputs["chosen"].read_text(encoding="utf-8")
         self.assertIn('"chosen": "Brazil"', row)
 
@@ -135,11 +139,6 @@ class JevPickTests(CandidateCase):
         replay = Capture.replay(store, load(path), None)
         again = asyncio.run(run_sketch(load_checked(path), self.dir / "out2", library, lambda line: None, replay))
         self.assertEqual(again.outputs["chosen"].read_text(encoding="utf-8"), first.outputs["chosen"].read_text(encoding="utf-8"))
-
-    def test_options_from_a_stage_that_has_not_run_are_named(self):
-        text = SKETCH.replace("then: rank", "then: choose", 1)
-        with self.assertRaisesRegex(ValueError, "its options come from stage 'rank', which has not run"):
-            self.run_it(self.write(text))
 
 
 if __name__ == "__main__":

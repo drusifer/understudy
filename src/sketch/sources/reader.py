@@ -29,18 +29,6 @@ def jev_keys(sketch: Sketch) -> list[str]:
     return keys
 
 
-def _with_options(config: dict, results: dict, key: str) -> dict:
-    """A Jev source whose `options` come from a stage's result chooses among the values of `key` in those rows
-    (each option is its own meaning); a source with `criteria` is returned as it is."""
-    if "options" not in config:
-        return config
-    found = config["options"]
-    if found["from"] not in results:
-        raise ValueError(f"{key}: its options come from stage {found['from']!r}, which has not run")
-    options = list(dict.fromkeys(str(row[found["key"]]) for row in results[found["from"]]))
-    return {**config, "criteria": {option: option for option in options}}
-
-
 @dataclass(frozen=True)
 class Capture:
     """How a run reads its non-file sources: live (with Jev, capturing) or from a replay folder."""
@@ -81,8 +69,7 @@ class Sources:
     def jev_requests(self) -> int:
         return self.jev.requests if self.jev else 0
 
-    async def read(self, sketch: Sketch, name: str, results: dict | None = None) -> list[dict]:
-        """`results` are the stage results so far, for a Jev source whose options come from one of them."""
+    async def read(self, sketch: Sketch, name: str) -> list[dict]:
         key = capture_key(sketch, name)
         if key not in self._read:
             source = sketch.sources[name]
@@ -91,7 +78,7 @@ class Sources:
             elif source.kind == "stage":
                 self._read[key] = await self._compute(sketch, name, key)
             else:
-                self._read[key] = await self._read_jev(sketch, name, key, results or {})
+                self._read[key] = await self._read_jev(sketch, name, key)
         return self._read[key]
 
     async def _compute(self, sketch: Sketch, name: str, key: str) -> list[dict]:
@@ -107,8 +94,17 @@ class Sources:
     async def _state(self, sketch: Sketch, config: dict) -> dict:
         return {key: await self.read(sketch, ref["from"]) for key, ref in config["state"].items()}
 
-    async def _read_jev(self, sketch: Sketch, name: str, key: str, results: dict) -> list[dict]:
-        config = _with_options(sketch.sources[name].config, results, key)
+    async def _options(self, sketch: Sketch, config: dict) -> dict:
+        """A Jev source whose `options` come from a source chooses among the values of `key` in its rows (each option is
+        its own meaning); a source with `criteria` is returned as it is."""
+        if "options" not in config:
+            return config
+        found = config["options"]
+        rows = await self.read(sketch, found["from"])
+        return {**config, "criteria": {option: option for option in dict.fromkeys(str(row[found["key"]]) for row in rows)}}
+
+    async def _read_jev(self, sketch: Sketch, name: str, key: str) -> list[dict]:
+        config = await self._options(sketch, sketch.sources[name].config)
         asked = jev_source.request(config, await self._state(sketch, config))
         digest = jev_source.request_hash(asked)
         if self.capture.replay_dir:

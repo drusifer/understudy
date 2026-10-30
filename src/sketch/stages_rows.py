@@ -7,7 +7,7 @@ its rows from a named source, which may itself be computed by a stage.
 """
 
 from src.sketch.conditions import holds
-from src.sketch.registry import Source, stage
+from src.sketch.registry import Data, Source, stage
 
 
 def _matching(rows: list[dict], match: dict | None) -> list[dict]:
@@ -21,13 +21,23 @@ async def where(context, source: Source, keep: dict) -> list[dict]:
 
 
 @stage("map.join")
-async def join(context, source: Source, other: Source, on: str) -> list[dict]:
-    """Each row of `source` plus the fields of the row of `other` that has the same `on` value (the first, if several).
-    A row with no match is dropped; where both have a field the row of `source` wins."""
+async def join(context, source: Source, other: Source, on: str, other_on: str | None = None) -> list[dict]:
+    """Each row of `source` plus the fields of the row of `other` whose `other_on` (default: `on`) equals the row's `on`
+    (the first, if several). A row with no match is dropped; where both have a field the row of `source` wins."""
     matching: dict = {}
     for row in await context.read(other):
-        matching.setdefault(row[on], row)
+        matching.setdefault(row[other_on or on], row)
     return [{**matching[row[on]], **row} for row in await context.read(source) if row[on] in matching]
+
+
+@stage("map.expect")
+async def expect(context, probabilities: Source, values: Data, into: str) -> list[dict]:
+    """One row, `{<into>: <number>}`: the average of your numbers per level (`data.<values>`, level to number) weighted
+    by the probability of each level in a Jev reading (`probabilities`)."""
+    readings = await context.read(probabilities)
+    numbers = context.sketch.data[values]
+    total = sum(row["probability"] for row in readings) or 1.0
+    return [{into: sum(row["probability"] * numbers[row["level"]] for row in readings) / total}]
 
 
 @stage("map.unpair")

@@ -39,7 +39,7 @@ class StageContext:
 
     async def read(self, name: str) -> list[dict]:
         """The rows of one of this sketch's sources."""
-        return await self.sources.read(self.sketch, name, self.results)
+        return await self.sources.read(self.sketch, name)
 
 
 @dataclass(frozen=True)

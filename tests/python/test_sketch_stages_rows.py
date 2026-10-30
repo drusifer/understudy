@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from src.sketch.registry import STAGES
 from src.sketch.stages_rows import (
     adjacent_runs,
+    expect,
     join,
     prefer_middle,
     prefer_order,
@@ -69,6 +70,22 @@ class JoinTests(unittest.TestCase):
     def test_the_source_rows_own_value_wins_a_clash(self):
         rows = run(join, context(left=[{"k": 1, "v": "mine"}], right=[{"k": 1, "v": "theirs", "w": 2}]), "left", "right", "k")
         self.assertEqual(rows, [{"k": 1, "v": "mine", "w": 2}])
+
+
+class JoinOnOtherKeyTests(unittest.TestCase):
+    def test_the_other_rows_key_may_be_named_differently(self):
+        rows = run(join, context(left=[{"showing": "A", "tomato": 90}], right=[{"level": "A", "probability": 0.7}]),
+                   "left", "right", "showing", "level")
+        self.assertEqual(rows, [{"level": "A", "probability": 0.7, "showing": "A", "tomato": 90}])
+
+
+class ExpectTests(unittest.TestCase):
+    def test_it_averages_your_numbers_by_the_probability_of_each_level(self):
+        sketch = SimpleNamespace(data={"values": {"bored": 0.0, "mixed": 0.5, "loved": 1.0}})
+        ctx = SimpleNamespace(read=context(p=[{"level": "bored", "probability": 0.1}, {"level": "mixed", "probability": 0.3},
+                                              {"level": "loved", "probability": 0.6}]).read, sketch=sketch)
+        (row,) = run(expect, ctx, "p", "values", "audience")
+        self.assertAlmostEqual(row["audience"], 0.1 * 0.0 + 0.3 * 0.5 + 0.6 * 1.0)
 
 
 class UnpairTests(unittest.TestCase):
