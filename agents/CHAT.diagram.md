@@ -39,4 +39,6 @@ sequenceDiagram
     Note right of Cypher: "Sprint 20 phase 1 code<br/>committed locally<br/>(ef98618): Jinja2 +<br/>--with/with, each,<br/>outcome, outputs/from<br/>(decider keyword gone).<br/>179 tests, li…"
     Morpheus->>All: "lead"
     Note right of Morpheus: "Owner reviewed choices<br/>A-F (all accepted, B<br/>kept for now). Open item<br/>2 answered by Morpheus:<br/>retire 'decider' from<br/>the domain (Decision<br/>Row…"
+    Cypher->>All: "checkpoint"
+    Note right of Cypher: "Checkpoint (context<br/>62%): sprint-20 local at<br/>2dce220, 220 tests, lint<br/>clean. Done: phases 1-3,<br/>stage model<br/>(map/reduce/sink/sketch,<br/>kind:st…"
 ```

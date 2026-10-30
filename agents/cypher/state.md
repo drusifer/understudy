@@ -12,16 +12,19 @@
 ## Current Task
 Status: Sprint 20 in progress on branch `sprint-20` (local only, not pushed). Stories (Smith Gate 1) and architecture (Gate 2) approved, plan approved. **Phase 1 code committed (ef98618) but not yet UAT'd by Trin or reviewed by Morpheus.**
 
-### Progress
-- [x] Epic slice B planned: `docs/sprints/USER_STORIES_SPRINT20.md` (UND-68..73), `ARCH_SPRINT20.md`, `task.md` (7 phases).
-- [x] Phase 1 code (Task 1.1): Jinja2 sketches, `--with`, per-call `with`, unused-name check, `each`, final-state `outcome`, `outputs`/`from` (no `decider` keyword), 179 Python tests green, lint clean.
-- [ ] Phase 1 UAT (Trin) and review (Morpheus); `docs/SKETCHES.md` is updated.
-- [ ] Phases 2-7 not started (UND-73 candidates/shortlist/Jev pick, UND-69 seating, UND-70 evening, UND-71 ETL as sketch, UND-72 purge).
+### Progress (2026-10-30, branch `sprint-20`, local only, last commit 2dce220, 220 Python tests, lint clean)
+- [x] Planning: stories UND-68..73, architecture, task board approved.
+- [x] Phase 1 (UND-68): Jinja2 sketches, `--with` / per-call `with`, unused-name check, `each`, final-state `outcome`, `outputs`.
+- [x] Phase 2 (UND-73): options read from rows `{ from, key }`, `shortlist`, Jev `options`.
+- [x] Stage model (decisions 23-33): `@stage` registry with typed signatures; `do: { map|reduce|sink|sketch: {...} }` + `with:` beside; `blend` is `reduce.blend`; `kind: stage` sources (lazy, once); stages `map.adjacent_runs/prefer_order/prefer_middle/weigh`, `reduce.max/min/any`; single-row guards; `center` (American spelling).
+- [x] Phase 3 (UND-69): `tests/fixtures/evening/seating.yaml` + `seats.jsonl` + `test_sketch_seating.py` (blocks, weights, outcome none).
+- [ ] Trin UAT and Morpheus review of phases 1-3 (not done).
+- [ ] Phase 4 (UND-70 the evening), Phase 5-6 (UND-71 ETL as sketch; freeze expected result first), Phase 7 (UND-72 purge + docs).
 
 ## Next Steps
-1. **Read `docs/sprints/OWNER_DECISIONS_SPRINT20.md` first.** It holds every owner answer (decisions 1-20) and the choices Claude made alone overnight (A-F). Check it before asking the owner anything; record each new answer there at once.
-2. Ask the owner to review choices A-F and the two open points; the owner may overturn any.
-3. UND-73 needs a re-think under "take away" (the owner's rule): ranking and shortlisting showings may be plain SQL stages, leaving only "a Jev choice among runtime options" as new; discuss before building. ARCH_SPRINT20 still describes the original UND-73 (candidate outcomes, `shortlist:`, Jev `options:`).
-4. Then phases 3-7 per `task.md`; the ETL expected-result file must be committed (Phase 5) before any ETL change.
-5. Owner rules: no back-compat, YAGNI, reuse existing syntax, no new words, one question at a time, define names before using them, Edit tool for edits, `bobp make` only, push only via `bobp make push` and only when asked.
+1. **Read `docs/sprints/OWNER_DECISIONS_SPRINT20.md` first** (decisions 1-33, choices A-H all accepted). Record each new owner answer there at once; check it before asking anything.
+2. Phase 4: move `seating.yaml`/`seats.jsonl` to `examples/evening/`, write `evening.yaml` (showings, films, ratings, reviews fixtures; `each` over films with a Jev review score; weights as `--with`; shortlist of 5 and Jev pick; calls `seating` with `with:`; walk away = final state `outcome`), replacing the old Node example. The unresolved piece: how the evening ranks showings with `map.weigh` + `reduce.max` and joins audience scores to showings by title (a join map is not built; ask the owner before adding one).
+3. Open (owner said wait): shape of non-weights outputs (a `hold`); `from:` as a blend entry key (owner unsure, kept for now).
+4. Then UND-71 (ETL), UND-72 (purge), Trin/Morpheus gates, Tank sdlc-check, Oracle groom, Smith test, retro, Cypher launch. Do not push or merge without the owner.
+5. Owner rules: no back-compat, YAGNI, reuse existing syntax, no new words, one question at a time, define names before using them, Edit tool for edits (no sed/python scripts), `bobp make` only, American spelling, push only via `bobp make push` and only when asked.
 6. Other open threads: net-spending check ($433k), 270 review merchants, old worktree and branches (owner said keep).
