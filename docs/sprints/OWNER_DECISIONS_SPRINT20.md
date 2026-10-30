@@ -53,8 +53,8 @@ The owner said: "do your best to finish without me. It is done when there is not
 | D | A loop's child may declare outputs the parent has no outcome for, because the loop's result is pairs, not weights to blend. | Decision 18. | seems resonable but could be subjectg to change in the future|
 | E | A child inside an `each` is read with its row values left empty when the parent is checked (the child is checked on its own). | Decision 6 (encapsulation). | +1 | 
 | F | A row's Jev answers are captured under `<child name>[<row position>]`, so replay needs no new mechanism. Replay does not list those keys up front. | Reuses capture/replay as is. | yay |
-| G | The `blend` stage is now generic: each result row is the input row's own fields plus `dimension`, `option` and `weight`. The coffee-only arithmetic (`drinks` times weight, the per-segment summaries) moved into `convert.recipes`, the coffee conversion. | Takes coffee out of `blend` so the evening can use it with rows that have no `segment` or `drinks`; coffee output is unchanged (tests identical). | _(reply)_ |
-| H | UND-73 criterion 3 dropped "an answer outside the shortlist is refused": Jev is offered only the shortlist and returns probabilities only for what it was offered, so it cannot answer outside it. | Nothing to refuse; less to build. | _(reply)_ |
+| G | The `blend` stage is now generic: each result row is the input row's own fields plus `dimension`, `option` and `weight`. The coffee-only arithmetic (`drinks` times weight, the per-segment summaries) moved into `convert.recipes`, the coffee conversion. | Takes coffee out of `blend` so the evening can use it with rows that have no `segment` or `drinks`; coffee output is unchanged (tests identical). | good |
+| H | UND-73 criterion 3 dropped "an answer outside the shortlist is refused": Jev is offered only the shortlist and returns probabilities only for what it was offered, so it cannot answer outside it. | Nothing to refuse; less to build. | good |
 
 ## Still open
 
