@@ -9,11 +9,11 @@ from unittest.mock import patch
 from src.paths import ROOT
 from src.sketch.check import load_checked
 from src.sketch.cli import main
+from src.sketch.registry import STAGES, Stage
 from src.sketch.run import run_sketch
-from src.sketch.vocabulary import STAGES
 
 BRANCH = ROOT / "tests" / "fixtures" / "machine_branch.yaml"
-TEST_STAGES = {"test.count": {}, "test.mark": {}, "test.boom": {}}
+TEST_STAGES = {name: Stage(name, None, {}) for name in ("test.count", "test.mark", "test.boom")}
 
 
 def library(count=100, fail_in=None):

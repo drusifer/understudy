@@ -10,14 +10,16 @@ import sys
 from collections.abc import Mapping
 from pathlib import Path
 
+import src.sketch.stages  # noqa: F401 - importing it registers the stages
 from src.jev import JevError, TypeSafeJev
 from src.paths import OutputPathError
 from src.sketch.check import load_checked
 from src.sketch.loader import SketchError
+from src.sketch.registry import StageFn
+from src.sketch.registry import library as registered
 from src.sketch.run import run_sketch
 from src.sketch.sources.capture import CaptureStore, ReplayError
 from src.sketch.sources.reader import Capture, non_file_keys
-from src.sketch.stages import LIBRARY, StageFn
 
 DEFAULT_OUT = Path("build/runs")
 
@@ -88,7 +90,7 @@ def main(  # noqa: PLR0913 - the command line's injection points
     except (ReplayError, JevError) as error:
         return fail(str(error), 2)
     try:
-        stages = LIBRARY if library is None else library
+        stages = registered() if library is None else library
         result = asyncio.run(run_sketch(sketch, args.out, stages, lambda line: stdout.write(line + "\n"), capture))
     except OutputPathError as error:
         return fail(str(error), 2)

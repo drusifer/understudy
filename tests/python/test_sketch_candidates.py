@@ -6,15 +6,16 @@ from unittest.mock import patch
 
 from jev_double import JevDouble
 
+import src.sketch.stages  # noqa: F401 - importing it registers the stages
 from src.jev import Chosen
 from src.sketch.blend import shortlist
 from src.sketch.check import check, load_checked
 from src.sketch.loader import load
+from src.sketch.registry import STAGES, Stage
+from src.sketch.registry import library as registered
 from src.sketch.run import run_sketch
 from src.sketch.sources.capture import CaptureStore
 from src.sketch.sources.reader import Capture
-from src.sketch.stages import LIBRARY
-from src.sketch.vocabulary import STAGES
 
 SKETCH = """\
 name: pick
@@ -72,7 +73,7 @@ class CandidateCase(unittest.TestCase):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         self.dir = Path(directory.name)
-        patcher = patch.dict(STAGES, {"test.start": {}, "test.choose": {}})
+        patcher = patch.dict(STAGES, {name: Stage(name, None, {}) for name in ("test.start", "test.choose")})
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -86,7 +87,7 @@ class CandidateCase(unittest.TestCase):
         jev = JevDouble(choose_fn=lambda state, instructions, options: Chosen(
             answer, 0.9, {option: 1.0 if option == answer else 0.0 for option in options}))
         capture = Capture.live(CaptureStore(self.dir / "cache"), jev)
-        library = {**LIBRARY, "test.start": start, "test.choose": choose}
+        library = {**registered(), "test.start": start, "test.choose": choose}
         return asyncio.run(run_sketch(load_checked(path), self.dir / "out", library, lambda line: None, capture)), jev
 
 
@@ -128,7 +129,7 @@ class JevPickTests(CandidateCase):
         path = self.write()
         first, _ = self.run_it(path, answer="Brazil")
         store = CaptureStore(self.dir / "cache")
-        library = {**LIBRARY, "test.start": start, "test.choose": choose}
+        library = {**registered(), "test.start": start, "test.choose": choose}
         replay = Capture.replay(store, load(path), None)
         again = asyncio.run(run_sketch(load_checked(path), self.dir / "out2", library, lambda line: None, replay))
         self.assertEqual(again.outputs["chosen"].read_text(encoding="utf-8"), first.outputs["chosen"].read_text(encoding="utf-8"))

@@ -31,10 +31,13 @@ Recorded by Cypher from the conversation, in the owner's words where possible. *
 | 15 | **Values are passed to the child explicitly** ("we had this before and I think you removed it"). Exact form for per-row values not yet decided. | "yes we had this before" |
 | 16 | **A showing is a film at a time;** the Jev reviews belong to the film, so the loop runs over films and joins to showings by `title`. | "yes I think that makes more sense" |
 | 17 | **Cut:** `format: csv` file sources; reading one source several times with different params. | "yes to 1 and 2" |
-
 | 18 | **An `each` produces a list of input/output pairs:** `[ { input: { ... }, output: { ... } }, ... ]`, one per iteration: the input row, and what the child output. No merging, no `by:`. | "1. [ {input: {a...}, output: {b ... }},...]" |
 | 19 | **The body of an `each` is a child invocation, and it passes its params with `with:`** (the one way). No special per-row form. | "the value for each is the child invocation and uses with to pass params" |
 | 20 | **"decider" is a user-defined name, not part of the schema.** The schema must not have a `decider:` keyword; outputs are named by the sketch's author. | "I think 'decider' is a user defined name not part of the schema definition" |
+| 21 | **"decider" is retired from the domain model;** the terms are Decision Row, Blend and Output. | "great!" (Morpheus's recommendation) |
+| 22 | **Candidates** are options read from rows, written `{ from, key }` for an outcome and for a Jev source's options; a blend may keep the best n with `shortlist: n`. | "ok let's continue then" (Morpheus's `*advise`) |
+| 23 | **A stage is a function registered with a decorator, and its typed signature is the contract of the YAML** (the `with:` keys, their kinds and whether they are required). One registration, not two. | "let's use a decorator to identify stage implementations; each stage type should have a strongly typed interface that should align with the declarative yaml so it's simple to apply" |
+| 24 | **Vocabulary:** a *transition* is an edge between states (`then`, `transitions`); `do:` is the work in a state, not a transition; a *state* is a node you name; a *stage* is the work it names, written `type.name` (`etl.split_by_share`); a modifier (`each`, `shortlist`, `on_empty`, `forbid`) changes how a state runs. The word "transition" need not be a schema key. | conversation 2026-10-30: "grounded in recognizable patterns" |
 
 ## Decided by Claude while the owner was asleep (2026-10-30), for the owner to review
 

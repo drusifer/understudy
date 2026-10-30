@@ -6,10 +6,12 @@ Every mistake is one line: file, the path inside it, what is wrong and, where th
 from difflib import get_close_matches
 from pathlib import Path
 
+import src.sketch.stages  # noqa: F401 - importing it registers the stages
 from src.sketch import conditions
 from src.sketch.loader import SketchError, load, unused_variables
 from src.sketch.model import Sketch
-from src.sketch.vocabulary import COMBINATORS, ON_EMPTY, SINK_PREFIX, SKETCH_PREFIX, STAGES
+from src.sketch.registry import STAGES, Data, Source
+from src.sketch.vocabulary import COMBINATORS, ON_EMPTY, SINK_PREFIX, SKETCH_PREFIX
 
 SHARE_TOLERANCE = 0.001
 OPTION_OPERATORS = ("eq", "ne", "in", "not_in")
@@ -151,22 +153,29 @@ class _Checker:
                 self.problem(f"{at}.do", f"sink {sink!r} is not declared{_nearest(sink, self.sketch.sinks)}")
         elif name.startswith(SKETCH_PREFIX):
             self.subsketch(f"{at}.do", name[len(SKETCH_PREFIX):], state.get("with", {}), "each" in state)
-        elif name not in STAGES:
-            self.problem(f"{at}.do", f"unknown stage {name!r}{_nearest(name, STAGES)}")
+        elif name not in STAGES or name == "blend":
+            self.problem(f"{at}.do", f"unknown stage {name!r}{_nearest(name, [n for n in STAGES if n != 'blend'])}")
         else:
             self.stage_with(at, name, state.get("with", {}))
 
     def stage_with(self, at: str, name: str, given: dict) -> None:
-        wanted = STAGES[name]
-        for key in sorted(set(wanted) - set(given)):
+        """The `with:` keys must be the parameters the stage's function declares (see `registry`)."""
+        wanted = STAGES[name].params
+        for key in sorted(key for key, param in wanted.items() if param.required and key not in given):
             self.problem(f"{at}.with", f"{name} needs {key!r}")
         for key, value in given.items():
             if key not in wanted:
                 self.problem(f"{at}.with.{key}", f"{name} has no {key!r}{_nearest(key, wanted)}")
-            elif wanted[key] == "source" and value not in self.sketch.sources:
-                self.problem(f"{at}.with.{key}", f"{value!r} is not a source{_nearest(value, self.sketch.sources)}")
-            elif wanted[key] == "data" and value not in self.sketch.data:
-                self.problem(f"{at}.with.{key}", f"{value!r} is not under data{_nearest(value, self.sketch.data)}")
+            else:
+                self.param(f"{at}.with.{key}", wanted[key].kind, value)
+
+    def param(self, at: str, kind: type, value) -> None:
+        if kind is Source and value not in self.sketch.sources:
+            self.problem(at, f"{value!r} is not a source{_nearest(value, self.sketch.sources)}")
+        elif kind is Data and value not in self.sketch.data:
+            self.problem(at, f"{value!r} is not under data{_nearest(value, self.sketch.data)}")
+        elif kind in (str, int, float) and (isinstance(value, bool) or not isinstance(value, kind)):
+            self.problem(at, f"{value!r} must be a {kind.__name__}")
 
     def subsketch(self, at: str, file: str, given: dict, each: bool) -> None:
         path = (self.sketch.path.parent / f"{file}.yaml").resolve()

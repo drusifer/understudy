@@ -1,17 +1,15 @@
-"""The stage library: the functions a sketch's `do:` and `blend:` name.
+"""The stage library: the functions a sketch's `do:` and `blend:` name, each registered with `@stage`.
 
-Each stage is `async def stage(context) -> result`; the result is what the next stage reads as `context.last`
-and what guards test. Counting and converting are DuckDB SQL; the owner's judgement is `decide` and `blend`.
+A stage is `async def stage(context, <with: keys>) -> result` (see `registry`); the result is what the next stage
+reads as `context.last` and what guards test. Counting and converting are DuckDB SQL; the owner's judgement is `decide` and `blend`.
 """
 
 import math
-from collections.abc import Awaitable, Callable
 from difflib import get_close_matches
 
 from src.sketch.decide import decide_input
+from src.sketch.registry import Data, Source, stage
 from src.sketch.sql import query
-
-StageFn = Callable[..., Awaitable]
 
 RECIPE_FIELDS = ("ingredient", "amount", "unit")
 SPLIT_SQL = """
@@ -30,26 +28,26 @@ RECIPE_SQL = """
 """
 
 
-async def split_by_share(context) -> list[dict]:
-    """Last week's total drinks split across the owner's segments by their share."""
-    use = context.state["with"]
-    sales = [{"drinks": row[use["field"]]} for row in await context.read(use["source"])]
+@stage("etl.split_by_share")
+async def split_by_share(context, source: Source, field: str, segments: Data) -> list[dict]:
+    """A total (the sum of `field` over the source's rows) split across the owner's segments by their share."""
+    sales = [{"drinks": row[field]} for row in await context.read(source)]
     segments = [{"name": s["name"], "share": s["share"], "age_min": s.get("age_min"), "age_max": s.get("age_max")}
-                for s in context.sketch.data[use["segments"]]]
+                for s in context.sketch.data[segments]]
     rows = query(context.directory, SPLIT_SQL, {"sales": sales, "segments": segments})
     context.summary["total_drinks"] = round(sum(row["drinks"] for row in rows), 6)
     return rows
 
 
-async def join_weights(context) -> list[dict]:
-    """A Jev reading (a probability per level) joined with the owner's weights per level: one decider's rows."""
-    use = context.state["with"]
-    probabilities = await context.read(use["probabilities"])
-    levels = context.sketch.data[use["weights"]]
+@stage("etl.join_weights")
+async def join_weights(context, probabilities: Source, weights: Data) -> list[dict]:
+    """A Jev reading (a probability per level) joined with the owner's weights per level: weighted rows."""
+    probabilities = await context.read(probabilities)
+    levels = context.sketch.data[weights]
     dimensions = _returned_dimensions(context)
-    weights = [{"level": level, "option": option, "weight": weight}
-               for level, options in levels.items() for option, weight in options.items()]
-    mixed = query(context.directory, JOIN_SQL, {"probs": probabilities, "weights": weights})
+    per_level = [{"level": level, "option": option, "weight": weight}
+                 for level, options in levels.items() for option, weight in options.items()]
+    mixed = query(context.directory, JOIN_SQL, {"probs": probabilities, "weights": per_level})
     context.summary[f"{context.sketch.name}_weights"] = {row["option"]: round(row["weight"], 6) for row in mixed}
     return [{dimensions[0]: row["option"], "weight": row["weight"]} for row in mixed]
 
@@ -87,6 +85,7 @@ async def declared_outcomes(context) -> dict:
     return outcomes
 
 
+@stage("blend")
 async def blend(context) -> list[dict]:
     """For each input row, the blended weight of every option per dimension: the row's own fields plus
     `dimension`, `option` and `weight`."""
@@ -106,34 +105,26 @@ async def blend(context) -> list[dict]:
     return weighted
 
 
-async def convert_recipes(context) -> list[dict]:
+@stage("convert.recipes")
+async def convert_recipes(context, recipes: Data, packs: Data) -> list[dict]:
     """Drink counts to ingredient amounts, rounded up to whole packs where the owner gave a pack size."""
-    use = context.state["with"]
-    recipes = []
-    for recipe in context.sketch.data[use["recipes"]]:
+    named_recipes = []
+    for recipe in context.sketch.data[recipes]:
         named = {k: v for k, v in recipe.items() if k not in RECIPE_FIELDS}
         if len(named) != 1:
             raise ValueError(f"a recipe names one option, such as size: medium (got {named})")
         ((dimension, option),) = named.items()
-        recipes.append({"dimension": dimension, "option": option, **{k: recipe[k] for k in RECIPE_FIELDS}})
+        named_recipes.append({"dimension": dimension, "option": option, **{k: recipe[k] for k in RECIPE_FIELDS}})
     context.summary["drinks_per_segment"] = {row["segment"]: round(row["drinks"], 6) for row in context.last}
     context.summary["shares_per_segment"] = {}
     for row in context.last:
         options = context.summary["shares_per_segment"].setdefault(row["segment"], {}).setdefault(row["dimension"], {})
         options[row["option"]] = round(row["weight"], 6)
-    totals = query(context.directory, RECIPE_SQL, {"shares": context.last, "recipes": recipes})
-    packs = context.sketch.data[use["packs"]]
+    totals = query(context.directory, RECIPE_SQL, {"shares": context.last, "recipes": named_recipes})
+    pack_sizes = context.sketch.data[packs]
     rows = []
     for total in totals:
-        pack = packs.get(total["ingredient"])
+        pack = pack_sizes.get(total["ingredient"])
         amount = math.ceil(round(total["amount"], 9) / pack) * pack if pack else round(total["amount"], 4)
         rows.append({"ingredient": total["ingredient"], "amount": amount, "unit": total["unit"]})
     return rows
-
-
-LIBRARY: dict[str, StageFn] = {
-    "etl.split_by_share": split_by_share,
-    "etl.join_weights": join_weights,
-    "blend": blend,
-    "convert.recipes": convert_recipes,
-}

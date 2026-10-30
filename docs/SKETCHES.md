@@ -172,6 +172,25 @@ seat:
 * A `--with` or `with` name the receiving file does not use is refused, with the nearest name it does use.
 * `understudy check` reads the sketch after Jinja has filled it in.
 
+## Adding a stage
+
+A stage is one Python function, registered with `@stage`. Its signature is the contract of the YAML, so there is nothing else to keep in step:
+
+```python
+@stage("etl.split_by_share")
+async def split_by_share(context, source: Source, field: str, segments: Data) -> list[dict]: ...
+```
+
+```yaml
+do: etl.split_by_share
+with: { source: sales, field: drinks, segments: segments }
+```
+
+* Each parameter after `context` is a `with:` key; one with no default is required.
+* The annotation says what the value is: `Source` names a source of the sketch, `Data` names a key under `data`, and `str`, `int` or `float` is a plain value.
+* `understudy check` reads the same signature, so a missing, unknown or wrongly typed `with:` key is refused before anything runs, with the nearest valid name.
+* The function returns rows; the next stage reads them as `context.last`.
+
 ## Options that exist only in data
 
 An outcome's options are normally listed. When they exist only in a file, say where to read them:

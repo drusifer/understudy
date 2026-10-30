@@ -9,8 +9,8 @@ from unittest.mock import patch
 from src.sketch.check import check, load_checked
 from src.sketch.cli import main
 from src.sketch.loader import SketchError, load
+from src.sketch.registry import STAGES, Stage
 from src.sketch.run import run_sketch
-from src.sketch.vocabulary import STAGES
 
 PARENT = """\
 name: parent
@@ -51,7 +51,7 @@ class TemplateCase(unittest.TestCase):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         self.dir = Path(directory.name)
-        patcher = patch.dict(STAGES, {"test.look": {}})
+        patcher = patch.dict(STAGES, {"test.look": Stage("test.look", None, {})})
         patcher.start()
         self.addCleanup(patcher.stop)
 

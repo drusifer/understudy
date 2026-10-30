@@ -18,9 +18,9 @@ from src.paths import check_writable
 from src.sketch.loader import child_path, children, load
 from src.sketch.machine import build_machine
 from src.sketch.model import Sketch
+from src.sketch.registry import StageFn
 from src.sketch.sources.capture import CaptureStore
 from src.sketch.sources.reader import Capture, Sources
-from src.sketch.stages import StageFn
 from src.sketch.vocabulary import SINK_PREFIX, SKETCH_PREFIX
 
 
@@ -161,7 +161,7 @@ def _stages(
                 run = _run_each if "each" in state else _run_child
                 result = await run(context, library, record)
             else:
-                result = await _stage_function(state, library)(context)
+                result = await _stage_function(state, library)(context, **state.get("with", {}))
             results[name] = result
             return result
 

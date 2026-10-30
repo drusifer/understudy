@@ -10,9 +10,9 @@ from jev_double import JevDouble
 from src.jev import Chosen, JevError
 from src.paths import ROOT
 from src.sketch.cli import main
+from src.sketch.registry import STAGES, Stage
 from src.sketch.sources.capture import CaptureStore, ReplayError, choose_replay
 from src.sketch.sources.file import read_jsonl
-from src.sketch.vocabulary import STAGES
 
 FIXTURE = ROOT / "tests" / "fixtures" / "jev_read.yaml"
 KEY = "jev_read.mood"
@@ -34,7 +34,7 @@ def double(answer=HAPPY, fail=None):
 
 class SourcesCase(unittest.TestCase):
     def setUp(self):
-        patcher = patch.dict(STAGES, {"test.read": {}})
+        patcher = patch.dict(STAGES, {"test.read": Stage("test.read", None, {})})
         patcher.start()
         self.addCleanup(patcher.stop)
         directory = tempfile.TemporaryDirectory()
