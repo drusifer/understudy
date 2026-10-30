@@ -19,8 +19,7 @@ import shutil
 import subprocess
 import sys
 import uuid
-from datetime import UTC, date, datetime
-from decimal import Decimal
+from datetime import UTC, datetime
 from pathlib import Path
 
 import duckdb
@@ -37,6 +36,7 @@ from src.etl.transfers import judge_payees
 from src.jev import GatedJev
 from src.machine_runner import RunRecord, run_machine
 from src.paths import ROOT, check_writable
+from src.sketch.sql import plain
 
 SQLMESH = Path(sys.executable).parent / "sqlmesh"
 MACHINE = load(Path(__file__).with_name("stages.yaml"))
@@ -54,16 +54,6 @@ NEW_CATEGORY = {
 
 class EtlError(Exception):
     """The run cannot continue; the message says why."""
-
-
-def _plain(value):
-    if isinstance(value, Decimal):
-        return float(value)
-    if isinstance(value, date):
-        return value.isoformat()
-    if isinstance(value, list):
-        return [_plain(item) for item in value]
-    return value
 
 
 def _mask(name: str) -> str:
@@ -85,7 +75,7 @@ class _Run:
         with duckdb.connect(str(self.database), read_only=True) as connection:
             cursor = connection.execute(sql)
             names = [column[0] for column in cursor.description]
-            return [{n: _plain(v) for n, v in zip(names, row, strict=True)} for row in cursor.fetchall()]
+            return [{n: plain(v) for n, v in zip(names, row, strict=True)} for row in cursor.fetchall()]
 
     def write(self, table: str, columns: dict, rows: list[dict]) -> None:
         with duckdb.connect(str(self.database)) as connection:

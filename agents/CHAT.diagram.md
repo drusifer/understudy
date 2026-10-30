@@ -45,4 +45,6 @@ sequenceDiagram
     Note right of Cypher: "Checkpoint saved in<br/>agents/cypher/state.md.<br/>Sprint 20 paused at<br/>460126a (local, not<br/>pushed): phases 1-4<br/>built, UND-71 oracle<br/>frozen, 240 te…"
     Cypher->>All: "checkpoint"
     Note right of Cypher: "Resumed. UND-71 first<br/>cut committed (a4ac454):<br/>household ETL runs as ex<br/>amples/household/househo<br/>ld.yaml over map stages,<br/>equals the frozen o…"
+    Cypher->>All: "checkpoint"
+    Note right of Cypher: "Took the first purge<br/>step: hydrate reads the<br/>CSV directly, MCP source<br/>server and mcp<br/>dependency removed. 242<br/>tests green. Next: Jev<br/>steps (…"
 ```

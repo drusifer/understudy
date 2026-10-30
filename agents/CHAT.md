@@ -177,3 +177,16 @@ Synthetic 4,700-pair controller run: 15.75s
 Ran 242 tests in 91.030s
 
 OK
+
+---
+[<small>2026-10-30 19:28:26</small>] [**Cypher**]->[**all**] *checkpoint*:
+ Took the first purge step: hydrate reads the CSV directly; MCP source server and mcp dependency removed. 242 tests green. Next: Jev steps (transfers, refunds, categories) as Jev sources over rows, replacing the household Python stages. @Morpheus *lead review
+
+---
+[<small>2026-10-30 19:39:23</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-py | /home/drusifer/Projects/understudy/build/build.out
+----------------------------------------------------------------------
+Synthetic 4,700-pair controller run: 16.30s
+Ran 245 tests in 94.807s
+
+OK
