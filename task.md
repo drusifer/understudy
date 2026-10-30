@@ -17,9 +17,9 @@
 ### Phase 1: Build setup and shared modules (UND-61 groundwork)
 *Phase goal: the environment and the shared code the new package needs, with no duplicates created.*
 
-- [ ] **Task 1.1:** `*devops` Pin `ruamel.yaml` and `jsonschema` as direct dependencies (`lock-py`), add `src/sketch` and its tests to the `lint` ruff paths, add `.understudy/` to `.gitignore`; update `docs/SDLC.md`. (*Owner: Tank | Verification: `bobp make install`, `bobp make lint`, `bobp make check` pass from a clean install.*)
-- [ ] **Task 1.2:** `*refactor` Move the Jev wrapper to `src/jev.py` and the output-destination policy to `src/paths.py`; `src/etl` imports them; delete the originals. (*Owner: Neo | Verification: `bobp make test-py` passes with the moved modules and no copy left (`git grep` finds one definition of each).*)
-- [ ] **Task 1.3:** Review: shared modules, dependencies, SDLC edit. (*Owner: Morpheus | Verification: verdict recorded; commit `Phase 1: ...`.*)
+- [x] **Task 1.1:** `*devops` Pin `ruamel.yaml` and `jsonschema` as direct dependencies (`lock-py`), add `src/sketch` and its tests to the `lint` ruff paths, add `.understudy/` to `.gitignore`; update `docs/SDLC.md`. (*Owner: Tank | Verification: `bobp make install`, `bobp make lint`, `bobp make check` pass from a clean install.*)
+- [x] **Task 1.2:** `*refactor` Move the Jev wrapper to `src/jev.py` and the output-destination policy to `src/paths.py`; `src/etl` imports them; delete the originals. (*Owner: Neo | Verification: `bobp make test-py` passes with the moved modules and no copy left (`git grep` finds one definition of each).*)
+- [x] **Task 1.3:** Review: shared modules, dependencies, SDLC edit. (*Owner: Morpheus | Verification: verdict recorded; commit `Phase 1: ...`.*)
 
 ### Phase 2: Load and check a sketch (UND-61)
 *Phase goal: a wrong sketch is refused before anything runs, naming file, path, value and the nearest good one.*

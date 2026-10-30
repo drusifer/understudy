@@ -79,7 +79,7 @@ lint: ## eslint over src/ and tests/, ruff over the Python ETL
 	$(NEED_INSTALL)
 	npm run lint
 	@test -x .venv/bin/ruff || { echo "No .venv - run 'bobp make install' first"; exit 1; }
-	.venv/bin/ruff check src/etl tests/python
+	.venv/bin/ruff check src/etl src/sketch src/jev.py src/paths.py tests/python
 
 secrets: ## gitleaks: every commit + uncommitted changes to tracked files
 	@command -v gitleaks >/dev/null || { echo "gitleaks is not installed - see https://github.com/gitleaks/gitleaks#installing"; exit 1; }

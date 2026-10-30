@@ -12,7 +12,8 @@ sequenceDiagram
     participant Neo
     participant Morpheus
     participant Tank
-    Note over Mouse,Tank: 📅 2026-10-29
+    participant All
+    Note over Mouse,All: 📅 2026-10-29
     Mouse->>Cypher: "phase 0"
     Note right of Mouse: "Sprint 19 planning<br/>started on branch<br/>sprint-19 (from main<br/>357c85b, no worktree).<br/>SDLC present. Scope<br/>pending the owner.<br/>@Cypher *pm plan sp…"
     Cypher->>Smith: "pm handoff"
@@ -47,5 +48,12 @@ sequenceDiagram
     Note right of Mouse: "Sprint 19 planned:<br/>task.md, 6 phases<br/>(setup/shared,<br/>load+check,<br/>decide/blend,<br/>run+command,<br/>sources+replay, coffee<br/>end to end), each<br/>Neo/Tri…"
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "Morpheus plan review:<br/>phases follow the<br/>architecture, Phase 4<br/>was oversized with a<br/>two-owner task, split<br/>into Phase 4 (run the<br/>machine) and…"
-    Note over Mouse,Tank: "Phase 0 summary<br/>Smith: Smith Gate 2 HOLD<br/>Sprint 19 architecture:<br/>stories say 'understudy<br/>run' but the arch says<br/>'understudy sketch run'<br/>(old sketches still use<br/>ru…<br/>Smith: Smith Gate 2<br/>APPROVE Sprint 19<br/>architecture: command is<br/>'understudy run'<br/>(owner), cache at<br/>.understudy/cache chosen<br/>by Morpheus and noted,…<br/>Morpheus: Morpheus plan<br/>review: phases follow<br/>the architecture, Phase<br/>4 was oversized with a<br/>two-owner task, split<br/>into Phase 4 (run the<br/>machine) and…"
+    Note over Mouse,All: "Phase 0 summary<br/>Smith: Smith Gate 2 HOLD<br/>Sprint 19 architecture:<br/>stories say 'understudy<br/>run' but the arch says<br/>'understudy sketch run'<br/>(old sketches still use<br/>ru…<br/>Smith: Smith Gate 2<br/>APPROVE Sprint 19<br/>architecture: command is<br/>'understudy run'<br/>(owner), cache at<br/>.understudy/cache chosen<br/>by Morpheus and noted,…<br/>Morpheus: Morpheus plan<br/>review: phases follow<br/>the architecture, Phase<br/>4 was oversized with a<br/>two-owner task, split<br/>into Phase 4 (run the<br/>machine) and…"
+    Mouse->>All: "phase 1"
+    Note right of Mouse: "Phase 1"
+    Neo->>Morpheus: "swe handoff"
+    Note right of Neo: "Phase 1 done:<br/>ruamel.yaml and<br/>jsonschema pinned, ruff<br/>covers src/sketch,<br/>.understudy/ ignored,<br/>Jev wrapper now<br/>src/jev.py and path<br/>policy s…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 1 review passed:<br/>no duplicate left (git<br/>grep one definition of<br/>each), dependencies<br/>ordinary, SDLC row<br/>updated. @Neo *swe impl<br/>phase-2"
+    Note over Mouse,All: "Phase 1 summary<br/>Neo: Phase 1 done:<br/>ruamel.yaml and<br/>jsonschema pinned, ruff<br/>covers src/sketch,<br/>.understudy/ ignored,<br/>Jev wrapper now<br/>src/jev.py and path<br/>policy s…<br/>Morpheus: Phase 1 review<br/>passed: no duplicate<br/>left (git grep one<br/>definition of each),<br/>dependencies ordinary,<br/>SDLC row updated. @Neo<br/>*swe impl phase-2"
 ```

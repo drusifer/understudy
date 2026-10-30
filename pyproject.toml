@@ -6,8 +6,10 @@ dependencies = [
     "duckdb==1.5.6",
     "holidays==0.107",
     "iso18245==1.4.1",
+    "jsonschema==4.26.0",
     "mcp==2.3.0",
     "python-statemachine[yaml]==3.2.2",
+    "ruamel.yaml==0.19.1",
     "sqlmesh[duckdb]==0.236.3",
     "typesafe-sdk==0.7.5",
 ]

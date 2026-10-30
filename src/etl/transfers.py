@@ -7,7 +7,7 @@ it (owner, 2026-10-27). That is a judgment about the payee, so Jev makes it, onc
 
 import asyncio
 
-from src.etl.jev import GatedJev, Jev, JevError
+from src.jev import GatedJev, Jev, JevError
 
 CONCURRENCY = 8
 EXTERNAL_ABOVE = 0.7

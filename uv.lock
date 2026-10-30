@@ -1205,8 +1205,10 @@ dependencies = [
     { name = "duckdb" },
     { name = "holidays" },
     { name = "iso18245" },
+    { name = "jsonschema" },
     { name = "mcp" },
     { name = "python-statemachine", extra = ["yaml"] },
+    { name = "ruamel-yaml" },
     { name = "sqlmesh" },
     { name = "typesafe-sdk" },
 ]
@@ -1221,8 +1223,10 @@ requires-dist = [
     { name = "duckdb", specifier = "==1.5.6" },
     { name = "holidays", specifier = "==0.107" },
     { name = "iso18245", specifier = "==1.4.1" },
+    { name = "jsonschema", specifier = "==4.26.0" },
     { name = "mcp", specifier = "==2.3.0" },
     { name = "python-statemachine", extras = ["yaml"], specifier = "==3.2.2" },
+    { name = "ruamel-yaml", specifier = "==0.19.1" },
     { name = "sqlmesh", extras = ["duckdb"], specifier = "==0.236.3" },
     { name = "typesafe-sdk", specifier = "==0.7.5" },
 ]

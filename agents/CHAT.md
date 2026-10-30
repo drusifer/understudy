@@ -131,3 +131,25 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-29 23:09:48</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
  Morpheus plan review: phases follow the architecture; Phase 4 was oversized with a two-owner task, split into Phase 4 (run the machine) and Phase 5 (replace old Node run/check); later phases renumbered to 6-7. rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=S OWNER=A. Approved. @Neo *swe impl phase-1 (Tank 1.1 first)
+
+---
+[<small>2026-10-29 23:42:33</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-py | /home/drusifer/Projects/understudy/build/build.out
+Ran 83 tests in 84.318s
+
+OK
+[10/29/26 23:42:32] INFO     Shutting down the event           dispatcher.py:159
+Synthetic 4,700-pair controller run: 18.43s
+dispatcher
+
+---
+[<small>2026-10-29 23:42:44</small>] [**Mouse**]->[**all**] *phase 1*:
+ Phase 1
+
+---
+[<small>2026-10-29 23:42:44</small>] [**Neo**]->[**Morpheus**] *swe handoff*:
+ Phase 1 done: ruamel.yaml and jsonschema pinned, ruff covers src/sketch, .understudy/ ignored; Jev wrapper now src/jev.py and path policy src/paths.py (one definition each, src/etl imports them, ROOT shared). Lint clean, 83 Python tests pass. @Morpheus *lead review phase-1
+
+---
+[<small>2026-10-29 23:42:44</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 1 review passed: no duplicate left (git grep one definition of each), dependencies ordinary, SDLC row updated. @Neo *swe impl phase-2

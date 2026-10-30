@@ -9,7 +9,7 @@ fixed order so a run is repeatable.
 import asyncio
 from collections.abc import Callable
 
-from src.etl.jev import ChoiceSpec, Chosen, GatedJev, Jev, JevError, NoulSpec
+from src.jev import ChoiceSpec, Chosen, GatedJev, Jev, JevError, NoulSpec
 
 CONCURRENCY = 8
 FITS_ABOVE = 0.7

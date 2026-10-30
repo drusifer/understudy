@@ -30,13 +30,13 @@ from src.etl import sources
 from src.etl.categorize import place_merchants
 from src.etl.decisions import store
 from src.etl.hydrate import hydrate
-from src.etl.jev import GatedJev
 from src.etl.mcc import load_mcc
 from src.etl.pairing import detect_amex_account, first_date
 from src.etl.refunds import decide_refunds
 from src.etl.transfers import judge_payees
+from src.jev import GatedJev
+from src.paths import ROOT, check_writable
 
-ROOT = Path(__file__).resolve().parents[2]
 SQLMESH = Path(sys.executable).parent / "sqlmesh"
 MACHINE = load(Path(__file__).with_name("stages.yaml"))
 
@@ -53,30 +53,6 @@ NEW_CATEGORY = {
 
 class EtlError(Exception):
     """The run cannot continue; the message says why."""
-
-
-def _check_destination_policy(out: Path) -> None:
-    """Private output stays out of tracked folders and `data/`; ignored folders and outside paths pass."""
-    resolved = out.resolve()
-    if not resolved.is_relative_to(ROOT):
-        return
-    if resolved.is_relative_to(ROOT / "data"):
-        raise EtlError(f"cannot write to {out}: private output does not belong in data/")
-    ignored = subprocess.run(["git", "check-ignore", "-q", str(resolved)], cwd=ROOT, check=False).returncode == 0
-    if not ignored:
-        raise EtlError(f"cannot write to {out}: it is inside the project and not git-ignored (use build/ or a path outside)")
-
-
-def _check_writable(out: Path) -> None:
-    """Refuse before reading anything when the run could not be written, changing nothing."""
-    if out.exists() and not out.is_dir():
-        raise EtlError(f"cannot write to {out}: it is not a directory")
-    _check_destination_policy(out)
-    nearest = out
-    while not nearest.exists():
-        nearest = nearest.parent
-    if not nearest.is_dir() or not os.access(nearest, os.W_OK):
-        raise EtlError(f"cannot write to {out}")
 
 
 def _plain(value):
@@ -133,7 +109,7 @@ async def run(*, monarch: Path, amex: Path, out: Path, jev, amex_account: str | 
               since: str | None = None, announce=print) -> dict:
     """Run the ETL over the two exports and return {"directory": <run folder>, "summary": {...}}."""
     out = Path(out).resolve()
-    _check_writable(out)
+    check_writable(out)
     for source, path in (("monarch", monarch), ("amex", amex)):
         sources.describe(Path(path), source)
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")

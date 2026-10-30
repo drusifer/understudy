@@ -7,9 +7,10 @@ import sys
 from datetime import date
 from pathlib import Path
 
-from src.etl.controller import EtlError, _check_writable, run
-from src.etl.jev import JevError, TypeSafeJev
+from src.etl.controller import EtlError, run
 from src.etl.sources import SourceError, describe
+from src.jev import JevError, TypeSafeJev
+from src.paths import OutputPathError, check_writable
 
 
 def main(argv=None, *, make_jev=TypeSafeJev, stdout=None, stderr=None):
@@ -24,11 +25,11 @@ def main(argv=None, *, make_jev=TypeSafeJev, stdout=None, stderr=None):
     try:
         if args.since:
             args.since = date.fromisoformat(args.since).isoformat()
-        _check_writable(args.out.resolve())
+        check_writable(args.out.resolve())
         describe(args.monarch, "monarch")
         describe(args.amex, "amex")
         jev = make_jev()
-    except (ValueError, OSError, SourceError, EtlError, JevError) as error:
+    except (ValueError, OSError, SourceError, EtlError, JevError, OutputPathError) as error:
         stderr.write(f"understudy: {error}\n")
         return 2
     try:

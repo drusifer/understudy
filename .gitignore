@@ -161,6 +161,9 @@ build/
 # household CSV exports (Monarch, Amex): private financial data, never committed
 data/
 
+# sketch run captures (real shop data, replayed offline)
+.understudy/
+
 # Python bytecode
 __pycache__/
 *.pyc

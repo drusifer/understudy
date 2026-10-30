@@ -3,8 +3,8 @@ import unittest
 
 from jev_double import JevDouble
 
-from src.etl.jev import JevError
 from src.etl.transfers import judge_payees
+from src.jev import JevError
 
 OWNER_ACCOUNTS = ["Ridgewood Good", "Citi Simplicity Card", "Goldman Sachs Platinum Card"]
 
