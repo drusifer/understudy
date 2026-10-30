@@ -58,7 +58,9 @@ class CoffeeCase(unittest.TestCase):
 
 class RegistryTests(unittest.TestCase):
     def test_the_stages_are_the_functions_decorated_with_stage(self):
-        self.assertEqual(set(STAGES), {"etl.split_by_share", "etl.join_weights", "convert.recipes", "blend"})
+        self.assertEqual(set(STAGES), {
+            "etl.split_by_share", "etl.join_weights", "convert.recipes", "blend",
+            "etl.adjacent_runs", "etl.prefer_order", "etl.prefer_middle"})
 
     def test_a_stage_declares_its_with_keys_by_its_signature(self):
         self.assertEqual(STAGES["etl.split_by_share"].params, {
