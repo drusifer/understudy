@@ -71,3 +71,35 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-30 00:57:28</small>] [**Cypher**]->[**all**] *checkpoint*:
  Checkpoint saved in agents/cypher/state.md. Sprint 19 merged and pushed (ea5f76b); nothing in flight. Next: plan slice B (translate the old examples) when the owner says go. Ready for context clear. Resume with *resume or /init.
+
+---
+[<small>2026-10-30 01:04:00</small>] [**Cypher**]->[**smith**] *handoff*:
+ Sprint 20 stories drafted (UND-68..71, 21 pts): evening + seating subsketch, ETL as sketch on file sources, purge old shapes. Owner chose file sources for ETL. Branch sprint-20. docs/sprints/USER_STORIES_SPRINT20.md @Smith *user review stories
+
+---
+[<small>2026-10-30 01:04:23</small>] [**Smith**]->[**cypher**] *reject*:
+ rubric STORIES: OUT=A TEST=W FAIL=A SCOPE=A SIZE=W DESIGN=A. *user reject REASON: UND-68 AC2 has no concrete case; 68 depends on 69 and hides the model gaps (assumption 5); ETL parity fixture must precede deleting etl run. FIX: concrete cases (evenings off admits 15:00; tickets=3 needs block of 3; centre 0 vs 10 differ), order 69 first, add a model-gaps story, fixture in 70 before 71. Detail: agents/smith/state.md @Cypher *pm revise stories
+
+---
+[<small>2026-10-30 01:05:58</small>] [**Cypher**]->[**smith**] *handoff*:
+ Stories revised: concrete input cases (UND-70), model gaps split out as UND-68, seating UND-69 before the evening, ETL fixture captured first (UND-71), purge last (UND-72); dependencies stated. 21 pts. @Smith *user review stories (re-review)
+
+---
+[<small>2026-10-30 01:06:46</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ rubric STORIES: OUT=A TEST=S FAIL=A SCOPE=A SIZE=S DESIGN=A. *user approve. Both findings fixed: concrete input cases, dependencies and order stated, model gaps and the ETL fixture have their own place. One note for Morpheus: UND-71 AC2 names the stage order; keep it as behaviour, free to merge stages. @Morpheus *lead arch sprint
+
+---
+[<small>2026-10-30 01:07:57</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Architecture drafted (docs/sprints/ARCH_SPRINT20.md): SQLMesh stays, ETL Jev reads become kind:jev sources, CSV as file format, candidates from file rows + shortlist + Jev pick over it. Found a gap Smith's stories missed: evening needs runtime candidates, so I added UND-73 (5 pts, after 68; total 26). ADR-0046..0049. @Smith *user feedback arch sprint 20
+
+---
+[<small>2026-10-30 01:08:06</small>] [**Smith**]->[**Mouse**] *user approve*:
+ rubric ARCH: BOUND=A FLOW=A FAIL=A USER=A DECS=A FEAS=A. *user approve. Messages match the stories; UND-73 is a real gap and is now in the stories header and order (26 pts). Note for Mouse: UND-73 is the riskiest story, plan it as its own phase. @Mouse *sm plan sprint
+
+---
+[<small>2026-10-30 01:08:30</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint 20 planned in task.md: 7 phases (68 gaps, 73 candidates, 69 seating, 70 evening, 71 in two phases with the ETL expected file frozen first, 72 purge), 3 tasks each, close tasks. rubric PLAN self-check: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-10-30 01:08:36</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A. Plan approved. Phase 5 freezes the ETL expected file before any ETL change, as the stories require. @Neo *swe impl phase-1
