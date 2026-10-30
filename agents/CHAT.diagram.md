@@ -35,4 +35,6 @@ sequenceDiagram
     Note right of Morpheus: "rubric PLAN: SIZE=A<br/>GATE=A VERIF=A ALIGN=A<br/>OWNER=A. Plan approved.<br/>Phase 5 freezes the ETL<br/>expected file before any<br/>ETL change, as the stor…"
     Morpheus->>All: "lead"
     Note right of Morpheus: "Syntax decisions with<br/>owner (ADR-0050): no<br/>inputs block, every<br/>sketch is a Jinja2<br/>template over standard<br/>YAML 1.2, values come<br/>from --with…"
+    Cypher->>All: "checkpoint"
+    Note right of Cypher: "Sprint 20 phase 1 code<br/>committed locally<br/>(ef98618): Jinja2 +<br/>--with/with, each,<br/>outcome, outputs/from<br/>(decider keyword gone).<br/>179 tests, li…"
 ```

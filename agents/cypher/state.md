@@ -10,15 +10,18 @@
 - **Open ETL items (Sprint 17 backlog):** net spending of $433k YTD looks too large (card-payment/transfer legs counted?), 270 merchants sent to review, Python port of the rest.
 
 ## Current Task
-Status: Completed. Sprint 19 launched, merged and pushed. No work in flight.
+Status: Sprint 20 in progress on branch `sprint-20` (local only, not pushed). Stories (Smith Gate 1) and architecture (Gate 2) approved, plan approved. **Phase 1 code committed (ef98618) but not yet UAT'd by Trin or reviewed by Morpheus.**
 
 ### Progress
-- [x] Epic framed, domain model, stories (one Smith rejection), architecture, plan, 7 phases, closeout, live Jev judgement, groom, acceptance, retros, launch, merge and push
-- [ ] Slice B planning not started
-- Working tree: only `agents/CHAT.md` modified (this checkpoint's chat post).
+- [x] Epic slice B planned: `docs/sprints/USER_STORIES_SPRINT20.md` (UND-68..73), `ARCH_SPRINT20.md`, `task.md` (7 phases).
+- [x] Phase 1 code (Task 1.1): Jinja2 sketches, `--with`, per-call `with`, unused-name check, `each`, final-state `outcome`, `outputs`/`from` (no `decider` keyword), 179 Python tests green, lint clean.
+- [ ] Phase 1 UAT (Trin) and review (Morpheus); `docs/SKETCHES.md` is updated.
+- [ ] Phases 2-7 not started (UND-73 candidates/shortlist/Jev pick, UND-69 seating, UND-70 evening, UND-71 ETL as sketch, UND-72 purge).
 
 ## Next Steps
-1. Cold start: read the last messages of `agents/CHAT.md`, then this file. Nothing is blocked.
-2. When the owner says go on the Python-port epic: cut `sprint-20` from `main` (no worktree), then `*plan sprint` for slice B: stories for translating the old examples into the new model (the evening example needs `on_empty: walk_away`, a seating subsketch with an ETL stage for adjacent seats, and probably MCP/HTTP source kinds or file fixtures; `docs/sprints/DESIGN_SKETCH_MODEL.md` section 7 sketches it). Candidates and retro items are in `docs/BACKLOG.md` under "From Sprint 19".
-3. Before asking the owner anything, apply the rule: ask only if the choice is consequential and hard to back out; otherwise decide, note it, move on.
-4. Other open threads the owner may raise: the net-spending check on the real ETL run, the 270 review merchants, removing the old worktree and branches (owner said keep them).
+1. **Read `docs/sprints/OWNER_DECISIONS_SPRINT20.md` first.** It holds every owner answer (decisions 1-20) and the choices Claude made alone overnight (A-F). Check it before asking the owner anything; record each new answer there at once.
+2. Ask the owner to review choices A-F and the two open points; the owner may overturn any.
+3. UND-73 needs a re-think under "take away" (the owner's rule): ranking and shortlisting showings may be plain SQL stages, leaving only "a Jev choice among runtime options" as new; discuss before building. ARCH_SPRINT20 still describes the original UND-73 (candidate outcomes, `shortlist:`, Jev `options:`).
+4. Then phases 3-7 per `task.md`; the ETL expected-result file must be committed (Phase 5) before any ETL change.
+5. Owner rules: no back-compat, YAGNI, reuse existing syntax, no new words, one question at a time, define names before using them, Edit tool for edits, `bobp make` only, push only via `bobp make push` and only when asked.
+6. Other open threads: net-spending check ($433k), 270 review merchants, old worktree and branches (owner said keep).

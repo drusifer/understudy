@@ -17,7 +17,7 @@
 ### Phase 1: The model's small gaps (UND-68)
 *Phase goal: walk away, Jinja2-templated sketches with `--with` and per-call `with`, and `each:` work and are documented.*
 
-- [ ] **Task 1.1:** `*impl` `on_empty: walk_away` (exit 0, no sink output, `walked away at <stage>`); Jinja2 rendering with `--with` and per-call `with`, unused names refused; `each:` runs a sketch once per row, Jev answers captured per call. (*Owner: Neo | Verification: unit tests for every UND-68 AC, including the missing-value and unused-name messages, and coffee tests unchanged. Done so far: walk-away, templating, composition (93 tests).*)
+- [x] **Task 1.1:** `*impl` `on_empty: walk_away` (exit 0, no sink output, `walked away at <stage>`); Jinja2 rendering with `--with` and per-call `with`, unused names refused; `each:` runs a sketch once per row, Jev answers captured per call. (*Owner: Neo | Verification: unit tests for every UND-68 AC, including the missing-value and unused-name messages, and coffee tests unchanged. Done (commit ef98618, 179 Python tests green, lint clean): `outcome` on final states instead of `walk_away`, Jinja2 + `--with` + `with`, unused-name check, calls keyed by state, `outputs`/`from` replace `returns`/`decider`, `each`. Decisions: `docs/sprints/OWNER_DECISIONS_SPRINT20.md`.*)
 - [ ] **Task 1.2:** UAT: UND-68 AC 1-5, with a doc check of `docs/SKETCHES.md`. (*Owner: Trin | Verification: UAT rows in `docs/sprints/UAT_PLAN_SPRINT20.md`; full suite green.*)
 - [ ] **Task 1.3:** Review against the architecture sections 3 and 5. (*Owner: Morpheus | Verification: verdict; commit `Phase 1: ...`.*)
 

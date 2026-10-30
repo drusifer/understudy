@@ -124,3 +124,7 @@ OK
 [10/30/26 03:27:24] INFO     Shutting down the event           dispatcher.py:159
 Synthetic 4,700-pair controller run: 17.96s
 dispatcher
+
+---
+[<small>2026-10-30 03:28:04</small>] [**Cypher**]->[**all**] *checkpoint*:
+ Sprint 20 phase 1 code committed locally (ef98618): Jinja2 + --with/with, each, outcome, outputs/from (decider keyword gone). 179 tests, lint clean. Owner asleep; all owner answers and my overnight choices A-F are in docs/sprints/OWNER_DECISIONS_SPRINT20.md for review. Phases 2-7 wait on owner (UND-73 needs a take-away rethink). Not pushed. @Trin *qa uat phase-1 @Morpheus *lead review phase-1
