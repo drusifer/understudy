@@ -47,6 +47,26 @@ class BlockTests(SeatingCase):
         self.assertEqual(sorted(self.runs(tickets=2, showing="21:00")), ["E1-2", "E2-3"])
 
 
+class NothingFitsTests(SeatingCase):
+    def run_seating(self, **values):
+        flags = [flag for name, value in values.items() for flag in ("--with", f"{name}={value}")]
+        stdout, stderr = io.StringIO(), io.StringIO()
+        code = main(["run", str(SEATING), "--out", str(self.out), *flags], stdout=stdout, stderr=stderr)
+        return code, stdout.getvalue().splitlines(), stderr.getvalue()
+
+    def test_a_party_too_big_for_any_block_ends_in_the_none_outcome_and_writes_nothing(self):
+        code, out, err = self.run_seating(tickets=9)
+        self.assertEqual((code, err), (0, ""))
+        self.assertEqual(out[-1], "outcome: none")
+        self.assertFalse(any(line.startswith("wrote ") for line in out))
+        self.assertEqual(list(self.out.glob("*/hold.jsonl")), [])
+
+    def test_a_party_that_fits_does_not_end_in_none(self):
+        code, out, _ = self.run_seating(tickets=2)
+        self.assertEqual(code, 0)
+        self.assertNotIn("outcome: none", out)
+
+
 class WeightTests(SeatingCase):
     def test_when_only_the_centre_matters_a_block_centred_in_its_row_comes_first(self):
         best = self.seat(tickets=2, row=0, centre=1)[0]

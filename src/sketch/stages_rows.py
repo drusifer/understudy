@@ -70,6 +70,12 @@ async def weigh(context, source: Source, by: dict, into: str) -> list[dict]:
     ]
 
 
+@stage("reduce.any")
+async def reduce_any(context, source: Source) -> list[dict]:
+    """One row, `{any: true}` when `source` has at least one row and `{any: false}` when it has none, for a guard."""
+    return [{"any": bool(await context.read(source))}]
+
+
 @stage("reduce.max")
 async def reduce_max(context, source: Source, field: str, take: int = 1) -> list[dict]:
     """The `take` rows of `source` with the highest `field`, highest first. Equal values keep the order they had."""

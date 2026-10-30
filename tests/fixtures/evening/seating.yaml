@@ -40,8 +40,18 @@ sinks:
   hold: hold.jsonl
 
 machine:
-  initial: best
+  initial: found
   states:
+    found:                              # is there any block at all?
+      do: { reduce: { action: any } }
+      with: { source: scored }
+      transitions:
+        - if: { any: { eq: false } }
+          to: nothing_fits
+        - to: best
+    nothing_fits:
+      final: true
+      outcome: none
     best:
       do: { reduce: { action: max } }
       with: { source: scored, field: score, take: 5 }

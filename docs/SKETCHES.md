@@ -74,6 +74,7 @@ A state's `do:` names a stage **type** as a key (a closed set the schema owns) a
 | `map: { action: prefer_middle }` | `rows`, `extent`, `group`, `order`, `into`, `match` | adds `into` to runs: 1.0 centred in their group, 0.0 at its end |
 | `map: { action: weigh }` | `source`, `by`, `into` | adds `into`: the sum of the `by` fields, each times its weight |
 | `reduce: { action: max }`, `min` | `source`, `field`, `take` | the `take` rows (default 1) with the highest (lowest) `field`, best first |
+| `reduce: { action: any }` | `source` | one row, `{any: true}` if the source has any row, `{any: false}` if none (for a guard) |
 | `sink: { name: <sink> }` | | writes the rows of the stage before it to the sink file |
 | `sketch: { file: <file> }` | | runs `<file>.yaml` beside this one as a nested run and gives back the weighted rows its `outputs` name; `with:` passes it values (see Subsketches) |
 | `reduce: { action: blend }` | `entries`, `forbid`, `on_empty`, `shortlist` | see Deciding, below |
@@ -270,12 +271,24 @@ Each row's Jev answers are captured under the child's name and the row's positio
 
 ## How a run ends
 
+A guard (`if:` on a transition) tests the fields of a stage's result when that result is a mapping or a **single row**, which is what a scalar reducer such as `reduce.any` returns. So a sketch can route on "is there anything?":
+
+```yaml
+found:
+  do: { reduce: { action: any } }
+  with: { source: scored }
+  transitions:
+    - if: { any: { eq: false } }
+      to: nothing_fits
+    - to: best
+```
+
 A final state may carry an `outcome:`, a name for the way the run ended:
 
 ```yaml
-nothing_suits:
+nothing_fits:
   final: true
-  outcome: walked_away
+  outcome: none
 ```
 
 The run still exits 0. It records the outcome in `run.json` and the last event, and prints `outcome: walked_away` as its last line.

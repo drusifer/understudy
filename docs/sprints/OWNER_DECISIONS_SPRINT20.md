@@ -52,6 +52,8 @@ Recorded by Cypher from the conversation, in the owner's words where possible. *
 
 | 31 | **`max` and `min` are the general reducers; there is no `pick_best`.** `map.weigh` adds a weighted sum of fields (`by: { field: weight }`, `into`); `reduce.max` and `reduce.min` keep the `take` rows with the highest or lowest `field`. Supersedes the stage in decision 30 (the scoring maps still add score fields). `sum`, `count` and `mean` would fit the same slot. | "maybe min/max are more appropriate as general reducers?"; "yes i think the new map reduce is the general case that solves this" |
 
+| 32 | **A reducer can reduce to a boolean, and a guard tests it:** `reduce.any` returns one row `{any: true|false}`; when a stage's result is a single row, a guard tests that row's fields. A sketch routes "nothing fits" to a final state with `outcome: none`. | "we can reduce to a boolean right?"; "ok" |
+
 ## Decided by Claude while the owner was asleep (2026-10-30), for the owner to review
 
 The owner said: "do your best to finish without me. It is done when there is nothing left to take away." Each choice below took the smaller option. Overturn any of them.
