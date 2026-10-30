@@ -1,4 +1,4 @@
-"""The stage library: the functions a sketch's `do:` and `blend:` name, each registered with `@stage`.
+"""The stage library: the functions a sketch's `do:` names, each registered with `@stage`.
 
 A stage is `async def stage(context, <with: keys>) -> result` (see `registry`); the result is what the next stage
 reads as `context.last` and what guards test. Counting and converting are DuckDB SQL; the owner's judgement is `decide` and `blend`.
@@ -86,13 +86,17 @@ async def declared_outcomes(context) -> dict:
     return outcomes
 
 
-@stage("blend")
-async def blend(context) -> list[dict]:
+@stage("reduce.blend")
+async def blend(
+    context, entries: list, forbid: list | None = None, on_empty: str = "fail", shortlist: int | None = None,
+) -> list[dict]:
     """For each input row, the blended weight of every option per dimension: the row's own fields plus
-    `dimension`, `option` and `weight`."""
-    state, outcomes = context.state, await declared_outcomes(context)
+    `dimension`, `option` and `weight`. `entries` are the weighted opinions to average (`decide` trees or `from` another
+    stage's rows), `forbid` drops options, `on_empty` says what an emptied dimension does, `shortlist` keeps the best."""
+    state = {"blend": entries, "forbid": forbid or [], "on_empty": on_empty, **({"shortlist": shortlist} if shortlist else {})}
+    outcomes = await declared_outcomes(context)
     deciders = {}
-    for entry in state["blend"]:
+    for entry in entries:
         if "from" in entry:
             deciders[entry["from"]] = context.results[entry["from"]]
             _validate(deciders[entry["from"]], entry["from"], outcomes, context.name)

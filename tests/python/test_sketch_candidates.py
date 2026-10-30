@@ -38,13 +38,15 @@ machine:
       do: { map: { action: start } }
       then: rank
     rank:
-      blend:
-        - decide:
-            drink:
-              - { showing: Alien, weight: 0.5 }
-              - { showing: Brazil, weight: 0.3 }
-              - { showing: Cube, weight: 0.2 }
-      shortlist: 2
+      do: { reduce: { action: blend } }
+      with:
+        entries:
+          - decide:
+              drink:
+                - { showing: Alien, weight: 0.5 }
+                - { showing: Brazil, weight: 0.3 }
+                - { showing: Cube, weight: 0.2 }
+        shortlist: 2
       then: choose
     choose:
       do: { map: { action: choose } }

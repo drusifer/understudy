@@ -4,7 +4,7 @@ A **sketch** is one YAML file in which you write down how you decide something. 
 
 TLDR:
     A sketch names `sources` (files in), `sinks` (files out), `outcomes` (what can be decided), `data` (your facts) and a `machine` (your pipeline).
-    Each state in the machine names a stage with `do:` (a `map` or `reduce` action, a `sketch` file, a `sink`) or has a `blend` of weighted rows.
+    Each state in the machine names a stage with `do:` (a `map` action, a `reduce` action such as `blend`, a `sketch` file, or a `sink`).
     A decide tree, lookup, subsketch or Jev reading produces weighted rows; `blend` is a weighted average per dimension; `forbid` drops options and always wins.
     Conditions are plain YAML: `segment: { eq: students }`, `temp: { in: [80:90] }`, `and` / `or` / `not`.
     Jev is a source: `kind: jev` with a rubric (`instructions` + `criteria`) and the `state` it reads; reading it gives a probability per level.
@@ -64,8 +64,6 @@ A state's `do:` names a stage **type** as a key (a closed set the schema owns) a
 | `sink` | `name` | write the rows of the previous stage to a declared sink |
 | `sketch` | `file` | run another sketch (`<file>.yaml` beside this one) |
 
-`blend:` is a state key of its own, below.
-
 | `do:` | `with` | What it does |
 |---|---|---|
 | `map: { action: split_by_share }` | `source`, `field`, `segments` | splits a total (the sum of `field` over the source's rows) across `data.<segments>` by each segment's `share`: rows `{segment, share, age_min, age_max, drinks}` |
@@ -73,34 +71,36 @@ A state's `do:` names a stage **type** as a key (a closed set the schema owns) a
 | `map: { action: recipes }` | `recipes`, `packs` | turns drink counts into ingredient amounts from `data.<recipes>` (rows `{<dimension>: <option>, ingredient, amount, unit}`), rounded up to whole packs from `data.<packs>` |
 | `sink: { name: <sink> }` | | writes the rows of the stage before it to the sink file |
 | `sketch: { file: <file> }` | | runs `<file>.yaml` beside this one as a nested run and gives back the weighted rows its `outputs` name; `with:` passes it values (see Subsketches) |
-| (a state with `blend:`) | | see below |
+| `reduce: { action: blend }` | `entries`, `forbid`, `on_empty`, `shortlist` | see Deciding, below |
 
 `understudy check` refuses an unknown stage and suggests the nearest, and checks each `with` key.
 
 ## Deciding
 
-A state with `blend:` decides, for every row the stage before it produced (a segment, say), how the outcomes are shared:
+`blend` is a **reduce** stage: it takes weighted entries and reduces them to one distribution per row the stage before it produced (a segment, say), sharing out the outcomes:
 
 ```yaml
 match_orders:
-  blend:
-    - decide:                       # your tree; weight defaults to 1
-        if: { segment: { eq: students } }
-        then:
-          drink:                    # a leaf: weighted rows that add up to 1
-            - { temp: iced, size: large,  weight: 0.5 }
-            - { temp: hot,  size: medium, weight: 0.5 }
-        else:
-          drink: [ { temp: hot, size: medium, weight: 1.0 } ]
-    - from: weather                 # a state that calls a subsketch
-      weight:
-        if: { segment: { eq: night_workers } }
-        then: 0                     # night shift ignores the weather
-        else: 0.3
-  forbid:                           # hard rules: drop options, always win
-    - when: { age_max: { le: 17 } }
-      drop: { caffeine: { ne: none } }
-  on_empty: fail                    # fail (default), skip, or fallback
+  do: { reduce: { action: blend } }
+  with:
+    entries:
+      - decide:                     # your tree; weight defaults to 1
+          if: { segment: { eq: students } }
+          then:
+            drink:                  # a leaf: weighted rows that add up to 1
+              - { temp: iced, size: large,  weight: 0.5 }
+              - { temp: hot,  size: medium, weight: 0.5 }
+          else:
+            drink: [ { temp: hot, size: medium, weight: 1.0 } ]
+      - from: weather               # a state that calls a subsketch
+        weight:
+          if: { segment: { eq: night_workers } }
+          then: 0                   # night shift ignores the weather
+          else: 0.3
+    forbid:                         # hard rules: drop options, always win
+      - when: { age_max: { le: 17 } }
+        drop: { caffeine: { ne: none } }
+    on_empty: fail                  # fail (default), skip, or fallback
   then: to_ingredients
 ```
 
@@ -230,8 +230,10 @@ A weighted row may name any of those titles; one the file does not have is refus
 
 ```yaml
 rank:
-  blend: [ ... ]
-  shortlist: 5                                  # keep the five heaviest options per outcome
+  do: { reduce: { action: blend } }
+  with:
+    entries: [ ... ]
+    shortlist: 5                                # keep the five heaviest options per outcome
 pick:
   kind: jev
   question: choice

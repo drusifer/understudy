@@ -111,8 +111,8 @@ class _Checker:
             return
         if ("then" in state) == ("transitions" in state):
             self.problem(at, "a state that is not final needs exactly one of `then` or `transitions`")
-        if ("do" in state) == ("blend" in state):
-            self.problem(at, "a state needs exactly one of `do` (a stage) or `blend` (deciders)")
+        if "do" not in state:
+            self.problem(at, "a state that is not final needs `do` (the stage it runs)")
         for target_path, target in self.targets(at, state):
             if target not in self.states:
                 self.problem(target_path, f"state {target!r} does not exist{_nearest(target, self.states)}")
@@ -123,13 +123,9 @@ class _Checker:
             self.each(at, state)
         if "do" in state:
             self.stage(at, state)
-        if "blend" in state:
-            self.blend(at, state)
-        if state.get("on_empty") is not None and state["on_empty"] not in ON_EMPTY:
-            self.problem(f"{at}.on_empty", f"unknown value {state['on_empty']!r}{_nearest(state['on_empty'], ON_EMPTY)}")
 
     def final_state(self, at: str, state: dict) -> None:
-        if "then" in state or "transitions" in state or "do" in state or "blend" in state:
+        if "then" in state or "transitions" in state or "do" in state:
             self.problem(at, "a final state does nothing and goes nowhere")
         for dimension in state.get("outputs", []):
             if dimension not in self.known and not self.is_subsketch_file():
@@ -181,9 +177,11 @@ class _Checker:
             self.subsketch(f"{at}.do.sketch.file", target, state.get("with", {}), "each" in state)
         elif name not in STAGES:
             self.problem(f"{at}.do.{kind}.{STAGE_TYPES[kind]}",
-                         f"unknown stage {name!r}{_nearest(name, [n for n in STAGES if n != 'blend'])}")
+                         f"unknown stage {name!r}{_nearest(name, STAGES)}")
         else:
             self.stage_with(at, name, state.get("with", {}))
+            if name == "reduce.blend":
+                self.blend(f"{at}.with", state["with"])
 
     def stage_with(self, at: str, name: str, given: dict) -> None:
         """The `with:` keys must be the parameters the stage's function declares (see `registry`)."""
@@ -225,9 +223,13 @@ class _Checker:
 
     # deciders ----------------------------------------------------------------
 
-    def blend(self, at: str, state: dict) -> None:
-        for index, entry in enumerate(state["blend"]):
-            here = f"{at}.blend[{index}]"
+    def blend(self, at: str, given: dict) -> None:
+        """The `with:` of `reduce: { action: blend }`: its entries, `forbid` rules and `on_empty` policy."""
+        on_empty = given.get("on_empty")
+        if on_empty is not None and on_empty not in ON_EMPTY:
+            self.problem(f"{at}.on_empty", f"unknown value {on_empty!r}{_nearest(on_empty, ON_EMPTY)}")
+        for index, entry in enumerate(given.get("entries", [])):
+            here = f"{at}.entries[{index}]"
             if "decide" in entry:
                 self.tree(entry["decide"], f"{here}.decide")
             elif entry["from"] not in self.states or not calls_sketch(self.states[entry["from"]]):
@@ -235,7 +237,7 @@ class _Checker:
                                              f"{_nearest(entry['from'], self.states)}")
             if "weight" in entry:
                 self.weight(entry["weight"], f"{here}.weight")
-        for index, rule in enumerate(state.get("forbid", [])):
+        for index, rule in enumerate(given.get("forbid", [])):
             self.condition(rule["when"], f"{at}.forbid[{index}].when")
             self.condition(rule["drop"], f"{at}.forbid[{index}].drop")
             self.options(rule["drop"], f"{at}.forbid[{index}].drop")

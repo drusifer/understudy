@@ -57,7 +57,7 @@ class CheckTests(unittest.TestCase):
 
     def test_a_leaf_option_that_is_not_declared_names_its_row(self):
         problems = self.workspace().edit("size: large,  weight: 0.5", "size: larg,  weight: 0.5").problems()
-        self.assert_problem(problems, "machine.states.match_orders.blend[0].decide.then.drink[0].size", "'larg'", "'large'")
+        self.assert_problem(problems, "machine.states.match_orders.with.entries[0].decide.then.drink[0].size", "'larg'", "'large'")
 
     def test_leaf_weights_must_add_up_to_one(self):
         problems = self.workspace().edit("weight: 0.5 }", "weight: 0.9 }").problems()
@@ -86,7 +86,7 @@ class CheckTests(unittest.TestCase):
 
     def test_a_decider_that_is_not_a_sketch_state_is_refused(self):
         problems = self.workspace().edit("from: weather", "from: write").problems()
-        self.assert_problem(problems, "blend[1].from", "not a state that calls a sketch")
+        self.assert_problem(problems, "entries[1].from", "not a state that calls a sketch")
 
     def test_a_subsketch_that_returns_an_undeclared_outcome_is_refused(self):
         problems = self.workspace().edit("  temp: [hot, iced]\n", "").problems()

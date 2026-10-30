@@ -41,36 +41,38 @@ machine:
       then: match_orders
 
     match_orders:
-      blend:
-        - decide:                       # the owner's tree for what each segment prefers
-            if:
-              segment: { eq: students }
-            then:
-              drink:
-                - { temp: iced, size: large,  weight: 0.5 }
-                - { temp: iced, size: medium, weight: 0.2 }
-                - { temp: hot,  size: medium, weight: 0.3 }
-            else:
+      do: { reduce: { action: blend } }
+      with:
+        entries:
+          - decide:                     # the owner's tree for what each segment prefers
               if:
-                segment: { eq: night_workers }
+                segment: { eq: students }
               then:
                 drink:
-                  - { temp: hot, size: large, caffeine: high, weight: 1.0 }
+                  - { temp: iced, size: large,  weight: 0.5 }
+                  - { temp: iced, size: medium, weight: 0.2 }
+                  - { temp: hot,  size: medium, weight: 0.3 }
               else:
-                drink:
-                  - { temp: hot,  size: medium, weight: 0.6 }
-                  - { temp: iced, size: medium, weight: 0.4 }
-        - from: weather                 # the subsketch's weights on temp
-          weight:
-            if:
-              segment: { eq: night_workers }   # night shift stays on hot coffee, warm or not
-            then: 0
-            else: 0.3
-      forbid:
-        - when:                         # teens: the under-18 rule
-            age_max: { le: 17 }
-          drop:
-            caffeine: { ne: none }
+                if:
+                  segment: { eq: night_workers }
+                then:
+                  drink:
+                    - { temp: hot, size: large, caffeine: high, weight: 1.0 }
+                else:
+                  drink:
+                    - { temp: hot,  size: medium, weight: 0.6 }
+                    - { temp: iced, size: medium, weight: 0.4 }
+          - from: weather               # the subsketch's weights on temp
+            weight:
+              if:
+                segment: { eq: night_workers }   # night shift stays on hot coffee, warm or not
+              then: 0
+              else: 0.3
+        forbid:
+          - when:                       # teens: the under-18 rule
+              age_max: { le: 17 }
+            drop:
+              caffeine: { ne: none }
       then: to_ingredients
 
     to_ingredients:

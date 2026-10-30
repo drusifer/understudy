@@ -83,7 +83,7 @@ def _write_part(directory: Path, file: str, rows) -> None:
 
 
 def _stage_function(state: dict, library: Mapping[str, StageFn]) -> StageFn:
-    name = "blend" if "blend" in state else ".".join(stage_of(state))
+    name = ".".join(stage_of(state))
     if name in library:
         return library[name]
     raise LookupError(f"no stage is defined for {name!r}")
@@ -152,7 +152,7 @@ def _stages(
 
         async def stage(name=name, state=state):
             context = make_context(name, state)
-            kind, target = stage_of(state) or ("blend", "")
+            kind, target = stage_of(state)
             if kind == "sink":
                 _write_part(context.directory, sketch.sinks[target].file, context.last)
                 return context.last

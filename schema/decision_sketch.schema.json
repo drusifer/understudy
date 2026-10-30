@@ -184,15 +184,26 @@
         "do": { "$ref": "#/$defs/stageRef" },
         "each": { "type": "string", "minLength": 1 },
         "with": { "type": "object" },
-        "blend": { "type": "array", "items": { "$ref": "#/$defs/blendEntry" }, "minItems": 1 },
-        "forbid": { "type": "array", "items": { "$ref": "#/$defs/forbid" } },
-        "on_empty": { "enum": ["fail", "fallback", "skip"] },
-        "shortlist": { "type": "integer", "minimum": 1 },
         "then": { "type": "string", "minLength": 1 },
         "transitions": { "type": "array", "items": { "$ref": "#/$defs/transition" }, "minItems": 1 },
         "final": { "type": "boolean" },
         "outcome": { "type": "string" },
         "outputs": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+      },
+      "if": { "required": ["do"], "properties": { "do": { "required": ["reduce"], "properties": { "reduce": {
+        "required": ["action"], "properties": { "action": { "const": "blend" } } } } } } },
+      "then": { "required": ["with"], "properties": { "with": { "$ref": "#/$defs/blendWith" } } }
+    },
+    "blendWith": {
+      "description": "The `with:` of `reduce: { action: blend }`: the weighted entries to combine, and the rules around them.",
+      "type": "object",
+      "required": ["entries"],
+      "additionalProperties": false,
+      "properties": {
+        "entries": { "type": "array", "items": { "$ref": "#/$defs/blendEntry" }, "minItems": 1 },
+        "forbid": { "type": "array", "items": { "$ref": "#/$defs/forbid" } },
+        "on_empty": { "enum": ["fail", "fallback", "skip"] },
+        "shortlist": { "type": "integer", "minimum": 1 }
       }
     },
     "machine": {
