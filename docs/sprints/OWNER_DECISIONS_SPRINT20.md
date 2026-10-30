@@ -58,6 +58,8 @@ Recorded by Cypher from the conversation, in the owner's words where possible. *
 
 | 34 | **Three general maps are added for the evening: `map.where`** (keep rows satisfying an explicit YAML condition), **`map.join`** (add fields from another source's rows that share a key), **`map.unpair`** (flatten an `each` result's `{input, output}` pairs). **Dates, times and datetimes are parsed with `dateparser`; durations, if needed, with `pytimeparse2`.** | "+1 to the maps. use dateparser for values that are dates or times or datetimes if we need duration use pytimeparse2" |
 
+| 35 | **The evening is built** (`examples/evening/evening.yaml`, `review_score.yaml`, `seating.yaml`, fixtures) from stage sources, `each`, `map.where/join/weigh/expect/unpair`, `reduce.max/any`, a Jev pick over a source, and seating called per chosen showing. Along the way: a Jev source's `options.from` names a **source** (file or stage), not a stage result; a **sink may name a source** to write (`with: { source: holds }`); a **subsketch that ends in `outcome: none` gives its caller no rows**; a child sees only what its call passes (so the evening passes `mood` to `review_score`). | built under "proceed"; Claude's choices for the owner to review |
+
 ## Decided by Claude while the owner was asleep (2026-10-30), for the owner to review
 
 The owner said: "do your best to finish without me. It is done when there is nothing left to take away." Each choice below took the smaller option. Overturn any of them.

@@ -5,6 +5,8 @@ COMBINATORS = ("and", "or", "not")
 ON_EMPTY = ("fail", "fallback", "skip")  # `walk_away` arrives with the evening example (slice B)
 
 
+NOTHING = "none"  # the outcome of a subsketch that found nothing: its caller gets no rows
+
 # The kinds of stage a state's `do:` can name, each with the one field that names which (owner, 2026-10-30):
 #   do: { map: { action: split_by_share } }    do: { sink: { name: ingredients } }
 #   do: { reduce: { action: blend } }           do: { sketch: { file: seating } }

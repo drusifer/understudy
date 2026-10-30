@@ -177,6 +177,9 @@ class _Checker:
         if kind == "sink":
             if target not in self.sketch.sinks:
                 self.problem(f"{at}.do.sink.name", f"sink {target!r} is not declared{_nearest(target, self.sketch.sinks)}")
+            named = (state.get("with") or {}).get("source")
+            if named is not None and named not in self.sketch.sources:
+                self.problem(f"{at}.with.source", f"{named!r} is not a source{_nearest(named, self.sketch.sources)}")
         elif kind == "sketch":
             self.subsketch(f"{at}.do.sketch.file", target, state.get("with", {}), "each" in state)
         elif name not in STAGES:

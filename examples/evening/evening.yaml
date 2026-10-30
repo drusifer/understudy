@@ -1,0 +1,106 @@
+name: evening
+description: >
+  Books two cinema seats the way the owner would: an evening showing of a horror film scoring 70 or more (or anything
+  above 90), liked by its audience, seats together in row E, F or D, as central as they come. Jev reads each film's
+  reviews, then chooses among the best five showings in the mood given. When nothing suits, it walks away.
+
+  Values you can set: --with mood=romantic  tickets=3  evenings=off  tomato=0.3  audience=0.7  row=0.7  center=1.0
+
+sources:
+  showings: showings.jsonl              # { showing, title, starts, genre, tomato }
+  films: films.jsonl                    # { title }
+  scored:                               # each film, scored by its reviews
+    kind: stage
+    do: { sketch: { file: review_score } }
+    each: films
+    with: { mood: "{{ mood | default('fun') }}" }
+  audience:                             # flat rows { title, audience }
+    kind: stage
+    do: { map: { action: unpair } }
+    with: { source: scored }
+  qualifying:                           # the owner's gates
+    kind: stage
+    do: { map: { action: where } }
+    with:
+      source: showings
+      keep:
+        and:
+          - starts: { ge: "{{ '17:00' if evenings | default('on') == 'on' else '00:00' }}" }
+          - or:
+              - { genre: { eq: horror }, tomato: { ge: 70 } }
+              - { tomato: { gt: 90 } }
+  joined:
+    kind: stage
+    do: { map: { action: join } }
+    with: { source: qualifying, other: audience, on: title }
+  weighed:                              # what the owner likes more, by how much it matters
+    kind: stage
+    do: { map: { action: weigh } }
+    with:
+      source: joined
+      by: { tomato: {{ (tomato | default(0.3) | float) / 100 }}, audience: {{ audience | default(0.7) }} }
+      into: score
+  shortlist:
+    kind: stage
+    do: { reduce: { action: max } }
+    with: { source: weighed, field: score, take: 5 }
+  pick:                                 # Jev chooses among the five, in the mood
+    kind: jev
+    question: choice
+    instructions: >
+      You are choosing a showing for a party of {{ tickets | default(2) }}, in the mood for something
+      {{ mood | default('fun') }}. Every option here already suits the owner; choose the one you would enjoy most.
+    options: { from: shortlist, key: showing }
+    state: {}
+  best:
+    kind: stage
+    do: { reduce: { action: max } }
+    with: { source: pick, field: probability }
+  chosen:
+    kind: stage
+    do: { map: { action: join } }
+    with: { source: best, other: shortlist, on: level, other_on: showing }
+  booked:                               # seating, for the showing chosen
+    kind: stage
+    do: { sketch: { file: seating } }
+    each: chosen
+    with:
+      tickets: {{ tickets | default(2) }}
+      row: {{ row | default(0.7) }}
+      center: {{ center | default(1.0) }}
+      take: 1
+  holds:
+    kind: stage
+    do: { map: { action: unpair } }
+    with: { source: booked }
+
+sinks:
+  booking: booking.jsonl
+
+machine:
+  initial: anything_qualifies
+  states:
+    anything_qualifies:
+      do: { reduce: { action: any } }
+      with: { source: qualifying }
+      transitions:
+        - if: { any: { eq: false } }
+          to: walk_away
+        - to: seats_free
+    seats_free:
+      do: { reduce: { action: any } }
+      with: { source: holds }
+      transitions:
+        - if: { any: { eq: false } }
+          to: walk_away
+        - to: book
+    walk_away:
+      final: true
+      outcome: walked_away
+    book:
+      do: { sink: { name: booking } }
+      with: { source: holds }
+      then: done
+    done:
+      final: true
+      outcome: booked

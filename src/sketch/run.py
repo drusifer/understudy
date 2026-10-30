@@ -21,7 +21,7 @@ from src.sketch.model import Sketch
 from src.sketch.registry import StageFn
 from src.sketch.sources.capture import CaptureStore
 from src.sketch.sources.reader import Capture, Sources
-from src.sketch.vocabulary import stage_of
+from src.sketch.vocabulary import NOTHING, stage_of
 
 
 @dataclass
@@ -94,6 +94,7 @@ class NestedRecord:
 
     def __init__(self, parent: EventedRecord, prefix: str):
         self.parent, self.prefix = parent, prefix
+        self.outcome: str | None = None
 
     def started(self, name: str) -> None:
         self.parent.started(f"{self.prefix}.{name}")
@@ -105,7 +106,8 @@ class NestedRecord:
         self.parent.emit("stage_failed", stage=f"{self.prefix}.{name}", reason=str(error))
 
     def finished(self, outcome: str | None = None) -> None:
-        """The parent's run is not over because a subsketch ended."""
+        """The parent's run is not over because a subsketch ended; the subsketch's outcome is kept for its caller."""
+        self.outcome = outcome
 
 
 async def _run_each(context: StageContext, library: Mapping[str, StageFn], record: EventedRecord) -> list[dict]:
@@ -127,7 +129,8 @@ async def _run_each(context: StageContext, library: Mapping[str, StageFn], recor
 async def _run_child(context: StageContext, library: Mapping[str, StageFn], record: EventedRecord, child: Sketch | None = None):
     """Run the sketch this state calls (`do: { sketch: { file: ... } }`) in the same run folder, with the same sources.
 
-    Its result is what its last stage returned: the weighted rows the parent blends.
+    Its result is what its last stage returned, or no rows when it ended in a final state with `outcome: none`: a
+    subsketch that finds nothing gives its caller nothing.
     """
     child = child or children(context.sketch)[context.name]
     results: dict = {}
@@ -137,8 +140,10 @@ async def _run_child(context: StageContext, library: Mapping[str, StageFn], reco
         return StageContext(child, name, state, results, last["value"], context.directory, context.summary, context.sources)
 
     stages = {name: _remember(stage, last) for name, stage in _stages(child, library, make_context, results, record).items()}
-    await run_machine(build_machine(child), stages, NestedRecord(record, child.name))
-    return last["value"]
+    nested = NestedRecord(record, child.name)
+    outcomes = {name: state["outcome"] for name, state in child.machine["states"].items() if state.get("outcome")}
+    await run_machine(build_machine(child), stages, nested, outcomes=outcomes)
+    return [] if nested.outcome == NOTHING else last["value"]
 
 
 def _stages(
@@ -154,8 +159,10 @@ def _stages(
             context = make_context(name, state)
             kind, target = stage_of(state)
             if kind == "sink":
-                _write_part(context.directory, sketch.sinks[target].file, context.last)
-                return context.last
+                named = state.get("with", {}).get("source")
+                rows = await context.read(named) if named else context.last
+                _write_part(context.directory, sketch.sinks[target].file, rows)
+                return rows
             if kind == "sketch":
                 run = _run_each if "each" in state else _run_child
                 result = await run(context, library, record)

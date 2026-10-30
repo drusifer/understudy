@@ -7,7 +7,9 @@ from pathlib import Path
 from src.paths import ROOT
 from src.sketch.cli import main
 
-SEATING = ROOT / "tests" / "fixtures" / "evening" / "seating.yaml"
+SEATING = ROOT / "examples" / "evening" / "seating.yaml"
+SEATS = ROOT / "tests" / "fixtures" / "evening" / "seats.jsonl"        # this test's own seat map, laid out to be asserted on
+SEATS_FLAG = ["--source", f"seats.path={SEATS}"]
 
 
 class SeatingCase(unittest.TestCase):
@@ -20,7 +22,7 @@ class SeatingCase(unittest.TestCase):
         """Run the seating sketch with `--with name=value` and return its holds, best first."""
         flags = [flag for name, value in values.items() for flag in ("--with", f"{name}={value}")]
         stdout, stderr = io.StringIO(), io.StringIO()
-        code = main(["run", str(SEATING), "--out", str(self.out), *flags], stdout=stdout, stderr=stderr)
+        code = main(["run", str(SEATING), "--out", str(self.out), *SEATS_FLAG, *flags], stdout=stdout, stderr=stderr)
         self.assertEqual((code, stderr.getvalue()), (0, ""))
         wrote = next(line for line in stdout.getvalue().splitlines() if line.startswith("wrote "))
         return [json.loads(line) for line in Path(wrote.removeprefix("wrote ")).read_text(encoding="utf-8").splitlines()]
@@ -51,7 +53,7 @@ class NothingFitsTests(SeatingCase):
     def run_seating(self, **values):
         flags = [flag for name, value in values.items() for flag in ("--with", f"{name}={value}")]
         stdout, stderr = io.StringIO(), io.StringIO()
-        code = main(["run", str(SEATING), "--out", str(self.out), *flags], stdout=stdout, stderr=stderr)
+        code = main(["run", str(SEATING), "--out", str(self.out), *SEATS_FLAG, *flags], stdout=stdout, stderr=stderr)
         return code, stdout.getvalue().splitlines(), stderr.getvalue()
 
     def test_a_party_too_big_for_any_block_ends_in_the_none_outcome_and_writes_nothing(self):

@@ -79,7 +79,7 @@ A state's `do:` names a stage **type** as a key (a closed set the schema owns) a
 | `map: { action: weigh }` | `source`, `by`, `into` | adds `into`: the sum of the `by` fields, each times its weight |
 | `reduce: { action: max }`, `min` | `source`, `field`, `take` | the `take` rows (default 1) with the highest (lowest) `field`, best first |
 | `reduce: { action: any }` | `source` | one row, `{any: true}` if the source has any row, `{any: false}` if none (for a guard) |
-| `sink: { name: <sink> }` | | writes the rows of the stage before it to the sink file |
+| `sink: { name: <sink> }` | `source` (optional) | writes the rows of the stage before it to the sink file, or the rows of the named `source` |
 | `sketch: { file: <file> }` | | runs `<file>.yaml` beside this one as a nested run and gives back the weighted rows its `outputs` name; `with:` passes it values (see Subsketches) |
 | `reduce: { action: blend }` | `entries`, `forbid`, `on_empty`, `shortlist` | see Deciding, below |
 
@@ -290,6 +290,8 @@ found:
       to: nothing_fits
     - to: best
 ```
+
+A subsketch that ends in a final state with `outcome: none` found nothing, and gives its caller **no rows** (not the last stage's result); the caller can then route on an empty source, as `examples/evening/evening.yaml` does when seating finds no block.
 
 A final state may carry an `outcome:`, a name for the way the run ended:
 

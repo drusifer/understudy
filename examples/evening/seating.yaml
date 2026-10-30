@@ -54,7 +54,7 @@ machine:
       outcome: none
     best:
       do: { reduce: { action: max } }
-      with: { source: scored, field: score, take: 5 }
+      with: { source: scored, field: score, take: {{ take | default(5) }} }
       then: write
     write:
       do: { sink: { name: hold } }
