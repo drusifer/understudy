@@ -41,6 +41,8 @@ Recorded by Cypher from the conversation, in the owner's words where possible. *
 
 | 25 | **A state's `do:` names the stage type as a key (a closed set the schema owns) and the target as a value; `with:` sits beside `do:` for every stage type, the same params pattern as a subsketch call.** Types so far: `etl` and `convert` (field `action`), `sink` (field `name`), `sketch` (field `file`). Names and files are values, never keys. Different types may have differently shaped fields; new actions are added in Python with `@stage`. | "i like how this is reading but with should be with do: it's the same params pattern as subsketch stages"; "we should be careful about using values as yaml keys" |
 
+| 26 | **Seating's calculations are general Python stages, not SQL in the sketch and not a `pandas` action:** `etl.adjacent_runs` (runs of consecutive numbers in a group) and scoring stages that give each candidate a 0.0 to 1.0 weight (by position in an ordered list, by closeness to the middle). | "adjacent_runs seems simple enough" |
+
 ## Decided by Claude while the owner was asleep (2026-10-30), for the owner to review
 
 The owner said: "do your best to finish without me. It is done when there is nothing left to take away." Each choice below took the smaller option. Overturn any of them.
@@ -128,7 +130,7 @@ DECISION: A.
 CHANGE MY MIND IF: the owner does not want users writing SQL in a sketch (then B, with the seating functions in the library).
 ```
 
-Owner's reply: _(accept / change)_
+Owner's reply (2026-10-30): **changed.** "this seems like a stage thing... but you don't think this is python appropriate?" and "i was thinking we could have an etl: action: pandas but I think it's hard to describe that in yaml; adjacent_runs seems simple enough". Decision 26: stages are Python, general and typed (`etl.adjacent_runs`, and scoring stages); there is **no `sql` stage type** and no `pandas` action.
 
 ## Working tree
 
