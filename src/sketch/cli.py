@@ -10,10 +10,13 @@ import sys
 from collections.abc import Mapping
 from pathlib import Path
 
+from src.jev import JevError, TypeSafeJev
 from src.paths import OutputPathError
 from src.sketch.check import load_checked
 from src.sketch.loader import SketchError
 from src.sketch.run import run_sketch
+from src.sketch.sources.capture import CaptureStore, ReplayError
+from src.sketch.sources.reader import Capture, non_file_keys
 from src.sketch.stages import LIBRARY, StageFn
 
 DEFAULT_OUT = Path("build/runs")
@@ -37,11 +40,22 @@ def _parser() -> argparse.ArgumentParser:
         command = commands.add_parser(name)
         command.add_argument("sketch", type=Path)
         command.add_argument("--source", action="append", default=[], metavar="NAME.path=FILE")
-    commands.choices["run"].add_argument("--out", type=Path, default=DEFAULT_OUT)
+    run = commands.choices["run"]
+    run.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    run.add_argument("--replay", nargs="?", const="", default=None, metavar="RUN-ID|DIR")
     return parser
 
 
-def main(argv=None, *, library: Mapping[str, StageFn] | None = None, stdout=None, stderr=None) -> int:
+def _capture(args, sketch, store, make_jev) -> Capture:
+    if args.replay is not None:
+        return Capture.replay(store, sketch, args.replay or None)
+    return Capture.live(store, make_jev() if non_file_keys(sketch) else None)
+
+
+def main(  # noqa: PLR0913 - the command line's injection points
+    argv=None, *, library: Mapping[str, StageFn] | None = None, make_jev=TypeSafeJev, store: CaptureStore | None = None,
+    stdout=None, stderr=None,
+) -> int:
     stdout, stderr = stdout or sys.stdout, stderr or sys.stderr
     args = _parser().parse_args(argv)
 
@@ -59,8 +73,12 @@ def main(argv=None, *, library: Mapping[str, StageFn] | None = None, stdout=None
         stdout.write(f"ok: {sketch.name}\n")
         return 0
     try:
+        capture = _capture(args, sketch, store or CaptureStore(), make_jev)
+    except (ReplayError, JevError) as error:
+        return fail(str(error), 2)
+    try:
         stages = LIBRARY if library is None else library
-        result = asyncio.run(run_sketch(sketch, args.out, stages, lambda line: stdout.write(line + "\n")))
+        result = asyncio.run(run_sketch(sketch, args.out, stages, lambda line: stdout.write(line + "\n"), capture))
     except OutputPathError as error:
         return fail(str(error), 2)
     except Exception as error:

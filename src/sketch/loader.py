@@ -12,6 +12,7 @@ from ruamel.yaml.error import YAMLError
 
 from src.paths import ROOT
 from src.sketch.model import Sink, Sketch, Source
+from src.sketch.vocabulary import SKETCH_PREFIX
 
 SCHEMA = json.loads((ROOT / "schema" / "decision_sketch.schema.json").read_text(encoding="utf-8"))
 
@@ -58,6 +59,19 @@ def _source(name: str, value, base: Path, overrides: dict[str, str]) -> Source:
         given = Path(config["path"])
         return Source(name, "file", config, given if given.is_absolute() else base / given)
     return Source(name, config["kind"], config)
+
+
+def children(sketch: Sketch) -> dict[str, Sketch]:
+    """The sketches this one calls (`do: sketch.<file>`), loaded from beside it; a missing file is left to `check`."""
+    found = {}
+    for state in sketch.machine["states"].values():
+        called = str(state.get("do", ""))
+        if called.startswith(SKETCH_PREFIX):
+            file = called.removeprefix(SKETCH_PREFIX)
+            path = sketch.path.parent / f"{file}.yaml"
+            if path.is_file():
+                found[file] = load(path)
+    return found
 
 
 def load(path: Path, overrides: dict[str, str] | None = None) -> Sketch:

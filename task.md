@@ -52,9 +52,9 @@
 ### Phase 6: Sources, capture and replay (UND-60 AC5-7, UND-65 groundwork)
 *Phase goal: file and Jev sources, one `--replay` flag, test and live data never mixed.*
 
-- [ ] **Task 6.1:** `*impl` `sources/file.py`, `sources/jev.py` (a `kind: jev` source: `instructions`, `criteria`, `state` from `from:` sources, through `src/jev.py`), `sources/capture.py` (capture after a complete read, keep the last 5 runs, replay one complete run, never go live, `stale` flag, `mode` in the summary). (*Owner: Neo | Verification: tests with a Jev double for capture, replay of the latest complete run, a named run, a directory, missing-source stop, stale flag, no fallback to live.*)
-- [ ] **Task 6.2:** UAT: UND-60 AC 5-7. (*Owner: Trin | Verification: UAT rows; a replay makes no network call.*)
-- [ ] **Task 6.3:** Review against ADR-0043 and invariants 6, 9. (*Owner: Morpheus | Verification: verdict; commit `Phase 6: ...`.*)
+- [x] **Task 6.1:** `*impl` `sources/file.py`, `sources/jev.py` (a `kind: jev` source: `instructions`, `criteria`, `state` from `from:` sources, through `src/jev.py`), `sources/capture.py` (capture after a complete read, keep the last 5 runs, replay one complete run, never go live, `stale` flag, `mode` in the summary). (*Owner: Neo | Verification: tests with a Jev double for capture, replay of the latest complete run, a named run, a directory, missing-source stop, stale flag, no fallback to live.*)
+- [x] **Task 6.2:** UAT: UND-60 AC 5-7. (*Owner: Trin | Verification: UAT rows; a replay makes no network call.*)
+- [x] **Task 6.3:** Review against ADR-0043 and invariants 6, 9. (*Owner: Morpheus | Verification: verdict; commit `Phase 6: ...`.*)
 
 ### Phase 7: Coffee end to end (UND-64, UND-65, UND-66)
 *Phase goal: the coffee sketch and its weather subsketch run from fixtures and replay to a reproducible ingredient file.*

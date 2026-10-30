@@ -17,6 +17,8 @@ from src.machine_runner import RunRecord, run_machine
 from src.paths import check_writable
 from src.sketch.machine import build_machine
 from src.sketch.model import Sketch
+from src.sketch.sources.capture import CaptureStore
+from src.sketch.sources.reader import Capture, Sources
 from src.sketch.stages import StageFn
 from src.sketch.vocabulary import SINK_PREFIX, SKETCH_PREFIX
 
@@ -32,6 +34,11 @@ class StageContext:
     last: object
     directory: Path
     summary: dict = field(default_factory=dict)
+    sources: Sources | None = None
+
+    async def read(self, name: str) -> list[dict]:
+        """The rows of one of this sketch's sources."""
+        return await self.sources.read(self.sketch, name)
 
 
 @dataclass(frozen=True)
@@ -103,28 +110,38 @@ def _stages(sketch: Sketch, library: Mapping[str, StageFn], make_context: Callab
 
 
 async def run_sketch(
-    sketch: Sketch, out: Path, library: Mapping[str, StageFn], announce: Callable[[str], None] = print, mode: str = "live",
+    sketch: Sketch, out: Path, library: Mapping[str, StageFn], announce: Callable[[str], None] = print,
+    capture: Capture | None = None,
 ) -> RunResult:
     """Run the sketch's machine. Raises whatever a stage raises, after recording the failure."""
+    capture = capture or Capture.live(CaptureStore())
     out = Path(out).resolve()
     check_writable(out)
     directory = out / f"run-{datetime.now(UTC).strftime('%Y%m%dT%H%M%S')}-{uuid.uuid4().hex[:8]}"
     directory.mkdir(parents=True)
     files = [f for sink in sketch.sinks.values() for f in (sink.file, f"{sink.file}.part")]
-    record = EventedRecord(directory, announce, cleanup=[*files, "summary.json"], mode=mode, sketch=sketch.name)
-    record.emit("run_started", sketch=str(sketch.path), mode=mode)
+    record = EventedRecord(directory, announce, cleanup=[*files, "summary.json"], mode=capture.mode, sketch=sketch.name)
+    record.emit("run_started", sketch=str(sketch.path), mode=capture.mode)
+    sources = Sources(capture, directory.name, announce)
     results: dict = {}
     summary: dict = {}
     last = {"value": None}
 
     def make_context(name: str, state: dict) -> StageContext:
-        return StageContext(sketch, name, state, results, last["value"], directory, summary)
+        return StageContext(sketch, name, state, results, last["value"], directory, summary, sources)
 
     stages = _stages(sketch, library, make_context, results)
     machine = build_machine(sketch)
     inner = {name: _remember(stage, last) for name, stage in stages.items()}
     published: dict[str, Path] = {}
-    await run_machine(machine, inner, record, publish=lambda: published.update(_publish(directory, sketch, {"mode": mode, **summary})))
+
+    def publish() -> None:
+        facts = {"mode": capture.mode, "stale": sources.stale, "jev_requests": sources.jev_requests, **summary}
+        published.update(_publish(directory, sketch, facts))
+
+    await run_machine(machine, inner, record, publish=publish)
+    if capture.mode == "live":
+        capture.store.prune()
     return RunResult(directory, published, summary)
 
 

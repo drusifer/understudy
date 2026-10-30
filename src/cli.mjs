@@ -2,8 +2,9 @@
 // src/etl for the household ETL); this file reads the command line, starts Python and passes its output and
 // exit code through.
 //
-//   understudy run <sketch.yaml> [--source name.path=file]... [--out folder]
-//                                         run the sketch and write its outputs
+//   understudy run <sketch.yaml> [--source name.path=file]... [--out folder] [--replay[=run-id|folder]]
+//                                         run the sketch and write its outputs; --replay reads the
+//                                         captured Jev answers instead of calling Jev
 //   understudy check <sketch.yaml> [--source name.path=file]...
 //                                         load and check the sketch, run nothing
 //   understudy etl run --monarch <csv> --amex <csv> [--out <folder>] [--since YYYY-MM-DD] [--amex-account <name>]
@@ -20,9 +21,10 @@ import path from 'node:path';
 const KEY = 'TYPESAFE_API_KEY';
 const REBUILDING = new Set(['library', 'watch', 'dashboard']);
 
-const USAGE = `usage: understudy run <sketch.yaml> [--source name.path=file]... [--out folder]
+const USAGE = `usage: understudy run <sketch.yaml> [--source name.path=file]... [--out folder] [--replay[=run-id|folder]]
            run the sketch: its machine, its rules, its sources, and write its outputs under build/runs/;
-           --source replaces one file source for this run only
+           --source replaces one file source for this run only;
+           --replay reads the last captured Jev answers (no key, no network), or those of a named run or folder
        understudy check <sketch.yaml> [--source name.path=file]...
            check the sketch without running anything
        understudy etl run --monarch <csv> --amex <csv> [--out <folder>] [--since YYYY-MM-DD] [--amex-account <name>]
@@ -35,6 +37,7 @@ const OPTIONS = {
     if (!/^[\w-]+(\.path)?=./s.test(value)) throw new UsageError(`--source needs name.path=file, e.g. --source sales.path=sales.jsonl (got "${value}")`);
     return value;
   }, needs: 'name.path=file', example: '--source sales.path=sales.jsonl', isRepeated: true },
+  replay: { commands: ['run'], read: (value) => value, isOptionalValue: true, needs: 'a run id or folder', example: '--replay=run-20261029T120000-ab12cd34' },
   monarch: { commands: ['etl'], read: (value) => value, needs: 'a CSV path', example: '--monarch transactions.csv' },
   amex: { commands: ['etl'], read: (value) => value, needs: 'a CSV path', example: '--amex transactions.csv' },
   out: { commands: ['run', 'etl'], read: (value) => value, needs: 'a folder', example: '--out build/runs' },
@@ -49,6 +52,7 @@ function option(command, rest, index) {
   const [flag, inline] = rest[index].slice(2).split(/=(.*)/s, 2);
   const known = OPTIONS[flag];
   if (!known?.commands.includes(command)) throw new UsageError(`no option "--${flag}" for ${command} - see understudy --help`);
+  if (inline === undefined && known.isOptionalValue) return { name: flag, value: true, used: 0 };
   const value = inline ?? rest[index + 1];
   if (!value) throw new UsageError(`--${flag} needs ${known.needs}, e.g. ${known.example}`);
   return { name: flag, value: known.read(value), used: inline === undefined ? 1 : 0, isRepeated: known.isRepeated === true };
@@ -97,8 +101,9 @@ function runPython(module, pythonArguments, { environment, stdout, stderr }) {
 }
 
 const defaultCommands = {
-  async run({ sketch, source, out, ...io }) {
+  async run({ sketch, source, out, replay, ...io }) {
     const pythonArguments = ['run', sketch, ...(source ?? []).flatMap((each) => ['--source', each]), ...(out ? ['--out', out] : [])];
+    if (replay !== undefined) pythonArguments.push(replay === true ? '--replay' : `--replay=${replay}`);
     return runPython('src.sketch.cli', pythonArguments, io);
   },
   async check({ sketch, source, ...io }) {
@@ -120,8 +125,8 @@ const HELP = new Set(['--help', '-h', 'help']);
  * stdout; failures are thrown.
  */
 const COMMANDS = {
-  async run({ positional, source, out }, { use, environment, stdout, stderr }) {
-    return use.run({ sketch: oneSketch('run', positional), source, out, environment, stdout, stderr });
+  async run({ positional, source, out, replay }, { use, environment, stdout, stderr }) {
+    return use.run({ sketch: oneSketch('run', positional), source, out, replay, environment, stdout, stderr });
   },
   async check({ positional, source }, { use, environment, stdout, stderr }) {
     return use.check({ sketch: oneSketch('check', positional), source, environment, stdout, stderr });

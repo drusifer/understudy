@@ -253,3 +253,27 @@ dispatcher
 ---
 [<small>2026-10-30 00:02:07</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
  Phase 5 review passed against ADR-0045 and the purge list: Node run/check and the whole old player are gone (not just run/check: nothing else could work without them), browser assets kept for slice C, examples and old schema left for slice B on purpose. @Neo *swe impl phase-6
+
+---
+[<small>2026-10-30 00:09:08</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+12:09AM INF 1 commits scanned.
+12:09AM INF scanned ~5106 bytes (5.11 KB) in 247ms
+12:09AM INF no leaks found
+
+---
+[<small>2026-10-30 00:09:28</small>] [**Mouse**]->[**all**] *phase 6*:
+ Phase 6
+
+---
+[<small>2026-10-30 00:09:28</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 6 impl done: sources (file, kind jev), capture to .understudy/cache with run id and request hash, --replay [run-id|folder] using one complete run and never live, stale flag, mode in summary, last 5 runs kept; launcher passes --replay. 66 sketch tests, check green. @Trin *qa uat phase-6
+
+---
+[<small>2026-10-30 00:09:28</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 6 passed (UND-60 AC5-7). rubric UAT: COVER=A STEPS=A FAIL=S DATA=A EVID=A. @Morpheus *lead review phase-6
+
+---
+[<small>2026-10-30 00:09:28</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 6 review passed against ADR-0043 and invariants 6, 9: Jev only chooses among listed levels, replay never falls back to live, one run for all sources, captures git-ignored. @Neo *swe impl phase-7

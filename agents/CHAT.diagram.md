@@ -94,4 +94,13 @@ sequenceDiagram
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "Phase 5 review passed<br/>against ADR-0045 and the<br/>purge list: Node<br/>run/check and the whole<br/>old player are gone (not<br/>just run/check: nothing<br/>el…"
     Note over Mouse,Trin: "Phase 5 summary<br/>Trin: UAT phase 5 passed<br/>(UND-60 AC1, AC2, AC8).<br/>rubric UAT: COVER=A<br/>STEPS=A FAIL=A DATA=A<br/>EVID=A. @Morpheus *lead<br/>review phase-5<br/>Morpheus: Phase 5 review<br/>passed against ADR-0045<br/>and the purge list: Node<br/>run/check and the whole<br/>old player are gone (not<br/>just run/check: nothing<br/>el…"
+    Mouse->>All: "phase 6"
+    Note right of Mouse: "Phase 6"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 6 impl done:<br/>sources (file, kind<br/>jev), capture to<br/>.understudy/cache with<br/>run id and request hash,<br/>--replay [run-id|folder]<br/>using one…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 6 passed<br/>(UND-60 AC5-7). rubric<br/>UAT: COVER=A STEPS=A<br/>FAIL=S DATA=A EVID=A.<br/>@Morpheus *lead review<br/>phase-6"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 6 review passed<br/>against ADR-0043 and<br/>invariants 6, 9: Jev<br/>only chooses among<br/>listed levels, replay<br/>never falls back to<br/>live, one run…"
+    Note over Mouse,Trin: "Phase 6 summary<br/>Neo: Phase 6 impl done:<br/>sources (file, kind<br/>jev), capture to<br/>.understudy/cache with<br/>run id and request hash,<br/>--replay [run-id|folder]<br/>using one…<br/>Trin: UAT phase 6 passed<br/>(UND-60 AC5-7). rubric<br/>UAT: COVER=A STEPS=A<br/>FAIL=S DATA=A EVID=A.<br/>@Morpheus *lead review<br/>phase-6<br/>Morpheus: Phase 6 review<br/>passed against ADR-0043<br/>and invariants 6, 9: Jev<br/>only chooses among<br/>listed levels, replay<br/>never falls back to<br/>live, one run…"
 ```

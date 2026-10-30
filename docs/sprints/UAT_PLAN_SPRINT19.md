@@ -123,3 +123,27 @@
 * `rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A`.
 
 **Phase 5 UAT verdict: PASSED.**
+
+## 6. Phase 6: sources, capture and replay (UND-60 AC 5-7)
+
+### `UAT-UND-60-04` A Jev source returns a probability per level and is captured
+* **Story/AC:** UND-60 AC 4, 5.
+* **Command:** `bobp make test-py ARGS="test_sketch*.py"` (`LiveTests`, `StoreTests`) with the Jev double.
+* **Expected:** a `kind: jev` source returns one row per level, in the rubric's order (`{level, probability}`); Jev is sent the rubric (`instructions` and `criteria`) and a `state` built from the named sources; a read is captured only after it completed, with run id, source, request hash and time; a source read twice in a run asks Jev once; the last 5 runs are kept together; a failed Jev call captures nothing.
+* **Result:** Pass. Request seen by the double: `state {"notes": [{"text": "the coffee was warm"}]}`, the instructions and the two criteria; one request for two reads; with `keep=2`, four runs prune to the newest two with complete file sets; a failed call exits 1 with `understudy: Jev could not be reached: down` and leaves an empty store. A bad JSON line in a file source names the file and the line.
+
+### `UAT-UND-60-05` Replay reads one complete run and never goes live
+* **Story/AC:** UND-60 AC 6.
+* **Expected:** `--replay` needs no key and makes no Jev call; it uses the latest run that captured every non-file source, or `--replay=<run-id>`, or `--replay=<folder>`; when no run covers every source it stops before any stage naming the missing source and saying to do a live run first; two replays are byte-identical.
+* **Result:** Pass. A replay after a live run returns the same rows with `jev_requests: 0`; an older complete run is chosen over a newer one that lacks the capture; a named run, a folder and an unknown name (`no capture named 'run-nope'`) all behave; an empty store exits 2 with `no saved run captured jev_read.mood; do a live run first` and creates no run folder; two replays produce identical bytes.
+
+### `UAT-UND-60-06` Live needs a key; the run says which mode it was in
+* **Story/AC:** UND-60 AC 7; ADR-0043.
+* **Expected:** a live run with a Jev source and no `TYPESAFE_API_KEY` is exit 2 before any stage; `summary.json` records `mode` (`live`/`replay`), `stale` and `jev_requests`; a replay whose rubric changed since the capture prints one line and sets `stale: true`, and carries on; `check` never touches the store.
+* **Result:** Pass. No key: `understudy: Jev needs a TypeSafe key: set TYPESAFE_API_KEY`, nothing created; changing `Smiling, pleased.` to `Beaming.` then replaying prints `replay of jev_read.mood is stale: ...` and writes `stale: true`; `check` leaves the store empty. The Node launcher passes `--replay` (a flag, or `=<id|folder>`) and refuses it for `check`.
+
+### Phase 6 gate evidence
+* `bobp make check` passed (JavaScript 20 tests, Python incl. 66 sketch tests, SQLMesh, eslint, ruff, secret scan); no live Jev call.
+* `rubric UAT: COVER=A STEPS=A FAIL=S DATA=A EVID=A`.
+
+**Phase 6 UAT verdict: PASSED.**

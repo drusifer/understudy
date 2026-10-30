@@ -30,6 +30,19 @@ test('run passes the sketch, each --source and --out to the Python package', asy
   assert.equal(seen[0].out, 'build/runs');
 });
 
+test('--replay is a flag, or takes a run id or folder after =; it is only for run', async () => {
+  const seen = [];
+  const commands = { run: async (options) => { seen.push(options.replay); return 0; }, check: async () => 0 };
+  await cli(['run', 'a.yaml', '--replay'], { commands, environment: {} });
+  await cli(['run', '--replay', 'a.yaml'], { commands, environment: {} });
+  await cli(['run', 'a.yaml', '--replay=run-20260101T000000-ab'], { commands, environment: {} });
+  await cli(['run', 'a.yaml'], { commands, environment: {} });
+  assert.deepEqual(seen, [true, true, 'run-20260101T000000-ab', undefined]);
+  const refused = await cli(['check', 'a.yaml', '--replay'], { commands, environment: {} });
+  assert.equal(refused.code, 2);
+  assert.match(refused.stderr, /no option "--replay" for check/);
+});
+
 test('run needs no key here: whether Jev is needed is the sketch\'s business, decided in Python', async () => {
   const result = await cli(['run', 'coffee_week.yaml'], { environment: {}, commands: { run: async () => 0 } });
   assert.equal(result.code, 0);
