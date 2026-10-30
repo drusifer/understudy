@@ -27,15 +27,16 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 ## STORY-UND-60: Run a sketch from the command line
 **Points:** 3
 
-**As the** shop owner, **I want** to run `understudy sketch run coffee_week.yaml`, **so that** I can get next week's order without touching code. (`sketch` is a temporary word, because the old Node `understudy run` still exists until slice D deletes it; then the command becomes `understudy run`. The owner wants one kind of sketch and no duplicates when the epic ends: see the epic's purge list.)
+**As the** shop owner, **I want** to run `understudy run coffee_week.yaml`, **so that** I can get next week's order without touching code. (The command is `understudy run` from this sprint on (owner, 2026-10-29): the old Node `run` and `check` are replaced and the old commands may be broken. There is one kind of sketch, and the epic's purge list removes every duplicate by slice D.)
 
 ### Acceptance Criteria
-1. `understudy sketch run <sketch.yaml>` loads the sketch, prints one line per stage as it starts (`stage weather`, `stage split_trade`, …) and ends with a line naming the output file.
+1. `understudy run <sketch.yaml>` loads the sketch, prints one line per stage as it starts (`stage weather`, `stage split_trade`, …) and ends with a line naming the output file.
 2. Exit code 0 on success, 1 when a stage fails, 2 when the sketch or an input file is wrong; the last line of an error says what to fix.
 3. `--source <name>.path=<file>` replaces one source's file for this run only; the sketch file is not changed.
 4. The command makes no network call except to Jev, and only when a stage reads a `kind: jev` source.
 5. Every non-file source (here the Jev source) captures a complete, successful live read into a git-ignored local cache with the run id, source name, kind, request hash and time; the last 5 runs are kept.
 6. `--replay [run-id|dir]` makes every non-file source read its capture and never go live: no key, no network, and the run repeats exactly. It uses the latest live run that captured every non-file source (or the named run, or the committed fixtures in `dir`); if no run covers them all it stops naming the missing source and saying to do a live run first.
+8. `understudy check <sketch.yaml>` is the new check (UND-61) and starts nothing. The old Node `run` and `check` code and their tests are deleted in this sprint; the other old commands (`library`, `watch`, `dashboard`) and the six old examples are left as they are, broken, until slices B to D rebuild or delete them (owner: the old command can be broken).
 7. Without `--replay` the run is live, and a missing `TYPESAFE_API_KEY` is exit 2 before any stage starts. `summary.json` records `mode: live` or `mode: replay`, and `stale: true` when the capture's request hash no longer matches the sketch.
 
 ## STORY-UND-61: A wrong sketch is refused before anything runs

@@ -9,13 +9,13 @@
 
 ## 1. Executive Summary & System Overview
 
-Sprint 19 adds a new Python package, `src/sketch/`, that runs the owner's decision sketches: it reads a YAML file, checks it, runs the owner's own python-statemachine machine, and writes an ingredient file. Rules are the owner's (`decide` trees with explicit YAML conditions), counts and conversions are DuckDB SQL, and Jev is one more kind of source, captured on every live read so any run can be replayed offline. The old Node player is untouched and keeps working until slice D; the two share nothing except the `understudy` command, which gains a `sketch` subcommand that launches the Python package.
+Sprint 19 adds a new Python package, `src/sketch/`, that runs the owner's decision sketches: it reads a YAML file, checks it, runs the owner's own python-statemachine machine, and writes an ingredient file. Rules are the owner's (`decide` trees with explicit YAML conditions), counts and conversions are DuckDB SQL, and Jev is one more kind of source, captured on every live read so any run can be replayed offline. The `understudy` command's `run` and `check` now launch the Python package (owner, 2026-10-29: the command is `understudy run`, and the old command can be broken); the old Node player code behind them is deleted this sprint, and the other old commands (`library`, `watch`, `dashboard`) and the old examples are left broken until slices B to D rebuild or delete them.
 
 ## 2. System Context & Boundaries
 
 ```mermaid
 graph TD
-    Owner["Shop owner (command line)"] -->|"understudy sketch run coffee_week.yaml"| Node["src/cli.mjs (launcher only)"]
+    Owner["Shop owner (command line)"] -->|"understudy run coffee_week.yaml"| Node["src/cli.mjs (launcher only)"]
     Node -->|"spawns, streams, preserves exit code"| Py["src/sketch (Python)"]
     Py -->|"reads"| Files[("Source files: sales, Almanac text (JSONL)")]
     Py -->|"writes"| Out[("Run folder under build/runs/: ingredients.jsonl, summary.json, run.json")]
@@ -56,7 +56,7 @@ graph TB
 ### Component Inventory
 | Component | Responsibility | Inputs | Outputs |
 |---|---|---|---|
-| `cli.py` | `sketch run` and `sketch check`: parse flags (`--source`, `--replay`, `--out`), map errors to exit codes 0/1/2, print one line per stage | argv | exit code, stage lines, final output line |
+| `cli.py` | `run` and `check`: parse flags (`--source`, `--replay`, `--out`), map errors to exit codes 0/1/2, print one line per stage | argv | exit code, stage lines, final output line |
 | `loader.py` | read the sketch with ruamel.yaml (YAML 1.2, so slices stay text), resolve paths relative to the file, build the model | sketch path, `--source` overrides | `Sketch` (immutable) |
 | `check.py` | JSON Schema (`schema/decision_sketch.schema.json`) then semantic checks: stages/transitions exist and reach a final state, outcomes declared, segment shares sum to 1, every referenced source exists; errors name file, path, bad value, nearest good one | `Sketch` | a list of problems, or none |
 | `model.py` | dataclasses: `Sketch`, `Source`, `Sink`, `Outcome`, `Segment`, `Stage` (the domain terms) | loader | typed objects |
@@ -85,7 +85,7 @@ sequenceDiagram
     participant Jev as Jev source
     participant Db as DuckDB
 
-    Owner->>CLI: understudy sketch run coffee_week.yaml
+    Owner->>CLI: understudy run coffee_week.yaml
     CLI->>Chk: load, validate against schema, check semantics
     Chk-->>CLI: ok (or exit 2 with path, value, nearest)
     CLI->>Run: start run (folder, manifest, mode live)
@@ -103,7 +103,7 @@ A failed stage ends the run with exit 1, removes any partial output and records 
 
 ## 5. Interface & Contract Specifications
 
-* **Command:** `understudy sketch run <sketch.yaml>` and `understudy sketch check <sketch.yaml>` (the Node launcher passes them to Python; `check` loads and checks and starts nothing). The new subcommand is `sketch` because `understudy run` still plays the old Node sketches; slice D drops the word `sketch`.
+* **Command:** `understudy run <sketch.yaml>` and `understudy check <sketch.yaml>` (the Node launcher passes them to Python; `check` loads and checks and starts nothing). There is no `sketch` subcommand: the old Node `run` and `check` are replaced, so there is one command and one kind of sketch.
 * **Flags:**
   * `--source <name>.path=<file>`: replace one file source for this run (repeatable); the sketch file is unchanged.
   * `--replay [run-id|dir]`: every non-file source reads its capture and never goes live; no key, no network.
@@ -137,9 +137,9 @@ A failed stage ends the run with exit 1, removes any partial output and records 
 
 * Python 3.12 in `.venv` with `uv`; no new language or package manager. New direct dependencies, both already installed transitively and now pinned in `pyproject.toml` through the existing `lock-py` flow (ordinary dependencies, not a mechanism change): `ruamel.yaml` (YAML 1.2) and `jsonschema`. python-statemachine, duckdb and typesafe-sdk are already direct.
 * SQL runs directly on DuckDB from the stages; SQLMesh is not used here (its models and plans suit the ETL's multi-stage store, not these three small queries).
-* `bobp make` front door unchanged. Existing targets cover this slice: `test-py` runs the new tests, `lint` gains `src/sketch` in its ruff paths (an edit to an existing target), `bobp make run ARGS="sketch run ..."` runs it. No new make target; Tank confirms at the SDLC check.
+* `bobp make` front door unchanged. Existing targets cover this slice: `test-py` runs the new tests, `lint` gains `src/sketch` in its ruff paths (an edit to an existing target), `bobp make run ARGS="run <sketch.yaml>"` runs it. No new make target; Tank confirms at the SDLC check.
 * `.gitignore` gains `.understudy/`.
-* Node side: `src/cli.mjs` gets the `sketch` subcommand that spawns Python the way `etl run` does; its tests extend `tests/cli.test.js`.
+* Node side: in `src/cli.mjs`, `run` and `check` spawn the Python package the way `etl run` does; the old Node `run`/`check` implementations (`src/run.mjs`, `src/sketch.mjs`, `src/machine.mjs`, `src/engine.mjs` and the code only they use) and their tests are deleted; `tests/cli.test.js` covers the launcher.
 
 ## 8. Architectural Decisions (ADRs) & Technical Debt
 
@@ -149,7 +149,7 @@ A failed stage ends the run with exit 1, removes any partial output and records 
 * **ADR-0042: Conditions are explicit YAML, read as YAML 1.2.** Field, operator, value; `in` takes a list or a slice; `has` is contains; `and`/`or`/`not` combine; no text expressions; ruamel.yaml loads sketches because PyYAML turns `70:30` into 4230.
 * **ADR-0043: Jev is a source kind, and non-file sources capture and replay.** `kind: jev` with `instructions`, `criteria`, `state`; one `--replay` flag; replay uses one complete run and never goes live.
 * **ADR-0044: Weights are numbers or `if/then/else`.** No expression language.
-* **ADR-0045: `understudy sketch …` is the new command until slice D.** A subcommand of the Node launcher that runs the Python package; `understudy run` keeps playing old sketches.
+* **ADR-0045: `understudy run` and `understudy check` are the new commands, now.** The Node launcher passes them to the Python package; the old Node implementations are deleted; the remaining old commands are allowed to break until rebuilt or deleted (owner, 2026-10-29).
 
 ### Acknowledged Technical Debt & Trade-offs
 * The Jev wrapper stays in `src/etl/jev.py` and the output-destination policy in `src/etl/controller.py`; `src/sketch` imports both. Phase 1 moves each to a shared module (`src/jev.py`, `src/paths.py`) so neither context depends on the other (DRY), and the ETL imports the shared ones.
