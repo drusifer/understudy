@@ -38,7 +38,7 @@ machine:
   initial: look
   states:
     look:
-      do: { etl: { action: look } }
+      do: { map: { action: look } }
       then: done
     done:
       final: true
@@ -51,7 +51,7 @@ class TemplateCase(unittest.TestCase):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         self.dir = Path(directory.name)
-        patcher = patch.dict(STAGES, {"etl.look": Stage("etl.look", None, {})})
+        patcher = patch.dict(STAGES, {"map.look": Stage("map.look", None, {})})
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -69,7 +69,7 @@ class TemplateCase(unittest.TestCase):
             return [{"a": "x", "weight": 1}]
 
         sketch = load_checked(path, variables=variables)
-        asyncio.run(run_sketch(sketch, self.dir / "out", {"etl.look": look}, lambda line: None))
+        asyncio.run(run_sketch(sketch, self.dir / "out", {"map.look": look}, lambda line: None))
         return seen
 
 
@@ -157,7 +157,7 @@ machine:
   initial: look
   states:
     look:
-      do: { etl: { action: look } }
+      do: { map: { action: look } }
       then: done
     done:
       final: true
@@ -178,7 +178,7 @@ class EachTests(TemplateCase):
             return [{"audience": "loved", "weight": 1}]
 
         sketch = load_checked(path)
-        result = asyncio.run(run_sketch(sketch, self.dir / "out", {"etl.look": look}, lambda line: None))
+        result = asyncio.run(run_sketch(sketch, self.dir / "out", {"map.look": look}, lambda line: None))
         lines = result.outputs["pairs"].read_text(encoding="utf-8").splitlines()
         return seen, [json.loads(line) for line in lines]
 
@@ -195,7 +195,7 @@ class EachTests(TemplateCase):
         self.assertTrue(any("'filsm' is not a source (did you mean 'films'?)" in p for p in check(load(path))))
 
     def test_each_repeats_only_a_sketch(self):
-        stage = "do: { etl: { action: look } }"
+        stage = "do: { map: { action: look } }"
         path = self.write_each(EACH_PARENT.replace("do: { sketch: { file: child } }\n      each", f"{stage}\n      each"))
         self.assertTrue(any("`each` repeats a sketch" in p for p in check(load(path))))
 

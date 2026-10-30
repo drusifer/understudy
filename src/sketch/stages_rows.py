@@ -1,6 +1,6 @@
 """General stages over rows: find runs of consecutive numbers, and weigh candidates 0.0 to 1.0.
 
-They know nothing about cinemas. `etl.adjacent_runs` finds consecutive seat numbers, consecutive days or consecutive
+They know nothing about cinemas. `map.adjacent_runs` finds consecutive seat numbers, consecutive days or consecutive
 invoice numbers alike; the `prefer_*` stages turn a field into the weighted rows a `blend` combines with the sketch's
 own weights (decision 26).
 """
@@ -12,7 +12,7 @@ def _matching(rows: list[dict], match: dict | None) -> list[dict]:
     return [row for row in rows if all(row.get(field) == value for field, value in (match or {}).items())]
 
 
-@stage("etl.adjacent_runs")
+@stage("map.adjacent_runs")
 async def adjacent_runs(  # noqa: PLR0913 - the stage's with: keys
     context, source: Source, group: str, order: str, length: int, match: dict | None = None,
 ) -> list[dict]:
@@ -31,7 +31,7 @@ async def adjacent_runs(  # noqa: PLR0913 - the stage's with: keys
     ]
 
 
-@stage("etl.prefer_order")
+@stage("map.prefer_order")
 async def prefer_order(context, field: str, order: list, key: str, outcome: str) -> list[dict]:
     """Weighted rows for the previous stage's rows: the first value of `order` weighs 1.0, the next less, and a value
     not listed 0. Each row becomes `{<outcome>: row[key], weight}`."""
@@ -41,7 +41,7 @@ async def prefer_order(context, field: str, order: list, key: str, outcome: str)
     ]
 
 
-@stage("etl.prefer_middle")
+@stage("map.prefer_middle")
 async def prefer_middle(  # noqa: PLR0913 - the stage's with: keys
     context, source: Source, group: str, order: str, key: str, outcome: str, match: dict | None = None,
 ) -> list[dict]:

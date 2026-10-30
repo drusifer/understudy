@@ -42,7 +42,7 @@ class AdjacentRunsTests(unittest.TestCase):
         self.assertEqual([r["run"] for r in self.runs(2, showing="21:00")], ["E1-2", "E2-3"])
 
     def test_it_is_registered_with_a_typed_signature(self):
-        params = STAGES["etl.adjacent_runs"].params
+        params = STAGES["map.adjacent_runs"].params
         self.assertEqual([name for name, p in params.items() if p.required], ["source", "group", "order", "length"])
 
 

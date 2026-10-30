@@ -6,9 +6,10 @@ ON_EMPTY = ("fail", "fallback", "skip")  # `walk_away` arrives with the evening 
 
 
 # The kinds of stage a state's `do:` can name, each with the one field that names which (owner, 2026-10-30):
-#   do: { etl: { action: split_by_share } }     do: { sink: { name: ingredients } }
-#   do: { convert: { action: recipes } }        do: { sketch: { file: seating } }
-STAGE_TYPES = {"etl": "action", "convert": "action", "sink": "name", "sketch": "file"}
+#   do: { map: { action: split_by_share } }    do: { sink: { name: ingredients } }
+#   do: { reduce: { action: blend } }           do: { sketch: { file: seating } }
+# A map turns rows into rows; a reduce turns many rows into fewer.
+STAGE_TYPES = {"map": "action", "reduce": "action", "sink": "name", "sketch": "file"}
 
 
 def stage_of(state: dict) -> tuple[str, str] | None:

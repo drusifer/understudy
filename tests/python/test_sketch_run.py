@@ -13,7 +13,7 @@ from src.sketch.registry import STAGES, Stage
 from src.sketch.run import run_sketch
 
 BRANCH = ROOT / "tests" / "fixtures" / "machine_branch.yaml"
-TEST_STAGES = {name: Stage(name, None, {}) for name in ("etl.count", "etl.mark", "etl.boom")}
+TEST_STAGES = {name: Stage(name, None, {}) for name in ("map.count", "map.mark", "map.boom")}
 
 
 def library(count=100, fail_in=None):
@@ -28,7 +28,7 @@ def library(count=100, fail_in=None):
     async def boom(context):
         raise RuntimeError("boom")
 
-    return {"etl.count": counted, "etl.mark": marked, "etl.boom": boom}
+    return {"map.count": counted, "map.mark": marked, "map.boom": boom}
 
 
 class RunCase(unittest.TestCase):
@@ -93,7 +93,7 @@ class MachineTests(RunCase):
         self.assertEqual(sorted(p.name for p in folder.iterdir()), ["events.jsonl", "run.json"])
 
     def test_a_failure_after_the_sink_removes_the_partial_output(self):
-        after = "then: after\n    after:\n      do: { etl: { action: boom } }\n      then: done\n    done:"
+        after = "then: after\n    after:\n      do: { map: { action: boom } }\n      then: done\n    done:"
         path = self.sketch([("then: done\n    done:", after)])
         with self.assertRaisesRegex(RuntimeError, "boom"):
             self.run_it(library(), path)
@@ -115,8 +115,8 @@ class MachineTests(RunCase):
         self.assertNotIn("outcome", json.loads((result.directory / "run.json").read_text(encoding="utf-8")))
 
     def test_a_state_with_no_stage_in_the_library_is_named(self):
-        with self.assertRaisesRegex(LookupError, "etl.mark"):
-            self.run_it({"etl.count": library()["etl.count"]})
+        with self.assertRaisesRegex(LookupError, "map.mark"):
+            self.run_it({"map.count": library()["map.count"]})
 
 
 class CliTests(RunCase):

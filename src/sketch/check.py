@@ -58,10 +58,10 @@ class _Checker:
                                      f"{ref['from']!r} is not another source{_nearest(ref['from'], self.sketch.sources)}")
 
     def stage_source(self, name: str, config: dict) -> None:
-        """A source computed by a stage: only a library stage (`etl` or `convert`), and it must not read itself."""
+        """A source computed by a stage: only a library stage (`map` or `reduce`), and it must not read itself."""
         at = f"sources.{name}"
         if next(iter(config["do"])) in ("sink", "sketch"):
-            self.problem(f"{at}.do", "a source is computed by an `etl` or `convert` stage, not a sink or a sketch")
+            self.problem(f"{at}.do", "a source is computed by a `map` or `reduce` stage, not a sink or a sketch")
             return
         self.stage(at, config)
         stack = [(name, config)]

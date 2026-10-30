@@ -20,7 +20,7 @@ machine:
   initial: ask
   states:
     ask:
-      do: { etl: { action: read } }
+      do: { map: { action: read } }
       then: write
     write:
       do: { sink: { name: out } }

@@ -36,7 +36,7 @@ machine:
       then: split_trade
 
     split_trade:
-      do: { etl: { action: split_by_share } }
+      do: { map: { action: split_by_share } }
       with: { source: sales, field: drinks, segments: segments }
       then: match_orders
 
@@ -74,7 +74,7 @@ machine:
       then: to_ingredients
 
     to_ingredients:
-      do: { convert: { action: recipes } }
+      do: { map: { action: recipes } }
       with: { recipes: recipes, packs: packs }
       then: write
 

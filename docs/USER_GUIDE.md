@@ -103,7 +103,7 @@ The reference is [SKETCHES.md](SKETCHES.md).
 | Message | Exit | What to do |
 |---|---|---|
 | `...: sources.sales: file ... does not exist` | 2 | the path is relative to the sketch file; fix it, or `--source sales.path=<file>` |
-| `...: unknown stage 'etl.split_by_shar' (did you mean 'etl.split_by_share'?)` | 2 | fix the name at that path |
+| `...: unknown stage 'map.split_by_shar' (did you mean 'map.split_by_share'?)` | 2 | fix the name at that path |
 | `...: 'larg' is not an option of size (did you mean 'large'?)` | 2 | use an option declared under `outcomes` |
 | `...: data.segments: shares add up to 1.1, not 1` | 2 | make the shares add up to 1 |
 | `...: weights add up to 1.4, not 1` | 2 | a leaf's weights must add up to 1 |

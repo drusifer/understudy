@@ -8,17 +8,17 @@ machine:
   initial: count
   states:
     count:
-      do: { etl: { action: count } }
+      do: { map: { action: count } }
       transitions:
         - if:
             drinks: { lt: 500 }
           to: quiet
         - to: busy
     quiet:
-      do: { etl: { action: mark } }
+      do: { map: { action: mark } }
       then: write
     busy:
-      do: { etl: { action: mark } }
+      do: { map: { action: mark } }
       then: write
     write:
       do: { sink: { name: report } }

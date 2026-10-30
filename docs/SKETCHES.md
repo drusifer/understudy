@@ -4,7 +4,7 @@ A **sketch** is one YAML file in which you write down how you decide something. 
 
 TLDR:
     A sketch names `sources` (files in), `sinks` (files out), `outcomes` (what can be decided), `data` (your facts) and a `machine` (your pipeline).
-    Each state in the machine names a stage with `do:` (an `etl` or `convert` action, a `sketch` file, a `sink`) or has a `blend` of weighted rows.
+    Each state in the machine names a stage with `do:` (a `map` or `reduce` action, a `sketch` file, a `sink`) or has a `blend` of weighted rows.
     A decide tree, lookup, subsketch or Jev reading produces weighted rows; `blend` is a weighted average per dimension; `forbid` drops options and always wins.
     Conditions are plain YAML: `segment: { eq: students }`, `temp: { in: [80:90] }`, `and` / `or` / `not`.
     Jev is a source: `kind: jev` with a rubric (`instructions` + `criteria`) and the `state` it reads; reading it gives a probability per level.
@@ -40,7 +40,7 @@ A state is final (`final: true`) or names one stage and where to go next:
 ```yaml
 states:
   split_trade:
-    do: { etl: { action: split_by_share } }   # the stage: a type, and which one
+    do: { map: { action: split_by_share } }   # the stage: a type, and which one
     with: { source: sales, field: drinks, segments: segments }   # its params
     then: match_orders              # the next state
   count:
@@ -59,8 +59,8 @@ A state's `do:` names a stage **type** as a key (a closed set the schema owns) a
 
 | `do:` | field | meaning |
 |---|---|---|
-| `etl` | `action` | a library operation, written in Python with `@stage` (below) |
-| `convert` | `action` | a library conversion, the same way |
+| `map` | `action` | rows in, rows out: a library operation written in Python with `@stage` (below) |
+| `reduce` | `action` | many rows to fewer (`blend`, later `pick_best`), written the same way |
 | `sink` | `name` | write the rows of the previous stage to a declared sink |
 | `sketch` | `file` | run another sketch (`<file>.yaml` beside this one) |
 
@@ -68,9 +68,9 @@ A state's `do:` names a stage **type** as a key (a closed set the schema owns) a
 
 | `do:` | `with` | What it does |
 |---|---|---|
-| `etl: { action: split_by_share }` | `source`, `field`, `segments` | splits a total (the sum of `field` over the source's rows) across `data.<segments>` by each segment's `share`: rows `{segment, share, age_min, age_max, drinks}` |
-| `etl: { action: join_weights }` | `probabilities`, `weights` | joins a Jev source's probability per level with `data.<weights>` (level to option weights) into weighted rows on the dimension the sketch lists in `outputs` |
-| `convert: { action: recipes }` | `recipes`, `packs` | turns drink counts into ingredient amounts from `data.<recipes>` (rows `{<dimension>: <option>, ingredient, amount, unit}`), rounded up to whole packs from `data.<packs>` |
+| `map: { action: split_by_share }` | `source`, `field`, `segments` | splits a total (the sum of `field` over the source's rows) across `data.<segments>` by each segment's `share`: rows `{segment, share, age_min, age_max, drinks}` |
+| `map: { action: join_weights }` | `probabilities`, `weights` | joins a Jev source's probability per level with `data.<weights>` (level to option weights) into weighted rows on the dimension the sketch lists in `outputs` |
+| `map: { action: recipes }` | `recipes`, `packs` | turns drink counts into ingredient amounts from `data.<recipes>` (rows `{<dimension>: <option>, ingredient, amount, unit}`), rounded up to whole packs from `data.<packs>` |
 | `sink: { name: <sink> }` | | writes the rows of the stage before it to the sink file |
 | `sketch: { file: <file> }` | | runs `<file>.yaml` beside this one as a nested run and gives back the weighted rows its `outputs` name; `with:` passes it values (see Subsketches) |
 | (a state with `blend:`) | | see below |
@@ -155,11 +155,11 @@ sources:
   seats: seats.jsonl
   runs:
     kind: stage
-    do: { etl: { action: adjacent_runs } }
+    do: { map: { action: adjacent_runs } }
     with: { source: seats, group: row, order: number, length: 2, match: { free: true } }
 ```
 
-Anything that reads `runs` by name (another stage's `source:`, a Jev source's `state:`, an outcome's `{ from, key }`) triggers it. It runs once, on the first read, and the rows are remembered. Only `etl` and `convert` stages can compute a source. `understudy check` refuses a source that reads itself, an unknown action, and a `source:` param that names no source. Stage sources are deterministic, so only Jev readings are captured for a replay.
+Anything that reads `runs` by name (another stage's `source:`, a Jev source's `state:`, an outcome's `{ from, key }`) triggers it. It runs once, on the first read, and the rows are remembered. Only `map` and `reduce` stages can compute a source. `understudy check` refuses a source that reads itself, an unknown action, and a `source:` param that names no source. Stage sources are deterministic, so only Jev readings are captured for a replay.
 
 ## Subsketches
 
@@ -203,12 +203,12 @@ seat:
 A stage is one Python function, registered with `@stage`. Its signature is the contract of the YAML, so there is nothing else to keep in step:
 
 ```python
-@stage("etl.split_by_share")
+@stage("map.split_by_share")
 async def split_by_share(context, source: Source, field: str, segments: Data) -> list[dict]: ...
 ```
 
 ```yaml
-do: { etl: { action: split_by_share } }
+do: { map: { action: split_by_share } }
 with: { source: sales, field: drinks, segments: segments }
 ```
 
@@ -298,4 +298,4 @@ Exit codes: 0 done, 1 a stage failed after the run started, 2 refused before sta
 
 ## Checking
 
-`understudy check <sketch.yaml>` loads and checks the sketch and starts nothing. It reports every mistake as the file, the path inside it, what is wrong and the nearest valid value, for example `machine.states.split_trade.do.etl.action: unknown stage 'etl.split_by_shar' (did you mean 'etl.split_by_share'?)`. [schema/decision_sketch.schema.json](../schema/decision_sketch.schema.json) describes the shape for editors.
+`understudy check <sketch.yaml>` loads and checks the sketch and starts nothing. It reports every mistake as the file, the path inside it, what is wrong and the nearest valid value, for example `machine.states.split_trade.do.map.action: unknown stage 'map.split_by_shar' (did you mean 'map.split_by_share'?)`. [schema/decision_sketch.schema.json](../schema/decision_sketch.schema.json) describes the shape for editors.

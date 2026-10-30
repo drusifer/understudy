@@ -29,7 +29,7 @@ RECIPE_SQL = """
 """
 
 
-@stage("etl.split_by_share")
+@stage("map.split_by_share")
 async def split_by_share(context, source: Source, field: str, segments: Data) -> list[dict]:
     """A total (the sum of `field` over the source's rows) split across the owner's segments by their share."""
     sales = [{"drinks": row[field]} for row in await context.read(source)]
@@ -40,7 +40,7 @@ async def split_by_share(context, source: Source, field: str, segments: Data) ->
     return rows
 
 
-@stage("etl.join_weights")
+@stage("map.join_weights")
 async def join_weights(context, probabilities: Source, weights: Data) -> list[dict]:
     """A Jev reading (a probability per level) joined with the owner's weights per level: weighted rows."""
     probabilities = await context.read(probabilities)
@@ -58,9 +58,9 @@ def _returned_dimensions(context) -> list[str]:
         if state.get("final") and state.get("outputs"):
             dimensions = state["outputs"]
             if len(dimensions) != 1:
-                raise ValueError(f"etl.join_weights answers one dimension; the sketch outputs {dimensions}")
+                raise ValueError(f"map.join_weights answers one dimension; the sketch outputs {dimensions}")
             return dimensions
-    raise ValueError("etl.join_weights is for a sketch that declares its outputs")
+    raise ValueError("map.join_weights is for a sketch that declares its outputs")
 
 
 def _validate(rows: list[dict], decider: str, outcomes: dict, stage: str) -> None:
@@ -106,7 +106,7 @@ async def blend(context) -> list[dict]:
     return weighted
 
 
-@stage("convert.recipes")
+@stage("map.recipes")
 async def convert_recipes(context, recipes: Data, packs: Data) -> list[dict]:
     """Drink counts to ingredient amounts, rounded up to whole packs where the owner gave a pack size."""
     named_recipes = []

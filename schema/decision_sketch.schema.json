@@ -42,8 +42,8 @@
       "maxProperties": 1,
       "additionalProperties": false,
       "properties": {
-        "etl": { "$ref": "#/$defs/actionStage" },
-        "convert": { "$ref": "#/$defs/actionStage" },
+        "map": { "$ref": "#/$defs/actionStage" },
+        "reduce": { "$ref": "#/$defs/actionStage" },
         "sink": {
           "type": "object", "required": ["name"], "additionalProperties": false,
           "properties": { "name": { "type": "string", "minLength": 1 } }

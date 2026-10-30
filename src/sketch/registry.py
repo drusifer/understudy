@@ -1,11 +1,11 @@
 """Stages register themselves here, and the signature of the function is the contract of the YAML.
 
-    @stage("etl.split_by_share")
+    @stage("map.split_by_share")
     async def split_by_share(context, source: Source, field: str, segments: Data) -> list[dict]: ...
 
-declares the stage `etl.split_by_share` that a sketch writes as
+declares the stage `map.split_by_share` that a sketch writes as
 
-    do: { etl: { action: split_by_share } }
+    do: { map: { action: split_by_share } }
     with: { source: sales, field: drinks, segments: segments }
 
 Each parameter is a `with:` key; a parameter with no default is required. Its annotation says what the value is:

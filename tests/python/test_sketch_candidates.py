@@ -35,7 +35,7 @@ machine:
   initial: start
   states:
     start:
-      do: { etl: { action: start } }
+      do: { map: { action: start } }
       then: rank
     rank:
       blend:
@@ -47,7 +47,7 @@ machine:
       shortlist: 2
       then: choose
     choose:
-      do: { etl: { action: choose } }
+      do: { map: { action: choose } }
       then: write
     write:
       do: { sink: { name: chosen } }
@@ -73,7 +73,7 @@ class CandidateCase(unittest.TestCase):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         self.dir = Path(directory.name)
-        patcher = patch.dict(STAGES, {name: Stage(name, None, {}) for name in ("etl.start", "etl.choose")})
+        patcher = patch.dict(STAGES, {name: Stage(name, None, {}) for name in ("map.start", "map.choose")})
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -87,7 +87,7 @@ class CandidateCase(unittest.TestCase):
         jev = JevDouble(choose_fn=lambda state, instructions, options: Chosen(
             answer, 0.9, {option: 1.0 if option == answer else 0.0 for option in options}))
         capture = Capture.live(CaptureStore(self.dir / "cache"), jev)
-        library = {**registered(), "etl.start": start, "etl.choose": choose}
+        library = {**registered(), "map.start": start, "map.choose": choose}
         return asyncio.run(run_sketch(load_checked(path), self.dir / "out", library, lambda line: None, capture)), jev
 
 
@@ -129,7 +129,7 @@ class JevPickTests(CandidateCase):
         path = self.write()
         first, _ = self.run_it(path, answer="Brazil")
         store = CaptureStore(self.dir / "cache")
-        library = {**registered(), "etl.start": start, "etl.choose": choose}
+        library = {**registered(), "map.start": start, "map.choose": choose}
         replay = Capture.replay(store, load(path), None)
         again = asyncio.run(run_sketch(load_checked(path), self.dir / "out2", library, lambda line: None, replay))
         self.assertEqual(again.outputs["chosen"].read_text(encoding="utf-8"), first.outputs["chosen"].read_text(encoding="utf-8"))

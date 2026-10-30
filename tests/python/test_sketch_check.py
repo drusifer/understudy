@@ -53,7 +53,7 @@ class CheckTests(unittest.TestCase):
 
     def test_an_unknown_stage_names_the_path_and_the_nearest_stage(self):
         problems = self.workspace().edit("action: split_by_share", "action: split_by_shar").problems()
-        self.assert_problem(problems, "machine.states.split_trade.do.etl.action", "etl.split_by_shar", "etl.split_by_share")
+        self.assert_problem(problems, "machine.states.split_trade.do.map.action", "map.split_by_shar", "map.split_by_share")
 
     def test_a_leaf_option_that_is_not_declared_names_its_row(self):
         problems = self.workspace().edit("size: large,  weight: 0.5", "size: larg,  weight: 0.5").problems()
