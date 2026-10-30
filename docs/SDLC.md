@@ -175,7 +175,7 @@ Run by Tank at sprint close (`*devops sdlc-check`):
 8. Nothing under `src/` or `tests/` imports from `seed/`.
 
 ---
-*Last verified: 2026-10-29 by Tank (Sprint 18 close: distclean → install → check green with ruff in `lint`; repeated install passed idempotently; Node DuckDB client and `probe-etl` removed with owner approval; Python manifest matches `pyproject.toml`/`uv.lock`).*
+*Last verified: 2026-10-30 by Tank (Sprint 19 close: distclean → install → check green; repeated install passed idempotently; Python manifest matches `pyproject.toml`/`uv.lock` including `ruamel.yaml` and `jsonschema`; the old Node player, its tests, the `test-browser`/`test-live`/`install-browser` targets and nine npm dependencies removed with the owner's decisions (one kind of sketch, old commands may break)).*
 *Previous verification: 2026-10-17 by Tank (sprint-15 close: clean → check green, browser tests green;
 no dependency or mechanism change. Sprint-14 close: clean → check green, browser tests green;
 routine dependency `elkjs` per §4. Sprint-13 close: clean → check green; no dependency or

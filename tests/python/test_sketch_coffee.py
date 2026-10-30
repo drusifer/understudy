@@ -36,7 +36,8 @@ class CoffeeCase(unittest.TestCase):
         self.addCleanup(directory.cleanup)
         self.dir = Path(directory.name)
         for item in FIXTURES.iterdir():
-            shutil.copy(item, self.dir / item.name)
+            if item.is_file():
+                shutil.copy(item, self.dir / item.name)
         self.sketch = self.dir / "coffee_week.yaml"
         self.store = CaptureStore(self.dir / "cache")
         self.out = self.dir / "out"
@@ -113,6 +114,16 @@ class CoffeeRunTests(CoffeeCase):
         for name in ("ingredients.jsonl", "summary.json"):
             self.assertEqual((self.folder(first) / name).read_bytes(), (self.folder(second) / name).read_bytes(), name)
         self.assertEqual(self.summary(first)["mode"], "replay")
+
+    def test_the_committed_live_capture_replays_with_no_key_and_no_network(self):
+        # tests/fixtures/coffee/replay holds the one real Jev answer (Sprint 19 close): a cold forecast after a mild week
+        code, lines, err = self.go(f"--replay={FIXTURES / 'replay'}")
+        self.assertEqual((code, err), (0, []))
+        summary = self.summary(lines)
+        self.assertEqual((summary["mode"], summary["stale"], summary["jev_requests"]), ("replay", False, 0))
+        self.assertEqual(summary["weather_change_weights"], {"hot": 0.8925, "iced": 0.1075})
+        self.assertEqual(read_jsonl(self.folder(lines) / "ingredients.jsonl"),
+                         [{"amount": 32000, "ingredient": "coffee_beans", "unit": "g"}])
 
     def test_output_lands_in_the_run_folder_and_nowhere_tracked(self):
         _, lines, _ = self.go(jev=double())

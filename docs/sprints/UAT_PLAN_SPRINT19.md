@@ -180,3 +180,14 @@
 * `rubric UAT: COVER=A STEPS=A FAIL=S DATA=A EVID=A`.
 
 **Phase 7 UAT verdict: PASSED.**
+
+## 8. Closeout: the one live judgement (UND-67)
+
+### `UAT-UND-67-01` Real Jev reads the Almanac descriptions
+* **Story/AC:** UND-67 AC 1, 2, 3.
+* **Command:** `bobp make run ARGS="run tests/fixtures/coffee/coffee_week.yaml --out build/runs"` on 2026-10-30, with `TYPESAFE_API_KEY` from the shell; the invented fixtures only; one Jev request (`jev_requests: 1`), the only live Jev call of the sprint. Last week: "Mild and breezy, highs near 55."; next week: "Fair but cold, with rain clearing midweek and a hint of snow by the weekend."
+* **Expected:** most of the probability on the colder levels.
+* **Result:** Pass, first time (no rubric rewording was needed). Jev answered `much_colder 0.95`, `colder 0.05`, the other three levels 0. The owner's weights turned that into hot 0.8925 and iced 0.1075 (`0.95 × 0.90 + 0.05 × 0.75` hot), students' iced share came out at 0.5633 (the tree's own 0.7 pulled down by the weather), night workers stayed on hot coffee, and the beans total is 32,000 g.
+* **Fixture:** the capture is committed as `tests/fixtures/coffee/replay/` (the rows and their metadata), so `--replay=tests/fixtures/coffee/replay` reproduces this run with no key and no network; a test does exactly that.
+
+**Sprint 19 UAT verdict: PASSED** (all eight stories). `rubric UAT: COVER=A STEPS=A FAIL=S DATA=A EVID=A`.

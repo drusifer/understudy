@@ -14,7 +14,8 @@ sequenceDiagram
     participant Tank
     participant All
     participant Trin
-    Note over Mouse,Trin: 📅 2026-10-29
+    participant Oracle
+    Note over Mouse,Oracle: 📅 2026-10-29
     Mouse->>Cypher: "phase 0"
     Note right of Mouse: "Sprint 19 planning<br/>started on branch<br/>sprint-19 (from main<br/>357c85b, no worktree).<br/>SDLC present. Scope<br/>pending the owner.<br/>@Cypher *pm plan sp…"
     Cypher->>Smith: "pm handoff"
@@ -49,14 +50,14 @@ sequenceDiagram
     Note right of Mouse: "Sprint 19 planned:<br/>task.md, 6 phases<br/>(setup/shared,<br/>load+check,<br/>decide/blend,<br/>run+command,<br/>sources+replay, coffee<br/>end to end), each<br/>Neo/Tri…"
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "Morpheus plan review:<br/>phases follow the<br/>architecture, Phase 4<br/>was oversized with a<br/>two-owner task, split<br/>into Phase 4 (run the<br/>machine) and…"
-    Note over Mouse,Trin: "Phase 0 summary<br/>Smith: Smith Gate 2 HOLD<br/>Sprint 19 architecture:<br/>stories say 'understudy<br/>run' but the arch says<br/>'understudy sketch run'<br/>(old sketches still use<br/>ru…<br/>Smith: Smith Gate 2<br/>APPROVE Sprint 19<br/>architecture: command is<br/>'understudy run'<br/>(owner), cache at<br/>.understudy/cache chosen<br/>by Morpheus and noted,…<br/>Morpheus: Morpheus plan<br/>review: phases follow<br/>the architecture, Phase<br/>4 was oversized with a<br/>two-owner task, split<br/>into Phase 4 (run the<br/>machine) and…"
+    Note over Mouse,Oracle: "Phase 0 summary<br/>Smith: Smith Gate 2 HOLD<br/>Sprint 19 architecture:<br/>stories say 'understudy<br/>run' but the arch says<br/>'understudy sketch run'<br/>(old sketches still use<br/>ru…<br/>Smith: Smith Gate 2<br/>APPROVE Sprint 19<br/>architecture: command is<br/>'understudy run'<br/>(owner), cache at<br/>.understudy/cache chosen<br/>by Morpheus and noted,…<br/>Morpheus: Morpheus plan<br/>review: phases follow<br/>the architecture, Phase<br/>4 was oversized with a<br/>two-owner task, split<br/>into Phase 4 (run the<br/>machine) and…"
     Mouse->>All: "phase 1"
     Note right of Mouse: "Phase 1"
     Neo->>Morpheus: "swe handoff"
     Note right of Neo: "Phase 1 done:<br/>ruamel.yaml and<br/>jsonschema pinned, ruff<br/>covers src/sketch,<br/>.understudy/ ignored,<br/>Jev wrapper now<br/>src/jev.py and path<br/>policy s…"
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "Phase 1 review passed:<br/>no duplicate left (git<br/>grep one definition of<br/>each), dependencies<br/>ordinary, SDLC row<br/>updated. @Neo *swe impl<br/>phase-2"
-    Note over Mouse,Trin: "Phase 1 summary<br/>Neo: Phase 1 done:<br/>ruamel.yaml and<br/>jsonschema pinned, ruff<br/>covers src/sketch,<br/>.understudy/ ignored,<br/>Jev wrapper now<br/>src/jev.py and path<br/>policy s…<br/>Morpheus: Phase 1 review<br/>passed: no duplicate<br/>left (git grep one<br/>definition of each),<br/>dependencies ordinary,<br/>SDLC row updated. @Neo<br/>*swe impl phase-2"
+    Note over Mouse,Oracle: "Phase 1 summary<br/>Neo: Phase 1 done:<br/>ruamel.yaml and<br/>jsonschema pinned, ruff<br/>covers src/sketch,<br/>.understudy/ ignored,<br/>Jev wrapper now<br/>src/jev.py and path<br/>policy s…<br/>Morpheus: Phase 1 review<br/>passed: no duplicate<br/>left (git grep one<br/>definition of each),<br/>dependencies ordinary,<br/>SDLC row updated. @Neo<br/>*swe impl phase-2"
     Mouse->>All: "phase 2"
     Note right of Mouse: "Phase 2"
     Neo->>Trin: "swe handoff"
@@ -65,7 +66,7 @@ sequenceDiagram
     Note right of Trin: "UAT phase 2 passed<br/>(UND-61 AC1-5, run-time<br/>option check follows in<br/>phase 7, no-output-on-<br/>missing-file end to end<br/>in phase 4). rubric UAT:<br/>C…"
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "Phase 2 review passed<br/>against ADR-0042 and<br/>invariants 1, 2, 7:<br/>explicit conditions,<br/>YAML 1.2, JSON Schema<br/>for shape plus Python<br/>for names,…"
-    Note over Mouse,Trin: "Phase 2 summary<br/>Neo: Phase 2 impl done:<br/>src/sketch (model,<br/>vocabulary, conditions,<br/>loader, check), schema/d<br/>ecision_sketch.schema.js<br/>on, coffee fixtures. 21<br/>tests…<br/>Trin: UAT phase 2 passed<br/>(UND-61 AC1-5, run-time<br/>option check follows in<br/>phase 7, no-output-on-<br/>missing-file end to end<br/>in phase 4). rubric UAT:<br/>C…<br/>Morpheus: Phase 2 review<br/>passed against ADR-0042<br/>and invariants 1, 2, 7:<br/>explicit conditions,<br/>YAML 1.2, JSON Schema<br/>for shape plus Python<br/>for names,…"
+    Note over Mouse,Oracle: "Phase 2 summary<br/>Neo: Phase 2 impl done:<br/>src/sketch (model,<br/>vocabulary, conditions,<br/>loader, check), schema/d<br/>ecision_sketch.schema.js<br/>on, coffee fixtures. 21<br/>tests…<br/>Trin: UAT phase 2 passed<br/>(UND-61 AC1-5, run-time<br/>option check follows in<br/>phase 7, no-output-on-<br/>missing-file end to end<br/>in phase 4). rubric UAT:<br/>C…<br/>Morpheus: Phase 2 review<br/>passed against ADR-0042<br/>and invariants 1, 2, 7:<br/>explicit conditions,<br/>YAML 1.2, JSON Schema<br/>for shape plus Python<br/>for names,…"
     Mouse->>All: "phase 3"
     Note right of Mouse: "Phase 3"
     Neo->>Trin: "swe handoff"
@@ -74,7 +75,7 @@ sequenceDiagram
     Note right of Trin: "UAT phase 3 passed<br/>(UND-63 AC1-5, 64-case<br/>grid proves no caffeine<br/>for under-18). rubric<br/>UAT: COVER=A STEPS=A<br/>FAIL=S DATA=A EVID=A.<br/>@Morpheu…"
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "Phase 3 review passed<br/>against ADR-0041/0044<br/>and invariants 3-5: one<br/>blend rule, forbid wins,<br/>weights sum checked.<br/>Design note recorded:<br/>ble…"
-    Note over Mouse,Trin: "Phase 3 summary<br/>Neo: Phase 3 impl done:<br/>conditions (all<br/>operators, slices,<br/>and/or/not), decide<br/>trees and weights, blend<br/>per dimension, forbid<br/>with fail/skip/fal…<br/>Trin: UAT phase 3 passed<br/>(UND-63 AC1-5, 64-case<br/>grid proves no caffeine<br/>for under-18). rubric<br/>UAT: COVER=A STEPS=A<br/>FAIL=S DATA=A EVID=A.<br/>@Morpheu…<br/>Morpheus: Phase 3 review<br/>passed against<br/>ADR-0041/0044 and<br/>invariants 3-5: one<br/>blend rule, forbid wins,<br/>weights sum checked.<br/>Design note recorded:<br/>ble…"
+    Note over Mouse,Oracle: "Phase 3 summary<br/>Neo: Phase 3 impl done:<br/>conditions (all<br/>operators, slices,<br/>and/or/not), decide<br/>trees and weights, blend<br/>per dimension, forbid<br/>with fail/skip/fal…<br/>Trin: UAT phase 3 passed<br/>(UND-63 AC1-5, 64-case<br/>grid proves no caffeine<br/>for under-18). rubric<br/>UAT: COVER=A STEPS=A<br/>FAIL=S DATA=A EVID=A.<br/>@Morpheu…<br/>Morpheus: Phase 3 review<br/>passed against<br/>ADR-0041/0044 and<br/>invariants 3-5: one<br/>blend rule, forbid wins,<br/>weights sum checked.<br/>Design note recorded:<br/>ble…"
     Mouse->>All: "phase 4"
     Note right of Mouse: "Phase 4"
     Neo->>Trin: "swe handoff"
@@ -83,8 +84,8 @@ sequenceDiagram
     Note right of Trin: "UAT phase 4 passed<br/>(UND-62 AC1-4, UND-60<br/>AC1-4). rubric UAT:<br/>COVER=A STEPS=A FAIL=S<br/>DATA=A EVID=A. @Morpheus<br/>*lead review phase-4"
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "Phase 4 review passed<br/>against ADR-0040 and<br/>invariants 1, 9, 10: one<br/>shared runner (a<br/>duplicate removed, not<br/>added), outputs<br/>published last,…"
-    Note over Mouse,Trin: "Phase 4 summary<br/>Neo: Phase 4 impl done:<br/>machine.py, run.py<br/>(folder, run.json,<br/>events.jsonl, outputs<br/>last), cli.py<br/>(run/check, exit 0/1/2),<br/>the ETL and sketches…<br/>Trin: UAT phase 4 passed<br/>(UND-62 AC1-4, UND-60<br/>AC1-4). rubric UAT:<br/>COVER=A STEPS=A FAIL=S<br/>DATA=A EVID=A. @Morpheus<br/>*lead review phase-4<br/>Morpheus: Phase 4 review<br/>passed against ADR-0040<br/>and invariants 1, 9, 10:<br/>one shared runner (a<br/>duplicate removed, not<br/>added), outputs<br/>published last,…"
-    Note over Mouse,Trin: 📅 2026-10-30
+    Note over Mouse,Oracle: "Phase 4 summary<br/>Neo: Phase 4 impl done:<br/>machine.py, run.py<br/>(folder, run.json,<br/>events.jsonl, outputs<br/>last), cli.py<br/>(run/check, exit 0/1/2),<br/>the ETL and sketches…<br/>Trin: UAT phase 4 passed<br/>(UND-62 AC1-4, UND-60<br/>AC1-4). rubric UAT:<br/>COVER=A STEPS=A FAIL=S<br/>DATA=A EVID=A. @Morpheus<br/>*lead review phase-4<br/>Morpheus: Phase 4 review<br/>passed against ADR-0040<br/>and invariants 1, 9, 10:<br/>one shared runner (a<br/>duplicate removed, not<br/>added), outputs<br/>published last,…"
+    Note over Mouse,Oracle: 📅 2026-10-30
     Mouse->>All: "phase 5"
     Note right of Mouse: "Phase 5"
     Neo->>Trin: "swe handoff"
@@ -93,7 +94,7 @@ sequenceDiagram
     Note right of Trin: "UAT phase 5 passed<br/>(UND-60 AC1, AC2, AC8).<br/>rubric UAT: COVER=A<br/>STEPS=A FAIL=A DATA=A<br/>EVID=A. @Morpheus *lead<br/>review phase-5"
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "Phase 5 review passed<br/>against ADR-0045 and the<br/>purge list: Node<br/>run/check and the whole<br/>old player are gone (not<br/>just run/check: nothing<br/>el…"
-    Note over Mouse,Trin: "Phase 5 summary<br/>Trin: UAT phase 5 passed<br/>(UND-60 AC1, AC2, AC8).<br/>rubric UAT: COVER=A<br/>STEPS=A FAIL=A DATA=A<br/>EVID=A. @Morpheus *lead<br/>review phase-5<br/>Morpheus: Phase 5 review<br/>passed against ADR-0045<br/>and the purge list: Node<br/>run/check and the whole<br/>old player are gone (not<br/>just run/check: nothing<br/>el…"
+    Note over Mouse,Oracle: "Phase 5 summary<br/>Trin: UAT phase 5 passed<br/>(UND-60 AC1, AC2, AC8).<br/>rubric UAT: COVER=A<br/>STEPS=A FAIL=A DATA=A<br/>EVID=A. @Morpheus *lead<br/>review phase-5<br/>Morpheus: Phase 5 review<br/>passed against ADR-0045<br/>and the purge list: Node<br/>run/check and the whole<br/>old player are gone (not<br/>just run/check: nothing<br/>el…"
     Mouse->>All: "phase 6"
     Note right of Mouse: "Phase 6"
     Neo->>Trin: "swe handoff"
@@ -102,7 +103,7 @@ sequenceDiagram
     Note right of Trin: "UAT phase 6 passed<br/>(UND-60 AC5-7). rubric<br/>UAT: COVER=A STEPS=A<br/>FAIL=S DATA=A EVID=A.<br/>@Morpheus *lead review<br/>phase-6"
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "Phase 6 review passed<br/>against ADR-0043 and<br/>invariants 6, 9: Jev<br/>only chooses among<br/>listed levels, replay<br/>never falls back to<br/>live, one run…"
-    Note over Mouse,Trin: "Phase 6 summary<br/>Neo: Phase 6 impl done:<br/>sources (file, kind<br/>jev), capture to<br/>.understudy/cache with<br/>run id and request hash,<br/>--replay [run-id|folder]<br/>using one…<br/>Trin: UAT phase 6 passed<br/>(UND-60 AC5-7). rubric<br/>UAT: COVER=A STEPS=A<br/>FAIL=S DATA=A EVID=A.<br/>@Morpheus *lead review<br/>phase-6<br/>Morpheus: Phase 6 review<br/>passed against ADR-0043<br/>and invariants 6, 9: Jev<br/>only chooses among<br/>listed levels, replay<br/>never falls back to<br/>live, one run…"
+    Note over Mouse,Oracle: "Phase 6 summary<br/>Neo: Phase 6 impl done:<br/>sources (file, kind<br/>jev), capture to<br/>.understudy/cache with<br/>run id and request hash,<br/>--replay [run-id|folder]<br/>using one…<br/>Trin: UAT phase 6 passed<br/>(UND-60 AC5-7). rubric<br/>UAT: COVER=A STEPS=A<br/>FAIL=S DATA=A EVID=A.<br/>@Morpheus *lead review<br/>phase-6<br/>Morpheus: Phase 6 review<br/>passed against ADR-0043<br/>and invariants 6, 9: Jev<br/>only chooses among<br/>listed levels, replay<br/>never falls back to<br/>live, one run…"
     Mouse->>All: "phase 7"
     Note right of Mouse: "Phase 7"
     Neo->>Trin: "swe handoff"
@@ -111,5 +112,9 @@ sequenceDiagram
     Note right of Trin: "UAT phase 7 passed<br/>(UND-64, UND-65, UND-66,<br/>run-time outcome check).<br/>rubric UAT: COVER=A<br/>STEPS=A FAIL=S DATA=A<br/>EVID=A. @Morpheus *lead<br/>revi…"
     Morpheus->>Tank: "lead handoff"
     Note right of Morpheus: "Phase 7 review passed<br/>against the architecture<br/>and the purge list: no<br/>duplicate introduced<br/>(one runner, one Jev<br/>wrapper, one path<br/>policy, o…"
-    Note over Mouse,Trin: "Phase 7 summary<br/>Trin: UAT phase 7 passed<br/>(UND-64, UND-65, UND-66,<br/>run-time outcome check).<br/>rubric UAT: COVER=A<br/>STEPS=A FAIL=S DATA=A<br/>EVID=A. @Morpheus *lead<br/>revi…<br/>Morpheus: Phase 7 review<br/>passed against the<br/>architecture and the<br/>purge list: no duplicate<br/>introduced (one runner,<br/>one Jev wrapper, one<br/>path policy, o…"
+    Tank->>Trin: "devops handoff"
+    Note right of Tank: "SDLC check passed:<br/>distclean, install,<br/>check and repeat install<br/>green, SDLC updated for<br/>src/sketch, the shared<br/>modules and the removed<br/>Node…"
+    Trin->>Oracle: "qa handoff"
+    Note right of Trin: "Live judgement done<br/>(UND-67): one real Jev<br/>request on the invented<br/>fixtures, much_colder<br/>0.95 / colder 0.05,<br/>right first time, owner<br/>weight…"
+    Note over Mouse,Oracle: "Phase 7 summary<br/>Trin: UAT phase 7 passed<br/>(UND-64, UND-65, UND-66,<br/>run-time outcome check).<br/>rubric UAT: COVER=A<br/>STEPS=A FAIL=S DATA=A<br/>EVID=A. @Morpheus *lead<br/>revi…<br/>Morpheus: Phase 7 review<br/>passed against the<br/>architecture and the<br/>purge list: no duplicate<br/>introduced (one runner,<br/>one Jev wrapper, one<br/>path policy, o…<br/>Tank: SDLC check passed:<br/>distclean, install,<br/>check and repeat install<br/>green, SDLC updated for<br/>src/sketch, the shared<br/>modules and the removed<br/>Node…"
 ```
