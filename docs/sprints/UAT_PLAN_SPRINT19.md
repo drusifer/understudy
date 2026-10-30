@@ -78,3 +78,29 @@
 * `rubric UAT: COVER=A STEPS=A FAIL=S DATA=A EVID=A`.
 
 **Phase 3 UAT verdict: PASSED.**
+
+## 4. Phase 4: run the owner's machine (UND-62, UND-60 AC 1-4)
+
+### `UAT-UND-62-01` The machine is the sketch's own, and the loop follows it
+* **Story/AC:** UND-62 AC 1, 2.
+* **Command:** `bobp make test-py ARGS="test_sketch*.py"` (`MachineTests` on `tests/fixtures/machine_branch.yaml`).
+* **Expected:** a transition guarded by an explicit YAML condition (`drinks: { lt: 500 }`) is taken only when it holds, otherwise the next unguarded one; the stage lines show the path taken.
+* **Result:** Pass. 100 drinks run `count, quiet, write`; 900 drinks run `count, busy, write`.
+
+### `UAT-UND-62-02` A failed stage publishes nothing and says where it stopped
+* **Story/AC:** UND-62 AC 3, 4.
+* **Expected:** exit 1 with the stage named, no output file, earlier stage records kept; the run folder records each stage as complete or failed; a failure after the sink also removes the partial output.
+* **Result:** Pass. `run.json` shows `status: failed`, `failed_stage: quiet`, `stages: {count: complete}`; the folder holds only `run.json` and `events.jsonl`; a failure in a stage after the sink leaves no `report.jsonl` and no `.part`.
+
+### `UAT-UND-60-01` `understudy run` and `understudy check` on the command line
+* **Story/AC:** UND-60 AC 1, 2, 3, 4.
+* **Command:** `bobp make test-py ARGS="test_sketch*.py"` (`CliTests`).
+* **Expected:** one line per stage then `wrote <file>`; exit 0 on success, 1 when a stage fails, 2 when the sketch or an input is wrong; the last line is one `understudy:` line, never a traceback; `--source <name>.path=<file>` replaces a file for the run only; `check` starts nothing; output under a tracked folder is refused before starting.
+* **Result:** Pass. Wrong sketch: exit 2, `did you mean 'report'`, no run folder; missing input: exit 2 naming `sources.numbers`, nothing created; stage failure: `understudy: boom`, exit 1; `--out src/` refused exit 2 with `cannot write`; the override leaves the sketch file unchanged. The command makes no network call (no source kind that reaches the network exists yet).
+
+### Phase 4 gate evidence
+* Full suite: `bobp make test-py` `Ran 134 tests ... OK` (the ETL included); ruff clean.
+* DRY: the ETL's stage loop and the sketch's are now one, `src/machine_runner.py` (`run_machine`, `RunRecord`); the ETL passes all of its tests on it.
+* `rubric UAT: COVER=A STEPS=A FAIL=S DATA=A EVID=A`.
+
+**Phase 4 UAT verdict: PASSED.**

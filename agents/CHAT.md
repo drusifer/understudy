@@ -203,3 +203,29 @@ OK
 ---
 [<small>2026-10-29 23:48:57</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
  Phase 3 review passed against ADR-0041/0044 and invariants 3-5: one blend rule, forbid wins, weights sum checked. Design note recorded: blend is per dimension. @Neo *swe impl phase-4
+
+---
+[<small>2026-10-29 23:55:55</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-py | /home/drusifer/Projects/understudy/build/build.out
+Ran 134 tests in 85.825s
+
+OK
+[10/29/26 23:55:54] INFO     Shutting down the event           dispatcher.py:159
+Synthetic 4,700-pair controller run: 18.10s
+dispatcher
+
+---
+[<small>2026-10-29 23:56:13</small>] [**Mouse**]->[**all**] *phase 4*:
+ Phase 4
+
+---
+[<small>2026-10-29 23:56:14</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 4 impl done: machine.py, run.py (folder, run.json, events.jsonl, outputs last), cli.py (run/check, exit 0/1/2); the ETL and sketches now share src/machine_runner.py. 134 tests pass, ruff clean. @Trin *qa uat phase-4
+
+---
+[<small>2026-10-29 23:56:14</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 4 passed (UND-62 AC1-4, UND-60 AC1-4). rubric UAT: COVER=A STEPS=A FAIL=S DATA=A EVID=A. @Morpheus *lead review phase-4
+
+---
+[<small>2026-10-29 23:56:14</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 4 review passed against ADR-0040 and invariants 1, 9, 10: one shared runner (a duplicate removed, not added), outputs published last, output policy reused from src/paths. @Neo *swe impl phase-5

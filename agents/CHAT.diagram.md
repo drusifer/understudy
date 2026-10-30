@@ -75,4 +75,13 @@ sequenceDiagram
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "Phase 3 review passed<br/>against ADR-0041/0044<br/>and invariants 3-5: one<br/>blend rule, forbid wins,<br/>weights sum checked.<br/>Design note recorded:<br/>ble…"
     Note over Mouse,Trin: "Phase 3 summary<br/>Neo: Phase 3 impl done:<br/>conditions (all<br/>operators, slices,<br/>and/or/not), decide<br/>trees and weights, blend<br/>per dimension, forbid<br/>with fail/skip/fal…<br/>Trin: UAT phase 3 passed<br/>(UND-63 AC1-5, 64-case<br/>grid proves no caffeine<br/>for under-18). rubric<br/>UAT: COVER=A STEPS=A<br/>FAIL=S DATA=A EVID=A.<br/>@Morpheu…<br/>Morpheus: Phase 3 review<br/>passed against<br/>ADR-0041/0044 and<br/>invariants 3-5: one<br/>blend rule, forbid wins,<br/>weights sum checked.<br/>Design note recorded:<br/>ble…"
+    Mouse->>All: "phase 4"
+    Note right of Mouse: "Phase 4"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 4 impl done:<br/>machine.py, run.py<br/>(folder, run.json,<br/>events.jsonl, outputs<br/>last), cli.py<br/>(run/check, exit 0/1/2),<br/>the ETL and sketches…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 4 passed<br/>(UND-62 AC1-4, UND-60<br/>AC1-4). rubric UAT:<br/>COVER=A STEPS=A FAIL=S<br/>DATA=A EVID=A. @Morpheus<br/>*lead review phase-4"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 4 review passed<br/>against ADR-0040 and<br/>invariants 1, 9, 10: one<br/>shared runner (a<br/>duplicate removed, not<br/>added), outputs<br/>published last,…"
+    Note over Mouse,Trin: "Phase 4 summary<br/>Neo: Phase 4 impl done:<br/>machine.py, run.py<br/>(folder, run.json,<br/>events.jsonl, outputs<br/>last), cli.py<br/>(run/check, exit 0/1/2),<br/>the ETL and sketches…<br/>Trin: UAT phase 4 passed<br/>(UND-62 AC1-4, UND-60<br/>AC1-4). rubric UAT:<br/>COVER=A STEPS=A FAIL=S<br/>DATA=A EVID=A. @Morpheus<br/>*lead review phase-4<br/>Morpheus: Phase 4 review<br/>passed against ADR-0040<br/>and invariants 1, 9, 10:<br/>one shared runner (a<br/>duplicate removed, not<br/>added), outputs<br/>published last,…"
 ```

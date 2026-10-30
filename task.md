@@ -38,9 +38,9 @@
 ### Phase 4: Run the owner's machine (UND-62, UND-60 AC1-4)
 *Phase goal: the Python package runs a sketch's machine, writes a run folder and answers on the command line.*
 
-- [ ] **Task 4.1:** `*impl` `machine.py` (the sketch's python-statemachine YAML, loop, guards from explicit conditions), `run.py` (run folder, manifest, events, outputs last, reuses `src/paths.py`), `cli.py` (flags `--source`, `--out`, exit codes 0/1/2, one line per stage). (*Owner: Neo | Verification: tests for UND-62 AC 1-4 on `tests/fixtures/machine_branch.yaml`, UND-60 AC 1-4, a failed stage leaves no output.*)
-- [ ] **Task 4.2:** UAT: UND-62 AC 1-4 and UND-60 AC 1-4. (*Owner: Trin | Verification: UAT rows; exit codes and last error line checked.*)
-- [ ] **Task 4.3:** Review against ADR-0040 and invariants 1, 9, 10. (*Owner: Morpheus | Verification: verdict; commit `Phase 4: ...`.*)
+- [x] **Task 4.1:** `*impl` `machine.py` (the sketch's python-statemachine YAML, loop, guards from explicit conditions), `run.py` (run folder, manifest, events, outputs last, reuses `src/paths.py`), `cli.py` (flags `--source`, `--out`, exit codes 0/1/2, one line per stage). (*Owner: Neo | Verification: tests for UND-62 AC 1-4 on `tests/fixtures/machine_branch.yaml`, UND-60 AC 1-4, a failed stage leaves no output.*)
+- [x] **Task 4.2:** UAT: UND-62 AC 1-4 and UND-60 AC 1-4. (*Owner: Trin | Verification: UAT rows; exit codes and last error line checked.*)
+- [x] **Task 4.3:** Review against ADR-0040 and invariants 1, 9, 10. (*Owner: Morpheus | Verification: verdict; commit `Phase 4: ...`.*)
 
 ### Phase 5: Replace the old Node commands (UND-60 AC8)
 *Phase goal: `understudy run` and `understudy check` are the Python commands; the old Node run and check are gone.*
