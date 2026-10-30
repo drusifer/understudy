@@ -17,7 +17,8 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 3. **Command line only.** No dashboard (owner, 2026-10-29).
 4. **The weather is a decider, not a shift** (owner, 2026-10-29): each of the five Almanac levels carries hot/iced weights (much colder 0.90/0.10 … much warmer 0.30/0.70), the subsketch returns their probability-weighted mix on `temp`, and the parent blends it by weight; night workers get weight 0. Weights are numbers or `if` / `then` / `else`, never expressions.
 5. **The syntax is settled** with the owner (`DESIGN_SKETCH_MODEL.md`): `blend:` for a stage's deciders, explicit YAML conditions, `returns: { decider: [...] }` for a subsketch, and a Jev question as a `kind: jev` source with `instructions`, `criteria` and `state`. Morpheus writes it down in the architecture; a change to how the owner writes a sketch returns to the owner before it is built.
-6. **One live Jev judgement** at sprint close, with the owner's go-ahead; everything else uses a Jev double.
+6. **One live Jev judgement** at sprint close, with the owner's go-ahead; everything else uses `--replay` or an injected Jev double. Capture and replay (owner, 2026-10-29) is the testing mechanism for every non-file source.
+7. **Open, assumed:** a stale replay (the sketch or rubric changed since the capture) is flagged in the output and carries on; it does not fail the run. The owner confirms.
 
 ---
 
@@ -33,7 +34,9 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 2. Exit code 0 on success, 1 when a stage fails, 2 when the sketch or an input file is wrong; the last line of an error says what to fix.
 3. `--source <name>.path=<file>` replaces one source's file for this run only; the sketch file is not changed.
 4. The command makes no network call except to Jev, and only when a stage reads a `kind: jev` source.
-5. `--jev-answers <file.jsonl>` replaces Jev for this run with recorded answers (one row per question: the option probabilities), so a run needs no key and no network and repeats exactly; without it the run uses live Jev and a missing `TYPESAFE_API_KEY` is exit 2 before any stage starts. (Proposed; the owner confirms.)
+5. Every non-file source (here the Jev source) captures a complete, successful live read into a git-ignored local cache with the run id, source name, kind, request hash and time; the last 5 runs are kept.
+6. `--replay [run-id|dir]` makes every non-file source read its capture and never go live: no key, no network, and the run repeats exactly. It uses the latest live run that captured every non-file source (or the named run, or the committed fixtures in `dir`); if no run covers them all it stops naming the missing source and saying to do a live run first.
+7. Without `--replay` the run is live, and a missing `TYPESAFE_API_KEY` is exit 2 before any stage starts. `summary.json` records `mode: live` or `mode: replay`, and `stale: true` when the capture's request hash no longer matches the sketch.
 
 ## STORY-UND-61: A wrong sketch is refused before anything runs
 **Points:** 5
@@ -100,7 +103,7 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 ### Acceptance Criteria
 1. `ingredients.jsonl` has one row per ingredient (`ingredient`, `amount`, `unit`) in a fixed order, written only when every stage finished.
 2. A `summary.json` holds counts only: total drinks, drinks per segment, the Jev requests made, the weather weights used.
-3. With the Jev double and the same fixtures, two runs produce byte-identical files.
+3. With `--replay` and the same fixtures, two runs produce byte-identical files.
 4. The output lands in the run folder under `build/runs/` by default, never in a tracked folder or `data/` (as in UND-54).
 
 ## STORY-UND-67: One live judgement
@@ -111,7 +114,7 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 ### Acceptance Criteria
 1. With the owner's go-ahead, one live run on the fixture descriptions (last week: "Mild and breezy, highs near 55."; next week: "Fair but cold, with rain clearing midweek and a hint of snow by the weekend.") returns probabilities with most of the weight on the colder levels.
 2. The probabilities and the resulting hot/iced weights are recorded in the UAT plan; if they are not sensible, the rubric wording changes and the run repeats once.
-3. The live run is the only live Jev call in the sprint.
+3. The live run is the only live Jev call in the sprint; its capture is copied into `tests/fixtures/` as the committed replay fixture, so later tests replay the real answer.
 
 ---
 
