@@ -11,10 +11,15 @@ from src.sketch import conditions
 from src.sketch.loader import SketchError, load, unused_variables
 from src.sketch.model import Sketch
 from src.sketch.registry import STAGES, Data, Source
-from src.sketch.vocabulary import COMBINATORS, ON_EMPTY, SINK_PREFIX, SKETCH_PREFIX
+from src.sketch.vocabulary import COMBINATORS, ON_EMPTY, STAGE_TYPES, stage_of
 
 SHARE_TOLERANCE = 0.001
 OPTION_OPERATORS = ("eq", "ne", "in", "not_in")
+
+
+def calls_sketch(state: dict) -> bool:
+    called = stage_of(state)
+    return bool(called) and called[0] == "sketch"
 
 
 def _nearest(word, choices) -> str:
@@ -142,19 +147,20 @@ class _Checker:
         """`each: <source>` repeats a sketch for every row of a source."""
         if state["each"] not in self.sketch.sources:
             self.problem(f"{at}.each", f"{state['each']!r} is not a source{_nearest(state['each'], self.sketch.sources)}")
-        if not str(state.get("do", "")).startswith(SKETCH_PREFIX):
-            self.problem(at, "`each` repeats a sketch, so `do` must be `sketch.<file>`")
+        if not calls_sketch(state):
+            self.problem(at, "`each` repeats a sketch, so `do` must be `sketch: { file: ... }`")
 
     def stage(self, at: str, state: dict) -> None:
-        name = state["do"]
-        if name.startswith(SINK_PREFIX):
-            sink = name[len(SINK_PREFIX):]
-            if sink not in self.sketch.sinks:
-                self.problem(f"{at}.do", f"sink {sink!r} is not declared{_nearest(sink, self.sketch.sinks)}")
-        elif name.startswith(SKETCH_PREFIX):
-            self.subsketch(f"{at}.do", name[len(SKETCH_PREFIX):], state.get("with", {}), "each" in state)
-        elif name not in STAGES or name == "blend":
-            self.problem(f"{at}.do", f"unknown stage {name!r}{_nearest(name, [n for n in STAGES if n != 'blend'])}")
+        kind, target = stage_of(state)
+        name = f"{kind}.{target}"
+        if kind == "sink":
+            if target not in self.sketch.sinks:
+                self.problem(f"{at}.do.sink.name", f"sink {target!r} is not declared{_nearest(target, self.sketch.sinks)}")
+        elif kind == "sketch":
+            self.subsketch(f"{at}.do.sketch.file", target, state.get("with", {}), "each" in state)
+        elif name not in STAGES:
+            self.problem(f"{at}.do.{kind}.{STAGE_TYPES[kind]}",
+                         f"unknown stage {name!r}{_nearest(name, [n for n in STAGES if n != 'blend'])}")
         else:
             self.stage_with(at, name, state.get("with", {}))
 
@@ -203,7 +209,7 @@ class _Checker:
             here = f"{at}.blend[{index}]"
             if "decide" in entry:
                 self.tree(entry["decide"], f"{here}.decide")
-            elif entry["from"] not in self.states or not str(self.states[entry["from"]].get("do", "")).startswith(SKETCH_PREFIX):
+            elif entry["from"] not in self.states or not calls_sketch(self.states[entry["from"]]):
                 self.problem(f"{here}.from", f"{entry['from']!r} is not a state that calls a sketch"
                                              f"{_nearest(entry['from'], self.states)}")
             if "weight" in entry:

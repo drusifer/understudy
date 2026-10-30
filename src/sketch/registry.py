@@ -5,7 +5,7 @@
 
 declares the stage `etl.split_by_share` that a sketch writes as
 
-    do: etl.split_by_share
+    do: { etl: { action: split_by_share } }
     with: { source: sales, field: drinks, segments: segments }
 
 Each parameter is a `with:` key; a parameter with no default is required. Its annotation says what the value is:

@@ -21,7 +21,7 @@ from src.sketch.model import Sketch
 from src.sketch.registry import StageFn
 from src.sketch.sources.capture import CaptureStore
 from src.sketch.sources.reader import Capture, Sources
-from src.sketch.vocabulary import SINK_PREFIX, SKETCH_PREFIX
+from src.sketch.vocabulary import stage_of
 
 
 @dataclass
@@ -83,7 +83,7 @@ def _write_part(directory: Path, file: str, rows) -> None:
 
 
 def _stage_function(state: dict, library: Mapping[str, StageFn]) -> StageFn:
-    name = "blend" if "blend" in state else state["do"]
+    name = "blend" if "blend" in state else ".".join(stage_of(state))
     if name in library:
         return library[name]
     raise LookupError(f"no stage is defined for {name!r}")
@@ -116,7 +116,7 @@ async def _run_each(context: StageContext, library: Mapping[str, StageFn], recor
     the child's name and the row's position, so each film (say) is asked and replayed on its own.
     """
     state = context.state
-    path = child_path(context.sketch, state["do"])
+    path = child_path(context.sketch, stage_of(state)[1])
     paired = []
     for index, row in enumerate(await context.read(state["each"])):
         child = replace(load(path, variables={**state.get("with", {}), **row}), name=f"{path.stem}[{index}]")
@@ -125,7 +125,7 @@ async def _run_each(context: StageContext, library: Mapping[str, StageFn], recor
 
 
 async def _run_child(context: StageContext, library: Mapping[str, StageFn], record: EventedRecord, child: Sketch | None = None):
-    """Run the sketch this stage calls (`do: sketch.<file>`) in the same run folder, with the same sources.
+    """Run the sketch this state calls (`do: { sketch: { file: ... } }`) in the same run folder, with the same sources.
 
     Its result is what its last stage returned: the weighted rows the parent blends.
     """
@@ -152,12 +152,11 @@ def _stages(
 
         async def stage(name=name, state=state):
             context = make_context(name, state)
-            called = state.get("do", "")
-            if called.startswith(SINK_PREFIX):
-                file = sketch.sinks[called.removeprefix(SINK_PREFIX)].file
-                _write_part(context.directory, file, context.last)
+            kind, target = stage_of(state) or ("blend", "")
+            if kind == "sink":
+                _write_part(context.directory, sketch.sinks[target].file, context.last)
                 return context.last
-            if called.startswith(SKETCH_PREFIX):
+            if kind == "sketch":
                 run = _run_each if "each" in state else _run_child
                 result = await run(context, library, record)
             else:

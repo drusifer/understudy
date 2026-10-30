@@ -20,11 +20,11 @@ machine:
   initial: first
   states:
     first:
-      do: sketch.child
+      do: { sketch: { file: child } }
       with: { seats: {{ tickets | default(2) }} }
       then: second
     second:
-      do: sketch.child
+      do: { sketch: { file: child } }
       with: { seats: 9 }
       then: done
     done:
@@ -38,7 +38,7 @@ machine:
   initial: look
   states:
     look:
-      do: test.look
+      do: { etl: { action: look } }
       then: done
     done:
       final: true
@@ -51,7 +51,7 @@ class TemplateCase(unittest.TestCase):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         self.dir = Path(directory.name)
-        patcher = patch.dict(STAGES, {"test.look": Stage("test.look", None, {})})
+        patcher = patch.dict(STAGES, {"etl.look": Stage("etl.look", None, {})})
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -69,7 +69,7 @@ class TemplateCase(unittest.TestCase):
             return [{"a": "x", "weight": 1}]
 
         sketch = load_checked(path, variables=variables)
-        asyncio.run(run_sketch(sketch, self.dir / "out", {"test.look": look}, lambda line: None))
+        asyncio.run(run_sketch(sketch, self.dir / "out", {"etl.look": look}, lambda line: None))
         return seen
 
 
@@ -140,11 +140,11 @@ machine:
   initial: score
   states:
     score:
-      do: sketch.child
+      do: { sketch: { file: child } }
       each: films
       then: write
     write:
-      do: sink.pairs
+      do: { sink: { name: pairs } }
       then: done
     done:
       final: true
@@ -157,7 +157,7 @@ machine:
   initial: look
   states:
     look:
-      do: test.look
+      do: { etl: { action: look } }
       then: done
     done:
       final: true
@@ -178,7 +178,7 @@ class EachTests(TemplateCase):
             return [{"audience": "loved", "weight": 1}]
 
         sketch = load_checked(path)
-        result = asyncio.run(run_sketch(sketch, self.dir / "out", {"test.look": look}, lambda line: None))
+        result = asyncio.run(run_sketch(sketch, self.dir / "out", {"etl.look": look}, lambda line: None))
         lines = result.outputs["pairs"].read_text(encoding="utf-8").splitlines()
         return seen, [json.loads(line) for line in lines]
 
@@ -195,7 +195,8 @@ class EachTests(TemplateCase):
         self.assertTrue(any("'filsm' is not a source (did you mean 'films'?)" in p for p in check(load(path))))
 
     def test_each_repeats_only_a_sketch(self):
-        path = self.write_each(EACH_PARENT.replace("do: sketch.child\n      each", "do: test.look\n      each"))
+        stage = "do: { etl: { action: look } }"
+        path = self.write_each(EACH_PARENT.replace("do: { sketch: { file: child } }\n      each", f"{stage}\n      each"))
         self.assertTrue(any("`each` repeats a sketch" in p for p in check(load(path))))
 
 

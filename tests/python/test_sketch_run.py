@@ -13,7 +13,7 @@ from src.sketch.registry import STAGES, Stage
 from src.sketch.run import run_sketch
 
 BRANCH = ROOT / "tests" / "fixtures" / "machine_branch.yaml"
-TEST_STAGES = {name: Stage(name, None, {}) for name in ("test.count", "test.mark", "test.boom")}
+TEST_STAGES = {name: Stage(name, None, {}) for name in ("etl.count", "etl.mark", "etl.boom")}
 
 
 def library(count=100, fail_in=None):
@@ -28,7 +28,7 @@ def library(count=100, fail_in=None):
     async def boom(context):
         raise RuntimeError("boom")
 
-    return {"test.count": counted, "test.mark": marked, "test.boom": boom}
+    return {"etl.count": counted, "etl.mark": marked, "etl.boom": boom}
 
 
 class RunCase(unittest.TestCase):
@@ -93,7 +93,8 @@ class MachineTests(RunCase):
         self.assertEqual(sorted(p.name for p in folder.iterdir()), ["events.jsonl", "run.json"])
 
     def test_a_failure_after_the_sink_removes_the_partial_output(self):
-        path = self.sketch([("then: done\n    done:", "then: after\n    after:\n      do: test.boom\n      then: done\n    done:")])
+        after = "then: after\n    after:\n      do: { etl: { action: boom } }\n      then: done\n    done:"
+        path = self.sketch([("then: done\n    done:", after)])
         with self.assertRaisesRegex(RuntimeError, "boom"):
             self.run_it(library(), path)
         self.assertEqual(sorted(p.name for p in self.only_run_folder().iterdir()), ["events.jsonl", "run.json"])
@@ -114,8 +115,8 @@ class MachineTests(RunCase):
         self.assertNotIn("outcome", json.loads((result.directory / "run.json").read_text(encoding="utf-8")))
 
     def test_a_state_with_no_stage_in_the_library_is_named(self):
-        with self.assertRaisesRegex(LookupError, "test.mark"):
-            self.run_it({"test.count": library()["test.count"]})
+        with self.assertRaisesRegex(LookupError, "etl.mark"):
+            self.run_it({"etl.count": library()["etl.count"]})
 
 
 class CliTests(RunCase):
@@ -137,7 +138,7 @@ class CliTests(RunCase):
         self.assertEqual((code, err, out[-1]), (0, [], "outcome: all_done"))
 
     def test_a_wrong_sketch_is_exit_2_with_a_last_line_saying_what_to_fix(self):
-        path = self.sketch([("do: sink.report", "do: sink.reportt")])
+        path = self.sketch([("do: { sink: { name: report } }", "do: { sink: { name: reportt } }")])
         code, out, err = self.go("run", str(path), "--out", str(self.out))
         self.assertEqual(code, 2)
         self.assertEqual(out, [])

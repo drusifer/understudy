@@ -52,8 +52,8 @@ class CheckTests(unittest.TestCase):
         self.assertEqual(check(load(FIXTURES / "weather_change.yaml")), [])
 
     def test_an_unknown_stage_names_the_path_and_the_nearest_stage(self):
-        problems = self.workspace().edit("etl.split_by_share", "etl.split_by_shar").problems()
-        self.assert_problem(problems, "machine.states.split_trade.do", "etl.split_by_shar", "etl.split_by_share")
+        problems = self.workspace().edit("action: split_by_share", "action: split_by_shar").problems()
+        self.assert_problem(problems, "machine.states.split_trade.do.etl.action", "etl.split_by_shar", "etl.split_by_share")
 
     def test_a_leaf_option_that_is_not_declared_names_its_row(self):
         problems = self.workspace().edit("size: large,  weight: 0.5", "size: larg,  weight: 0.5").problems()
@@ -77,7 +77,7 @@ class CheckTests(unittest.TestCase):
         self.assert_problem(problems, "unknown operator 'eqq'", "did you mean 'eq'")
 
     def test_an_unknown_sink_is_refused(self):
-        problems = self.workspace().edit("do: sink.ingredients", "do: sink.ingredientz").problems()
+        problems = self.workspace().edit("do: { sink: { name: ingredients } }", "do: { sink: { name: ingredientz } }").problems()
         self.assert_problem(problems, "machine.states.write.do", "ingredientz", "ingredients")
 
     def test_a_machine_that_never_ends_is_refused(self):

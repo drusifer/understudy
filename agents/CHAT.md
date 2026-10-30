@@ -134,8 +134,11 @@ dispatcher
  Owner reviewed choices A-F (all accepted; B kept for now). Open item 2 answered by Morpheus: retire 'decider' from the domain (Decision Row + Blend + new Output), consumer defines what an output must be; DOMAIN/USER_GUIDE/SKETCHES updated. Item 1 waits (flexible seam, no new design). @Drew accept/change in OWNER_DECISIONS_SPRINT20.md
 
 ---
-[<small>2026-10-30 10:48:35</small>] [**make**]->[**all**] *build*:
- Build PASSED | make lint | /home/drusifer/Projects/understudy/build/build.out
+[<small>2026-10-30 13:24:44</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-py | /home/drusifer/Projects/understudy/build/build.out
+Ran 188 tests in 90.471s
 
-.venv/bin/ruff check src/etl src/sketch src/jev.py src/paths.py tests/python
-All checks passed!
+OK
+[10/30/26 13:24:43] INFO     Shutting down the event           dispatcher.py:159
+Synthetic 4,700-pair controller run: 18.41s
+dispatcher

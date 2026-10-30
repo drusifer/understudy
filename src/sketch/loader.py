@@ -13,7 +13,7 @@ from ruamel.yaml.error import YAMLError
 
 from src.paths import ROOT
 from src.sketch.model import Candidates, Sink, Sketch, Source
-from src.sketch.vocabulary import SKETCH_PREFIX
+from src.sketch.vocabulary import stage_of
 
 SCHEMA = json.loads((ROOT / "schema" / "decision_sketch.schema.json").read_text(encoding="utf-8"))
 
@@ -87,17 +87,17 @@ def children(sketch: Sketch) -> dict[str, Sketch]:
     beside it with that call's `with`; a missing file is left to `check`. One sketch may be called many times."""
     found = {}
     for name, state in sketch.machine["states"].items():
-        called = str(state.get("do", ""))
-        if called.startswith(SKETCH_PREFIX):
-            path = child_path(sketch, called)
+        called = stage_of(state)
+        if called and called[0] == "sketch":
+            path = child_path(sketch, called[1])
             if path.is_file():
                 found[name] = load(path, variables=state.get("with", {}), lenient="each" in state)
     return found
 
 
-def child_path(sketch: Sketch, called: str) -> Path:
-    """The file a `do: sketch.<file>` names, beside the sketch that calls it."""
-    return sketch.path.parent / f"{called.removeprefix(SKETCH_PREFIX)}.yaml"
+def child_path(sketch: Sketch, file: str) -> Path:
+    """The file a `do: { sketch: { file: ... } }` names, beside the sketch that calls it."""
+    return sketch.path.parent / f"{file}.yaml"
 
 
 def unused_variables(sketch: Sketch, how: str = "--with") -> list[tuple[Sketch, str, list[str]]]:

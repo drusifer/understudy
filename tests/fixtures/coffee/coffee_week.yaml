@@ -32,11 +32,11 @@ machine:
   initial: weather
   states:
     weather:
-      do: sketch.weather_change
+      do: { sketch: { file: weather_change } }
       then: split_trade
 
     split_trade:
-      do: etl.split_by_share
+      do: { etl: { action: split_by_share } }
       with: { source: sales, field: drinks, segments: segments }
       then: match_orders
 
@@ -74,12 +74,12 @@ machine:
       then: to_ingredients
 
     to_ingredients:
-      do: convert.recipes
+      do: { convert: { action: recipes } }
       with: { recipes: recipes, packs: packs }
       then: write
 
     write:
-      do: sink.ingredients
+      do: { sink: { name: ingredients } }
       then: done
 
     done:

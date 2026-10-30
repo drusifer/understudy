@@ -32,7 +32,7 @@ machine:
   initial: judge
   states:
     judge:
-      do: etl.join_weights
+      do: { etl: { action: join_weights } }
       with: { probabilities: weather_change, weights: weather_temp }
       then: done
     done:

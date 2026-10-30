@@ -33,7 +33,7 @@ TLDR:
 | **machine** | your pipeline: states that each name a stage and say what comes next |
 | **decision row** | one combination of outcome values with a weight; your `decide` tree, a lookup, a subsketch or a Jev reading can each produce them |
 | **blend** | the weighted average of the decision rows its entries produce, per dimension; `forbid` rules then drop options and always win |
-| **subsketch** | a sketch another sketch calls (`do: sketch.<file>`); it declares the `outputs` it gives back, and the caller passes it values with `with:` |
+| **subsketch** | a sketch another sketch calls (`do: { sketch: { file: ... } }`); it declares the `outputs` it gives back, and the caller passes it values with `with:` |
 | **Jev** | TypeSafe's judgement model. It reads text you supply against a rubric you write and gives a probability per level; it never writes a value |
 | **capture / replay** | a live Jev read is saved; `--replay` reuses it offline |
 

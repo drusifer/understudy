@@ -34,7 +34,7 @@ def double(answer=HAPPY, fail=None):
 
 class SourcesCase(unittest.TestCase):
     def setUp(self):
-        patcher = patch.dict(STAGES, {"test.read": Stage("test.read", None, {})})
+        patcher = patch.dict(STAGES, {"etl.read": Stage("etl.read", None, {})})
         patcher.start()
         self.addCleanup(patcher.stop)
         directory = tempfile.TemporaryDirectory()
@@ -54,7 +54,7 @@ class SourcesCase(unittest.TestCase):
                 raise JevError("Jev needs a TypeSafe key: set TYPESAFE_API_KEY")
             return jev
 
-        code = main(["run", str(self.sketch), "--out", str(self.out), *flags], library=library or {"test.read": read_mood},
+        code = main(["run", str(self.sketch), "--out", str(self.out), *flags], library=library or {"etl.read": read_mood},
                     make_jev=make_jev, store=self.store, stdout=stdout, stderr=stderr)
         return code, stdout.getvalue().splitlines(), stderr.getvalue().splitlines()
 
@@ -90,7 +90,7 @@ class LiveTests(SourcesCase):
 
     def test_a_source_read_twice_in_a_run_asks_jev_once(self):
         jev = double()
-        code, _, _ = self.go(jev=jev, library={"test.read": read_twice})
+        code, _, _ = self.go(jev=jev, library={"etl.read": read_twice})
         self.assertEqual(code, 0)
         self.assertEqual(len(jev.requests), 1)
 
