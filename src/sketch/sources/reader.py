@@ -16,15 +16,16 @@ def capture_key(sketch: Sketch, name: str) -> str:
     return f"{sketch.name}.{name}"
 
 
-def non_file_keys(sketch: Sketch) -> list[str]:
-    """Capture keys of every non-file source in the sketch and, recursively, the sketches it calls.
+def jev_keys(sketch: Sketch) -> list[str]:
+    """Capture keys of every Jev source in the sketch and, recursively, the sketches it calls.
 
-    A sketch repeated by `each` is left out: its keys are named per row, and only the rows know them.
+    Files and stage sources are deterministic, so only Jev is captured. A sketch repeated by `each` is left out: its
+    keys are named per row, and only the rows know them.
     """
-    keys = [capture_key(sketch, n) for n, s in sketch.sources.items() if s.kind != "file"]
+    keys = [capture_key(sketch, n) for n, s in sketch.sources.items() if s.kind == "jev"]
     for name, child in children(sketch).items():
         if "each" not in sketch.machine["states"][name]:
-            keys += non_file_keys(child)
+            keys += jev_keys(child)
     return keys
 
 
@@ -58,7 +59,7 @@ class Capture:
 
     @classmethod
     def replay(cls, store: CaptureStore, sketch: Sketch, target: str | None) -> "Capture":
-        return cls(store, None, choose_replay(store, target, non_file_keys(sketch)))
+        return cls(store, None, choose_replay(store, target, jev_keys(sketch)))
 
 
 class Sources:
@@ -69,6 +70,12 @@ class Sources:
         self.jev = GatedJev(capture.jev) if capture.jev is not None else None
         self.stale = False
         self._read: dict[str, list[dict]] = {}
+        self._computing: set[str] = set()
+        self.compute = self._cannot_compute  # replaced by the run, which holds the stage library
+
+    @staticmethod
+    async def _cannot_compute(sketch: Sketch, name: str) -> list[dict]:  # noqa: ARG004 - the signature the run's `compute` has
+        raise LookupError(f"source {name!r} is computed by a stage, but this run has no stages")
 
     @property
     def jev_requests(self) -> int:
@@ -79,9 +86,23 @@ class Sources:
         key = capture_key(sketch, name)
         if key not in self._read:
             source = sketch.sources[name]
-            self._read[key] = read_jsonl(source.path) if source.kind == "file" else await self._read_jev(
-                sketch, name, key, results or {})
+            if source.kind == "file":
+                self._read[key] = read_jsonl(source.path)
+            elif source.kind == "stage":
+                self._read[key] = await self._compute(sketch, name, key)
+            else:
+                self._read[key] = await self._read_jev(sketch, name, key, results or {})
         return self._read[key]
+
+    async def _compute(self, sketch: Sketch, name: str, key: str) -> list[dict]:
+        """A stage source: run its stage once, on first read. The run installs `compute` (it holds the library)."""
+        if key in self._computing:
+            raise ValueError(f"source {name!r} reads itself, directly or through another source")
+        self._computing.add(key)
+        try:
+            return await self.compute(sketch, name)
+        finally:
+            self._computing.discard(key)
 
     async def _state(self, sketch: Sketch, config: dict) -> dict:
         return {key: await self.read(sketch, ref["from"]) for key, ref in config["state"].items()}

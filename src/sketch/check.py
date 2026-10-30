@@ -49,11 +49,32 @@ class _Checker:
         for name, source in self.sketch.sources.items():
             if source.kind == "file" and not (source.path and source.path.is_file()):
                 self.problem(f"sources.{name}", f"file {source.path} does not exist")
+            if source.kind == "stage":
+                self.stage_source(name, source.config)
             if source.kind == "jev":
                 for key, ref in source.config["state"].items():
                     if ref["from"] not in self.sketch.sources or ref["from"] == name:
                         self.problem(f"sources.{name}.state.{key}.from",
                                      f"{ref['from']!r} is not another source{_nearest(ref['from'], self.sketch.sources)}")
+
+    def stage_source(self, name: str, config: dict) -> None:
+        """A source computed by a stage: only a library stage (`etl` or `convert`), and it must not read itself."""
+        at = f"sources.{name}"
+        if next(iter(config["do"])) in ("sink", "sketch"):
+            self.problem(f"{at}.do", "a source is computed by an `etl` or `convert` stage, not a sink or a sketch")
+            return
+        self.stage(at, config)
+        stack = [(name, config)]
+        seen = {name}
+        while stack:
+            _, current = stack.pop()
+            for param in (value for value in (current.get("with") or {}).values() if isinstance(value, str)):
+                if param == name:
+                    self.problem(f"{at}.with", f"source {name!r} reads itself, directly or through another source")
+                    return
+                if param in self.sketch.sources and param not in seen and self.sketch.sources[param].kind == "stage":
+                    seen.add(param)
+                    stack.append((param, self.sketch.sources[param].config))
 
     def candidate_sources(self) -> None:
         """An outcome read from rows names a source or a state whose result holds them."""

@@ -191,6 +191,14 @@ async def run_sketch(
     def make_context(name: str, state: dict) -> StageContext:
         return StageContext(sketch, name, state, results, last["value"], directory, summary, sources)
 
+    async def compute(owner: Sketch, name: str) -> list[dict]:
+        """Run a stage source's stage (`kind: stage`): the source's `do` and `with`, as a state would have them."""
+        config = owner.sources[name].config
+        state = {"do": config["do"], "with": config.get("with", {})}
+        context = StageContext(owner, name, state, results, None, directory, summary, sources)
+        return await _stage_function(state, library)(context, **state["with"])
+
+    sources.compute = compute
     stages = _stages(sketch, library, make_context, results, record)
     machine = build_machine(sketch)
     inner = {name: _remember(stage, last) for name, stage in stages.items()}

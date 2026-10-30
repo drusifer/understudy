@@ -146,6 +146,21 @@ sources:
 
 Reading it returns one row per level, `{level, probability}`. Your weights per level live in `data`, and Jev never sees them. A live read needs `TYPESAFE_API_KEY`.
 
+## A stage as a source
+
+A source is a named set of rows. Besides a file and a Jev reading, a source can be **computed by a stage** (`kind: stage`), declared with the same `do:` and `with:` a state has:
+
+```yaml
+sources:
+  seats: seats.jsonl
+  runs:
+    kind: stage
+    do: { etl: { action: adjacent_runs } }
+    with: { source: seats, group: row, order: number, length: 2, match: { free: true } }
+```
+
+Anything that reads `runs` by name (another stage's `source:`, a Jev source's `state:`, an outcome's `{ from, key }`) triggers it. It runs once, on the first read, and the rows are remembered. Only `etl` and `convert` stages can compute a source. `understudy check` refuses a source that reads itself, an unknown action, and a `source:` param that names no source. Stage sources are deterministic, so only Jev readings are captured for a replay.
+
 ## Subsketches
 
 `do: { sketch: { file: weather_change } }` runs `weather_change.yaml` from the same folder, sharing the run folder and the sources. It declares what it gives back on its final state:

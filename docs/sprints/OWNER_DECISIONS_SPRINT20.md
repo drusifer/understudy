@@ -43,7 +43,7 @@ Recorded by Cypher from the conversation, in the owner's words where possible. *
 
 | 26 | **Seating's calculations are general Python stages, not SQL in the sketch and not a `pandas` action:** `etl.adjacent_runs` (runs of consecutive numbers in a group) and scoring stages that give each candidate a 0.0 to 1.0 weight (by position in an ordered list, by closeness to the middle). | "adjacent_runs seems simple enough" |
 
-| 27 | **A stage can be a source: it is a new source type** (a third `kind:` beside `file` and `jev`). Exact shape not yet agreed. | "it is a new source type" |
+| 27 | **A stage can be a source: it is a new source type** (a third `kind:` beside `file` and `jev`), declared with the same `do:` and `with:` a state has: `runs: { kind: stage, do: { etl: { action: adjacent_runs } }, with: { ... } }`. Computed once, on first read, by name. | "it is a new source type"; "yes" (to `kind: stage` with `do:` and `with:`) |
 
 ## Decided by Claude while the owner was asleep (2026-10-30), for the owner to review
 

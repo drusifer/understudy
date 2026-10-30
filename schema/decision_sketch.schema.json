@@ -35,6 +35,25 @@
     "machine": { "$ref": "#/$defs/machine" }
   },
   "$defs": {
+    "stageRef": {
+      "description": "Which stage a state runs (or a stage source computes): a type as the key, its one field as the value.",
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "etl": { "$ref": "#/$defs/actionStage" },
+        "convert": { "$ref": "#/$defs/actionStage" },
+        "sink": {
+          "type": "object", "required": ["name"], "additionalProperties": false,
+          "properties": { "name": { "type": "string", "minLength": 1 } }
+        },
+        "sketch": {
+          "type": "object", "required": ["file"], "additionalProperties": false,
+          "properties": { "file": { "type": "string", "minLength": 1 } }
+        }
+      }
+    },
     "actionStage": {
       "type": "object",
       "required": ["action"],
@@ -61,6 +80,16 @@
           "properties": {
             "kind": { "const": "file" },
             "path": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "do"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "stage" },
+            "do": { "$ref": "#/$defs/stageRef" },
+            "with": { "type": "object" }
           }
         },
         {
@@ -152,24 +181,7 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "do": {
-          "type": "object",
-          "minProperties": 1,
-          "maxProperties": 1,
-          "additionalProperties": false,
-          "properties": {
-            "etl": { "$ref": "#/$defs/actionStage" },
-            "convert": { "$ref": "#/$defs/actionStage" },
-            "sink": {
-              "type": "object", "required": ["name"], "additionalProperties": false,
-              "properties": { "name": { "type": "string", "minLength": 1 } }
-            },
-            "sketch": {
-              "type": "object", "required": ["file"], "additionalProperties": false,
-              "properties": { "file": { "type": "string", "minLength": 1 } }
-            }
-          }
-        },
+        "do": { "$ref": "#/$defs/stageRef" },
         "each": { "type": "string", "minLength": 1 },
         "with": { "type": "object" },
         "blend": { "type": "array", "items": { "$ref": "#/$defs/blendEntry" }, "minItems": 1 },
