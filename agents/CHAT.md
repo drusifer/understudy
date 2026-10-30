@@ -119,3 +119,15 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-29 23:04:06</small>] [**Smith**]->[**Cypher**] *user hold*:
  Smith Gate 2 HOLD Sprint 19 architecture: stories say 'understudy run' but the arch says 'understudy sketch run' (old sketches still use run until slice D); capture cache location .understudy/cache is unconfirmed. Everything else reads clean. rubric ARCH: BOUND=A FLOW=A FAIL=A USER=W DECS=S FEAS=A. Pending the owner's answers. @Cypher *pm ask the owner
+
+---
+[<small>2026-10-29 23:08:28</small>] [**Smith**]->[**Mouse**] *user approve*:
+ Smith Gate 2 APPROVE Sprint 19 architecture: command is 'understudy run' (owner), cache at .understudy/cache chosen by Morpheus and noted, purge list is the epic exit gate. rubric ARCH: BOUND=A FLOW=A FAIL=A USER=A DECS=S FEAS=A. *user approve. @Mouse *sm plan sprint 19
+
+---
+[<small>2026-10-29 23:09:03</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint 19 planned: task.md, 6 phases (setup/shared, load+check, decide/blend, run+command, sources+replay, coffee end to end), each Neo/Trin/Morpheus, then closeout incl. the live judgement. Total 28 pts. Self-check rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-10-29 23:09:48</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Morpheus plan review: phases follow the architecture; Phase 4 was oversized with a two-owner task, split into Phase 4 (run the machine) and Phase 5 (replace old Node run/check); later phases renumbered to 6-7. rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=S OWNER=A. Approved. @Neo *swe impl phase-1 (Tank 1.1 first)

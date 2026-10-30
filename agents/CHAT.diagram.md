@@ -41,5 +41,11 @@ sequenceDiagram
     Note right of Morpheus: "Architecture drafted: do<br/>cs/sprints/ARCH_SPRINT19<br/>.md (src/sketch package,<br/>12 components,<br/>capture/replay,<br/>ADR-0040..0045, no new<br/>mechanism, r…"
     Smith->>Cypher: "user hold"
     Note right of Smith: "Smith Gate 2 HOLD Sprint<br/>19 architecture: stories<br/>say 'understudy run' but<br/>the arch says<br/>'understudy sketch run'<br/>(old sketches still use<br/>ru…"
-    Note over Mouse,Tank: "Phase 0 summary<br/>Smith: Smith Gate 1 re-<br/>review Sprint 19<br/>stories: all six<br/>findings fixed,<br/>capture/replay (UND-60<br/>AC5-7) is testable,<br/>owner confirmed stale<br/>replay w…<br/>Morpheus: Architecture<br/>drafted: docs/sprints/AR<br/>CH_SPRINT19.md<br/>(src/sketch package, 12<br/>components,<br/>capture/replay,<br/>ADR-0040..0045, no new<br/>mechanism, r…<br/>Smith: Smith Gate 2 HOLD<br/>Sprint 19 architecture:<br/>stories say 'understudy<br/>run' but the arch says<br/>'understudy sketch run'<br/>(old sketches still use<br/>ru…"
+    Smith->>Mouse: "user approve"
+    Note right of Smith: "Smith Gate 2 APPROVE<br/>Sprint 19 architecture:<br/>command is 'understudy<br/>run' (owner), cache at<br/>.understudy/cache chosen<br/>by Morpheus and noted,…"
+    Mouse->>Morpheus: "sm handoff"
+    Note right of Mouse: "Sprint 19 planned:<br/>task.md, 6 phases<br/>(setup/shared,<br/>load+check,<br/>decide/blend,<br/>run+command,<br/>sources+replay, coffee<br/>end to end), each<br/>Neo/Tri…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Morpheus plan review:<br/>phases follow the<br/>architecture, Phase 4<br/>was oversized with a<br/>two-owner task, split<br/>into Phase 4 (run the<br/>machine) and…"
+    Note over Mouse,Tank: "Phase 0 summary<br/>Smith: Smith Gate 2 HOLD<br/>Sprint 19 architecture:<br/>stories say 'understudy<br/>run' but the arch says<br/>'understudy sketch run'<br/>(old sketches still use<br/>ru…<br/>Smith: Smith Gate 2<br/>APPROVE Sprint 19<br/>architecture: command is<br/>'understudy run'<br/>(owner), cache at<br/>.understudy/cache chosen<br/>by Morpheus and noted,…<br/>Morpheus: Morpheus plan<br/>review: phases follow<br/>the architecture, Phase<br/>4 was oversized with a<br/>two-owner task, split<br/>into Phase 4 (run the<br/>machine) and…"
 ```
