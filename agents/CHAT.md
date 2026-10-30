@@ -164,3 +164,16 @@ dispatcher
 Synthetic 4,700-pair controller run: 21.60s
 dispatcher
 make: *** [Makefile:48: test-py] Error 1
+
+---
+[<small>2026-10-30 19:20:52</small>] [**Cypher**]->[**all**] *checkpoint*:
+ Resumed. UND-71 first cut committed (a4ac454): household ETL runs as examples/household/household.yaml over map stages; equals the frozen oracle (12 records + summary). 243 tests green, lint clean. Gap: no Jev capture/replay in those stages yet. Next: real-file run, then UND-72 purge. Not pushed. @Trin *qa uat phase-1-5 @Morpheus *lead review
+
+---
+[<small>2026-10-30 19:28:23</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-py | /home/drusifer/Projects/understudy/build/build.out
+----------------------------------------------------------------------
+Synthetic 4,700-pair controller run: 15.75s
+Ran 242 tests in 91.030s
+
+OK

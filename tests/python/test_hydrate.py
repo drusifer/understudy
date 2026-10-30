@@ -1,4 +1,3 @@
-import asyncio
 import hashlib
 import json
 import tempfile
@@ -19,24 +18,23 @@ def monarch_file(directory, count):
 
 
 class HydrateTests(unittest.TestCase):
-    def test_pages_a_source_through_its_server_into_a_jsonl_snapshot(self):
+    def test_reads_an_export_into_a_jsonl_snapshot(self):
         with tempfile.TemporaryDirectory() as directory:
             source = monarch_file(directory, 2500)
             destination = Path(directory) / "inputs" / "monarch.jsonl"
-            result = asyncio.run(hydrate("monarch", source, destination))
+            result = hydrate("monarch", source, destination)
             lines = destination.read_text(encoding="utf-8").splitlines()
             self.assertEqual(result["rows"], 2500)
             self.assertEqual(len(lines), 2500)
             self.assertEqual(json.loads(lines[0])["source_row_number"], 1)
             self.assertEqual(json.loads(lines[-1])["source_row_number"], 2500)
-            self.assertEqual(result["pages"], 3)
             self.assertEqual(result["sha256"], hashlib.sha256(destination.read_bytes()).hexdigest())
 
     def test_a_missing_file_stops_before_anything_is_written(self):
         with tempfile.TemporaryDirectory() as directory:
             destination = Path(directory) / "inputs" / "monarch.jsonl"
             with self.assertRaises(SourceError) as caught:
-                asyncio.run(hydrate("monarch", Path(directory) / "missing.csv", destination))
+                hydrate("monarch", Path(directory) / "missing.csv", destination)
             self.assertIn("missing.csv", str(caught.exception))
             self.assertFalse(destination.exists())
             self.assertFalse(destination.parent.exists())
@@ -47,24 +45,15 @@ class HydrateTests(unittest.TestCase):
             broken.write_text("Date,Description\n01/02/2026,X\n", encoding="utf-8")
             destination = Path(directory) / "inputs" / "amex.jsonl"
             with self.assertRaises(SourceError) as caught:
-                asyncio.run(hydrate("amex", broken, destination))
+                hydrate("amex", broken, destination)
             self.assertIn("amount", str(caught.exception))
             self.assertFalse(destination.exists())
-
-    def test_the_server_describes_its_tools(self):
-        from src.etl.source_server import build_server
-
-        with tempfile.TemporaryDirectory() as directory:
-            tools = asyncio.run(build_server("monarch", monarch_file(directory, 3)).list_tools())
-            described = {tool.name: tool.description for tool in tools}
-            self.assertEqual(set(described), {"describe", "read_transactions"})
-            self.assertTrue(all(described.values()), described)
 
     def test_the_snapshot_is_the_same_on_every_run(self):
         with tempfile.TemporaryDirectory() as directory:
             source = monarch_file(directory, 120)
-            first = asyncio.run(hydrate("monarch", source, Path(directory) / "a.jsonl"))
-            second = asyncio.run(hydrate("monarch", source, Path(directory) / "b.jsonl"))
+            first = hydrate("monarch", source, Path(directory) / "a.jsonl")
+            second = hydrate("monarch", source, Path(directory) / "b.jsonl")
             self.assertEqual(first["sha256"], second["sha256"])
 
 

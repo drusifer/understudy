@@ -117,8 +117,8 @@ class Household:
         self.facts: dict = {}
 
     async def hydrate(self):
-        await hydrate("monarch", self.monarch, self.monarch_jsonl)
-        await hydrate("amex", self.amex, self.amex_jsonl)
+        hydrate("monarch", self.monarch, self.monarch_jsonl)
+        hydrate("amex", self.amex, self.amex_jsonl)
 
     async def pair(self):
         state, found = self.state, self.found
