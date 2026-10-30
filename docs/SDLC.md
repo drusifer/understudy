@@ -51,7 +51,7 @@ repeating their commands. `bobp make help` lists them.
 | `install-browser` | `npx playwright install chromium` | needed only for web targets; touches the network; see §9 |
 | `test` | `test-js` + `test-py` | both language suites; no Jev or browser calls |
 | `test-js` | JavaScript `node:test` suite | `ARGS` supports Node test filtering |
-| `test-py` | `python -m unittest discover -s tests/python` | offline tests for Python tooling and ETL helpers |
+| `test-py` | `python -m unittest discover -s tests/python` | offline tests for the Python ETL and sketch package; `ARGS="test_sketch*.py"` runs only the files matching that pattern |
 | `test-browser` | `npm run test:browser` → `node --test tests/browser/*.test.js` (one file at a time) | the watch page driven in headless Chromium against real runs of the examples with a Jev double - no key, no cost; needs Chromium (`make install-browser`); `make test` stays browser-free (ADR-0006) |
 | `test-live` | `understudy run <sketch> --steps 30` for every `examples/*/`, each run's final `outcome` checked (`done`), then `examples/evening` again with `BOX_STATE=full` (`walked-away`); serves the box office over HTTP with a throwaway token (`MCP_TOKEN`, `BOX_PORT`, default 8765) for `examples/mcp-remote` and stops it after | live Jev (paid) and, for web examples, Chromium; UAT only |
 | `run` | `node bin/understudy.mjs $(ARGS)` | e.g. `ARGS="check examples/cli"` |

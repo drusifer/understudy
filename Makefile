@@ -47,9 +47,9 @@ test-js: ## Run JavaScript unit tests
 	$(NEED_INSTALL)
 	npm run test:js -- $(ARGS)
 
-test-py: ## Run Python unit tests
+test-py: ## Run Python unit tests (ARGS="test_sketch*.py" runs only the files matching that pattern)
 	@test -x .venv/bin/python || { echo "No .venv - run 'bobp make install' first"; exit 1; }
-	.venv/bin/python -m unittest discover -s tests/python -p 'test_*.py'
+	.venv/bin/python -m unittest discover -s tests/python -p '$(if $(ARGS),$(ARGS),test_*.py)'
 
 test-etl: ## Run SQLMesh model unit tests against synthetic fixtures
 	@test -x .venv/bin/sqlmesh || { echo "No SQLMesh - run 'bobp make install' first"; exit 1; }

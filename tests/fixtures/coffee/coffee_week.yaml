@@ -1,0 +1,86 @@
+name: coffee_week
+description: >
+  From last week's total sales and a rough picture of who the customers are,
+  work out what to order for next week.
+
+sources:
+  sales: last_week_sales.jsonl          # {"week": "2026-W43", "drinks": 1600}
+
+sinks:
+  ingredients: ingredients.jsonl        # a file name inside the run folder
+
+outcomes:
+  temp: [hot, iced]
+  size: [small, medium, large]
+  caffeine: [none, regular, high]
+
+data:
+  segments:                             # rough demographics, not individuals
+    - { name: students,      share: 0.30, age_max: 24 }
+    - { name: teens,         share: 0.10, age_max: 17 }
+    - { name: commuters,     share: 0.35, age_min: 25 }
+    - { name: night_workers, share: 0.15, age_min: 25 }
+    - { name: others,        share: 0.10 }
+  recipes:                              # one drink choice to ingredient amounts
+    - { size: small,  ingredient: coffee_beans, amount: 12, unit: g }
+    - { size: medium, ingredient: coffee_beans, amount: 18, unit: g }
+    - { size: large,  ingredient: coffee_beans, amount: 24, unit: g }
+  packs:                                # round each ingredient up to whole packs
+    coffee_beans: 1000
+
+machine:
+  initial: weather
+  states:
+    weather:
+      do: sketch.weather_change
+      then: split_trade
+
+    split_trade:
+      do: etl.split_by_share
+      with: { source: sales, field: drinks, segments: segments }
+      then: match_orders
+
+    match_orders:
+      blend:
+        - decide:                       # the owner's tree for what each segment prefers
+            if:
+              segment: { eq: students }
+            then:
+              drink:
+                - { temp: iced, size: large,  weight: 0.5 }
+                - { temp: iced, size: medium, weight: 0.2 }
+                - { temp: hot,  size: medium, weight: 0.3 }
+            else:
+              if:
+                segment: { eq: night_workers }
+              then:
+                drink:
+                  - { temp: hot, size: large, caffeine: high, weight: 1.0 }
+              else:
+                drink:
+                  - { temp: hot,  size: medium, weight: 0.6 }
+                  - { temp: iced, size: medium, weight: 0.4 }
+        - decider: weather              # the subsketch's weights on temp
+          weight:
+            if:
+              segment: { eq: night_workers }   # night shift stays on hot coffee, warm or not
+            then: 0
+            else: 0.3
+      forbid:
+        - when:                         # teens: the under-18 rule
+            age_max: { le: 17 }
+          drop:
+            caffeine: { ne: none }
+      then: to_ingredients
+
+    to_ingredients:
+      do: convert.recipes
+      with: { recipes: recipes, packs: packs }
+      then: write
+
+    write:
+      do: sink.ingredients
+      then: done
+
+    done:
+      final: true

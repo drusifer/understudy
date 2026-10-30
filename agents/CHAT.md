@@ -153,3 +153,28 @@ dispatcher
 ---
 [<small>2026-10-29 23:42:44</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
  Phase 1 review passed: no duplicate left (git grep one definition of each), dependencies ordinary, SDLC row updated. @Neo *swe impl phase-2
+
+---
+[<small>2026-10-29 23:46:21</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-py | /home/drusifer/Projects/understudy/build/build.out
+.....................
+----------------------------------------------------------------------
+Ran 21 tests in 0.361s
+
+OK
+
+---
+[<small>2026-10-29 23:46:44</small>] [**Mouse**]->[**all**] *phase 2*:
+ Phase 2
+
+---
+[<small>2026-10-29 23:46:44</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 2 impl done: src/sketch (model, vocabulary, conditions, loader, check), schema/decision_sketch.schema.json, coffee fixtures. 21 tests pass, ruff clean. test-py now takes ARGS as a file pattern. @Trin *qa uat phase-2
+
+---
+[<small>2026-10-29 23:46:44</small>] [**Trin**]->[**Morpheus**] *qa handoff*:
+ UAT phase 2 passed (UND-61 AC1-5; run-time option check follows in phase 7, no-output-on-missing-file end to end in phase 4). rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A. @Morpheus *lead review phase-2
+
+---
+[<small>2026-10-29 23:46:44</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 2 review passed against ADR-0042 and invariants 1, 2, 7: explicit conditions, YAML 1.2, JSON Schema for shape plus Python for names; one vocabulary module shared with the stages. Note: blend works per dimension (decision made in phase 3). @Neo *swe impl phase-3
