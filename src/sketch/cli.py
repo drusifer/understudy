@@ -19,7 +19,7 @@ from src.sketch.registry import StageFn
 from src.sketch.registry import library as registered
 from src.sketch.run import run_sketch
 from src.sketch.sources.capture import CaptureStore, ReplayError
-from src.sketch.sources.reader import Capture, jev_keys
+from src.sketch.sources.reader import Capture, needs_jev
 
 DEFAULT_OUT = Path("build/runs")
 
@@ -62,7 +62,7 @@ def _parser() -> argparse.ArgumentParser:
 def _capture(args, sketch, store, make_jev) -> Capture:
     if args.replay is not None:
         return Capture.replay(store, sketch, args.replay or None)
-    return Capture.live(store, make_jev() if jev_keys(sketch) else None)
+    return Capture.live(store, make_jev() if needs_jev(sketch) else None)
 
 
 def main(  # noqa: PLR0913 - the command line's injection points

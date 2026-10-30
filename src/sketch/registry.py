@@ -41,18 +41,19 @@ class Stage:
     name: str
     run: StageFn
     params: dict[str, Param]
+    jev: bool = False  # the stage asks Jev itself, so a run that names it needs one
 
 
 STAGES: dict[str, Stage] = {}
 
 
-def describe(name: str, run: StageFn) -> Stage:
+def describe(name: str, run: StageFn, jev: bool = False) -> Stage:
     """The stage a function declares: its parameters after `context`, by name, annotation and default."""
     params = {}
     for parameter in list(inspect.signature(run).parameters.values())[1:]:
         kind = parameter.annotation if parameter.annotation is not inspect.Parameter.empty else str
         params[parameter.name] = Param(kind, parameter.default is inspect.Parameter.empty)
-    return Stage(name, run, params)
+    return Stage(name, run, params, jev)
 
 
 def library() -> dict[str, StageFn]:
@@ -60,9 +61,9 @@ def library() -> dict[str, StageFn]:
     return {name: registered.run for name, registered in STAGES.items()}
 
 
-def stage(name: str) -> Callable[[StageFn], StageFn]:
-    """Register the decorated function as the stage `name`."""
+def stage(name: str, jev: bool = False) -> Callable[[StageFn], StageFn]:
+    """Register the decorated function as the stage `name`; `jev=True` when it asks Jev itself."""
     def register(run: StageFn) -> StageFn:
-        STAGES[name] = describe(name, run)
+        STAGES[name] = describe(name, run, jev)
         return run
     return register

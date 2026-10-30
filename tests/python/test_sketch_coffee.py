@@ -62,7 +62,9 @@ class RegistryTests(unittest.TestCase):
             "map.split_by_share", "map.join_weights", "map.recipes", "reduce.blend",
             "map.adjacent_runs", "map.prefer_order", "map.prefer_middle",
             "map.weigh", "reduce.max", "reduce.min", "reduce.any",
-            "map.where", "map.join", "map.unpair", "map.expect"})
+            "map.where", "map.join", "map.unpair", "map.expect",
+            "map.hydrate", "map.pair", "map.judge_transfers", "map.plan_spending", "map.link_refunds",
+            "map.place_merchants", "map.publish"})
 
     def test_a_stage_declares_its_with_keys_by_its_signature(self):
         self.assertEqual(STAGES["map.split_by_share"].params, {

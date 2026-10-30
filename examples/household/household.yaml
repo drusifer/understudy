@@ -1,0 +1,44 @@
+name: household
+description: >
+  Reads a household's Monarch and Amex exports and writes one record per transaction in the period: purchases
+  merged across the two files, card payments paired as transfers, refunds linked to their originals, and every
+  merchant in a category. Rules are SQL (SQLMesh on DuckDB); Jev judges the payee of an unpaired transfer, the
+  original charge of a refund with several, and the category of a merchant.
+
+  Values you can set: --with monarch=<csv>  amex=<csv>  amex_account=<name>  since=<yyyy-mm-dd>
+
+machine:
+  initial: hydrate
+  states:
+    hydrate:
+      do: { map: { action: hydrate } }
+      with:
+        monarch: "{{ monarch }}"
+        amex: "{{ amex }}"
+        {% if amex_account is defined %}
+        amex_account: "{{ amex_account }}"
+        {% endif %}
+        {% if since is defined %}
+        since: "{{ since }}"
+        {% endif %}
+      then: pair
+    pair:
+      do: { map: { action: pair } }
+      then: transfers
+    transfers:
+      do: { map: { action: judge_transfers } }
+      then: plan_spending
+    plan_spending:
+      do: { map: { action: plan_spending } }
+      then: refunds
+    refunds:
+      do: { map: { action: link_refunds } }
+      then: categories
+    categories:
+      do: { map: { action: place_merchants } }
+      then: output
+    output:
+      do: { map: { action: publish } }
+      then: done
+    done:
+      final: true

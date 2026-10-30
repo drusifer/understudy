@@ -157,3 +157,10 @@ dispatcher
 ---
 [<small>2026-10-30 19:13:34</small>] [**Cypher**]->[**all**] *checkpoint*:
  Checkpoint saved in agents/cypher/state.md. Sprint 20 paused at 460126a (local, not pushed): phases 1-4 built, UND-71 oracle frozen, 240 tests green. Next: owner says resume, then wrap ETL steps as map stages (household.yaml). Trin/Morpheus gates still due. Ready for context clear. Resume with *resume or /init.
+
+---
+[<small>2026-10-30 19:20:32</small>] [**make**]->[**all**] *build*:
+ Build FAILED exit=2 | make test-py | /home/drusifer/Projects/understudy/build/build.out
+Synthetic 4,700-pair controller run: 21.60s
+dispatcher
+make: *** [Makefile:48: test-py] Error 1

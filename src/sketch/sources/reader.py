@@ -7,9 +7,11 @@ from pathlib import Path
 from src.jev import GatedJev, JevError
 from src.sketch.loader import children
 from src.sketch.model import Sketch
+from src.sketch.registry import STAGES
 from src.sketch.sources import jev as jev_source
 from src.sketch.sources.capture import CaptureStore, choose_replay, read_capture
 from src.sketch.sources.file import read_jsonl
+from src.sketch.vocabulary import stage_of
 
 
 def capture_key(sketch: Sketch, name: str) -> str:
@@ -27,6 +29,14 @@ def jev_keys(sketch: Sketch) -> list[str]:
         if "each" not in sketch.machine["states"][name]:
             keys += jev_keys(child)
     return keys
+
+
+def needs_jev(sketch: Sketch) -> bool:
+    """Whether a live run of the sketch, or of the sketches it calls, asks Jev: a Jev source, or a stage that does."""
+    named = (stage_of(state) for state in sketch.machine["states"].values())
+    named = [".".join(found) for found in named if found]
+    return bool(jev_keys(sketch)) or any(STAGES[n].jev for n in named if n in STAGES) or any(
+        needs_jev(child) for child in children(sketch).values())
 
 
 @dataclass(frozen=True)

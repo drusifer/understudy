@@ -103,6 +103,76 @@ class _Run:
             raise EtlError(f"SQLMesh failed for {', '.join(selects)}; see {self.directory / 'sqlmesh.log'}")
 
 
+class Household:
+    """One household run: the two exports, the run folder and what each step hands the next. The steps are methods,
+    run in order by `run` here and as stages by the household sketch (`src/sketch/stages_household.py`)."""
+
+    def __init__(self, *, monarch: Path, amex: Path, directory: Path, jev, amex_account: str | None = None,  # noqa: PLR0913
+                 since: str | None = None, announce=print):
+        self.monarch, self.amex = Path(monarch), Path(amex)
+        self.amex_account, self.since, self.announce = amex_account, since, announce
+        self.state, self.gated = _Run(directory, announce), GatedJev(jev)
+        self.monarch_jsonl, self.amex_jsonl = directory / "inputs" / "monarch.jsonl", directory / "inputs" / "amex.jsonl"
+        self.found: dict = {}
+        self.facts: dict = {}
+
+    async def hydrate(self):
+        await hydrate("monarch", self.monarch, self.monarch_jsonl)
+        await hydrate("amex", self.amex, self.amex_jsonl)
+
+    async def pair(self):
+        state, found = self.state, self.found
+        start = self.since or first_date(self.amex_jsonl)
+        if start is None:
+            raise EtlError("the Amex file has no dated rows, so there is no period to run")
+        self.facts["period_start"] = start
+        found.update(detect_amex_account(self.monarch_jsonl, self.amex_jsonl, override=self.amex_account, since=start))
+        shutil.copytree(ROOT / "sqlmesh", state.project, ignore=shutil.ignore_patterns("logs", ".cache", "*.pyc"))
+        state.environment.update(
+            UNDERSTUDY_ETL_MONARCH_JSONL=str(self.monarch_jsonl), UNDERSTUDY_ETL_AMEX_JSONL=str(self.amex_jsonl),
+            UNDERSTUDY_ETL_AMEX_ACCOUNT=found["account"], UNDERSTUDY_ETL_PERIOD_START=start)
+        with duckdb.connect(str(state.database)) as connection:
+            connection.execute("CREATE SCHEMA IF NOT EXISTS etl__dev")
+            store(connection, "etl__dev.transfer_judgment", TRANSFER_JUDGMENT, [])
+            store(connection, "etl__dev.refund_choice", REFUND_CHOICE, [])
+            store(connection, "etl__dev.merchant_category", MERCHANT_CATEGORY, [])
+        state.plan("+etl.transfer_pairs", "etl.period_scope")
+
+    async def transfers(self):
+        state = self.state
+        unpaired = state.rows("""SELECT record_id, transaction_date, amount, merchant, account
+                                 FROM etl__dev.transfer_pairs WHERE transfer_status = 'unpaired' ORDER BY record_id""")
+        accounts = sorted({_mask(r["account"]) for r in state.rows(
+            "SELECT DISTINCT account FROM etl__dev.raw_monarch WHERE account IS NOT NULL")})
+        self.facts["transfer_decisions"] = await judge_payees(unpaired, accounts, self.gated)
+        state.write("etl__dev.transfer_judgment", TRANSFER_JUDGMENT, [
+            {k: d[k] for k in TRANSFER_JUDGMENT} for d in self.facts["transfer_decisions"]])
+
+    async def plan_spending(self):
+        self.state.plan("+etl.refund_candidates", "+etl.merchant_candidates", "etl.offered_categories")
+
+    async def refunds(self):
+        state = self.state
+        needing = state.rows("""SELECT * FROM etl__dev.refund_candidates WHERE link_status = 'needs_choice'
+                                ORDER BY refund_date, refund_id, candidate_rank""")
+        self.facts["refund_decisions"] = await decide_refunds(needing, self.gated)
+        state.write("etl__dev.refund_choice", REFUND_CHOICE, self.facts["refund_decisions"])
+
+    async def categories(self):
+        state = self.state
+        mcc = load_mcc()  # stops here, before any naming, when the list cannot be read
+        merchants = state.rows("SELECT * FROM etl__dev.merchant_candidates ORDER BY merchant_key")
+        categories = [r["category"] for r in state.rows("SELECT category FROM etl__dev.offered_categories ORDER BY category")]
+        self.facts["placement"] = await place_merchants(merchants, categories, self.gated, mcc, announce=self.announce)
+        state.write("etl__dev.merchant_category", MERCHANT_CATEGORY, [
+            {k: p[k] for k in MERCHANT_CATEGORY} for p in self.facts["placement"]["placements"]])
+        state.write("etl__dev.new_category", NEW_CATEGORY, [
+            {k: c[k] for k in NEW_CATEGORY} for c in self.facts["placement"]["new_categories"]])
+
+    async def output(self):
+        self.facts["summary"] = _publish(self.state, self.facts, self.found, self.gated)
+
+
 async def run(*, monarch: Path, amex: Path, out: Path, jev, amex_account: str | None = None,  # noqa: PLR0913 - keyword-only entry point
               since: str | None = None, announce=print) -> dict:
     """Run the ETL over the two exports and return {"directory": <run folder>, "summary": {...}}."""
@@ -113,67 +183,12 @@ async def run(*, monarch: Path, amex: Path, out: Path, jev, amex_account: str | 
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
     run_dir = out / f"run-{stamp}-{uuid.uuid4().hex[:8]}"
     (run_dir / "inputs").mkdir(parents=True)
-    state, gated = _Run(run_dir, announce), GatedJev(jev)
-    monarch_jsonl, amex_jsonl = run_dir / "inputs" / "monarch.jsonl", run_dir / "inputs" / "amex.jsonl"
-    found: dict = {}
-    facts: dict = {}
-
-    async def do_hydrate():
-        await hydrate("monarch", Path(monarch), monarch_jsonl)
-        await hydrate("amex", Path(amex), amex_jsonl)
-
-    async def do_pair():
-        start = since or first_date(amex_jsonl)
-        if start is None:
-            raise EtlError("the Amex file has no dated rows, so there is no period to run")
-        facts["period_start"] = start
-        found.update(detect_amex_account(monarch_jsonl, amex_jsonl, override=amex_account, since=start))
-        shutil.copytree(ROOT / "sqlmesh", state.project, ignore=shutil.ignore_patterns("logs", ".cache", "*.pyc"))
-        state.environment.update(
-            UNDERSTUDY_ETL_MONARCH_JSONL=str(monarch_jsonl), UNDERSTUDY_ETL_AMEX_JSONL=str(amex_jsonl),
-            UNDERSTUDY_ETL_AMEX_ACCOUNT=found["account"], UNDERSTUDY_ETL_PERIOD_START=start)
-        with duckdb.connect(str(state.database)) as connection:
-            connection.execute("CREATE SCHEMA IF NOT EXISTS etl__dev")
-            store(connection, "etl__dev.transfer_judgment", TRANSFER_JUDGMENT, [])
-            store(connection, "etl__dev.refund_choice", REFUND_CHOICE, [])
-            store(connection, "etl__dev.merchant_category", MERCHANT_CATEGORY, [])
-        state.plan("+etl.transfer_pairs", "etl.period_scope")
-
-    async def do_transfers():
-        unpaired = state.rows("""SELECT record_id, transaction_date, amount, merchant, account
-                                 FROM etl__dev.transfer_pairs WHERE transfer_status = 'unpaired' ORDER BY record_id""")
-        accounts = sorted({_mask(r["account"]) for r in state.rows(
-            "SELECT DISTINCT account FROM etl__dev.raw_monarch WHERE account IS NOT NULL")})
-        facts["transfer_decisions"] = await judge_payees(unpaired, accounts, gated)
-        state.write("etl__dev.transfer_judgment", TRANSFER_JUDGMENT, [
-            {k: d[k] for k in TRANSFER_JUDGMENT} for d in facts["transfer_decisions"]])
-
-    async def do_plan_spending():
-        state.plan("+etl.refund_candidates", "+etl.merchant_candidates", "etl.offered_categories")
-
-    async def do_refunds():
-        needing = state.rows("""SELECT * FROM etl__dev.refund_candidates WHERE link_status = 'needs_choice'
-                                ORDER BY refund_date, refund_id, candidate_rank""")
-        facts["refund_decisions"] = await decide_refunds(needing, gated)
-        state.write("etl__dev.refund_choice", REFUND_CHOICE, facts["refund_decisions"])
-
-    async def do_categories():
-        mcc = load_mcc()  # stops here, before any naming, when the list cannot be read
-        merchants = state.rows("SELECT * FROM etl__dev.merchant_candidates ORDER BY merchant_key")
-        categories = [r["category"] for r in state.rows("SELECT category FROM etl__dev.offered_categories ORDER BY category")]
-        facts["placement"] = await place_merchants(merchants, categories, gated, mcc, announce=announce)
-        state.write("etl__dev.merchant_category", MERCHANT_CATEGORY, [
-            {k: p[k] for k in MERCHANT_CATEGORY} for p in facts["placement"]["placements"]])
-        state.write("etl__dev.new_category", NEW_CATEGORY, [
-            {k: c[k] for k in NEW_CATEGORY} for c in facts["placement"]["new_categories"]])
-
-    async def do_output():
-        facts["summary"] = _publish(state, facts, found, gated)
-
-    stages = {"hydrate": do_hydrate, "pair": do_pair, "transfers": do_transfers, "plan_spending": do_plan_spending,
-              "refunds": do_refunds, "categories": do_categories, "output": do_output}
-    await run_machine(MACHINE(), stages, state.record)
-    return {"directory": str(run_dir), "summary": facts["summary"]}
+    household = Household(monarch=monarch, amex=amex, directory=run_dir, jev=jev, amex_account=amex_account,
+                          since=since, announce=announce)
+    stages = {name: getattr(household, name) for name in
+              ("hydrate", "pair", "transfers", "plan_spending", "refunds", "categories", "output")}
+    await run_machine(MACHINE(), stages, household.state.record)
+    return {"directory": str(run_dir), "summary": household.facts["summary"]}
 
 
 def _publish(state: _Run, facts: dict, found: dict, gated: GatedJev) -> dict:
