@@ -6,10 +6,12 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import src.sketch.stages  # noqa: F401 - importing it registers the stages
 from src.sketch.check import check, load_checked
 from src.sketch.cli import main
 from src.sketch.loader import SketchError, load
 from src.sketch.registry import STAGES, Stage
+from src.sketch.registry import library as registered
 from src.sketch.run import run_sketch
 
 PARENT = """\
@@ -189,6 +191,49 @@ class EachTests(TemplateCase):
             {"input": {"title": "It Follows"}, "output": [{"audience": "loved", "weight": 1}]},
             {"input": {"title": "Hereditary"}, "output": [{"audience": "loved", "weight": 1}]},
         ])
+
+    def test_each_can_compute_a_source_that_another_stage_flattens(self):
+        parent = """\
+name: parent
+sources:
+  films: films.jsonl
+  scored:
+    kind: stage
+    do: { sketch: { file: child } }
+    each: films
+  flat:
+    kind: stage
+    do: { map: { action: unpair } }
+    with: { source: scored }
+sinks:
+  rows: rows.jsonl
+machine:
+  initial: write
+  states:
+    write:
+      do: { map: { action: read_flat } }
+      then: save
+    save:
+      do: { sink: { name: rows } }
+      then: done
+    done:
+      final: true
+"""
+
+        async def read_flat(context):
+            return await context.read("flat")
+
+        async def look(context):
+            return [{"audience": context.sketch.data["title"].upper()}]
+
+        path = self.write_each(parent)
+        with patch.dict(STAGES, {"map.read_flat": Stage("map.read_flat", None, {})}):
+            sketch = load_checked(path)
+            library = {**registered(), "map.look": look, "map.read_flat": read_flat}
+            result = asyncio.run(run_sketch(sketch, self.dir / "out", library, lambda line: None))
+        lines = result.outputs["rows"].read_text(encoding="utf-8").splitlines()
+        self.assertEqual([json.loads(line) for line in lines],
+                         [{"audience": "IT FOLLOWS", "title": "It Follows"}, {"audience": "HEREDITARY", "title": "Hereditary"}])
 
     def test_each_must_name_a_source(self):
         path = self.write_each(EACH_PARENT.replace("each: films", "each: filsm"))

@@ -60,15 +60,19 @@ class _Checker:
     def stage_source(self, name: str, config: dict) -> None:
         """A source computed by a stage: only a library stage (`map` or `reduce`), and it must not read itself."""
         at = f"sources.{name}"
-        if next(iter(config["do"])) in ("sink", "sketch"):
-            self.problem(f"{at}.do", "a source is computed by a `map` or `reduce` stage, not a sink or a sketch")
+        kind = next(iter(config["do"]))
+        if kind == "sink" or (kind == "sketch" and "each" not in config):
+            self.problem(f"{at}.do", "a source is computed by a `map` or `reduce` stage, or by a sketch repeated with `each`")
             return
+        if "each" in config:
+            self.each(at, config)
         self.stage(at, config)
         stack = [(name, config)]
         seen = {name}
         while stack:
             _, current = stack.pop()
-            for param in (value for value in (current.get("with") or {}).values() if isinstance(value, str)):
+            reads = [*(current.get("with") or {}).values(), current.get("each")]
+            for param in (value for value in reads if isinstance(value, str)):
                 if param == name:
                     self.problem(f"{at}.with", f"source {name!r} reads itself, directly or through another source")
                     return

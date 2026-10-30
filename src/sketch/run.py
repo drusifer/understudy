@@ -119,7 +119,7 @@ async def _run_each(context: StageContext, library: Mapping[str, StageFn], recor
     path = child_path(context.sketch, stage_of(state)[1])
     paired = []
     for index, row in enumerate(await context.read(state["each"])):
-        child = replace(load(path, variables={**state.get("with", {}), **row}), name=f"{path.stem}[{index}]")
+        child = replace(load(path, variables={**state.get("with", {}), **row}), name=f"{context.name}.{path.stem}[{index}]")
         paired.append({"input": row, "output": await _run_child(context, library, record, child)})
     return paired
 
@@ -194,8 +194,11 @@ async def run_sketch(
     async def compute(owner: Sketch, name: str) -> list[dict]:
         """Run a stage source's stage (`kind: stage`): the source's `do` and `with`, as a state would have them."""
         config = owner.sources[name].config
-        state = {"do": config["do"], "with": config.get("with", {})}
+        state = {key: config[key] for key in ("do", "with", "each") if key in config}
+        state.setdefault("with", {})
         context = StageContext(owner, name, state, results, None, directory, summary, sources)
+        if "each" in state:
+            return await _run_each(context, library, record)
         return await _stage_function(state, library)(context, **state["with"])
 
     sources.compute = compute

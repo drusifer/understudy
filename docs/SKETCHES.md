@@ -69,6 +69,9 @@ A state's `do:` names a stage **type** as a key (a closed set the schema owns) a
 | `map: { action: split_by_share }` | `source`, `field`, `segments` | splits a total (the sum of `field` over the source's rows) across `data.<segments>` by each segment's `share`: rows `{segment, share, age_min, age_max, drinks}` |
 | `map: { action: join_weights }` | `probabilities`, `weights` | joins a Jev source's probability per level with `data.<weights>` (level to option weights) into weighted rows on the dimension the sketch lists in `outputs` |
 | `map: { action: recipes }` | `recipes`, `packs` | turns drink counts into ingredient amounts from `data.<recipes>` (rows `{<dimension>: <option>, ingredient, amount, unit}`), rounded up to whole packs from `data.<packs>` |
+| `map: { action: where }` | `source`, `keep` | the rows that satisfy the condition `keep` (the same explicit conditions as everywhere) |
+| `map: { action: join }` | `source`, `other`, `on` | each row plus the fields of the row of `other` with the same `on` value; a row with no match is dropped |
+| `map: { action: unpair }` | `source` | flat rows from an `each` result: each `{input, output}` pair becomes the input row plus each row it output |
 | `map: { action: adjacent_runs }` | `source`, `group`, `order`, `length`, `match` | every run of `length` consecutive `order` numbers in a `group`, from the rows that `match` (E3 E4 E5 gives E3-4 and E4-5 for 2): `{<group>, first, last, run}` |
 | `map: { action: prefer_order }` | `rows`, `field`, `order`, `into` | adds `into`: 1.0 for the first value of `order`, less for the next, 0 for one not listed |
 | `map: { action: prefer_middle }` | `rows`, `extent`, `group`, `order`, `into`, `match` | adds `into` to runs: 1.0 centered in their group, 0.0 at its end |
@@ -127,6 +130,8 @@ or:                                  # and or not combine; several fields in one
   - { tomato: { gt: 90 } }
 ```
 
+`lt le gt ge` order numbers, and also dates, times and datetimes, which [dateparser](https://dateparser.readthedocs.io) reads from text: `starts: { ge: "17:00" }` keeps a showing at `"19:30"` and drops one at `"15:00"`, and `on: { lt: "2026-11-01" }` compares dates. A bare time is placed on a fixed day, so a time is always compared as a time.
+
 A field a row does not have never matches. A condition compares a field with a fixed value, never with another field. Sketches are read as YAML 1.2, so `70:30` stays text.
 
 ## Jev
@@ -164,6 +169,8 @@ sources:
     do: { map: { action: adjacent_runs } }
     with: { source: seats, group: row, order: number, length: 2, match: { free: true } }
 ```
+
+A source can also be a sketch repeated per row: `scored: { kind: stage, do: { sketch: { file: review_score } }, each: films }` is the list of `{input, output}` pairs (see `each`), ready for `map.unpair`.
 
 Anything that reads `runs` by name (another stage's `source:`, a Jev source's `state:`, an outcome's `{ from, key }`) triggers it. It runs once, on the first read, and the rows are remembered. Only `map` and `reduce` stages can compute a source. `understudy check` refuses a source that reads itself, an unknown action, and a `source:` param that names no source. Stage sources are deterministic, so only Jev readings are captured for a replay.
 
