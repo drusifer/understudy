@@ -40,20 +40,36 @@ Recorded by Cypher from the conversation, in the owner's words where possible. *
 
 The owner said: "do your best to finish without me. It is done when there is nothing left to take away." Each choice below took the smaller option. Overturn any of them.
 
-| # | Choice | Why (what it takes away) |
+| # | Choice | Why (what it takes away) | Drew's Response |
 |---|---|---|
-| A | A final state's `outputs:` is a plain list of names: `outputs: [temp]`. The `decider:` wrapper is gone. | Decision 20 (no `decider` keyword); reuses the names of `outcomes:`. |
-| B | A `blend` entry that uses a subsketch's rows is `- from: weather`, not `- decider: weather`. | Decision 20; `from:` already means "this other thing" in a Jev source's `state:`. |
-| C | Inside an `each`, the row's fields are the child's variables by their own names; `with:` still passes anything extra, as everywhere. | Decision 19 says `with:` passes params; naming each row field in `with:` would repeat what the row already says. |
-| D | A loop's child may declare outputs the parent has no outcome for, because the loop's result is pairs, not weights to blend. | Decision 18. |
-| E | A child inside an `each` is read with its row values left empty when the parent is checked (the child is checked on its own). | Decision 6 (encapsulation). |
-| F | A row's Jev answers are captured under `<child name>[<row position>]`, so replay needs no new mechanism. Replay does not list those keys up front. | Reuses capture/replay as is. |
+| A | A final state's `outputs:` is a plain list of names: `outputs: [temp]`. The `decider:` wrapper is gone. | Decision 20 (no `decider` keyword); reuses the names of `outcomes:`. | agreed |
+| B | A `blend` entry that uses a subsketch's rows is `- from: weather`, not `- decider: weather`. | Decision 20; `from:` already means "this other thing" in a Jev source's `state:`. | i'm not sure what blend has to do with from but we can keep it for now while we consider if this is part of an "aggregators" feature or an etl step |
+| C | Inside an `each`, the row's fields are the child's variables by their own names; `with:` still passes anything extra, as everywhere. | Decision 19 says `with:` passes params; naming each row field in `with:` would repeat what the row already says. | ok |
+| D | A loop's child may declare outputs the parent has no outcome for, because the loop's result is pairs, not weights to blend. | Decision 18. | seems resonable but could be subjectg to change in the future|
+| E | A child inside an `each` is read with its row values left empty when the parent is checked (the child is checked on its own). | Decision 6 (encapsulation). | +1 | 
+| F | A row's Jev answers are captured under `<child name>[<row position>]`, so replay needs no new mechanism. Replay does not list those keys up front. | Reuses capture/replay as is. | yay |
 
 ## Still open
 
 1. **How an output that is not weights is declared** (a `hold`, a film's audience level). With A, a child lists names; the options of an output are not yet declared anywhere but the parent's `outcomes:`.
+  1. [Drew] this could be something like a sketch type but lets wait and see if there are more than 1.  I think we'll uncover some of this as we work through more examples later on.  try to design a flexable seam for now so we can try out a few options down the road. just don't overcomplicate it.
 2. **What `docs/DOMAIN.md` calls a "decider"** should be reviewed against decision 20; the word is only prose now.
+  2. [Drew] See above.  @morph what to you recommend for the model here (wrt. BDD and Domain Abstraction)
 
-## Changes in the working tree that follow these decisions
+### Morpheus's recommendation on open item 2 (domain abstraction and BDD), for the owner to accept or reject
 
-Built and tested (93 sketch tests): Jinja2 rendering, `--with`, per-call `with`, unused-name check, final-state `outcome`, calls keyed by state name. Half done: the `returns` to `outputs` rename (code, schema, two fixtures changed; one test and the docs not yet). Nothing is committed.
+**Recommendation: retire "decider" as a domain term, and let the consumer define what an output must look like.**
+
+* **What the model needs is two ideas, not three.** *Decision Row* (one combination of outcome values and a weight) is a thing a stage produces. *Blend* is the policy that combines them. "Decider" named only the role a stage plays while producing Decision Rows; it added a type with no behaviour of its own, and it leaked into the schema (`decider:` twice). `DOMAIN.md` now has no Decider entity, a new **Output** (a name a final state lists), and Blend defined over Decision Rows.
+* **The seam is the output name plus the consumer's check.** A sketch's `outputs: [names]` is the whole contract on the child's side. The *consumer* decides what it accepts and checks at its own boundary: `blend` requires Decision Rows over declared outcomes (checked at `check` time by name, and at run time by `_validate`); `each` accepts anything and pairs it with its input row. A new kind of output (a `hold`, a film's audience level) then needs only a new consumer that knows how to read it, not a change to the child's declaration. That is the flexible, uncomplicated seam item 1 asked for, and nothing is added now.
+* **BDD, as the acceptance language for this seam** (these become the tests of UND-73 and UND-69):
+  * *Given* a child that outputs `[audience]` and a parent that `blend`s `from` it, *when* the child's rows name an option the parent has not declared, *then* `check` or the run fails naming the stage and the option.
+  * *Given* a parent that runs the child `each` film, *when* the run finishes, *then* the result is one `{input, output}` pair per film, in the films' order, with nothing merged.
+  * *Given* a child that declares no `outputs`, *when* the parent blends from it, *then* `check` refuses it by name.
+* **What this costs:** nothing in code (no `Decider` class existed); only the domain document and the prose that said "decider".
+
+Owner's reply: _(accept / change)_
+
+## Working tree
+
+Phase 1 code is committed (`ef98618`, 179 Python tests, lint clean).

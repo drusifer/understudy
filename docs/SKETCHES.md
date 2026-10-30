@@ -4,8 +4,8 @@ A **sketch** is one YAML file in which you write down how you decide something. 
 
 TLDR:
     A sketch names `sources` (files in), `sinks` (files out), `outcomes` (what can be decided), `data` (your facts) and a `machine` (your pipeline).
-    Each state in the machine names a stage: ETL, a `blend` of deciders, a `sketch.<file>` subsketch, or a `sink`.
-    A decider is one row in, weighted rows out; `blend` is a weighted average per dimension; `forbid` drops options and always wins.
+    Each state in the machine names a stage: ETL, a `blend` of weighted rows, a `sketch.<file>` subsketch, or a `sink`.
+    A decide tree, lookup, subsketch or Jev reading produces weighted rows; `blend` is a weighted average per dimension; `forbid` drops options and always wins.
     Conditions are plain YAML: `segment: { eq: students }`, `temp: { in: [80:90] }`, `and` / `or` / `not`.
     Jev is a source: `kind: jev` with a rubric (`instructions` + `criteria`) and the `state` it reads; reading it gives a probability per level.
     Every non-file read is captured; `--replay` runs offline from the capture. `understudy check` finds mistakes before anything runs.
@@ -93,8 +93,8 @@ match_orders:
   then: to_ingredients
 ```
 
-* **A decider** takes one row and returns weighted rows. A row names only the dimensions it has an opinion on.
-* **The blend** averages each dimension over the deciders that name it, weighted by the entry's `weight` (a number, or `if`/`then`/`else`; a missing `else` is 0). A weight of 0 means no say.
+* **Weighted rows** come from one input row. A row names only the dimensions it has an opinion on.
+* **The blend** averages each dimension over the entries that name it, weighted by the entry's `weight` (a number, or `if`/`then`/`else`; a missing `else` is 0). A weight of 0 means no say.
 * **`forbid`** drops the options a matching rule forbids and renormalises. If that leaves a row with no option in a dimension, the run fails naming the rule and the row, unless the stage says `on_empty: skip` (drop that dimension) or `fallback` (spread over the allowed options).
 * Options must be declared under `outcomes`; the checker refuses a typo and suggests the nearest, and the run checks rows that came from a source.
 

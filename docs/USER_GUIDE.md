@@ -31,8 +31,8 @@ TLDR:
 | **sketch** | one YAML file in which you write down how you decide something: its sources, sinks, outcomes, data and a machine |
 | **source / sink** | a named input (JSONL file, or Jev) and a named output (a file in the run folder) |
 | **machine** | your pipeline: states that each name a stage and say what comes next |
-| **decider** | one row in, weighted rows out: your `decide` tree, a lookup, a subsketch or a Jev reading |
-| **blend** | the weighted average of deciders, per dimension; `forbid` rules then drop options and always win |
+| **decision row** | one combination of outcome values with a weight; your `decide` tree, a lookup, a subsketch or a Jev reading can each produce them |
+| **blend** | the weighted average of the decision rows its entries produce, per dimension; `forbid` rules then drop options and always win |
 | **subsketch** | a sketch another sketch calls (`do: sketch.<file>`); it declares the `outputs` it gives back, and the caller passes it values with `with:` |
 | **Jev** | TypeSafe's judgement model. It reads text you supply against a rubric you write and gives a probability per level; it never writes a value |
 | **capture / replay** | a live Jev read is saved; `--replay` reuses it offline |
