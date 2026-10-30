@@ -60,6 +60,8 @@ Recorded by Cypher from the conversation, in the owner's words where possible. *
 
 | 35 | **The evening is built** (`examples/evening/evening.yaml`, `review_score.yaml`, `seating.yaml`, fixtures) from stage sources, `each`, `map.where/join/weigh/expect/unpair`, `reduce.max/any`, a Jev pick over a source, and seating called per chosen showing. Along the way: a Jev source's `options.from` names a **source** (file or stage), not a stage result; a **sink may name a source** to write (`with: { source: holds }`); a **subsketch that ends in `outcome: none` gives its caller no rows**; a child sees only what its call passes (so the evening passes `mood` to `review_score`). | built under "proceed"; Claude's choices for the owner to review |
 
+| 36 | **The household's structure and code need not be kept:** it was written before the model was enhanced, so it is redesigned as a sketch from the model's own parts (sources, stages, Jev sources, `each`). Its frozen result (`tests/fixtures/etl/household/`) says what it must mean, not how it is built. A database is not a sketch concept: if SQL stays, it is hidden inside one stage (rows in, rows out). `map.table` / `map.store` and the `Household` wrapper are not the way. | "you don't need to preserve the household structure / code. it was written before we enhanced the model"; "that sounds like a source to me"; "do we need a sql db for this?" |
+
 ## Decided by Claude while the owner was asleep (2026-10-30), for the owner to review
 
 The owner said: "do your best to finish without me. It is done when there is nothing left to take away." Each choice below took the smaller option. Overturn any of them.
