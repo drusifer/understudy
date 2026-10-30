@@ -70,6 +70,32 @@ The owner said: "do your best to finish without me. It is done when there is not
 
 Owner's reply (2026-10-30): **accepted** ("great!"). Decision 21: "decider" is retired from the domain model; the terms are Decision Row, Blend and Output.
 
+## Advised by Morpheus (`*advise`), not yet accepted: how the evening ranks showings and has Jev pick
+
+```
+CONUNDRUM: The evening's showings and seat blocks exist only in data. How do we rank and shortlist them and let Jev pick among the few left, with the least new language?
+
+SCENARIOS
+ 1. Given ten showings and an audience level for each film, when the evening ranks them by its weights, then they come out in blended-weight order and the five best are kept (three showings keep three).
+ 2. Given a shortlist and the mood "romantic", when Jev picks, then the pick is one of the shortlist and an answer outside it is refused naming it.
+ 3. Given nothing qualifies after the filters, when the stage ends, then the machine can route to a final state with an outcome (no new keyword).
+
+CONCEPT: a "candidate" is an option that exists only in data. Everything else already exists: forbid (filter), weights, blend, outcome, `from:`.
+
+OPTIONS
+ A. Candidates are options read from rows: an outcome's options may be `{ from: <source>, key: <field> }`; a blend may keep only the best n (`shortlist: n`); a Jev source's options may be `{ from: <stage>, key: <field> }`. Adds one idea (candidates, one shape written twice) and one word (`shortlist`). Removes nothing, but nothing is repeated: filtering, weighting and blending stay the owner's one way.
+ B. Rank and cut in SQL (a stage with ORDER BY / LIMIT), and only the Jev pick is new. Adds one thing, but it makes a second way to filter and to combine weights next to forbid and blend: the owner's rule is one way only.
+ C. Skip the pick: ask Jev for a score on each shortlisted candidate with `each`, take the best in SQL. Adds nothing to the language, but Jev stops choosing among the options together, which the owner's design ("a final Jev Choice picks from the shortlist, in a mood") exists to do; and a per-candidate score is not a comparison.
+
+DECISION: A.
+ KISS: B and C add less syntax, but each fails a scenario's meaning (B duplicates the blend; C changes what Jev does). A is the smallest option that satisfies all three.
+ DRY: the `{ from, key }` shape is written once and used for both an outcome and a Jev source's options. Filters and weights are not restated in SQL.
+
+CHANGE MY MIND IF: the owner decides `from:` should not be reused for this (item B above), in which case the shape is renamed in one place; or if the evening drops the shortlist and lets Jev choose among everything that survives the filters, in which case `shortlist:` goes.
+```
+
+Owner's reply: _(accept / change)_
+
 ## Working tree
 
 Phase 1 code is committed (`ef98618`, 179 Python tests, lint clean).
