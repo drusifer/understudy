@@ -18,7 +18,7 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 4. **The weather is a decider, not a shift** (owner, 2026-10-29): each of the five Almanac levels carries hot/iced weights (much colder 0.90/0.10 … much warmer 0.30/0.70), the subsketch returns their probability-weighted mix on `temp`, and the parent blends it by weight; night workers get weight 0. Weights are numbers or `if` / `then` / `else`, never expressions.
 5. **The syntax is settled** with the owner (`DESIGN_SKETCH_MODEL.md`): `blend:` for a stage's deciders, explicit YAML conditions, `returns: { decider: [...] }` for a subsketch, and a Jev question as a `kind: jev` source with `instructions`, `criteria` and `state`. Morpheus writes it down in the architecture; a change to how the owner writes a sketch returns to the owner before it is built.
 6. **One live Jev judgement** at sprint close, with the owner's go-ahead; everything else uses `--replay` or an injected Jev double. Capture and replay (owner, 2026-10-29) is the testing mechanism for every non-file source.
-7. **Open, assumed:** a stale replay (the sketch or rubric changed since the capture) is flagged in the output and carries on; it does not fail the run. The owner confirms.
+7. **Stale replay** (the sketch or rubric changed since the capture) is flagged in the output and carries on; it does not fail the run (owner, 2026-10-29: "fine for now").
 
 ---
 

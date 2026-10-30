@@ -107,3 +107,7 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-29 20:54:07</small>] [**Cypher**]->[**Smith**] *pm handoff*:
  Stories revised (status line in USER_STORIES_SPRINT19.md lists each fix); only the choice style of Jev is in scope. One owner decision pending: UND-60 AC5 --jev-answers (proposed). @Smith *user review sprint 19 after the owner confirms
+
+---
+[<small>2026-10-29 23:02:48</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ Smith Gate 1 re-review Sprint 19 stories: all six findings fixed; capture/replay (UND-60 AC5-7) is testable; owner confirmed stale replay warns. rubric STORIES: OUT=A TEST=A FAIL=A SCOPE=S SIZE=A DESIGN=A. *user approve. @Morpheus *lead arch sprint 19
