@@ -103,6 +103,33 @@ CHANGE MY MIND IF: the owner decides `from:` should not be reused for this (item
 
 Owner's reply (2026-10-30): **accepted** ("ok let's continue then"). Decision 22: candidates are options read from rows, written `{ from: <source or stage>, key: <field> }` for both an outcome and a Jev source's options; a blend may keep the best n with `shortlist: n`.
 
+## Advised by Morpheus (`*advise`), not yet accepted: how seating finds and ranks seat blocks
+
+```
+CONUNDRUM: Seating must (1) find blocks of adjacent free seats, (2) weigh each block by its row and how central it is, and (3) end with outcome `none` when no block fits. Today every such calculation would be a new Python stage.
+
+SCENARIOS
+ 1. Given row E with free seats 3, 4, 5, 8, 9, when tickets=2, then the blocks are 3-4, 4-5, 8-9; when tickets=3, only 3-5.
+ 2. Given blocks in rows E and F, when the row weight is high and the centre weight low, then the row E block ranks first; when the row weight is 0 and the centre weight 1, then the most central ranks first.
+ 3. Given no block is long enough, when seating finishes, then the run ends in a final state with `outcome: none`.
+
+CONCEPT: counting and converting are SQL on DuckDB (the owner's design). A block is a gaps-and-islands query; a block's row score and centredness are arithmetic on columns. Weights for them are the sketch's values (Jinja), and `blend` already combines weighted rows.
+
+OPTIONS
+ A. A new stage type `sql`: `do: { sql: { query: "SELECT ..." } }`. The sources and the earlier stages' results are tables the query can read; its rows are the stage's result. Adds one stage type and no Python per calculation; the adjacency, the row score and the centre score are three short queries in the sketch. The user writes SQL, which the design already intends.
+ B. Python stages (`etl.seat_blocks`, `etl.score_row`, `etl.score_centre`). Adds three functions, each specific to cinema seats; a different sketch needs different Python.
+ C. Extend `decide` trees to score candidates by their fields. Adds new tree semantics beside weights, and a second way to combine.
+
+DECISION: A.
+ KISS: the smallest new language: one stage type, and its content is a language the design already uses.
+ DRY: row and centre scores become rows that `blend` combines with the sketch's weights; combining stays in one place.
+ Cost: `check` cannot validate the SQL's column names without running it (DuckDB reports them at run time, and the run names the stage).
+
+CHANGE MY MIND IF: the owner does not want users writing SQL in a sketch (then B, with the seating functions in the library).
+```
+
+Owner's reply: _(accept / change)_
+
 ## Working tree
 
 Phase 1 code is committed (`ef98618`, 179 Python tests, lint clean).
