@@ -94,7 +94,7 @@ DECISION: A.
 CHANGE MY MIND IF: the owner decides `from:` should not be reused for this (item B above), in which case the shape is renamed in one place; or if the evening drops the shortlist and lets Jev choose among everything that survives the filters, in which case `shortlist:` goes.
 ```
 
-Owner's reply: _(accept / change)_
+Owner's reply (2026-10-30): **accepted** ("ok let's continue then"). Decision 22: candidates are options read from rows, written `{ from: <source or stage>, key: <field> }` for both an outcome and a Jev source's options; a blend may keep the best n with `shortlist: n`.
 
 ## Working tree
 

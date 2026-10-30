@@ -172,6 +172,31 @@ seat:
 * A `--with` or `with` name the receiving file does not use is refused, with the nearest name it does use.
 * `understudy check` reads the sketch after Jinja has filled it in.
 
+## Options that exist only in data
+
+An outcome's options are normally listed. When they exist only in a file, say where to read them:
+
+```yaml
+outcomes:
+  showing: { from: showings, key: title }      # the title of every row of the `showings` source
+```
+
+A weighted row may name any of those titles; one the file does not have is refused with the nearest (`showing='Alein', not a declared option (did you mean 'Alien'?)`). A `blend` can keep only its best few options, and Jev can then choose among them:
+
+```yaml
+rank:
+  blend: [ ... ]
+  shortlist: 5                                  # keep the five heaviest options per outcome
+pick:
+  kind: jev
+  question: choice
+  instructions: Choose the showing you would enjoy most.
+  options: { from: rank, key: option }          # the options of the stage `rank`'s result
+  state: {}
+```
+
+Only the shortlisted options are offered to Jev, so its answer can only be one of them. `{ from, key }` is written the same way both times.
+
 ## Repeating a sketch: `each`
 
 There are no hidden loops: a list given to a source, stage or sketch is one input. To repeat a sketch once per row of a source, say so on the state that calls it:

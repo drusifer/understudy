@@ -45,7 +45,7 @@ When this sprint is done, the owner's two real pipelines are sketches in the new
 ### Acceptance Criteria
 1. An outcome whose options come from a file's rows (`showings.jsonl`, key `title`) can be weighted by deciders and filtered by `forbid` like a declared one; a decider that names a title not in the file fails with `<title> is not a candidate (did you mean …?)`.
 2. `shortlist: { at_most: 5 }` on a blend keeps the five highest-weight candidates; with three candidates it keeps three.
-3. A Jev source can list as its options a stage's shortlist; it returns the chosen candidate, and an answer outside the shortlist is refused naming it.
+3. A Jev source can list as its options a stage's shortlist (`options: { from: <stage>, key: <field> }`); only those options are offered to Jev, so its answer can only be one of them. A stage that has not run is named: `its options come from stage 'rank', which has not run`.
 4. Capture and replay cover that read like any other source.
 
 ## STORY-UND-69: Seating is a subsketch

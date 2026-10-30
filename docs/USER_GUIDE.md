@@ -110,7 +110,7 @@ The reference is [SKETCHES.md](SKETCHES.md).
 | `Jev needs a TypeSafe key: set TYPESAFE_API_KEY` | 2 | export the key, or run with `--replay` |
 | `no saved run captured <source>; do a live run first` | 2 | there is nothing to replay yet: run once without `--replay` |
 | `forbid rule 0 left teens with no option for 'caffeine'` | 1 | a rule dropped every option for that segment; relax the rule, or give the stage `on_empty: skip` or `fallback` |
-| `stage match_orders: decider 'weather' returned temp='ice', not a declared option` | 1 | a source returned an option that `outcomes` does not declare |
+| `stage match_orders: 'weather' returned temp='ice', not a declared option` | 1 | a source returned an option that `outcomes` does not declare |
 | `cannot write to ...: it is inside the project and not git-ignored` | 2 | use `build/runs` (the default) or a path outside the project |
 | `library is being rebuilt for the new sketch model` (also `watch`, `dashboard`) | 2 | those commands arrive again when the examples and dashboard are rebuilt |
 | `could not start Python: ...; run bobp make install` | 2 | the Python environment is missing |

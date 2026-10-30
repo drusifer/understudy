@@ -28,6 +28,18 @@ def non_file_keys(sketch: Sketch) -> list[str]:
     return keys
 
 
+def _with_options(config: dict, results: dict, key: str) -> dict:
+    """A Jev source whose `options` come from a stage's result chooses among the values of `key` in those rows
+    (each option is its own meaning); a source with `criteria` is returned as it is."""
+    if "options" not in config:
+        return config
+    found = config["options"]
+    if found["from"] not in results:
+        raise ValueError(f"{key}: its options come from stage {found['from']!r}, which has not run")
+    options = list(dict.fromkeys(str(row[found["key"]]) for row in results[found["from"]]))
+    return {**config, "criteria": {option: option for option in options}}
+
+
 @dataclass(frozen=True)
 class Capture:
     """How a run reads its non-file sources: live (with Jev, capturing) or from a replay folder."""
@@ -62,18 +74,20 @@ class Sources:
     def jev_requests(self) -> int:
         return self.jev.requests if self.jev else 0
 
-    async def read(self, sketch: Sketch, name: str) -> list[dict]:
+    async def read(self, sketch: Sketch, name: str, results: dict | None = None) -> list[dict]:
+        """`results` are the stage results so far, for a Jev source whose options come from one of them."""
         key = capture_key(sketch, name)
         if key not in self._read:
             source = sketch.sources[name]
-            self._read[key] = read_jsonl(source.path) if source.kind == "file" else await self._read_jev(sketch, name, key)
+            self._read[key] = read_jsonl(source.path) if source.kind == "file" else await self._read_jev(
+                sketch, name, key, results or {})
         return self._read[key]
 
     async def _state(self, sketch: Sketch, config: dict) -> dict:
         return {key: await self.read(sketch, ref["from"]) for key, ref in config["state"].items()}
 
-    async def _read_jev(self, sketch: Sketch, name: str, key: str) -> list[dict]:
-        config = sketch.sources[name].config
+    async def _read_jev(self, sketch: Sketch, name: str, key: str, results: dict) -> list[dict]:
+        config = _with_options(sketch.sources[name].config, results, key)
         asked = jev_source.request(config, await self._state(sketch, config))
         digest = jev_source.request_hash(asked)
         if self.capture.replay_dir:

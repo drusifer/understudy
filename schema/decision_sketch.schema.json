@@ -20,16 +20,31 @@
     "outcomes": {
       "type": "object",
       "additionalProperties": {
-        "type": "array",
-        "items": { "type": "string", "minLength": 1 },
-        "minItems": 1,
-        "uniqueItems": true
+        "oneOf": [
+          {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          { "$ref": "#/$defs/candidates" }
+        ]
       }
     },
     "data": { "type": "object" },
     "machine": { "$ref": "#/$defs/machine" }
   },
   "$defs": {
+    "candidates": {
+      "description": "Options that exist only in data: the values of `key` in the rows of a source (or a stage's result).",
+      "type": "object",
+      "required": ["from", "key"],
+      "additionalProperties": false,
+      "properties": {
+        "from": { "type": "string", "minLength": 1 },
+        "key": { "type": "string", "minLength": 1 }
+      }
+    },
     "source": {
       "oneOf": [
         { "type": "string", "minLength": 1 },
@@ -44,12 +59,14 @@
         },
         {
           "type": "object",
-          "required": ["kind", "question", "instructions", "criteria", "state"],
+          "required": ["kind", "question", "instructions", "state"],
+          "oneOf": [{ "required": ["criteria"] }, { "required": ["options"] }],
           "additionalProperties": false,
           "properties": {
             "kind": { "const": "jev" },
             "question": { "const": "choice" },
             "instructions": { "type": "string", "minLength": 1 },
+            "options": { "$ref": "#/$defs/candidates" },
             "criteria": {
               "type": "object",
               "minProperties": 2,
@@ -135,6 +152,7 @@
         "blend": { "type": "array", "items": { "$ref": "#/$defs/blendEntry" }, "minItems": 1 },
         "forbid": { "type": "array", "items": { "$ref": "#/$defs/forbid" } },
         "on_empty": { "enum": ["fail", "fallback", "skip"] },
+        "shortlist": { "type": "integer", "minimum": 1 },
         "then": { "type": "string", "minLength": 1 },
         "transitions": { "type": "array", "items": { "$ref": "#/$defs/transition" }, "minItems": 1 },
         "final": { "type": "boolean" },

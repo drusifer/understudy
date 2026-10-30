@@ -12,7 +12,7 @@ from ruamel.yaml import YAML
 from ruamel.yaml.error import YAMLError
 
 from src.paths import ROOT
-from src.sketch.model import Sink, Sketch, Source
+from src.sketch.model import Candidates, Sink, Sketch, Source
 from src.sketch.vocabulary import SKETCH_PREFIX
 
 SCHEMA = json.loads((ROOT / "schema" / "decision_sketch.schema.json").read_text(encoding="utf-8"))
@@ -135,7 +135,8 @@ def load(
         description=document.get("description", "").strip(),
         sources={n: _source(n, v, base, overrides) for n, v in document.get("sources", {}).items()},
         sinks={n: Sink(n, v if isinstance(v, str) else v["path"]) for n, v in document.get("sinks", {}).items()},
-        outcomes={n: tuple(v) for n, v in document.get("outcomes", {}).items()},
+        outcomes={n: tuple(v) for n, v in document.get("outcomes", {}).items() if isinstance(v, list)},
+        candidates={n: Candidates(v["from"], v["key"]) for n, v in document.get("outcomes", {}).items() if isinstance(v, dict)},
         data=document.get("data", {}),
         machine=document["machine"],
         variables=variables,

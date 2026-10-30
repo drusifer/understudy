@@ -9,7 +9,7 @@ A tree is `if` / `then` / `else` over conditions; a leaf is `drink`, a list of w
 A weight is a number, or the same `if` / `then` / `else` (no expression language, ADR-0044).
 """
 
-from src.sketch.blend import Distribution, Opinion, Policy, blend, check_sums, forbid
+from src.sketch.blend import Distribution, Opinion, Policy, blend, check_sums, forbid, shortlist
 from src.sketch.conditions import holds
 
 
@@ -45,5 +45,7 @@ def decide_input(state: dict, row: dict, deciders: dict[str, list[dict]], *, all
     label = f"{row.get('segment', 'the input row')}"
     policy = Policy(state.get("on_empty", "fail"), allowed)
     result = forbid(blend(opinions), state.get("forbid", []), row, label, policy)
+    if "shortlist" in state:
+        result = shortlist(result, state["shortlist"])
     check_sums(result)
     return result

@@ -70,17 +70,26 @@ def _validate(rows: list[dict], decider: str, outcomes: dict, stage: str) -> Non
         for dimension, option in ((d, o) for d, o in row.items() if d != "weight"):
             if dimension not in outcomes:
                 near = get_close_matches(dimension, list(outcomes), n=1)
-                raise ValueError(f"stage {stage}: decider {decider!r} returned {dimension!r}, not a declared outcome"
+                raise ValueError(f"stage {stage}: {decider!r} returned {dimension!r}, not a declared outcome"
                                  + (f" (did you mean {near[0]!r}?)" if near else ""))
             if option not in outcomes[dimension]:
                 near = get_close_matches(str(option), list(outcomes[dimension]), n=1)
-                raise ValueError(f"stage {stage}: decider {decider!r} returned {dimension}={option!r}, not a declared option"
+                raise ValueError(f"stage {stage}: {decider!r} returned {dimension}={option!r}, not a declared option"
                                  + (f" (did you mean {near[0]!r}?)" if near else ""))
+
+
+async def declared_outcomes(context) -> dict:
+    """Every outcome's options: the declared ones, and for an outcome read from rows, the values found now."""
+    outcomes = dict(context.sketch.outcomes)
+    for dimension, found in context.sketch.candidates.items():
+        rows = context.results[found.source] if found.source in context.results else await context.read(found.source)
+        outcomes[dimension] = tuple(dict.fromkeys(row[found.key] for row in rows))
+    return outcomes
 
 
 async def blend(context) -> list[dict]:
     """For each input row (a segment), the blended weight of every option per dimension, as drink counts."""
-    state, outcomes = context.state, context.sketch.outcomes
+    state, outcomes = context.state, await declared_outcomes(context)
     deciders = {}
     for entry in state["blend"]:
         if "from" in entry:
@@ -90,6 +99,8 @@ async def blend(context) -> list[dict]:
     summary: dict = {}
     for row in context.last:
         distribution = decide_input(state, row, deciders, allowed=outcomes)
+        # options read from rows are known only now, so what the blend produced is checked against them
+        _validate([{d: o} for d, options in distribution.items() for o in options], "the blend", outcomes, context.name)
         summary[row["segment"]] = {d: {o: round(w, 6) for o, w in options.items()} for d, options in distribution.items()}
         shares += [{"segment": row["segment"], "dimension": d, "option": o, "drinks": row["drinks"] * w}
                    for d, options in distribution.items() for o, w in options.items()]

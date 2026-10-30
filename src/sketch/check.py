@@ -24,12 +24,14 @@ class _Checker:
     def __init__(self, sketch: Sketch, seen: tuple[Path, ...]):
         self.sketch, self.seen, self.found = sketch, seen, []
         self.states = sketch.machine["states"]
+        self.known = set(sketch.outcomes) | set(sketch.candidates)  # every outcome, declared or read from rows
 
     def problem(self, path: str, message: str) -> None:
         self.found.append(f"{self.sketch.path}: {path}: {message}")
 
     def run(self) -> list[str]:
         self.sources()
+        self.candidate_sources()
         self.segments()
         self.machine()
         return self.found
@@ -45,6 +47,14 @@ class _Checker:
                     if ref["from"] not in self.sketch.sources or ref["from"] == name:
                         self.problem(f"sources.{name}.state.{key}.from",
                                      f"{ref['from']!r} is not another source{_nearest(ref['from'], self.sketch.sources)}")
+
+    def candidate_sources(self) -> None:
+        """An outcome read from rows names a source or a state whose result holds them."""
+        for dimension, candidates in self.sketch.candidates.items():
+            if candidates.source not in self.sketch.sources and candidates.source not in self.states:
+                known = [*self.sketch.sources, *self.states]
+                self.problem(f"outcomes.{dimension}.from",
+                             f"{candidates.source!r} is neither a source nor a state{_nearest(candidates.source, known)}")
 
     def segments(self) -> None:
         segments = self.sketch.data.get("segments")
@@ -94,11 +104,11 @@ class _Checker:
         if "then" in state or "transitions" in state or "do" in state or "blend" in state:
             self.problem(at, "a final state does nothing and goes nowhere")
         for dimension in state.get("outputs", []):
-            if dimension not in self.sketch.outcomes and not self.is_subsketch_file():
+            if dimension not in self.known and not self.is_subsketch_file():
                 self.problem(f"{at}.outputs", f"{dimension!r} is not a declared outcome")
 
     def is_subsketch_file(self) -> bool:
-        return not self.sketch.outcomes
+        return not self.known
 
     def targets(self, at: str, state: dict):
         if "then" in state:
@@ -174,7 +184,7 @@ class _Checker:
             self.problem(at, f"sketch {file!r} declares no outputs, so its weights cannot be blended")
             return
         for dimension in declared:
-            if dimension not in self.sketch.outcomes and not each:  # a loop's outputs are paired with rows, not blended
+            if dimension not in self.known and not each:  # a loop's outputs are paired with rows, not blended
                 self.problem(at, f"sketch {file!r} outputs {dimension!r}, which is not a declared outcome here")
 
     # deciders ----------------------------------------------------------------
@@ -226,19 +236,22 @@ class _Checker:
 
     def dimension(self, dimension: str, at: str) -> bool:
         """True when the dimension is declared; otherwise records the problem."""
-        if dimension in self.sketch.outcomes:
+        if dimension in self.known:
             return True
-        self.problem(at, f"{dimension!r} is not a declared outcome{_nearest(dimension, self.sketch.outcomes)}")
+        self.problem(at, f"{dimension!r} is not a declared outcome{_nearest(dimension, self.known)}")
         return False
 
     def option(self, dimension: str, value, at: str) -> None:
-        if self.dimension(dimension, f"{at}.{dimension}") and value not in self.sketch.outcomes[dimension]:
+        """An option of a declared outcome; the options of one read from rows are known only when it runs."""
+        if self.dimension(dimension, f"{at}.{dimension}") and dimension in self.sketch.outcomes \
+                and value not in self.sketch.outcomes[dimension]:
             self.problem(f"{at}.{dimension}",
                          f"{value!r} is not an option of {dimension}{_nearest(value, self.sketch.outcomes[dimension])}")
 
     def options(self, drop: dict, at: str) -> None:
         for dimension, test in drop.items():
-            if dimension in COMBINATORS or not self.dimension(dimension, f"{at}.{dimension}"):
+            if dimension in COMBINATORS or not self.dimension(dimension, f"{at}.{dimension}") \
+                    or dimension in self.sketch.candidates:
                 continue
             for operator, operand in (test.items() if isinstance(test, dict) else []):
                 for value in (operand if isinstance(operand, list) else [operand]):

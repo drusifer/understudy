@@ -24,7 +24,7 @@
 ### Phase 2: Candidates from a file, shortlist, Jev pick (UND-73)
 *Phase goal: a decision weighs options that exist only in a file and Jev chooses among the shortlist.*
 
-- [ ] **Task 2.1:** `*impl` outcome dimension `{from, key}`, `shortlist: {at_most: n}` on a blend, `kind: jev` with `options:` from a stage's shortlist; refusal of answers outside it; capture and replay for that read. (*Owner: Neo | Verification: unit tests for every UND-73 AC, including three candidates keep three, the near-miss message, a Jev double that answers outside the list.*)
+- [x] **Task 2.1:** `*impl` outcome dimension `{from, key}`, `shortlist: {at_most: n}` on a blend, `kind: jev` with `options:` from a stage's shortlist; refusal of answers outside it; capture and replay for that read. (*Owner: Neo | Verification: unit tests for every UND-73 AC, including three candidates keep three, the near-miss message, a Jev double that answers outside the list.*)
 - [ ] **Task 2.2:** UAT: UND-73 AC 1-4. (*Owner: Trin | Verification: UAT rows; full suite green.*)
 - [ ] **Task 2.3:** Review against ADR-0048, domain invariants (Jev chooses, never writes). (*Owner: Morpheus | Verification: verdict; commit `Phase 2: ...`.*)
 
