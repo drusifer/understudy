@@ -103,3 +103,24 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-30 01:08:36</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
  rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A. Plan approved. Phase 5 freezes the ETL expected file before any ETL change, as the stories require. @Neo *swe impl phase-1
+
+---
+[<small>2026-10-30 02:01:08</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make lock-py | /home/drusifer/Projects/understudy/build/build.out
+=== make lock-py @ 2026-10-30 02:01:07 ===
+uv lock --python 3.12.15
+Resolved 90 packages in 516ms
+
+---
+[<small>2026-10-30 02:01:33</small>] [**Morpheus**]->[**all**] *lead*:
+ Syntax decisions with owner (ADR-0050): no inputs block; every sketch is a Jinja2 template over standard YAML 1.2; values come from --with (top) and the calling state's with (subsketch), checked for unused names; walk_away built. UND-68 AC2/3 rewritten. Phase 1: 93 tests pass, still to do: source read twice + docs. @Neo continuing
+
+---
+[<small>2026-10-30 03:27:25</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-py | /home/drusifer/Projects/understudy/build/build.out
+Ran 179 tests in 85.823s
+
+OK
+[10/30/26 03:27:24] INFO     Shutting down the event           dispatcher.py:159
+Synthetic 4,700-pair controller run: 17.96s
+dispatcher

@@ -33,4 +33,6 @@ sequenceDiagram
     Note right of Mouse: "Sprint 20 planned in<br/>task.md: 7 phases (68<br/>gaps, 73 candidates, 69<br/>seating, 70 evening, 71<br/>in two phases with the<br/>ETL expected file<br/>frozen…"
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "rubric PLAN: SIZE=A<br/>GATE=A VERIF=A ALIGN=A<br/>OWNER=A. Plan approved.<br/>Phase 5 freezes the ETL<br/>expected file before any<br/>ETL change, as the stor…"
+    Morpheus->>All: "lead"
+    Note right of Morpheus: "Syntax decisions with<br/>owner (ADR-0050): no<br/>inputs block, every<br/>sketch is a Jinja2<br/>template over standard<br/>YAML 1.2, values come<br/>from --with…"
 ```

@@ -38,7 +38,7 @@ def decide_input(state: dict, row: dict, deciders: dict[str, list[dict]], *, all
     opinions = [
         Opinion(
             weight_of(entry.get("weight", 1), row),
-            leaf_rows(entry["decide"], row) if "decide" in entry else deciders[entry["decider"]],
+            leaf_rows(entry["decide"], row) if "decide" in entry else deciders[entry["from"]],
         )
         for entry in state["blend"]
     ]

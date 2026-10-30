@@ -98,6 +98,21 @@ class MachineTests(RunCase):
             self.run_it(library(), path)
         self.assertEqual(sorted(p.name for p in self.only_run_folder().iterdir()), ["events.jsonl", "run.json"])
 
+    def test_a_final_state_can_name_the_outcome_the_run_ended_in(self):
+        path = self.sketch([("    done:\n      final: true", "    done:\n      final: true\n      outcome: all_done")])
+        result, _ = self.run_it(library(), path)
+        self.assertEqual(result.outcome, "all_done")
+        manifest = json.loads((result.directory / "run.json").read_text(encoding="utf-8"))
+        self.assertEqual((manifest["status"], manifest["outcome"]), ("complete", "all_done"))
+        last = json.loads((result.directory / "events.jsonl").read_text(encoding="utf-8").splitlines()[-1])
+        self.assertEqual(last["outcome"], "all_done")
+        self.assertTrue(result.outputs["report"].is_file())
+
+    def test_a_final_state_with_no_outcome_leaves_it_out(self):
+        result, _ = self.run_it(library())
+        self.assertIsNone(result.outcome)
+        self.assertNotIn("outcome", json.loads((result.directory / "run.json").read_text(encoding="utf-8")))
+
     def test_a_state_with_no_stage_in_the_library_is_named(self):
         with self.assertRaisesRegex(LookupError, "test.mark"):
             self.run_it({"test.count": library()["test.count"]})
@@ -115,6 +130,11 @@ class CliTests(RunCase):
         self.assertEqual(out[:3], ["stage count", "stage quiet", "stage write"])
         self.assertTrue(out[-1].startswith("wrote ") and out[-1].endswith("report.jsonl"))
         self.assertEqual(err, [])
+
+    def test_the_outcome_is_the_last_line_and_the_exit_is_still_0(self):
+        path = self.sketch([("    done:\n      final: true", "    done:\n      final: true\n      outcome: all_done")])
+        code, out, err = self.go("run", str(path), "--out", str(self.out))
+        self.assertEqual((code, err, out[-1]), (0, [], "outcome: all_done"))
 
     def test_a_wrong_sketch_is_exit_2_with_a_last_line_saying_what_to_fix(self):
         path = self.sketch([("do: sink.report", "do: sink.reportt")])

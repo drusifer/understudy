@@ -60,7 +60,7 @@ machine:
                 drink:
                   - { temp: hot,  size: medium, weight: 0.6 }
                   - { temp: iced, size: medium, weight: 0.4 }
-        - decider: weather              # the subsketch's weights on temp
+        - from: weather                 # the subsketch's weights on temp
           weight:
             if:
               segment: { eq: night_workers }   # night shift stays on hot coffee, warm or not

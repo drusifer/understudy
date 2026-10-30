@@ -33,6 +33,16 @@ def _overrides(pairs: list[str]) -> dict[str, str]:
     return overrides
 
 
+def _values(pairs: list[str]) -> dict[str, str]:
+    values = {}
+    for pair in pairs:
+        name, separator, value = pair.partition("=")
+        if not name or not separator:
+            raise SketchError([f"--with needs <name>=<value>, not {pair!r}"])
+        values[name] = value
+    return values
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="understudy")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -40,6 +50,7 @@ def _parser() -> argparse.ArgumentParser:
         command = commands.add_parser(name)
         command.add_argument("sketch", type=Path)
         command.add_argument("--source", action="append", default=[], metavar="NAME.path=FILE")
+        command.add_argument("--with", action="append", default=[], metavar="NAME=VALUE", dest="values")
     run = commands.choices["run"]
     run.add_argument("--out", type=Path, default=DEFAULT_OUT)
     run.add_argument("--replay", nargs="?", const="", default=None, metavar="RUN-ID|DIR")
@@ -64,7 +75,7 @@ def main(  # noqa: PLR0913 - the command line's injection points
         return code
 
     try:
-        sketch = load_checked(args.sketch, _overrides(args.source))
+        sketch = load_checked(args.sketch, _overrides(args.source), _values(args.values))
     except SketchError as error:
         for problem in error.problems[:-1]:
             stderr.write(f"understudy: {problem}\n")
@@ -85,6 +96,8 @@ def main(  # noqa: PLR0913 - the command line's injection points
         return fail(str(error) or type(error).__name__, 1)
     for path in result.outputs.values():
         stdout.write(f"wrote {path}\n")
+    if result.outcome:
+        stdout.write(f"outcome: {result.outcome}\n")
     return 0
 
 

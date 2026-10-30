@@ -56,12 +56,12 @@ async def join_weights(context) -> list[dict]:
 
 def _returned_dimensions(context) -> list[str]:
     for state in context.sketch.machine["states"].values():
-        if state.get("final") and state.get("returns"):
-            dimensions = state["returns"]["decider"]
+        if state.get("final") and state.get("outputs"):
+            dimensions = state["outputs"]
             if len(dimensions) != 1:
-                raise ValueError(f"etl.join_weights answers one dimension; the sketch returns {dimensions}")
+                raise ValueError(f"etl.join_weights answers one dimension; the sketch outputs {dimensions}")
             return dimensions
-    raise ValueError("etl.join_weights is for a sketch that returns a decider")
+    raise ValueError("etl.join_weights is for a sketch that declares its outputs")
 
 
 def _validate(rows: list[dict], decider: str, outcomes: dict, stage: str) -> None:
@@ -83,9 +83,9 @@ async def blend(context) -> list[dict]:
     state, outcomes = context.state, context.sketch.outcomes
     deciders = {}
     for entry in state["blend"]:
-        if "decider" in entry:
-            deciders[entry["decider"]] = context.results[entry["decider"]]
-            _validate(deciders[entry["decider"]], entry["decider"], outcomes, context.name)
+        if "from" in entry:
+            deciders[entry["from"]] = context.results[entry["from"]]
+            _validate(deciders[entry["from"]], entry["from"], outcomes, context.name)
     shares: list[dict] = []
     summary: dict = {}
     for row in context.last:

@@ -102,10 +102,10 @@
       "additionalProperties": false,
       "properties": {
         "decide": { "type": "object" },
-        "decider": { "type": "string", "minLength": 1 },
+        "from": { "type": "string", "minLength": 1 },
         "weight": { "$ref": "#/$defs/weight" }
       },
-      "oneOf": [{ "required": ["decide"] }, { "required": ["decider"] }]
+      "oneOf": [{ "required": ["decide"] }, { "required": ["from"] }]
     },
     "forbid": {
       "type": "object",
@@ -130,6 +130,7 @@
       "additionalProperties": false,
       "properties": {
         "do": { "type": "string", "minLength": 1 },
+        "each": { "type": "string", "minLength": 1 },
         "with": { "type": "object" },
         "blend": { "type": "array", "items": { "$ref": "#/$defs/blendEntry" }, "minItems": 1 },
         "forbid": { "type": "array", "items": { "$ref": "#/$defs/forbid" } },
@@ -138,14 +139,7 @@
         "transitions": { "type": "array", "items": { "$ref": "#/$defs/transition" }, "minItems": 1 },
         "final": { "type": "boolean" },
         "outcome": { "type": "string" },
-        "returns": {
-          "type": "object",
-          "required": ["decider"],
-          "additionalProperties": false,
-          "properties": {
-            "decider": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
-          }
-        }
+        "outputs": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
       }
     },
     "machine": {

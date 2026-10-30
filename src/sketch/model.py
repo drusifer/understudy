@@ -34,3 +34,5 @@ class Sketch:
     outcomes: dict[str, tuple[str, ...]]
     data: dict
     machine: dict
+    variables: dict[str, str] = field(default_factory=dict)  # the `--input` values the file was rendered with
+    uses: frozenset[str] = frozenset()  # the template variables this file uses

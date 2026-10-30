@@ -152,7 +152,7 @@ class ForbidTests(unittest.TestCase):
 STATE = {
     "blend": [
         {"decide": TREE},
-        {"decider": "weather", "weight": {"if": {"segment": {"eq": "night_workers"}}, "then": 0, "else": 0.3}},
+        {"from": "weather", "weight": {"if": {"segment": {"eq": "night_workers"}}, "then": 0, "else": 0.3}},
     ],
     "forbid": UNDER_18,
 }

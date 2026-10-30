@@ -37,4 +37,4 @@ machine:
       then: done
     done:
       final: true
-      returns: { decider: [temp] }
+      outputs: [temp]

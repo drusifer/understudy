@@ -25,14 +25,14 @@ When this sprint is done, the owner's two real pipelines are sketches in the new
 **Points:** 3
 
 **As the** owner,
-**I want** the sketch model to say "walk away", take counts and 0-10 weights as inputs, and read a source with different params,
+**I want** the sketch model to say "walk away", take values from the command line or a calling sketch (Jinja2 templates), and repeat a sketch once per row (`each:`),
 **so that** my evening and my budget can be written down without workarounds.
 
 ### Acceptance Criteria
 1. A stage with `on_empty: walk_away` that has no options left ends the run with exit 0, writes no sink output and prints `walked away at <stage>`; the existing `fail`, `skip` and `fallback` values behave as before (coffee tests unchanged).
-2. A sketch can declare an input as a count (`{ count: [1, 4], default: 2 }`) or a weight (`{ weight: [0, 10], default: 7 }`); `--input tickets=3` sets it, `--input tickets=9` fails `check` with `tickets must be 1 to 4, got 9`, and an unknown input name is refused naming the known ones.
-3. A weight input can be used as a decider's weight and a count input in a condition (`ge`) on a row field.
-4. A source can be read twice in one run with different params (`seats` for two showings), and replay returns each read's own sample.
+2. A sketch file is a Jinja2 template read as standard YAML 1.2: `{{ tickets | default(2) }}` takes `--with tickets=3` from the command line; plain YAML without template marks reads unchanged (every existing test still passes). A variable with no default and no value fails naming it: `needs a value for 'tickets': pass --with tickets=<value>`.
+3. Any sketch can be called by another: the calling state's `with: { seats: {{ tickets }} }` passes values to it; the child sees only what its call passes; one sketch can be called many times with different values. A `--with` or `with` name that the receiving file does not use is refused with the nearest used name: `--with tikets: the file does not use it (did you mean 'tickets'?)`.
+4. `each: <source>` on a state that calls a sketch runs that sketch once per row of the source, passing the row's values with `with:`; a list given to any other source, stage or sketch is one input, never looped over behind the scenes. The loop's result is one list with an entry per row. Each iteration's Jev answers are captured under that call, and a replay returns them without a live call; a replay whose rows changed since the capture says it is stale.
 5. `docs/SKETCHES.md` describes each of the four additions with one example.
 
 ## STORY-UND-73: A decision can choose among candidates read from a file
@@ -71,7 +71,7 @@ When this sprint is done, the owner's two real pipelines are sketches in the new
 
 ### Acceptance Criteria
 1. `understudy check` passes on the evening sketch; `understudy run` with a Jev double and the committed fixtures books a showing and a hold that obey my rules: evening only, horror scoring 70 or more or anything above 90, seats together in row E, F or D, central.
-2. Inputs shape the decision, each with a test: `--input evenings=off` admits a 15:00 showing that is otherwise dropped; `--input tickets=3` books a block of three; `--input centre=0` and `--input centre=10` book different named blocks on the same fixture; `--input mood=romantic` is shown to the Jev double in its request.
+2. Values shape the decision, each with a test: `--with evenings=off` admits a 15:00 showing that is otherwise dropped; `--with tickets=3` books a block of three; `--with centre=0` and `--with centre=1` (a weight, 0.0 to 1.0) book different named blocks on the same fixture; `--with mood=romantic` is shown to the Jev double in its request.
 3. The final pick is made by Jev from a shortlist of at most five; a Jev double that answers with an option outside the list is refused and the run fails naming the option.
 4. When no showing qualifies (fixture with only afternoon horror at 60) or seating returns `none`, the run exits 0, prints `walked away at <stage>` and writes no booking.
 5. A missing or malformed fixture fails `check` naming the file and the field; no booking is written.

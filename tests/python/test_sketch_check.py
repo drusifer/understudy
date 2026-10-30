@@ -85,12 +85,12 @@ class CheckTests(unittest.TestCase):
         self.assert_problem(problems, "no state is final")
 
     def test_a_decider_that_is_not_a_sketch_state_is_refused(self):
-        problems = self.workspace().edit("decider: weather", "decider: write").problems()
-        self.assert_problem(problems, "blend[1].decider", "not a state that calls a sketch")
+        problems = self.workspace().edit("from: weather", "from: write").problems()
+        self.assert_problem(problems, "blend[1].from", "not a state that calls a sketch")
 
     def test_a_subsketch_that_returns_an_undeclared_outcome_is_refused(self):
         problems = self.workspace().edit("  temp: [hot, iced]\n", "").problems()
-        self.assert_problem(problems, "returns 'temp'", "not a declared outcome")
+        self.assert_problem(problems, "outputs 'temp'", "not a declared outcome")
 
     def test_a_forbid_that_drops_an_unknown_option_is_refused(self):
         problems = self.workspace().edit("caffeine: { ne: none }", "caffeine: { ne: nonee }").problems()

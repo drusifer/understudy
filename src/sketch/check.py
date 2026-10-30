@@ -7,7 +7,7 @@ from difflib import get_close_matches
 from pathlib import Path
 
 from src.sketch import conditions
-from src.sketch.loader import SketchError, load
+from src.sketch.loader import SketchError, load, unused_variables
 from src.sketch.model import Sketch
 from src.sketch.vocabulary import COMBINATORS, ON_EMPTY, SINK_PREFIX, SKETCH_PREFIX, STAGES
 
@@ -81,6 +81,8 @@ class _Checker:
         for index, transition in enumerate(state.get("transitions", [])):
             if "if" in transition:
                 self.condition(transition["if"], f"{at}.transitions[{index}].if")
+        if "each" in state:
+            self.each(at, state)
         if "do" in state:
             self.stage(at, state)
         if "blend" in state:
@@ -91,9 +93,9 @@ class _Checker:
     def final_state(self, at: str, state: dict) -> None:
         if "then" in state or "transitions" in state or "do" in state or "blend" in state:
             self.problem(at, "a final state does nothing and goes nowhere")
-        for dimension in state.get("returns", {}).get("decider", []):
+        for dimension in state.get("outputs", []):
             if dimension not in self.sketch.outcomes and not self.is_subsketch_file():
-                self.problem(f"{at}.returns.decider", f"{dimension!r} is not a declared outcome")
+                self.problem(f"{at}.outputs", f"{dimension!r} is not a declared outcome")
 
     def is_subsketch_file(self) -> bool:
         return not self.sketch.outcomes
@@ -124,6 +126,13 @@ class _Checker:
 
     # stages ----------------------------------------------------------------
 
+    def each(self, at: str, state: dict) -> None:
+        """`each: <source>` repeats a sketch for every row of a source."""
+        if state["each"] not in self.sketch.sources:
+            self.problem(f"{at}.each", f"{state['each']!r} is not a source{_nearest(state['each'], self.sketch.sources)}")
+        if not str(state.get("do", "")).startswith(SKETCH_PREFIX):
+            self.problem(at, "`each` repeats a sketch, so `do` must be `sketch.<file>`")
+
     def stage(self, at: str, state: dict) -> None:
         name = state["do"]
         if name.startswith(SINK_PREFIX):
@@ -131,7 +140,7 @@ class _Checker:
             if sink not in self.sketch.sinks:
                 self.problem(f"{at}.do", f"sink {sink!r} is not declared{_nearest(sink, self.sketch.sinks)}")
         elif name.startswith(SKETCH_PREFIX):
-            self.subsketch(f"{at}.do", name[len(SKETCH_PREFIX):])
+            self.subsketch(f"{at}.do", name[len(SKETCH_PREFIX):], state.get("with", {}), "each" in state)
         elif name not in STAGES:
             self.problem(f"{at}.do", f"unknown stage {name!r}{_nearest(name, STAGES)}")
         else:
@@ -149,24 +158,24 @@ class _Checker:
             elif wanted[key] == "data" and value not in self.sketch.data:
                 self.problem(f"{at}.with.{key}", f"{value!r} is not under data{_nearest(value, self.sketch.data)}")
 
-    def subsketch(self, at: str, file: str) -> None:
+    def subsketch(self, at: str, file: str, given: dict, each: bool) -> None:
         path = (self.sketch.path.parent / f"{file}.yaml").resolve()
         if path in self.seen:
             self.problem(at, f"sketch {file!r} calls itself")
             return
         try:
-            child = load(path)
+            child = load(path, variables=given, lenient=each)
         except SketchError as error:
             self.found.extend(error.problems if path.is_file() else [f"{self.sketch.path}: {at}: no sketch file {path.name}"])
             return
         self.found.extend(_Checker(child, (*self.seen, path)).run())
-        returned = next((s.get("returns") for s in child.machine["states"].values() if s.get("final") and s.get("returns")), None)
-        if returned is None:
-            self.problem(at, f"sketch {file!r} returns nothing, so it cannot be a decider")
+        declared = next((s.get("outputs") for s in child.machine["states"].values() if s.get("final") and s.get("outputs")), None)
+        if declared is None:
+            self.problem(at, f"sketch {file!r} declares no outputs, so its weights cannot be blended")
             return
-        for dimension in returned["decider"]:
-            if dimension not in self.sketch.outcomes:
-                self.problem(at, f"sketch {file!r} returns {dimension!r}, which is not a declared outcome here")
+        for dimension in declared:
+            if dimension not in self.sketch.outcomes and not each:  # a loop's outputs are paired with rows, not blended
+                self.problem(at, f"sketch {file!r} outputs {dimension!r}, which is not a declared outcome here")
 
     # deciders ----------------------------------------------------------------
 
@@ -175,9 +184,9 @@ class _Checker:
             here = f"{at}.blend[{index}]"
             if "decide" in entry:
                 self.tree(entry["decide"], f"{here}.decide")
-            elif entry["decider"] not in self.states or not str(self.states[entry["decider"]].get("do", "")).startswith(SKETCH_PREFIX):
-                self.problem(f"{here}.decider", f"{entry['decider']!r} is not a state that calls a sketch"
-                                                f"{_nearest(entry['decider'], self.states)}")
+            elif entry["from"] not in self.states or not str(self.states[entry["from"]].get("do", "")).startswith(SKETCH_PREFIX):
+                self.problem(f"{here}.from", f"{entry['from']!r} is not a state that calls a sketch"
+                                             f"{_nearest(entry['from'], self.states)}")
             if "weight" in entry:
                 self.weight(entry["weight"], f"{here}.weight")
         for index, rule in enumerate(state.get("forbid", [])):
@@ -252,12 +261,17 @@ class _Checker:
 
 def check(sketch: Sketch) -> list[str]:
     """Every problem with the sketch, one line each; an empty list means it is ready to run."""
-    return _Checker(sketch, (sketch.path.resolve(),)).run()
+    found = _Checker(sketch, (sketch.path.resolve(),)).run()
+    for unread, how, names in unused_variables(sketch):
+        for name in names:
+            found.append(f"{unread.path}: {how} {name}: the file does not use it{_nearest(name, unread.uses)}"
+                         f"; it uses: {', '.join(sorted(unread.uses)) or 'nothing'}")
+    return found
 
 
-def load_checked(path: Path, overrides: dict[str, str] | None = None) -> Sketch:
+def load_checked(path: Path, overrides: dict[str, str] | None = None, variables: dict[str, str] | None = None) -> Sketch:
     """Load and check; raise `SketchError` listing every problem."""
-    sketch = load(path, overrides)
+    sketch = load(path, overrides, variables)
     problems = check(sketch)
     if problems:
         raise SketchError(problems)

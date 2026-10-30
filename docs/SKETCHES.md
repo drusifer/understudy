@@ -58,10 +58,10 @@ The machine is a python-statemachine; the loop runs the stage each state names a
 | `do` | `with` | What it does |
 |---|---|---|
 | `etl.split_by_share` | `source`, `field`, `segments` | splits a total (the sum of `field` over the source's rows) across `data.<segments>` by each segment's `share`: rows `{segment, share, age_min, age_max, drinks}` |
-| `etl.join_weights` | `probabilities`, `weights` | joins a Jev source's probability per level with `data.<weights>` (level to option weights) into one decider's rows on the dimension the sketch `returns` |
+| `etl.join_weights` | `probabilities`, `weights` | joins a Jev source's probability per level with `data.<weights>` (level to option weights) into weighted rows on the dimension the sketch lists in `outputs` |
 | `convert.recipes` | `recipes`, `packs` | turns drink counts into ingredient amounts from `data.<recipes>` (rows `{<dimension>: <option>, ingredient, amount, unit}`), rounded up to whole packs from `data.<packs>` |
 | `sink.<name>` | | writes the rows of the stage before it to the sink file |
-| `sketch.<file>` | | runs `<file>.yaml` beside this one as a nested run and gives back its decider's rows |
+| `sketch.<file>` | | runs `<file>.yaml` beside this one as a nested run and gives back the weighted rows its `outputs` name; `with:` passes it values (see Subsketches) |
 | (a state with `blend:`) | | see below |
 
 `understudy check` refuses an unknown stage and suggests the nearest, and checks each `with` key.
@@ -81,7 +81,7 @@ match_orders:
             - { temp: hot,  size: medium, weight: 0.5 }
         else:
           drink: [ { temp: hot, size: medium, weight: 1.0 } ]
-    - decider: weather              # a state that calls a subsketch
+    - from: weather                 # a state that calls a subsketch
       weight:
         if: { segment: { eq: night_workers } }
         then: 0                     # night shift ignores the weather
@@ -142,10 +142,66 @@ Reading it returns one row per level, `{level, probability}`. Your weights per l
 ```yaml
 done:
   final: true
-  returns: { decider: [temp] }       # weights on the temp dimension
+  outputs: [temp]                    # the outcome it gives weights on
 ```
 
-The parent names it in a `blend` (`decider: weather`, the state that calls it). The checker refuses a returned dimension the parent has not declared.
+The parent names it in a `blend` (`from: weather`, the state that calls it). The checker refuses an output the parent has not declared under `outcomes`.
+
+Any sketch can be run on its own or called by another, and one sketch can be called many times.
+
+## Values in: Jinja2 and `with`
+
+Every sketch file is a Jinja2 template over standard YAML 1.2; a file with no `{{ }}` or `{% %}` reads as it always did. A value comes from the command line (`--with`), or from a calling state's `with:`, and the file writes its own default:
+
+```yaml
+- when: { length: { lt: {{ tickets | default(2) }} } }
+```
+
+```sh
+understudy run evening.yaml --with tickets=3
+```
+
+```yaml
+seat:
+  do: sketch.seating
+  with: { tickets: {{ tickets | default(2) }} }   # filled in when the parent is loaded
+```
+
+* A child sees only what its call passes; the parent's values are not visible to it.
+* A variable with no default and no value fails: `needs a value for 'tickets': pass --with tickets=<value>, or write {{ tickets | default(…) }}`.
+* A `--with` or `with` name the receiving file does not use is refused, with the nearest name it does use.
+* `understudy check` reads the sketch after Jinja has filled it in.
+
+## Repeating a sketch: `each`
+
+There are no hidden loops: a list given to a source, stage or sketch is one input. To repeat a sketch once per row of a source, say so on the state that calls it:
+
+```yaml
+score_films:
+  each: films                   # a source: the rows to go through
+  do: sketch.review_score       # each only repeats a sketch
+  then: rank
+```
+
+The row's fields are the child's variables (`{{ title }}`), beside anything the call's `with:` passes. The result is one list of pairs, a row with what the child output for it:
+
+```json
+[ { "input": { "title": "It Follows" }, "output": [ { "audience": "loved", "weight": 0.9 } ] }, ... ]
+```
+
+Each row's Jev answers are captured under the child's name and the row's position, so a replay needs no live call. `understudy check` reads the child with its row values left empty, so it checks the child's shape, not its values.
+
+## How a run ends
+
+A final state may carry an `outcome:`, a name for the way the run ended:
+
+```yaml
+nothing_suits:
+  final: true
+  outcome: walked_away
+```
+
+The run still exits 0. It records the outcome in `run.json` and the last event, and prints `outcome: walked_away` as its last line.
 
 ## Capture and replay
 

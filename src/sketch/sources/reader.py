@@ -17,10 +17,14 @@ def capture_key(sketch: Sketch, name: str) -> str:
 
 
 def non_file_keys(sketch: Sketch) -> list[str]:
-    """Capture keys of every non-file source in the sketch and, recursively, the sketches it calls."""
+    """Capture keys of every non-file source in the sketch and, recursively, the sketches it calls.
+
+    A sketch repeated by `each` is left out: its keys are named per row, and only the rows know them.
+    """
     keys = [capture_key(sketch, n) for n, s in sketch.sources.items() if s.kind != "file"]
-    for child in children(sketch).values():
-        keys += non_file_keys(child)
+    for name, child in children(sketch).items():
+        if "each" not in sketch.machine["states"][name]:
+            keys += non_file_keys(child)
     return keys
 
 

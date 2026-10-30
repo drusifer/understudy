@@ -15,9 +15,9 @@
 ## Sprint Execution Phases
 
 ### Phase 1: The model's small gaps (UND-68)
-*Phase goal: walk away, count and weight inputs, and several reads of one source work and are documented.*
+*Phase goal: walk away, Jinja2-templated sketches with `--with` and per-call `with`, and `each:` work and are documented.*
 
-- [ ] **Task 1.1:** `*impl` `on_empty: walk_away` (exit 0, no sink output, `walked away at <stage>`); `count` and `weight` inputs with `--input` and range errors; a source read twice with different params, one captured sample per request hash. (*Owner: Neo | Verification: unit tests for every UND-68 AC, including `tickets must be 1 to 4, got 9`, unknown input names the known ones, and coffee tests unchanged.*)
+- [ ] **Task 1.1:** `*impl` `on_empty: walk_away` (exit 0, no sink output, `walked away at <stage>`); Jinja2 rendering with `--with` and per-call `with`, unused names refused; `each:` runs a sketch once per row, Jev answers captured per call. (*Owner: Neo | Verification: unit tests for every UND-68 AC, including the missing-value and unused-name messages, and coffee tests unchanged. Done so far: walk-away, templating, composition (93 tests).*)
 - [ ] **Task 1.2:** UAT: UND-68 AC 1-5, with a doc check of `docs/SKETCHES.md`. (*Owner: Trin | Verification: UAT rows in `docs/sprints/UAT_PLAN_SPRINT20.md`; full suite green.*)
 - [ ] **Task 1.3:** Review against the architecture sections 3 and 5. (*Owner: Morpheus | Verification: verdict; commit `Phase 1: ...`.*)
 
@@ -45,9 +45,9 @@
 ### Phase 5: The ETL's expected result and its stage wrappers (UND-71, part 1)
 *Phase goal: the current ETL's answer is frozen before anything moves, and CSVs read as file sources.*
 
-- [ ] **Task 5.1:** `*impl` Commit `tests/fixtures/etl/expected/result.jsonl` and summary from the current ETL on the fixtures (before any ETL change); `format: csv` file sources; `stages_etl.py` wrappers over the existing functions. (*Owner: Neo | Verification: expected files exist and a test regenerates and compares them; a CSV with no `merchant` column fails with `<file>: missing a required merchant column (recognized: …)`.*)
+- [ ] **Task 5.1:** `*impl` Commit `tests/fixtures/etl/expected/result.jsonl` and summary from the current ETL on the fixtures (before any ETL change); `stages_etl.py` wrappers (`etl.hydrate` reads the CSVs named under `sources:`) over the existing functions. (*Owner: Neo | Verification: expected files exist and a test regenerates and compares them; a CSV with no `merchant` column fails with `<file>: missing a required merchant column (recognized: …)`.*)
 - [ ] **Task 5.2:** UAT: UND-71 AC 1, 5. (*Owner: Trin | Verification: UAT rows; full suite green.*)
-- [ ] **Task 5.3:** Review against ADR-0046, ADR-0049. (*Owner: Morpheus | Verification: verdict; commit `Phase 5: ...`.*)
+- [ ] **Task 5.3:** Review against ADR-0046. (*Owner: Morpheus | Verification: verdict; commit `Phase 5: ...`.*)
 
 ### Phase 6: The household sketch (UND-71, part 2)
 *Phase goal: the sketch makes the same answer as the old ETL, offline, then on the owner's real files.*
