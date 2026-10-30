@@ -103,4 +103,13 @@ sequenceDiagram
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "Phase 6 review passed<br/>against ADR-0043 and<br/>invariants 6, 9: Jev<br/>only chooses among<br/>listed levels, replay<br/>never falls back to<br/>live, one run…"
     Note over Mouse,Trin: "Phase 6 summary<br/>Neo: Phase 6 impl done:<br/>sources (file, kind<br/>jev), capture to<br/>.understudy/cache with<br/>run id and request hash,<br/>--replay [run-id|folder]<br/>using one…<br/>Trin: UAT phase 6 passed<br/>(UND-60 AC5-7). rubric<br/>UAT: COVER=A STEPS=A<br/>FAIL=S DATA=A EVID=A.<br/>@Morpheus *lead review<br/>phase-6<br/>Morpheus: Phase 6 review<br/>passed against ADR-0043<br/>and invariants 6, 9: Jev<br/>only chooses among<br/>listed levels, replay<br/>never falls back to<br/>live, one run…"
+    Mouse->>All: "phase 7"
+    Note right of Mouse: "Phase 7"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 7 impl done:<br/>stages (split_by_share,<br/>join_weights, blend,<br/>convert.recipes on<br/>DuckDB), subsketch as a<br/>nested run, coffee<br/>fixtures run…"
+    Trin->>Morpheus: "qa handoff"
+    Note right of Trin: "UAT phase 7 passed<br/>(UND-64, UND-65, UND-66,<br/>run-time outcome check).<br/>rubric UAT: COVER=A<br/>STEPS=A FAIL=S DATA=A<br/>EVID=A. @Morpheus *lead<br/>revi…"
+    Morpheus->>Tank: "lead handoff"
+    Note right of Morpheus: "Phase 7 review passed<br/>against the architecture<br/>and the purge list: no<br/>duplicate introduced<br/>(one runner, one Jev<br/>wrapper, one path<br/>policy, o…"
+    Note over Mouse,Trin: "Phase 7 summary<br/>Trin: UAT phase 7 passed<br/>(UND-64, UND-65, UND-66,<br/>run-time outcome check).<br/>rubric UAT: COVER=A<br/>STEPS=A FAIL=S DATA=A<br/>EVID=A. @Morpheus *lead<br/>revi…<br/>Morpheus: Phase 7 review<br/>passed against the<br/>architecture and the<br/>purge list: no duplicate<br/>introduced (one runner,<br/>one Jev wrapper, one<br/>path policy, o…"
 ```

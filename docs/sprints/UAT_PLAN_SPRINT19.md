@@ -147,3 +147,36 @@
 * `rubric UAT: COVER=A STEPS=A FAIL=S DATA=A EVID=A`.
 
 **Phase 6 UAT verdict: PASSED.**
+
+## 7. Phase 7: coffee end to end (UND-64, UND-65, UND-66)
+
+### `UAT-UND-64-01` Weekly sales split by segment and converted to ingredients
+* **Story/AC:** UND-64 AC 1, 2, 3, 4.
+* **Command:** `bobp make test-py ARGS="test_sketch_coffee.py"` (real stage library, Jev double, invented fixtures).
+* **Expected:** 1,600 drinks split by share (students 480, teens 160, commuters 560, night workers 240, others 160) add up to 1,600 exactly; each segment's drinks follow its blended shares; recipes turn them into grams (a medium is 18 g); beans round up to whole 1,000 g packs; all of it is DuckDB SQL with no Jev call.
+* **Result:** Pass. Total 1,600; the beans total 31,680 g by hand (480×21 + 160×18 + 560×18 + 240×24 + 160×18) and the output row is `{"amount": 32000, "ingredient": "coffee_beans", "unit": "g"}`; with 5,000 g packs it is 35,000.
+
+### `UAT-UND-65-01` The weather subsketch and the owner's weights
+* **Story/AC:** UND-65 AC 1, 2, 3.
+* **Expected:** `weather_change` runs as a nested run with two file sources and a `kind: jev` source; the parent sees only its decider rows (`returns: { decider: [temp] }`); with the double on "warmer" the output is hot 0.45 and iced 0.55, and with `warmer 0.5 / colder 0.5` it is their weighted average (hot 0.6, iced 0.4); the parent blends by the owner's weight; night workers (weight 0) are unchanged by warm weather.
+* **Result:** Pass. Stage lines: `weather`, `weather_change.judge`, `split_trade`, `match_orders`, `to_ingredients`, `write`. Night workers' temp stays `{hot: 1.0}` even at `much_warmer`; students' iced share is `(1×0.7 + 0.3×0.7)/1.3` at `much_warmer` and `(1×0.7 + 0.3×0.1)/1.3` at `much_colder`.
+
+### `UAT-UND-61-06` The run-time half of the outcome check
+* **Story/AC:** UND-61 AC 3 (run time).
+* **Expected:** a decider row that comes from a source and uses an undeclared option is refused naming the stage.
+* **Result:** Pass. `stage match_orders: decider 'weather' returned temp='ice', not a declared option (did you mean 'iced'?)`, exit 1, no `ingredients.jsonl`.
+
+### `UAT-UND-63-06` A forbid that empties a segment, end to end
+* **Story/AC:** UND-63 AC 3.
+* **Result:** Pass. With the rule widened to age 24 and every leaf recommending high caffeine, the run fails with `forbid rule 0 left students with no option for 'caffeine'` (or `teens`), exit 1.
+
+### `UAT-UND-66-01` One reproducible output
+* **Story/AC:** UND-66 AC 1, 2, 3, 4.
+* **Expected:** `ingredients.jsonl` (one row per ingredient, fixed order) is written only when every stage finished; `summary.json` holds counts only (total drinks, drinks per segment, Jev requests, the weather weights, the shares per segment, mode, stale); two `--replay` runs of the same capture produce byte-identical files; output lands under the run folder, never a tracked folder.
+* **Result:** Pass. `ingredients.jsonl` and `summary.json` are byte-identical across two replays; `mode: live` then `mode: replay`; the folder is under the temporary `--out`; a live run with no key exits 2 before any stage.
+
+### Phase 7 gate evidence
+* `bobp make check` passed (JavaScript 20, Python including 79 sketch tests, SQLMesh, eslint, ruff, secret scan). No live Jev call yet (UND-67).
+* `rubric UAT: COVER=A STEPS=A FAIL=S DATA=A EVID=A`.
+
+**Phase 7 UAT verdict: PASSED.**

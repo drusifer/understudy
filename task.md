@@ -59,9 +59,9 @@
 ### Phase 7: Coffee end to end (UND-64, UND-65, UND-66)
 *Phase goal: the coffee sketch and its weather subsketch run from fixtures and replay to a reproducible ingredient file.*
 
-- [ ] **Task 7.1:** `*impl` `stages.py` (`etl.split_by_share`, `etl.join_weights`, `convert.recipes` with round-up to packs, `sink.<name>`, `sketch.<file>` as a nested run sharing the run id), the invented fixtures under `tests/fixtures/coffee/` (about 1,600 drinks, five segments, two Almanac descriptions) and `coffee_week.yaml` plus `weather_change.yaml`. (*Owner: Neo | Verification: end-to-end test on a Jev double: split sums to the total, under-18 rule holds, night workers unchanged by warm weather, pack round-up, byte-identical rerun with `--replay`.*)
-- [ ] **Task 7.2:** UAT: UND-64, UND-65, UND-66 and the full command on the fixtures. (*Owner: Trin | Verification: UAT rows; two `--replay` runs are byte-identical; output outside tracked folders.*)
-- [ ] **Task 7.3:** Review the whole slice against the architecture and the epic's purge list (no duplicate introduced). (*Owner: Morpheus | Verification: verdict; commit `Phase 7: ...`.*)
+- [x] **Task 7.1:** `*impl` `stages.py` (`etl.split_by_share`, `etl.join_weights`, `convert.recipes` with round-up to packs, `sink.<name>`, `sketch.<file>` as a nested run sharing the run id), the invented fixtures under `tests/fixtures/coffee/` (about 1,600 drinks, five segments, two Almanac descriptions) and `coffee_week.yaml` plus `weather_change.yaml`. (*Owner: Neo | Verification: end-to-end test on a Jev double: split sums to the total, under-18 rule holds, night workers unchanged by warm weather, pack round-up, byte-identical rerun with `--replay`.*)
+- [x] **Task 7.2:** UAT: UND-64, UND-65, UND-66 and the full command on the fixtures. (*Owner: Trin | Verification: UAT rows; two `--replay` runs are byte-identical; output outside tracked folders.*)
+- [x] **Task 7.3:** Review the whole slice against the architecture and the epic's purge list (no duplicate introduced). (*Owner: Morpheus | Verification: verdict; commit `Phase 7: ...`.*)
 
 ## Sprint Closeout
 

@@ -15,6 +15,7 @@ from pathlib import Path
 
 from src.machine_runner import RunRecord, run_machine
 from src.paths import check_writable
+from src.sketch.loader import children
 from src.sketch.machine import build_machine
 from src.sketch.model import Sketch
 from src.sketch.sources.capture import CaptureStore
@@ -84,12 +85,49 @@ def _stage_function(state: dict, library: Mapping[str, StageFn]) -> StageFn:
     name = "blend" if "blend" in state else state["do"]
     if name in library:
         return library[name]
-    if name.startswith(SKETCH_PREFIX) and "sketch" in library:
-        return library["sketch"]
     raise LookupError(f"no stage is defined for {name!r}")
 
 
-def _stages(sketch: Sketch, library: Mapping[str, StageFn], make_context: Callable[[str, dict], StageContext], results: dict):
+class NestedRecord:
+    """A subsketch's stages, reported through the parent's record so the one run.json stays the parent's."""
+
+    def __init__(self, parent: EventedRecord, prefix: str):
+        self.parent, self.prefix = parent, prefix
+
+    def started(self, name: str) -> None:
+        self.parent.started(f"{self.prefix}.{name}")
+
+    def completed(self, name: str) -> None:
+        self.parent.emit("stage_completed", stage=f"{self.prefix}.{name}")
+
+    def failed(self, name: str, error: Exception) -> None:
+        self.parent.emit("stage_failed", stage=f"{self.prefix}.{name}", reason=str(error))
+
+    def finished(self) -> None:
+        """The parent's run is not over because a subsketch ended."""
+
+
+async def _run_child(context: StageContext, library: Mapping[str, StageFn], record: EventedRecord):
+    """Run the sketch this stage calls (`do: sketch.<file>`) in the same run folder, with the same sources.
+
+    Its result is what its last stage returned: the decider's rows the parent blends.
+    """
+    child = children(context.sketch)[context.state["do"].removeprefix(SKETCH_PREFIX)]
+    results: dict = {}
+    last = {"value": None}
+
+    def make_context(name: str, state: dict) -> StageContext:
+        return StageContext(child, name, state, results, last["value"], context.directory, context.summary, context.sources)
+
+    stages = {name: _remember(stage, last) for name, stage in _stages(child, library, make_context, results, record).items()}
+    await run_machine(build_machine(child), stages, NestedRecord(record, child.name))
+    return last["value"]
+
+
+def _stages(
+    sketch: Sketch, library: Mapping[str, StageFn], make_context: Callable[[str, dict], StageContext], results: dict,
+    record: EventedRecord,
+):
     stages = {}
     for name, state in sketch.machine["states"].items():
         if state.get("final"):
@@ -97,11 +135,15 @@ def _stages(sketch: Sketch, library: Mapping[str, StageFn], make_context: Callab
 
         async def stage(name=name, state=state):
             context = make_context(name, state)
-            if state.get("do", "").startswith(SINK_PREFIX):
-                file = sketch.sinks[state["do"][len(SINK_PREFIX):]].file
+            called = state.get("do", "")
+            if called.startswith(SINK_PREFIX):
+                file = sketch.sinks[called.removeprefix(SINK_PREFIX)].file
                 _write_part(context.directory, file, context.last)
                 return context.last
-            result = await _stage_function(state, library)(context)
+            if called.startswith(SKETCH_PREFIX):
+                result = await _run_child(context, library, record)
+            else:
+                result = await _stage_function(state, library)(context)
             results[name] = result
             return result
 
@@ -130,7 +172,7 @@ async def run_sketch(
     def make_context(name: str, state: dict) -> StageContext:
         return StageContext(sketch, name, state, results, last["value"], directory, summary, sources)
 
-    stages = _stages(sketch, library, make_context, results)
+    stages = _stages(sketch, library, make_context, results, record)
     machine = build_machine(sketch)
     inner = {name: _remember(stage, last) for name, stage in stages.items()}
     published: dict[str, Path] = {}
