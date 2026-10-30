@@ -4,11 +4,11 @@
 *   **Branch**: `sprint-19` (cut from `main` at the Sprint 18 merge, 357c85b)
 *   **Source**: owner, 2026-10-29, recorded in `docs/sprints/EPIC_PYTHON_PORT.md` (slice A) and `docs/sprints/DESIGN_SKETCH_MODEL.md`.
 *   **Builds on**: the Python ETL controller (Sprint 17, ADR-0038) for the state machine runner, and `src/etl/jev.py` for Jev. The old Node player is untouched.
-*   **Status**: Draft — awaiting Smith Gate 1
+*   **Status**: Revised after Smith's Gate 1 rejection (2026-10-29): goal updated, UND-62 guard made testable on a fixture machine, UND-65 `expose` moved out of scope, UND-64 rounding stated, `--jev-answers` added to UND-60, share check added to UND-61 — awaiting re-review
 
 ## Goal
 
-When this sprint is done, a shop owner can write one YAML file that says how they decide what to order, give it last week's total sales, last week's weather and a weekly weather forecast as plain files, and get back the ingredients to order for next week. Their own rules decide; counts and conversions are plain SQL; and Jev is used once, to read the forecast against last week's weather. This is the first working piece of the new sketch model, and it decides whether the rest of the Python port (the other examples, the dashboard) is built on the right shape.
+When this sprint is done, a shop owner can write one YAML file that says how they decide what to order, give it last week's total sales and the Farmers' Almanac's descriptions of last week and next week as plain files, and get back the ingredients to order for next week. Their own rules decide; counts and conversions are plain SQL; and Jev is used once, to read the two Almanac descriptions and say how much warmer or colder next week will be. This is the first working piece of the new sketch model, and it decides whether the rest of the Python port (the other examples, the dashboard) is built on the right shape.
 
 ## Assumptions made for the owner
 
@@ -32,7 +32,8 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 1. `understudy run <sketch.yaml>` loads the sketch, prints one line per stage as it starts (`stage weather`, `stage split_trade`, …) and ends with a line naming the output file.
 2. Exit code 0 on success, 1 when a stage fails, 2 when the sketch or an input file is wrong; the last line of an error says what to fix.
 3. `--source <name>.path=<file>` replaces one source's file for this run only; the sketch file is not changed.
-4. The command makes no network call except to Jev, and only when a stage asks Jev.
+4. The command makes no network call except to Jev, and only when a stage reads a `kind: jev` source.
+5. `--jev-answers <file.jsonl>` replaces Jev for this run with recorded answers (one row per question: the option probabilities), so a run needs no key and no network and repeats exactly; without it the run uses live Jev and a missing `TYPESAFE_API_KEY` is exit 2 before any stage starts. (Proposed; the owner confirms.)
 
 ## STORY-UND-61: A wrong sketch is refused before anything runs
 **Points:** 5
@@ -40,8 +41,8 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 **As the** shop owner, **I want** the sketch checked as a whole before it runs, **so that** a typo costs me seconds, not a half-finished run.
 
 ### Acceptance Criteria
-1. The sketch is checked for: sources and sinks (a bare path or `kind: file`), declared `outcomes`, `data`, `questions`, and a `machine` whose stages and transitions all exist and end in a final state.
-2. Every mistake names the file, the path inside it (`machine.states.match_orders.decide.then.drink[1]`), the bad value and the nearest good one.
+1. The sketch is checked for: sources and sinks (a bare path, `kind: file` or `kind: jev`), declared `outcomes`, `data` (segment shares must add up to 1, within 0.001), and a `machine` whose stages and transitions all exist and end in a final state.
+2. Every mistake names the file, the path inside it (`machine.states.match_orders.blend[0].decide.then.drink[1]`), the bad value and the nearest good one.
 3. A decider that returns an option not in `outcomes` is refused at check time when it is written in the sketch, and at run time when it comes from a source, naming the stage.
 4. A required source file that does not exist stops the run before any stage starts, and no output file is created.
 5. A slice such as `70:100` is accepted in a condition (`in: [70:100]`, start included, stop excluded) and in a score; the sketch is read as YAML 1.2, so `70:30` stays text and is never turned into a number.
@@ -53,7 +54,7 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 
 ### Acceptance Criteria
 1. The machine is the sketch's own python-statemachine YAML; the Python loop runs the step the current state names and feeds the result back as an event.
-2. A transition guarded by a condition over a stage's result (for example `customers < 20`) is taken only when the condition holds; otherwise the next unguarded transition is.
+2. A transition guarded by an explicit YAML condition over a stage's result (for example `if: { drinks: { lt: 500 } }`) is taken only when the condition holds; otherwise the next unguarded transition is. The coffee sketch is a straight line, so this is tested on a small fixture machine with a branch (`tests/fixtures/machine_branch.yaml`).
 3. A stage that fails ends the run with exit code 1, names the stage, and publishes no output file; earlier stages' files stay in the run folder for inspection.
 4. The run folder records each stage as complete or failed, so a failed run says where it stopped.
 
@@ -75,7 +76,7 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 **As the** shop owner, **I want** last week's total sales split across my customer groups and turned into amounts to order, **so that** I know how many grams to buy.
 
 ### Acceptance Criteria
-1. The total drinks are split across segments by their `share`; the segment totals add up to the total (1,600 stays 1,600, to the rounding of one drink).
+1. The total drinks are split across segments by their `share`; expected counts stay fractional and the segment totals add up to the total exactly (1,600.00 stays 1,600.00); nothing is rounded until the packs (AC3).
 2. Each segment's drinks are spread over its weighted drink rows, and the recipes turn drink counts into ingredient amounts (a medium uses 18 g of beans).
 3. Amounts are rounded up to whole packs from `data.packs` (1,000 g of beans); a missing pack size leaves the amount unrounded.
 4. All of this is plain SQL on DuckDB; no Jev call and no network.
@@ -89,8 +90,7 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 1. `weather_change` is its own sketch file with two file sources (the pasted Almanac descriptions of last week and next week); the parent calls it and sees only its output, which it declares as `returns: { decider: [temp] }`.
 2. Jev is asked one rubric question over both descriptions and answers with a probability for each of five levels (much colder, colder, same, warmer, much warmer); the rubric holds only what each level means, and the owner's weights per level are separate and never shown to Jev. With the Jev double fixed to "warmer" the output is hot 0.45 and iced 0.55, and with mixed probabilities it is their weighted average.
 3. The parent blends the weather weights with each segment's own preference by the weight the sketch gives; a segment whose weight is 0 (night workers) is unchanged by warm weather.
-4. A Jev failure fails the run (UND-62 AC3); a Jev answer that is not one of the five levels is refused and asked again once, then fails.
-5. The subsketch's inputs appear in the parent only if the parent lists them under `expose`.
+4. A Jev failure fails the run (UND-62 AC3); a Jev answer that is not one of the five levels (possible only from a recorded-answers file) is refused with the file and row named, and the run fails.
 
 ## STORY-UND-66: One reproducible output file
 **Points:** 2
@@ -121,6 +121,8 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 - Deleting the Node code (slice D); the Node player keeps working unchanged.
 - Per-customer history, customer-level forecasts, or real shop data.
 - A scoring formula or the old `position ^ weight` rule; vetoes are explicit filters.
+- Subsketch inputs and the parent's `expose` list (the weather subsketch has no inputs, and there is no dashboard to show them on).
+- Other styles of Jev interaction (yes/no probability, score); only the `choice` question is built. They are added later behind the same `kind: jev` source (owner, 2026-10-29).
 
 ## Open Questions
 1. None on syntax (settled 2026-10-29). Morpheus confirms the module layout and the JSON Schema for sketches in the architecture.

@@ -99,3 +99,11 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-29 18:01:11</small>] [**Smith**]->[**Cypher**] *user approve*:
  Smith Gate 2: epic and domain model approved. rubric DOMAIN: LANG=S BOUND=A INVAR=S STATE=A EVENT=A. rubric LOOP_EPIC: FRAME=A APPET=A BOUNDS=S DOMAIN=S DERISK=A. Open items are syntax placeholders for the Sprint 19 architecture (evidence/weight, subsketch outputs, ask branches); they return to the owner before build. *user approve. @Cypher stories are drafted: *pm hand Sprint 19 stories to Smith Gate 1
+
+---
+[<small>2026-10-29 20:54:07</small>] [**Smith**]->[**Cypher**] *user reject*:
+ Smith Gate 1 REJECT Sprint 19 stories: stale goal; UND-62 guard untestable (coffee machine has no branch); UND-65 expose has no subject; UND-64 rounding untestable; no way to run the CLI with a Jev double; shares not checked. rubric STORIES: OUT=A TEST=W FAIL=A SCOPE=A SIZE=A DESIGN=A. @Cypher revise.
+
+---
+[<small>2026-10-29 20:54:07</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Stories revised (status line in USER_STORIES_SPRINT19.md lists each fix); only the choice style of Jev is in scope. One owner decision pending: UND-60 AC5 --jev-answers (proposed). @Smith *user review sprint 19 after the owner confirms
