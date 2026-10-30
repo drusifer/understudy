@@ -153,6 +153,6 @@ A failed stage ends the run with exit 1, removes any partial output and records 
 
 ### Acknowledged Technical Debt & Trade-offs
 * The Jev wrapper stays in `src/etl/jev.py` and the output-destination policy in `src/etl/controller.py`; `src/sketch` imports both. Phase 1 moves each to a shared module (`src/jev.py`, `src/paths.py`) so neither context depends on the other (DRY), and the ETL imports the shared ones.
-* Two sketch schemas and two commands exist side by side until slice D.
+* Two sketch schemas, two commands and two runtimes exist side by side until slice D. **They are scheduled for removal, not tolerated:** the epic's purge list (`EPIC_PYTHON_PORT.md` section 2) is slice D's exit gate, and Sprint 19 itself removes the first duplicates (the Jev wrapper and the output-destination policy move to shared modules and are not copied).
 * Replay keeps one sample per source per run and does not handle a source read several times with different params (YAGNY).
 * The capture cache location (`.understudy/cache/`) survives `bobp make clean` by design; the owner can delete it by hand.

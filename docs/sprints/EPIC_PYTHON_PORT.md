@@ -23,6 +23,15 @@ A second problem sits underneath: the player is built to *play an app* like a pe
 | C | Dashboard and watch servers (HTTP + SSE), flow layout, rack, settings, over the new model. | console and watch page served by Python |
 | D | Delete the Node code, `package.json`, eslint and the Node test runner; Python-only SDLC. | one toolchain |
 
+**Purge list (owner, 2026-10-29: "make sure the dups are purged as part of this epic").** There is to be one kind of sketch, one runtime, one of everything when the epic ends. The epic is not done until slice D has deleted or merged each of these, and slice D's gate is that this list is empty:
+
+* **Two sketch formats:** the old `sketch.yaml` shape (`target`, `calls`, `values`, `decide` gates/scores, `turn:`, `pick`) and `schema/sketch.schema.json`; only `schema/decision_sketch.schema.json` remains (renamed `sketch.schema.json`).
+* **Two commands:** `understudy sketch run` loses the word `sketch` and becomes `understudy run`; the Node `run`, `check`, `library`, `watch` and `dashboard` commands and their Node implementations go.
+* **Two runtimes and toolchains:** `src/*.mjs`, `src/targets/`, `src/apps/`, `src/watch/`, `src/dashboard/` server code, `package.json`, `package-lock.json`, eslint, the Node test runner and their make targets and SDLC rows (the dashboard's browser files are rebuilt, not copied: they stay JavaScript/CSS only if the new dashboard still serves them).
+* **Old examples** (`examples/cli`, `http`, `web`, `mcp`, `mcp-remote`, `evening`) and their Node tests: each is translated into the new model in slice B or deleted; none survives in the old shape.
+* **Duplicate Python:** the Jev wrapper and the output-destination policy each exist once (`src/jev.py`, `src/paths.py`, moved in Sprint 19 phase 1), with `src/etl` and `src/sketch` both importing them; the state machine runner and `GatedJev` likewise shared, not copied.
+* **Duplicate decisions and docs:** ADR-0011, ADR-0018 and ADR-0030 marked superseded; `docs/SKETCHES.md` and `docs/MCP_GUIDE.md` rewritten for the new model, not kept beside it.
+
 ## 3. No-gos (not built in this epic)
 
 * No Node/Python bridge or dual-run mode (owner: no back-compat). Slices are cut over, not shimmed.

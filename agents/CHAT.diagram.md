@@ -37,5 +37,9 @@ sequenceDiagram
     Note right of Cypher: "Stories revised (status<br/>line in<br/>USER_STORIES_SPRINT19.md<br/>lists each fix), only<br/>the choice style of Jev<br/>is in scope. One owner<br/>decision pend…"
     Smith->>Morpheus: "user approve"
     Note right of Smith: "Smith Gate 1 re-review<br/>Sprint 19 stories: all<br/>six findings fixed,<br/>capture/replay (UND-60<br/>AC5-7) is testable,<br/>owner confirmed stale<br/>replay w…"
-    Note over Mouse,Tank: "Phase 0 summary<br/>Smith: Smith Gate 2:<br/>epic and domain model<br/>approved. rubric DOMAIN:<br/>LANG=S BOUND=A INVAR=S<br/>STATE=A EVENT=A. rubric<br/>LOOP_EPIC: FRAME=A<br/>APPET=A BOUN…<br/>Smith: Smith Gate 1<br/>REJECT Sprint 19<br/>stories: stale goal,<br/>UND-62 guard untestable<br/>(coffee machine has no<br/>branch), UND-65 expose<br/>has no subject, UN…<br/>Smith: Smith Gate 1 re-<br/>review Sprint 19<br/>stories: all six<br/>findings fixed,<br/>capture/replay (UND-60<br/>AC5-7) is testable,<br/>owner confirmed stale<br/>replay w…"
+    Morpheus->>Smith: "lead handoff"
+    Note right of Morpheus: "Architecture drafted: do<br/>cs/sprints/ARCH_SPRINT19<br/>.md (src/sketch package,<br/>12 components,<br/>capture/replay,<br/>ADR-0040..0045, no new<br/>mechanism, r…"
+    Smith->>Cypher: "user hold"
+    Note right of Smith: "Smith Gate 2 HOLD Sprint<br/>19 architecture: stories<br/>say 'understudy run' but<br/>the arch says<br/>'understudy sketch run'<br/>(old sketches still use<br/>ru…"
+    Note over Mouse,Tank: "Phase 0 summary<br/>Smith: Smith Gate 1 re-<br/>review Sprint 19<br/>stories: all six<br/>findings fixed,<br/>capture/replay (UND-60<br/>AC5-7) is testable,<br/>owner confirmed stale<br/>replay w…<br/>Morpheus: Architecture<br/>drafted: docs/sprints/AR<br/>CH_SPRINT19.md<br/>(src/sketch package, 12<br/>components,<br/>capture/replay,<br/>ADR-0040..0045, no new<br/>mechanism, r…<br/>Smith: Smith Gate 2 HOLD<br/>Sprint 19 architecture:<br/>stories say 'understudy<br/>run' but the arch says<br/>'understudy sketch run'<br/>(old sketches still use<br/>ru…"
 ```

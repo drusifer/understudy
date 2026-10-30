@@ -111,3 +111,11 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-29 23:02:48</small>] [**Smith**]->[**Morpheus**] *user approve*:
  Smith Gate 1 re-review Sprint 19 stories: all six findings fixed; capture/replay (UND-60 AC5-7) is testable; owner confirmed stale replay warns. rubric STORIES: OUT=A TEST=A FAIL=A SCOPE=S SIZE=A DESIGN=A. *user approve. @Morpheus *lead arch sprint 19
+
+---
+[<small>2026-10-29 23:03:56</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Architecture drafted: docs/sprints/ARCH_SPRINT19.md (src/sketch package, 12 components, capture/replay, ADR-0040..0045, no new mechanism; ruamel.yaml and jsonschema become direct deps). Self-check rubric ARCH: BOUND=A FLOW=A FAIL=A USER=A DECS=S FEAS=A. Command name is 'understudy sketch run' until slice D. @Smith *user feedback arch sprint 19
+
+---
+[<small>2026-10-29 23:04:06</small>] [**Smith**]->[**Cypher**] *user hold*:
+ Smith Gate 2 HOLD Sprint 19 architecture: stories say 'understudy run' but the arch says 'understudy sketch run' (old sketches still use run until slice D); capture cache location .understudy/cache is unconfirmed. Everything else reads clean. rubric ARCH: BOUND=A FLOW=A FAIL=A USER=W DECS=S FEAS=A. Pending the owner's answers. @Cypher *pm ask the owner

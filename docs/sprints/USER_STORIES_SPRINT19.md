@@ -27,10 +27,10 @@ When this sprint is done, a shop owner can write one YAML file that says how the
 ## STORY-UND-60: Run a sketch from the command line
 **Points:** 3
 
-**As the** shop owner, **I want** to run `understudy run coffee_week.yaml`, **so that** I can get next week's order without touching code.
+**As the** shop owner, **I want** to run `understudy sketch run coffee_week.yaml`, **so that** I can get next week's order without touching code. (`sketch` is a temporary word, because the old Node `understudy run` still exists until slice D deletes it; then the command becomes `understudy run`. The owner wants one kind of sketch and no duplicates when the epic ends: see the epic's purge list.)
 
 ### Acceptance Criteria
-1. `understudy run <sketch.yaml>` loads the sketch, prints one line per stage as it starts (`stage weather`, `stage split_trade`, …) and ends with a line naming the output file.
+1. `understudy sketch run <sketch.yaml>` loads the sketch, prints one line per stage as it starts (`stage weather`, `stage split_trade`, …) and ends with a line naming the output file.
 2. Exit code 0 on success, 1 when a stage fails, 2 when the sketch or an input file is wrong; the last line of an error says what to fix.
 3. `--source <name>.path=<file>` replaces one source's file for this run only; the sketch file is not changed.
 4. The command makes no network call except to Jev, and only when a stage reads a `kind: jev` source.
