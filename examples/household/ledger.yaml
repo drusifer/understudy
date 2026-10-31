@@ -105,7 +105,7 @@ sources:
   read:
     kind: stage
     do: { map: { action: join } }
-    with: { source: linked, other: judged, on: key, keep_unmatched: true }
+    with: { source: linked, other: judged, on: key, keep_unmatched: true, prefix: judged_ }
   standing:                             # transfers and invalid rows are settled; the rest is still open
     kind: stage
     do: { map: { action: classify } }
@@ -115,7 +115,7 @@ sources:
       cases:
         - { if: { match: { eq: invalid_key } }, then: invalid }
         - { if: { partner: { ne: null } }, then: transfer }
-        - { if: { and: [ { partner: { eq: null } }, { decision: { eq: external_transfer } } ] }, then: external_transfer }
+        - { if: { and: [ { partner: { eq: null } }, { judged_decision: { eq: external_transfer } } ] }, then: external_transfer }
       otherwise: open
   plain:                                # what is left is spending
     kind: stage
@@ -214,18 +214,105 @@ sources:
         - { if: { link_status: { ne: null } }, then: refund }
         - { if: { cost: { gt: 0 } }, then: credit }
       otherwise: purchase
+  spending:                             # what needs a category
+    kind: stage
+    do: { map: { action: where } }
+    with: { source: typed, keep: { kind: { in: [purchase, refund, credit] } } }
+  merchants:
+    kind: stage
+    do: { map: { action: group } }
+    with:
+      source: spending
+      by: payee
+      collect: { amounts: cost, statements: Original Statement, descriptions: other_Description }
+  monarch_labels:                       # Monarch's own labels for spending, not the ones about moving money
+    kind: stage
+    do: { map: { action: where } }
+    with:
+      source: typed
+      keep:
+        and:
+          - { Category: { has: ": " } }
+          - not:
+              or:
+                - { Category: { has: Transfer } }
+                - { Category: { has: transfer } }
+                - { Category: { has: Payment } }
+                - { Category: { has: payment } }
+  offered:
+    kind: stage
+    do: { map: { action: group } }
+    with: { source: monarch_labels, by: Category }
+  merchants_and_categories:
+    kind: stage
+    do: { map: { action: attach } }
+    with: { source: merchants, other: offered, field: Category, into: categories }
+  placements:                           # Jev, once per merchant: which category in use, if any
+    kind: stage
+    do: { sketch: { file: place_merchant } }
+    each: merchants_and_categories
+  placed:
+    kind: stage
+    do: { map: { action: unpair } }
+    with: { source: placements }
+  unfit:                                # no category in use fits
+    kind: stage
+    do: { map: { action: where } }
+    with: { source: placed, keep: { status: { eq: unfit } } }
+  fitted:
+    kind: stage
+    do: { map: { action: where } }
+    with: { source: placed, keep: { status: { ne: unfit } } }
+  named:                                # Jev names the rest in turn, each seeing the names given before it
+    kind: stage
+    do: { sketch: { file: name_merchant } }
+    each: unfit
+    reduce: { action: concat, into: earlier }
+  decided:
+    kind: stage
+    do: { map: { action: concat } }
+    with: { sources: [ fitted, named ] }
+  categories:
+    kind: stage
+    do: { map: { action: where } }
+    with: { source: decided, keep: { status: { eq: placed } } }
+  categorized:
+    kind: stage
+    do: { map: { action: join } }
+    with: { source: typed, other: categories, on: key, keep_unmatched: true, prefix: category_ }
+  finished:                             # whether a record's category was placed, is for review, or was not asked
+    kind: stage
+    do: { map: { action: classify } }
+    with:
+      source: categorized
+      into: category_status
+      cases:
+        - { if: { kind: { in: [transfer, external_transfer, invalid] } }, then: none }
+        - { if: { category_level: { ne: null } }, then: placed }
+      otherwise: review
+
+  kinds:                                # how many records of each kind, and how many were placed or are for review
+    kind: stage
+    do: { map: { action: group } }
+    with: { source: finished, by: kind }
+  statuses:
+    kind: stage
+    do: { map: { action: group } }
+    with: { source: finished, by: category_status }
 
 sinks:
   records: records.jsonl
   legs: legs.jsonl
   judgments: judgments.jsonl
+  kinds: kinds.jsonl
+  statuses: statuses.jsonl
 
 machine:
   initial: write_records
   states:
     write_records:
       do: { sink: { name: records } }
-      with: { source: typed }
+      with: { source: finished }
       then: write_legs
     write_legs:
       do: { sink: { name: legs } }
@@ -234,6 +321,14 @@ machine:
     write_judgments:
       do: { sink: { name: judgments } }
       with: { source: judged }
+      then: write_kinds
+    write_kinds:
+      do: { sink: { name: kinds } }
+      with: { source: kinds }
+      then: write_statuses
+    write_statuses:
+      do: { sink: { name: statuses } }
+      with: { source: statuses }
       then: done
     done:
       final: true

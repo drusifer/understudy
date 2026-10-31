@@ -16,6 +16,23 @@ ORACLE = ROOT / "tests" / "fixtures" / "etl" / "household"
 OWN = {"Venmo": 0.05, "Ridgewood Savings Bank": 0.93}  # the probability the payee is one of the owner's accounts
 
 
+PLACED = {"Store": ("Shopping & Retail: General", 0.9), "Dunkin'": ("Food & Dining: Coffee & Cafes", 0.95),
+          "Employer": ("Income: Paychecks", 0.99), "Shoe Shop": ("Shopping & Retail: General", 0.5),
+          "Venmo": ("none_of_these", 0.9)}
+
+
+def category(merchant, options):
+    """A scripted Jev for the three category questions: which category in use, which kind of business, which name."""
+    if "none_of_these" in options:
+        top, sure = PLACED[merchant]
+    elif "Utilities" in options:
+        top, sure = "Utilities", 0.8
+    else:
+        top, sure = next(iter(options)), 0.9
+    rest = (1 - sure) / max(len(options) - 1, 1)
+    return Chosen(top, sure, {name: sure if name == top else rest for name in options})
+
+
 def lines(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
 
@@ -31,6 +48,8 @@ class LedgerTests(unittest.TestCase):
             if "refund" in state:  # the refund of 45.00 reverses the charge of 45.00 on the 15th
                 original = next(label for label in options if "2026-02-15" in label)
                 return Chosen(original, 0.8, {label: 0.8 if label == original else 0.2 for label in options})
+            if "merchant" in state:
+                return category(state["merchant"][0]["merchant"], options)
             cls.seen.append(state)
             own = OWN[state["payee"][0]["payee"]]
             levels = {"own_account": own, "someone_else": 1 - own}
@@ -83,6 +102,23 @@ class LedgerTests(unittest.TestCase):
         self.assertEqual(refunds["Store"]["link_status"], "chosen")
         original = next(r for r in self.records if r["record_id"] == refunds["Store"]["candidate_record_id"])
         self.assertEqual((original["cost"], original["day"]), (-45.0, "2026-02-15"))
+
+    def test_merchants_are_placed_in_the_categories_in_use_and_an_unsure_one_goes_to_review(self):
+        by = {(r["payee"], r["kind"]): r for r in self.records}
+        self.assertEqual(by["Store", "purchase"]["category_level"], "Shopping & Retail: General")
+        self.assertEqual(by["Dunkin'", "purchase"]["category_level"], "Food & Dining: Coffee & Cafes")
+        self.assertEqual(by["Employer", "credit"]["category_status"], "placed")
+        shoes = by["Shoe Shop", "purchase"]
+        self.assertEqual((shoes["category_status"], shoes.get("category_level")), ("review", None))
+
+    def test_a_merchant_that_fits_no_category_is_named_from_the_mcc_list_by_choosing_a_group_and_a_name(self):
+        venmo = next(r for r in self.records if r["payee"] == "Venmo")
+        self.assertEqual(venmo["category_status"], "placed")
+        self.assertTrue(venmo["category_level"] and venmo["category_level"] != "none_of_these")
+
+    def test_transfers_are_not_asked_about_and_say_so(self):
+        legs = [r for r in self.records if r["kind"] in ("transfer", "external_transfer")]
+        self.assertEqual({r["category_status"] for r in legs}, {"none"})
 
     def test_jev_sees_the_owners_account_names_but_never_their_numbers(self):
         self.assertEqual(len(self.seen), 2)

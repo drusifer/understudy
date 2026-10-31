@@ -1,0 +1,133 @@
+name: name_merchant
+description: >
+  Names a category for a merchant that fits none of those in use. A category named earlier in the run is tried first;
+  if none of them fits, Jev chooses a kind of business from the ISO 18245 merchant category list and then a name in
+  it. Jev only chooses; it never writes a name. Above 0.7 the merchant is placed; otherwise it goes to review. Give it
+  the merchant's `key`, `payee`, `count`, `amounts`, `statements` and `descriptions`, and `earlier`: the rows this
+  sketch output for the merchants before it.
+
+sources:
+  facts:
+    kind: stage
+    do: { map: { action: rows } }
+    with:
+      rows:
+        - { merchant: {{ payee | tojson }}, also_seen_as: {{ (statements + descriptions) | tojson }}, payments: {{ count | tojson }}, example_amounts: {{ amounts | tojson }} }
+  before:                               # what the merchants before this one were given
+    kind: stage
+    do: { map: { action: rows } }
+    with:
+      rows:
+{% for row in earlier %}
+        - { level: {{ row.level | tojson }}, status: {{ row.status | tojson }} }
+{% endfor %}
+  named_before:
+    kind: stage
+    do: { map: { action: where } }
+    with: { source: before, keep: { status: { eq: placed } } }
+  names_before:
+    kind: stage
+    do: { map: { action: group } }
+    with: { source: named_before, by: level }
+  none:
+    kind: stage
+    do: { map: { action: rows } }
+    with: { rows: [ { level: none_of_these } ] }
+  earlier_choices:
+    kind: stage
+    do: { map: { action: concat } }
+    with: { sources: [ names_before, none ] }
+  earlier_reading:
+    kind: jev
+    question: choice
+    instructions: >
+      Which category named earlier in this run best describes what is bought from `merchant`? Choose none_of_these
+      when none of them does.
+    options: { from: earlier_choices, key: level }
+    state:
+      merchant: { from: facts }
+  earlier_best:
+    kind: stage
+    do: { reduce: { action: max } }
+    with: { source: earlier_reading, field: probability }
+  use_earlier:                          # a category named earlier fits
+    kind: stage
+    do: { map: { action: where } }
+    with:
+      source: earlier_best
+      keep: { and: [ { level: { ne: none_of_these } }, { probability: { gt: 0.7 } } ] }
+  earlier_placed:
+    kind: stage
+    do: { map: { action: classify } }
+    with: { source: use_earlier, into: status, cases: [], otherwise: placed }
+  list:
+    kind: stage
+    do: { map: { action: mcc } }
+  kinds:
+    kind: stage
+    do: { map: { action: group } }
+    with: { source: list, by: group }
+  kind_reading:
+    kind: jev
+    question: choice
+    instructions: Which kind of business is `merchant`?
+    options: { from: kinds, key: group }
+    state:
+      merchant: { from: facts }
+  kind_best:
+    kind: stage
+    do: { reduce: { action: max } }
+    with: { source: kind_reading, field: probability }
+  in_kind:                              # the names of that kind of business
+    kind: stage
+    do: { map: { action: matching } }
+    with: { source: list, among: kind_best, on: group, among_on: level }
+  name_reading:
+    kind: jev
+    question: choice
+    instructions: Which name best describes what is bought from `merchant`?
+    options: { from: in_kind, key: name }
+    state:
+      merchant: { from: facts }
+  name_best:
+    kind: stage
+    do: { reduce: { action: max } }
+    with: { source: name_reading, field: probability }
+  named:
+    kind: stage
+    do: { map: { action: classify } }
+    with:
+      source: name_best
+      into: status
+      cases:
+        - { if: { probability: { gt: 0.7 } }, then: placed }
+      otherwise: review
+
+machine:
+  initial: any_before
+  states:
+    any_before:
+      do: { reduce: { action: any } }
+      with: { source: before }
+      transitions:
+        - if: { any: { eq: true } }
+          to: ask_before
+        - to: name_it
+    ask_before:
+      do: { reduce: { action: any } }
+      with: { source: use_earlier }
+      transitions:
+        - if: { any: { eq: true } }
+          to: use_before
+        - to: name_it
+    use_before:
+      do: { map: { action: format } }
+      with: { source: earlier_placed, template: {{ key | replace('{', '{{') | replace('}', '}}') | tojson }}, into: key }
+      then: done
+    name_it:
+      do: { map: { action: format } }
+      with: { source: named, template: {{ key | replace('{', '{{') | replace('}', '}}') | tojson }}, into: key }
+      then: done
+    done:
+      final: true
+      outputs: [status]

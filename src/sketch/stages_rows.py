@@ -26,13 +26,14 @@ async def where(context, source: Source, keep: dict) -> list[dict]:
 @stage("map.join")
 async def join(  # noqa: PLR0913 - the stage's with: keys
     context, source: Source, other: Source, on: str, other_on: str | None = None, keep_unmatched: bool = False,
+    prefix: str = "",
 ) -> list[dict]:
     """Each row of `source` plus the fields of the row of `other` whose `other_on` (default: `on`) equals the row's `on`
-    (the first, if several). A row with no match is dropped, or kept as it is when `keep_unmatched`; where both have a
-    field the row of `source` wins."""
+    (the first, if several), with `prefix` before their names. A row with no match is dropped, or kept as it is when
+    `keep_unmatched`; where both have a field the row of `source` wins."""
     matching: dict = {}
     for row in await context.read(other):
-        matching.setdefault(row[other_on or on], row)
+        matching.setdefault(row[other_on or on], {f"{prefix}{field}": value for field, value in row.items()})
     return [{**matching.get(row[on], {}), **row} for row in await context.read(source) if keep_unmatched or row[on] in matching]
 
 
@@ -146,7 +147,7 @@ async def group(context, source: Source, by: str, collect: dict | None = None, t
 @stage("map.rows")
 async def rows(context, rows: list) -> list[dict]:  # noqa: ARG001 - a stage always gets its context
     """The rows written in the sketch (often a list another sketch handed in), as a source."""
-    return list(rows)
+    return list(rows or [])
 
 
 @stage("map.classify")

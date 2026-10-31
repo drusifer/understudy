@@ -1,0 +1,60 @@
+name: place_merchant
+description: >
+  Does one merchant belong in one of the categories already in use? Jev chooses among those categories, or says that
+  none of them fits. Above 0.7 for a category the merchant is placed in it; above 0.7 for none of them it needs a new
+  category; anything less sure goes to review. Give it the merchant's `payee`, `count`, `amounts`, `statements` and
+  `descriptions`, and the `categories` in use.
+
+sources:
+  facts:
+    kind: stage
+    do: { map: { action: rows } }
+    with:
+      rows:
+        - { merchant: {{ payee | tojson }}, also_seen_as: {{ (statements + descriptions) | tojson }}, payments: {{ count | tojson }}, example_amounts: {{ amounts | tojson }} }
+  in_use:
+    kind: stage
+    do: { map: { action: rows } }
+    with:
+      rows:
+{% for category in categories %}
+        - { category: {{ category | tojson }} }
+{% endfor %}
+  none:
+    kind: stage
+    do: { map: { action: rows } }
+    with: { rows: [ { category: none_of_these } ] }
+  choices:
+    kind: stage
+    do: { map: { action: concat } }
+    with: { sources: [ in_use, none ] }
+  reading:
+    kind: jev
+    question: choice
+    instructions: >
+      Which category best describes what is bought from `merchant`? Choose none_of_these when no category in use
+      describes it.
+    options: { from: choices, key: category }
+    state:
+      merchant: { from: facts }
+  best:
+    kind: stage
+    do: { reduce: { action: max } }
+    with: { source: reading, field: probability }
+
+machine:
+  initial: decide
+  states:
+    decide:
+      do: { map: { action: classify } }
+      with:
+        source: best
+        into: status
+        cases:
+          - { if: { and: [ { level: { eq: none_of_these } }, { probability: { gt: 0.7 } } ] }, then: unfit }
+          - { if: { and: [ { level: { ne: none_of_these } }, { probability: { gt: 0.7 } } ] }, then: placed }
+        otherwise: review
+      then: done
+    done:
+      final: true
+      outputs: [status]
