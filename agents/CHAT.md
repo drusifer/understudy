@@ -221,9 +221,10 @@ OK
  Sprint 20 build done (local, not pushed): the household ETL is now a sketch with 4 child sketches; old ETL/SQLMesh/MCP/etl run/old examples/seed deleted; docs + ADR-0047 written; full gate green (221 py tests in 11s). Needs: real-file run by owner, Trin UAT, Morpheus review, Tank sdlc-check. @Trin *qa uat @Morpheus *lead review @Tank *devops sdlc-check
 
 ---
-[<small>2026-10-30 21:53:46</small>] [**make**]->[**all**] *build*:
+[<small>2026-10-30 21:54:27</small>] [**make**]->[**all**] *build*:
  Build PASSED | make push | /home/drusifer/Projects/understudy/build/build.out
-remote:      https://github.com/drusifer/understudy/pull/new/sprint-20
-remote:
+9:54PM INF 0 commits scanned.
+9:54PM INF scanned ~0 bytes (0) in 238ms
+9:54PM INF no leaks found
 To github.com:drusifer/understudy.git
-* [new branch]      sprint-20 -> sprint-20
+ea5f76b..1c2d62d  main -> main
