@@ -194,3 +194,12 @@ OK
 ---
 [<small>2026-10-30 20:02:22</small>] [**Cypher**]->[**all**] *checkpoint*:
  Household redesign under way (decisions 36-38): CSV by name, date/business-day math in Python, map.convert + map.pair built and tested. 250ish tests green. Next: transfer legs (reuse mutual_nearest), group, Jev children, assemble. Not pushed.
+
+---
+[<small>2026-10-30 20:17:51</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-py | /home/drusifer/Projects/understudy/build/build.out
+----------------------------------------------------------------------
+Synthetic 4,700-pair controller run: 15.87s
+Ran 261 tests in 94.199s
+
+OK
