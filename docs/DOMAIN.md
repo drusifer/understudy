@@ -12,8 +12,8 @@
 A sketch is a shop owner's written-down way of deciding something, run by understudy: files in, a decision made by the owner's own rules, files out. Counting and converting are plain SQL; the owner's judgement is `decide` logic with weights; Jev is called only for a qualitative reading of supplied text against a rubric. This context replaces the old "play an app like a person" model; the Node player is deleted at the end of the epic.
 
 * **In-Scope Capabilities:** loading and checking a sketch; running its machine; deciders, blending, filtering; sources and sinks as files; subsketches; the run folder and its output.
-* **Out-of-Scope:** the dashboard and watch page (a later slice; they will consume the run event stream); fetching data over a network (MCP, HTTP); the Monarch/Amex ETL, which stays its own context and shares only the Jev wrapper and the state machine runner.
-* **Upstream Contexts:** `Jev` (typesafe-sdk, wrapped in `src/etl/jev.py`), `DuckDB/SQL`, `python-statemachine`.
+* **Out-of-Scope:** the dashboard and watch page (a later slice; they will consume the run event stream); fetching data over a network (MCP, HTTP); the Monarch/Amex ETL is now just a sketch, `examples/household/household.yaml` (Sprint 20), built from the same parts as the rest and in no context of its own.
+* **Upstream Contexts:** `Jev` (typesafe-sdk, wrapped in `src/jev.py`), `DuckDB/SQL`, `python-statemachine`.
 * **Downstream Consumers:** the owner (command line), later the Dashboard context.
 
 ---

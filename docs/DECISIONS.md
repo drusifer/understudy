@@ -10,6 +10,14 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+## ADR-0047: The household ETL is a sketch; SQLMesh and the MCP source servers are gone
+
+*   **Status**: Accepted · **Deciders**: owner · **Date**: 2026-10-30 · **Related**: Sprint 20 UND-71, UND-72; [owner decisions 36-40](sprints/OWNER_DECISIONS_SPRINT20.md); supersedes ADR-0046
+*   **Context**: the household ETL was written before the sketch model had stages, `each`, Jev sources over rows or conditions. It kept its own controller, a database of SQL models and MCP servers that paged CSVs, so there were two ways to do everything.
+*   **Options**: (1) wrap the old ETL in stages (done once, as a first cut, and rejected); (2) rebuild it from the sketch model's own parts and delete the old code.
+*   **Decision**: (2). `examples/household/household.yaml` reads the CSVs as file sources and uses general stages (`convert`, `pair`, `link`, `earlier`, `group`, `classify`, `join` ...), three child sketches that ask Jev (`judge_payee`, `link_refund`, `place_merchant`) and one that folds (`name_merchant`, `each` with `reduce`). Dates and business days are Python (`dateparser`, `holidays`). A database is not a sketch concept; DuckDB stays only inside the stage helper that runs short queries.
+*   **Consequences**: + one language, one runtime, a 90 s test suite became 11 s; every rule is visible in YAML or in a general, tested stage. − Category naming no longer does the old rubric check on three candidate names (Jev still only chooses), a refund candidate's option name now carries its record id, and `amex_account` is required instead of detected (`since` is optional).
+
 ## ADR-0045: `understudy run` and `understudy check` are the Python commands, now
 
 *   **Status**: Accepted · **Deciders**: owner, Morpheus · **Date**: 2026-10-29 · **Related**: STORY-UND-60; [Sprint 19 architecture](sprints/ARCH_SPRINT19.md)

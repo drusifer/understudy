@@ -209,10 +209,9 @@ OK
  Household redesign: map.link (card-payment legs) and map.group built, 255ish tests green, committed locally. Next: map.row, map.classify, the three Jev child sketches, assembly, then delete the old ETL. Owner question pending on category naming. Not pushed.
 
 ---
-[<small>2026-10-30 21:10:03</small>] [**make**]->[**all**] *build*:
- Build PASSED | make test | /home/drusifer/Projects/understudy/build/build.out
-----------------------------------------------------------------------
-make[1]: Leaving directory '/home/drusifer/Projects/understudy'
-Ran 221 tests in 10.998s
-
-OK
+[<small>2026-10-30 21:11:47</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+9:11PM INF no leaks found
+9:11PM INF 1 commits scanned.
+9:11PM INF scanned ~13107 bytes (13.11 KB) in 241ms
+9:11PM INF no leaks found

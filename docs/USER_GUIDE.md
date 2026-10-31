@@ -118,9 +118,8 @@ The reference is [SKETCHES.md](SKETCHES.md).
 ## 8. Command reference
 
 ```text
-understudy run <sketch.yaml> [--source name.path=file]... [--out folder] [--replay[=run-id|folder]]
-understudy check <sketch.yaml> [--source name.path=file]...
-understudy etl run --monarch <csv> --amex <csv> [--out <folder>] [--since YYYY-MM-DD] [--amex-account <name>]
+understudy run <sketch.yaml> [--with name=value]... [--source name.path=file]... [--out folder] [--replay[=run-id|folder]]
+understudy check <sketch.yaml> [--with name=value]... [--source name.path=file]...
 understudy --help
 ```
 
@@ -129,37 +128,41 @@ Run them as `bobp make run ARGS="<command> ..."`.
 | Make target (`bobp make <target>`) | Does |
 |---|---|
 | `install` | install dependencies (network) |
-| `run` | `ARGS="run <sketch>"`, `"check <sketch>"` or `"etl run ..."` |
-| `test` / `lint` / `check` | unit tests (JavaScript launcher, Python, SQLMesh) / eslint and ruff / the full gate with the secret scan |
+| `run` | `ARGS="run <sketch> [--with name=value]..."` or `"check <sketch>"` |
+| `test` / `lint` / `check` | unit tests (JavaScript launcher, Python) / eslint and ruff / the full gate with the secret scan |
 | `clean` | remove `build/` |
 
 ## 9. Local transaction cleanup
 
+The household cleanup is an ordinary sketch, `examples/household/household.yaml`, built from the same parts as
+any other: file sources (a file whose name ends in `.csv` is read with its header row as the field names),
+general stages, child sketches that ask Jev, and a fold.
+
 ```sh
-bobp make run ARGS="etl run --monarch data/monarch.csv --amex data/amex.csv --since 2026-01-01 --out build/runs"
+bobp make run ARGS="run examples/household/household.yaml --with monarch=data/monarch.csv --with amex=data/amex.csv --with amex_account=Platinum --with since=2026-01-01"
 ```
 
 This needs `TYPESAFE_API_KEY` and the locked Python environment (`bobp make install`).
-The two CSVs must be the complete Monarch and Amex exports with their original column names.
-Each is served through its own local MCP source server; input snapshots retain every source column.
+`amex_account` is a part of the card's account name in Monarch (required: only Monarch rows on that account are
+paired with the Amex rows). `since` is the first date of the period (default: no limit); earlier rows are left out
+and undated rows are kept as `invalid`.
 
-The default period starts at the Amex export's first date; `--since YYYY-MM-DD` overrides it.
-Earlier rows are counted and excluded; undated rows are retained as invalid. The Monarch Amex
-account is detected from opposite-sign matches. If detection ties or finds none, pass
-`--amex-account <distinctive account text>`.
+What it does, in order:
 
-Each run creates a new folder under `build/runs/`, or the folder supplied with `--out`:
+1. Reads the two exports; a charge in both (same date and amount, the same text first, then in file order, then
+   within three business days) is one record.
+2. Links the two halves of a card payment (opposite amounts in different accounts, within three business days).
+3. Jev judges each payee left over (`judge_payee`): an account the owner holds (above 0.7) is an external
+   transfer, below 0.3 it is spending (Venmo, Zelle, a person, a shop), in between it goes to review. Jev sees the
+   owner's account names, never their numbers.
+4. Links each refund to the earlier charge it reversed: by rule when there is one, by Jev (`link_refund`) when
+   there are several.
+5. Places each merchant in a category already in use (`place_merchant`) or, when none fits, names one: a category
+   named earlier in the run first, then a kind of business and a name from the ISO 18245 list (`name_merchant`,
+   run `each` merchant with `reduce` so each one sees the names given before it).
 
-- `result.jsonl`: one transaction per line, including original `source_rows`, date, signed amount,
-  merchant, account, category and confidence, transfer partner and refund link and confidence.
-- `summary.json`: source and result counts, merged purchases, transfer counts and amounts,
-  net spending (purchases less refunds, transfers excluded), category counts, and review counts.
-- `run.json`, input snapshots, `run.duckdb`, and `sqlmesh.log`: local run diagnostics.
-
-`result.jsonl` replaces Sprint 16's `review.csv`; consumers must use the new JSONL fields.
-Purchases are negative, refunds positive. Transfer amounts in the summary sum absolute leg
-amounts, so a paired transfer contributes both legs. External transfers are listed by payee.
-Categories are chosen from the offered Monarch labels or the MCC list; uncertain answers remain
-for review. The same inputs and Jev answers produce byte-identical result and summary files.
-A failed stage stops the run and publishes no result. Keep household inputs and outputs in
-ignored `data/` and `build/` folders.
+Each run creates a new folder under `build/runs/` (or `--out`): `records.jsonl` (one record per transaction with its
+`kind`: purchase, refund, credit, transfer, external_transfer or invalid; its link and its category), `legs.jsonl`,
+`judgments.jsonl`, `kinds.jsonl` and `statuses.jsonl` (counts), `summary.json` (run facts) and `run.json`. Amounts
+are signed as Monarch writes them: purchases negative, refunds positive. A failed stage publishes no output.
+Keep household inputs and outputs in ignored `data/` and `build/` folders.

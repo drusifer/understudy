@@ -10,7 +10,7 @@
 - **Open ETL items (Sprint 17 backlog):** net spending of $433k YTD looks too large (card-payment/transfer legs counted?), 270 merchants sent to review, Python port of the rest.
 
 ## Current Task
-Status: Sprint 20 PAUSED by the owner on branch `sprint-20` (local only, never pushed). Working tree clean at `460126a`; 240 Python tests green, lint clean at the last full run. Phases 1-4 built; UND-71 started (oracle frozen). **No Trin UAT or Morpheus review has been done on any phase yet.**
+Status (2026-10-30, late): Sprint 20 BUILD DONE on branch `sprint-20` (local only, never pushed); `bobp make check` green (221 Python tests in 11 s, 19 JS, lint, secrets). The household is now a real sketch (`examples/household/household.yaml` + children `judge_payee`, `link_refund`, `place_merchant`, `name_merchant`), tests `tests/python/test_household.py` and `test_household_naming.py`; the old ETL, SQLMesh, MCP servers, `etl run`, old Node examples, `seed/` and old schema are deleted; docs updated (README, USER_GUIDE, SKETCHES, SDLC, DOMAIN, DECISIONS ADR-0047, CHANGELOG). Owner decisions 36-40 recorded. **Not done: the real-file run (owner's files), Jev capture/replay check for the household, Trin UAT, Morpheus review, Tank sdlc-check (SDLC.md edited by Cypher; Tank must confirm), Oracle groom, Smith test, retro, launch.** Behavior changes to tell the owner: `amex_account` required (no detection); category naming has no 3-candidate rubric check; offered categories = Monarch labels containing ': ' that are not transfer/payment; refund option names carry the record id.
 
 ### Progress (2026-10-30)
 - [x] Planning: stories UND-68..73, architecture, task board approved.

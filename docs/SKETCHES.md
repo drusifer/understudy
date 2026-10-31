@@ -70,7 +70,20 @@ A state's `do:` names a stage **type** as a key (a closed set the schema owns) a
 | `map: { action: join_weights }` | `probabilities`, `weights` | joins a Jev source's probability per level with `data.<weights>` (level to option weights) into weighted rows on the dimension the sketch lists in `outputs` |
 | `map: { action: recipes }` | `recipes`, `packs` | turns drink counts into ingredient amounts from `data.<recipes>` (rows `{<dimension>: <option>, ingredient, amount, unit}`), rounded up to whole packs from `data.<packs>` |
 | `map: { action: where }` | `source`, `keep` | the rows that satisfy the condition `keep` (the same explicit conditions as everywhere) |
-| `map: { action: join }` | `source`, `other`, `on`, `other_on` | each row plus the fields of the row of `other` whose `other_on` (default `on`) equals its `on`; a row with no match is dropped |
+| `map: { action: join }` | `source`, `other`, `on`, `other_on`, `keep_unmatched`, `prefix` | each row plus the fields of the row of `other` whose `other_on` (default `on`) equals its `on`, named with `prefix` before them; a row with no match is dropped, or kept as it is when `keep_unmatched` |
+| `map: { action: convert }` | `source`, `dates`, `amounts`, `negate` | adds fields read from text: `dates` maps a field to the field that gets its ISO date (`01/02/2026` is January 2), `amounts` maps a field to the field that gets its dollars (`(4.50)` is negative); `negate` flips the sign (a card lists charges as positive) |
+| `map: { action: number }` | `source`, `into`, `prefix` | adds `into`: the row's position from 1 after `prefix` (`m1`, `m2`) |
+| `map: { action: pair }` | `source`, `other`, `date`, `amount`, `within`, `only`, `text`, `other_text`, `rounds` | every row of two lists once, paired one to one when `date` and `amount` are equal (rows whose `text` is equal first, then in file order), then within `within` business days, nearest first: flat rows `{match, method, <source fields>, other_<other fields>}`; `only` is a condition on which source rows may pair |
+| `map: { action: link }` | `source`, `date`, `amount`, `apart`, `id`, `within`, `rounds` | links rows of one list to each other (opposite amounts, different `apart` values, dates within `within` business days, nearest first, ties by `id`): adds `partner` and `gap` (null when unlinked) |
+| `map: { action: earlier }` | `source`, `other`, `on`, `date`, `amount`, `tie`, `prefix`, `take` | for each row, one row per `other` row with the same `on`, a `date` no later and an `amount` of the opposite sign at least as large (a refund and the charges it could reverse), with the candidate's fields after `prefix` and a `candidates` count |
+| `map: { action: group }` | `source`, `by`, `collect`, `take` | one row per distinct `by` value (case and spacing ignored): `{key, <by>, count}` plus, for each `collect` entry `into: field`, up to `take` different values |
+| `map: { action: attach }` | `source`, `other`, `field`, `into` | adds `into` to every row: the list of the `field` values of all rows of `other` (what a repeated sketch needs to see) |
+| `map: { action: concat }` | `sources` | the rows of every source named, one after the other |
+| `map: { action: matching }` | `source`, `among`, `on`, `among_on` | the rows of `source` whose `on` value is a value of `among_on` in some row of `among` |
+| `map: { action: classify }` | `source`, `into`, `cases`, `otherwise` | adds `into`: the `then` of the first case `{ if: <condition>, then: <value> }` the row satisfies, else `otherwise` |
+| `map: { action: coalesce }` | `source`, `fields` | adds each `into: [field, ...]`: the first field the row has with a value |
+| `map: { action: replace }` / `normalize` / `format` | `source`, `field`, `pattern`, `into`, `by` / `field`, `into` / `template`, `into` | text: replace a regular expression, lower-case and collapse spaces, fill a `{field}` template |
+| `map: { action: rows }` / `mcc` | `rows` / none | a literal list of rows (often a list another sketch passed in) / the ISO 18245 merchant categories as `{group, name}` |
 | `map: { action: expect }` | `probabilities`, `values`, `into` | one row `{<into>: number}`: your numbers per level (`data.<values>`) averaged by a Jev reading's probabilities |
 | `map: { action: unpair }` | `source` | flat rows from an `each` result: each `{input, output}` pair becomes the input row plus each row it output |
 | `map: { action: adjacent_runs }` | `source`, `group`, `order`, `length`, `match` | every run of `length` consecutive `order` numbers in a `group`, from the rows that `match` (E3 E4 E5 gives E3-4 and E4-5 for 2): `{<group>, first, last, run}` |
@@ -276,6 +289,23 @@ The row's fields are the child's variables (`{{ title }}`), beside anything the 
 ```
 
 Each row's Jev answers are captured under the child's name and the row's position, so a replay needs no live call. `understudy check` reads the child with its row values left empty, so it checks the child's shape, not its values.
+
+### Folding: `each` with `reduce`
+
+When each iteration should see what the earlier ones produced, add `reduce`:
+
+```yaml
+named:
+  do: { sketch: { file: name_merchant } }
+  each: unfit
+  reduce: { action: concat, into: earlier }
+```
+
+The iterations run in order. The rows each one outputs are appended to a running list, and the next iteration receives it as the variable named by `into` (here `{{ earlier }}`, empty for the first). The state's result is that list, not pairs, so an iteration's output must carry whatever identifies its row. A child that never uses the `into` name is refused by `check`. Only `concat` exists so far.
+
+## Files
+
+A file source whose name ends in `.csv` is read with its header row as the field names; every value is text (turn dates and amounts into values with `map.convert`). Any other file is JSONL.
 
 ## How a run ends
 
