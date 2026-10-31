@@ -46,11 +46,6 @@ export default [
     },
   },
   {
-    // The web example's own app code runs in the page.
-    files: ['examples/web/**/*.js'],
-    languageOptions: { globals: { document: 'readonly', globalThis: 'readonly' } },
-  },
-  {
     // The watch page's script runs in the browser (sprint 4, ARCH_SPRINT4 §7).
     // The dashboard's page too (sprint 6, ARCH_SPRINT6 §7).
     files: ['src/watch/page.mjs', 'src/dashboard/page.mjs'],

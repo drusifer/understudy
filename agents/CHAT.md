@@ -209,9 +209,10 @@ OK
  Household redesign: map.link (card-payment legs) and map.group built, 255ish tests green, committed locally. Next: map.row, map.classify, the three Jev child sketches, assembly, then delete the old ETL. Owner question pending on category naming. Not pushed.
 
 ---
-[<small>2026-10-30 21:09:24</small>] [**make**]->[**all**] *build*:
- Build PASSED | make test-py | /home/drusifer/Projects/understudy/build/build.out
+[<small>2026-10-30 21:10:03</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test | /home/drusifer/Projects/understudy/build/build.out
 ----------------------------------------------------------------------
-Ran 221 tests in 11.221s
+make[1]: Leaving directory '/home/drusifer/Projects/understudy'
+Ran 221 tests in 10.998s
 
 OK
