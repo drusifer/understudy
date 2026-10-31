@@ -36,8 +36,10 @@ class RunRecord:
         self.manifest.update(status="failed", failed_stage=name, error=str(error))
         self.save()
 
-    def finished(self) -> None:
+    def finished(self, outcome: str | None = None) -> None:
         self.manifest["status"] = "complete"
+        if outcome:
+            self.manifest["outcome"] = outcome
         self.save()
 
 
@@ -47,10 +49,12 @@ def current_state(machine) -> str:
 
 async def run_machine(
     machine, stages: Mapping[str, Callable[[], Awaitable]], record: RunRecord, publish: Callable[[], None] | None = None,
+    outcomes: Mapping[str, str] | None = None,
 ) -> None:
     """Walk `machine` from its initial state to a final one, running the stage each state names.
 
     `publish` runs once the machine has ended and before the run is recorded as complete; if it fails, so does the run.
+    `outcomes` names what a final state means (`outcome:` in the sketch); the run records the one it ended in.
     """
     while not machine.is_terminated:
         name = current_state(machine)
@@ -73,4 +77,4 @@ async def run_machine(
     except Exception as error:
         record.failed("publish", error)
         raise
-    record.finished()
+    record.finished((outcomes or {}).get(current_state(machine)))

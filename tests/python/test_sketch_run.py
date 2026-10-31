@@ -9,11 +9,11 @@ from unittest.mock import patch
 from src.paths import ROOT
 from src.sketch.check import load_checked
 from src.sketch.cli import main
+from src.sketch.registry import STAGES, Stage
 from src.sketch.run import run_sketch
-from src.sketch.vocabulary import STAGES
 
 BRANCH = ROOT / "tests" / "fixtures" / "machine_branch.yaml"
-TEST_STAGES = {"test.count": {}, "test.mark": {}, "test.boom": {}}
+TEST_STAGES = {name: Stage(name, None, {}) for name in ("map.count", "map.mark", "map.boom")}
 
 
 def library(count=100, fail_in=None):
@@ -28,7 +28,7 @@ def library(count=100, fail_in=None):
     async def boom(context):
         raise RuntimeError("boom")
 
-    return {"test.count": counted, "test.mark": marked, "test.boom": boom}
+    return {"map.count": counted, "map.mark": marked, "map.boom": boom}
 
 
 class RunCase(unittest.TestCase):
@@ -93,14 +93,30 @@ class MachineTests(RunCase):
         self.assertEqual(sorted(p.name for p in folder.iterdir()), ["events.jsonl", "run.json"])
 
     def test_a_failure_after_the_sink_removes_the_partial_output(self):
-        path = self.sketch([("then: done\n    done:", "then: after\n    after:\n      do: test.boom\n      then: done\n    done:")])
+        after = "then: after\n    after:\n      do: { map: { action: boom } }\n      then: done\n    done:"
+        path = self.sketch([("then: done\n    done:", after)])
         with self.assertRaisesRegex(RuntimeError, "boom"):
             self.run_it(library(), path)
         self.assertEqual(sorted(p.name for p in self.only_run_folder().iterdir()), ["events.jsonl", "run.json"])
 
+    def test_a_final_state_can_name_the_outcome_the_run_ended_in(self):
+        path = self.sketch([("    done:\n      final: true", "    done:\n      final: true\n      outcome: all_done")])
+        result, _ = self.run_it(library(), path)
+        self.assertEqual(result.outcome, "all_done")
+        manifest = json.loads((result.directory / "run.json").read_text(encoding="utf-8"))
+        self.assertEqual((manifest["status"], manifest["outcome"]), ("complete", "all_done"))
+        last = json.loads((result.directory / "events.jsonl").read_text(encoding="utf-8").splitlines()[-1])
+        self.assertEqual(last["outcome"], "all_done")
+        self.assertTrue(result.outputs["report"].is_file())
+
+    def test_a_final_state_with_no_outcome_leaves_it_out(self):
+        result, _ = self.run_it(library())
+        self.assertIsNone(result.outcome)
+        self.assertNotIn("outcome", json.loads((result.directory / "run.json").read_text(encoding="utf-8")))
+
     def test_a_state_with_no_stage_in_the_library_is_named(self):
-        with self.assertRaisesRegex(LookupError, "test.mark"):
-            self.run_it({"test.count": library()["test.count"]})
+        with self.assertRaisesRegex(LookupError, "map.mark"):
+            self.run_it({"map.count": library()["map.count"]})
 
 
 class CliTests(RunCase):
@@ -116,8 +132,13 @@ class CliTests(RunCase):
         self.assertTrue(out[-1].startswith("wrote ") and out[-1].endswith("report.jsonl"))
         self.assertEqual(err, [])
 
+    def test_the_outcome_is_the_last_line_and_the_exit_is_still_0(self):
+        path = self.sketch([("    done:\n      final: true", "    done:\n      final: true\n      outcome: all_done")])
+        code, out, err = self.go("run", str(path), "--out", str(self.out))
+        self.assertEqual((code, err, out[-1]), (0, [], "outcome: all_done"))
+
     def test_a_wrong_sketch_is_exit_2_with_a_last_line_saying_what_to_fix(self):
-        path = self.sketch([("do: sink.report", "do: sink.reportt")])
+        path = self.sketch([("do: { sink: { name: report } }", "do: { sink: { name: reportt } }")])
         code, out, err = self.go("run", str(path), "--out", str(self.out))
         self.assertEqual(code, 2)
         self.assertEqual(out, [])

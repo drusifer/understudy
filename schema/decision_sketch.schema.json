@@ -20,16 +20,56 @@
     "outcomes": {
       "type": "object",
       "additionalProperties": {
-        "type": "array",
-        "items": { "type": "string", "minLength": 1 },
-        "minItems": 1,
-        "uniqueItems": true
+        "oneOf": [
+          {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          { "$ref": "#/$defs/candidates" }
+        ]
       }
     },
     "data": { "type": "object" },
     "machine": { "$ref": "#/$defs/machine" }
   },
   "$defs": {
+    "stageRef": {
+      "description": "Which stage a state runs (or a stage source computes): a type as the key, its one field as the value.",
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "map": { "$ref": "#/$defs/actionStage" },
+        "reduce": { "$ref": "#/$defs/actionStage" },
+        "sink": {
+          "type": "object", "required": ["name"], "additionalProperties": false,
+          "properties": { "name": { "type": "string", "minLength": 1 } }
+        },
+        "sketch": {
+          "type": "object", "required": ["file"], "additionalProperties": false,
+          "properties": { "file": { "type": "string", "minLength": 1 } }
+        }
+      }
+    },
+    "actionStage": {
+      "type": "object",
+      "required": ["action"],
+      "additionalProperties": false,
+      "properties": { "action": { "type": "string", "minLength": 1 } }
+    },
+    "candidates": {
+      "description": "Options that exist only in data: the values of `key` in the rows of a source (or a stage's result).",
+      "type": "object",
+      "required": ["from", "key"],
+      "additionalProperties": false,
+      "properties": {
+        "from": { "type": "string", "minLength": 1 },
+        "key": { "type": "string", "minLength": 1 }
+      }
+    },
     "source": {
       "oneOf": [
         { "type": "string", "minLength": 1 },
@@ -44,12 +84,26 @@
         },
         {
           "type": "object",
-          "required": ["kind", "question", "instructions", "criteria", "state"],
+          "required": ["kind", "do"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "stage" },
+            "do": { "$ref": "#/$defs/stageRef" },
+            "each": { "type": "string", "minLength": 1 },
+            "reduce": { "$ref": "#/$defs/state/properties/reduce" },
+            "with": { "type": "object" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "question", "instructions", "state"],
+          "oneOf": [{ "required": ["criteria"] }, { "required": ["options"] }],
           "additionalProperties": false,
           "properties": {
             "kind": { "const": "jev" },
             "question": { "const": "choice" },
             "instructions": { "type": "string", "minLength": 1 },
+            "options": { "$ref": "#/$defs/candidates" },
             "criteria": {
               "type": "object",
               "minProperties": 2,
@@ -102,10 +156,10 @@
       "additionalProperties": false,
       "properties": {
         "decide": { "type": "object" },
-        "decider": { "type": "string", "minLength": 1 },
+        "from": { "type": "string", "minLength": 1 },
         "weight": { "$ref": "#/$defs/weight" }
       },
-      "oneOf": [{ "required": ["decide"] }, { "required": ["decider"] }]
+      "oneOf": [{ "required": ["decide"] }, { "required": ["from"] }]
     },
     "forbid": {
       "type": "object",
@@ -129,23 +183,39 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "do": { "type": "string", "minLength": 1 },
+        "do": { "$ref": "#/$defs/stageRef" },
+        "each": { "type": "string", "minLength": 1 },
+        "reduce": {
+          "description": "With `each`: fold the iterations. Each iteration's rows are merged into a running list that the next iteration receives as the variable `into`.",
+          "type": "object",
+          "required": ["action", "into"],
+          "additionalProperties": false,
+          "properties": {
+            "action": { "const": "concat" },
+            "into": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" }
+          }
+        },
         "with": { "type": "object" },
-        "blend": { "type": "array", "items": { "$ref": "#/$defs/blendEntry" }, "minItems": 1 },
-        "forbid": { "type": "array", "items": { "$ref": "#/$defs/forbid" } },
-        "on_empty": { "enum": ["fail", "fallback", "skip"] },
         "then": { "type": "string", "minLength": 1 },
         "transitions": { "type": "array", "items": { "$ref": "#/$defs/transition" }, "minItems": 1 },
         "final": { "type": "boolean" },
         "outcome": { "type": "string" },
-        "returns": {
-          "type": "object",
-          "required": ["decider"],
-          "additionalProperties": false,
-          "properties": {
-            "decider": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
-          }
-        }
+        "outputs": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+      },
+      "if": { "required": ["do"], "properties": { "do": { "required": ["reduce"], "properties": { "reduce": {
+        "required": ["action"], "properties": { "action": { "const": "blend" } } } } } } },
+      "then": { "required": ["with"], "properties": { "with": { "$ref": "#/$defs/blendWith" } } }
+    },
+    "blendWith": {
+      "description": "The `with:` of `reduce: { action: blend }`: the weighted entries to combine, and the rules around them.",
+      "type": "object",
+      "required": ["entries"],
+      "additionalProperties": false,
+      "properties": {
+        "entries": { "type": "array", "items": { "$ref": "#/$defs/blendEntry" }, "minItems": 1 },
+        "forbid": { "type": "array", "items": { "$ref": "#/$defs/forbid" } },
+        "on_empty": { "enum": ["fail", "fallback", "skip"] },
+        "shortlist": { "type": "integer", "minimum": 1 }
       }
     },
     "machine": {

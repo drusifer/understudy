@@ -1,9 +1,0 @@
-{
-  "mcpServers": {
-    "boxoffice": {
-      "type": "http",
-      "url": "http://127.0.0.1:${BOX_PORT:-8765}/mcp",
-      "headers": { "Authorization": "Bearer ${MCP_TOKEN}" }
-    }
-  }
-}

@@ -13,9 +13,18 @@ from src.sketch.conditions import holds
 from src.sketch.model import Sketch
 
 
+def _seen(result):
+    """What a guard tests: a mapping result as it is, or the one row of a single-row result (a scalar reducer such as
+    `reduce.any` returns `[{any: true}]`); anything else cannot be tested."""
+    if isinstance(result, list) and len(result) == 1:
+        result = result[0]
+    return result if isinstance(result, dict) else None
+
+
 def _guard(condition: dict):
     def guard(self, *args, **kwargs):  # noqa: ARG001 - python-statemachine passes event data we do not use
-        return isinstance(self.result, dict) and holds(condition, self.result)
+        seen = _seen(self.result)
+        return seen is not None and holds(condition, seen)
     return guard
 
 

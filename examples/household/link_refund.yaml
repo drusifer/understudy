@@ -1,0 +1,40 @@
+name: link_refund
+description: >
+  Which of several earlier charges did a refund most likely reverse? Jev chooses among the charges, each named by its
+  date and amount; the one it gives the highest probability is the original. Give it the refund's `record_id`,
+  `payees`, `days`, `costs` and the `options` (one name per charge).
+
+sources:
+  facts:
+    kind: stage
+    do: { map: { action: rows } }
+    with:
+      rows:
+        - { merchant: {{ (payees | first | default('')) | tojson }}, date: {{ (days | first | default('')) | tojson }}, amount: {{ (costs | first | default('')) | tojson }} }
+  charges:
+    kind: stage
+    do: { map: { action: rows } }
+    with:
+      rows:
+{% for label in options %}
+        - { label: {{ label | tojson }} }
+{% endfor %}
+  reading:
+    kind: jev
+    question: choice
+    instructions: >
+      Which of these earlier charges did `refund` most likely reverse? Each option is one charge from the same merchant.
+    options: { from: charges, key: label }
+    state:
+      refund: { from: facts }
+
+machine:
+  initial: pick
+  states:
+    pick:
+      do: { reduce: { action: max } }
+      with: { source: reading, field: probability }
+      then: done
+    done:
+      final: true
+      outputs: [level]

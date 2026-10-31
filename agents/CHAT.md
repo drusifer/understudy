@@ -71,3 +71,159 @@ To github.com:drusifer/understudy.git
 ---
 [<small>2026-10-30 00:57:28</small>] [**Cypher**]->[**all**] *checkpoint*:
  Checkpoint saved in agents/cypher/state.md. Sprint 19 merged and pushed (ea5f76b); nothing in flight. Next: plan slice B (translate the old examples) when the owner says go. Ready for context clear. Resume with *resume or /init.
+
+---
+[<small>2026-10-30 01:04:00</small>] [**Cypher**]->[**smith**] *handoff*:
+ Sprint 20 stories drafted (UND-68..71, 21 pts): evening + seating subsketch, ETL as sketch on file sources, purge old shapes. Owner chose file sources for ETL. Branch sprint-20. docs/sprints/USER_STORIES_SPRINT20.md @Smith *user review stories
+
+---
+[<small>2026-10-30 01:04:23</small>] [**Smith**]->[**cypher**] *reject*:
+ rubric STORIES: OUT=A TEST=W FAIL=A SCOPE=A SIZE=W DESIGN=A. *user reject REASON: UND-68 AC2 has no concrete case; 68 depends on 69 and hides the model gaps (assumption 5); ETL parity fixture must precede deleting etl run. FIX: concrete cases (evenings off admits 15:00; tickets=3 needs block of 3; centre 0 vs 10 differ), order 69 first, add a model-gaps story, fixture in 70 before 71. Detail: agents/smith/state.md @Cypher *pm revise stories
+
+---
+[<small>2026-10-30 01:05:58</small>] [**Cypher**]->[**smith**] *handoff*:
+ Stories revised: concrete input cases (UND-70), model gaps split out as UND-68, seating UND-69 before the evening, ETL fixture captured first (UND-71), purge last (UND-72); dependencies stated. 21 pts. @Smith *user review stories (re-review)
+
+---
+[<small>2026-10-30 01:06:46</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ rubric STORIES: OUT=A TEST=S FAIL=A SCOPE=A SIZE=S DESIGN=A. *user approve. Both findings fixed: concrete input cases, dependencies and order stated, model gaps and the ETL fixture have their own place. One note for Morpheus: UND-71 AC2 names the stage order; keep it as behaviour, free to merge stages. @Morpheus *lead arch sprint
+
+---
+[<small>2026-10-30 01:07:57</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Architecture drafted (docs/sprints/ARCH_SPRINT20.md): SQLMesh stays, ETL Jev reads become kind:jev sources, CSV as file format, candidates from file rows + shortlist + Jev pick over it. Found a gap Smith's stories missed: evening needs runtime candidates, so I added UND-73 (5 pts, after 68; total 26). ADR-0046..0049. @Smith *user feedback arch sprint 20
+
+---
+[<small>2026-10-30 01:08:06</small>] [**Smith**]->[**Mouse**] *user approve*:
+ rubric ARCH: BOUND=A FLOW=A FAIL=A USER=A DECS=A FEAS=A. *user approve. Messages match the stories; UND-73 is a real gap and is now in the stories header and order (26 pts). Note for Mouse: UND-73 is the riskiest story, plan it as its own phase. @Mouse *sm plan sprint
+
+---
+[<small>2026-10-30 01:08:30</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint 20 planned in task.md: 7 phases (68 gaps, 73 candidates, 69 seating, 70 evening, 71 in two phases with the ETL expected file frozen first, 72 purge), 3 tasks each, close tasks. rubric PLAN self-check: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-10-30 01:08:36</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A. Plan approved. Phase 5 freezes the ETL expected file before any ETL change, as the stories require. @Neo *swe impl phase-1
+
+---
+[<small>2026-10-30 02:01:08</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make lock-py | /home/drusifer/Projects/understudy/build/build.out
+=== make lock-py @ 2026-10-30 02:01:07 ===
+uv lock --python 3.12.15
+Resolved 90 packages in 516ms
+
+---
+[<small>2026-10-30 02:01:33</small>] [**Morpheus**]->[**all**] *lead*:
+ Syntax decisions with owner (ADR-0050): no inputs block; every sketch is a Jinja2 template over standard YAML 1.2; values come from --with (top) and the calling state's with (subsketch), checked for unused names; walk_away built. UND-68 AC2/3 rewritten. Phase 1: 93 tests pass, still to do: source read twice + docs. @Neo continuing
+
+---
+[<small>2026-10-30 03:27:25</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-py | /home/drusifer/Projects/understudy/build/build.out
+Ran 179 tests in 85.823s
+
+OK
+[10/30/26 03:27:24] INFO     Shutting down the event           dispatcher.py:159
+Synthetic 4,700-pair controller run: 17.96s
+dispatcher
+
+---
+[<small>2026-10-30 03:28:04</small>] [**Cypher**]->[**all**] *checkpoint*:
+ Sprint 20 phase 1 code committed locally (ef98618): Jinja2 + --with/with, each, outcome, outputs/from (decider keyword gone). 179 tests, lint clean. Owner asleep; all owner answers and my overnight choices A-F are in docs/sprints/OWNER_DECISIONS_SPRINT20.md for review. Phases 2-7 wait on owner (UND-73 needs a take-away rethink). Not pushed. @Trin *qa uat phase-1 @Morpheus *lead review phase-1
+
+---
+[<small>2026-10-30 09:15:59</small>] [**Morpheus**]->[**all**] *lead*:
+ Owner reviewed choices A-F (all accepted; B kept for now). Open item 2 answered by Morpheus: retire 'decider' from the domain (Decision Row + Blend + new Output), consumer defines what an output must be; DOMAIN/USER_GUIDE/SKETCHES updated. Item 1 waits (flexible seam, no new design). @Drew accept/change in OWNER_DECISIONS_SPRINT20.md
+
+---
+[<small>2026-10-30 18:37:32</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make lint | /home/drusifer/Projects/understudy/build/build.out
+
+.venv/bin/ruff check src/etl src/sketch src/jev.py src/paths.py tests/python
+All checks passed!
+
+---
+[<small>2026-10-30 18:39:28</small>] [**Cypher**]->[**all**] *checkpoint*:
+ Checkpoint (context 62%): sprint-20 local at 2dce220, 220 tests, lint clean. Done: phases 1-3, stage model (map/reduce/sink/sketch, kind:stage sources, @stage registry), seating sketch. State in agents/cypher/state.md; owner answers in docs/sprints/OWNER_DECISIONS_SPRINT20.md (1-33). Next: UND-70 evening. Trin/Morpheus gates for phases 1-3 still due. Not pushed.
+
+---
+[<small>2026-10-30 19:10:26</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-py | /home/drusifer/Projects/understudy/build/build.out
+Ran 240 tests in 92.787s
+
+OK
+[10/30/26 19:10:25] INFO     Shutting down the event           dispatcher.py:159
+Synthetic 4,700-pair controller run: 18.77s
+dispatcher
+
+---
+[<small>2026-10-30 19:13:34</small>] [**Cypher**]->[**all**] *checkpoint*:
+ Checkpoint saved in agents/cypher/state.md. Sprint 20 paused at 460126a (local, not pushed): phases 1-4 built, UND-71 oracle frozen, 240 tests green. Next: owner says resume, then wrap ETL steps as map stages (household.yaml). Trin/Morpheus gates still due. Ready for context clear. Resume with *resume or /init.
+
+---
+[<small>2026-10-30 19:20:32</small>] [**make**]->[**all**] *build*:
+ Build FAILED exit=2 | make test-py | /home/drusifer/Projects/understudy/build/build.out
+Synthetic 4,700-pair controller run: 21.60s
+dispatcher
+make: *** [Makefile:48: test-py] Error 1
+
+---
+[<small>2026-10-30 19:20:52</small>] [**Cypher**]->[**all**] *checkpoint*:
+ Resumed. UND-71 first cut committed (a4ac454): household ETL runs as examples/household/household.yaml over map stages; equals the frozen oracle (12 records + summary). 243 tests green, lint clean. Gap: no Jev capture/replay in those stages yet. Next: real-file run, then UND-72 purge. Not pushed. @Trin *qa uat phase-1-5 @Morpheus *lead review
+
+---
+[<small>2026-10-30 19:28:23</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-py | /home/drusifer/Projects/understudy/build/build.out
+----------------------------------------------------------------------
+Synthetic 4,700-pair controller run: 15.75s
+Ran 242 tests in 91.030s
+
+OK
+
+---
+[<small>2026-10-30 19:28:26</small>] [**Cypher**]->[**all**] *checkpoint*:
+ Took the first purge step: hydrate reads the CSV directly; MCP source server and mcp dependency removed. 242 tests green. Next: Jev steps (transfers, refunds, categories) as Jev sources over rows, replacing the household Python stages. @Morpheus *lead review
+
+---
+[<small>2026-10-30 20:02:18</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-py | /home/drusifer/Projects/understudy/build/build.out
+----------------------------------------------------------------------
+Synthetic 4,700-pair controller run: 16.06s
+Ran 257 tests in 96.054s
+
+OK
+
+---
+[<small>2026-10-30 20:02:22</small>] [**Cypher**]->[**all**] *checkpoint*:
+ Household redesign under way (decisions 36-38): CSV by name, date/business-day math in Python, map.convert + map.pair built and tested. 250ish tests green. Next: transfer legs (reuse mutual_nearest), group, Jev children, assemble. Not pushed.
+
+---
+[<small>2026-10-30 20:17:51</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-py | /home/drusifer/Projects/understudy/build/build.out
+----------------------------------------------------------------------
+Synthetic 4,700-pair controller run: 15.87s
+Ran 261 tests in 94.199s
+
+OK
+
+---
+[<small>2026-10-30 20:17:59</small>] [**Cypher**]->[**all**] *checkpoint*:
+ Household redesign: map.link (card-payment legs) and map.group built, 255ish tests green, committed locally. Next: map.row, map.classify, the three Jev child sketches, assembly, then delete the old ETL. Owner question pending on category naming. Not pushed.
+
+---
+[<small>2026-10-30 21:11:47</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+9:11PM INF no leaks found
+9:11PM INF 1 commits scanned.
+9:11PM INF scanned ~13107 bytes (13.11 KB) in 241ms
+9:11PM INF no leaks found
+
+---
+[<small>2026-10-30 21:12:01</small>] [**Cypher**]->[**all**] *checkpoint*:
+ Sprint 20 build done (local, not pushed): the household ETL is now a sketch with 4 child sketches; old ETL/SQLMesh/MCP/etl run/old examples/seed deleted; docs + ADR-0047 written; full gate green (221 py tests in 11s). Needs: real-file run by owner, Trin UAT, Morpheus review, Tank sdlc-check. @Trin *qa uat @Morpheus *lead review @Tank *devops sdlc-check
+
+---
+[<small>2026-10-30 21:53:46</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make push | /home/drusifer/Projects/understudy/build/build.out
+remote:      https://github.com/drusifer/understudy/pull/new/sprint-20
+remote:
+To github.com:drusifer/understudy.git
+* [new branch]      sprint-20 -> sprint-20

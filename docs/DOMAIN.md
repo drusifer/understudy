@@ -12,8 +12,8 @@
 A sketch is a shop owner's written-down way of deciding something, run by understudy: files in, a decision made by the owner's own rules, files out. Counting and converting are plain SQL; the owner's judgement is `decide` logic with weights; Jev is called only for a qualitative reading of supplied text against a rubric. This context replaces the old "play an app like a person" model; the Node player is deleted at the end of the epic.
 
 * **In-Scope Capabilities:** loading and checking a sketch; running its machine; deciders, blending, filtering; sources and sinks as files; subsketches; the run folder and its output.
-* **Out-of-Scope:** the dashboard and watch page (a later slice; they will consume the run event stream); fetching data over a network (MCP, HTTP); the Monarch/Amex ETL, which stays its own context and shares only the Jev wrapper and the state machine runner.
-* **Upstream Contexts:** `Jev` (typesafe-sdk, wrapped in `src/etl/jev.py`), `DuckDB/SQL`, `python-statemachine`.
+* **Out-of-Scope:** the dashboard and watch page (a later slice; they will consume the run event stream); fetching data over a network (MCP, HTTP); the Monarch/Amex ETL is now just a sketch, `examples/household/household.yaml` (Sprint 20), built from the same parts as the rest and in no context of its own.
+* **Upstream Contexts:** `Jev` (typesafe-sdk, wrapped in `src/jev.py`), `DuckDB/SQL`, `python-statemachine`.
 * **Downstream Consumers:** the owner (command line), later the Dashboard context.
 
 ---
@@ -32,9 +32,9 @@ Code mappings are the proposed symbols for the new package; Morpheus confirms th
 | **Sink** | Value Object | A named output that accepts JSONL. | `Sink` |
 | **Input** | Value Object | A value the person sets for a run (a fader, switch, count or choice), or passes to a subsketch. | `Input` |
 | **Outcome** (dimension) | Value Object | A declared dimension of a decision: an enumeration, or discrete numeric steps. Candidates may be read from source rows. | `Outcome` |
-| **Decider** | Domain Service | One row in, weighted rows out. Implemented by a decide tree, an ETL lookup, a subsketch or a Jev source. | `Decider` |
-| **Decision Row** | Value Object | One combination of outcome values with a `weight`; the weights for one input sum to 1. | `DecisionRow` |
-| **Blend** | Policy | The single combination rule: the weighted average of deciders' rows, weights normalised. | `blend()` |
+| **Output** | Value Object | A name a sketch lists in `outputs:` on a final state: the rows it hands back to whoever called it. What an output holds is for the consumer to accept: a `blend` takes Decision Rows; an `each` pairs it with the row it ran for. | `Output` (a name; no class) |
+| **Decision Row** | Value Object | One combination of outcome values with a `weight`; the weights for one input sum to 1. A decide tree, an ETL lookup, a subsketch or a Jev source can all produce them. | `DecisionRow` |
+| **Blend** | Policy | The single combination rule: the weighted average of the Decision Rows its entries produce, weights normalised. | `blend()` |
 | **Filter** (`forbid`) | Policy | An explicit YAML condition (field, operator, value) that drops rows; survivors are renormalised; a forbid always wins over a preference. | `forbid()` |
 | **Empty Result** | Policy | A filter that empties every row for an input fails the run, unless the stage says `fallback`, `skip` or `walk_away`. | `OnEmpty` |
 | **Segment** | Value Object | A group of customers with a share of the trade, from the owner's rough demographics. | `Segment` |
@@ -48,7 +48,8 @@ Code mappings are the proposed symbols for the new package; Morpheus confirms th
 | Forbidden / Deprecated Term | Preferred Ubiquitous Term | Rationale |
 |---|---|---|
 | `turn`, `look`, `play`, "the understudy plays" | Machine, Stage, Run | The sketch is the owner's own pipeline, not an actor performing in an app. |
-| `gates`, `scores`, `position ^ weight` | Filter, Decider, Blend | The old multiplicative scoring is dropped; vetoes are explicit filters. |
+| `gates`, `scores`, `position ^ weight` | Filter, Decision Row, Blend | The old multiplicative scoring is dropped; vetoes are explicit filters. |
+| "decider" as a schema keyword or a type | Decision Row (what is produced), Blend (what combines them) | Owner, 2026-10-30: "decider" is a name an author may choose, not part of the schema. |
 | `bind`, `extends` | Source / Sink with `kind` in place | Decided against: the declaration holds its own configuration. |
 | `target` (process/http/mcp/page) | Source, Sink | Nothing is played or driven; data goes in and out. |
 | "record" for a row | Decision Row, source row | "Record" leaks storage detail. |
@@ -67,9 +68,9 @@ erDiagram
     Sketch ||--|| Machine : runs
     Sketch ||--o{ Rubric : asks
     Machine ||--|{ Stage : names
-    Stage ||--o| Decider : "is, for a decide stage"
+    Stage ||--o{ DecisionRow : "produces, for a decide stage"
     Stage ||--o| Sketch : "calls, as a subsketch"
-    Decider ||--|{ DecisionRow : returns
+    Sketch ||--o{ Output : "hands back, from a final state"
     Run }o--|| Sketch : executes
     Run ||--|| RunFolder : owns
 ```
@@ -90,7 +91,7 @@ erDiagram
 * **Boundary Members:** `Source`, `Sink`, `Outcome`, `Machine`, `Stage`, `Rubric`, `Segment`, `Input`.
 * **Business Invariants (Must ALWAYS Be True):**
   1. *Checked before run:* every stage a state names exists; every transition target exists; every path ends in a final state; any mistake names the file, the path inside it, the bad value and the nearest good one.
-  2. *Declared outcomes only:* a decider's rows use only dimensions and options in `outcomes` (or, for source-backed outcomes, keys read from the source); an unknown key is an error naming the decider, never ignored.
+  2. *Declared outcomes only:* the Decision Rows a blend receives use only dimensions and options in `outcomes` (or, for source-backed outcomes, keys read from the source); an unknown key is an error naming the stage that produced it, never ignored.
   3. *Weights:* the weights of one input's rows sum to 1 after every blend and every filter; a missing option has weight 0.
   4. *Forbid wins:* a `forbid` is applied after the blend and cannot be outweighed by a preference.
   5. *No silent gaps:* a filter that empties an input fails the run naming the rule and the input, unless the stage opts in to `fallback`, `skip` or `walk_away`.

@@ -1,0 +1,42 @@
+name: review_score
+description: >
+  How much a horror lover would enjoy one film, from its audience reviews: Jev reads the reviews against a rubric,
+  and your number for each level turns its reading into one score from 0.0 to 1.0. Give it the film's `title`.
+
+sources:
+  all_reviews: reviews.jsonl            # { title, text }
+  reviews:                              # just this film's reviews
+    kind: stage
+    do: { map: { action: where } }
+    with: { source: all_reviews, keep: { title: { eq: "{{ title }}" } } }
+  audience:                             # Jev reads them and answers with a probability per level
+    kind: jev
+    question: choice
+    instructions: >
+      Judging by these audience reviews, how much would a horror lover in the mood for something
+      {{ mood | default('fun') }} enjoy this film?
+    criteria:
+      bored: Bored, or walked out.
+      mixed: Mixed, a few good moments.
+      solid: Solid fun, would recommend.
+      loved: Loved it, the best of the year.
+    state:
+      reviews: { from: reviews }
+
+data:
+  audience_value:                       # your number for each level; Jev never sees these
+    bored: 0.0
+    mixed: 0.4
+    solid: 0.7
+    loved: 1.0
+
+machine:
+  initial: score
+  states:
+    score:
+      do: { map: { action: expect } }
+      with: { probabilities: audience, values: audience_value, into: audience }
+      then: done
+    done:
+      final: true
+      outputs: [audience]

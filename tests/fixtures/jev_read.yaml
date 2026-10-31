@@ -20,10 +20,10 @@ machine:
   initial: ask
   states:
     ask:
-      do: test.read
+      do: { map: { action: read } }
       then: write
     write:
-      do: sink.out
+      do: { sink: { name: out } }
       then: done
     done:
       final: true

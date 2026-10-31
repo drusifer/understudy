@@ -6,7 +6,7 @@ ask `@Tank *devops sdlc <what and why>` — the mechanism and this document chan
 
 ## 1. Toolchain
 
-| | JavaScript (Node ESM, `.mjs` sources) | Python (SQLMesh ETL models) |
+| | JavaScript (Node ESM, `.mjs` sources) | Python (the sketch package) |
 |---|---|---|
 | Runtime version | Node 24 — `engines.node: ">=24"` in `package.json` and `.nvmrc` (`24`). Verified on v24.13.0. | CPython 3.12.15 in `.python-version` |
 | Manifest | `package.json` (tasks in `scripts`) | `pyproject.toml` |
@@ -15,10 +15,12 @@ ask `@Tank *devops sdlc <what and why>` — the mechanism and this document chan
 | Local environment | `node_modules/` (gitignored) | `.venv/` (gitignored) |
 | Test runner | `node:test` (built in, no dependency) | `unittest` (built in) |
 
-Since Sprint 17 the whole ETL is Python (ADR-0038): a `python-statemachine` YAML controller
-(`src/etl/stages.yaml`), SQLMesh 0.236.3 on DuckDB 1.5.6, MCP source servers (`mcp` 2.3.0), `holidays`,
-`iso18245` (MCC names) and `typesafe-sdk` 0.7.5 for Jev, all pinned in `pyproject.toml` and `uv.lock`. Since Sprint 19 the decision-sketch package `src/sketch` also pins `ruamel.yaml` 0.19.1 (sketches are read as YAML 1.2, so `70:30` stays text) and `jsonschema` 4.26.0 (the sketch JSON Schema); the capture cache lives in git-ignored `.understudy/`.
-The Node ETL (`src/etl/*.mjs`) is deleted; `src/cli.mjs` only launches the Python CLI. The run database is
+Everything runs in the Python package `src/sketch` (ADR-0038, ADR-0045, ADR-0047): `python-statemachine`, DuckDB 1.5.6 (the
+SQL a stage may run), `dateparser` 1.2.1 and `holidays` 0.107 (dates and business days), `iso18245` (MCC names),
+`jinja2` 3.1.6 (sketches are templates), `ruamel.yaml` 0.19.1 (sketches are read as YAML 1.2, so `70:30` stays text),
+`jsonschema` 4.26.0 (the sketch JSON Schema) and `typesafe-sdk` 0.7.5 for Jev, all pinned in `pyproject.toml` and
+`uv.lock`; the capture cache lives in git-ignored `.understudy/`. SQLMesh and the MCP source servers were removed in
+Sprint 20 when the household ETL became a sketch. `src/cli.mjs` only launches the Python CLI. The run database is
 opened by one process at a time. Private run output is refused under `data/` and any non-git-ignored
 project path (UND-54 AC4).
 Other required tools: `make`, `bobp` (agents run every target through `bobp make <target>`),
@@ -51,8 +53,8 @@ repeating their commands. `bobp make help` lists them.
 | `test` | `test-js` + `test-py` | both language suites; no Jev or browser calls |
 | `test-js` | JavaScript `node:test` suite | `ARGS` supports Node test filtering |
 | `test-py` | `python -m unittest discover -s tests/python` | offline tests for the Python ETL and sketch package; `ARGS="test_sketch*.py"` runs only the files matching that pattern |
-| `run` | `node bin/understudy.mjs $(ARGS)` (a launcher: `run` and `check` start the Python package `src/sketch`, `etl run` starts `src/etl`) | e.g. `ARGS="run tests/fixtures/coffee/coffee_week.yaml --replay"`; a live run reads `TYPESAFE_API_KEY` from `.env` |
-| `lint` | `npm run lint` → eslint over `src/**/*.mjs`, `tests/**`; then `.venv/bin/ruff check src/etl src/sketch src/jev.py src/paths.py tests/python` | eslint config `eslint.config.js` (recommended + unicorn + sonarjs, as in recard); ruff 0.9.10 pinned in `pyproject.toml` (dev group); rule sets E, W, F, I, B, SIM, UP, N, C4, PERF, RUF, ERA, ARG, C90 (max complexity 12), PL, T20, RET, PTH, line length 135; test doubles and the CLI/MCP stdout are the only per-file ignores |
+| `run` | `node bin/understudy.mjs $(ARGS)` (a launcher: `run` and `check` start the Python package `src/sketch`) | e.g. `ARGS="run tests/fixtures/coffee/coffee_week.yaml --replay"`; a live run reads `TYPESAFE_API_KEY` from `.env` |
+| `lint` | `npm run lint` → eslint over `src/**/*.mjs`, `tests/**`; then `.venv/bin/ruff check src/sketch src/jev.py src/paths.py tests/python` | eslint config `eslint.config.js` (recommended + unicorn + sonarjs, as in recard); ruff 0.9.10 pinned in `pyproject.toml` (dev group); rule sets E, W, F, I, B, SIM, UP, N, C4, PERF, RUF, ERA, ARG, C90 (max complexity 12), PL, T20, RET, PTH, line length 135; test doubles and the CLI/MCP stdout are the only per-file ignores |
 | `secrets` | `gitleaks git` over history + uncommitted tracked changes | needs `gitleaks` installed |
 | `hooks` | `git config core.hooksPath .githooks` | installs the gitleaks pre-commit hook |
 | `check` | `test` + `lint` + `secrets` | the full gate |
@@ -152,8 +154,6 @@ None — everything runs locally on the dev Pi. A CI job, if added, must run
 
 - `gitleaks` is a system binary (`~/.local/bin/gitleaks`), not an npm dependency — same as recard.
   `make secrets` fails with an install hint if it is missing.
-- `seed/` holds non-running reference copies from recard; it is excluded from lint and tests
-  until each file is generalized into `src/` (see `seed/README.md`).
 - eslint rules turned off, all matching recard's config for the same reasons:
   `unicorn/filename-case` (camelCase files), `unicorn/no-null` (JSON-safe sentinel),
   `unicorn/consistent-class-member-order`, `unicorn/no-break-in-nested-loop`.

@@ -7,15 +7,15 @@ from pathlib import Path
 
 from jev_double import JevDouble
 
+import src.sketch.stages  # noqa: F401 - importing it registers the stages
 from src.jev import Chosen
 from src.paths import ROOT
 from src.sketch.check import check
 from src.sketch.cli import main
 from src.sketch.loader import load
+from src.sketch.registry import STAGES, Data, Param, Source
 from src.sketch.sources.capture import CaptureStore
 from src.sketch.sources.file import read_jsonl
-from src.sketch.stages import LIBRARY
-from src.sketch.vocabulary import STAGES
 
 FIXTURES = ROOT / "tests" / "fixtures" / "coffee"
 LEVELS = ("much_colder", "colder", "same", "warmer", "much_warmer")
@@ -56,9 +56,24 @@ class CoffeeCase(unittest.TestCase):
         return json.loads((self.folder(lines) / "summary.json").read_text(encoding="utf-8"))
 
 
-class LibraryTests(unittest.TestCase):
-    def test_the_stage_library_and_the_vocabulary_name_the_same_stages(self):
-        self.assertEqual(set(LIBRARY) - {"blend"}, set(STAGES))
+class RegistryTests(unittest.TestCase):
+    def test_the_stages_are_the_functions_decorated_with_stage(self):
+        self.assertEqual(set(STAGES), {
+            "map.split_by_share", "map.join_weights", "map.recipes", "reduce.blend",
+            "map.adjacent_runs", "map.prefer_order", "map.prefer_middle",
+            "map.weigh", "reduce.max", "reduce.min", "reduce.any",
+            "map.where", "map.join", "map.unpair", "map.expect",
+            "map.convert", "map.pair", "map.link", "map.group", "map.rows", "map.classify",
+            "map.number", "map.coalesce",
+            "map.replace", "map.normalize", "map.format", "map.earlier", "map.concat", "map.matching",
+            "map.attach", "map.mcc"})
+
+    def test_a_stage_declares_its_with_keys_by_its_signature(self):
+        self.assertEqual(STAGES["map.split_by_share"].params, {
+            "source": Param(Source, True), "field": Param(str, True), "segments": Param(Data, True)})
+        self.assertEqual(STAGES["reduce.blend"].params, {
+            "entries": Param(list, True), "forbid": Param(list | None, False), "on_empty": Param(str, False),
+            "shortlist": Param(int | None, False)})
 
 
 class CoffeeRunTests(CoffeeCase):

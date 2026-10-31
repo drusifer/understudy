@@ -1,5 +1,14 @@
 # Changelog
 
+## Sprint 20 — stages, children and the household as a sketch (2026-10-30, branch `sprint-20`, not yet merged)
+
+- **Sketches are Jinja2 templates** with `--with name=value` (and `with:` when a sketch calls another), a final state's `outcome`, and a sketch's `outputs`. **Breaking:** the `decider` keyword is gone.
+- **Stages are `map`, `reduce`, `sink` and `sketch`**, registered in Python with `@stage` whose signature is the contract of the YAML. **`kind: stage` sources** compute a list once, by name. **`each`** repeats a sketch per row, and **`each` with `reduce`** folds, giving each iteration what the earlier ones output.
+- **New general stages:** `where`, `join`, `unpair`, `expect`, `adjacent_runs`, `prefer_order`, `prefer_middle`, `weigh`, `max`, `min`, `any`, `convert`, `number`, `pair`, `link`, `earlier`, `group`, `attach`, `concat`, `matching`, `classify`, `coalesce`, `replace`, `normalize`, `format`, `rows`, `mcc`. Conditions read dates and times with `dateparser`; business days use `holidays`.
+- **A file source ending in `.csv`** is read with its header row as field names.
+- **The evening** (`examples/evening/`): showings ranked by Jev's reading of the reviews, Jev picks among the best five, seats found by adjacent runs. **The household** (`examples/household/household.yaml`, `understudy run ... --with monarch=... --with amex=... --with amex_account=...`) is the old transaction cleanup rebuilt as a sketch with three Jev child sketches and a fold (ADR-0047).
+- **Removed:** `understudy etl run`, SQLMesh and its models, the MCP source servers and the `mcp` dependency, the old Node examples, the recard `seed/` and the old sketch schema. `understudy run` and `check` take `--with`.
+
 ## Sprint 19 — the coffee proof of concept: a new sketch model (2026-10-30, branch `sprint-19`, not yet merged)
 
 - **A new kind of sketch, and the only one.** One YAML file with `sources`, `sinks`, `outcomes`, `data` and a `machine` the owner writes (python-statemachine). Rules are `decide` trees with explicit YAML conditions (`segment: { eq: students }`, `temp: { in: [80:90] }`, `and`/`or`/`not`, `has`), weights are numbers or `if`/`then`/`else`, a stage's deciders are blended per dimension, and `forbid` rules drop options and always win. Counting and converting run as SQL on DuckDB. A subsketch (`do: sketch.<file>`) gives back a decider. See `docs/SKETCHES.md`.

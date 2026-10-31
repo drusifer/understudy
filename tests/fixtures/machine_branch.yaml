@@ -8,20 +8,20 @@ machine:
   initial: count
   states:
     count:
-      do: test.count
+      do: { map: { action: count } }
       transitions:
         - if:
             drinks: { lt: 500 }
           to: quiet
         - to: busy
     quiet:
-      do: test.mark
+      do: { map: { action: mark } }
       then: write
     busy:
-      do: test.mark
+      do: { map: { action: mark } }
       then: write
     write:
-      do: sink.report
+      do: { sink: { name: report } }
       then: done
     done:
       final: true

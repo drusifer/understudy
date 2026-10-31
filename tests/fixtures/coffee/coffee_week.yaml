@@ -32,54 +32,56 @@ machine:
   initial: weather
   states:
     weather:
-      do: sketch.weather_change
+      do: { sketch: { file: weather_change } }
       then: split_trade
 
     split_trade:
-      do: etl.split_by_share
+      do: { map: { action: split_by_share } }
       with: { source: sales, field: drinks, segments: segments }
       then: match_orders
 
     match_orders:
-      blend:
-        - decide:                       # the owner's tree for what each segment prefers
-            if:
-              segment: { eq: students }
-            then:
-              drink:
-                - { temp: iced, size: large,  weight: 0.5 }
-                - { temp: iced, size: medium, weight: 0.2 }
-                - { temp: hot,  size: medium, weight: 0.3 }
-            else:
+      do: { reduce: { action: blend } }
+      with:
+        entries:
+          - decide:                     # the owner's tree for what each segment prefers
               if:
-                segment: { eq: night_workers }
+                segment: { eq: students }
               then:
                 drink:
-                  - { temp: hot, size: large, caffeine: high, weight: 1.0 }
+                  - { temp: iced, size: large,  weight: 0.5 }
+                  - { temp: iced, size: medium, weight: 0.2 }
+                  - { temp: hot,  size: medium, weight: 0.3 }
               else:
-                drink:
-                  - { temp: hot,  size: medium, weight: 0.6 }
-                  - { temp: iced, size: medium, weight: 0.4 }
-        - decider: weather              # the subsketch's weights on temp
-          weight:
-            if:
-              segment: { eq: night_workers }   # night shift stays on hot coffee, warm or not
-            then: 0
-            else: 0.3
-      forbid:
-        - when:                         # teens: the under-18 rule
-            age_max: { le: 17 }
-          drop:
-            caffeine: { ne: none }
+                if:
+                  segment: { eq: night_workers }
+                then:
+                  drink:
+                    - { temp: hot, size: large, caffeine: high, weight: 1.0 }
+                else:
+                  drink:
+                    - { temp: hot,  size: medium, weight: 0.6 }
+                    - { temp: iced, size: medium, weight: 0.4 }
+          - from: weather               # the subsketch's weights on temp
+            weight:
+              if:
+                segment: { eq: night_workers }   # night shift stays on hot coffee, warm or not
+              then: 0
+              else: 0.3
+        forbid:
+          - when:                       # teens: the under-18 rule
+              age_max: { le: 17 }
+            drop:
+              caffeine: { ne: none }
       then: to_ingredients
 
     to_ingredients:
-      do: convert.recipes
+      do: { map: { action: recipes } }
       with: { recipes: recipes, packs: packs }
       then: write
 
     write:
-      do: sink.ingredients
+      do: { sink: { name: ingredients } }
       then: done
 
     done:

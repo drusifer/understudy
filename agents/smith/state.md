@@ -53,4 +53,8 @@ Owner acceptance decision.
 - [ ] Ask the owner for final acceptance and record the response.
 
 ---
-*Last updated: 2026-10-17*
+## Sprint 20 Gate 1 (2026-10-30)
+Rejected USER_STORIES_SPRINT20.md once: rubric STORIES: OUT=A TEST=W FAIL=A SCOPE=A SIZE=W DESIGN=A. TEST: UND-68 AC2 "a test can see" has no concrete case. SIZE: UND-68 needs UND-69 and hides the model gaps (assumption 5); ETL parity fixture must be captured before `etl run` is deleted. Re-review the revision, then approve if fixed.
+
+---
+*Last updated: 2026-10-30*

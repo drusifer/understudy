@@ -52,12 +52,12 @@ class CheckTests(unittest.TestCase):
         self.assertEqual(check(load(FIXTURES / "weather_change.yaml")), [])
 
     def test_an_unknown_stage_names_the_path_and_the_nearest_stage(self):
-        problems = self.workspace().edit("etl.split_by_share", "etl.split_by_shar").problems()
-        self.assert_problem(problems, "machine.states.split_trade.do", "etl.split_by_shar", "etl.split_by_share")
+        problems = self.workspace().edit("action: split_by_share", "action: split_by_shar").problems()
+        self.assert_problem(problems, "machine.states.split_trade.do.map.action", "map.split_by_shar", "map.split_by_share")
 
     def test_a_leaf_option_that_is_not_declared_names_its_row(self):
         problems = self.workspace().edit("size: large,  weight: 0.5", "size: larg,  weight: 0.5").problems()
-        self.assert_problem(problems, "machine.states.match_orders.blend[0].decide.then.drink[0].size", "'larg'", "'large'")
+        self.assert_problem(problems, "machine.states.match_orders.with.entries[0].decide.then.drink[0].size", "'larg'", "'large'")
 
     def test_leaf_weights_must_add_up_to_one(self):
         problems = self.workspace().edit("weight: 0.5 }", "weight: 0.9 }").problems()
@@ -77,7 +77,7 @@ class CheckTests(unittest.TestCase):
         self.assert_problem(problems, "unknown operator 'eqq'", "did you mean 'eq'")
 
     def test_an_unknown_sink_is_refused(self):
-        problems = self.workspace().edit("do: sink.ingredients", "do: sink.ingredientz").problems()
+        problems = self.workspace().edit("do: { sink: { name: ingredients } }", "do: { sink: { name: ingredientz } }").problems()
         self.assert_problem(problems, "machine.states.write.do", "ingredientz", "ingredients")
 
     def test_a_machine_that_never_ends_is_refused(self):
@@ -85,12 +85,12 @@ class CheckTests(unittest.TestCase):
         self.assert_problem(problems, "no state is final")
 
     def test_a_decider_that_is_not_a_sketch_state_is_refused(self):
-        problems = self.workspace().edit("decider: weather", "decider: write").problems()
-        self.assert_problem(problems, "blend[1].decider", "not a state that calls a sketch")
+        problems = self.workspace().edit("from: weather", "from: write").problems()
+        self.assert_problem(problems, "entries[1].from", "not a state that calls a sketch")
 
     def test_a_subsketch_that_returns_an_undeclared_outcome_is_refused(self):
         problems = self.workspace().edit("  temp: [hot, iced]\n", "").problems()
-        self.assert_problem(problems, "returns 'temp'", "not a declared outcome")
+        self.assert_problem(problems, "outputs 'temp'", "not a declared outcome")
 
     def test_a_forbid_that_drops_an_unknown_option_is_refused(self):
         problems = self.workspace().edit("caffeine: { ne: none }", "caffeine: { ne: nonee }").problems()

@@ -6,13 +6,14 @@ ruamel.yaml reads YAML 1.2, so `70:30` stays text; PyYAML would turn it into the
 import json
 from pathlib import Path
 
+from jinja2 import Environment, StrictUndefined, TemplateSyntaxError, UndefinedError, meta
 from jsonschema import Draft202012Validator
 from ruamel.yaml import YAML
 from ruamel.yaml.error import YAMLError
 
 from src.paths import ROOT
-from src.sketch.model import Sink, Sketch, Source
-from src.sketch.vocabulary import SKETCH_PREFIX
+from src.sketch.model import Candidates, Sink, Sketch, Source
+from src.sketch.vocabulary import stage_of
 
 SCHEMA = json.loads((ROOT / "schema" / "decision_sketch.schema.json").read_text(encoding="utf-8"))
 
@@ -33,16 +34,36 @@ def dotted(parts) -> str:
     return text or "(top)"
 
 
-def _read(path: Path) -> dict:
+TEMPLATES = Environment(undefined=StrictUndefined, keep_trailing_newline=True, trim_blocks=True, lstrip_blocks=True)
+
+
+def _read(path: Path, variables: dict[str, str], lenient: bool) -> tuple[dict, frozenset[str]]:
+    """The sketch's YAML, after Jinja2 has filled in `variables`, and the names of the variables the file uses.
+
+    `lenient` fills any variable not given with an empty value, to read the shape of a sketch whose values are not
+    known yet (the child of an `each`).
+    """
     try:
-        document = YAML(typ="safe").load(path.read_text(encoding="utf-8"))
+        text = path.read_text(encoding="utf-8")
     except OSError as error:
         raise SketchError([f"{path}: cannot be read: {error.strerror or error}"]) from error
+    try:
+        used = frozenset(meta.find_undeclared_variables(TEMPLATES.parse(text)))
+        given = {**{name: "" for name in used}, **variables} if lenient else variables
+        rendered = TEMPLATES.from_string(text).render(given)
+    except TemplateSyntaxError as error:
+        raise SketchError([f"{path}: line {error.lineno}: {error.message}"]) from error
+    except UndefinedError as error:
+        name = str(error).split("'")[1] if "'" in str(error) else "a variable"
+        hint = f"pass --with {name}=<value>, or write {{{{ {name} | default(…) }}}}"
+        raise SketchError([f"{path}: needs a value for {name!r}: {hint}"]) from error
+    try:
+        document = YAML(typ="safe").load(rendered)
     except YAMLError as error:
         raise SketchError([f"{path}: is not valid YAML: {str(error).splitlines()[0]}"]) from error
     if not isinstance(document, dict):
         raise SketchError([f"{path}: (top): a sketch is a mapping with a name and a machine"])
-    return document
+    return document, used
 
 
 def _shape(path: Path, document: dict) -> None:
@@ -62,23 +83,63 @@ def _source(name: str, value, base: Path, overrides: dict[str, str]) -> Source:
 
 
 def children(sketch: Sketch) -> dict[str, Sketch]:
-    """The sketches this one calls (`do: sketch.<file>`), loaded from beside it; a missing file is left to `check`."""
+    """The sketches this one calls (`do: sketch.<file>`), by the name of the state that calls each, loaded from
+    beside it with that call's `with`; a missing file is left to `check`. One sketch may be called many times."""
     found = {}
-    for state in sketch.machine["states"].values():
-        called = str(state.get("do", ""))
-        if called.startswith(SKETCH_PREFIX):
-            file = called.removeprefix(SKETCH_PREFIX)
-            path = sketch.path.parent / f"{file}.yaml"
+    for name, state in sketch.machine["states"].items():
+        called = stage_of(state)
+        if called and called[0] == "sketch":
+            path = child_path(sketch, called[1])
             if path.is_file():
-                found[file] = load(path)
+                found[name] = load(path, variables=call_values(state), lenient="each" in state)
     return found
 
 
-def load(path: Path, overrides: dict[str, str] | None = None) -> Sketch:
-    """The sketch at `path`. `overrides` replaces a source with a file for this run only."""
+def source_children(sketch: Sketch) -> list[Sketch]:
+    """The sketches this one calls from a stage source (`kind: stage` with `do: { sketch: ... }`), loaded as `children` are."""
+    found = []
+    for source in sketch.sources.values():
+        called = stage_of(source.config) if source.kind == "stage" else None
+        if called and called[0] == "sketch" and child_path(sketch, called[1]).is_file():
+            found.append(load(child_path(sketch, called[1]), variables=call_values(source.config), lenient="each" in source.config))
+    return found
+
+
+def call_values(state: dict) -> dict:
+    """The values a state's call gives its sketch: its `with`, and the name a folding `each` passes its running list
+    under (empty until the run), so a child that does not use the name is caught by the unused-name check."""
+    return {**state.get("with", {}), **({state["reduce"]["into"]: []} if "reduce" in state else {})}
+
+
+def child_path(sketch: Sketch, file: str) -> Path:
+    """The file a `do: { sketch: { file: ... } }` names, beside the sketch that calls it."""
+    return sketch.path.parent / f"{file}.yaml"
+
+
+def unused_variables(sketch: Sketch, how: str = "--with") -> list[tuple[Sketch, str, list[str]]]:
+    """Per file of the sketch and the sketches it calls: the names given to it (`--with` or a call's `with`)
+    that the file does not use, as (sketch, how it was given, names)."""
+    found = []
+    unused = sorted(set(sketch.variables) - sketch.uses)
+    if unused:
+        found.append((sketch, how, unused))
+    for child in children(sketch).values():
+        found += unused_variables(child, "with")
+    return found
+
+
+def load(
+    path: Path, overrides: dict[str, str] | None = None, variables: dict[str, str] | None = None, *, lenient: bool = False,
+) -> Sketch:
+    """The sketch at `path`. `overrides` replaces a source with a file for this run only.
+
+    The file is a Jinja2 template: `variables` (`--with` on the command line, `with` on a call) fill it in before
+    it is read as YAML.
+    """
     path = Path(path)
     overrides = overrides or {}
-    document = _read(path)
+    variables = variables or {}
+    document, uses = _read(path, variables, lenient)
     _shape(path, document)
     unknown = sorted(set(overrides) - set(document.get("sources", {})))
     if unknown:
@@ -90,7 +151,10 @@ def load(path: Path, overrides: dict[str, str] | None = None) -> Sketch:
         description=document.get("description", "").strip(),
         sources={n: _source(n, v, base, overrides) for n, v in document.get("sources", {}).items()},
         sinks={n: Sink(n, v if isinstance(v, str) else v["path"]) for n, v in document.get("sinks", {}).items()},
-        outcomes={n: tuple(v) for n, v in document.get("outcomes", {}).items()},
+        outcomes={n: tuple(v) for n, v in document.get("outcomes", {}).items() if isinstance(v, list)},
+        candidates={n: Candidates(v["from"], v["key"]) for n, v in document.get("outcomes", {}).items() if isinstance(v, dict)},
         data=document.get("data", {}),
         machine=document["machine"],
+        variables=variables,
+        uses=uses,
     )

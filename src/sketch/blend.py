@@ -95,6 +95,14 @@ def _emptied(result: Distribution, dimension: str, rule: dict, policy: Policy, w
     raise EmptyResultError(where)
 
 
+def shortlist(distribution: Distribution, best: int) -> Distribution:
+    """Keep each dimension's `best` heaviest options (ties keep their order) and renormalise."""
+    return {
+        dimension: _normalised(dict(sorted(options.items(), key=lambda item: -item[1])[:best]))
+        for dimension, options in distribution.items()
+    }
+
+
 def check_sums(distribution: Distribution) -> None:
     """The invariant: every dimension's weights add up to 1."""
     for dimension, options in distribution.items():

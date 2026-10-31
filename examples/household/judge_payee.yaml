@@ -1,0 +1,57 @@
+name: judge_payee
+description: >
+  Is one payee an account at a bank or card issuer the owner holds, so that the money stays with the owner? Jev reads
+  the payee, how many payments went to it and the names of the owner's accounts (never their numbers). Above 0.7 the
+  payee is an external transfer of the owner's own, below 0.3 it is spending (Venmo, Zelle, a person, a shop), and in
+  between it goes to review. Give it the payee's `payee`, `count` and `amounts`, and the Monarch export (`monarch`).
+
+sources:
+  facts:
+    kind: stage
+    do: { map: { action: rows } }
+    with:
+      rows:
+        - { payee: {{ payee | tojson }}, payments: {{ count | tojson }}, example_amounts: {{ amounts | tojson }} }
+  monarch_csv: "{{ monarch }}"
+  numberless:                           # an account name without its number
+    kind: stage
+    do: { map: { action: replace } }
+    with: { source: monarch_csv, field: Account, pattern: '\s*\(\.\.\.\d+\)', into: account_name }
+  accounts:
+    kind: stage
+    do: { map: { action: group } }
+    with: { source: numberless, by: account_name }
+  reading:
+    kind: jev
+    question: choice
+    instructions: >
+      Is `payee` an account at one of the owner's own banks or card issuers, so that the money stays with the owner?
+      An entry in `owner_accounts` that shares an institution with the payee means yes; a person, a payment app such
+      as Venmo or Zelle, or a merchant means no.
+    criteria:
+      own_account: The payee is a bank, card issuer or account the owner holds.
+      someone_else: The payee is a person, a payment app or a merchant, so the money has left the owner.
+    state:
+      payee: { from: facts }
+      owner_accounts: { from: accounts }
+  own:
+    kind: stage
+    do: { map: { action: where } }
+    with: { source: reading, keep: { level: { eq: own_account } } }
+
+machine:
+  initial: decide
+  states:
+    decide:
+      do: { map: { action: classify } }
+      with:
+        source: own
+        into: decision
+        cases:
+          - { if: { probability: { gt: 0.7 } }, then: external_transfer }
+          - { if: { probability: { lt: 0.3 } }, then: spending }
+        otherwise: review
+      then: done
+    done:
+      final: true
+      outputs: [decision]

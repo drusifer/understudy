@@ -47,17 +47,18 @@ export TYPESAFE_API_KEY=...                                        # for a live 
 bobp make run ARGS="run tests/fixtures/coffee/coffee_week.yaml"    # live: one Jev request, captured
 ```
 
-The local transaction cleanup run reads Monarch and Amex exports through Python MCP source
-servers, merges sign-flipped purchases in DuckDB, pairs transfers, links refunds, and asks Jev
-to place merchants in the offered categories or name new ones from the MCC list. It writes
-`result.jsonl` and `summary.json` under `build/runs/<run-id>/`:
+The household example (`examples/household/household.yaml`) is an ordinary sketch. It reads Monarch and
+Amex exports as CSV files, merges a charge seen in both into one record, links the two halves of a card
+payment, links refunds to their originals, and asks Jev to judge payees, choose among a refund's candidate
+charges, and place merchants in a category in use or name a new one from the MCC list. It writes
+`records.jsonl` and some counts under `build/runs/<run-id>/`:
 
 ```sh
-bobp make run ARGS="etl run --monarch inputs/monarch.csv --amex inputs/amex.csv"
+bobp make run ARGS="run examples/household/household.yaml --with monarch=inputs/monarch.csv --with amex=inputs/amex.csv --with amex_account=Platinum"
 ```
 
-Use `--since 2026-01-01` to set the period, `--amex-account <text>` to select the Monarch card
-account when detection is unclear, and `--out <folder>` to choose the output folder.
+Use `--with since=2026-01-01` to set the period and `--with amex_account=<text>` to name the Monarch card
+account (a part of its name); `--out <folder>` chooses the output folder.
 
 Always go through `bobp make <target>` - it is the front door for people and agents alike.
 `bobp make help` lists the targets.
@@ -80,15 +81,14 @@ Sprint documents are in [docs/sprints/](docs/sprints/).
 
 ```text
 bin/understudy.mjs     the command
-src/cli.mjs            the launcher: `run`, `check` and `etl run` start the Python packages
+src/cli.mjs            the launcher: `run` and `check` start the Python package
 src/sketch/            the sketch package: loader, check, machine, decide, blend, stages, sources (file, Jev, capture), run, cli
-src/etl/               the household transaction cleanup (SQLMesh on DuckDB, MCP source servers)
 src/jev.py             the one Jev wrapper (shared)    src/paths.py   the output-path policy (shared)
-src/machine_runner.py  the one state-machine loop (shared by the ETL and sketches)
+src/machine_runner.py  the one state-machine loop
 src/dashboard/         the dashboard's browser files, kept for the rebuild
 schema/                JSON Schema for sketches
-tests/                 Python unittest suites, the launcher's node:test, fixtures (tests/fixtures/coffee)
-examples/              the older examples, to be rebuilt for the new model
+tests/                 Python unittest suites, the launcher's node:test, fixtures (coffee, household)
+examples/              evening (a night out) and household (the transaction cleanup)
 docs/                  user and project documentation
 agents/                the Bob Protocol team (personas, state, chat) - see AGENTS.md
 ```
@@ -96,7 +96,7 @@ agents/                the Bob Protocol team (personas, state, chat) - see AGENT
 ## Development
 
 ```sh
-bobp make test        # unit tests (JavaScript launcher, Python, SQLMesh) - never calls Jev
+bobp make test        # unit tests (JavaScript launcher, Python) - never calls Jev
 bobp make test-py ARGS="test_sketch*.py"   # only the sketch tests
 bobp make lint        # eslint and ruff
 bobp make check       # test + lint + gitleaks secret scan (the gate)

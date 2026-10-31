@@ -4,8 +4,8 @@ A **sketch** is one YAML file in which you write down how you decide something. 
 
 TLDR:
     A sketch names `sources` (files in), `sinks` (files out), `outcomes` (what can be decided), `data` (your facts) and a `machine` (your pipeline).
-    Each state in the machine names a stage: ETL, a `blend` of deciders, a `sketch.<file>` subsketch, or a `sink`.
-    A decider is one row in, weighted rows out; `blend` is a weighted average per dimension; `forbid` drops options and always wins.
+    Each state in the machine names a stage with `do:` (a `map` action, a `reduce` action such as `blend`, a `sketch` file, or a `sink`).
+    A decide tree, lookup, subsketch or Jev reading produces weighted rows; `blend` is a weighted average per dimension; `forbid` drops options and always wins.
     Conditions are plain YAML: `segment: { eq: students }`, `temp: { in: [80:90] }`, `and` / `or` / `not`.
     Jev is a source: `kind: jev` with a rubric (`instructions` + `criteria`) and the `state` it reads; reading it gives a probability per level.
     Every non-file read is captured; `--replay` runs offline from the capture. `understudy check` finds mistakes before anything runs.
@@ -40,8 +40,8 @@ A state is final (`final: true`) or names one stage and where to go next:
 ```yaml
 states:
   split_trade:
-    do: etl.split_by_share          # a stage
-    with: { source: sales, field: drinks, segments: segments }
+    do: { map: { action: split_by_share } }   # the stage: a type, and which one
+    with: { source: sales, field: drinks, segments: segments }   # its params
     then: match_orders              # the next state
   count:
     do: ...
@@ -55,46 +55,80 @@ The machine is a python-statemachine; the loop runs the stage each state names a
 
 ### Stages
 
-| `do` | `with` | What it does |
+A state's `do:` names a stage **type** as a key (a closed set the schema owns) and says which one with that type's one field. Names and files are always values, never keys. `with:` sits beside `do:` for every type and passes its params.
+
+| `do:` | field | meaning |
 |---|---|---|
-| `etl.split_by_share` | `source`, `field`, `segments` | splits a total (the sum of `field` over the source's rows) across `data.<segments>` by each segment's `share`: rows `{segment, share, age_min, age_max, drinks}` |
-| `etl.join_weights` | `probabilities`, `weights` | joins a Jev source's probability per level with `data.<weights>` (level to option weights) into one decider's rows on the dimension the sketch `returns` |
-| `convert.recipes` | `recipes`, `packs` | turns drink counts into ingredient amounts from `data.<recipes>` (rows `{<dimension>: <option>, ingredient, amount, unit}`), rounded up to whole packs from `data.<packs>` |
-| `sink.<name>` | | writes the rows of the stage before it to the sink file |
-| `sketch.<file>` | | runs `<file>.yaml` beside this one as a nested run and gives back its decider's rows |
-| (a state with `blend:`) | | see below |
+| `map` | `action` | rows in, rows out: a library operation written in Python with `@stage` (below) |
+| `reduce` | `action` | many rows to fewer (`blend`, `max`, `min`), written the same way |
+| `sink` | `name` | write the rows of the previous stage to a declared sink |
+| `sketch` | `file` | run another sketch (`<file>.yaml` beside this one) |
+
+| `do:` | `with` | What it does |
+|---|---|---|
+| `map: { action: split_by_share }` | `source`, `field`, `segments` | splits a total (the sum of `field` over the source's rows) across `data.<segments>` by each segment's `share`: rows `{segment, share, age_min, age_max, drinks}` |
+| `map: { action: join_weights }` | `probabilities`, `weights` | joins a Jev source's probability per level with `data.<weights>` (level to option weights) into weighted rows on the dimension the sketch lists in `outputs` |
+| `map: { action: recipes }` | `recipes`, `packs` | turns drink counts into ingredient amounts from `data.<recipes>` (rows `{<dimension>: <option>, ingredient, amount, unit}`), rounded up to whole packs from `data.<packs>` |
+| `map: { action: where }` | `source`, `keep` | the rows that satisfy the condition `keep` (the same explicit conditions as everywhere) |
+| `map: { action: join }` | `source`, `other`, `on`, `other_on`, `keep_unmatched`, `prefix` | each row plus the fields of the row of `other` whose `other_on` (default `on`) equals its `on`, named with `prefix` before them; a row with no match is dropped, or kept as it is when `keep_unmatched` |
+| `map: { action: convert }` | `source`, `dates`, `amounts`, `negate` | adds fields read from text: `dates` maps a field to the field that gets its ISO date (`01/02/2026` is January 2), `amounts` maps a field to the field that gets its dollars (`(4.50)` is negative); `negate` flips the sign (a card lists charges as positive) |
+| `map: { action: number }` | `source`, `into`, `prefix` | adds `into`: the row's position from 1 after `prefix` (`m1`, `m2`) |
+| `map: { action: pair }` | `source`, `other`, `date`, `amount`, `within`, `only`, `text`, `other_text`, `rounds` | every row of two lists once, paired one to one when `date` and `amount` are equal (rows whose `text` is equal first, then in file order), then within `within` business days, nearest first: flat rows `{match, method, <source fields>, other_<other fields>}`; `only` is a condition on which source rows may pair |
+| `map: { action: link }` | `source`, `date`, `amount`, `apart`, `id`, `within`, `rounds` | links rows of one list to each other (opposite amounts, different `apart` values, dates within `within` business days, nearest first, ties by `id`): adds `partner` and `gap` (null when unlinked) |
+| `map: { action: earlier }` | `source`, `other`, `on`, `date`, `amount`, `tie`, `prefix`, `take` | for each row, one row per `other` row with the same `on`, a `date` no later and an `amount` of the opposite sign at least as large (a refund and the charges it could reverse), with the candidate's fields after `prefix` and a `candidates` count |
+| `map: { action: group }` | `source`, `by`, `collect`, `take` | one row per distinct `by` value (case and spacing ignored): `{key, <by>, count}` plus, for each `collect` entry `into: field`, up to `take` different values |
+| `map: { action: attach }` | `source`, `other`, `field`, `into` | adds `into` to every row: the list of the `field` values of all rows of `other` (what a repeated sketch needs to see) |
+| `map: { action: concat }` | `sources` | the rows of every source named, one after the other |
+| `map: { action: matching }` | `source`, `among`, `on`, `among_on` | the rows of `source` whose `on` value is a value of `among_on` in some row of `among` |
+| `map: { action: classify }` | `source`, `into`, `cases`, `otherwise` | adds `into`: the `then` of the first case `{ if: <condition>, then: <value> }` the row satisfies, else `otherwise` |
+| `map: { action: coalesce }` | `source`, `fields` | adds each `into: [field, ...]`: the first field the row has with a value |
+| `map: { action: replace }` / `normalize` / `format` | `source`, `field`, `pattern`, `into`, `by` / `field`, `into` / `template`, `into` | text: replace a regular expression, lower-case and collapse spaces, fill a `{field}` template |
+| `map: { action: rows }` / `mcc` | `rows` / none | a literal list of rows (often a list another sketch passed in) / the ISO 18245 merchant categories as `{group, name}` |
+| `map: { action: expect }` | `probabilities`, `values`, `into` | one row `{<into>: number}`: your numbers per level (`data.<values>`) averaged by a Jev reading's probabilities |
+| `map: { action: unpair }` | `source` | flat rows from an `each` result: each `{input, output}` pair becomes the input row plus each row it output |
+| `map: { action: adjacent_runs }` | `source`, `group`, `order`, `length`, `match` | every run of `length` consecutive `order` numbers in a `group`, from the rows that `match` (E3 E4 E5 gives E3-4 and E4-5 for 2): `{<group>, first, last, run}` |
+| `map: { action: prefer_order }` | `rows`, `field`, `order`, `into` | adds `into`: 1.0 for the first value of `order`, less for the next, 0 for one not listed |
+| `map: { action: prefer_middle }` | `rows`, `extent`, `group`, `order`, `into`, `match` | adds `into` to runs: 1.0 centered in their group, 0.0 at its end |
+| `map: { action: weigh }` | `source`, `by`, `into` | adds `into`: the sum of the `by` fields, each times its weight |
+| `reduce: { action: max }`, `min` | `source`, `field`, `take` | the `take` rows (default 1) with the highest (lowest) `field`, best first |
+| `reduce: { action: any }` | `source` | one row, `{any: true}` if the source has any row, `{any: false}` if none (for a guard) |
+| `sink: { name: <sink> }` | `source` (optional) | writes the rows of the stage before it to the sink file, or the rows of the named `source` |
+| `sketch: { file: <file> }` | | runs `<file>.yaml` beside this one as a nested run and gives back the weighted rows its `outputs` name; `with:` passes it values (see Subsketches) |
+| `reduce: { action: blend }` | `entries`, `forbid`, `on_empty`, `shortlist` | see Deciding, below |
 
 `understudy check` refuses an unknown stage and suggests the nearest, and checks each `with` key.
 
 ## Deciding
 
-A state with `blend:` decides, for every row the stage before it produced (a segment, say), how the outcomes are shared:
+`blend` is a **reduce** stage: it takes weighted entries and reduces them to one distribution per row the stage before it produced (a segment, say), sharing out the outcomes:
 
 ```yaml
 match_orders:
-  blend:
-    - decide:                       # your tree; weight defaults to 1
-        if: { segment: { eq: students } }
-        then:
-          drink:                    # a leaf: weighted rows that add up to 1
-            - { temp: iced, size: large,  weight: 0.5 }
-            - { temp: hot,  size: medium, weight: 0.5 }
-        else:
-          drink: [ { temp: hot, size: medium, weight: 1.0 } ]
-    - decider: weather              # a state that calls a subsketch
-      weight:
-        if: { segment: { eq: night_workers } }
-        then: 0                     # night shift ignores the weather
-        else: 0.3
-  forbid:                           # hard rules: drop options, always win
-    - when: { age_max: { le: 17 } }
-      drop: { caffeine: { ne: none } }
-  on_empty: fail                    # fail (default), skip, or fallback
+  do: { reduce: { action: blend } }
+  with:
+    entries:
+      - decide:                     # your tree; weight defaults to 1
+          if: { segment: { eq: students } }
+          then:
+            drink:                  # a leaf: weighted rows that add up to 1
+              - { temp: iced, size: large,  weight: 0.5 }
+              - { temp: hot,  size: medium, weight: 0.5 }
+          else:
+            drink: [ { temp: hot, size: medium, weight: 1.0 } ]
+      - from: weather               # a state that calls a subsketch
+        weight:
+          if: { segment: { eq: night_workers } }
+          then: 0                   # night shift ignores the weather
+          else: 0.3
+    forbid:                         # hard rules: drop options, always win
+      - when: { age_max: { le: 17 } }
+        drop: { caffeine: { ne: none } }
+    on_empty: fail                  # fail (default), skip, or fallback
   then: to_ingredients
 ```
 
-* **A decider** takes one row and returns weighted rows. A row names only the dimensions it has an opinion on.
-* **The blend** averages each dimension over the deciders that name it, weighted by the entry's `weight` (a number, or `if`/`then`/`else`; a missing `else` is 0). A weight of 0 means no say.
+* **Weighted rows** come from one input row. A row names only the dimensions it has an opinion on.
+* **The blend** averages each dimension over the entries that name it, weighted by the entry's `weight` (a number, or `if`/`then`/`else`; a missing `else` is 0). A weight of 0 means no say.
 * **`forbid`** drops the options a matching rule forbids and renormalises. If that leaves a row with no option in a dimension, the run fails naming the rule and the row, unless the stage says `on_empty: skip` (drop that dimension) or `fallback` (spread over the allowed options).
 * Options must be declared under `outcomes`; the checker refuses a typo and suggests the nearest, and the run checks rows that came from a source.
 
@@ -109,6 +143,8 @@ or:                                  # and or not combine; several fields in one
   - { genre: { eq: horror }, tomato: { ge: 70 } }
   - { tomato: { gt: 90 } }
 ```
+
+`lt le gt ge` order numbers, and also dates, times and datetimes, which [dateparser](https://dateparser.readthedocs.io) reads from text: `starts: { ge: "17:00" }` keeps a showing at `"19:30"` and drops one at `"15:00"`, and `on: { lt: "2026-11-01" }` compares dates. A bare time is placed on a fixed day, so a time is always compared as a time.
 
 A field a row does not have never matches. A condition compares a field with a fixed value, never with another field. Sketches are read as YAML 1.2, so `70:30` stays text.
 
@@ -135,17 +171,167 @@ sources:
 
 Reading it returns one row per level, `{level, probability}`. Your weights per level live in `data`, and Jev never sees them. A live read needs `TYPESAFE_API_KEY`.
 
+## A stage as a source
+
+A source is a named set of rows. Besides a file and a Jev reading, a source can be **computed by a stage** (`kind: stage`), declared with the same `do:` and `with:` a state has:
+
+```yaml
+sources:
+  seats: seats.jsonl
+  runs:
+    kind: stage
+    do: { map: { action: adjacent_runs } }
+    with: { source: seats, group: row, order: number, length: 2, match: { free: true } }
+```
+
+A source can also be a sketch repeated per row: `scored: { kind: stage, do: { sketch: { file: review_score } }, each: films }` is the list of `{input, output}` pairs (see `each`), ready for `map.unpair`.
+
+Anything that reads `runs` by name (another stage's `source:`, a Jev source's `state:`, an outcome's `{ from, key }`) triggers it. It runs once, on the first read, and the rows are remembered. Only `map` and `reduce` stages can compute a source. `understudy check` refuses a source that reads itself, an unknown action, and a `source:` param that names no source. Stage sources are deterministic, so only Jev readings are captured for a replay.
+
 ## Subsketches
 
-`do: sketch.weather_change` runs `weather_change.yaml` from the same folder, sharing the run folder and the sources. It declares what it gives back on its final state:
+`do: { sketch: { file: weather_change } }` runs `weather_change.yaml` from the same folder, sharing the run folder and the sources. It declares what it gives back on its final state:
 
 ```yaml
 done:
   final: true
-  returns: { decider: [temp] }       # weights on the temp dimension
+  outputs: [temp]                    # the outcome it gives weights on
 ```
 
-The parent names it in a `blend` (`decider: weather`, the state that calls it). The checker refuses a returned dimension the parent has not declared.
+The parent names it in a `blend` (`from: weather`, the state that calls it). The checker refuses an output the parent has not declared under `outcomes`.
+
+Any sketch can be run on its own or called by another, and one sketch can be called many times.
+
+## Values in: Jinja2 and `with`
+
+Every sketch file is a Jinja2 template over standard YAML 1.2; a file with no `{{ }}` or `{% %}` reads as it always did. A value comes from the command line (`--with`), or from a calling state's `with:`, and the file writes its own default:
+
+```yaml
+- when: { length: { lt: {{ tickets | default(2) }} } }
+```
+
+```sh
+understudy run evening.yaml --with tickets=3
+```
+
+```yaml
+seat:
+  do: { sketch: { file: seating } }
+  with: { tickets: {{ tickets | default(2) }} }   # filled in when the parent is loaded
+```
+
+* A child sees only what its call passes; the parent's values are not visible to it.
+* A variable with no default and no value fails: `needs a value for 'tickets': pass --with tickets=<value>, or write {{ tickets | default(…) }}`.
+* A `--with` or `with` name the receiving file does not use is refused, with the nearest name it does use.
+* `understudy check` reads the sketch after Jinja has filled it in.
+
+## Adding a stage
+
+A stage is one Python function, registered with `@stage`. Its signature is the contract of the YAML, so there is nothing else to keep in step:
+
+```python
+@stage("map.split_by_share")
+async def split_by_share(context, source: Source, field: str, segments: Data) -> list[dict]: ...
+```
+
+```yaml
+do: { map: { action: split_by_share } }
+with: { source: sales, field: drinks, segments: segments }
+```
+
+* Each parameter after `context` is a `with:` key; one with no default is required.
+* The annotation says what the value is: `Source` names a source of the sketch, `Data` names a key under `data`, and `str`, `int` or `float` is a plain value.
+* `understudy check` reads the same signature, so a missing, unknown or wrongly typed `with:` key is refused before anything runs, with the nearest valid name.
+* The function returns rows; the next stage reads them as `context.last`.
+
+## Options that exist only in data
+
+An outcome's options are normally listed. When they exist only in a file, say where to read them:
+
+```yaml
+outcomes:
+  showing: { from: showings, key: title }      # the title of every row of the `showings` source
+```
+
+A weighted row may name any of those titles; one the file does not have is refused with the nearest (`showing='Alein', not a declared option (did you mean 'Alien'?)`). A `blend` can keep only its best few options, and Jev can then choose among them:
+
+```yaml
+rank:
+  do: { reduce: { action: blend } }
+  with:
+    entries: [ ... ]
+    shortlist: 5                                # keep the five heaviest options per outcome
+pick:
+  kind: jev
+  question: choice
+  instructions: Choose the showing you would enjoy most.
+  options: { from: ranked, key: title }         # the `title` of every row of the source `ranked` (a file or a stage source)
+  state: {}
+```
+
+Only the shortlisted options are offered to Jev, so its answer can only be one of them. `{ from, key }` is written the same way both times.
+
+## Repeating a sketch: `each`
+
+There are no hidden loops: a list given to a source, stage or sketch is one input. To repeat a sketch once per row of a source, say so on the state that calls it:
+
+```yaml
+score_films:
+  each: films                   # a source: the rows to go through
+  do: { sketch: { file: review_score } }   # each only repeats a sketch
+  then: rank
+```
+
+The row's fields are the child's variables (`{{ title }}`), beside anything the call's `with:` passes. The result is one list of pairs, a row with what the child output for it:
+
+```json
+[ { "input": { "title": "It Follows" }, "output": [ { "audience": "loved", "weight": 0.9 } ] }, ... ]
+```
+
+Each row's Jev answers are captured under the child's name and the row's position, so a replay needs no live call. `understudy check` reads the child with its row values left empty, so it checks the child's shape, not its values.
+
+### Folding: `each` with `reduce`
+
+When each iteration should see what the earlier ones produced, add `reduce`:
+
+```yaml
+named:
+  do: { sketch: { file: name_merchant } }
+  each: unfit
+  reduce: { action: concat, into: earlier }
+```
+
+The iterations run in order. The rows each one outputs are appended to a running list, and the next iteration receives it as the variable named by `into` (here `{{ earlier }}`, empty for the first). The state's result is that list, not pairs, so an iteration's output must carry whatever identifies its row. A child that never uses the `into` name is refused by `check`. Only `concat` exists so far.
+
+## Files
+
+A file source whose name ends in `.csv` is read with its header row as the field names; every value is text (turn dates and amounts into values with `map.convert`). Any other file is JSONL.
+
+## How a run ends
+
+A guard (`if:` on a transition) tests the fields of a stage's result when that result is a mapping or a **single row**, which is what a scalar reducer such as `reduce.any` returns. So a sketch can route on "is there anything?":
+
+```yaml
+found:
+  do: { reduce: { action: any } }
+  with: { source: scored }
+  transitions:
+    - if: { any: { eq: false } }
+      to: nothing_fits
+    - to: best
+```
+
+A subsketch that ends in a final state with `outcome: none` found nothing, and gives its caller **no rows** (not the last stage's result); the caller can then route on an empty source, as `examples/evening/evening.yaml` does when seating finds no block.
+
+A final state may carry an `outcome:`, a name for the way the run ended:
+
+```yaml
+nothing_fits:
+  final: true
+  outcome: none
+```
+
+The run still exits 0. It records the outcome in `run.json` and the last event, and prints `outcome: walked_away` as its last line.
 
 ## Capture and replay
 
@@ -172,4 +358,4 @@ Exit codes: 0 done, 1 a stage failed after the run started, 2 refused before sta
 
 ## Checking
 
-`understudy check <sketch.yaml>` loads and checks the sketch and starts nothing. It reports every mistake as the file, the path inside it, what is wrong and the nearest valid value, for example `machine.states.split_trade.do: unknown stage 'etl.split_by_shar' (did you mean 'etl.split_by_share'?)`. [schema/decision_sketch.schema.json](../schema/decision_sketch.schema.json) describes the shape for editors.
+`understudy check <sketch.yaml>` loads and checks the sketch and starts nothing. It reports every mistake as the file, the path inside it, what is wrong and the nearest valid value, for example `machine.states.split_trade.do.map.action: unknown stage 'map.split_by_shar' (did you mean 'map.split_by_share'?)`. [schema/decision_sketch.schema.json](../schema/decision_sketch.schema.json) describes the shape for editors.
