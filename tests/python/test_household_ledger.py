@@ -28,6 +28,9 @@ class LedgerTests(unittest.TestCase):
         cls.seen = []
 
         def reading(state, instructions, options):
+            if "refund" in state:  # the refund of 45.00 reverses the charge of 45.00 on the 15th
+                original = next(label for label in options if "2026-02-15" in label)
+                return Chosen(original, 0.8, {label: 0.8 if label == original else 0.2 for label in options})
             cls.seen.append(state)
             own = OWN[state["payee"][0]["payee"]]
             levels = {"own_account": own, "someone_else": 1 - own}
@@ -67,6 +70,19 @@ class LedgerTests(unittest.TestCase):
     def test_jev_judges_each_unpaired_payee_and_the_thresholds_decide(self):
         self.assertEqual({payee: row["decision"] for payee, row in self.judged.items()},
                          {"Venmo": "spending", "Ridgewood Savings Bank": "external_transfer"})
+
+    def test_every_record_has_a_kind_and_they_are_the_etls_kinds(self):
+        kinds = {}
+        for record in self.records:
+            kinds[record["kind"]] = kinds.get(record["kind"], 0) + 1
+        self.assertEqual(kinds, {"purchase": 6, "transfer": 2, "external_transfer": 1, "refund": 2, "credit": 1})
+
+    def test_a_refund_with_one_original_links_by_rule_and_one_with_several_by_jev(self):
+        refunds = {r["payee"]: r for r in self.records if r["kind"] == "refund"}
+        self.assertEqual(refunds["Shoe Shop"]["link_status"], "single")
+        self.assertEqual(refunds["Store"]["link_status"], "chosen")
+        original = next(r for r in self.records if r["record_id"] == refunds["Store"]["candidate_record_id"])
+        self.assertEqual((original["cost"], original["day"]), (-45.0, "2026-02-15"))
 
     def test_jev_sees_the_owners_account_names_but_never_their_numbers(self):
         self.assertEqual(len(self.seen), 2)
