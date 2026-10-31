@@ -64,6 +64,8 @@ Recorded by Cypher from the conversation, in the owner's words where possible. *
 
 | 37 | **A file source reads CSV when its name ends in `.csv`** (header row = field names, every value text); otherwise JSONL. No `format:` key (decision 17 stands: no new word). Cleaning (dates, amounts) is a separate stage. | "ok just follow the plan" (the draft in `DESIGN_HOUSEHOLD_SKETCH.md` asked about `format: csv`; Claude took the smaller option) |
 
+| 38 | **Business-day and date math is Python, not SQL:** `dateparser` reads dates (month-first, as the exports write them), the `holidays` package says which days are US federal holidays, and a business-day gap is a count of weekdays that are not holidays (`src/sketch/dates.py`). The SQL `business_calendar` and pairing models are not ported. `map.convert` (dates, amounts) and `map.pair` (one-to-one pairing of two exports, exact then in order then within N business days) are general stages. | "maybe we can do bday an date math with our flexable datetime python libs" |
+
 ## Decided by Claude while the owner was asleep (2026-10-30), for the owner to review
 
 The owner said: "do your best to finish without me. It is done when there is nothing left to take away." Each choice below took the smaller option. Overturn any of them.

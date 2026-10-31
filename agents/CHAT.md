@@ -183,10 +183,11 @@ OK
  Took the first purge step: hydrate reads the CSV directly; MCP source server and mcp dependency removed. 242 tests green. Next: Jev steps (transfers, refunds, categories) as Jev sources over rows, replacing the household Python stages. @Morpheus *lead review
 
 ---
-[<small>2026-10-30 19:57:26</small>] [**make**]->[**all**] *build*:
- Build PASSED | make test-py | /home/drusifer/Projects/understudy/build/build.out
-----------------------------------------------------------------------
-Synthetic 4,700-pair controller run: 16.04s
-Ran 244 tests in 96.497s
+[<small>2026-10-30 20:00:18</small>] [**make**]->[**all**] *build*:
+ Build FAILED exit=2 | make test-py | /home/drusifer/Projects/understudy/build/build.out
 
-OK
+----------------------------------------------------------------------
+Ran 254 tests in 82.683s
+
+FAILED (errors=1)
+make: *** [Makefile:48: test-py] Error 1
