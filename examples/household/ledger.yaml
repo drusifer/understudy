@@ -1,0 +1,97 @@
+name: ledger
+description: >
+  One record per transaction in a household's Monarch and Amex exports: a charge in both files is one record, and
+  the two halves of a card payment are linked.
+
+  Values you can set: --with monarch=<csv>  amex=<csv>  amex_account=<part of the card's name in Monarch>
+  since=<yyyy-mm-dd>
+
+sources:
+  monarch_csv: "{{ monarch }}"
+  amex_csv: "{{ amex }}"
+  monarch_clean:                        # dates and amounts read from the text
+    kind: stage
+    do: { map: { action: convert } }
+    with: { source: monarch_csv, dates: { Date: date }, amounts: { Amount: amount } }
+  amex_clean:                           # a card export lists charges as positive amounts
+    kind: stage
+    do: { map: { action: convert } }
+    with: { source: amex_csv, dates: { Date: date }, amounts: { Amount: amount }, negate: true }
+  monarch_numbered:
+    kind: stage
+    do: { map: { action: number } }
+    with: { source: monarch_clean, into: id, prefix: m }
+  amex_numbered:
+    kind: stage
+    do: { map: { action: number } }
+    with: { source: amex_clean, into: id, prefix: a }
+  monarch_rows:                         # the run's period; a row with no date stays, to be reported
+    kind: stage
+    do: { map: { action: where } }
+    with:
+      source: monarch_numbered
+      keep: { or: [ { date: { eq: null } }, { date: { ge: "{{ since | default('1900-01-01') }}" } } ] }
+  amex_rows:
+    kind: stage
+    do: { map: { action: where } }
+    with:
+      source: amex_numbered
+      keep: { or: [ { date: { eq: null } }, { date: { ge: "{{ since | default('1900-01-01') }}" } } ] }
+  merged:                               # a charge seen in both exports is one record
+    kind: stage
+    do: { map: { action: pair } }
+    with:
+      source: monarch_rows
+      other: amex_rows
+      date: date
+      amount: amount
+      within: 3
+      only: { Account: { has: "{{ amex_account }}" } }
+      text: Original Statement
+      other_text: Description
+  records:                              # one name for what both exports call the same thing
+    kind: stage
+    do: { map: { action: coalesce } }
+    with:
+      source: merged
+      fields:
+        record_id: [ id, other_id ]
+        day: [ date, other_date ]
+        cost: [ amount, other_amount ]
+        payee: [ Merchant, other_Description ]
+        card: [ Account, "other_Account #" ]
+  candidates:                           # what might be money moving between the owner's own accounts
+    kind: stage
+    do: { map: { action: where } }
+    with:
+      source: records
+      keep:
+        or:
+          - { Category: { has: Transfer } }
+          - { Category: { has: transfer } }
+          - { Category: { has: Payment } }
+          - { Category: { has: payment } }
+          - { other_Description: { has: "PAYMENT RECEIVED" } }
+          - { other_Description: { has: "Payment Received" } }
+  legs:                                 # the two halves of a transfer, linked
+    kind: stage
+    do: { map: { action: link } }
+    with: { source: candidates, date: day, amount: cost, apart: card, id: record_id }
+
+sinks:
+  records: records.jsonl
+  legs: legs.jsonl
+
+machine:
+  initial: write_records
+  states:
+    write_records:
+      do: { sink: { name: records } }
+      with: { source: records }
+      then: write_legs
+    write_legs:
+      do: { sink: { name: legs } }
+      with: { source: legs }
+      then: done
+    done:
+      final: true
