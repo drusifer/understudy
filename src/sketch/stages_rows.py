@@ -8,6 +8,7 @@ its rows from a named source, which may itself be computed by a stage.
 
 import re
 
+from src.etl.mcc import load_mcc
 from src.sketch.conditions import holds
 from src.sketch.registry import Data, Source, stage
 
@@ -229,3 +230,17 @@ async def matching(context, source: Source, among: Source, on: str, among_on: st
     """The rows of `source` whose `on` value is also the `among_on` (default: `on`) value of some row of `among`."""
     wanted = {row[among_on or on] for row in await context.read(among)}
     return [row for row in await context.read(source) if row[on] in wanted]
+
+
+@stage("map.attach")
+async def attach(context, source: Source, other: Source, field: str, into: str) -> list[dict]:
+    """Each row of `source` plus `into`: the list of the `field` values of all the rows of `other`, as one list for every
+    row (what a repeated sketch needs to see, since it is handed only its own row)."""
+    values = [row[field] for row in await context.read(other)]
+    return [{**row, into: values} for row in await context.read(source)]
+
+
+@stage("map.mcc")
+async def mcc(context) -> list[dict]:  # noqa: ARG001 - a stage always gets its context
+    """The names a new category may take: one row `{group, name}` for each ISO 18245 merchant category in use."""
+    return [{"group": group, "name": name} for group, names in load_mcc().items() for name in names]

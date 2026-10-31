@@ -253,3 +253,12 @@ class UnionTests(unittest.TestCase):
         self.assertEqual(run(concat, ctx, sources=["a", "b"]), [{"k": 1}, {"k": 2}])
         found = run(matching, ctx, source="names", among="pick", on="g", among_on="level")
         self.assertEqual([r["n"] for r in found], [1, 3])
+
+
+class AttachTests(unittest.TestCase):
+    def test_every_row_gets_the_whole_list_and_mcc_lists_group_and_name(self):
+        from src.sketch.stages_rows import attach, mcc
+        found = run(attach, context(m=[{"k": 1}, {"k": 2}], c=[{"c": "a"}, {"c": "b"}]), source="m", other="c", field="c", into="all")
+        self.assertEqual([r["all"] for r in found], [["a", "b"], ["a", "b"]])
+        names = run(mcc, context())
+        self.assertTrue(names and set(names[0]) == {"group", "name"})
