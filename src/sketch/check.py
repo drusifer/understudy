@@ -8,7 +8,7 @@ from pathlib import Path
 
 import src.sketch.stages  # noqa: F401 - importing it registers the stages
 from src.sketch import conditions
-from src.sketch.loader import SketchError, load, unused_variables
+from src.sketch.loader import SketchError, call_values, load, unused_variables
 from src.sketch.model import Sketch
 from src.sketch.registry import STAGES, Data, Source
 from src.sketch.vocabulary import COMBINATORS, ON_EMPTY, STAGE_TYPES, stage_of
@@ -66,6 +66,8 @@ class _Checker:
             return
         if "each" in config:
             self.each(at, config)
+        if "reduce" in config:
+            self.reduce(at, config)
         self.stage(at, config)
         stack = [(name, config)]
         seen = {name}
@@ -125,6 +127,8 @@ class _Checker:
                 self.condition(transition["if"], f"{at}.transitions[{index}].if")
         if "each" in state:
             self.each(at, state)
+        if "reduce" in state:
+            self.reduce(at, state)
         if "do" in state:
             self.stage(at, state)
 
@@ -171,6 +175,11 @@ class _Checker:
         if not calls_sketch(state):
             self.problem(at, "`each` repeats a sketch, so `do` must be `sketch: { file: ... }`")
 
+    def reduce(self, at: str, state: dict) -> None:
+        """`reduce` folds the iterations of an `each`; on its own it has nothing to fold."""
+        if "each" not in state:
+            self.problem(f"{at}.reduce", "`reduce` folds the iterations of an `each`, and this state has none")
+
     def stage(self, at: str, state: dict) -> None:
         kind, target = stage_of(state)
         name = f"{kind}.{target}"
@@ -181,7 +190,7 @@ class _Checker:
             if named is not None and named not in self.sketch.sources:
                 self.problem(f"{at}.with.source", f"{named!r} is not a source{_nearest(named, self.sketch.sources)}")
         elif kind == "sketch":
-            self.subsketch(f"{at}.do.sketch.file", target, state.get("with", {}), "each" in state)
+            self.subsketch(f"{at}.do.sketch.file", target, call_values(state), "each" in state)
         elif name not in STAGES:
             self.problem(f"{at}.do.{kind}.{STAGE_TYPES[kind]}",
                          f"unknown stage {name!r}{_nearest(name, STAGES)}")

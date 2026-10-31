@@ -91,8 +91,14 @@ def children(sketch: Sketch) -> dict[str, Sketch]:
         if called and called[0] == "sketch":
             path = child_path(sketch, called[1])
             if path.is_file():
-                found[name] = load(path, variables=state.get("with", {}), lenient="each" in state)
+                found[name] = load(path, variables=call_values(state), lenient="each" in state)
     return found
+
+
+def call_values(state: dict) -> dict:
+    """The values a state's call gives its sketch: its `with`, and the name a folding `each` passes its running list
+    under (empty until the run), so a child that does not use the name is caught by the unused-name check."""
+    return {**state.get("with", {}), **({state["reduce"]["into"]: []} if "reduce" in state else {})}
 
 
 def child_path(sketch: Sketch, file: str) -> Path:

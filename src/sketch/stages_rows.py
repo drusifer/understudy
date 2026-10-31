@@ -135,3 +135,9 @@ async def group(context, source: Source, by: str, collect: dict | None = None, t
             for into, field in (collect or {}).items()}}
         for key, rows in groups.items()
     ]
+
+
+@stage("map.rows")
+async def rows(context, rows: list) -> list[dict]:  # noqa: ARG001 - a stage always gets its context
+    """The rows written in the sketch (often a list another sketch handed in), as a source."""
+    return list(rows)

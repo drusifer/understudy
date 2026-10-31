@@ -90,6 +90,7 @@
             "kind": { "const": "stage" },
             "do": { "$ref": "#/$defs/stageRef" },
             "each": { "type": "string", "minLength": 1 },
+            "reduce": { "$ref": "#/$defs/state/properties/reduce" },
             "with": { "type": "object" }
           }
         },
@@ -184,6 +185,16 @@
       "properties": {
         "do": { "$ref": "#/$defs/stageRef" },
         "each": { "type": "string", "minLength": 1 },
+        "reduce": {
+          "description": "With `each`: fold the iterations. Each iteration's rows are merged into a running list that the next iteration receives as the variable `into`.",
+          "type": "object",
+          "required": ["action", "into"],
+          "additionalProperties": false,
+          "properties": {
+            "action": { "const": "concat" },
+            "into": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" }
+          }
+        },
         "with": { "type": "object" },
         "then": { "type": "string", "minLength": 1 },
         "transitions": { "type": "array", "items": { "$ref": "#/$defs/transition" }, "minItems": 1 },

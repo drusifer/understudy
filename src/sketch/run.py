@@ -116,14 +116,22 @@ async def _run_each(context: StageContext, library: Mapping[str, StageFn], recor
     The row's fields are the child's variables, beside the call's `with`. The result pairs every row with what its
     run output: `[ { input: <row>, output: <what the child returned> }, ... ]`. A row's Jev answers are captured under
     the child's name and the row's position, so each film (say) is asked and replayed on its own.
+
+    With `reduce: { action: concat, into: <name> }` the iterations run in order as a fold instead: the rows each one
+    outputs are appended to a running list, which the next one receives as the variable `<name>` (empty to begin
+    with), and the result is that list.
     """
     state = context.state
     path = child_path(context.sketch, stage_of(state)[1])
-    paired = []
+    folding = state.get("reduce")
+    paired, running = [], []
     for index, row in enumerate(await context.read(state["each"])):
-        child = replace(load(path, variables={**state.get("with", {}), **row}), name=f"{context.name}.{path.stem}[{index}]")
-        paired.append({"input": row, "output": await _run_child(context, library, record, child)})
-    return paired
+        values = {**state.get("with", {}), **row, **({folding["into"]: list(running)} if folding else {})}
+        child = replace(load(path, variables=values), name=f"{context.name}.{path.stem}[{index}]")
+        output = await _run_child(context, library, record, child)
+        running += output
+        paired.append({"input": row, "output": output})
+    return running if folding else paired
 
 
 async def _run_child(context: StageContext, library: Mapping[str, StageFn], record: EventedRecord, child: Sketch | None = None):
@@ -201,7 +209,7 @@ async def run_sketch(
     async def compute(owner: Sketch, name: str) -> list[dict]:
         """Run a stage source's stage (`kind: stage`): the source's `do` and `with`, as a state would have them."""
         config = owner.sources[name].config
-        state = {key: config[key] for key in ("do", "with", "each") if key in config}
+        state = {key: config[key] for key in ("do", "with", "each", "reduce") if key in config}
         state.setdefault("with", {})
         context = StageContext(owner, name, state, results, None, directory, summary, sources)
         if "each" in state:

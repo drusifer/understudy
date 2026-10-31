@@ -66,6 +66,8 @@ Recorded by Cypher from the conversation, in the owner's words where possible. *
 
 | 38 | **Business-day and date math is Python, not SQL:** `dateparser` reads dates (month-first, as the exports write them), the `holidays` package says which days are US federal holidays, and a business-day gap is a count of weekdays that are not holidays (`src/sketch/dates.py`). The SQL `business_calendar` and pairing models are not ported. `map.convert` (dates, amounts) and `map.pair` (one-to-one pairing of two exports, exact then in order then within N business days) are general stages. | "maybe we can do bday an date math with our flexable datetime python libs" |
 
+| 39 | **`each` can fold: `each` + `reduce`.** `reduce: { action: concat, into: <name> }` on an `each` state (or stage source) runs the iterations in order; each iteration's rows are appended to a running list, which the next iteration receives as the variable `<name>` (empty to begin), and the stage's result is that list. The owner chose the explicit form (the parent names the variable) over a fixed word `previous`. A child that never uses `<name>` is refused by the unused-name check. `map.rows` makes a literal list of rows into a source. Only `concat` exists so far. Used for category naming, where a merchant is checked against the categories named earlier in the run. | "we use each and reduce to merge the list from the output of the previous iteration and pass to the next one"; "B I prefer more explicit" |
+
 ## Decided by Claude while the owner was asleep (2026-10-30), for the owner to review
 
 The owner said: "do your best to finish without me. It is done when there is nothing left to take away." Each choice below took the smaller option. Overturn any of them.

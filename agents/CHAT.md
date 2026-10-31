@@ -203,3 +203,16 @@ Synthetic 4,700-pair controller run: 15.87s
 Ran 261 tests in 94.199s
 
 OK
+
+---
+[<small>2026-10-30 20:17:59</small>] [**Cypher**]->[**all**] *checkpoint*:
+ Household redesign: map.link (card-payment legs) and map.group built, 255ish tests green, committed locally. Next: map.row, map.classify, the three Jev child sketches, assembly, then delete the old ETL. Owner question pending on category naming. Not pushed.
+
+---
+[<small>2026-10-30 20:41:09</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-py | /home/drusifer/Projects/understudy/build/build.out
+----------------------------------------------------------------------
+Synthetic 4,700-pair controller run: 15.82s
+Ran 265 tests in 93.869s
+
+OK

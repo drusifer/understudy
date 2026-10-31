@@ -49,4 +49,6 @@ sequenceDiagram
     Note right of Cypher: "Took the first purge<br/>step: hydrate reads the<br/>CSV directly, MCP source<br/>server and mcp<br/>dependency removed. 242<br/>tests green. Next: Jev<br/>steps (…"
     Cypher->>All: "checkpoint"
     Note right of Cypher: "Household redesign under<br/>way (decisions 36-38):<br/>CSV by name,<br/>date/business-day math<br/>in Python, map.convert +<br/>map.pair built and<br/>tested. 250…"
+    Cypher->>All: "checkpoint"
+    Note right of Cypher: "Household redesign:<br/>map.link (card-payment<br/>legs) and map.group<br/>built, 255ish tests<br/>green, committed<br/>locally. Next: map.row,<br/>map.classify, t…"
 ```
