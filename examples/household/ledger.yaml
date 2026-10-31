@@ -77,10 +77,28 @@ sources:
     kind: stage
     do: { map: { action: link } }
     with: { source: candidates, date: day, amount: cost, apart: card, id: record_id }
+  unpaired:                             # candidates with no partner: is the payee one of the owner's accounts?
+    kind: stage
+    do: { map: { action: where } }
+    with: { source: legs, keep: { partner: { eq: null } } }
+  payees:
+    kind: stage
+    do: { map: { action: group } }
+    with: { source: unpaired, by: payee, collect: { amounts: cost } }
+  readings:                             # Jev, once per payee
+    kind: stage
+    do: { sketch: { file: judge_payee } }
+    each: payees
+    with: { monarch: "{{ monarch }}" }
+  judged:
+    kind: stage
+    do: { map: { action: unpair } }
+    with: { source: readings }
 
 sinks:
   records: records.jsonl
   legs: legs.jsonl
+  judgments: judgments.jsonl
 
 machine:
   initial: write_records
@@ -92,6 +110,10 @@ machine:
     write_legs:
       do: { sink: { name: legs } }
       with: { source: legs }
+      then: write_judgments
+    write_judgments:
+      do: { sink: { name: judgments } }
+      with: { source: judged }
       then: done
     done:
       final: true

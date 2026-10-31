@@ -95,6 +95,16 @@ def children(sketch: Sketch) -> dict[str, Sketch]:
     return found
 
 
+def source_children(sketch: Sketch) -> list[Sketch]:
+    """The sketches this one calls from a stage source (`kind: stage` with `do: { sketch: ... }`), loaded as `children` are."""
+    found = []
+    for source in sketch.sources.values():
+        called = stage_of(source.config) if source.kind == "stage" else None
+        if called and called[0] == "sketch" and child_path(sketch, called[1]).is_file():
+            found.append(load(child_path(sketch, called[1]), variables=call_values(source.config), lenient="each" in source.config))
+    return found
+
+
 def call_values(state: dict) -> dict:
     """The values a state's call gives its sketch: its `with`, and the name a folding `each` passes its running list
     under (empty until the run), so a child that does not use the name is caught by the unused-name check."""

@@ -4,12 +4,16 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from jev_double import JevDouble
+
+from src.jev import Chosen
 from src.paths import ROOT
 from src.sketch.cli import main
 from src.sketch.sources.capture import CaptureStore
 
 LEDGER = ROOT / "examples" / "household" / "ledger.yaml"
 ORACLE = ROOT / "tests" / "fixtures" / "etl" / "household"
+OWN = {"Venmo": 0.05, "Ridgewood Savings Bank": 0.93}  # the probability the payee is one of the owner's accounts
 
 
 def lines(path: Path) -> list[dict]:
@@ -21,15 +25,25 @@ class LedgerTests(unittest.TestCase):
     def setUpClass(cls):
         cls.temporary = tempfile.TemporaryDirectory()
         directory = Path(cls.temporary.name)
+        cls.seen = []
+
+        def reading(state, instructions, options):
+            cls.seen.append(state)
+            own = OWN[state["payee"][0]["payee"]]
+            levels = {"own_account": own, "someone_else": 1 - own}
+            return Chosen(max(levels, key=levels.get), 0.9, levels)
+
         stderr = io.StringIO()
         cls.code = main(
             ["run", str(LEDGER), "--out", str(directory / "out"), "--with", f"monarch={ORACLE / 'monarch.csv'}",
              "--with", f"amex={ORACLE / 'amex.csv'}", "--with", "amex_account=Platinum", "--with", "since=2026-01-01"],
-            store=CaptureStore(directory / "cache"), stdout=io.StringIO(), stderr=stderr)
+            make_jev=lambda: JevDouble(choose_fn=reading), store=CaptureStore(directory / "cache"), stdout=io.StringIO(),
+            stderr=stderr)
         cls.stderr = stderr.getvalue()
         (folder,) = (directory / "out").iterdir()
         cls.records = lines(folder / "records.jsonl")
         cls.legs = {leg["record_id"]: leg for leg in lines(folder / "legs.jsonl")}
+        cls.judged = {row["payee"]: row for row in lines(folder / "judgments.jsonl")}
 
     @classmethod
     def tearDownClass(cls):
@@ -49,6 +63,17 @@ class LedgerTests(unittest.TestCase):
     def test_venmo_and_the_savings_bank_are_unpaired_transfer_candidates(self):
         unpaired = {leg["payee"] for leg in self.legs.values() if leg["partner"] is None}
         self.assertEqual(unpaired, {"Venmo", "Ridgewood Savings Bank"})
+
+    def test_jev_judges_each_unpaired_payee_and_the_thresholds_decide(self):
+        self.assertEqual({payee: row["decision"] for payee, row in self.judged.items()},
+                         {"Venmo": "spending", "Ridgewood Savings Bank": "external_transfer"})
+
+    def test_jev_sees_the_owners_account_names_but_never_their_numbers(self):
+        self.assertEqual(len(self.seen), 2)
+        shown = json.dumps(self.seen)
+        self.assertIn("Platinum Card", shown)
+        self.assertNotIn("(...", shown)
+        self.assertNotIn("1111", shown)
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from src.jev import GatedJev, JevError
-from src.sketch.loader import children
+from src.sketch.loader import children, source_children
 from src.sketch.model import Sketch
 from src.sketch.registry import STAGES
 from src.sketch.sources import jev as jev_source
@@ -36,7 +36,7 @@ def needs_jev(sketch: Sketch) -> bool:
     named = (stage_of(state) for state in sketch.machine["states"].values())
     named = [".".join(found) for found in named if found]
     return bool(jev_keys(sketch)) or any(STAGES[n].jev for n in named if n in STAGES) or any(
-        needs_jev(child) for child in children(sketch).values())
+        needs_jev(child) for child in [*children(sketch).values(), *source_children(sketch)])
 
 
 @dataclass(frozen=True)
