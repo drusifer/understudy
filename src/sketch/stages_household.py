@@ -27,8 +27,8 @@ async def hydrate(context, monarch: str, amex: str, amex_account: str | None = N
     return []
 
 
-@stage("map.pair")
-async def pair(context) -> list[dict]:
+@stage("map.pair_exports")
+async def pair_exports(context) -> list[dict]:
     """Find the period and the Amex card, then pair purchases and transfer legs (SQL)."""
     await _household(context).pair()
     return []

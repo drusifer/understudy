@@ -23,7 +23,7 @@ machine:
         {% endif %}
       then: pair
     pair:
-      do: { map: { action: pair } }
+      do: { map: { action: pair_exports } }
       then: transfers
     transfers:
       do: { map: { action: judge_transfers } }
