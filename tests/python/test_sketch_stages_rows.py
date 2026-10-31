@@ -190,3 +190,19 @@ class GroupTests(unittest.TestCase):
         self.assertEqual(found, [
             {"key": "dunkin'", "merchant": "Dunkin'", "count": 2, "amounts": [-4.5], "texts": ["DUNKIN #1"]},
             {"key": "store", "merchant": "Store", "count": 1, "amounts": [-50.0], "texts": ["STORE"]}])
+
+
+class ClassifyTests(unittest.TestCase):
+    CASES = ({"if": {"probability": {"gt": 0.7}}, "then": "external_transfer"},
+             {"if": {"probability": {"lt": 0.3}}, "then": "spending"})
+
+    def test_the_first_case_that_holds_names_the_row_and_otherwise_covers_the_rest(self):
+        from src.sketch.stages_rows import classify
+        rows = [{"probability": p} for p in (0.9, 0.05, 0.5)]
+        found = run(classify, context(rows=rows), source="rows", into="decision", cases=self.CASES, otherwise="review")
+        self.assertEqual([r["decision"] for r in found], ["external_transfer", "spending", "review"])
+
+    def test_rows_are_numbered_from_one_after_a_prefix(self):
+        from src.sketch.stages_rows import number
+        found = run(number, context(rows=[{"a": 1}, {"a": 2}]), source="rows", into="id", prefix="m")
+        self.assertEqual([r["id"] for r in found], ["m1", "m2"])

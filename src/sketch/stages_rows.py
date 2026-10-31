@@ -141,3 +141,19 @@ async def group(context, source: Source, by: str, collect: dict | None = None, t
 async def rows(context, rows: list) -> list[dict]:  # noqa: ARG001 - a stage always gets its context
     """The rows written in the sketch (often a list another sketch handed in), as a source."""
     return list(rows)
+
+
+@stage("map.classify")
+async def classify(context, source: Source, into: str, cases: list, otherwise: str) -> list[dict]:
+    """Each row of `source` plus `into`: the `then` of the first case whose `if` condition the row satisfies, else
+    `otherwise`. A case is `{ if: <condition>, then: <value> }`."""
+    return [
+        {**row, into: next((case["then"] for case in cases if holds(case["if"], row)), otherwise)}
+        for row in await context.read(source)
+    ]
+
+
+@stage("map.number")
+async def number(context, source: Source, into: str, prefix: str = "") -> list[dict]:
+    """Each row of `source` plus `into`: its position in the source, from 1, after `prefix` (`m1`, `m2`, ...)."""
+    return [{**row, into: f"{prefix}{position}"} for position, row in enumerate(await context.read(source), start=1)]
