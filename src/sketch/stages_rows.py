@@ -203,8 +203,8 @@ async def earlier(  # noqa: PLR0913 - the stage's with: keys
 ) -> list[dict]:
     """For each row of `source`, one row per `other` row with the same `on` value, a `date` no later, and an `amount`
     at least as large in size and of the opposite sign (a refund and the charges it could reverse), most recent first
-    (equal dates: the larger `tie` first) and at most `take`. The row is joined with the candidate's fields (named with `prefix` before them) and a
-    `candidates` count of all of them; a row with no candidate comes back once with `candidates` 0."""
+    (equal dates: the larger `tie` first) and at most `take`. The row is joined with the candidate's fields (named
+    with `prefix` before them) and a `candidates` count of all of them; a row with no candidate comes back once with `candidates` 0."""
     others = await context.read(other)
     found = []
     for row in await context.read(source):
