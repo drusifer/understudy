@@ -6,6 +6,8 @@ of fields, and `reduce.max` / `reduce.min` keep the best rows by a field (decisi
 its rows from a named source, which may itself be computed by a stage.
 """
 
+import re
+
 from src.sketch.conditions import holds
 from src.sketch.registry import Data, Source, stage
 
@@ -21,13 +23,16 @@ async def where(context, source: Source, keep: dict) -> list[dict]:
 
 
 @stage("map.join")
-async def join(context, source: Source, other: Source, on: str, other_on: str | None = None) -> list[dict]:
+async def join(  # noqa: PLR0913 - the stage's with: keys
+    context, source: Source, other: Source, on: str, other_on: str | None = None, keep_unmatched: bool = False,
+) -> list[dict]:
     """Each row of `source` plus the fields of the row of `other` whose `other_on` (default: `on`) equals the row's `on`
-    (the first, if several). A row with no match is dropped; where both have a field the row of `source` wins."""
+    (the first, if several). A row with no match is dropped, or kept as it is when `keep_unmatched`; where both have a
+    field the row of `source` wins."""
     matching: dict = {}
     for row in await context.read(other):
         matching.setdefault(row[other_on or on], row)
-    return [{**matching[row[on]], **row} for row in await context.read(source) if row[on] in matching]
+    return [{**matching.get(row[on], {}), **row} for row in await context.read(source) if keep_unmatched or row[on] in matching]
 
 
 @stage("map.expect")
@@ -168,3 +173,46 @@ async def coalesce(context, source: Source, fields: dict) -> list[dict]:
                    for into, names in fields.items()}}
         for row in await context.read(source)
     ]
+
+
+@stage("map.replace")
+async def replace(  # noqa: PLR0913 - the stage's with: keys
+    context, source: Source, field: str, pattern: str, into: str, by: str = "",
+) -> list[dict]:
+    """Each row of `source` plus `into`: its `field` with every match of the regular expression `pattern` replaced by
+    `by` (default: removed) and the ends trimmed."""
+    return [{**row, into: re.sub(pattern, by, str(row.get(field) or "")).strip()} for row in await context.read(source)]
+
+
+@stage("map.normalize")
+async def normalize(context, source: Source, field: str, into: str) -> list[dict]:
+    """Each row of `source` plus `into`: its `field` in lower case with spaces collapsed, the key that `map.group` uses."""
+    return [{**row, into: " ".join(str(row.get(field) or "").lower().split())} for row in await context.read(source)]
+
+
+@stage("map.format")
+async def format_text(context, source: Source, template: str, into: str) -> list[dict]:
+    """Each row of `source` plus `into`: `template` with `{field}` filled from the row (Python format syntax)."""
+    return [{**row, into: template.format_map(row)} for row in await context.read(source)]
+
+
+@stage("map.earlier")
+async def earlier(  # noqa: PLR0913 - the stage's with: keys
+    context, source: Source, other: Source, on: str, date: str, amount: str, tie: str, prefix: str = "candidate_",
+    take: int = 5,
+) -> list[dict]:
+    """For each row of `source`, one row per `other` row with the same `on` value, a `date` no later, and an `amount`
+    at least as large in size and of the opposite sign (a refund and the charges it could reverse), most recent first
+    (equal dates: the larger `tie` first) and at most `take`. The row is joined with the candidate's fields (named with `prefix` before them) and a
+    `candidates` count of all of them; a row with no candidate comes back once with `candidates` 0."""
+    others = await context.read(other)
+    found = []
+    for row in await context.read(source):
+        fits = sorted(
+            (o for o in others if o[on] == row[on] and o[date] <= row[date] and o[amount] * row[amount] < 0
+             and abs(o[amount]) >= abs(row[amount])),
+            key=lambda o: (o[date], str(o[tie])), reverse=True)
+        found += [{**row, "candidates": len(fits), **{f"{prefix}{k}": v for k, v in o.items()}} for o in fits[:take]]
+        if not fits:
+            found.append({**row, "candidates": 0})
+    return found

@@ -214,3 +214,32 @@ class CoalesceTests(unittest.TestCase):
         rows = [{"Merchant": "Store", "other_Description": "STORE #1"}, {"other_Description": "ATM"}, {"Merchant": ""}]
         found = run(coalesce, context(rows=rows), source="rows", fields={"merchant": ["Merchant", "other_Description"]})
         self.assertEqual([r["merchant"] for r in found], ["Store", "ATM", None])
+
+
+class CleaningTests(unittest.TestCase):
+    def test_replace_removes_the_account_number_and_normalize_makes_a_key(self):
+        from src.sketch.stages_rows import normalize, replace
+        rows = [{"Account": "Platinum Card (...1111)", "m": "  Dunkin'   DONUTS "}]
+        cleaned = run(replace, context(r=rows), source="r", field="Account", pattern=r"\s*\(\.\.\.\d+\)", into="name")
+        self.assertEqual(cleaned[0]["name"], "Platinum Card")
+        self.assertEqual(run(normalize, context(r=rows), source="r", field="m", into="key")[0]["key"], "dunkin' donuts")
+
+    def test_format_fills_a_template_from_the_row(self):
+        from src.sketch.stages_rows import format_text
+        rows = context(r=[{"day": "2026-02-15", "cost": 45.0}])
+        found = run(format_text, rows, source="r", template="charged_{day}_{cost}", into="label")
+        self.assertEqual(found[0]["label"], "charged_2026-02-15_45.0")
+
+    def test_join_can_keep_the_rows_with_no_match(self):
+        from src.sketch.stages_rows import join
+        found = run(join, context(a=[{"k": 1}, {"k": 2}], b=[{"k": 1, "v": "x"}]), source="a", other="b", on="k", keep_unmatched=True)
+        self.assertEqual(found, [{"k": 1, "v": "x"}, {"k": 2}])
+
+    def test_earlier_lists_the_charges_a_refund_could_reverse_most_recent_first(self):
+        from src.sketch.stages_rows import earlier
+        charges = [{"id": "c1", "m": "s", "d": "2026-02-01", "a": -50.0}, {"id": "c2", "m": "s", "d": "2026-02-15", "a": -45.0},
+                   {"id": "c3", "m": "s", "d": "2026-02-20", "a": -10.0}, {"id": "c4", "m": "x", "d": "2026-02-01", "a": -50.0}]
+        refunds = [{"id": "r1", "m": "s", "d": "2026-03-12", "a": 45.0}, {"id": "r2", "m": "z", "d": "2026-03-12", "a": 5.0}]
+        found = run(earlier, context(r=refunds, c=charges), source="r", other="c", on="m", date="d", amount="a", tie="id")
+        self.assertEqual([(f["id"], f.get("candidate_id"), f["candidates"]) for f in found],
+                         [("r1", "c2", 2), ("r1", "c1", 2), ("r2", None, 0)])
