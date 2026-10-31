@@ -216,3 +216,16 @@ async def earlier(  # noqa: PLR0913 - the stage's with: keys
         if not fits:
             found.append({**row, "candidates": 0})
     return found
+
+
+@stage("map.concat")
+async def concat(context, sources: list) -> list[dict]:
+    """The rows of every source named in `sources`, one after the other."""
+    return [row for name in sources for row in await context.read(name)]
+
+
+@stage("map.matching")
+async def matching(context, source: Source, among: Source, on: str, among_on: str | None = None) -> list[dict]:
+    """The rows of `source` whose `on` value is also the `among_on` (default: `on`) value of some row of `among`."""
+    wanted = {row[among_on or on] for row in await context.read(among)}
+    return [row for row in await context.read(source) if row[on] in wanted]

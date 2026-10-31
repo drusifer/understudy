@@ -243,3 +243,13 @@ class CleaningTests(unittest.TestCase):
         found = run(earlier, context(r=refunds, c=charges), source="r", other="c", on="m", date="d", amount="a", tie="id")
         self.assertEqual([(f["id"], f.get("candidate_id"), f["candidates"]) for f in found],
                          [("r1", "c2", 2), ("r1", "c1", 2), ("r2", None, 0)])
+
+
+class UnionTests(unittest.TestCase):
+    def test_concat_joins_sources_and_matching_keeps_rows_found_in_another(self):
+        from src.sketch.stages_rows import concat, matching
+        names = [{"g": "x", "n": 1}, {"g": "y", "n": 2}, {"g": "x", "n": 3}]
+        ctx = context(a=[{"k": 1}], b=[{"k": 2}], names=names, pick=[{"level": "x"}])
+        self.assertEqual(run(concat, ctx, sources=["a", "b"]), [{"k": 1}, {"k": 2}])
+        found = run(matching, ctx, source="names", among="pick", on="g", among_on="level")
+        self.assertEqual([r["n"] for r in found], [1, 3])
