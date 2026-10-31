@@ -142,7 +142,8 @@ general stages, child sketches that ask Jev, and a fold.
 bobp make run ARGS="run examples/household/household.yaml --with monarch=data/monarch.csv --with amex=data/amex.csv --with amex_account=Platinum --with since=2026-01-01"
 ```
 
-This needs `TYPESAFE_API_KEY` and the locked Python environment (`bobp make install`).
+This needs `TYPESAFE_API_KEY` and the locked Python environment (`bobp make install`). A `--with` value that names
+an existing file is read relative to where you run the command.
 `amex_account` is a part of the card's account name in Monarch (required: only Monarch rows on that account are
 paired with the Amex rows). `since` is the first date of the period (default: no limit); earlier rows are left out
 and undated rows are kept as `invalid`.

@@ -128,5 +128,15 @@ class LedgerTests(unittest.TestCase):
         self.assertNotIn("1111", shown)
 
 
+
+
+class PathValueTests(unittest.TestCase):
+    def test_a_with_value_naming_a_file_relative_to_where_you_run_is_made_absolute(self):
+        from src.sketch.cli import _values
+        relative = str(Path(__file__).resolve().relative_to(Path.cwd()))
+        self.assertEqual(_values([f"monarch={relative}", "amex_account=Platinum"]),
+                         {"monarch": str(Path(__file__).resolve()), "amex_account": "Platinum"})
+
+
 if __name__ == "__main__":
     unittest.main()

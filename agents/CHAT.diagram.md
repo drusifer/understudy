@@ -51,4 +51,6 @@ sequenceDiagram
     Note right of Cypher: "Household redesign under<br/>way (decisions 36-38):<br/>CSV by name,<br/>date/business-day math<br/>in Python, map.convert +<br/>map.pair built and<br/>tested. 250…"
     Cypher->>All: "checkpoint"
     Note right of Cypher: "Household redesign:<br/>map.link (card-payment<br/>legs) and map.group<br/>built, 255ish tests<br/>green, committed<br/>locally. Next: map.row,<br/>map.classify, t…"
+    Cypher->>All: "checkpoint"
+    Note right of Cypher: "Sprint 20 build done<br/>(local, not pushed): the<br/>household ETL is now a<br/>sketch with 4 child<br/>sketches, old<br/>ETL/SQLMesh/MCP/etl<br/>run/old examples…"
 ```

@@ -41,7 +41,7 @@ def _values(pairs: list[str]) -> dict[str, str]:
         name, separator, value = pair.partition("=")
         if not name or not separator:
             raise SketchError([f"--with needs <name>=<value>, not {pair!r}"])
-        values[name] = value
+        values[name] = str(Path(value).resolve()) if value and not Path(value).is_absolute() and Path(value).is_file() else value
     return values
 
 

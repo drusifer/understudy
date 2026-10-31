@@ -211,3 +211,10 @@ Everything above this heading about the old player (watch page, dashboard, proce
 - `judge-trace` make target is missing; add it or drop the audit step. (Trin)
 - Run the full test suite, not only the focused files, at every phase gate: a new fixtures folder broke a helper that only the full run touched. (Trin)
 - Name captures more kindly in messages: `weather_change.weather_change` (sketch.source) reads oddly. (Smith)
+
+## From the sprint 20 retro (2026-10-30)
+- 1,706 of 5,074 household records are in category review (34%); measure per merchant, then tune the placement question. (Cypher)
+- Net spending $433,762 is still suspect (Sprint 17's open item); trace what inflates it. (Neo)
+- Replay of a captured household run is untested; fold reducers other than `concat` do not exist. (Neo)
+- Confirm with the owner: `amex_account` required, no rubric check when naming a category, the offered-categories rule. (Cypher)
+- Slice C (dashboard and watch page over `events.jsonl`) and slice D (delete the last Node) of `docs/sprints/EPIC_PYTHON_PORT.md`. (Morpheus)
