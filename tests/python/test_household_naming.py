@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 from jev_double import JevDouble
-from test_household_ledger import LEDGER, ORACLE, OWN, PLACED, category, lines
+from test_household import LEDGER, ORACLE, OWN, PLACED, category, lines
 
 from src.jev import Chosen
 from src.sketch.cli import main

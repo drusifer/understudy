@@ -6,7 +6,7 @@
 #
 # Adding a task: add the npm script first, then a one-line target here.
 
-.PHONY: help install install-js lock-js install-py lock-py test test-js test-py test-etl lint check secrets hooks push run clean distclean
+.PHONY: help install install-js lock-js install-py lock-py test test-js test-py lint check secrets hooks push run clean distclean
 
 NEED_INSTALL = @test -d node_modules || { echo "No node_modules - run 'bobp make install' first"; exit 1; }
 
@@ -37,7 +37,6 @@ lock-py: ## Refresh uv.lock from pyproject.toml (network)
 test: ## Run the unit tests (node:test); ARGS="--test-name-pattern=x" to filter
 	$(MAKE) test-js
 	$(MAKE) test-py
-	$(MAKE) test-etl
 
 test-js: ## Run JavaScript unit tests
 	$(NEED_INSTALL)
@@ -47,20 +46,16 @@ test-py: ## Run Python unit tests (ARGS="test_sketch*.py" runs only the files ma
 	@test -x .venv/bin/python || { echo "No .venv - run 'bobp make install' first"; exit 1; }
 	.venv/bin/python -m unittest discover -s tests/python -p '$(if $(ARGS),$(ARGS),test_*.py)'
 
-test-etl: ## Run SQLMesh model unit tests against synthetic fixtures
-	@test -x .venv/bin/sqlmesh || { echo "No SQLMesh - run 'bobp make install' first"; exit 1; }
-	cd sqlmesh && ../.venv/bin/sqlmesh test --local
-
-run: ## Run the understudy command: ARGS="run coffee_week.yaml" | "check coffee_week.yaml" | "etl run --monarch ... --amex ..."
+run: ## Run the understudy command: ARGS="run coffee_week.yaml" | "check coffee_week.yaml" | "run examples/household/household.yaml --with monarch=... --with amex=... --with amex_account=..."
 	$(NEED_INSTALL)
 	@test -f bin/understudy.mjs || { echo "bin/understudy.mjs does not exist yet (sprint 1, phase 2)"; exit 1; }
 	@$(LOAD_ENV) node bin/understudy.mjs $(ARGS)
 
-lint: ## eslint over src/ and tests/, ruff over the Python ETL
+lint: ## eslint over src/ and tests/, ruff over the Python
 	$(NEED_INSTALL)
 	npm run lint
 	@test -x .venv/bin/ruff || { echo "No .venv - run 'bobp make install' first"; exit 1; }
-	.venv/bin/ruff check src/etl src/sketch src/jev.py src/paths.py tests/python
+	.venv/bin/ruff check src/sketch src/jev.py src/paths.py tests/python
 
 secrets: ## gitleaks: every commit + uncommitted changes to tracked files
 	@command -v gitleaks >/dev/null || { echo "gitleaks is not installed - see https://github.com/gitleaks/gitleaks#installing"; exit 1; }

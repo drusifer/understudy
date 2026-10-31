@@ -73,7 +73,7 @@ test('the real command refuses a wrong sketch with one understudy line and no st
 test('mistakes in the command line are refused with what to type instead', async () => {
   const cases = [
     [[], /usage: understudy run <sketch\.yaml>/],
-    [['dance'], /no command "dance" - commands: run, check, etl/],
+    [['dance'], /no command "dance" - commands: run, check \(see/],
     [['run'], /run needs a sketch, e\.g\. understudy run coffee_week\.yaml/],
     [['run', 'a', 'b'], /run takes one sketch \(got "a", "b"\)/],
     [['run', 'a.yaml', '--headed'], /no option "--headed" for run/],
@@ -100,37 +100,20 @@ test('the old commands say they are being rebuilt instead of failing', async () 
 test('--help prints the usage on stdout and exits 0', async () => {
   const result = await cli(['--help']);
   assert.equal(result.code, 0);
-  assert.match(result.stdout, /usage: understudy run <sketch\.yaml> \[--source name\.path=file\]\.\.\./);
+  assert.match(result.stdout, /usage: understudy run <sketch\.yaml> \[--with name=value\]\.\.\. \[--source name\.path=file\]\.\.\./);
   assert.match(result.stdout, /understudy check <sketch\.yaml>/);
-  assert.match(result.stdout, /understudy etl run --monarch <csv> --amex <csv>/);
+  assert.match(result.stdout, /--with name=value/);
 });
 
-test('etl run requires both named CSV inputs and passes them to the stage runner', async () => {
+test('--with gives the sketch its values, for run and for check, and needs name=value', async () => {
   const seen = [];
-  const commands = { etl: async (options) => { seen.push(options); options.stdout.write('etl complete\n'); } };
-  const result = await cli(['etl', 'run', '--monarch', 'monarch.csv', '--amex=amex.csv', '--out', 'build/results', '--since', '2026-01-01', '--amex-account', 'Platinum'], { commands });
-  assert.equal(result.code, 0);
-  assert.equal(result.stdout, 'etl complete\n');
-  assert.equal(seen[0].monarchPath, 'monarch.csv');
-  assert.equal(seen[0].amexPath, 'amex.csv');
-  assert.equal(seen[0].out, 'build/results');
-  assert.equal(seen[0].since, '2026-01-01');
-  assert.equal(seen[0].amexAccount, 'Platinum');
-  const missing = await cli(['etl', 'run', '--monarch', 'monarch.csv'], { commands, environment: {} });
-  assert.equal(missing.code, 2);
-  assert.equal(missing.stderr, 'understudy: understudy etl run needs --amex <csv>\n');
-  const noKey = await cli(['etl', 'run', '--monarch', 'monarch.csv', '--amex', 'amex.csv'], { commands, environment: {} });
-  assert.equal(noKey.code, 2);
-  assert.equal(noKey.stderr, 'understudy: understudy etl run needs a TypeSafe key: set TYPESAFE_API_KEY\n');
-});
-
-test('the Python ETL bridge preserves a missing-input refusal without calling Jev', async () => {
-  const result = await cli(['etl', 'run', '--monarch', '/missing-monarch.csv', '--amex', '/missing-amex.csv'],
-    { environment: { ...process.env, TYPESAFE_API_KEY: 'test-key' } });
-  assert.equal(result.code, 2);
-  assert.match(result.stderr, /understudy: .*missing-monarch/);
-  assert.doesNotMatch(result.stderr, /Traceback|unexpected error/);
-  assert.equal(result.stdout, '');
+  const commands = { run: async (options) => { seen.push(options.values); return 0; }, check: async (options) => { seen.push(options.values); return 0; } };
+  await cli(['run', 'household.yaml', '--with', 'monarch=m.csv', '--with=amex_account=Platinum'], { commands, environment: {} });
+  await cli(['check', 'household.yaml', '--with', 'since=2026-01-01'], { commands, environment: {} });
+  assert.deepEqual(seen, [['monarch=m.csv', 'amex_account=Platinum'], ['since=2026-01-01']]);
+  const refused = await cli(['run', 'a.yaml', '--with', 'monarch'], { commands, environment: {} });
+  assert.equal(refused.code, 2);
+  assert.match(refused.stderr, /--with needs name=value, e\.g\. --with mood=romantic/);
 });
 
 test('a run that fails after starting exits 1 with its message; anything unexpected exits 1 too', async () => {

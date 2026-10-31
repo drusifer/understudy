@@ -63,8 +63,6 @@ class RegistryTests(unittest.TestCase):
             "map.adjacent_runs", "map.prefer_order", "map.prefer_middle",
             "map.weigh", "reduce.max", "reduce.min", "reduce.any",
             "map.where", "map.join", "map.unpair", "map.expect",
-            "map.hydrate", "map.pair_exports", "map.judge_transfers", "map.plan_spending", "map.link_refunds",
-            "map.place_merchants", "map.publish",
             "map.convert", "map.pair", "map.link", "map.group", "map.rows", "map.classify",
             "map.number", "map.coalesce",
             "map.replace", "map.normalize", "map.format", "map.earlier", "map.concat", "map.matching",

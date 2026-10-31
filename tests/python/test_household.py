@@ -11,8 +11,8 @@ from src.paths import ROOT
 from src.sketch.cli import main
 from src.sketch.sources.capture import CaptureStore
 
-LEDGER = ROOT / "examples" / "household" / "ledger.yaml"
-ORACLE = ROOT / "tests" / "fixtures" / "etl" / "household"
+LEDGER = ROOT / "examples" / "household" / "household.yaml"
+ORACLE = ROOT / "tests" / "fixtures" / "household"
 OWN = {"Venmo": 0.05, "Ridgewood Savings Bank": 0.93}  # the probability the payee is one of the owner's accounts
 
 

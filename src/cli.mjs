@@ -1,13 +1,11 @@
-// The `understudy` command: a launcher. The work is done by the Python package (src/sketch for sketches,
-// src/etl for the household ETL); this file reads the command line, starts Python and passes its output and
-// exit code through.
+// The `understudy` command: a launcher. The work is done by the Python package (src/sketch); this file reads
+// the command line, starts Python and passes its output and exit code through.
 //
-//   understudy run <sketch.yaml> [--source name.path=file]... [--out folder] [--replay[=run-id|folder]]
+//   understudy run <sketch.yaml> [--with name=value]... [--source name.path=file]... [--out folder] [--replay[=run-id|folder]]
 //                                         run the sketch and write its outputs; --replay reads the
 //                                         captured Jev answers instead of calling Jev
-//   understudy check <sketch.yaml> [--source name.path=file]...
+//   understudy check <sketch.yaml> [--with name=value]... [--source name.path=file]...
 //                                         load and check the sketch, run nothing
-//   understudy etl run --monarch <csv> --amex <csv> [--out <folder>] [--since YYYY-MM-DD] [--amex-account <name>]
 //
 // Exit codes are the same for every command: 0 done, 1 the run failed
 // after starting, 2 refused before starting. Every failure is one
@@ -18,31 +16,29 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
-const KEY = 'TYPESAFE_API_KEY';
 const REBUILDING = new Set(['library', 'watch', 'dashboard']);
 
-const USAGE = `usage: understudy run <sketch.yaml> [--source name.path=file]... [--out folder] [--replay[=run-id|folder]]
+const USAGE = `usage: understudy run <sketch.yaml> [--with name=value]... [--source name.path=file]... [--out folder] [--replay[=run-id|folder]]
            run the sketch: its machine, its rules, its sources, and write its outputs under build/runs/;
+           --with gives the sketch a value it uses (a file name, a weight, a date);
            --source replaces one file source for this run only;
            --replay reads the last captured Jev answers (no key, no network), or those of a named run or folder
-       understudy check <sketch.yaml> [--source name.path=file]...
+       understudy check <sketch.yaml> [--with name=value]... [--source name.path=file]...
            check the sketch without running anything
-       understudy etl run --monarch <csv> --amex <csv> [--out <folder>] [--since YYYY-MM-DD] [--amex-account <name>]
-           merge purchases, pair transfers, link refunds, place merchants with Jev, and write result.jsonl (needs ${KEY})
 `;
 
 // Each option: the commands that take it, and how its value is read.
 const OPTIONS = {
+  with: { commands: ['run', 'check'], read: (value) => {
+    if (!/^[A-Za-z_]\w*=/s.test(value)) throw new UsageError(`--with needs name=value, e.g. --with mood=romantic (got "${value}")`);
+    return value;
+  }, needs: 'name=value', example: '--with mood=romantic', isRepeated: true },
   source: { commands: ['run', 'check'], read: (value) => {
     if (!/^[\w-]+(\.path)?=./s.test(value)) throw new UsageError(`--source needs name.path=file, e.g. --source sales.path=sales.jsonl (got "${value}")`);
     return value;
   }, needs: 'name.path=file', example: '--source sales.path=sales.jsonl', isRepeated: true },
   replay: { commands: ['run'], read: (value) => value, isOptionalValue: true, needs: 'a run id or folder', example: '--replay=run-20261029T120000-ab12cd34' },
-  monarch: { commands: ['etl'], read: (value) => value, needs: 'a CSV path', example: '--monarch transactions.csv' },
-  amex: { commands: ['etl'], read: (value) => value, needs: 'a CSV path', example: '--amex transactions.csv' },
-  out: { commands: ['run', 'etl'], read: (value) => value, needs: 'a folder', example: '--out build/runs' },
-  since: { commands: ['etl'], read: (value) => value, needs: 'a date', example: '--since 2026-01-01' },
-  'amex-account': { commands: ['etl'], read: (value) => value, needs: 'an account name', example: '--amex-account "Platinum Card"' },
+  out: { commands: ['run'], read: (value) => value, needs: 'a folder', example: '--out build/runs' },
 };
 
 /**
@@ -101,22 +97,19 @@ function runPython(module, pythonArguments, { environment, stdout, stderr }) {
 }
 
 const defaultCommands = {
-  async run({ sketch, source, out, replay, ...io }) {
-    const pythonArguments = ['run', sketch, ...(source ?? []).flatMap((each) => ['--source', each]), ...(out ? ['--out', out] : [])];
+  async run({ sketch, source, values, out, replay, ...io }) {
+    const pythonArguments = ['run', sketch, ...flags('--source', source), ...flags('--with', values), ...(out ? ['--out', out] : [])];
     if (replay !== undefined) pythonArguments.push(replay === true ? '--replay' : `--replay=${replay}`);
     return runPython('src.sketch.cli', pythonArguments, io);
   },
-  async check({ sketch, source, ...io }) {
-    return runPython('src.sketch.cli', ['check', sketch, ...(source ?? []).flatMap((each) => ['--source', each])], io);
-  },
-  async etl({ monarchPath, amexPath, out, since, amexAccount, ...io }) {
-    const pythonArguments = ['--monarch', monarchPath, '--amex', amexPath];
-    for (const [name, value] of [['out', out], ['since', since], ['amex-account', amexAccount]]) {
-      if (value !== undefined) pythonArguments.push(`--${name}`, value);
-    }
-    return runPython('src.etl.cli', pythonArguments, io);
+  async check({ sketch, source, values, ...io }) {
+    return runPython('src.sketch.cli', ['check', sketch, ...flags('--source', source), ...flags('--with', values)], io);
   },
 };
+
+function flags(name, values) {
+  return (values ?? []).flatMap((each) => [name, each]);
+}
 
 const HELP = new Set(['--help', '-h', 'help']);
 
@@ -125,20 +118,11 @@ const HELP = new Set(['--help', '-h', 'help']);
  * stdout; failures are thrown.
  */
 const COMMANDS = {
-  async run({ positional, source, out, replay }, { use, environment, stdout, stderr }) {
-    return use.run({ sketch: oneSketch('run', positional), source, out, replay, environment, stdout, stderr });
+  async run({ positional, source, with: values, out, replay }, { use, environment, stdout, stderr }) {
+    return use.run({ sketch: oneSketch('run', positional), source, values, out, replay, environment, stdout, stderr });
   },
-  async check({ positional, source }, { use, environment, stdout, stderr }) {
-    return use.check({ sketch: oneSketch('check', positional), source, environment, stdout, stderr });
-  },
-  async etl({ positional, monarch, amex, out, since, 'amex-account': amexAccount }, { use, environment, stdout, stderr }) {
-    if (positional.length !== 1 || positional[0] !== 'run') {
-      throw new UsageError('usage: understudy etl run --monarch <csv> --amex <csv>');
-    }
-    if (!monarch) throw new UsageError('understudy etl run needs --monarch <csv>');
-    if (!amex) throw new UsageError('understudy etl run needs --amex <csv>');
-    if (!environment[KEY]?.trim()) throw new UsageError(`understudy etl run needs a TypeSafe key: set ${KEY}`);
-    return use.etl({ monarchPath: monarch, amexPath: amex, out, since, amexAccount, environment, stdout, stderr });
+  async check({ positional, source, with: values }, { use, environment, stdout, stderr }) {
+    return use.check({ sketch: oneSketch('check', positional), source, values, environment, stdout, stderr });
   },
 };
 
@@ -147,7 +131,7 @@ const COMMANDS = {
  * injectable so tests never start Python or call Jev.
  * @param {string[]} argv
  * @param {{ environment?: object, stdout?: { write: Function }, stderr?: { write: Function },
- *   commands?: { run?: Function, check?: Function, etl?: Function } }} [io]
+ *   commands?: { run?: Function, check?: Function } }} [io]
  */
 export async function main(argv, { environment = process.env, stdout = process.stdout, stderr = process.stderr, commands = {} } = {}) {
   try {

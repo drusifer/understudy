@@ -1,5 +1,5 @@
 [project]
-name = "understudy-etl"
+name = "understudy"
 version = "0.1.0"
 requires-python = "==3.12.15.*"
 dependencies = [
@@ -11,7 +11,6 @@ dependencies = [
     "jsonschema==4.26.0",
     "python-statemachine[yaml]==3.2.2",
     "ruamel.yaml==0.19.1",
-    "sqlmesh[duckdb]==0.236.3",
     "typesafe-sdk==0.7.5",
 ]
 
@@ -30,8 +29,6 @@ select = ["E", "W", "F", "I", "B", "SIM", "UP", "N", "C4", "PERF", "RUF", "ERA",
 [tool.ruff.lint.per-file-ignores]
 # test doubles must match the signatures they stand in for; tests print and take many fixtures
 "tests/python/*" = ["ARG", "PLR0913", "T201", "SIM117"]
-# the CLI speaks on stdout
-"src/etl/cli.py" = ["T201"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 12
