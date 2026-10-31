@@ -119,3 +119,19 @@ async def reduce_max(context, source: Source, field: str, take: int = 1) -> list
 async def reduce_min(context, source: Source, field: str, take: int = 1) -> list[dict]:
     """The `take` rows of `source` with the lowest `field`, lowest first. Equal values keep the order they had."""
     return sorted(await context.read(source), key=lambda row: row[field])[:take]
+
+
+@stage("map.group")
+async def group(context, source: Source, by: str, collect: dict | None = None, take: int = 3) -> list[dict]:
+    """One row per distinct `by` value (case, spacing and edges ignored), in the order they first appear:
+    `{key, <by>: the first spelling, count, <into>: [...]}`. Each `collect` entry, `into: field`, lists up to `take`
+    different non-empty values of `field` among the group's rows."""
+    groups: dict[str, list[dict]] = {}
+    for row in await context.read(source):
+        groups.setdefault(" ".join(str(row[by] or "").lower().split()), []).append(row)
+    return [
+        {"key": key, by: rows[0][by], "count": len(rows),
+         **{into: list(dict.fromkeys(row[field] for row in rows if row.get(field) not in (None, "")))[:take]
+            for into, field in (collect or {}).items()}}
+        for key, rows in groups.items()
+    ]

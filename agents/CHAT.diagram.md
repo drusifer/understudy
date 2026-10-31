@@ -47,4 +47,6 @@ sequenceDiagram
     Note right of Cypher: "Resumed. UND-71 first<br/>cut committed (a4ac454):<br/>household ETL runs as ex<br/>amples/household/househo<br/>ld.yaml over map stages,<br/>equals the frozen o…"
     Cypher->>All: "checkpoint"
     Note right of Cypher: "Took the first purge<br/>step: hydrate reads the<br/>CSV directly, MCP source<br/>server and mcp<br/>dependency removed. 242<br/>tests green. Next: Jev<br/>steps (…"
+    Cypher->>All: "checkpoint"
+    Note right of Cypher: "Household redesign under<br/>way (decisions 36-38):<br/>CSV by name,<br/>date/business-day math<br/>in Python, map.convert +<br/>map.pair built and<br/>tested. 250…"
 ```

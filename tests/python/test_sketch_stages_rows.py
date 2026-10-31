@@ -179,3 +179,14 @@ class MaxMinTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class GroupTests(unittest.TestCase):
+    def test_rows_group_by_a_normalized_value_and_collect_a_few_examples(self):
+        from src.sketch.stages_rows import group
+        rows = [{"merchant": "Dunkin'", "amount": -4.5, "text": "DUNKIN #1"}, {"merchant": " dunkin'  ", "amount": -6.7, "text": ""},
+                {"merchant": "Store", "amount": -50.0, "text": "STORE"}]
+        found = run(group, context(rows=rows), source="rows", by="merchant", collect={"amounts": "amount", "texts": "text"}, take=1)
+        self.assertEqual(found, [
+            {"key": "dunkin'", "merchant": "Dunkin'", "count": 2, "amounts": [-4.5], "texts": ["DUNKIN #1"]},
+            {"key": "store", "merchant": "Store", "count": 1, "amounts": [-50.0], "texts": ["STORE"]}])

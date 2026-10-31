@@ -107,3 +107,42 @@ async def pair(  # noqa: PLR0913 - the stage's with: keys
     rows += [{"match": "other_only" if i in valid_right else "invalid_key", "method": None, "source": None, "other": row}
              for i, row in enumerate(right) if i not in taken_right]
     return rows
+
+
+def mutual_pairs(nearby: dict[int, list[tuple]], rounds: int) -> list[tuple[int, int, int]]:
+    """One-to-one links inside one list. `nearby[i]` holds `(gap, tie, j)` for every row `j` that `i` could link to;
+    in each round two rows link when each is the other's nearest (smallest gap, then tie), then the rest try again."""
+    alive = set(nearby)
+    links: list[tuple[int, int, int]] = []
+    for _ in range(rounds):
+        nearest = {i: min(((gap, tie, j) for gap, tie, j in nearby[i] if j in alive), default=None) for i in alive}
+        made = [(i, found[2], found[0]) for i, found in nearest.items()
+                if found and i < found[2] and nearest.get(found[2]) and nearest[found[2]][2] == i]
+        if not made:
+            break
+        links += made
+        alive -= {i for i, _, _ in made} | {j for _, j, _ in made}
+    return links
+
+
+@stage("map.link")
+async def link(  # noqa: PLR0913 - the stage's with: keys
+    context, source: Source, date: str, amount: str, apart: str, id: str, within: int = 3, rounds: int = 3,
+) -> list[dict]:
+    """Each row of `source` plus `partner` and `gap`: the `id` of the row it links to and the business days between them
+    (both null when it has none). Two rows link when their `amount`s are opposite, their `apart` fields differ and their
+    `date`s are within `within` business days, nearest first, ties by `id`; see `mutual_pairs`."""
+    rows = await context.read(source)
+    usable = [i for i, row in enumerate(rows) if row[date] is not None and row[amount] is not None]
+    nearby: dict[int, list[tuple]] = {i: [] for i in usable}
+    for i in usable:
+        for j in usable:
+            if i != j and rows[i][apart] != rows[j][apart] and round(rows[i][amount] * 100) == -round(rows[j][amount] * 100):
+                gap = business_days_between(to_date(rows[i][date]), to_date(rows[j][date]))
+                if gap <= within:
+                    nearby[i].append((gap, str(rows[j][id]), j))
+    partners = {}
+    for i, j, gap in mutual_pairs(nearby, rounds):
+        partners[i], partners[j] = (rows[j][id], gap), (rows[i][id], gap)
+    return [{**row, "partner": partners.get(i, (None, None))[0], "gap": partners.get(i, (None, None))[1]}
+            for i, row in enumerate(rows)]

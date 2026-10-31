@@ -70,3 +70,29 @@ class PairTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def leg(ident, date, amount, account):
+    return {"id": ident, "date": date, "amount": amount, "account": account}
+
+
+class LinkTests(unittest.TestCase):
+    def link(self, rows, **kwargs):
+        from src.sketch.stages_pair import link
+        found = go(link, context(rows=rows), source="rows", date="date", amount="amount", apart="account", id="id", **kwargs)
+        return {r["id"]: (r["partner"], r["gap"]) for r in found}
+
+    def test_a_card_payment_links_to_the_checking_debit_across_a_weekend(self):
+        found = self.link([leg("a1", "2026-03-06", 500.0, "card"), leg("m1", "2026-03-09", -500.0, "checking")])
+        self.assertEqual(found, {"a1": ("m1", 1), "m1": ("a1", 1)})
+
+    def test_two_payments_of_one_amount_each_get_their_own_partner(self):
+        rows = [leg("a1", "2026-03-02", 100.0, "card"), leg("a2", "2026-03-04", 100.0, "card"),
+                leg("m1", "2026-03-02", -100.0, "bank"), leg("m2", "2026-03-04", -100.0, "bank")]
+        found = self.link(rows)
+        self.assertEqual((found["a1"][0], found["a2"][0]), ("m1", "m2"))
+
+    def test_the_same_account_or_too_far_apart_does_not_link(self):
+        rows = [leg("x1", "2026-03-02", 50.0, "card"), leg("x2", "2026-03-02", -50.0, "card"),
+                leg("y1", "2026-03-02", 70.0, "card"), leg("y2", "2026-03-20", -70.0, "bank")]
+        self.assertEqual(set(self.link(rows).values()), {(None, None)})
