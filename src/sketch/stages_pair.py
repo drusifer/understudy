@@ -6,20 +6,24 @@ the bank's export and in the card's). Both know nothing about banks: any two lis
 
 from collections import defaultdict
 
+from src.sketch.conditions import holds
 from src.sketch.dates import business_days_between, to_cents, to_date
 from src.sketch.registry import Source, stage
 
 
 @stage("map.convert")
-async def convert(context, source: Source, dates: dict | None = None, amounts: dict | None = None) -> list[dict]:
+async def convert(
+    context, source: Source, dates: dict | None = None, amounts: dict | None = None, negate: bool = False,
+) -> list[dict]:
     """Each row of `source` plus new fields read from its text: `dates` maps a field to the field that gets its ISO date
-    (or null), `amounts` maps a field to the field that gets its amount in dollars (or null)."""
+    (or null), `amounts` maps a field to the field that gets its amount in dollars (or null); `negate` flips the sign
+    of those amounts (a card's export lists charges as positive)."""
     converted = []
     for row in await context.read(source):
         added = {into: (day.isoformat() if (day := to_date(row.get(field))) else None) for field, into in (dates or {}).items()}
         for field, into in (amounts or {}).items():
             cents = to_cents(row.get(field))
-            added[into] = None if cents is None else cents / 100
+            added[into] = None if cents is None else (-cents if negate else cents) / 100
         converted.append({**row, **added})
     return converted
 
@@ -60,22 +64,23 @@ def _ranked(keys: dict[int, tuple], left: set[int], right: set[int], other_keys:
 
 @stage("map.pair")
 async def pair(  # noqa: PLR0913 - the stage's with: keys
-    context, source: Source, other: Source, date: str, amount: str, opposite: bool = False, within: int = 0,
+    context, source: Source, other: Source, date: str, amount: str, within: int = 0, only: dict | None = None,
     text: str | None = None, other_text: str | None = None, rounds: int = 5,
 ) -> list[dict]:
-    """Every row of `source` and of `other` once, paired one to one: `{match, method, source, other}`.
+    """Every row of `source` and of `other` once, paired one to one, flat: `{match, method}` plus the fields of the
+    `source` row and the fields of the `other` row with `other_` before their names (neither, when a row is single).
 
-    Rows pair when they have the same `date` field and the same `amount` field (opposite signs when `opposite`).
-    Same-day rows pair first by equal `text`/`other_text` (case and spacing ignored), then in file order; what is left
-    pairs when the dates are within `within` business days, nearest first (see `mutual_nearest`). `match` is `paired`,
-    `source_only`, `other_only` or `invalid_key` (no date or amount); `method` is `exact`, `order` or `near_date`.
+    Rows pair when they have the same `date` field and the same `amount` field. Only the `source` rows that satisfy
+    the condition `only` (when given) are paired; the rest stay single. Same-day rows pair first by equal
+    `text`/`other_text` (case and spacing ignored), then in file order; what is left pairs when the dates are within
+    `within` business days, nearest first (see `mutual_nearest`). `match` is `paired`, `source_only`, `other_only` or
+    `invalid_key` (no date or amount); `method` is `exact`, `order` or `near_date`.
     """
     left, right = await context.read(source), await context.read(other)
-    sign = -1 if opposite else 1
-    keys = lambda rows, flip: {  # noqa: E731
-        i: (row[date], None if row[amount] is None else round(flip * row[amount] * 100)) for i, row in enumerate(rows)}
-    left_keys, right_keys = keys(left, sign), keys(right, 1)
-    valid_left = {i for i, key in left_keys.items() if None not in key}
+    keys = lambda rows: {  # noqa: E731
+        i: (row[date], None if row[amount] is None else round(row[amount] * 100)) for i, row in enumerate(rows)}
+    left_keys, right_keys = keys(left), keys(right)
+    valid_left = {i for i, key in left_keys.items() if None not in key and (only is None or holds(only, left[i]))}
     valid_right = {i for i, key in right_keys.items() if None not in key}
     clean = lambda row, field: " ".join(str(row.get(field) or "").lower().split())  # noqa: E731
     left_text = {i: (*left_keys[i], clean(left[i], text)) for i in valid_left} if text else None
@@ -101,10 +106,11 @@ async def pair(  # noqa: PLR0913 - the stage's with: keys
         for a, b, gap in mutual_nearest(edges, rounds):
             take([(a, b)], "near_date", gap)
 
-    rows = [{"match": "paired", "method": method, "source": left[a], "other": right[b]} for a, b, method, _ in sorted(pairs)]
-    rows += [{"match": "source_only" if i in valid_left else "invalid_key", "method": None, "source": row, "other": None}
+    theirs = lambda row: {f"other_{field}": value for field, value in row.items()}  # noqa: E731
+    rows = [{"match": "paired", "method": method, **left[a], **theirs(right[b])} for a, b, method, _ in sorted(pairs)]
+    rows += [{"match": "source_only" if None not in left_keys[i] else "invalid_key", "method": None, **row}
              for i, row in enumerate(left) if i not in taken_left]
-    rows += [{"match": "other_only" if i in valid_right else "invalid_key", "method": None, "source": None, "other": row}
+    rows += [{"match": "other_only" if i in valid_right else "invalid_key", "method": None, **theirs(row)}
              for i, row in enumerate(right) if i not in taken_right]
     return rows
 

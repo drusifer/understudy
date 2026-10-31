@@ -157,3 +157,14 @@ async def classify(context, source: Source, into: str, cases: list, otherwise: s
 async def number(context, source: Source, into: str, prefix: str = "") -> list[dict]:
     """Each row of `source` plus `into`: its position in the source, from 1, after `prefix` (`m1`, `m2`, ...)."""
     return [{**row, into: f"{prefix}{position}"} for position, row in enumerate(await context.read(source), start=1)]
+
+
+@stage("map.coalesce")
+async def coalesce(context, source: Source, fields: dict) -> list[dict]:
+    """Each row of `source` plus the fields in `fields`, each `into: [candidate, ...]` taking the first candidate field the
+    row has with a value (null when none): one record from two exports that name the same thing differently."""
+    return [
+        {**row, **{into: next((row[name] for name in names if row.get(name) not in (None, "")), None)
+                   for into, names in fields.items()}}
+        for row in await context.read(source)
+    ]

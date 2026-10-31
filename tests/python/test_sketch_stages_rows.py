@@ -206,3 +206,11 @@ class ClassifyTests(unittest.TestCase):
         from src.sketch.stages_rows import number
         found = run(number, context(rows=[{"a": 1}, {"a": 2}]), source="rows", into="id", prefix="m")
         self.assertEqual([r["id"] for r in found], ["m1", "m2"])
+
+
+class CoalesceTests(unittest.TestCase):
+    def test_a_field_takes_the_first_candidate_that_has_a_value(self):
+        from src.sketch.stages_rows import coalesce
+        rows = [{"Merchant": "Store", "other_Description": "STORE #1"}, {"other_Description": "ATM"}, {"Merchant": ""}]
+        found = run(coalesce, context(rows=rows), source="rows", fields={"merchant": ["Merchant", "other_Description"]})
+        self.assertEqual([r["merchant"] for r in found], ["Store", "ATM", None])
