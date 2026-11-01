@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="theme-professional.css">
 <link rel="stylesheet" href="theme-starship.css">
 <script src="page.js" defer></script>
+<script src="controls.js" defer></script>
 </head>
 <body>
 <div class="room">
@@ -46,6 +47,29 @@
   <div class="plate-label">RUN RACK</div>
   <div id="rack" class="rack-list" role="tablist"></div>
 </nav>
+
+<details id="controls" class="start-panel" hidden>
+  <summary>START A RUN</summary>
+  <div class="start-grid">
+    <div class="start-gate">
+      <label for="secret-box">Access secret</label>
+      <input id="secret-box" type="password" class="find-field" autocomplete="off" placeholder="from .understudy/dashboard.secret">
+      <button type="button" id="unlock" class="find-button">UNLOCK</button>
+      <span id="gate-note" class="about">locked: you can watch, but not start, replay or stop</span>
+    </div>
+    <label for="sketch-pick">Sketch</label>
+    <select id="sketch-pick" class="find-field"></select>
+    <div id="sketch-about" class="about"></div>
+    <div id="fields" class="start-fields"></div>
+    <label for="replay-pick">Replay from</label>
+    <select id="replay-pick" class="find-field"><option value="">no - run live</option></select>
+    <div class="start-buttons">
+      <button type="button" id="play" class="find-button" disabled>PLAY</button>
+      <button type="button" id="stop" class="find-button" disabled>STOP THIS RUN</button>
+    </div>
+    <div id="start-message" class="start-message" role="status" aria-live="polite"></div>
+  </div>
+</details>
 
 <div id="offline" class="offline" role="status" hidden>DISCONNECTED - retrying. What you see may be out of date.</div>
 <div id="banner-slot" role="status"></div>

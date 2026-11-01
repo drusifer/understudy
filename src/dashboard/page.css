@@ -365,3 +365,19 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .jev-read.unsure > summary { color: #ff9a3c; }
 .jev-question { margin: 2px 0 2px 18px; font-style: italic; opacity: .85; }
 .jev-level { margin-left: 18px; opacity: .85; }
+
+/* Sprint 22 UND-79: start, replay and stop. */
+.start-panel { margin: 0 0 12px; padding: 8px 12px; border-radius: 8px; border: 2px solid var(--brass-deep); background: rgba(0,0,0,.18); font-family: VT323, monospace; font-size: 18px; color: var(--cream); }
+.start-panel > summary { cursor: pointer; font-family: Cinzel, serif; font-size: 12px; letter-spacing: 3px; color: var(--brass); padding: 2px 0; }
+.start-panel > summary:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+.start-grid { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 12px; align-items: center; margin-top: 8px; }
+.start-grid > .start-gate, .start-grid > .start-fields, .start-grid > .start-buttons, .start-grid > .start-message, .start-grid > #sketch-about { grid-column: 1 / -1; }
+.start-gate { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.start-gate .find-field { flex: 0 1 260px; }
+.start-fields { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 12px; align-items: center; }
+.start-field { display: contents; }
+.start-buttons { display: flex; gap: 8px; }
+.start-message { min-height: 1.2em; white-space: pre-wrap; overflow-wrap: anywhere; }
+.start-message.problem { color: #ff9a8a; }
+.start-message.ok { color: #9be8a6; }
+@media (max-width: 640px) { .start-grid, .start-fields { grid-template-columns: 1fr; } }

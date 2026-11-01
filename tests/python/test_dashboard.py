@@ -110,6 +110,7 @@ class ServerTest(unittest.TestCase):
     def test_the_page_and_its_files_are_served(self):
         self.assertIn("OPERATIONS CONSOLE", self.get("/")[1])
         self.assertEqual(self.get("/page.js")[0], 200)
+        self.assertEqual(self.get("/controls.js")[0], 200)
         self.assertEqual(self.get("/theme-starship.css")[0], 200)
         self.assertEqual(self.get("/fonts/cinzel-700.woff2")[0], 200)
 

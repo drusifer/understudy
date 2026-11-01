@@ -174,6 +174,7 @@ function drawStatus(run) {
   drawBanner(run);
   drawSummary(run);
   state.chosenState = run.state;
+  if (typeof afterStatus === 'function') afterStatus(run); // controls.js: the controls follow the chosen run
 }
 
 // The stages the stage filter offers: each top-level stage and each group of nested stages.
@@ -235,9 +236,17 @@ $('jump-end').addEventListener('click', () => { $('paper-window').scrollTop = $(
 $('jump-failure').addEventListener('click', () => jumpTo(state.failures[0]));
 
 // A fetch that says so when the server cannot be reached, and recovers by itself on the next one that works.
+// The access secret lives in this tab only (sessionStorage), and goes out only in a header, never in an address.
+function secretHeaders() {
+  try {
+    const secret = sessionStorage.getItem('understudy.secret');
+    return secret ? { 'X-Understudy-Secret': secret } : {};
+  } catch { return {}; }
+}
+
 async function getJson(url) {
   try {
-    const value = await (await fetch(url)).json();
+    const value = await (await fetch(url, { headers: secretHeaders() })).json();
     setOffline(false);
     return value;
   } catch {
