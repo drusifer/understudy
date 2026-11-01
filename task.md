@@ -21,10 +21,10 @@ Complexity levels follow the definitions in `agents/templates/_template_task.md`
 
 ### Phase 1: A run says how it went (UND-76, 5 pts)
 *Phase goal: the header, a failure banner, a summary panel and a disconnected marker tell the owner how a run went.*
-- [ ] **Task 1.1:** Record `outcome`, `with` and `outputs` in `run.json`; state, failure, summary and stalled marker in `describe`; banner, summary panel, "disconnected, retrying" and mobile header in the page; tests first. **L2** (several files in one bounded area; pattern known). (*Owner: Neo | Trace: UND-76 AC1-7 | Verification: `bobp make test` and `bobp make lint`*)
-- [ ] **Task 1.2:** UAT in a real browser: running, done, failed and unreadable runs; server stopped and restarted; 390 px. **L2**. (*Owner: Trin | Trace: UND-76 AC1-7 | Verification: UAT verdict and screenshots noted in `agents/CHAT.md` and `docs/sprints/UAT_PLAN_SPRINT22.md`*)
-- [ ] **Task 1.3:** Security quick pass: the new `run.json` fields (`with` values are paths as typed). **L1**. (*Owner: Switch | Trace: SEC-004 | Verification: `security gate (phase 1): ...` in `agents/CHAT.md`*)
-- [ ] **Task 1.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT22 section 3 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 1.1:** Record `outcome`, `with` and `outputs` in `run.json`; state, failure, summary and stalled marker in `describe`; banner, summary panel, "disconnected, retrying" and mobile header in the page; tests first. **L2** (several files in one bounded area; pattern known). (*Owner: Neo | Trace: UND-76 AC1-7 | Verification: `bobp make test` and `bobp make lint`*)
+- [x] **Task 1.2:** UAT in a real browser: running, done, failed and unreadable runs; server stopped and restarted; 390 px. **L2**. (*Owner: Trin | Trace: UND-76 AC1-7 | Verification: UAT verdict and screenshots noted in `agents/CHAT.md` and `docs/sprints/UAT_PLAN_SPRINT22.md`*)
+- [x] **Task 1.3:** Security quick pass: the new `run.json` fields (`with` values are paths as typed). **L1**. (*Owner: Switch | Trace: SEC-004 | Verification: `security gate (phase 1): ...` in `agents/CHAT.md`*)
+- [x] **Task 1.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT22 section 3 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 2: See inside a run (UND-77, 5 pts)
 *Phase goal: nested stages as groups with progress, honest gauges, rack badges.*

@@ -1,7 +1,7 @@
 # SEC-004: Events show the sketch path as typed, which may include a home directory (`src/sketch/run.py` `run_started`)
 
 - **Severity:** Info — a path is not a secret, but it tells a network reader the user name and folder layout.
-- **Status:** Open
+- **Status:** Fixed (2026-11-01, Sprint 22 phase 1): `run_started` stores the path relative to the project, or only the file name when the sketch is outside it; test `test_the_run_started_event_names_the_sketch_relative_to_the_project_not_as_typed`
 - **Verdict:** No blocking findings
 - **Date / author:** 2026-11-01 / Switch
 - **Affected:** `src/sketch/run.py:198` (`record.emit("run_started", sketch=str(sketch.path), ...)`), shown by the console printer
