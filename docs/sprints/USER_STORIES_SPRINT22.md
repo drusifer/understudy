@@ -9,7 +9,7 @@
 
 When this sprint is done, the owner can open the console and see at once whether a run worked and what it produced, look inside a long run and into Jev's judgements, and start, replay or stop a run without a terminal. Starting a run is possible only for someone who holds the access secret, because the console is reachable from the whole network. It matters now because the household pipeline is the owner's daily work and today every question about a run needs a terminal.
 
-**Order.** UND-76 first (the others read its summary). UND-77 and UND-78 are independent after UND-76. UND-79 waits for Switch's security design gate, then needs UND-76. UND-80 last.
+**Order.** UND-76 first (the others read its summary). UND-77, UND-88 and UND-78 are independent after UND-76. UND-79 waits for Switch's security design gate, then needs UND-76. UND-80 last.
 
 ## Assumptions made for the owner
 
@@ -37,19 +37,31 @@ When this sprint is done, the owner can open the console and see at once whether
 7. A run whose files are missing or unreadable shows "no details for this run" and its id; it does not break the page or the other runs.
 
 ## STORY-UND-77: See inside a run
-**Points:** 8
+**Points:** 5
 
 **As the** owner,
-**I want** to see child sketches and nested stages, find a line in the log, and tell runs apart,
-**so that** a run with nearly two thousand lines is navigable.
+**I want** to see child sketches and nested stages, honest gauges, and which run is which,
+**so that** I can tell where a long run is and how it is going.
 
 ### Acceptance Criteria
 1. Top-level stages show their child stages as groups (for example `readings.judge_payee` and `named.name_merchant`), each with a count and a state; opening a group lists its stages.
 2. While a run is going, the stage in progress is lit and its group shows how many iterations are done.
-3. The printer has a text filter, a "failures only" switch, a stage filter, and jumps to the start, the first failure and the end; lines that arrive while a filter is on are filtered too.
-4. A filter that matches nothing says "no lines match" and offers to clear it.
-5. Gauge needles read only fractions the run knows; the figures for Jev requests and elapsed time show without a needle.
-6. Each rack tab carries a running or failed badge; tabs are grouped by sketch with the newest run of each first.
+3. Gauge needles read only fractions the run knows; the figures for Jev requests and elapsed time show without a needle.
+4. Each rack tab carries a running or failed badge; tabs are grouped by sketch with the newest run of each first.
+5. A run with no nested stages shows its top-level stages as before, with no empty groups.
+
+## STORY-UND-88: Find a line in the log
+**Points:** 3
+
+**As the** owner,
+**I want** to filter the printer and jump to the lines that matter,
+**so that** I can find a failure among nearly two thousand lines.
+
+### Acceptance Criteria
+1. The printer has a text filter, a "failures only" switch and a stage filter; lines that arrive while a filter is on are filtered too.
+2. The printer can jump to the start, to the first failure and to the end; with no failure, "first failure" is disabled and says why.
+3. A filter that matches nothing says "no lines match" and offers to clear it.
+4. Clearing every filter shows the whole log again without a reload.
 
 ## STORY-UND-78: See Jev's judgements
 **Points:** 5
