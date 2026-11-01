@@ -27,6 +27,7 @@ The owner can open the console, see at once whether a run worked and what it pro
 **Acceptance criteria**
 1. The header lamp and word show RUNNING, DONE or FAILED for the chosen run, not STANDING BY.
 2. A failed run shows a banner naming the stage and the reason (`read: Jev needs a TypeSafe key`) above the printer; the printer jumps to that line when the banner is clicked.
+2a. When a run ends, the page says how in one line: `done after N stages`, or the outcome and message (old UND-14 AC5).
 3. A summary panel shows outcome, mode (live or replay), stale, duration, the `--with` values the run had, and each output file with its row count.
 4. If the server cannot be reached, the page says "disconnected, retrying" and keeps the last data marked stale; it recovers by itself.
 5. At 390 px wide the run's status is visible without scrolling past the theme controls (they collapse into one menu).
@@ -61,6 +62,8 @@ The owner can open the console, see at once whether a run worked and what it pro
 
 **Acceptance criteria**
 1. A "Sketches" list shows the sketches under a folder given to `understudy dashboard` (`--sketches DIR`, default `examples`), each with its description and its `--with` names.
+1a. A sketch that fails `check` is listed greyed out with its check message and cannot be started; a folder with no sketches, or a path that is not a folder, is refused before the server starts (old UND-27).
+1b. A run that cannot start (no `TYPESAFE_API_KEY`, missing file) says why on the page, and when any run ends the controls unlock and show the outcome (old UND-29).
 2. Choosing one shows a form for its `--with` values (file paths checked to exist) and Play, Replay (offers captured runs) and Check.
 3. Play starts `understudy run` as a child process; the new run appears at once in the rack and is followed live; Stop ends the process and the run is marked stopped.
 4. Starting, stopping and replaying need the access token printed at startup; without it the console still watches, and the Play controls say why they are off. The token is never in the page's URL or logs.

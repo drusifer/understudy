@@ -24,6 +24,26 @@
 | 15 | **Themes, light/dark, mobile, fonts, local only** (S9, S11) | kept | done | (none) |
 | 16 | **Play-an-app targets** (process, page, http, mcp) and their live views | deleted by owner decision (one kind of sketch) | stays deleted | (none) |
 
+## Checked against the old story files (added after the owner asked "did you read the user stories?")
+
+The table above was first built from the changelog and the design doc. Reading the acceptance criteria of `USER_STORIES_SPRINT4.md` (UND-13 to 16), `SPRINT6` (UND-27 to 32), `SPRINT8` (UND-35), `SPRINT12` (UND-39), `SPRINT14` (UND-41) and `SPRINT15` (UND-42) confirmed every row and added these details, now written into the stories:
+
+| Old acceptance criterion | Folded into |
+|---|---|
+| UND-27 AC2: a sketch that fails `check` is listed greyed out with its check message and cannot be played | UND-79 (Sprint 22) |
+| UND-27 AC4: a folder with no sketches or a path that is not a folder is refused before anything starts | UND-79, UND-80 |
+| UND-27 AC1/5, UND-14 AC1: the old console URL carried a **token** (`/d/<token>/`) and a wrong token was a 404: a precedent for the access control UND-79 needs | UND-79 design (Switch) |
+| UND-29 AC3-4: when a run ends the controls unlock and the outcome shows; a run that cannot start (no `TYPESAFE_API_KEY`) says why on the page | UND-79, UND-76 |
+| UND-14 AC5: the page says how the run ended (`done after 3 steps`, or the outcome and message) | UND-76 |
+| UND-14 AC2: the highlight moves within one second of a state change | UND-82 |
+| UND-15 AC3-5: while paused the page says `paused before <stage>` and what is about to run; a paused run is never stopped by a time limit; Ctrl-C stops a paused run at once | UND-83 |
+| UND-15 AC6: `--pause` without `--watch` is refused with a message | UND-83 |
+| UND-16 AC2-4: replay has **step back** as well as forward, replays the whole log including its ending, and refuses a log it cannot read | UND-84 |
+| UND-28 AC5, UND-39 AC5: every control reachable by keyboard with an accessible name and value | UND-80, every new control |
+| UND-31 AC3: the printer can be scrolled back and the newest line stays visible | already kept |
+| UND-35 AC4: the editor is read-only while a run plays, and Play uses the saved file | UND-86 |
+| UND-39 AC1: STEP from idle starts the run and makes exactly one move | UND-83 |
+
 ## Re-planning
 
 The old features need information the new event stream does not carry, so the order changes:
