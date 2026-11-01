@@ -15,7 +15,7 @@ const remembered = (key) => { try { return localStorage.getItem(`understudy.${ke
 const remember = (key, value) => { try { localStorage.setItem(`understudy.${key}`, value); } catch { /* private mode */ } };
 const known = (list, ...candidates) => candidates.find((each) => list.includes(each)) ?? list[0];
 
-const state = { runs: [], chosen: null, follow: null, theme: 'steampunk', mode: 'auto' };
+const state = { runs: [], chosen: null, chosenState: null, follow: null, openGroups: new Set(), theme: 'steampunk', mode: 'auto' };
 const query = new URLSearchParams(location.search);
 const device = matchMedia('(prefers-color-scheme: dark)');
 
@@ -52,9 +52,13 @@ function gauge(each) {
   dial.setAttribute('aria-hidden', 'true');
   dial.innerHTML = '<path d="M 10 56 A 46 46 0 0 1 90 56" class="arc" fill="none"/><line x1="50" y1="56" x2="50" y2="14" class="needle"/><circle cx="50" cy="56" r="4" class="hub"/>';
   dial.prepend(...ticks);
-  const node = make('div', { class: 'gauge', role: 'meter', 'aria-valuemin': '0', 'aria-valuemax': '1', 'aria-valuenow': String(each.level), 'aria-valuetext': `${each.name.toLowerCase()} ${each.text}`, 'aria-label': each.about, title: each.about },
+  // A needle only where the run knows a full scale (level is a fraction); otherwise just the figure.
+  const attributes = each.level === null
+    ? { class: 'gauge no-needle', role: 'group' }
+    : { class: 'gauge', role: 'meter', 'aria-valuemin': '0', 'aria-valuemax': '1', 'aria-valuenow': String(each.level) };
+  const node = make('div', { ...attributes, 'aria-valuetext': `${each.name.toLowerCase()} ${each.text}`, 'aria-label': each.about, title: each.about },
     dial, make('div', { class: 'figure' }, each.text), make('div', { class: 'gauge-name' }, each.name));
-  node.style.setProperty('--level', String(each.level));
+  node.style.setProperty('--level', String(each.level ?? 0));
   return node;
 }
 
@@ -91,9 +95,25 @@ function drawSummary(run) {
   $('summary').replaceChildren(...rows.flatMap(([name, value]) => [make('dt', {}, name), make('dd', {}, value)]));
 }
 
+// One top-level stage: its lamp, and under it each group of nested stages (open or closed as the reader left it).
+function stageBlock(stage) {
+  const block = make('div', { class: 'stage-block' }, make('div', { class: `stage-lamp ${stage.state}` }, make('i'), stage.name));
+  for (const group of stage.groups) {
+    const key = `${stage.name}/${group.name}`;
+    const progress = group.seen > 0 ? `${group.done} of ${group.seen} done` : group.state;
+    const details = make('details', { class: `group ${group.state}` },
+      make('summary', {}, `${group.name} · ${progress}${group.seen > 0 && group.state === 'running' ? ' · running' : ''}`),
+      ...group.stages.map((child) => make('div', { class: 'group-stage' }, `${child.name} · ${child.completed} of ${child.started} done`)));
+    details.open = state.openGroups.has(key);
+    details.addEventListener('toggle', () => { if (details.open) state.openGroups.add(key); else state.openGroups.delete(key); });
+    block.append(details);
+  }
+  return block;
+}
+
 // Everything but the printer's lines, so it can be refreshed while a run goes without losing the reader's place.
 function drawStatus(run) {
-  $('tube').replaceChildren(...run.tube.map((each) => make('div', { class: `stage-lamp ${each.state}` }, make('i'), each.name)));
+  $('tube').replaceChildren(...run.tube.map(stageBlock));
   $('gauges').replaceChildren(...run.gauges.map(gauge));
   $('tube-caption').textContent = `${run.sketch} · ${WORDS[run.state]} · ${run.mode}`;
   $('ended').textContent = run.ended;
@@ -149,14 +169,24 @@ function stamp(id) {
   return month ? `${month}-${day} ${hour}:${minute}` : id;
 }
 
+const BADGES = { running: 'RUNNING', failed: 'FAILED', stalled: 'STALLED', stopped: 'STOPPED' };
+
+// The rack: runs grouped by sketch (the runs arrive newest first, so each group and each tab inside it is newest first),
+// each tab carrying a badge in words for a run that is going, failed, stalled or stopped.
 function rack() {
-  $('rack').replaceChildren(...state.runs.map((each) => {
-    const tab = make('button', { type: 'button', role: 'tab', class: 'sketch-tab', 'aria-selected': String(each.id === state.chosen), title: `${each.id} · ${each.status}` },
-      make('span', { class: 'name' }, `${each.sketch} · ${stamp(each.id)}`));
-    tab.addEventListener('click', () => choose(each.id));
-    return tab;
-  }));
-  if (state.runs.length === 0) $('rack').replaceChildren(make('span', { class: 'about' }, 'No runs yet - run a sketch with understudy run.'));
+  const groups = new Map();
+  for (const each of state.runs) groups.set(each.sketch, [...groups.get(each.sketch) ?? [], each]);
+  const nodes = [...groups].flatMap(([sketch, runs]) => [
+    make('span', { class: 'rack-group' }, sketch),
+    ...runs.map((each) => {
+      const label = make('span', { class: 'name' }, stamp(each.id));
+      const tab = make('button', { type: 'button', role: 'tab', class: `sketch-tab ${each.state}`, 'aria-selected': String(each.id === state.chosen), title: `${each.id} · ${each.state}` }, label);
+      if (BADGES[each.state]) tab.append(make('span', { class: 'badge' }, BADGES[each.state]));
+      tab.addEventListener('click', () => choose(each.id));
+      return tab;
+    }),
+  ]);
+  $('rack').replaceChildren(...(nodes.length ? nodes : [make('span', { class: 'about' }, 'No runs yet - run a sketch with understudy run.')]));
 }
 
 async function loadRuns() {

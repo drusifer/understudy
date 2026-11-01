@@ -11,7 +11,8 @@ import urllib.request
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from src.dashboard.server import describe, follow, gauges_of, list_runs, printed, read_events, serve
+from src.dashboard.server import follow, serve
+from src.dashboard.view import describe, gauges_of, list_runs, printed, read_events
 
 EVENTS = [
     {"event": "run_started", "at": "2026-10-31T01:00:00+00:00", "sketch": "examples/x/coffee.yaml", "mode": "live"},
@@ -51,13 +52,15 @@ class DescribeTest(unittest.TestCase):
         gauges = {each["name"]: each for each in run["gauges"]}
         self.assertEqual((gauges["STAGES"]["text"], gauges["STAGES"]["level"]), ("1/2", 0.5))
         self.assertEqual(gauges["FAILED"]["text"], "1")
-        self.assertEqual((gauges["JEV"]["text"], gauges["JEV"]["level"]), ("250", 0.25))
-        self.assertEqual(gauges["ELAPSED"]["text"], "30s")
-        self.assertEqual(run["tube"], [{"name": "read", "state": "complete"}, {"name": "write", "state": "failed"}])
+        self.assertEqual(gauges["FAILED"]["level"], 0.5)
+        self.assertEqual((gauges["JEV"]["text"], gauges["JEV"]["level"]), ("250", None))  # no needle: no known full scale
+        self.assertEqual((gauges["ELAPSED"]["text"], gauges["ELAPSED"]["level"]), ("30s", None))
+        self.assertEqual(run["tube"], [{"name": "read", "state": "complete", "groups": []},
+                                       {"name": "write", "state": "failed", "groups": []}])
         self.assertEqual((run["sketch"], run["state"], run["count"]), ("coffee", "done", 5))
 
     def test_a_run_with_no_files_reads_as_empty_gauges(self):
-        self.assertEqual([each["level"] for each in gauges_of({}, {}, [])], [0, 0, 0, 0])
+        self.assertEqual([each["level"] for each in gauges_of({}, [])], [0, 0, None, None])
 
     def test_a_half_written_last_line_waits_for_the_next_read(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -72,9 +75,9 @@ class DescribeTest(unittest.TestCase):
             make_run(root, "run-20261030T000000-aaaaaaaa")
             make_run(root, "run-20261031T000000-bbbbbbbb", finished=False)
             (root / "notes").mkdir()
-            runs = list_runs(root)
+            runs = list_runs(root, now=datetime.fromisoformat("2026-10-31T01:00:40+00:00"))
         self.assertEqual([each["id"] for each in runs], ["run-20261031T000000-bbbbbbbb", "run-20261030T000000-aaaaaaaa"])
-        self.assertEqual(runs[0]["status"], "running")
+        self.assertEqual(runs[0]["state"], "running")
         self.assertEqual(list_runs(root / "missing"), [])
 
 
@@ -183,6 +186,65 @@ class RunStateTest(unittest.TestCase):
         self.assertEqual((run["state"], run["id"]), ("unreadable", "run-20261101T100000-eeeeeeee"))
         self.assertIn("no details", run["ended"])
         self.assertEqual(len(list_runs(self.root)), 1)
+
+
+def stage_events(*steps: tuple[str, str]) -> list[dict]:
+    """Events for (kind, stage) pairs, one second apart: kind is start, done or fail."""
+    kinds = {"start": "stage_started", "done": "stage_completed", "fail": "stage_failed"}
+    started = {"event": "run_started", "at": "2026-11-01T10:00:00+00:00", "sketch": "examples/h/household.yaml", "mode": "live"}
+    return [started] + [
+        {"event": kinds[kind], "at": f"2026-11-01T10:00:{index + 1:02d}+00:00", "stage": stage}
+        for index, (kind, stage) in enumerate(steps)
+    ]
+
+
+class StageGroupsTest(unittest.TestCase):
+    """UND-77: nested stages are grouped under the top-level stage that was running."""
+
+    def tube(self, *steps):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            make_manifest(root, "run-20261101T100000-aaaaaaaa", {"status": "running", "stages": {}}, stage_events(*steps))
+            return describe(root / "run-20261101T100000-aaaaaaaa", now=datetime.fromisoformat("2026-11-01T10:01:00+00:00"))["tube"]
+
+    def test_iterations_of_a_child_sketch_form_one_group_with_the_stages_inside(self):
+        tube = self.tube(
+            ("start", "write_records"),
+            ("start", "readings.judge_payee[0].decide"), ("done", "readings.judge_payee[0].decide"),
+            ("start", "readings.judge_payee[1].decide"), ("done", "readings.judge_payee[1].decide"),
+            ("start", "readings.judge_payee[2].decide"),
+        )
+        self.assertEqual([each["name"] for each in tube], ["write_records"])
+        (group,) = tube[0]["groups"]
+        self.assertEqual((group["name"], group["state"], group["done"], group["seen"]), ("readings.judge_payee", "running", 2, 3))
+        self.assertEqual(group["stages"], [{"name": "decide", "started": 3, "completed": 2}])
+
+    def test_a_subsketch_without_iterations_is_a_group_named_for_its_state(self):
+        tube = self.tube(("start", "weather"), ("start", "weather_change.judge"),
+                         ("done", "weather_change.judge"), ("done", "weather"))
+        self.assertEqual(tube[0]["state"], "complete")
+        (group,) = tube[0]["groups"]
+        self.assertEqual((group["name"], group["state"], group["done"], group["seen"]), ("weather_change", "complete", 0, 0))
+
+    def test_a_stage_in_progress_is_running_and_a_failure_marks_its_group_and_stage_failed(self):
+        tube = self.tube(("start", "read"), ("done", "read"), ("start", "write"),
+                         ("start", "a.child[0].go"), ("fail", "a.child[0].go"))
+        self.assertEqual([(each["name"], each["state"]) for each in tube], [("read", "complete"), ("write", "running")])
+        self.assertEqual(tube[1]["groups"][0]["state"], "failed")
+
+    def test_a_run_with_no_nested_stages_has_no_empty_groups(self):
+        tube = self.tube(("start", "read"), ("done", "read"))
+        self.assertEqual(tube, [{"name": "read", "state": "complete", "groups": []}])
+
+    def test_the_rack_entry_carries_the_state_and_the_sketch(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            make_manifest(root, "run-20261101T100000-bbbbbbbb", {"status": "failed", "failed_stage": "x", "error": "e"}, EVENTS)
+            make_manifest(root, "run-20261101T110000-cccccccc", {"status": "complete", "stages": {}}, EVENTS)
+            entries = {each["id"]: each for each in list_runs(root, now=datetime.fromisoformat("2026-10-31T01:01:00+00:00"))}
+        self.assertEqual(entries["run-20261101T100000-bbbbbbbb"]["state"], "failed")
+        self.assertEqual(entries["run-20261101T110000-cccccccc"],
+                         {"id": "run-20261101T110000-cccccccc", "sketch": "coffee", "state": "done"})
 
 
 class StreamLimitTest(unittest.TestCase):

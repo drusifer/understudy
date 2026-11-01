@@ -329,3 +329,17 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
   .looks { display: none; }
   .looks.open { display: flex; }
 }
+
+/* Sprint 22 UND-77: groups of nested stages, gauges without a needle, badges on the rack. */
+.stage-block { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.group { margin-left: 18px; font-family: VT323, monospace; font-size: 18px; color: var(--cream); }
+.group summary { cursor: pointer; padding: 2px 6px; border-radius: 4px; }
+.group summary:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+.group.failed summary { color: #ff7a6b; }
+.group.running summary::after { content: ' ...'; }
+.group-stage { margin: 2px 0 2px 22px; color: var(--muted); }
+.gauge.no-needle .dial { display: none; }
+.gauge.no-needle .figure { font-size: clamp(24px, 2vw, 32px); padding: 8px 0; }
+.rack-group { align-self: center; font-family: Cinzel, serif; font-size: 12px; letter-spacing: 2px; color: var(--brass); text-transform: uppercase; margin-left: 8px; }
+.badge { margin-left: 8px; padding: 1px 6px; border-radius: 4px; font-family: VT323, monospace; font-size: 15px; letter-spacing: 1px; background: #24180f; color: #ffe9b8; }
+.sketch-tab.failed .badge { background: #3a0f0a; color: #ffd9d2; }
