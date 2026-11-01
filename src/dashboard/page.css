@@ -299,3 +299,14 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 
 /* Leather-covered panels, stitched, with brass screws and an ornate brass edge (steampunk). */
 .controls, .tube-panel { position: relative; background-color: #3a2416; background-image: radial-gradient(circle at 12px 12px, #f3d48c 2.5px, #6e4c1c 4px, transparent 5px), radial-gradient(circle at calc(100% - 12px) 12px, #f3d48c 2.5px, #6e4c1c 4px, transparent 5px), radial-gradient(circle at 12px calc(100% - 12px), #f3d48c 2.5px, #6e4c1c 4px, transparent 5px), radial-gradient(circle at calc(100% - 12px) calc(100% - 12px), #f3d48c 2.5px, #6e4c1c 4px, transparent 5px), radial-gradient(rgba(0,0,0,.18) 1px, transparent 1.5px), radial-gradient(rgba(255,220,170,.05) 1px, transparent 1.5px), linear-gradient(160deg, #4a2e1b 0%, #34200f 60%, #2a190c 100%); background-size: auto, auto, auto, auto, 5px 5px, 7px 7px, auto; background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 2px 3px, 0 0; outline: 1.5px dashed rgba(224,178,92,.5); outline-offset: -9px; box-shadow: 0 0 0 2px #c9a15a, 0 0 0 5px #4a3216, 0 0 0 7px #8a6630, 0 10px 28px rgba(0,0,0,.6); border-color: #2b1b0b; }
+
+/* Sprint 21: the console only watches runs - two columns, a list of stages in the tube. */
+.stage.watch { grid-template-columns: minmax(280px, 1fr) minmax(0, 1.4fr); }
+.gauges { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.tube.stages { height: auto; min-height: 160px; max-height: 560px; overflow: auto; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 8px; padding: 18px; }
+.stage-lamp { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 6px; border: 1px solid #5a3e1e; background: rgba(0,0,0,.35); font-family: VT323, monospace; font-size: 20px; color: #d8c4a0; }
+.stage-lamp i { width: 12px; height: 12px; border-radius: 50%; background: #2a1a0c; border: 1px solid #3b2711; }
+.stage-lamp.complete i { background: #7dff98; box-shadow: 0 0 8px #7dff98; }
+.stage-lamp.running i { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+.stage-lamp.failed i { background: #ff4838; box-shadow: 0 0 8px #ff4838; }
+@media (max-width: 1100px) { .stage.watch { grid-template-columns: 1fr; } }

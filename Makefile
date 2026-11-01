@@ -1,14 +1,8 @@
-# Understudy - Makefile fronting the project's npm scripts.
+# Understudy - the project's task front door (Python only: uv, unittest, ruff). See docs/SDLC.md.
 #
-# package.json "scripts" is the source of truth for HOW each task runs; this
-# file gives every task the standard name so `bobp make <target>` works the
-# same here as in every other project. See docs/SDLC.md.
-#
-# Adding a task: add the npm script first, then a one-line target here.
+# Adding a task: add a one-line target here with a `## description`; `bobp make help` lists them.
 
-.PHONY: help install install-js lock-js install-py lock-py test test-js test-py lint check secrets hooks push run clean distclean
-
-NEED_INSTALL = @test -d node_modules || { echo "No node_modules - run 'bobp make install' first"; exit 1; }
+.PHONY: help install lock install-py lock-py test test-py lint check secrets hooks push run dashboard clean distclean
 
 # Live targets (run) read API keys from .env (gitignored; `export NAME=value` lines);
 # test never does, so it can never reach a paid or networked service.
@@ -17,15 +11,9 @@ LOAD_ENV = set -a; if [ -f .env ]; then . ./.env; fi; set +a;
 help: ## List targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
 
-install: ## Install dependencies exactly as locked (network)
-	$(MAKE) install-js
-	$(MAKE) install-py
+install: install-py ## Install dependencies exactly as locked (network on first setup)
 
-install-js: ## Install Node dependencies exactly as locked (network)
-	@if [ -f package-lock.json ]; then npm ci; else npm install; fi
-
-lock-js: ## Refresh the npm lockfile from package.json (network)
-	npm install --package-lock-only --ignore-scripts
+lock: lock-py ## Refresh uv.lock from pyproject.toml (network)
 
 install-py: ## Install the pinned Python environment from uv.lock (network on first setup)
 	@if [ ! -f uv.lock ]; then uv lock --python 3.12.15; fi
@@ -34,28 +22,21 @@ install-py: ## Install the pinned Python environment from uv.lock (network on fi
 lock-py: ## Refresh uv.lock from pyproject.toml (network)
 	uv lock --python 3.12.15
 
-test: ## Run the unit tests (node:test); ARGS="--test-name-pattern=x" to filter
-	$(MAKE) test-js
-	$(MAKE) test-py
-
-test-js: ## Run JavaScript unit tests
-	$(NEED_INSTALL)
-	npm run test:js -- $(ARGS)
+test: test-py ## Run the unit tests; ARGS="test_sketch*.py" runs only the files matching that pattern
 
 test-py: ## Run Python unit tests (ARGS="test_sketch*.py" runs only the files matching that pattern)
 	@test -x .venv/bin/python || { echo "No .venv - run 'bobp make install' first"; exit 1; }
 	.venv/bin/python -m unittest discover -s tests/python -p '$(if $(ARGS),$(ARGS),test_*.py)'
 
-run: ## Run the understudy command: ARGS="run coffee_week.yaml" | "check coffee_week.yaml" | "run examples/household/household.yaml --with monarch=... --with amex=... --with amex_account=..."
-	$(NEED_INSTALL)
-	@test -f bin/understudy.mjs || { echo "bin/understudy.mjs does not exist yet (sprint 1, phase 2)"; exit 1; }
-	@$(LOAD_ENV) node bin/understudy.mjs $(ARGS)
+run: ## Run the understudy command: ARGS="run coffee_week.yaml" | "check coffee_week.yaml" | "dashboard" | "run examples/household/household.yaml --with monarch=... --with amex=... --with amex_account=..."
+	@$(LOAD_ENV) bin/understudy $(ARGS)
 
-lint: ## eslint over src/ and tests/, ruff over the Python
-	$(NEED_INSTALL)
-	npm run lint
+dashboard: ## Serve the operations console over build/runs on http://127.0.0.1:4180/ (ARGS="build/runs --port 4180")
+	@bin/understudy dashboard $(ARGS)
+
+lint: ## ruff over the Python
 	@test -x .venv/bin/ruff || { echo "No .venv - run 'bobp make install' first"; exit 1; }
-	.venv/bin/ruff check src/sketch src/jev.py src/paths.py tests/python
+	.venv/bin/ruff check src tests/python
 
 secrets: ## gitleaks: every commit + uncommitted changes to tracked files
 	@command -v gitleaks >/dev/null || { echo "gitleaks is not installed - see https://github.com/gitleaks/gitleaks#installing"; exit 1; }
@@ -74,7 +55,7 @@ push: check ## Commit everything (MSG="...") and push the current branch + its t
 clean: ## Remove build outputs and caches
 	@mkdir -p build
 	@find build -mindepth 1 -maxdepth 1 ! -name build.out -exec rm -rf {} +
-	rm -rf coverage .eslintcache
+	rm -rf coverage
 
-distclean: clean ## Also remove node_modules
-	rm -rf node_modules .venv
+distclean: clean ## Also remove the Python environment
+	rm -rf .venv

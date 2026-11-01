@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="theme-steampunk-light.css">
 <link rel="stylesheet" href="theme-professional.css">
 <link rel="stylesheet" href="theme-starship.css">
-<script type="module" src="page.mjs"></script>
+<script src="page.js" defer></script>
 </head>
 <body>
 <div class="room">
@@ -38,22 +38,17 @@
   <div class="status">
     <span id="status-lamp" class="lamp standby" aria-hidden="true"></span>
     <span id="status-text">STANDING BY</span>
-    <button type="button" id="power" class="power" aria-pressed="true" aria-label="Power off the console">
-      <span class="bat-slot"><span class="bat"></span></span>
-      <span>POWER <span id="power-word">ON</span></span>
-    </button>
   </div>
 </header>
 
-<nav class="rack" aria-label="Sketches">
-  <div class="plate-label">SKETCH RACK</div>
-  <div id="rack" class="rack-list"></div>
+<nav class="rack" aria-label="Runs">
+  <div class="plate-label">RUN RACK</div>
+  <div id="rack" class="rack-list" role="tablist"></div>
 </nav>
 
-<main id="console" class="stage">
+<main id="console" class="stage watch">
   <section id="printer" class="printer" aria-label="Printer">
-    <div class="printer-head"><span>RUN LOG · PRINTER</span><span id="printer-state">IDLE</span>
-      <button type="button" id="open-printer" class="screw-button latch" aria-label="Open the printer to edit the sketch's YAML"><span class="lever" aria-hidden="true"></span>OPEN</button></div>
+    <div class="printer-head"><span>RUN LOG · PRINTER</span><span id="printer-state">IDLE</span></div>
     <div class="roller" aria-hidden="true"></div>
     <div class="glass">
       <div class="paper-window" id="paper-window" tabindex="0" aria-label="Run log - scroll up to rewind, down to wind on">
@@ -63,66 +58,12 @@
     <div class="roller take-up" aria-hidden="true"></div>
   </section>
 
-  <section id="bay" class="bay" aria-label="Behind the printer: the sketch's YAML" hidden>
-    <div class="printer-head"><span>SKETCH.YAML</span>
-      <button type="button" id="refit-printer" class="screw-button" aria-label="Refit the printer">REFIT PRINTER</button></div>
-    <aside class="sticker" aria-label="Cheat sheet">
-      <div class="sticker-title">SKETCH CHEAT SHEET</div>
-      <dl>
-        <dt>name</dt><dd><code>name: evening</code></dd>
-        <dt>description</dt><dd><code>description: &gt;- what it does</code></dd>
-        <dt>target</dt><dd><code>{ kind: process | page | http | mcp, ... }</code></dd>
-        <dt>inputs</dt><dd><code>mood: { choose: [fun, serious], default: fun }</code>
-          <code>centre: { weight: [0, 10], default: 7 }</code>
-          <code>tickets: { count: [1, 4], default: 2 }</code>
-          <code>evenings: { switch: true, default: true }</code></dd>
-        <dt>decide</dt><dd><code>&lt;tool.arg&gt;: { scores: { centre: { range: [0.3, 1], weight: centre } } }</code></dd>
-        <dt>questions</dt><dd><code>next: { type: choice, instructions: ..., looks_at: [...] }</code></dd>
-        <dt>player</dt><dd><code>player: { floor: 0.4 }</code></dd>
-        <dt>turn</dt><dd><code>initial: waiting</code>
-          <code>states: { waiting: { on: { OBSERVE: looking } } }</code>
-          <code>tags: [move] · on: { STEP: acting } · tags: [safe]</code>
-          <code>invoke: { src: look, onDone: [{ target: x, guard: ... }] }</code>
-          <code>finished: { type: final }</code></dd>
-      </dl>
-    </aside>
-    <textarea id="bay-text" class="bay-text" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="sketch.yaml" aria-describedby="bay-note bay-problem"></textarea>
-    <div id="bay-problem" class="bay-problem" role="status"></div>
-    <div id="bay-note" class="about">Saved to sketch.yaml as you type. Power off and on for the factory sketch.</div>
-  </section>
-
-  <section class="tube-panel" aria-label="State tube">
-    <div class="panel-head"><span>STATE TUBE · POWER</span><span id="tube-caption" class="about">idle</span></div>
-    <div id="tube" class="tube"></div>
-    <div id="decision-power" class="decision-power"></div>
+  <section class="tube-panel" aria-label="Stage tube">
+    <div class="panel-head"><span>STAGE TUBE</span><span id="tube-caption" class="about">no run chosen</span></div>
+    <div id="tube" class="tube stages"></div>
     <div id="gauges" class="gauges" role="group" aria-label="Gauges"></div>
   </section>
-
-  <section class="controls" aria-labelledby="sketch-title">
-    <div class="controls-head">
-      <h2 id="sketch-title">…</h2>
-      <div id="sketch-about" class="about"></div>
-    </div>
-    <div class="play-area">
-      <div class="ready">
-        <div class="ready-bezel"><span id="ready-lamp" class="ready-lamp" role="img" aria-label="Ready"></span></div>
-        <div id="ready-text" class="ready-text">READY</div>
-        <div id="ready-hint" class="about">press to play the sketch</div>
-      </div>
-      <div class="play-bezel"><button type="button" id="play" class="play" aria-label="Play the sketch"><span id="play-word">PLAY</span></button></div>
-      <div class="move-buttons" role="group" aria-label="One move at a time">
-        <button type="button" id="step" class="move-button" title="Make one move, then wait">STEP</button>
-        <button type="button" id="pause" class="move-button" aria-pressed="false" title="Wait before the next move">PAUSE</button>
-      </div>
-    </div>
-    <div id="dials" class="dials"></div>
-    <div id="faders" class="faders"></div>
-    <div id="fader-drawers" class="fader-drawers"></div>
-    <div id="nothing-to-tune" class="about" hidden>This sketch has no inputs - nothing to tune. Press Play.</div>
-    <div id="switches" class="switches" role="group" aria-label="Switches"></div>
-  </section>
 </main>
-</div>
 </div>
 </body>
 </html>

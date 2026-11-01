@@ -28,14 +28,12 @@ wrote build/runs/run-20261030T041744-28ee3978/ingredients.jsonl      {"amount": 
 Every live Jev read is captured, so a run can be replayed offline: `--replay` needs no key and no
 network, and two replays are byte-identical.
 
-> **Status:** understudy is mid-way through moving to Python and this model (the
-> [epic](docs/sprints/EPIC_PYTHON_PORT.md)). The older "play an app like a person" sketches, the
-> six examples and the dashboard are being rebuilt for it; `understudy library`, `watch` and
-> `dashboard` say so for now.
+> **Status:** the move to Python and this model is done (the [epic](docs/sprints/EPIC_PYTHON_PORT.md)):
+> one runtime, one kind of sketch. `understudy dashboard` serves a read-only console over your runs.
 
 ## Quick start
 
-Needs CPython 3.12.15 (uv installs it), uv 0.13.0, Node 24 (only for the launcher), `make`, the
+Needs CPython 3.12.15 (uv installs it), uv 0.13.0, `make`, the
 `bobp` CLI (Bob Protocol tooling - it wraps every make target and captures its output in
 `build/build.out`), and, for a live run that asks Jev, a TypeSafe API key.
 
@@ -80,14 +78,13 @@ Sprint documents are in [docs/sprints/](docs/sprints/).
 ## Repository layout
 
 ```text
-bin/understudy.mjs     the command
-src/cli.mjs            the launcher: `run` and `check` start the Python package
+bin/understudy        the command (a shell script that starts the Python package)
 src/sketch/            the sketch package: loader, check, machine, decide, blend, stages, sources (file, Jev, capture), run, cli
 src/jev.py             the one Jev wrapper (shared)    src/paths.py   the output-path policy (shared)
 src/machine_runner.py  the one state-machine loop
-src/dashboard/         the dashboard's browser files, kept for the rebuild
+src/dashboard/         the console: server.py (what the page shows) and its browser files (page.html, page.js, CSS, fonts)
 schema/                JSON Schema for sketches
-tests/                 Python unittest suites, the launcher's node:test, fixtures (coffee, household)
+tests/                 Python unittest suites, fixtures (coffee, household)
 examples/              evening (a night out) and household (the transaction cleanup)
 docs/                  user and project documentation
 agents/                the Bob Protocol team (personas, state, chat) - see AGENTS.md
@@ -96,9 +93,10 @@ agents/                the Bob Protocol team (personas, state, chat) - see AGENT
 ## Development
 
 ```sh
-bobp make test        # unit tests (JavaScript launcher, Python) - never calls Jev
+bobp make test        # unit tests - never calls Jev
 bobp make test-py ARGS="test_sketch*.py"   # only the sketch tests
-bobp make lint        # eslint and ruff
+bobp make lint        # ruff
+bobp make dashboard   # the console over build/runs, http://127.0.0.1:4180/
 bobp make check       # test + lint + gitleaks secret scan (the gate)
 ```
 

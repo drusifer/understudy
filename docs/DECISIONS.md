@@ -10,6 +10,14 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+## ADR-0048: Node is removed; the console is Python-served, with plain browser JavaScript
+
+*   **Status**: Accepted · **Deciders**: owner · **Date**: 2026-11-01 · **Related**: Sprint 21 UND-74, UND-75; [owner decisions 1-2](sprints/OWNER_DECISIONS_SPRINT21.md); epic `EPIC_PYTHON_PORT.md` slices C and D; supersedes the Node parts of ADR-0011, ADR-0018, ADR-0030
+*   **Context**: after Sprint 20 the only Node left was a launcher and the dashboard's browser files, and a second toolchain (npm, eslint, node:test) was paid for by them alone.
+*   **Options**: (1) keep Node for the page's tests and lint; (2) serve the page from Python, keep the browser script plain, decide everything testable in Python.
+*   **Decision**: (2). `src/dashboard/server.py` (standard-library `http.server`) serves the page and a small JSON and server-sent-events API over `build/runs`; `page.js` only draws it. The console watches runs; it does not start them or edit YAML. Fonts are committed.
+*   **Consequences**: + one toolchain, no `package.json`; the console shows only real data. − `page.js` has no automated test (checked by hand at UAT); the old play controls, dial, faders and YAML editor are gone and would be rebuilt from scratch if wanted.
+
 ## ADR-0047: The household ETL is a sketch; SQLMesh and the MCP source servers are gone
 
 *   **Status**: Accepted · **Deciders**: owner · **Date**: 2026-10-30 · **Related**: Sprint 20 UND-71, UND-72; [owner decisions 36-40](sprints/OWNER_DECISIONS_SPRINT20.md); supersedes ADR-0046

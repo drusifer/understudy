@@ -41,10 +41,10 @@ The idea: **you** know how to decide. Write your rules down (if/else trees with 
 
 ## 2. Install
 
-Needs CPython 3.12.15 (installed for you by `uv`), `uv`, Node 24 (only the launcher), `make` and the `bobp` CLI.
+Needs CPython 3.12.15 (installed for you by `uv`), `uv`, `make` and the `bobp` CLI.
 
 ```sh
-bobp make install        # locked Python and Node environments, inside the project
+bobp make install        # the locked Python environment, inside the project
 ```
 
 A live run that asks Jev needs a TypeSafe key in `TYPESAFE_API_KEY` (shell, or `export TYPESAFE_API_KEY=...` in a git-ignored `.env`). Replay, `check` and sketches without a Jev source need none.
@@ -112,24 +112,26 @@ The reference is [SKETCHES.md](SKETCHES.md).
 | `forbid rule 0 left teens with no option for 'caffeine'` | 1 | a rule dropped every option for that segment; relax the rule, or give the stage `on_empty: skip` or `fallback` |
 | `stage match_orders: 'weather' returned temp='ice', not a declared option` | 1 | a source returned an option that `outcomes` does not declare |
 | `cannot write to ...: it is inside the project and not git-ignored` | 2 | use `build/runs` (the default) or a path outside the project |
-| `library is being rebuilt for the new sketch model` (also `watch`, `dashboard`) | 2 | those commands arrive again when the examples and dashboard are rebuilt |
-| `could not start Python: ...; run bobp make install` | 2 | the Python environment is missing |
+| `understudy: no .venv - run 'bobp make install' first` | 2 | the Python environment is missing |
 
 ## 8. Command reference
 
 ```text
 understudy run <sketch.yaml> [--with name=value]... [--source name.path=file]... [--out folder] [--replay[=run-id|folder]]
 understudy check <sketch.yaml> [--with name=value]... [--source name.path=file]...
-understudy --help
+understudy dashboard [runs-folder] [--port 4180]
 ```
 
-Run them as `bobp make run ARGS="<command> ..."`.
+Run them as `bobp make run ARGS="<command> ..."`, or `bin/understudy <command> ...`.
+
+`understudy dashboard` serves a read-only console on `http://127.0.0.1:4180/` over the runs under `build/runs` (or the folder you give). Pick a run on the rack: the printer shows its events (new lines appear while it runs), the tube lights one lamp per stage, and four gauges (STAGES, FAILED, JEV, ELAPSED) read the run's own files. It starts nothing and changes nothing; three themes and light, dark or auto are remembered by the browser.
 
 | Make target (`bobp make <target>`) | Does |
 |---|---|
 | `install` | install dependencies (network) |
 | `run` | `ARGS="run <sketch> [--with name=value]..."` or `"check <sketch>"` |
-| `test` / `lint` / `check` | unit tests (JavaScript launcher, Python) / eslint and ruff / the full gate with the secret scan |
+| `dashboard` | the console over `build/runs` |
+| `test` / `lint` / `check` | unit tests / ruff / the full gate with the secret scan |
 | `clean` | remove `build/` |
 
 ## 9. Local transaction cleanup

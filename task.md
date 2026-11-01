@@ -1,23 +1,21 @@
-# Sprint 20 Task Board: the evening and the household as sketches (CLOSED 2026-10-30)
+# Sprint 21 Task Board: the console in Python, and the last Node deleted
 
-* **Goal**: both of the owner's real pipelines run as sketches with `understudy run`.
-* **Branch**: `sprint-20` (local, not pushed). **Plan**: `docs/sprints/USER_STORIES_SPRINT20.md`, `ARCH_SPRINT20.md`. **Retro**: `docs/sprints/RETRO_SPRINT20.md`. **Decisions**: `docs/sprints/OWNER_DECISIONS_SPRINT20.md` (1-40).
-* The plan's seven phases were reshaped by the owner's decisions during the sprint; what was delivered is listed below.
+* **Goal**: `understudy dashboard` in Python; no Node left. **Branch**: `sprint-21`. **Plan**: `docs/sprints/USER_STORIES_SPRINT21.md`, `ARCH_SPRINT21.md`. **Decisions**: `docs/sprints/OWNER_DECISIONS_SPRINT21.md`.
+* Process note: phases 1 and 2 were built before the planning artifacts and gates existed; their gates run now, after the fact.
 
-## Delivered
+## Phase 1: the console server (UND-74) - L2
+- [x] Neo **UND-74** `src/dashboard/server.py`, `page.js`, `page.html`, CSS, fonts, `dashboard` command, `tests/python/test_dashboard.py`.
+- [x] Trin UAT phase 1 (tests plus a real look at a real run in a browser)
+- [x] Switch security review phase 1 (new network listener)
+- [x] Morpheus review phase 1
 
-- [x] **UND-68** Jinja2 sketches, `--with` and `with:`, `each`, `outcome`, `outputs`.
-- [x] **UND-73** options read from rows (`{from, key}`), Jev choosing among them.
-- [x] **Stage model** `map`/`reduce`/`sink`/`sketch`, `@stage` registry, `kind: stage` sources, `each` + `reduce` fold.
-- [x] **UND-69** seating as a subsketch (adjacent runs, scoring stages).
-- [x] **UND-70** the evening (`examples/evening/`).
-- [x] **UND-71** the household as a sketch (`examples/household/`): CSV sources, `convert`, `pair`, `link`, `earlier`, `group`, `classify`, child sketches that ask Jev, a folding category namer. Real-file run done (5,074 records).
-- [x] **UND-72** purge: old ETL, SQLMesh, MCP servers, `etl run`, old Node examples, `seed/`, old schema; docs, ADR-0047, changelog.
-- [x] **Gate**: `bobp make check` (tests, lint, secrets) green; 221 Python and 19 JavaScript tests.
-- [x] **Close-out**: SDLC doc matches the tooling (edited by Cypher; Tank to confirm), retro written, backlog updated.
+## Phase 2: delete Node (UND-75) - L2
+- [x] Neo **UND-75** removed package.json, lockfile, eslint, .nvmrc, .mjs, node tests; `bin/understudy`; Makefile Python-only.
+- [x] Trin UAT phase 2 (`bobp make check` from the Python side; `bin/understudy check`/`run`)
+- [x] Switch security review phase 2 (secrets scan; dependency surface shrank)
+- [x] Morpheus review phase 2
 
-## Not done (carried to the backlog)
-
-- [ ] Per-phase Trin UAT and Morpheus review (the author reviewed at close only).
-- [ ] The 1,706 records in category review; the $433k net spending; replay of a household run.
-- [ ] Merge, tag and push: waiting for the owner.
+## Phase 3: docs and close - L1
+- [x] Oracle: README, USER_GUIDE, SKETCHES, DOMAIN, CHANGELOG, epic doc, ADR-0048, backlog
+- [x] Tank `*devops sdlc-check` (SDLC rewritten Python-only)
+- [x] Smith user test; retro; Cypher launch
