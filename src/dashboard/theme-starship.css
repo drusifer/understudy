@@ -199,3 +199,7 @@
 :root[data-theme="starship"] .bay-text { font-family: ui-monospace, Menlo, Consolas, monospace; letter-spacing: 0; }
 :root[data-theme="starship"] .sticker code { font-size: 11px; }
 :root[data-theme="starship"] .bay-text { background: var(--void); color: var(--t-gold); border: 2px solid var(--violet); border-radius: 8px; font-size: 13px; }
+
+/* Sprint 22: the tube is black; its text is the screen's peach. */
+:root[data-theme="starship"] { --tube-ink: var(--cream); }
+:root[data-theme="starship"] .stage-lamp { background: transparent; }

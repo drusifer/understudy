@@ -62,9 +62,45 @@
 - **Verdict:** PASS
 - **Evidence / issue:** screenshot `p1-mobile.png`
 
+### UAT-77-1: A real 937-event household run shows its groups with counts
+- **Linked criterion:** UND-77 AC1, AC5
+- **Preconditions and data:** the owner's real household run on this machine (5,074 records; counts and stage names only are read)
+- **Steps:** open the console on `build/runs`; choose the household run; read the tube; open the first group
+- **Expected observable outcome:** five top-level lamps; under `write_records` four groups with counts (`readings.judge_payee`, `refund_readings.link_refund`, `placements.place_merchant`, `named.name_merchant`); opening one lists its stage with a count
+- **Actual outcome:** 5 lamps, 4 groups, `25 of 25 done`, `69 of 69`, `818 of 818`, `7 of 7`; the opened group shows `decide - 25 of 25 done`
+- **Verdict:** PASS
+- **Evidence / issue:** screenshot `p2-household.png`; found: group text unreadable on the dark glass in light mode and on a light tube; fixed with a `--tube-ink` color per theme and checked in all six theme and mode combinations
+
+### UAT-77-2: A growing run lights its stage in progress and its group counts up
+- **Linked criterion:** UND-77 AC2, AC4
+- **Preconditions and data:** a run folder whose events and `run.json` the test script appends to while the page is open (running, then finished)
+- **Steps:** open the console; read the badge and lamp; append two iterations, one unfinished; wait for the poll; finish the run
+- **Expected observable outcome:** badge RUNNING and a running lamp; group `1 of 2 done - running`; after the finish the lamp is complete, the group `2 of 2 done`, and the badge is gone
+- **Actual outcome:** exactly that
+- **Verdict:** PASS
+- **Evidence / issue:** session output 2026-11-01
+
+### UAT-77-3: Gauges draw a needle only for a real fraction; the rack groups and badges
+- **Linked criterion:** UND-77 AC3, AC4
+- **Preconditions and data:** the real household run and two coffee runs
+- **Steps:** count the gauges with and without needles; read the rack
+- **Expected observable outcome:** STAGES and FAILED have needles; JEV and ELAPSED show only their figures (`932`, `126s`); the rack shows a `household` group and a `coffee_week` group with the newest run first
+- **Actual outcome:** 4 gauges, 2 without a needle, figures `5/5`, `0`, `932`, `126s`; groups `household`, `coffee_week`
+- **Verdict:** PASS
+- **Evidence / issue:** session output 2026-11-01
+
+### UAT-77-4: A run with no nested stages shows no empty groups (rejection-style case)
+- **Linked criterion:** UND-77 AC5
+- **Preconditions and data:** unit fixture with two top-level stages only
+- **Steps:** `bobp make test-py ARGS="test_dashboard.py"`
+- **Expected observable outcome:** the tube is two stages with an empty list of groups
+- **Actual outcome:** `test_a_run_with_no_nested_stages_has_no_empty_groups` passes
+- **Verdict:** PASS
+- **Evidence / issue:** test name above
+
 ## Results and Handoff
 
-- **Passed / failed / blocked:** Phase 1: 6 passed (3 after a fix found in the run), 0 failed, 0 blocked. Phases 2 to 7 not yet run.
+- **Passed / failed / blocked:** Phase 1: 6 passed (3 after a fix found in the run); Phase 2: 4 passed (1 after a contrast fix); 0 failed, 0 blocked. Phases 3 to 7 not yet run.
 - **Open issues and impact:** none for Phase 1. The `with` values in `run.json` are file paths as typed (SEC-004 covers the sketch path, now stored relative).
 - **Overall verdict:** Phase 1 PASS
 - **Handoff evidence:** `agents/CHAT.md` message "UAT phase 1 passed"

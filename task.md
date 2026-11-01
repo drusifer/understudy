@@ -28,10 +28,10 @@ Complexity levels follow the definitions in `agents/templates/_template_task.md`
 
 ### Phase 2: See inside a run (UND-77, 5 pts)
 *Phase goal: nested stages as groups with progress, honest gauges, rack badges.*
-- [ ] **Task 2.1:** Groups and iteration counts from stage names (decision D-S22-1); real-fraction gauges only (D-S22-2); rack badges and grouping by sketch; tests first. **L2**. (*Owner: Neo | Trace: UND-77 AC1-5 | Verification: `bobp make test`, `bobp make lint`*)
-- [ ] **Task 2.2:** UAT on the real household run (937 stage events): groups, in-progress lamp on a growing run, a run with no nested stages. **L2**. (*Owner: Trin | Trace: UND-77 AC1-5 | Verification: UAT verdict in `agents/CHAT.md` and the UAT plan*)
-- [ ] **Task 2.3:** Security quick pass: no new input or surface. **L1**. (*Owner: Switch | Trace: N/A — quick pass | Verification: `security gate (phase 2): ...` in `agents/CHAT.md`*)
-- [ ] **Task 2.4:** Code review. **L1**. (*Owner: Morpheus | Trace: D-S22-1, D-S22-2 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 2.1:** Groups and iteration counts from stage names (decision D-S22-1); real-fraction gauges only (D-S22-2); rack badges and grouping by sketch; tests first. **L2**. (*Owner: Neo | Trace: UND-77 AC1-5 | Verification: `bobp make test`, `bobp make lint`*)
+- [x] **Task 2.2:** UAT on the real household run (937 stage events): groups, in-progress lamp on a growing run, a run with no nested stages. **L2**. (*Owner: Trin | Trace: UND-77 AC1-5 | Verification: UAT verdict in `agents/CHAT.md` and the UAT plan*)
+- [x] **Task 2.3:** Security quick pass: no new input or surface. **L1**. (*Owner: Switch | Trace: N/A — quick pass | Verification: `security gate (phase 2): ...` in `agents/CHAT.md`*)
+- [x] **Task 2.4:** Code review. **L1**. (*Owner: Morpheus | Trace: D-S22-1, D-S22-2 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 3: Find a line in the log (UND-88, 3 pts)
 *Phase goal: filter and jump in the printer.*
