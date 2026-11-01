@@ -42,7 +42,8 @@ class ReadsCase(unittest.TestCase):
 class ListTest(ReadsCase):
     def test_each_read_lists_its_levels_the_top_one_and_how_close_the_next_was(self):
         directory = self.make_run()
-        self.store.write(RUN, "named.child[0].kind", rows(a=0.1, b=0.8, c=0.1), "h1", instructions="Which kind is it?")
+        self.store.write(RUN, "named.child[0].kind", rows(a=0.1, b=0.8, c=0.1), "h1", instructions="Which kind is it?",
+                         levels_from_data=False)
         result = self.reads(directory)
         (read,) = result["reads"]
         self.assertEqual((read["source"], read["top"], read["instructions"]), ("named.child[0].kind", "b", "Which kind is it?"))
@@ -71,6 +72,31 @@ class ListTest(ReadsCase):
         directory = self.make_run()
         self.store.write(RUN, "a", rows(x=0.9, y=0.1), "h")
         self.assertIsNone(self.reads(directory)["reads"][0]["instructions"])
+
+
+class PrivacyTest(ReadsCase):
+    """SEC-007: level names that come from the owner's data (a refund candidate named by its date and amount) are not
+    sent to the network; only the sketch's own words are."""
+
+    def test_levels_from_data_or_of_unknown_origin_read_as_option_numbers_with_their_probabilities(self):
+        directory = self.make_run()
+        self.store.write(RUN, "from_data", rows(**{"refund_2026-01-05_-12.50_x1": 0.2, "refund_2026-01-06_-9.99_x2": 0.8}), "h",
+                         instructions="Which charge?", levels_from_data=True)
+        self.store.write(RUN, "unknown", rows(**{"charge_2026-02-01_-3.00_x3": 0.9, "charge_2026-02-02_-4.00_x4": 0.1}), "h")
+        reads = {each["source"]: each for each in self.reads(directory)["reads"]}
+        for key, top in (("from_data", "option 2"), ("unknown", "option 1")):
+            self.assertEqual(reads[key]["top"], top)
+            for private in ("12.50", "9.99", "3.00", "4.00", "refund_", "charge_"):
+                self.assertNotIn(private, json.dumps(reads[key]))
+        self.assertEqual(reads["from_data"]["levels"], [["option 1", 0.2], ["option 2", 0.8]])
+        self.assertEqual(reads["from_data"]["instructions"], "Which charge?")
+
+    def test_the_sketchs_own_none_of_these_stays_readable_so_the_flag_makes_sense(self):
+        directory = self.make_run()
+        self.store.write(RUN, "a", rows(**{"charge_2026-02-01_-3.00_x3": 0.1, "none_of_these": 0.9}), "h", levels_from_data=True)
+        (read,) = self.reads(directory)["reads"]
+        self.assertEqual((read["top"], read["flagged"]), ("none_of_these", True))
+        self.assertEqual(read["levels"][0][0], "option 1")
 
 
 class ReplayAndMissingTest(ReadsCase):

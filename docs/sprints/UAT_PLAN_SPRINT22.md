@@ -125,9 +125,36 @@
 - **Verdict:** PASS
 - **Evidence / issue:** session output 2026-11-01
 
+### UAT-78-1: A replayed run shows the answers it replayed, with two Jev gauges
+- **Linked criterion:** UND-78 AC1, AC3, AC4
+- **Preconditions and data:** the committed coffee capture replayed with `--replay=tests/fixtures/coffee/replay` into a scratch folder
+- **Steps:** open the console on that folder; read the Jev summary; open the list and the first read
+- **Expected observable outcome:** `1 read, 0 unsure`; the read names its source, its top level `much_colder` at 0.95 and 5 levels; gauges SURE 0.95 and ASKED `0·1` (none asked, one reused)
+- **Actual outcome:** exactly that; the old capture has no question, so none is shown (expected)
+- **Verdict:** PASS
+- **Evidence / issue:** session output 2026-11-01
+
+### UAT-78-2: The real household run: 932 reads, the unsure ones can be isolated
+- **Linked criterion:** UND-78 AC1, AC2, AC4
+- **Preconditions and data:** the owner's real run on this machine; counts only are recorded
+- **Steps:** choose the run; read the summary; open the list; tick "unsure only"
+- **Expected observable outcome:** the count of reads and of unsure reads; the filter shows exactly the unsure ones; gauges SURE and ASKED `932·0`
+- **Actual outcome:** 932 reads, 481 unsure (top level below 0.7 or `none_of_these`); the filter showed 481; ASKED `932·0`; SURE 0.64
+- **Verdict:** PASS
+- **Evidence / issue:** this is the first measurement of how often Jev is unsure on the real data; reported to the owner as counts. Found: refund candidates are named by date and amount (SEC-007), so the first build sent them to the network; fixed with `levels_from_data` and re-verified: 0 level names with a date or an amount in the payload
+
+### UAT-78-3: A run without captures says why on its summary line (rejection paths)
+- **Linked criterion:** UND-78 AC3, AC5, AC6
+- **Preconditions and data:** an older coffee run whose captures were pruned; a run that never asked Jev; a capture folder with one file missing its other half
+- **Steps:** choose each run; read the summary line
+- **Expected observable outcome:** `captures no longer kept for this run`; `this run did not ask Jev`; the broken half named while the rest lists
+- **Actual outcome:** the first run showed the note only inside the closed list (hard to find), moved to the summary line and rechecked; the others as expected (broken half by unit test)
+- **Verdict:** PASS after fix
+- **Evidence / issue:** `test_a_run_whose_captures_were_pruned_says_so`, `test_a_run_that_never_asked_jev_says_so`, `test_a_capture_missing_its_other_half_is_named_and_the_rest_still_lists`
+
 ## Results and Handoff
 
-- **Passed / failed / blocked:** Phase 1: 6 passed (3 after a fix found in the run); Phase 2: 4 passed (1 after a contrast fix); Phase 3: 3 passed; 0 failed, 0 blocked. Phases 4 to 7 not yet run.
+- **Passed / failed / blocked:** Phase 1: 6 passed (3 after a fix found in the run); Phase 2: 4 passed (1 after a contrast fix); Phase 3: 3 passed; Phase 4: 3 passed (1 after a fix; 1 privacy defect found and fixed, SEC-007); 0 failed, 0 blocked. Phases 5 to 7 not yet run.
 - **Open issues and impact:** none for Phase 1. The `with` values in `run.json` are file paths as typed (SEC-004 covers the sketch path, now stored relative).
 - **Overall verdict:** Phase 1 PASS
 - **Handoff evidence:** `agents/CHAT.md` message "UAT phase 1 passed"

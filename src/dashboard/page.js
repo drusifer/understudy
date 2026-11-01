@@ -188,7 +188,7 @@ function drawJev() {
   const unsure = $('jev-unsure').checked;
   if (!jev) { $('jev-summary').textContent = 'JEV READS'; $('jev-list').replaceChildren(); return; }
   const flagged = jev.reads.filter((each) => each.flagged).length;
-  $('jev-summary').textContent = jev.kept ? `JEV READS · ${jev.reads.length} read, ${flagged} unsure` : 'JEV READS · none';
+  $('jev-summary').textContent = jev.kept ? `JEV READS · ${jev.reads.length} read, ${flagged} unsure` : `JEV READS · ${jev.note}`;
   const items = jev.reads.filter((each) => !unsure || each.flagged).map((each) => make('details', { class: `jev-read ${each.flagged ? 'unsure' : ''}` },
     make('summary', {}, `${each.source} · ${each.top} ${each.probability.toFixed(2)}${each.flagged ? ' · UNSURE' : ''}`),
     ...(each.instructions ? [make('div', { class: 'jev-question' }, each.instructions)] : []),

@@ -77,6 +77,7 @@ When this sprint is done, the owner can open the console and see at once whether
 4. Two gauges show Jev's confidence in its last choice and how many answers were asked as against reused.
 5. If a run's captured answers are missing, the list says which are missing and the rest of the console still works.
 6. Captures are kept for the last five runs only; for an older run the list says "captures no longer kept".
+7. Level names that come from the owner's data (for example a refund candidate named by its date and amount) are shown as "option N" with their probabilities; the sketch's own level names are shown as they are. Someone who holds the access secret can see the real names (arrives with the secret, UND-79).
 
 ## STORY-UND-79: Start, replay and stop a run from the console
 **Points:** 8

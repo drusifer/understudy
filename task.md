@@ -42,10 +42,10 @@ Complexity levels follow the definitions in `agents/templates/_template_task.md`
 
 ### Phase 4: See Jev's judgements (UND-78, 5 pts)
 *Phase goal: a list of Jev reads from the capture files, flagged by confidence, with two real gauges.*
-- [ ] **Task 4.1:** `jev_reads` over `CaptureStore` (levels, probabilities, top, margin, flag below 0.7, missing and pruned notes); the list in the page; confidence and asked-vs-reused gauges; tests first against the committed coffee capture. **L2**. (*Owner: Neo | Trace: UND-78 AC1-6 | Verification: `bobp make test`, `bobp make lint`*)
-- [ ] **Task 4.2:** UAT on a replayed run, a live-captured household run (counts only, no private values printed), a run with no Jev and a run whose captures were pruned. **L2**. (*Owner: Trin | Trace: UND-78 AC1-6 | Verification: UAT verdict in `agents/CHAT.md`*)
-- [ ] **Task 4.3:** Security review: the list reads capture files from a run id taken from the URL. **L2**. (*Owner: Switch | Trace: SEC-006 (id check) | Verification: `security gate (phase 4): ...` in `agents/CHAT.md`*)
-- [ ] **Task 4.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT22 section 4 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 4.1:** `jev_reads` over `CaptureStore` (levels, probabilities, top, margin, flag below 0.7, missing and pruned notes); the list in the page; confidence and asked-vs-reused gauges; tests first against the committed coffee capture. **L2**. (*Owner: Neo | Trace: UND-78 AC1-6 | Verification: `bobp make test`, `bobp make lint`*)
+- [x] **Task 4.2:** UAT on a replayed run, a live-captured household run (counts only, no private values printed), a run with no Jev and a run whose captures were pruned. **L2**. (*Owner: Trin | Trace: UND-78 AC1-6 | Verification: UAT verdict in `agents/CHAT.md`*)
+- [x] **Task 4.3:** Security review: the list reads capture files from a run id taken from the URL. **L2**. (*Owner: Switch | Trace: SEC-006 (id check) | Verification: `security gate (phase 4): ...` in `agents/CHAT.md`*)
+- [x] **Task 4.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT22 section 4 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 5: Start, replay and stop: the server side (UND-79 part 1, 5 pts)
 *Phase goal: the `Launcher`, the secret and the POST routes, tested without a browser.*

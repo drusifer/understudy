@@ -24,9 +24,17 @@ def _capture_dir(directory: Path, run: dict, cache: Path, project: Path) -> Path
     return folder if folder.is_dir() else None
 
 
+def _hide_names(rows: list[dict]) -> list[dict]:
+    """Level names that came from the owner's data (a charge named by its date and amount) are shown as `option N`; the
+    sketch's own `none_of_these` keeps its name so a flag still makes sense (SEC-007)."""
+    return [row if row["level"] == NONE_LEVEL else {**row, "level": f"option {number}"} for number, row in enumerate(rows, 1)]
+
+
 def _one_read(folder: Path, key: str) -> dict:
     rows = [json.loads(line) for line in (folder / f"{key}.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
     meta = json.loads((folder / f"{key}.meta.json").read_text(encoding="utf-8"))
+    if meta.get("levels_from_data") is not False:  # data-derived, or a capture too old to say: do not send the names
+        rows = _hide_names(rows)
     ranked = sorted(rows, key=lambda row: row["probability"], reverse=True)
     top = ranked[0] if ranked else {"level": "", "probability": 0.0}
     second = ranked[1]["probability"] if len(ranked) > 1 else 0.0
