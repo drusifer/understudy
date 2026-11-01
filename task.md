@@ -2,9 +2,9 @@
 
 *   **Goal**: The owner can open the console and see at once how a run went, look inside a long run and at Jev's answers, and start, replay or stop a run behind an access secret. Command-line failures are one plain line.
 *   **Tier**: Tier 1 (Major)
-*   **Total Points** (optional): 32 (stories 29, plus 3 for the Sprint 21 documents in Phase 0)
+*   **Total Points** (optional): 29
 *   **Branch**: `sprint-22`
-*   **Status**: Planning — awaiting Morpheus Step 3a Review
+*   **Status**: Plan approved by Morpheus (Step 3a); Phase 1 in progress
 *   **Plan**: `docs/sprints/USER_STORIES_SPRINT22.md` (Gate 1 approved), `ARCH_SPRINT22.md` (Gate 2 approved), security design gate `agents/switch/reviews/2026-11-01-sprint-22-design-gate.md` (no blocking findings; SEC-005 accepted until 2027-01-30). Decisions: `OWNER_DECISIONS_SPRINT22.md`.
 
 ---
