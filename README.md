@@ -96,7 +96,7 @@ agents/                the Bob Protocol team (personas, state, chat) - see AGENT
 bobp make test        # unit tests - never calls Jev
 bobp make test-py ARGS="test_sketch*.py"   # only the sketch tests
 bobp make lint        # ruff
-bobp make dashboard   # the console over build/runs, http://127.0.0.1:4180/
+bobp make dashboard   # the console over build/runs, http://<this machine>:4180/ (listens on 0.0.0.0)
 bobp make check       # test + lint + gitleaks secret scan (the gate)
 ```
 

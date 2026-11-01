@@ -53,7 +53,7 @@ The Makefile is the only entry point; its recipes hold the commands. `bobp make 
 | `test` | `test-py` | offline; no Jev or browser calls |
 | `test-py` | `python -m unittest discover -s tests/python` | `ARGS="test_sketch*.py"` runs only the files matching that pattern |
 | `run` | `bin/understudy $(ARGS)` (starts `python -m src.sketch.cli`) | e.g. `ARGS="run tests/fixtures/coffee/coffee_week.yaml --replay"`; a live run reads `TYPESAFE_API_KEY` from `.env` |
-| `dashboard` | `bin/understudy dashboard $(ARGS)` | serves the read-only console over `build/runs` on 127.0.0.1:4180 |
+| `dashboard` | `bin/understudy dashboard $(ARGS)` | serves the read-only console over `build/runs` on 0.0.0.0:4180 (all interfaces, no login) |
 | `lint` | `.venv/bin/ruff check src tests/python` | ruff 0.9.10 pinned in `pyproject.toml` (dev group); rule sets E, W, F, I, B, SIM, UP, N, C4, PERF, RUF, ERA, ARG, C90 (max complexity 12), PL, T20, RET, PTH, line length 135; test doubles and the CLI stdout are the only per-file ignores |
 | `secrets` | `gitleaks git` over history + uncommitted tracked changes | needs `gitleaks` installed |
 | `hooks` | `git config core.hooksPath .githooks` | installs the gitleaks pre-commit hook |

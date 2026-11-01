@@ -124,7 +124,7 @@ understudy dashboard [runs-folder] [--port 4180]
 
 Run them as `bobp make run ARGS="<command> ..."`, or `bin/understudy <command> ...`.
 
-`understudy dashboard` serves a read-only console on `http://127.0.0.1:4180/` over the runs under `build/runs` (or the folder you give). Pick a run on the rack: the printer shows its events (new lines appear while it runs), the tube lights one lamp per stage, and four gauges (STAGES, FAILED, JEV, ELAPSED) read the run's own files. It starts nothing and changes nothing; three themes and light, dark or auto are remembered by the browser.
+`understudy dashboard` serves a read-only console on port 4180 of every network interface (`http://<this machine>:4180/`; there is no login, so use it on a network you trust) over the runs under `build/runs` (or the folder you give). Pick a run on the rack: the printer shows its events (new lines appear while it runs), the tube lights one lamp per stage, and four gauges (STAGES, FAILED, JEV, ELAPSED) read the run's own files. It starts nothing and changes nothing; three themes and light, dark or auto are remembered by the browser.
 
 | Make target (`bobp make <target>`) | Does |
 |---|---|

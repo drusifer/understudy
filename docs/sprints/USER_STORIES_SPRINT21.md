@@ -23,7 +23,7 @@
 **As the** owner, **I want** to open the console and see my runs, pick one, and watch its log, stages and gauges (live while it runs), **so that** I can see what a pipeline is doing without reading JSON.
 
 **Acceptance criteria**
-1. `understudy dashboard [folder] [--port N]` serves `/` on 127.0.0.1; the folder defaults to `build/runs`.
+1. `understudy dashboard [folder] [--port N]` serves `/` on 0.0.0.0 (owner, 2026-11-01); the folder defaults to `build/runs`.
 2. A rack tab per run, newest first; with no runs the page says so.
 3. The printer shows one line per event with its clock; failures are marked.
 4. The tube shows one lamp per top-level stage (complete, running, failed).

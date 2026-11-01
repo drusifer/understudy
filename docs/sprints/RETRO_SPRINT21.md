@@ -14,5 +14,5 @@ Delivered: UND-74 (read-only console, live follow, 4 real gauges, 3 themes) and 
 ## Backlog
 * If a run list grows large, page the rack and the printer (1,876 lines render at once today and it is fine).
 * Optional: start a run from the console, and a per-run YAML view, only if the owner asks.
-* Add a `--host` option only with a threat review (it binds 127.0.0.1 only today).
+* The console listens on 0.0.0.0 with no login (owner's choice, 2026-11-01, so he can open it from another device). Add a login or a `--host` option only if it is ever run outside a trusted network.
 * Still open from Sprint 20: the 1,706 category-review records, the $433k net spending, replay of the household run.

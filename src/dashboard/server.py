@@ -196,7 +196,7 @@ def make_handler(root: Path, poll_seconds: float = 0.5):
     return Handler
 
 
-def serve(root: Path, port: int = 4180, host: str = "127.0.0.1") -> ThreadingHTTPServer:
+def serve(root: Path, port: int = 4180, host: str = "0.0.0.0") -> ThreadingHTTPServer:
     """A server for the runs under `root`; the caller starts and stops it."""
     server = ThreadingHTTPServer((host, port), make_handler(root))
     server.daemon_threads = True
@@ -205,7 +205,7 @@ def serve(root: Path, port: int = 4180, host: str = "127.0.0.1") -> ThreadingHTT
 
 def serve_forever(root: Path, port: int, stdout) -> None:
     server = serve(root, port)
-    stdout.write(f"dashboard: http://127.0.0.1:{server.server_address[1]}/  (runs under {root}; Ctrl-C to stop)\n")
+    stdout.write(f"dashboard: listening on 0.0.0.0:{server.server_address[1]}  (runs under {root}; Ctrl-C to stop)\n")
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:

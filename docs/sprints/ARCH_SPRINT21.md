@@ -32,7 +32,7 @@ graph LR
 
 * Run ids must match `run-[0-9A-Za-z-]+` and be a directory under the root; static names come from one allow-list regex; anything else is 404. Nothing but GET exists.
 * A half-written last line of `events.jsonl` is skipped until complete.
-* Binds 127.0.0.1 only. No secrets are read; run files already hold counts, and private values live in sink files the console never opens.
+* Binds 0.0.0.0 (owner's choice, decision 4): no login, so any host on the network can read run logs and counts; GET only, and only the files and run folders above are reachable. No secrets are read; run files already hold counts, and private values live in sink files the console never opens.
 * A client that disconnects ends its stream (broken pipe caught).
 
 ## 4. Decisions
