@@ -19,6 +19,7 @@ Template source lives in `bobp/templates/agents/templates/`; installed or dogfoo
 | Sprint task board | `_template_task.md` | Mouse | PLAN / Morpheus at plan review |
 | Quality and test strategy | `_template_TEST_STRATEGY.md` | Trin | STRATEGY / Morpheus and Smith |
 | UAT plan and results | `_template_UAT_PLAN.md` | Trin | UAT / Smith or Morpheus |
+| Product requirements (PRD) | `_template_PRD.md` | Cypher | PRD / Smith (user value) and Morpheus (feasibility) |
 | User stories | `_template_USER_STORIES.md` | Cypher | STORIES / Smith at planning gate |
 | Persona skill | `_template_PERSONA_SKILL.md` | Bob | PERSONA / Bob at creation or material revision |
 | Agent working memory | `_template_state.md` | Each persona | STATE / mechanical handoff check |
