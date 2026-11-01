@@ -1,8 +1,6 @@
 ---
 name: sprint
 description: Sprint planning and execution container loop. Orchestrates SDLC verification, breaks stories into an ordered sequence of typed Work Loops in task.md, executes them, and manages sprint close.
-triggers: ["*plan sprint", "/sprint", "*sprint close", "*sprint retro", "*sprint launch"]
-requires: ["bob-protocol", "bloop", "chat", "make", "prep-clear", "epic", "story", "impl", "fix", "refactor", "spike", "uat", "deploy"]
 ---
 
 Sprint planning and execution container loop: orchestrates the sprint cadence from SDLC gate through work-loop execution to launch.
@@ -16,6 +14,14 @@ TLDR:
 
 # Sprint — Planning & Cadence Container Loop
 
+## Triggers
+
+`*plan sprint`, `/sprint`, `*sprint close`, `*sprint retro`, `*sprint launch`
+
+## Requires
+
+`bob-protocol`, `bloop`, `chat`, `make`, `prep-clear`, `epic`, `story`, `impl`, `fix`, `refactor`, `spike`, `uat`, `deploy`
+
 ## Overview
 
 In the Bob Protocol SDLC hierarchy, the `sprint` loop serves as the **Execution Container**. It takes ready stories from the `story` planning loop, verifies SDLC governance ([docs/SDLC.md](file:///home/drusifer/Projects/bob_protocol/docs/SDLC.md)), structures `task.md` as an ordered sequence of typed **Work Loops**, manages context budgeting (`prep-clear`), and coordinates sprint close.
@@ -26,8 +32,8 @@ In the Bob Protocol SDLC hierarchy, the `sprint` loop serves as the **Execution 
 
 ```
 Stage 0: SDLC Gate         → docs/SDLC.md verified by Tank (Blocker)
-Stage 1: Sprint Planning   → Mouse structures task.md as typed Work Loops; Morpheus reviews
-Stage 2: Work-Loop Execution → Sequential execution of Work Loops (*impl, *fix, *refactor, *spike, *uat, *deploy)
+Stage 1: Sprint Planning   → Smith story gate → Morpheus arch → Smith + Switch design gates → Mouse structures task.md as typed Work Loops; Morpheus reviews
+Stage 2: Work-Loop Execution → Sequential execution of Work Loops (*impl, *fix, *refactor, *spike, *uat, *deploy); each coding phase ends with a Switch security review
 Stage 3: Sprint Close      → Tank SDLC check → Oracle groom → Smith UAT → Retro → Cypher launch
 ```
 
@@ -128,11 +134,28 @@ Smith *user feedback <arch>
 - Must post explicit approve or reject
 
 ```bash
-# Approve → proceed to Mouse
-bobp chat "*user approve. Architecture approved. @Mouse *sm plan sprint" --persona Smith --cmd "user approve" --to Mouse
+# Approve → proceed to Switch's security design gate
+bobp chat "*user approve. Architecture approved. @Switch *sec threat sprint" --persona Smith --cmd "user approve" --to Switch
 
 # Reject → back to Morpheus
 bobp chat "*user reject REASON: <reason> | FIX: <fix>. @Morpheus revise arch." --persona Smith --cmd "user reject" --to Morpheus
+```
+
+### Gate 2b — Switch: Security Design Review
+```
+Switch *sec threat <sprint>
+```
+- Threat-model the approved architecture: assets, entry points, trust boundaries, abuse cases, and new dependencies, workflows, or secrets handling. Review the ADRs and `ARCH.md` against the Scope and Threat Model section of `agents/templates/_template_SECURITY_REVIEW.md`.
+- Record any issue as a finding (`agents/templates/_template_SECURITY_FINDING.md`) with a Next Action table. Design-level fixes go back to Morpheus; Switch advises, Morpheus decides.
+- **Depth scales with risk.** If the design adds no new input, data, dependency, permission, or pipeline surface, Switch posts a one-line quick pass that names what was checked and why nothing applies. Never skip the post.
+- Post the verdict line `security gate (design): No blocking findings` or `Blocked SEC-NNN`. Any open High or Critical finding blocks the gate until it is fixed or the user accepts the risk.
+
+```bash
+# Clear → proceed to Mouse
+bobp chat "Security design gate: No blocking findings. @Mouse *sm plan sprint" --persona Switch --cmd "sec handoff" --to Mouse
+
+# Blocked → back to Morpheus
+bobp chat "Security design gate: Blocked SEC-NNN. Next action in finding. @Morpheus revise arch." --persona Switch --cmd "sec reject" --to Morpheus
 ```
 
 ### Step 3 — Mouse: Phase Breakdown
@@ -141,6 +164,8 @@ Mouse *sm plan sprint
 ```
 - Write sprint tasks to root `task.md` using `agents/templates/_template_task.md` (delete rubric block)
 - Break sprint into phases of **1-3 tasks each** (no larger — context overflow risk)
+- Give every coding phase a Switch security-review task after Trin's UAT and before Morpheus's review (Step 5a)
+- Assign each executable task an L1–L4 complexity level using the task-template definitions. Base it on observable scope, dependencies, and uncertainty; use the lowest fitting level and split separable work with different levels. The level sets execution depth, not priority, duration, or persona rank.
 - If Morpheus flagged a build-environment change, make it **Phase 0**, assigned to Tank
   (`*devops bootstrap` or `*devops sdlc`), before any Neo phase — Neo cannot build on an
   environment that does not exist yet. Deploy tasks, by contrast, stay last.
@@ -159,7 +184,7 @@ bobp chat "Sprint planned. Phases ready for review. @Morpheus *lead review sprin
 Morpheus *lead review sprint plan
 ```
 - Verify phase breakdown aligns with architecture decisions
-- Apply the PLAN rubric and report its verdict line (`rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A`); any Weak rejects, naming criterion and fix — see `agents/templates/ARTIFACTS.md`
+- Apply the PLAN rubric and report its verdict line (`rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A LEVEL=A`); any Weak rejects, naming criterion and fix — see `agents/templates/ARTIFACTS.md`
 - Approve or request adjustment to Mouse
 
 **Handoff (approved):**
@@ -194,13 +219,34 @@ Trin *qa uat <phase N>
 
 **Handoff (pass):**
 ```bash
-bobp chat "UAT phase N passed. @Morpheus *lead review phase-N" --persona Trin --cmd "qa handoff" --to Morpheus
+bobp chat "UAT phase N passed. @Switch *sec review phase-N" --persona Trin --cmd "qa handoff" --to Switch
 ```
 
 **Handoff (fail):**
 ```bash
 bobp chat "UAT phase N FAILED. @Neo *swe fix <issues>" --persona Trin --cmd "qa reject" --to Neo
 ```
+
+### Step 5a — Switch: Security Implementation Review
+```
+Switch *sec review <phase N>
+```
+- Review the phase's diff (`git diff` for the phase) against the design gate's threat model and the area checklist in `agents/templates/_template_SECURITY_REVIEW.md`. Confirm the gitleaks setup first, as the Switch skill requires.
+- Run `bobp make security-scan` when the phase touched dependencies, manifests, workflows, or secrets handling; otherwise the secrets scan is enough.
+- Switch fixes vulnerable dependencies itself (tests and scan must pass afterward) and proposes patches for application source for Neo to apply.
+- **Depth scales with risk.** A phase with no security-relevant change gets a one-line quick pass that states what was checked. Never skip the post.
+- Post the verdict line `security gate (phase N): No blocking findings` or `Blocked SEC-NNN`. Any open High or Critical finding blocks the phase until it is fixed or the user accepts the risk.
+
+**Handoff (clear):**
+```bash
+bobp chat "Security gate phase N: No blocking findings. @Morpheus *lead review phase-N" --persona Switch --cmd "sec handoff" --to Morpheus
+```
+
+**Handoff (blocked):**
+```bash
+bobp chat "Security gate phase N: Blocked SEC-NNN. Proposed fix in finding. @Neo *swe fix SEC-NNN" --persona Switch --cmd "sec reject" --to Neo
+```
+After the fix, Trin re-runs UAT, then Switch re-reviews (Anti-Loop applies: two failed rounds → Oracle, then user).
 
 ### Step 6 — Morpheus: Code Review
 ```
@@ -343,10 +389,12 @@ bobp chat "*pm launch <sprint>. Sprint complete." --persona Cypher --cmd "pm lau
 | 1a | Smith | `*user approve` / `*user reject` | Must approve to proceed |
 | 2 | Morpheus | `*lead arch sprint` | → Smith `*user feedback` |
 | 2a | Smith | `*user approve` / `*user reject` | Must approve to proceed |
+| 2b | Switch | `*sec threat <sprint>` | Clear → Mouse; Blocked → Morpheus revises |
 | 3 | Mouse | `*sm plan sprint` | → Morpheus `*lead review sprint plan` |
 | 3a | Morpheus | `*lead review sprint plan` | Approve to start phase Bloop |
 | 4 | Neo | `*swe impl <phase N>` | → Trin UAT |
-| 5 | Trin | `*qa uat <phase N>` | → Morpheus review |
+| 5 | Trin | `*qa uat <phase N>` | → Switch security review |
+| 5a | Switch | `*sec review <phase N>` | Clear → Morpheus; Blocked → Neo `*swe fix` |
 | 6 | Morpheus | `*lead review <phase N>` | Pass → next phase or Tank |
 | 6a | Tank | `*devops sdlc-check` | Pass → Oracle; regression → fix Bloop |
 | 7 | Oracle | `*ora groom` | → Smith testing |
@@ -359,7 +407,7 @@ bobp chat "*pm launch <sprint>. Sprint complete." --persona Cypher --cmd "pm lau
 ## Rules
 
 - **Short phases**: 1-3 tasks each. Large phases cause context overflow.
-- **No skipping gates**: Smith's gates after steps 1 and 2 are mandatory. Never auto-proceed.
+- **No skipping gates**: Smith's gates after steps 1 and 2, Switch's design gate (2b), and Switch's review after every coding phase (5a) are mandatory. Never auto-proceed. A gate may be a one-line quick pass when nothing security-relevant changed, but the verdict line must be posted.
 - **SDLC bookends**: no planning without `docs/SDLC.md` (Stage 0); no close without Tank's `*devops sdlc-check` (Step 6a). Only Tank edits the SDLC.
 - **Fix Bloop scope**: Fix Bloop targets the failing phase only — never restart the full sprint.
 - **State saves**: Every persona saves state before every handoff (see bob-protocol State Management).
@@ -377,6 +425,6 @@ Verdict line in `agents/CHAT.md`: `rubric LOOP_SPRINT: SDLC=L DECOMP=L GATES=L C
 |---|---|---|---|---|
 | `SDLC` | **SDLC Governance** | Proceeded without `docs/SDLC.md`; ignored project build rules, linters, or git workflow conventions; skipped close audit. | Stage 0 SDLC gate verified before planning; drift check executed at sprint close by Tank. | 100% adherence to documented SDLC tooling and quality gates; proactive updates proposed to SDLC if tooling evolved. |
 | `DECOMP` | **Work-Loop Decomposition** | Task board contains vague, unstructured notes or giant multi-day lumps; tasks do not specify work-loop type (`*impl`, `*fix`, etc.). | Mouse structured `task.md` into phased tasks, each explicitly mapped to a typed Work Loop with clear dependencies. | Bounded phases (1-3 tasks each); typed loops assigned to specialist personas; clear acceptance references; passes PLAN rubric. |
-| `GATES` | **Gate & Rubric Enforcement** | Gates rubber-stamped without rubric verdicts; Weak findings ignored; handoffs proceeded despite unapproved gates. | Smith and Morpheus posted explicit rubric verdict lines (`rubric STORIES:...`); rejections required fixes before approval. | Thorough, formative critique on every gate; concrete tells identified; clean progression from rejection to revision to approval. |
+| `GATES` | **Gate & Rubric Enforcement** | Gates rubber-stamped without rubric verdicts; Weak findings ignored; handoffs proceeded despite unapproved gates. | Smith, Switch, and Morpheus posted explicit verdict lines (`rubric STORIES:...`, `security gate:...`); rejections required fixes before approval. | Thorough, formative critique on every gate; concrete tells identified; clean progression from rejection to revision to approval. |
 | `CADENCE` | **Cadence & Context Budget** | Personas hopped erratically across tasks; context bloated past 70-80% without checkpoints; unlogged handoffs. | Sequential execution of task board; state files updated; `*prep-clear` run before clearing when context exceeded 60%. | Smooth, rhythmic handoffs in CHAT.md; zero lost context across clear boundaries; anti-loop guard protected against thrashing. |
 | `RETRO` | **Knowledge & Retro Harvest** | Sprint ended without retro; lessons lost; CHAT.md ungroomed; changelog unmaintained. | Tank verified SDLC; Oracle groomed docs and archived chat; team held retrospective feeding backlog; Cypher launched. | Rich engineering lessons logged in `docs/LESSONS.md`; meaningful retrospective insights; comprehensive release notes published. |

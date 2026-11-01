@@ -1,8 +1,6 @@
 ---
 name: deploy
 description: Deployment and delivery work-loop. Builds, packages, releases to a target environment per docs/SDLC.md, and runs live smoke verification.
-triggers: ["*deploy", "/deploy"]
-requires: ["bob-protocol", "chat", "make", "prep-clear", "build-env"]
 ---
 
 Deployment and release work-loop: executes predictable builds, deploys to target environments, and runs post-deploy smoke tests.
@@ -13,6 +11,14 @@ TLDR:
     Chain: Tank (builds & deploys via bobp make) → Trin (executes live smoke test) → Bloop (reports status or triggers rollback).
 
 # Deployment & Release Work-Loop (`deploy`)
+
+## Triggers
+
+`*deploy`, `/deploy`
+
+## Requires
+
+`bob-protocol`, `chat`, `make`, `prep-clear`, `build-env`
 
 ## Overview
 

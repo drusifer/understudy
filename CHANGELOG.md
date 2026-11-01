@@ -1,5 +1,11 @@
 # Changelog
 
+## Sprint 21 — the console in Python, and the last Node deleted (2026-11-01, branch `sprint-21`, not yet merged)
+
+- **`understudy dashboard [runs-folder] [--port 4180]`** serves a read-only operations console over the runs under `build/runs`: a rack of runs, a printer that follows a running run live (server-sent events), one lamp per stage, and four gauges (STAGES, FAILED, JEV, ELAPSED) read from the run's own files. Three themes, light, dark or auto. Standard-library server, listening on 0.0.0.0 with no login (use a trusted network); what the page shows is decided in Python (`src/dashboard/server.py`) and tested there.
+- **Removed:** all Node: `package.json`, `package-lock.json`, eslint, `.nvmrc`, every `.mjs`, the `node:test` suites, the play controls, faders, YAML bay and cheat sheet of the old console. **Breaking:** `bin/understudy.mjs` is now the shell script `bin/understudy`; `bobp make install`, `test` and `lint` are Python only (ADR-0048). Fonts are committed under `src/dashboard/fonts/`.
+- The Python-port epic is complete; its purge list is empty.
+
 ## Sprint 20 — stages, children and the household as a sketch (2026-10-30, branch `sprint-20`, not yet merged)
 
 - **Sketches are Jinja2 templates** with `--with name=value` (and `with:` when a sketch calls another), a final state's `outcome`, and a sketch's `outputs`. **Breaking:** the `decider` keyword is gone.

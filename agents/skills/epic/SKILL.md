@@ -1,8 +1,6 @@
 ---
 name: epic
 description: Strategic epic and shaping planning loop. Frames the business problem, defines appetite, models domain boundaries, and charts milestone roadmaps without premature line-level coding.
-triggers: ["*plan epic", "/epic"]
-requires: ["bob-protocol", "chat", "prep-clear", "story"]
 ---
 
 Epic planning and shaping loop: defines problem boundaries, appetite, domain concepts, and milestone roadmap.
@@ -14,6 +12,14 @@ TLDR:
     Defers to: Story Planning Loop (`*plan story`).
 
 # Epic Planning & Shaping Loop (`epic`)
+
+## Triggers
+
+`*plan epic`, `/epic`
+
+## Requires
+
+`bob-protocol`, `chat`, `prep-clear`, `story`
 
 ## Overview
 

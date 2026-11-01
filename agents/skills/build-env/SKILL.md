@@ -1,19 +1,23 @@
 ---
 name: build-env
 description: Set up a project's build environment the way its language expects (Python pyproject.toml + .venv, JavaScript package.json + lockfile, Go, Rust, ...), with the Makefile as the single front door, and record it in docs/SDLC.md. Tank runs this for initial setup, when a language is added, to write or update the SDLC doc, and to check for drift at sprint close.
-triggers: ["*devops bootstrap", "*devops build-env", "*build-env", "*devops sdlc", "*devops sdlc-check"]
 ---
 
 One-line summary: Tank bootstraps a build environment using the language's own manifest and tools, isolated inside the project, and exposes it through a standard set of `make` targets.
 
 TLDR:
     Detect what exists first; never replace a package manager or manifest the project already chose.
+    For new Python projects, use uv by default.
     The language's manifest is the source of truth (pyproject.toml, package.json, go.mod, Cargo.toml); the Makefile only fronts the native tool.
     Everything installs inside the project (.venv, node_modules) — never system-wide, never with sudo.
     Done means: from a clean checkout, `bobp make install && bobp make test` works, and docs/SDLC.md describes it.
     Tank owns docs/SDLC.md. No sprint starts without it; Tank checks the project against it at every sprint close.
 
 # Build Environment Skill
+
+## Triggers
+
+`*devops bootstrap`, `*devops build-env`, `*build-env`, `*devops sdlc`, `*devops sdlc-check`
 
 ## When to use
 
@@ -127,7 +131,7 @@ Start from a template rather than a blank page — they live with the team's oth
 
 | Template | Use for |
 |---|---|
-| `agents/templates/_template_SDLC.python.md` | Python: `pyproject.toml` + `.venv` + pip (notes where uv/poetry differ) |
+| `agents/templates/_template_SDLC.python.md` | Python: `pyproject.toml` + uv + `.venv` |
 | `agents/templates/_template_SDLC.javascript.md` | JavaScript / TypeScript: `package.json` + lockfile |
 | `agents/templates/_template_SDLC.md` | Any other language, or a repo with several languages |
 
@@ -227,16 +231,17 @@ Rules for recipes:
 |---|---|
 | Manifest | `pyproject.toml` with a PEP 621 `[project]` table. Tool config (`[tool.pytest.ini_options]`, `[tool.ruff]`, ...) goes in the same file. |
 | Environment | `.venv/` at the repo root. |
-| Package manager | `uv` if the repo already has `uv.lock` or the team uses it; otherwise stdlib `venv` + `pip`. Keep `poetry`/`pdm`/`hatch` if their lockfile or `[tool.*]` section is already present. |
-| Dev dependencies | `[project.optional-dependencies] dev = [...]` (or `[dependency-groups]` where the tool supports it). |
-| Install | `python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"` — or `uv sync`. |
+| Package manager | `uv` for new Python projects. Preserve an existing project's chosen manager unless migration is explicitly requested; keep `poetry`/`pdm`/`hatch` when already established. |
+| Dev dependencies | `[dependency-groups].dev` for new uv projects; preserve the existing project's dependency layout. |
+| Install | `uv sync` (creates `.venv` and installs locked dependencies). |
 | CLI entry points | `[project.scripts]`, so `make install` puts the command in `.venv/bin/`. |
 | Version pin | `requires-python` in the manifest; `.python-version` if a version manager is in use. |
-| Lockfile | `uv.lock` / `poetry.lock` when that tool is used. Plain pip has none — pin lower bounds in the manifest and say so in the handoff. |
+| Lockfile | Commit `uv.lock`; refresh it with `uv lock` when dependencies change. |
 
 Notes:
-- A Debian/Ubuntu/Raspberry Pi OS system Python rejects `pip install` (PEP 668). That is the
-  system telling you to use a venv — do so; do not override it.
+- Use `uv run <command>` for project commands so they run in the managed environment.
+- A Debian/Ubuntu/Raspberry Pi OS system Python may reject global `pip install` (PEP 668).
+  Use the project environment; do not override the system guard.
 - Create the venv with `--system-site-packages` only when a dependency is realistically available
   only from the OS package manager (hardware bindings, some GUI/GPU stacks). Record which
   packages depend on that, because the project is then not reproducible from the manifest alone.
@@ -244,17 +249,13 @@ Notes:
   (`sudo .venv/bin/python ...`), never `sudo python3`.
 
 ```make
-PYTHON := .venv/bin/python
+UV := uv
 
-.venv/bin/python:
-	python3 -m venv .venv
-
-install: .venv/bin/python ## Create .venv and install the project with dev dependencies
-	$(PYTHON) -m pip install -q -e ".[dev]"
+install: ## Sync the project environment from pyproject.toml and uv.lock
+	$(UV) sync
 
 test: ## Run the test suite
-	@test -x $(PYTHON) || { echo "No .venv - run 'make install' first"; exit 1; }
-	$(PYTHON) -m pytest $(ARGS)
+	$(UV) run pytest $(ARGS)
 
 distclean: clean ## Also remove the virtualenv
 	rm -rf .venv

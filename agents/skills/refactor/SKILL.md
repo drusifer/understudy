@@ -1,8 +1,6 @@
 ---
 name: refactor
 description: Technical debt and code hygiene work-loop. Restructures existing code to improve maintainability, reduce complexity, and eliminate debt with zero behavioral change.
-triggers: ["*refactor", "/refactor", "*debt"]
-requires: ["bob-protocol", "chat", "make", "prep-clear"]
 ---
 
 Technical debt and refactoring work-loop: restructures code with zero behavioral change under strict test protection.
@@ -13,6 +11,14 @@ TLDR:
     Chain: Morpheus (plan invariants & boundaries) → Trin (baseline test snapshot) → Neo (structural refactoring) → Trin (verify 100% test parity & zero regression) → Morpheus (architectural review).
 
 # Technical Debt & Refactoring Work-Loop (`refactor`)
+
+## Triggers
+
+`*refactor`, `/refactor`, `*debt`
+
+## Requires
+
+`bob-protocol`, `chat`, `make`, `prep-clear`
 
 ## Overview
 

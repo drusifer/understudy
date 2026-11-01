@@ -1,7 +1,6 @@
 ---
 name: test-runner
 description: Run tests using the project Makefile. Use for executing test suites, running specific tests, and validating code changes.
-triggers: ["*test", "*qa test"]
 ---
 
 One-line summary: Run the project test suite through the Makefile for consistent environment setup.
@@ -13,19 +12,13 @@ TLDR:
 
 # Test Runner Skill
 
+## Triggers
+
+`*test`, `*qa test`
+
 ## Overview
 
 This skill provides standardized test execution using the project's Makefile. All test commands should go through `make` to ensure consistent environment setup.
-
-## Test Pyramid and Iteration
-
-Start with the smallest test level that can prove the changed behavior:
-
-1. **Unit:** Prefer focused tests for deterministic logic and CSS contracts (for example, asserting that the relevant rule sets the required property). Keep these fast and isolated.
-2. **Browser/integration:** Add this level only when the remaining behavior depends on browser-computed layout, rendering, or interactions that the unit test cannot establish.
-3. **End-to-end:** Use it only when a cross-component user flow remains uncovered by lower-level tests.
-
-Move up one level at a time to close a named coverage gap. Do not default CSS changes to a full browser or end-to-end suite. Before iterating, confirm that the project's Makefile actually supports the requested test filter; check the resulting test count so a broad run is not mistaken for a targeted one.
 
 ## Commands
 

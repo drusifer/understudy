@@ -1,8 +1,6 @@
 ---
 name: spike
 description: Research spike work-loop. Executes a timeboxed, disposable technical investigation to eliminate uncertainty, benchmark solutions, or evaluate feasibility without committing production code.
-triggers: ["*spike", "/spike", "*research"]
-requires: ["bob-protocol", "chat", "make", "prep-clear"]
 ---
 
 Research spike work-loop: timeboxed, throwaway technical exploration producing an architectural finding or decision.
@@ -13,6 +11,14 @@ TLDR:
     Chain: Oracle (prior art & docs) → Neo / Tank (sandbox POC / benchmark) → Morpheus (synthesis & architecture decision).
 
 # Research Spike Work-Loop (`spike`)
+
+## Triggers
+
+`*spike`, `/spike`, `*research`
+
+## Requires
+
+`bob-protocol`, `chat`, `make`, `prep-clear`
 
 ## Overview
 

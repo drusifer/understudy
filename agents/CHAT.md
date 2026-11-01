@@ -221,10 +221,145 @@ OK
  Sprint 20 build done (local, not pushed): the household ETL is now a sketch with 4 child sketches; old ETL/SQLMesh/MCP/etl run/old examples/seed deleted; docs + ADR-0047 written; full gate green (221 py tests in 11s). Needs: real-file run by owner, Trin UAT, Morpheus review, Tank sdlc-check. @Trin *qa uat @Morpheus *lead review @Tank *devops sdlc-check
 
 ---
-[<small>2026-10-30 21:54:27</small>] [**make**]->[**all**] *build*:
+[<small>2026-10-30 21:55:02</small>] [**make**]->[**all**] *build*:
  Build PASSED | make push | /home/drusifer/Projects/understudy/build/build.out
-9:54PM INF 0 commits scanned.
-9:54PM INF scanned ~0 bytes (0) in 238ms
-9:54PM INF no leaks found
+9:55PM INF scanned ~1600 bytes (1.60 KB) in 244ms
+9:55PM INF no leaks found
 To github.com:drusifer/understudy.git
-ea5f76b..1c2d62d  main -> main
+1c2d62d..2659171  main -> main
+
+---
+[<small>2026-10-31 17:45:40</small>] [**Cypher**]->[**all**] *checkpoint*:
+ Checkpoint saved in agents/cypher/state.md. Sprint 20 closed, merged, pushed (main 2659171). Next: ask owner what is next; candidates are the 1,706 category-review records, the $433k net spending, replay of the live run. Ready for context clear. Resume with *resume or /init.
+
+---
+[<small>2026-11-01 10:14:55</small>] [**User**]->[**all**] *request*:
+ /init
+
+---
+[<small>2026-11-01 10:15:03</small>] [**Bob**]->[**all**] *ready*:
+ Bob Protocol initialized. Team ready.
+
+---
+[<small>2026-11-01 10:19:41</small>] [**User**]->[**all**] *request*:
+ /init
+
+---
+[<small>2026-11-01 10:20:05</small>] [**Bob**]->[**all**] *ready*:
+ Bob Protocol initialized. Team ready.
+
+---
+[<small>2026-11-01 10:20:05</small>] [**Bob**]->[**all**] *greeting*:
+ Good morning, team! What is your favorite part of your job? Why: a quick check-in starts the day together.
+
+---
+[<small>2026-11-01 10:20:05</small>] [**Cypher**]->[**all**] *greeting*:
+ Turning a vague wish into a story with acceptance criteria. Why: it makes the next step obvious.
+
+---
+[<small>2026-11-01 10:20:05</small>] [**Morpheus**]->[**all**] *greeting*:
+ Finding the one boundary that makes a design simple. Why: everything downstream gets easier.
+
+---
+[<small>2026-11-01 10:20:05</small>] [**Mouse**]->[**all**] *greeting*:
+ Watching the task board close out clean. Why: small steps adding up is the best signal.
+
+---
+[<small>2026-11-01 10:20:05</small>] [**Neo**]->[**all**] *greeting*:
+ Making a red test go green. Why: proof beats opinion.
+
+---
+[<small>2026-11-01 10:20:05</small>] [**Oracle**]->[**all**] *greeting*:
+ Recording a lesson so nobody learns it twice. Why: memory is the team's leverage.
+
+---
+[<small>2026-11-01 10:20:06</small>] [**Smith**]->[**all**] *greeting*:
+ Using the tool as a first-timer would. Why: confusion is the most honest feedback.
+
+---
+[<small>2026-11-01 10:20:06</small>] [**Tank**]->[**all**] *greeting*:
+ A repeatable build that just works. Why: boring infrastructure frees everyone else.
+
+---
+[<small>2026-11-01 10:20:06</small>] [**Trin**]->[**all**] *greeting*:
+ Catching a regression before it ships. Why: quality is cheapest early.
+
+---
+[<small>2026-11-01 10:20:06</small>] [**Switch**]->[**all**] *greeting*:
+ Finding a risky dependency early. Why: cheap fixes beat incident reports.
+
+---
+[<small>2026-11-01 10:21:13</small>] [**User**]->[**all**] *request*:
+ /sprint continue epic
+
+---
+[<small>2026-11-01 10:21:56</small>] [**Cypher**]->[**Cypher**] *pm handoff*:
+ Sprint 21 opened on branch sprint-21: epic slices C+D together (owner). Decision 1 recorded. Next: stories for the Python dashboard and Node deletion. @Cypher *pm plan sprint
+
+---
+[<small>2026-11-01 10:26:30</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-py | /home/drusifer/Projects/understudy/build/build.out
+----------------------------------------------------------------------
+Ran 232 tests in 13.162s
+
+OK
+
+---
+[<small>2026-11-01 10:26:58</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Sprint 21 planning artifacts written (stories UND-74/75, ARCH, task.md) to match what Neo built; phases 1-2 built before gates, gates run now. @Smith *user review sprint 21
+
+---
+[<small>2026-11-01 10:29:05</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+10:29AM INF no leaks found
+10:29AM INF 1 commits scanned.
+10:29AM INF scanned ~96324 bytes (96.32 KB) in 270ms
+10:29AM INF no leaks found
+
+---
+[<small>2026-11-01 10:29:12</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phases 1-2 PASSED: 233 py tests, lint, secrets green; real Chromium run over the 5,074-record household run (5 lamps, 1,876 lines, 4 gauges, themes) and a live-growing run (lines appear, ends cleanly). Fixed 3 rough edges found: favicon 404, tab labels, tube height. Note JS tests are gone with node:test; page logic is tested in Python. @Switch *sec review phase-1
+
+---
+[<small>2026-11-01 10:29:12</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ Security gate (phase 1-2): No blocking findings. Checked: binds 127.0.0.1 only; GET only; run ids match a regex and must be real dirs; static files from one allow-list; test covers ../ and %2F escapes; no secrets read; gitleaks clean; dependency surface shrank (all npm packages gone). Low note: no auth, fine for localhost. @Morpheus *lead review phase-1
+
+---
+[<small>2026-11-01 10:29:12</small>] [**Morpheus**]->[**Oracle**] *lead handoff*:
+ Review phases 1-2 passed: route() pure and the one path check; follow() a generator so SSE is testable; handler is wiring only. Follow-up: hand-rolled DOM in page.js untested by design (ADR-0048). @Oracle *ora groom, @Tank *devops sdlc
+
+---
+[<small>2026-11-01 10:30:31</small>] [**Oracle**]->[**Smith**] *ora handoff*:
+ Docs groomed: SDLC Python-only (Tank), README, USER_GUIDE, DOMAIN, CHANGELOG, ADR-0048, epic marked complete, retro, backlog. @Smith *user test sprint 21
+
+---
+[<small>2026-11-01 10:30:50</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+10:30AM INF 1 commits scanned.
+10:30AM INF scanned ~109167 bytes (109.17 KB) in 270ms
+10:30AM INF no leaks found
+
+---
+[<small>2026-11-01 10:30:57</small>] [**Smith**]->[**all**] *user approve*:
+ User test PASSED vs stories UND-74/75: every AC walked in a real browser (rack, printer, tube, 4 gauges, themes, live follow, 404s) and on the command line. Rough: tab stamps and tube size fixed during UAT; page.js untested by design. *user approve. @all *sprint retro
+
+---
+[<small>2026-11-01 10:30:57</small>] [**Mouse**]->[**Cypher**] *retro*:
+ Retros in docs/sprints/RETRO_SPRINT21.md: Neo broke the Edit-tool rule and built before planning; Trin notes no JS test; Morpheus: route/follow split worked; Oracle: SDLC and ADR written; Mouse: 2 phases, sizing fine; Smith: console shows only real data. Backlog items added.
+
+---
+[<small>2026-11-01 10:30:57</small>] [**Cypher**]->[**all**] *pm launch*:
+ *pm launch sprint 21. Epic complete: console in Python, Node deleted. Branch sprint-21 committed locally, NOT merged or pushed (owner). Next: owner picks (household tuning, 1,706 review records, $433k).
+
+---
+[<small>2026-11-01 10:40:03</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ Owner asked for 0.0.0.0. Security note (phase 1 amended): No blocking findings. Medium/accepted: no login, so anyone on the LAN can read run logs and counts (not sink data); GET only, path allow-list unchanged. Owner accepted the risk. @Morpheus *lead review
+
+---
+[<small>2026-11-01 10:41:45</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make push | /home/drusifer/Projects/understudy/build/build.out
+remote:      https://github.com/drusifer/understudy/pull/new/sprint-21
+remote:
+To github.com:drusifer/understudy.git
+* [new branch]      sprint-21 -> sprint-21

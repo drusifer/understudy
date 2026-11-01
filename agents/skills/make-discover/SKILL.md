@@ -1,12 +1,15 @@
 ---
 name: make-discover
 description: Self-discovery guide for a project's Makefile targets. Run `bobp make help` (or read the Makefile) to see what's available — there's no bob-authored target list to rely on.
-triggers: ["*bobp make help", "*make discover", "*build help"]
 ---
 
 One-line summary: This project's Makefile is not bob-managed — discover its targets the normal way, then invoke them via the `make` skill's `bobp make <target>`.
 
 # Make Target Discovery
+
+## Triggers
+
+`*bobp make help`, `*make discover`, `*build help`
 
 ## Discover available targets
 

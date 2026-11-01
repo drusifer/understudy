@@ -1,7 +1,6 @@
 ---
 name: linter
 description: Run code quality checks including linting, type checking, dead code detection, duplication, and complexity analysis.
-triggers: ["*qa lint", "*qa quality", "*qa check"]
 ---
 
 One-line summary: Runs Python code quality checks — style, types, dead code, complexity, and duplication.
@@ -12,6 +11,10 @@ TLDR:
     Fix priority: errors first, then warnings, then style; refactor functions graded C or worse by radon.
 
 # Linter Skill
+
+## Triggers
+
+`*qa lint`, `*qa quality`, `*qa check`
 
 ## Overview
 

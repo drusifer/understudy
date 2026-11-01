@@ -1,19 +1,21 @@
 ---
 name: init
 description: Initialize or resume a BobProtocol session. Validates agent discovery links, reads team chat context and project capabilities, handles cold-start recovery, posts persona status, and displays the command quick reference.
-triggers: ["*init", "/init", "/bob-protocol init", "*startup", "*resume", "*chat init"]
-requires: ["bob-protocol", "chat", "bob-tools", "prep-clear"]
 ---
 
 Formalizes the initialization and session resume procedure across all supported AI harnesses.
 
 TLDR:
     Invoked via `*init`, `/init`, `/bob-protocol init`, `*startup`, or `*resume`.
-    Fresh session: verify agent links (`bobp setup-agent-links`), read CHAT.md & PROJECT.md, post ready status as Bob, display quick reference, wait for user direction.
+    Fresh session: verify agent links (`bobp setup-agent-links`), read CHAT.md & PROJECT.md, post ready status as Bob, post a start-of-day greeting and have every persona share the favorite part of their job, display quick reference, wait for user direction.
     Cold start recovery: locate last active handoff in CHAT.md (prepared via `prep-clear`), load persona state.md, post resume message, resume from `## Next Steps`.
     Hard rule: Rapid Startup — NEVER run full test suites on init. Never auto-execute tasks without user direction.
 
 # Bob Protocol — Initialization & Startup Skill (`init`)
+
+## Requires
+
+`bob-protocol`, `chat`, `bob-tools`, `prep-clear`
 
 ## Overview
 
@@ -43,7 +45,8 @@ flowchart TD
     Branch -- "No (Fresh Session)" --> ModeA["Mode A: Fresh Session (Bob)"]
     ModeA --> StepA1["Update agents/bob/state.md"]
     StepA1 --> StepA2["Post Ready: 'Bob Protocol initialized. Team ready.'"]
-    StepA2 --> StepA3["Display Quick Reference Card"]
+    StepA2 --> StepA2b["Start-of-day greeting: every persona shares the favorite part of their job"]
+    StepA2b --> StepA3["Display Quick Reference Card"]
     StepA3 --> WaitUser["Wait for User Direction"]
     Branch -- "Yes (Mid-Task Resume)" --> ModeB["Mode B: Cold Start Recovery"]
     ModeB --> StepB1["Identify Last Persona & Pending Command"]
@@ -87,8 +90,17 @@ When starting a new session or after a sprint/task has completed:
    ```bash
    bobp chat "Bob Protocol initialized. Team ready." --persona Bob --cmd ready
    ```
-4. **Present the Quick Reference Card** (see below).
-5. **HALT and WAIT**: Do NOT auto-execute tasks. Wait for explicit user instruction.
+4. **Start-of-Day Greeting** (skip on Mode B, or when the user asks for a quiet start):
+   - Bob posts one greeting to everyone that asks: *"Good morning, team! What is your favorite part of your job?"*
+   - Then **every persona** (each folder under `agents/` with a `SKILL.md`, so new personas are included automatically) posts **one** short reply in its own voice, drawn from its role and sayings in its `SKILL.md`. Do not load each `state.md` for this; startup stays fast.
+   - Keep each post under 512 characters, include a brief *why*, vary the answers from the last greeting still visible in `CHAT.md`, and keep them truthful to what the persona actually does.
+   ```bash
+   bobp chat "Good morning, team! What is your favorite part of your job? Why: a quick check-in starts the day together." --persona Bob --cmd greeting
+   bobp chat "<favorite part, in character>. Why: <one-line reason>." --persona <Name> --cmd greeting --to all
+   ```
+   Post the replies in one shell call (one `bobp chat` per persona). This step only posts chat messages; it does no project work.
+5. **Present the Quick Reference Card** (see below).
+6. **HALT and WAIT**: Do NOT auto-execute tasks. Wait for explicit user instruction.
 
 #### Mode B — Cold Start Recovery (Resuming Mid-Task)
 When resuming after context clear (prepared via `agents/skills/prep-clear/SKILL.md`), crash, or session restart mid-task:
@@ -106,7 +118,7 @@ When resuming after context clear (prepared via `agents/skills/prep-clear/SKILL.
 ## Hard Rules & Invariants
 
 1. **Rapid Startup (CRITICAL)**: Do **NOT** run full test suites (`bobp make test`) or heavy builds on startup unless explicitly requested by the user or validating recent code modifications. Rapid startup avoids wasting context and compute.
-2. **No Unrequested Work**: Never begin modifying code, drafting stories, or executing tasks during `init` without explicit user direction.
+2. **No Unrequested Work**: Never begin modifying code, drafting stories, or executing tasks during `init` without explicit user direction. The start-of-day greeting is chat-only and does not count as work.
 3. **State Management**: Every persona activated during startup must load their `state.md` upon entry and save `state.md` upon exit.
 
 ---
@@ -116,7 +128,7 @@ When resuming after context clear (prepared via `agents/skills/prep-clear/SKILL.
 ### Bloop Workflow Loops
 ```
 *fix <bug>           → Neo fix → Trin UAT → Morpheus review
-*impl <feature>      → Neo impl → Trin UAT → Morpheus review
+*impl <feature>      → Neo impl → Trin UAT → Switch security review → Morpheus review
 *qa <thing>          → Trin test → Morpheus review
 *review <thing>      → Morpheus review → Trin (if needed)
 *plan sprint         → Cypher → Smith gate → Morpheus → Smith gate → Mouse
@@ -139,4 +151,5 @@ When resuming after context clear (prepared via `agents/skills/prep-clear/SKILL.
 | **Cypher** | Product Manager | `*pm story`, `*pm doc`, `*pm assess` | User stories, requirements |
 | **Smith** | HCI / UX Advocate | `*user review`, `*user test`, `*user approve` | Review rubrics, acceptance gates |
 | **Tank** | DevOps Engineer | `*devops deploy`, `*devops infra`, `*devops sdlc` | Environment hygiene, CI/CD, SDLC |
+| **Switch** | Security Engineer | `*sec review`, `*sec threat`, `*sec deps` | Security reviews, threat models, dependency audits |
 | **Bob** | Prompt Engineer | `*prompt`, `*reprompt`, `*learn` | Skills, agent prompts, protocol maintenance |

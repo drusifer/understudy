@@ -6,21 +6,24 @@ ask `@Tank *devops sdlc <what and why>` — the mechanism and this document chan
 
 ## 1. Toolchain
 
-| | JavaScript (Node ESM, `.mjs` sources) | Python (the sketch package) |
-|---|---|---|
-| Runtime version | Node 24 — `engines.node: ">=24"` in `package.json` and `.nvmrc` (`24`). Verified on v24.13.0. | CPython 3.12.15 in `.python-version` |
-| Manifest | `package.json` (tasks in `scripts`) | `pyproject.toml` |
-| Lockfile | `package-lock.json` (committed) | `uv.lock` (committed) |
-| Package manager | npm (11.x) | uv 0.13.0 |
-| Local environment | `node_modules/` (gitignored) | `.venv/` (gitignored) |
-| Test runner | `node:test` (built in, no dependency) | `unittest` (built in) |
+| | Python (the only toolchain) |
+|---|---|
+| Runtime version | CPython 3.12.15 in `.python-version` |
+| Manifest | `pyproject.toml` |
+| Lockfile | `uv.lock` (committed) |
+| Package manager | uv 0.13.0 |
+| Local environment | `.venv/` (gitignored) |
+| Test runner | `unittest` (built in) |
+| Linter | ruff 0.9.10 (dev group) |
+
+There is no Node: since Sprint 21 (ADR-0048) the repository has no `package.json`, eslint or `node:test`. The dashboard's browser files (`src/dashboard/page.html`, `page.js`, CSS, fonts) are plain files served as they are: no build, no lint, no test runner; what the page shows is decided in Python (`src/dashboard/server.py`) and tested there. The fonts are copied into `src/dashboard/fonts/` (SIL OFL).
 
 Everything runs in the Python package `src/sketch` (ADR-0038, ADR-0045, ADR-0047): `python-statemachine`, DuckDB 1.5.6 (the
 SQL a stage may run), `dateparser` 1.2.1 and `holidays` 0.107 (dates and business days), `iso18245` (MCC names),
 `jinja2` 3.1.6 (sketches are templates), `ruamel.yaml` 0.19.1 (sketches are read as YAML 1.2, so `70:30` stays text),
 `jsonschema` 4.26.0 (the sketch JSON Schema) and `typesafe-sdk` 0.7.5 for Jev, all pinned in `pyproject.toml` and
 `uv.lock`; the capture cache lives in git-ignored `.understudy/`. SQLMesh and the MCP source servers were removed in
-Sprint 20 when the household ETL became a sketch. `src/cli.mjs` only launches the Python CLI. The run database is
+Sprint 20 when the household ETL became a sketch. `bin/understudy` is a shell script that starts the Python CLI; the dashboard server is standard-library `http.server` (no dependency). The run database is
 opened by one process at a time. Private run output is refused under `data/` and any non-git-ignored
 project path (UND-54 AC4).
 Other required tools: `make`, `bobp` (agents run every target through `bobp make <target>`),
@@ -31,57 +34,48 @@ Other required tools: `make`, `bobp` (agents run every target through `bobp make
 From a clean checkout:
 
 ```sh
-bobp make install     # installs the locked npm and uv environments
-bobp make test        # JavaScript and Python unit tests; expect "fail 0" / "OK"
+bobp make install     # installs the locked uv environment
+bobp make test        # Python unit tests; expect "OK"
 bobp make hooks       # optional: gitleaks pre-commit hook
 ```
 
-Nothing is installed globally. Run local tools with `npx`, never `npm install -g`.
+Nothing is installed globally.
 
 ## 3. Make targets
 
-The Makefile is the only entry point; recipes call `package.json` scripts rather than
-repeating their commands. `bobp make help` lists them.
+The Makefile is the only entry point; its recipes hold the commands. `bobp make help` lists them.
 
 | Target | Runs | Notes |
 |---|---|---|
-| `install` | `install-js` + `install-py` | installs both exact lockfiles; touches the network |
-| `install-js` | `npm ci` | exact npm lockfile install; touches the network |
+| `install` | `install-py` | installs the exact lockfile; touches the network |
 | `install-py` | `uv sync --locked` | exact Python lockfile install into `.venv`; touches the network on first setup |
-| `lock-js` | `npm install --package-lock-only --ignore-scripts` | updates the npm lockfile after a manifest change; touches the network |
-| `lock-py` | `uv lock --python 3.12.15` | updates `uv.lock` after a Python manifest change; touches the network |
-| `test` | `test-js` + `test-py` | both language suites; no Jev or browser calls |
-| `test-js` | JavaScript `node:test` suite | `ARGS` supports Node test filtering |
-| `test-py` | `python -m unittest discover -s tests/python` | offline tests for the Python ETL and sketch package; `ARGS="test_sketch*.py"` runs only the files matching that pattern |
-| `run` | `node bin/understudy.mjs $(ARGS)` (a launcher: `run` and `check` start the Python package `src/sketch`) | e.g. `ARGS="run tests/fixtures/coffee/coffee_week.yaml --replay"`; a live run reads `TYPESAFE_API_KEY` from `.env` |
-| `lint` | `npm run lint` → eslint over `src/**/*.mjs`, `tests/**`; then `.venv/bin/ruff check src/sketch src/jev.py src/paths.py tests/python` | eslint config `eslint.config.js` (recommended + unicorn + sonarjs, as in recard); ruff 0.9.10 pinned in `pyproject.toml` (dev group); rule sets E, W, F, I, B, SIM, UP, N, C4, PERF, RUF, ERA, ARG, C90 (max complexity 12), PL, T20, RET, PTH, line length 135; test doubles and the CLI/MCP stdout are the only per-file ignores |
+| `lock` / `lock-py` | `uv lock --python 3.12.15` | updates `uv.lock` after a manifest change; touches the network |
+| `test` | `test-py` | offline; no Jev or browser calls |
+| `test-py` | `python -m unittest discover -s tests/python` | `ARGS="test_sketch*.py"` runs only the files matching that pattern |
+| `run` | `bin/understudy $(ARGS)` (starts `python -m src.sketch.cli`) | e.g. `ARGS="run tests/fixtures/coffee/coffee_week.yaml --replay"`; a live run reads `TYPESAFE_API_KEY` from `.env` |
+| `dashboard` | `bin/understudy dashboard $(ARGS)` | serves the read-only console over `build/runs` on 0.0.0.0:4180 (all interfaces, no login) |
+| `lint` | `.venv/bin/ruff check src tests/python` | ruff 0.9.10 pinned in `pyproject.toml` (dev group); rule sets E, W, F, I, B, SIM, UP, N, C4, PERF, RUF, ERA, ARG, C90 (max complexity 12), PL, T20, RET, PTH, line length 135; test doubles and the CLI stdout are the only per-file ignores |
 | `secrets` | `gitleaks git` over history + uncommitted tracked changes | needs `gitleaks` installed |
 | `hooks` | `git config core.hooksPath .githooks` | installs the gitleaks pre-commit hook |
 | `check` | `test` + `lint` + `secrets` | the full gate |
 | `push` | `check`, then `scripts/push.sh`: stage all → gitleaks scan of the staged files → commit with `MSG` → `git push --follow-tags origin <current branch>` | the only way changes are committed for publishing and pushed; `MSG="..."` required when anything is uncommitted; `ARGS="--dry-run"` commits nothing and previews; never `--force`; touches the network |
-| `clean` | removes `build/`, `coverage/`, `.eslintcache` | keeps installed environments |
-| `distclean` | `clean` + removes `node_modules/` and `.venv/` | used for the from-clean check |
+| `clean` | removes `build/`, `coverage/` | keeps the installed environment |
+| `distclean` | `clean` + removes `.venv/` | used for the from-clean check |
 | `help` | lists targets | parses `## comment` suffixes |
 
 Standard targets deliberately absent:
-- `format` — no formatter chosen; eslint is the only style tool (same as recard).
-- `build` — nothing is bundled; understudy is used from a checkout (or as a git dependency).
-- (`run` calls `bin/understudy.mjs`, which is also `bin.understudy` in `package.json`.)
+- `format` — no formatter chosen; ruff's lint rules are the only style tool.
+- `build` — nothing is bundled; understudy is used from a checkout.
 
 ## 4. Dependencies
 
-- **Add a Node runtime dependency:** `npm install {pkg}`; **dev tool:** `npm install -D {pkg}`.
 - **Add or upgrade Python dependencies:** edit `pyproject.toml`, run `bobp make lock-py`, then `bobp make install-py`.
-- **Commit afterwards:** the appropriate manifest and lockfile (`package.json` + `package-lock.json`, or `pyproject.toml` + `uv.lock`) together.
+- **Commit afterwards:** `pyproject.toml` and `uv.lock` together.
 - **Who:** Neo adds and bumps dependencies, in the story whose code first imports them. A
-  different package manager, a Node version change or a new language is a mechanism change — Tank's.
-- Never hand-edit either lockfile; do not use multiple lockfiles for one package manager.
-- Declare only what the code imports. Node runtime today: only the dashboard's fonts, `@fontsource/cinzel`,
-  `@fontsource/spectral`, `@fontsource/vt323`, `@fontsource/dotgothic16` and `@fontsource/antonio` (OFL, served
-  locally so the page fetches nothing from the internet), kept for the dashboard rebuild (slice C). Sprint 19
-  removed `xstate`, `yaml`, `@typesafe-ai/sdk`, `playwright`, `@modelcontextprotocol/sdk`, `zod`, `lru-cache`,
-  `elkjs` and dev `ajv`: the old Node player they served is deleted, and the Python package (`ruamel.yaml`,
-  `jsonschema`, `python-statemachine`, `typesafe-sdk`, `mcp`, `duckdb`) replaces it.
+  different package manager, a runtime version change or a new language is a mechanism change — Tank's.
+- Never hand-edit the lockfile.
+- Declare only what the code imports. There is no JavaScript dependency: the page loads nothing from the internet, and
+  its fonts (Cinzel, Spectral, VT323, DotGothic16, Antonio; OFL) are committed under `src/dashboard/fonts/`.
 
 ## 5. Quality gates
 
@@ -139,11 +133,11 @@ is reported to Tank so one of them gets fixed.
 
 ## 7. Versioning and release
 
-- **Version lives in:** `version` in `package.json` (`0.1.0`).
+- **Version lives in:** `version` in `pyproject.toml` (`0.1.0`).
 - **Bumped:** only when the owner asks for a release (owner, 2026-10-15). Sprint closes do not
   bump the version on their own.
-- **CLI entry points:** `bin.understudy` in `package.json` → `bin/understudy.mjs`.
-- **Artifact:** None — not published to npm; a release is a tag on `main`.
+- **CLI entry point:** `bin/understudy` (a shell script over `python -m src.sketch.cli`).
+- **Artifact:** None — not published; a release is a tag on `main`.
 
 ## 8. CI / deploy
 
@@ -152,30 +146,29 @@ None — everything runs locally on the dev Pi. A CI job, if added, must run
 
 ## 9. Known deviations
 
-- `gitleaks` is a system binary (`~/.local/bin/gitleaks`), not an npm dependency — same as recard.
+- `gitleaks` is a system binary (`~/.local/bin/gitleaks`), not a Python dependency.
   `make secrets` fails with an install hint if it is missing.
-- eslint rules turned off, all matching recard's config for the same reasons:
-  `unicorn/filename-case` (camelCase files), `unicorn/no-null` (JSON-safe sentinel),
-  `unicorn/consistent-class-member-order`, `unicorn/no-break-in-nested-loop`.
-- Network targets: `install`, `lock-js`, `install-js`, `lock-py`, `install-py` and `push`.
-- The lint script passes `--no-error-on-unmatched-pattern` because `tests/**/*.mjs` is empty today.
+- The dashboard's browser script (`page.js`) has no automated test and no linter (owner: JavaScript is fine in the
+  dashboard, Sprint 21). A browser check is done by hand at UAT; page logic that matters lives in Python.
+- Network targets: `install`, `lock`, `install-py`, `lock-py` and `push`.
 
 ## 10. Conformance check
 
 Run by Tank at sprint close (`*devops sdlc-check`):
 
 1. `bobp make distclean && bobp make install && bobp make check` passes, and `bobp make test` made no network call
-   to Jev and launched no browser (unit tests use a judge double and fake targets).
-2. `bobp make install` a second time leaves both lockfiles unchanged (`git status` clean).
-3. Every imported package is declared in its language manifest and lockfile.
-4. Every target in section 3 exists and maps to a `package.json` script or a documented command.
-5. No doc or script tells people to install globally or bypass `make`.
-6. `node_modules/`, `.venv/` and `build/` are ignored; runtime pins match their manifests.
+   to Jev and launched no browser (unit tests use a Jev double or `--replay` captures).
+2. `bobp make install` a second time leaves `uv.lock` unchanged (`git status` clean).
+3. Every imported package is declared in `pyproject.toml` and `uv.lock`.
+4. Every target in section 3 exists in the Makefile.
+5. No doc or script tells people to install globally or bypass `make`; no Node file has come back.
+6. `.venv/` and `build/` are ignored; runtime pins match the manifest.
 7. This sprint's changes followed section 6: right class, right approval, recorded where it says.
 8. Nothing under `src/` or `tests/` imports from `seed/`.
 
 ---
-*Last verified: 2026-10-30 by Tank (Sprint 19 close: distclean → install → check green; repeated install passed idempotently; Python manifest matches `pyproject.toml`/`uv.lock` including `ruamel.yaml` and `jsonschema`; the old Node player, its tests, the `test-browser`/`test-live`/`install-browser` targets and nine npm dependencies removed with the owner's decisions (one kind of sketch, old commands may break)).*
+*Last verified: 2026-11-01 by Tank (Sprint 21 close: Node removed, Python-only; `bobp make check` green (lint, 233 tests, gitleaks); Makefile targets match section 3; no package.json, eslint, `.mjs` or lockfile other than `uv.lock` remains; the from-clean `distclean` → `install` run was not repeated this sprint because no dependency changed.)*
+*Previous verification: 2026-10-30 by Tank (Sprint 19 close: distclean → install → check green; repeated install passed idempotently; Python manifest matches `pyproject.toml`/`uv.lock` including `ruamel.yaml` and `jsonschema`; the old Node player, its tests, the `test-browser`/`test-live`/`install-browser` targets and nine npm dependencies removed with the owner's decisions (one kind of sketch, old commands may break)).*
 *Previous verification: 2026-10-17 by Tank (sprint-15 close: clean → check green, browser tests green;
 no dependency or mechanism change. Sprint-14 close: clean → check green, browser tests green;
 routine dependency `elkjs` per §4. Sprint-13 close: clean → check green; no dependency or

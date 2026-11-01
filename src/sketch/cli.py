@@ -11,6 +11,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 import src.sketch.stages  # noqa: F401 - importing it registers the stages
+from src.dashboard.server import serve_forever
 from src.jev import JevError, TypeSafeJev
 from src.paths import OutputPathError
 from src.sketch.check import load_checked
@@ -53,6 +54,9 @@ def _parser() -> argparse.ArgumentParser:
         command.add_argument("sketch", type=Path)
         command.add_argument("--source", action="append", default=[], metavar="NAME.path=FILE")
         command.add_argument("--with", action="append", default=[], metavar="NAME=VALUE", dest="values")
+    dashboard = commands.add_parser("dashboard")
+    dashboard.add_argument("runs", type=Path, nargs="?", default=DEFAULT_OUT, help="the folder of runs to watch")
+    dashboard.add_argument("--port", type=int, default=4180)
     run = commands.choices["run"]
     run.add_argument("--out", type=Path, default=DEFAULT_OUT)
     run.add_argument("--replay", nargs="?", const="", default=None, metavar="RUN-ID|DIR")
@@ -65,12 +69,19 @@ def _capture(args, sketch, store, make_jev) -> Capture:
     return Capture.live(store, make_jev() if needs_jev(sketch) else None)
 
 
-def main(  # noqa: PLR0913 - the command line's injection points
+def _dashboard(args, stdout) -> int:
+    serve_forever(args.runs, args.port, stdout)
+    return 0
+
+
+def main(  # noqa: PLR0911, PLR0913 - the command line's injection points
     argv=None, *, library: Mapping[str, StageFn] | None = None, make_jev=TypeSafeJev, store: CaptureStore | None = None,
     stdout=None, stderr=None,
 ) -> int:
     stdout, stderr = stdout or sys.stdout, stderr or sys.stderr
     args = _parser().parse_args(argv)
+    if args.command == "dashboard":
+        return _dashboard(args, stdout)
 
     def fail(message: str, code: int) -> int:
         stderr.write(f"understudy: {message}\n")

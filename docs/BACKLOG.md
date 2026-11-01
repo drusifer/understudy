@@ -218,3 +218,9 @@ Everything above this heading about the old player (watch page, dashboard, proce
 - Replay of a captured household run is untested; fold reducers other than `concat` do not exist. (Neo)
 - Confirm with the owner: `amex_account` required, no rubric check when naming a category, the offered-categories rule. (Cypher)
 - Slice C (dashboard and watch page over `events.jsonl`) and slice D (delete the last Node) of `docs/sprints/EPIC_PYTHON_PORT.md`. (Morpheus)
+
+## From the sprint 21 retro (2026-11-01)
+- Python-port epic complete; Node is gone. See `docs/sprints/RETRO_SPRINT21.md`.
+- Console extras only if asked: start a run from the page, view a run's YAML, page the printer for very long runs. (Cypher)
+- `page.js` has no automated test; add a Python-driven browser check only if it starts to hurt. (Trin)
+- Carried from Sprint 20: the 1,706 category-review records, the $433k net spending, replay of the household run.
