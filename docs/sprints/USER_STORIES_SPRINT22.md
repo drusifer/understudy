@@ -1,9 +1,9 @@
 # Sprint 22 User Stories: the console you can trust, see into, and start runs from
 
-*   **Total Points**: 26 (Tier 1: new surface that starts processes)
+*   **Total Points**: 29 (Tier 1: new surface that starts processes)
 *   **Branch**: `sprint-22`
 *   **Source**: Owner, 2026-11-01 (`OWNER_DECISIONS_SPRINT22.md` 1); gaps G1-G14 in `UX_GAPS_SPRINT22.md`.
-*   **Status**: Draft for Smith Gate 1
+*   **Status**: Smith Gate 1: approved with notes (2026-11-01), notes applied
 
 ## Goal
 
@@ -68,7 +68,7 @@ The owner can open the console, see at once whether a run worked and what it pro
 6. Only one run per sketch at a time; a second Play says "already running" and offers to open it.
 
 ## STORY-UND-80: The command line and the page match the contract
-**Points:** 0 (done inside the others) — acceptance only (G11, G13, G14)
+**Points:** 3 (G11, G13, G14)
 
 **Acceptance criteria**
 1. `understudy dashboard` on a busy port or a missing folder prints one `understudy: <message>` line and exits 2; no traceback.
