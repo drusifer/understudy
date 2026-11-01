@@ -503,3 +503,87 @@ When two places must list the same names, keep the lists small and add one test 
 
 ### References
 - **Files:** `src/sketch/vocabulary.py`, `src/sketch/stages.py`, `tests/python/test_sketch_coffee.py`
+
+---
+
+## [2026-11-01] Command output is copied into the team chat: never print a secret
+
+> **Tags:** #security #tooling #Switch
+
+### Context
+The console's access secret was first printed to the terminal when the console started, as the old Node console's token address had been.
+
+### The Issue
+`bobp make <target>` captures a command's output and posts its tail to `agents/CHAT.md`, which is tracked and pushed. A secret printed by `bobp make dashboard` would have been published to the repository when the console stopped. (SEC-008; found in Switch's review of the phase, not by a test.)
+
+### The Solution
+The secret is saved to a file only its owner can read (`.understudy/dashboard.secret`, mode 0600, git-ignored) and the output names the file. A test asserts the secret never appears in the output and that the file is ignored by git.
+
+### The Rule (The "Lesson")
+In this project standard output and error are public. Nothing secret goes to either; save it to an ignored, private file and print where it is.
+
+### References
+- **Files:** `src/dashboard/server.py` (`announce`, `save_secret`), `agents/switch/findings/2026-11-01-secret-printed-to-captured-output.md`
+
+---
+
+## [2026-11-01] Look at the real data's shape before you show it
+
+> **Tags:** #privacy #testing #Trin
+
+### Context
+The Jev list shows each read's levels and probabilities. The fixtures' levels were words like `much_colder`.
+
+### The Issue
+In the owner's real household run, refund candidates are named by a date and an amount. The first version of the list would have sent those to everyone on the network. No unit test could know: the fixtures were invented. Trin saw it by masking the real captures' level names (letters to `a`, digits to `9`) and counting shapes, without reading any value.
+
+### The Solution
+Captures record whether their levels come from the owner's data; the list shows `option N` unless the sketch's own words, or the caller holds the secret. The payload of the real run was re-checked: zero levels with a date or an amount.
+
+### The Rule (The "Lesson")
+Before a screen shows something drawn from the owner's real files, look at its shape in the real data (masked, as counts) and decide what may leave the machine.
+
+### References
+- **Files:** `src/dashboard/reads.py`, `tests/python/test_dashboard_reads.py` (`PrivacyTest`), `agents/switch/findings/2026-11-01-jev-list-shows-transaction-details.md`
+
+---
+
+## [2026-11-01] Check an instrument on an answer you know before you trust what it reports
+
+> **Tags:** #testing #usability #Trin
+
+### Context
+UND-80 asked for text contrast of 4.5:1 in every theme and mode. A test measures it from the pixels the browser draws.
+
+### The Issue
+The first four versions of the measuring code gave wrong answers: it counted anti-aliased text pixels, then a button's border, then a status dot and a checkbox inside the element as "the background", and once read the text color after hiding the text. Each gave a long list of failures, some real and some not, and the numbers moved when the code changed, not when the page did.
+
+### The Solution
+Make the text invisible and stop animations while measuring, screenshot only the element's interior, ignore child controls, read the color first; and, for each surprising figure, save the screenshot and look at it. The final list of 25 real failures was fixed and the test now passes in all six looks.
+
+### The Rule (The "Lesson")
+When a new measurement reports something surprising, test the measurement on one case you can judge by eye before changing the thing it measures.
+
+### References
+- **Files:** `tests/browser/test_console.py` (`ContrastTest`, `decode_png`, `backdrops`)
+
+---
+
+## [2026-11-01] Open the template and the skill before you write the artifact
+
+> **Tags:** #process #Bob #Cypher
+
+### Context
+Sprint 21 and the first drafts of Sprint 22 were written from memory of earlier sprint files.
+
+### The Issue
+The stories lacked the template's acceptance-criteria blocks, out-of-scope and open-questions sections and used the retired A/S/W rubric line; no PRD template existed so no PRD did; Cypher's skill steps (Switch and Tank criteria, state, lessons first) were skipped. The owner had to ask three times ("are you using Bob protocol?", "the templates?", "Cypher's skills?") before the process was followed.
+
+### The Solution
+Read `agents/templates/<artifact>` and the persona's `SKILL.md` first, every time; write to the template; apply its check before the handoff. A missing template is itself a finding (the PRD template was added).
+
+### The Rule (The "Lesson")
+The first tool call for any artifact is reading its template; the first for any persona is reading its skill.
+
+### References
+- **Files:** `agents/templates/_template_PRD.md`, `docs/sprints/USER_STORIES_SPRINT22.md`, `docs/sprints/RETRO_SPRINT21.md`

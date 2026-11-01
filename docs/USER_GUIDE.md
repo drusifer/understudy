@@ -119,21 +119,39 @@ The reference is [SKETCHES.md](SKETCHES.md).
 ```text
 understudy run <sketch.yaml> [--with name=value]... [--source name.path=file]... [--out folder] [--replay[=run-id|folder]]
 understudy check <sketch.yaml> [--with name=value]... [--source name.path=file]...
-understudy dashboard [runs-folder] [--port 4180]
+understudy dashboard [runs-folder] [--port 4180] [--sketches examples]
+understudy runs [runs-folder]
 ```
 
 Run them as `bobp make run ARGS="<command> ..."`, or `bin/understudy <command> ...`.
 
 A run records the `--with` values it was given in its `run.json`, and the console shows them to anyone who can open it. Pass file names, dates and weights; never a password or key.
 
-`understudy dashboard` serves a read-only console on port 4180 of every network interface (`http://<this machine>:4180/`; there is no login, so use it on a network you trust) over the runs under `build/runs` (or the folder you give). Pick a run on the rack: the printer shows its events (new lines appear while it runs), the tube lights one lamp per stage, and four gauges (STAGES, FAILED, JEV, ELAPSED) read the run's own files. It starts nothing and changes nothing; three themes and light, dark or auto are remembered by the browser.
+`understudy runs` lists the runs in a folder, newest first, with how each ended. A finished `understudy run` prints its run id and how to watch it.
+
+### The console
+
+`understudy dashboard` serves the console on port 4180 of every network interface (`http://<this machine>:4180/`), over the runs under `build/runs` (or the folder you give). There is no login for watching, so use it on a network you trust. A busy port, or a folder that is not a folder, is one plain line and exit 2.
+
+* **The rack** lists the runs grouped by sketch, newest first; a run that is going, failed, stalled or stopped carries a badge in words. The header says RUNNING, DONE, FAILED, STOPPED or STALLED.
+* **A failed run** shows a banner with the stage and the reason; press it to see that line in the printer. The summary under the gauges gives the outcome, mode, duration, the `--with` values and each output with its row count.
+* **The printer** shows the run's events (new lines appear while it runs). Filter by text, by stage, or failures only; jump to the start, the first failure or the end.
+* **The stage tube** shows one lamp per top-level stage; the child sketches that ran inside it are groups you can open (`25 of 25 done`). Four gauges read the run's own files; a needle appears only where the run knows the full scale.
+* **JEV READS** lists what Jev answered in the run (from the captured answers; the last five runs keep them): each read's levels and probabilities, flagged UNSURE when the top level is below 0.7 or is `none_of_these`. Level names that come from your own data (a refund candidate named by its date and amount) show as "option N" unless you have unlocked the console.
+* **START A RUN** (open the panel at the top): unlock with the access secret, choose a sketch, fill in its values, and press PLAY, live or from a captured run. The console checks the sketch with your values first and tells you what is wrong. STOP THIS RUN ends a run the console started. A sketch that is only called by another is not listed, and a file that cannot be read is listed greyed out with the reason.
+* **The access secret** is new at every start of the console and saved in `.understudy/dashboard.secret` (readable by you alone, git-ignored). Read it there (`cat .understudy/dashboard.secret`) and paste it into the panel; it is kept for that tab only. It is never printed, because command output is copied into the team chat. Without it you can watch but not start, replay or stop. It travels over plain HTTP, which you accepted for a home network (until 2027-01-30).
+* **Three themes and light, dark or auto** are remembered by the browser; on a phone the theme controls sit behind LOOK.
+
+To check the console after a change: `bobp make install-browser`, then `bobp make test-browser` (needs Chromium; it drives the real page and measures text contrast in all six looks).
 
 | Make target (`bobp make <target>`) | Does |
 |---|---|
 | `install` | install dependencies (network) |
 | `run` | `ARGS="run <sketch> [--with name=value]..."` or `"check <sketch>"` |
-| `dashboard` | the console over `build/runs` |
+| `dashboard` | the console over `build/runs` (`ARGS="build/runs --port 4180 --sketches examples"`) |
 | `test` / `lint` / `check` | unit tests / ruff / the full gate with the secret scan |
+| `security-scan` | gitleaks and pip-audit over every dependency group (network); clean before a release |
+| `install-browser` / `test-browser` | the optional browser tools / the console in a real Chromium |
 | `clean` | remove `build/` |
 
 ## 9. Local transaction cleanup

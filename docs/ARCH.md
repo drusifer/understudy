@@ -29,7 +29,7 @@ graph TD
 
 * **Trust domains:** the owner's files and the machine are trusted; Jev's answers are untrusted text, constrained to the listed options before use; the console's network clients are untrusted (read-only, no login: SEC-002).
 * **Network boundaries:** the only outbound call is to Jev, made by a run, never by the console. The console listens on 0.0.0.0, port 4180 (owner's decision; Sprint 21 decision 4).
-* **Process model:** each command is one Python process. A run and the console share nothing but the run folder on disk. The run database (`run.duckdb`) is opened by one process at a time.
+* **Process model:** each command is one Python process. A run and the console share the run folder on disk; since Sprint 22 the console can also start runs, as child processes of its own user (an argument list, no shell, their own session; at most one per sketch and four in all) and stop only the ones it started. The run database (`run.duckdb`) is opened by one process at a time.
 
 ## 3. Component & Container Architecture
 
@@ -67,8 +67,11 @@ graph LR
 | `jev.py` | The one Jev client: bounded questions, typed answers | rubric, options, text | probabilities |
 | `run.py` | One run: folder, stage context, parts written then published last, `run.json`, `summary.json`, `events.jsonl` | `Sketch`, capture | `RunResult` |
 | `paths.py` | The project root and the rule that private output never goes to tracked folders or `data/` | an output path | allowed path or `OutputPathError` |
-| `dashboard/server.py` | Read-only console: `/api/runs`, `/api/runs/<id>`, `/events/<id>` (server-sent events), page files | run folders | JSON, event stream, static files |
-| `dashboard/page.js` and CSS | Draws the server's data; themes and mode; no decisions of its own | API JSON | the page |
+| `dashboard/server.py` | HTTP only: routes, page files, event streams (capped), the access-secret, origin and body checks for POST, security headers | requests | JSON, event stream, static files |
+| `dashboard/view.py` | Everything the page shows about a run: state, failure, summary, stage groups, gauges, printed lines, the rack | run folders | dicts for the API |
+| `dashboard/reads.py` | The Jev list from a run's captured answers; hides level names that come from the owner's data unless the caller holds the secret | capture files | list, gauge figures |
+| `dashboard/runs.py` | `Launcher`: lists sketches, checks then starts, replays and stops runs; the allow-lists and limits | sketches folder, requests | run ids, refusals |
+| `dashboard/page.js`, `controls.js`, CSS | Draw what the server returns; themes and mode; the start panel; no decisions of their own | API JSON | the page |
 
 ## 4. Runtime Interaction & Critical Flows
 
@@ -87,7 +90,9 @@ graph LR
 
 * **Commands:** `understudy run <sketch> [--with name=value]... [--source name.path=file]... [--out folder] [--replay[=run-id|folder]]`; `understudy check <sketch> [...]`; `understudy dashboard [runs-folder] [--port N]`. Exit codes: 0 done, 1 a stage failed after start, 2 refused before start. Every failure is one `understudy: <message>` line.
 * **Run folder:** `build/runs/run-<stamp>-<id>/` holds the sink files, `run.json` (status, per-stage state, mode), `summary.json` (counts only), `events.jsonl` (`run_started`, `stage_started`, `stage_completed`, `stage_failed`, `run_finished`; one JSON object per line with `event` and `at`), `run.duckdb`.
-* **Console API** (GET only, JSON): `/api/runs` list; `/api/runs/<id>` the run as drawn (tube, gauges, printed lines); `/events/<id>` server-sent events; page files from an allow-list. A run id must match `run-[0-9A-Za-z-]+` and be a folder under the root.
+* **Console API, open to read** (GET, JSON): `/api/runs` list; `/api/runs/<id>` the run as drawn (state, failure, summary, stage groups, gauges, printed lines, failure indices); `/api/runs/<id>/jev` the Jev reads; `/api/sketches`, `/api/replays`, `/api/session`; `/events/<id>` server-sent events; page files from an allow-list. A run id must match `run-[0-9A-Za-z-]+` and be a folder under the root.
+* **Console API, behind the access secret** (POST, JSON object under 8 KB, header `X-Understudy-Secret`, same-origin only): `/api/start {sketch, with, replay?}` and `/api/stop {run}`. Refusals are `{problem}` with 400, 401, 403, 404, 409 or 413. The secret is made at each start of the console and saved in `.understudy/dashboard.secret` (git-ignored, mode 0600); it is never printed, because `bobp make` copies output into the team chat.
+* **Command line:** `understudy run | check | dashboard [RUNS] [--port] [--sketches] | runs [FOLDER]`.
 * **Sketch format:** [SKETCHES.md](SKETCHES.md) and `schema/decision_sketch.schema.json`.
 
 ## 6. Cross-Cutting Concepts & Resilience
@@ -102,11 +107,13 @@ graph LR
 | A rule empties a choice | `forbid` removes every option | run fails naming the rule and the input unless the stage opts into `fallback`, `skip` or `walk_away` | failure reason | the run |
 | Forbidden output path | `--out` under `data/` or a tracked folder | refused before start | one line, exit 2 | none |
 | Console loses a run's files | missing or half-written `events.jsonl` | a half-written last line is skipped; missing files read as empty | the run shows empty; other runs unaffected | one run in the page |
-| Console overload | many open event streams | currently one thread each, no cap | console may stop answering | the console only (SEC-001) |
+| Console overload | many open event streams | at most 32; a further one gets 503; a silent stream ends after 10 minutes | "too many watchers" | the console only (SEC-001, fixed) |
+| Start refused | no or wrong secret, another origin, a sketch outside the folder, an unknown name, a file outside the project, a second Play, a fifth run, a failing check | 401 (after a 1 s pause), 403, 400 or 409 with one sentence; nothing is started | the page shows the sentence | none |
+| Run killed before its first stage | Stop, or `kill` | the launcher marks it stopped; a run killed elsewhere reads "stalled" after 10 minutes | STOPPED or STALLED | one run |
 
 ### Security & Privacy
 
-* **Trust / access boundaries:** the console has no authentication (SEC-002, accepted until 2026-12-01); starting runs will require an access secret (Sprint 22). Details: [security review](../agents/switch/reviews/2026-11-01-console-and-run-pipeline.md).
+* **Trust / access boundaries:** reading is open to the network (SEC-002, accepted until 2026-12-01); starting, replaying and stopping need the access secret, which travels over plain HTTP on the home network (SEC-005, accepted until 2027-01-30). Details: [baseline review](../agents/switch/reviews/2026-11-01-console-and-run-pipeline.md), [design gate](../agents/switch/reviews/2026-11-01-sprint-22-design-gate.md), [phase 5 review](../agents/switch/reviews/2026-11-01-sprint-22-phase-5.md); decisions in [ARCH_SPRINT22](sprints/ARCH_SPRINT22.md) and ADR-0049.
 * **Sensitive data:** the owner's transactions stay in input files and in sink files under `build/runs`; `summary.json` and the console show counts and names only; capture files live in git-ignored `.understudy/`; `paths.py` refuses private output in tracked folders.
 * **Reproducibility:** two replays of one capture are byte-identical (DOMAIN invariant 9).
 
@@ -126,8 +133,9 @@ graph LR
 
 ### Acknowledged Technical Debt & Trade-offs
 * **Thin event stream:** `events.jsonl` has five event kinds and no state changes or decisions; the diagram, step, replay and decision detail stories (Sprint 23, UND-81 first) all depend on enriching it.
-* **No stream limits or security headers in the console** (SEC-001, SEC-003): fix before Sprint 22 builds on it.
-* **`page.js` is untested by machine:** every decision is made in Python and tested; the DOM is checked by hand (ADR-0048, UND-80 adds a written browser check).
-* **Gauge needles with arbitrary scales** (JEV, ELAPSED): replaced in Sprint 22 UND-77.
-* **Dependencies unaudited:** no `security-scan` make target yet (Tank, next sprint).
+* **Browser check outside the gate:** `bobp make test-browser` (Playwright, system Chromium) covers the page's behavior, keyboard reach and text contrast in all six looks, but is not part of `check` (SDLC section 9).
+* **The launcher's lock is held while it checks a sketch** (up to 60 s), so a Stop can wait behind a slow check.
+* **A console restart forgets the children it started;** they keep running and stay visible by their files, but Stop is unavailable for them.
+* **The access secret is one shared string over plain HTTP** (SEC-005): fine for one owner on a home network, to be re-decided by 2027-01-30 (TLS flags would be about ten lines).
+* **Jev level names from the owner's data are hidden from callers without the secret** (SEC-007); captures made before Sprint 22 do not say where their levels came from and are hidden too.
 * **One process per run, one database writer:** fine for one owner; a second concurrent run in the same folder is not supported.
