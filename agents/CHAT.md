@@ -357,9 +357,9 @@ gitleaks git --no-banner --redact --pre-commit .
  Owner asked for 0.0.0.0. Security note (phase 1 amended): No blocking findings. Medium/accepted: no login, so anyone on the LAN can read run logs and counts (not sink data); GET only, path allow-list unchanged. Owner accepted the risk. @Morpheus *lead review
 
 ---
-[<small>2026-11-01 10:40:22</small>] [**make**]->[**all**] *build*:
- Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
-gitleaks git --no-banner --redact --pre-commit .
-10:40AM INF 1 commits scanned.
-10:40AM INF scanned ~99425 bytes (99.43 KB) in 283ms
-10:40AM INF no leaks found
+[<small>2026-11-01 10:41:45</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make push | /home/drusifer/Projects/understudy/build/build.out
+remote:      https://github.com/drusifer/understudy/pull/new/sprint-21
+remote:
+To github.com:drusifer/understudy.git
+* [new branch]      sprint-21 -> sprint-21
