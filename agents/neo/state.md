@@ -22,3 +22,7 @@
 2. Check the final run logs in CHAT.md; build/build.out currently contains the passing 302-test JS run. Prior Python and SQLMesh results are recorded above and in chat.
 3. Morpheus reviews Phase 5 before any phase commit. No publishing without owner instruction. Tank must update SDLC for Python dependencies and the removed Node ETL boundary at sprint close.
 4. Real-file live Jev acceptance remains held for owner direction; use doubles for automated verification.
+
+---
+## Sprint 22 close 2026-11-01
+Sprint 22 built (UND-76..80, 88): view/reads/runs/server/controls; 309+6 tests. Rule to keep: Edit/Write only, no sed/python for edits. Next: Sprint 23 UND-81 events v2 after the owner starts it.

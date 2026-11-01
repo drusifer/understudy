@@ -131,7 +131,8 @@ sequenceDiagram
     participant Trin
     participant Tank
     participant Mouse
-    Note over Switch,Mouse: 📅 2026-11-01
+    participant Oracle
+    Note over Switch,Oracle: 📅 2026-11-01
     Switch->>Morpheus: "sec handoff"
     Note right of Switch: "Owner asked for 0.0.0.0.<br/>Security note (phase 1<br/>amended): No blocking<br/>findings.<br/>Medium/accepted: no<br/>login, so anyone on the<br/>LAN can read ru…"
     User->>All: "request"
@@ -230,4 +231,22 @@ sequenceDiagram
     Note right of Switch: "security gate (phase 6):<br/>No blocking findings.<br/>Checked<br/>controls.js/page.js: the<br/>secret goes only into<br/>sessionStorage and the<br/>X-Understudy-S…"
     Morpheus->>Tank: "lead handoff"
     Note right of Morpheus: "Phase 6 review passed:<br/>controls.js is thin<br/>(asks, shows), policy<br/>stays in<br/>runs.py/server.py,<br/>page.js hook afterStatus<br/>keeps the two scripts…"
+    Neo->>Tank: "swe handoff"
+    Note right of Neo: "Phase 7 / Task 7.0:<br/>which tool for the<br/>repeatable browser check<br/>(UND-80 AC6)?<br/>Candidates: playwright<br/>(Python, dev group,<br/>system Chromium vi…"
+    Tank->>Neo: "devops handoff"
+    Note right of Tank: "Tank: browser-check tool<br/>approved and recorded in<br/>docs/SDLC.md: Playwright<br/>for Python 1.64.1 in an<br/>optional 'browser' group<br/>(install-browse…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 7 PASSED: 5<br/>scenarios, contrast<br/>measured on real<br/>rendered pixels in 6<br/>theme/mode looks (25<br/>failures found and<br/>fixed, 0 left), key…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 7):<br/>No blocking findings.<br/>Quick pass: no new<br/>network surface, the CLI<br/>messages carry no<br/>secrets, new dev<br/>dependency (p…"
+    Morpheus->>Tank: "lead handoff"
+    Note right of Morpheus: "Phase 7 / all phases<br/>reviewed. Closeout next:<br/>Tank sdlc-check, Oracle<br/>groom (PRD statuses,<br/>ARCH.md, README,<br/>USER_GUIDE, CHANGELOG,<br/>ADR-0049…"
+    Tank->>Oracle: "devops handoff"
+    Note right of Tank: "SDLC check passed (fresh<br/>clone of sprint-22: 308<br/>tests, ruff, gitleaks,<br/>second install leaves<br/>uv.lock unchanged,<br/>security-scan clean over<br/>a…"
+    Oracle->>Smith: "ora handoff"
+    Note right of Oracle: "Docs groomed: PRD<br/>statuses (R12, R14,<br/>R19-R21, R28, Q4, Q5<br/>delivered), ARCH.md<br/>console section,<br/>ADR-0049, USER_GUIDE<br/>console section, CHANG…"
+    Smith->>Trin: "user bug"
+    Note right of Smith: "*user bug CMD: open JEV<br/>READS on the real<br/>household run while<br/>locked | EXPECTED: a<br/>hint why levels read<br/>'option 3' | ACTUAL: no<br/>explanation…"
+    Trin->>Neo: "qa handoff"
+    Note right of Trin: "Triage: usability, not<br/>correctness. @Neo *swe<br/>fix: say it on the list<br/>when names are hidden,<br/>and how to see them"
 ```

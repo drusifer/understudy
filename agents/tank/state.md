@@ -20,3 +20,7 @@
 ## Next Steps
 1. Hand off to Oracle for Sprint 16 document grooming and chat report archive.
 2. Preserve private CSV data under ignored `build/runs/`; no household exports were read.
+
+---
+## Sprint 22 close 2026-11-01
+SDLC verified on a fresh clone; browser group and security-scan recorded in docs/SDLC.md. Open: clean target would delete build/runs (owner to decide).

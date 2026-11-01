@@ -260,9 +260,19 @@
 - **Verdict:** PASS
 - **Evidence / issue:** `tests/browser/test_console.py`; tool approved by Tank and recorded in `docs/SDLC.md`
 
+### UAT-22-E2E: Smith's end-to-end user test on the real console and the real household run (sprint close)
+- **Linked criterion:** UND-76 AC1-4, UND-77 AC1-4, UND-88 AC1-3, UND-78 AC1-2, 4, 7, UND-79 AC1, 4, 8, UND-80 AC2, 4
+- **User / task:** the owner, who wants to know how last week's household run went, find what Jev was unsure about, and start the next run without a terminal
+- **Preconditions and data:** the finished code on `sprint-22`; the console restarted on port 4180 over the owner's `build/runs` with `--sketches examples`; the real run of 2026-10-31 (made before this sprint); the real access secret read from its file; only counts and shapes are recorded
+- **Steps:** open the page; read the rack; choose the household run; read the header, the ended line, the summary, the gauges; filter the printer; open JEV READS locked, then unlock and look again; open START A RUN, choose the household sketch, read its form; open on a phone
+- **Expected observable outcome:** a rack grouped by sketch; DONE after 5 stages with 5 lamps and 4 groups; the figures 5/5, 0, 932, 126 s, 0.64 and 932·0; `name_merchant[4]` finds 6 lines; the Jev summary reads 932 reads, 481 unsure; locked, no level name from the owner's data is visible and the page says why; unlocked, they are; the panel lists the evening and the household (the called child sketches are not listed), shows the household's four fields, and PLAY is off until unlocked; the phone shows the status on the first screen with no horizontal scroll
+- **Actual outcome:** all as expected. Smith's one finding: locked, the list said "option 3" with no word on why (H1, H9); fixed in this sprint: the list says how many reads have hidden names and how to see them, and the note goes away after unlocking (unit test `test_the_list_says_how_many_reads_have_their_names_hidden...`). Observed and left: this run predates the sprint, so its summary shows "-" for outcome, `with` and `wrote`, which reads the same as "none" (backlog)
+- **Verdict:** PASS
+- **Evidence / issue:** `p7.js` output in the session scratch folder; `p7-desktop.png`, `p7-phone.png`; `*user bug` filed and triaged in `agents/CHAT.md`
+
 ## Results and Handoff
 
 - **Passed / failed / blocked:** Phase 1: 6 passed (3 after a fix found in the run); Phase 2: 4 passed (1 after a contrast fix); Phase 3: 3 passed; Phase 4: 3 passed (1 after a fix; 1 privacy defect found and fixed, SEC-007); Phase 5: 3 passed after fixes (SEC-008 and SEC-009 found by the attack and fixed); Phase 6: 4 passed (1 after a fix); Phase 7: 5 passed (2 after fixes); 0 failed, 0 blocked.
 - **Open issues and impact:** none for Phase 1. The `with` values in `run.json` are file paths as typed (SEC-004 covers the sketch path, now stored relative).
-- **Overall verdict:** PASS for phases 1 to 7. Smith's end-to-end user test (closeout) is still to run.
+- **Overall verdict:** PASS: phases 1 to 7 and Smith's end-to-end user test; 0 failed, 0 blocked; the one usability finding is fixed.
 - **Handoff evidence:** `agents/CHAT.md` messages "UAT phase N passed" for each phase; screenshots and outputs in the session scratch folder

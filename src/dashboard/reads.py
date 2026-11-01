@@ -34,7 +34,8 @@ def _one_read(folder: Path, key: str, reveal: bool) -> dict:
     rows = [json.loads(line) for line in (folder / f"{key}.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
     meta = json.loads((folder / f"{key}.meta.json").read_text(encoding="utf-8"))
     # data-derived or of unknown origin: the names go only to the holder of the secret
-    if meta.get("levels_from_data") is not False and not reveal:
+    hidden = meta.get("levels_from_data") is not False and not reveal
+    if hidden:
         rows = _hide_names(rows)
     ranked = sorted(rows, key=lambda row: row["probability"], reverse=True)
     top = ranked[0] if ranked else {"level": "", "probability": 0.0}
@@ -42,7 +43,7 @@ def _one_read(folder: Path, key: str, reveal: bool) -> dict:
     return {
         "source": key, "levels": [[row["level"], row["probability"]] for row in rows], "top": top["level"],
         "probability": top["probability"], "margin": top["probability"] - second,
-        "flagged": top["probability"] < REVIEW_THRESHOLD or top["level"] == NONE_LEVEL,
+        "flagged": top["probability"] < REVIEW_THRESHOLD or top["level"] == NONE_LEVEL, "hidden": hidden,
         "instructions": meta.get("instructions"), "captured_at": meta.get("captured_at", ""),
     }
 
@@ -55,13 +56,13 @@ def jev_reads(directory: Path, cache: Path, project: Path = ROOT, *, reveal: boo
     if folder is None:
         asked = int(summary.get("jev_requests", 0))
         note = "captures no longer kept for this run" if asked or run.get("mode") == "replay" else "this run did not ask Jev"
-        return {"kept": False, "note": note, "reads": [], "missing": [], "confidence": None, "asked": asked, "reused": 0}
+        return {"kept": False, "note": note, "reads": [], "missing": [], "hidden": 0, "confidence": None, "asked": asked, "reused": 0}
     jsonl = {path.name.removesuffix(".jsonl") for path in folder.glob("*.jsonl")}
     metas = {path.name.removesuffix(".meta.json") for path in folder.glob("*.meta.json")}
     reads = sorted((_one_read(folder, key, reveal) for key in jsonl & metas), key=lambda read: (read["captured_at"], read["source"]))
     replayed = run.get("mode") == "replay"
     return {
-        "kept": True, "note": "", "reads": reads, "missing": sorted(jsonl ^ metas),
+        "kept": True, "note": "", "reads": reads, "missing": sorted(jsonl ^ metas), "hidden": sum(read["hidden"] for read in reads),
         "confidence": reads[-1]["probability"] if reads else None,
         "asked": 0 if replayed else int(summary.get("jev_requests", len(reads))), "reused": len(reads) if replayed else 0,
     }

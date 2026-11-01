@@ -33,3 +33,7 @@ Status: Completed. Sprint 20 is closed and pushed. Working tree: only `agents/CH
 ---
 ## Update 2026-11-01
 PRD written and checked (docs/PRD.md, template _template_PRD.md). Open: typed inputs, review-share target, net-spending figure.
+
+---
+## Sprint 22 close 2026-11-01
+Sprint 22 launched: 29 pts. Open owner questions: typed inputs; review-share and net-spending targets; TLS by 2027-01-30. Branch sprint-22 local, not merged.

@@ -28,3 +28,7 @@ State Management Protocol in `agents/skills/bob-protocol/SKILL.md` for entry and
 ---
 ## Update 2026-11-01
 Baseline review agents/switch/reviews/2026-11-01-console-and-run-pipeline.md: SEC-001 Medium open, SEC-002 accepted by owner until 2026-12-01, SEC-003 Low, SEC-004 Info; dependency audit not run. Next: threat-model UND-79 secret at Sprint 22 design gate.
+
+---
+## Sprint 22 close 2026-11-01
+SEC-001..009 handled; open: SEC-002 (expires 2026-12-01) and SEC-005 (2027-01-30), both accepted by the owner. Next: re-review when Sprint 23 changes the event stream (SEC-004 closed).

@@ -33,3 +33,7 @@
 ---
 ## Update 2026-11-01
 Wrote docs/ARCH.md (system-wide, from the code). Debt listed: thin event stream, console stream cap and headers, untested page.js, unaudited deps. Next: Sprint 22 arch (UND-79 access secret with Switch) after Gate 1.
+
+---
+## Sprint 22 close 2026-11-01
+ARCH_SPRINT22 built as designed; ADR-0049. Revisit: launcher lock during check. Next: Sprint 23 architecture (events v2) when asked.

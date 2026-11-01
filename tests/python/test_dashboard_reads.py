@@ -91,6 +91,15 @@ class PrivacyTest(ReadsCase):
         self.assertEqual(reads["from_data"]["levels"], [["option 1", 0.2], ["option 2", 0.8]])
         self.assertEqual(reads["from_data"]["instructions"], "Which charge?")
 
+    def test_the_list_says_how_many_reads_have_their_names_hidden_so_the_page_can_say_why(self):
+        directory = self.make_run()
+        self.store.write(RUN, "own_words", rows(x=0.9, y=0.1), "h", levels_from_data=False)
+        self.store.write(RUN, "from_data", rows(a=0.6, b=0.4), "h", levels_from_data=True)
+        self.store.write(RUN, "unknown", rows(a=0.6, b=0.4), "h")
+        self.assertEqual(self.reads(directory)["hidden"], 2)
+        self.assertEqual(jev_reads(directory, self.cache, self.root, reveal=True)["hidden"], 0)
+        self.assertEqual(self.reads(self.make_run("run-20261101T110000-bbbbbbbb"))["hidden"], 0)  # no captures: nothing to hide
+
     def test_the_holder_of_the_secret_sees_the_real_names(self):
         directory = self.make_run()
         self.store.write(RUN, "a", rows(**{"refund_x1": 0.2, "refund_x2": 0.8}), "h", levels_from_data=True)

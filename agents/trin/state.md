@@ -28,3 +28,7 @@
 ---
 ## Update 2026-11-01
 Wrote docs/TEST_STRATEGY.md (233 tests, 13 s, gates via bobp make check, known gaps). Next: Sprint 21 UAT plan after the fact; Sprint 22 UAT plan up front; probe SEC-001 fix.
+
+---
+## Sprint 22 close 2026-11-01
+Sprint 22 UAT plan done (docs/sprints/UAT_PLAN_SPRINT22.md); browser check is test-browser. Next: UAT plan for Sprint 21 after the fact; probe SEC-002/005 expiries.

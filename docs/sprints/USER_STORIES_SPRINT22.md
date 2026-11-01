@@ -3,7 +3,7 @@
 *   **Planning Size** (optional): 29 points
 *   **Branch**: `sprint-22`
 *   **Source**: Owner, 2026-11-01 (`OWNER_DECISIONS_SPRINT22.md` 1); gaps G1-G14 in `UX_GAPS_SPRINT22.md`; old criteria carried over from `OLD_VERSION_PARITY.md`.
-*   **Status**: Draft, revised to the template after the owner asked whether the templates were used; awaiting Smith Gate 1 again (the earlier approval used the retired A/S/W rubric line and is void)
+*   **Status**: Delivered (Sprint 22 closed 2026-11-01; Gate 1 passed on the template's STORIES check)
 
 ## Goal
 

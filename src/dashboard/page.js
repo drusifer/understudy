@@ -196,6 +196,10 @@ function drawJev() {
     ...each.levels.map(([level, probability]) => make('div', { class: 'jev-level' }, `${level} ${probability.toFixed(2)}`))));
   const notes = [];
   if (!jev.kept) notes.push(make('div', { class: 'about' }, jev.note));
+  if (jev.hidden) {
+    notes.push(make('div', { class: 'about' }, `${jev.hidden} of these reads have level names from your own data, shown as "option N"; `
+      + 'unlock with the access secret (START A RUN panel above) to see the names'));
+  }
   if (jev.missing.length) notes.push(make('div', { class: 'about' }, `missing capture halves: ${jev.missing.join(', ')}`));
   if (jev.kept && !items.length) notes.push(make('div', { class: 'about' }, unsure ? 'no unsure reads' : 'no reads'));
   $('jev-list').replaceChildren(...notes, ...items);

@@ -650,3 +650,64 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-11-01 12:29:26</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
  Phase 6 review passed: controls.js is thin (asks, shows), policy stays in runs.py/server.py; page.js hook afterStatus keeps the two scripts decoupled. @Tank *devops approve browser-check tool, then @Neo *swe impl phase-7
+
+---
+[<small>2026-11-01 12:29:54</small>] [**Neo**]->[**Tank**] *swe handoff*:
+ Phase 7 / Task 7.0: which tool for the repeatable browser check (UND-80 AC6)? Candidates: playwright (Python, dev group, system Chromium via executable path, own target not in check) or a manual script. @Tank *devops sdlc
+
+---
+[<small>2026-11-01 15:29:28</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-browser | /home/drusifer/Projects/understudy/build/build.out
+......
+----------------------------------------------------------------------
+Ran 6 tests in 55.504s
+
+OK
+
+---
+[<small>2026-11-01 15:29:28</small>] [**Tank**]->[**Neo**] *devops handoff*:
+ Tank: browser-check tool approved and recorded in docs/SDLC.md: Playwright for Python 1.64.1 in an optional 'browser' group (install-browser / test-browser, system Chromium, outside check). security-scan now audits all groups: clean.
+
+---
+[<small>2026-11-01 15:29:28</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 7 PASSED: 5 scenarios; contrast measured on real rendered pixels in 6 theme/mode looks (25 failures found and fixed, 0 left); keyboard reaches and names every control; busy port/missing folders are one line; help teaches; run prints its id. 307 tests + 6 browser tests green. @Switch *sec review phase-7
+
+---
+[<small>2026-11-01 15:29:29</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 7): No blocking findings. Quick pass: no new network surface; the CLI messages carry no secrets; new dev dependency (playwright, greenlet, pyee) in an optional group, audited clean by security-scan --all-groups. @Morpheus *lead review phase-7
+
+---
+[<small>2026-11-01 15:29:29</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
+ Phase 7 / all phases reviewed. Closeout next: Tank sdlc-check, Oracle groom (PRD statuses, ARCH.md, README, USER_GUIDE, CHANGELOG, ADR-0049, lessons), Smith user test, retro, Cypher launch. @Tank *devops sdlc-check
+
+---
+[<small>2026-11-01 15:32:00</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+3:32PM INF 1 commits scanned.
+3:32PM INF scanned ~3849 bytes (3.85 KB) in 247ms
+3:32PM INF no leaks found
+
+---
+[<small>2026-11-01 15:33:49</small>] [**Tank**]->[**Oracle**] *devops handoff*:
+ SDLC check passed (fresh clone of sprint-22: 308 tests, ruff, gitleaks, second install leaves uv.lock unchanged; security-scan clean over all groups; test-browser 6/6). Note: bobp make clean would delete build/runs (the owner's real run): owner to decide. @Oracle *ora groom
+
+---
+[<small>2026-11-01 15:33:49</small>] [**Oracle**]->[**Smith**] *ora handoff*:
+ Docs groomed: PRD statuses (R12, R14, R19-R21, R28, Q4, Q5 delivered), ARCH.md console section, ADR-0049, USER_GUIDE console section, CHANGELOG, README, 4 lessons (secret in captured output; real data shape; check the instrument; read the template first). Chat archive not run: it would reset CHAT.md, owner's call. @Smith *user test sprint 22
+
+---
+[<small>2026-11-01 15:35:14</small>] [**Smith**]->[**Trin**] *user bug*:
+ *user bug CMD: open JEV READS on the real household run while locked | EXPECTED: a hint why levels read 'option 3' | ACTUAL: no explanation; the owner cannot tell hiding from a bug | UX ISSUE: H1 visibility of system status, H9 recognize and recover: the way out (unlock) is not offered where the problem is seen. @Trin triage
+
+---
+[<small>2026-11-01 15:35:14</small>] [**Trin**]->[**Neo**] *qa handoff*:
+ Triage: usability, not correctness. @Neo *swe fix: say it on the list when names are hidden, and how to see them
+
+---
+[<small>2026-11-01 15:36:03</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+3:36PM INF no leaks found
+3:36PM INF 1 commits scanned.
+3:36PM INF scanned ~7069 bytes (7.07 KB) in 241ms
+3:36PM INF no leaks found

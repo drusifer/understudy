@@ -4,7 +4,7 @@
 *   **Tier**: Tier 1 (Major)
 *   **Total Points** (optional): 29
 *   **Branch**: `sprint-22`
-*   **Status**: Plan approved by Morpheus (Step 3a); Phase 1 in progress
+*   **Status**: CLOSED 2026-11-01. All seven phases and the closeout done; not merged or pushed (owner). Retro: `docs/sprints/RETRO_SPRINT22.md`.
 *   **Plan**: `docs/sprints/USER_STORIES_SPRINT22.md` (Gate 1 approved), `ARCH_SPRINT22.md` (Gate 2 approved), security design gate `agents/switch/reviews/2026-11-01-sprint-22-design-gate.md` (no blocking findings; SEC-005 accepted until 2027-01-30). Decisions: `OWNER_DECISIONS_SPRINT22.md`.
 
 ---
@@ -72,8 +72,8 @@ Complexity levels follow the definitions in `agents/templates/_template_task.md`
 
 ## Stage 3: Sprint Closeout
 
-- [ ] **Task C.1:** SDLC conformance check, and `bobp make security-scan` clean. (*Owner: Tank | Trace: N/A — closeout | Verification: `bobp make distclean && bobp make install && bobp make check` and `bobp make security-scan`*)
-- [ ] **Task C.2:** Document grooming (PRD statuses, ARCH.md, README, USER_GUIDE, CHANGELOG, ADR-0049), lessons, chat report. (*Owner: Oracle | Trace: N/A — closeout | Verification: `bobp chat-report --moniker SPRINT_22 --summary "..."`*)
-- [ ] **Task C.3:** End-to-end user test against `UAT_PLAN_SPRINT22.md` and the UAT check; lesson review. (*Owner: Smith | Trace: UND-76 to UND-80, UND-88 | Verification: Smith verdict in `agents/CHAT.md`*)
-- [ ] **Task C.4:** Retrospective and backlog grooming. (*Owner: Mouse | Trace: N/A — closeout | Verification: retros posted in `agents/CHAT.md`*)
-- [ ] **Task C.5:** Launch decision. (*Owner: Cypher | Trace: N/A — release decision | Verification: decision recorded in `agents/CHAT.md`*)
+- [x] **Task C.1:** SDLC conformance check, and `bobp make security-scan` clean. (*Owner: Tank | Trace: N/A — closeout | Verification: `bobp make distclean && bobp make install && bobp make check` and `bobp make security-scan`*)
+- [x] **Task C.2:** Document grooming (PRD statuses, ARCH.md, README, USER_GUIDE, CHANGELOG, ADR-0049), lessons, chat report. (*Owner: Oracle | Trace: N/A — closeout | Verification: `bobp chat-report --moniker SPRINT_22 --summary "..."`*)
+- [x] **Task C.3:** End-to-end user test against `UAT_PLAN_SPRINT22.md` and the UAT check; lesson review. (*Owner: Smith | Trace: UND-76 to UND-80, UND-88 | Verification: Smith verdict in `agents/CHAT.md`*)
+- [x] **Task C.4:** Retrospective and backlog grooming. (*Owner: Mouse | Trace: N/A — closeout | Verification: retros posted in `agents/CHAT.md`*)
+- [x] **Task C.5:** Launch decision. (*Owner: Cypher | Trace: N/A — release decision | Verification: decision recorded in `agents/CHAT.md`*)
