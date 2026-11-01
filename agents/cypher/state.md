@@ -21,3 +21,11 @@ Status: Completed. Sprint 20 is closed and pushed. Working tree: only `agents/CH
 2. Ask the owner (one question) what is next. Candidates, in my order: (a) the 1,706 category-review records: measure per merchant how often the top option is under 0.7 or `none_of_these`, then tune the placement question or thresholds; (b) trace the $433,762 net spending (what is counted that should not be: refunds, credits, transfer legs, external transfers); (c) try `--replay` of the live household run and fix what breaks; (d) epic slices C and D; (e) confirm the three behavior changes with the owner (`amex_account` required; no rubric check when naming; offered categories = Monarch labels containing ": " that are not transfer/payment).
 3. Any new owner answer goes into `docs/sprints/OWNER_DECISIONS_SPRINT20.md` (or a new Sprint 21 file) at once, before code relies on it.
 4. A new sprint starts from `main` on a `sprint-21` branch with Tank's `sdlc-check` first. Do NOT merge or push without the owner (`bobp make push`).
+
+---
+## Update 2026-11-01 (Sprint 21 closed and merged to main 5cd0927; Sprint 22 planned on `sprint-22`, local)
+- **Sprint 21** delivered the Python console (read-only, listens on 0.0.0.0, no login) and deleted all Node (ADR-0048). Process misses to avoid: build before stories/gates; docs off the bobp templates (read `agents/templates/` FIRST); edits via sed/python instead of Edit; skill steps skipped (artifacts first, Switch/Tank criteria).
+- **Sprint 22** (29 pts, `docs/sprints/USER_STORIES_SPRINT22.md`, template-conformant, Switch and Tank criteria tagged): UND-76 run says how it went, UND-77 see inside a run, UND-78 Jev panel, UND-79 start/replay/stop with a secret, UND-80 CLI and a11y promises. Owner chose watch AND start (`OWNER_DECISIONS_SPRINT22.md`).
+- **Sprints 23-24** (`docs/sprints/OLD_VERSION_PARITY.md`): UND-81 richer event stream, 82 statechart diagram, 83 pause/step/stop/`run --watch`, 84 replay a log, 85 decision detail; then 86 YAML editor, 87 typed inputs (owner question OPEN: wanted or plain `--with`?).
+- Gates pending: Smith Gate 1 on the rewritten Sprint 22 stories (earlier approval void); Morpheus arch; Switch design gate before UND-79; Mouse plan.
+- Sprint 21 docs still off-template: ARCH_SPRINT21, task.md, no UAT plan or security review doc (owner not yet asked to redo).

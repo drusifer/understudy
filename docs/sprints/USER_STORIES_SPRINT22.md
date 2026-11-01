@@ -83,6 +83,7 @@ When this sprint is done, the owner can open the console and see at once whether
 8. Starting, stopping and replaying work only for someone who has the access secret shown when the console started; without it the console still watches and the controls say why they are off. The secret is not in the address bar and not in any log.
 9. A sketch outside the chosen folder, or any extra argument, is refused with a message.
 10. A second Play for a sketch that is already running says "already running" and offers to open that run.
+11. Switch's design gate (`*sec threat sprint 22`) clears the access design before any code, and `*sec review` has no blocking findings after the build (the console starts processes and is reachable from the whole network). Tag: **Switch**.
 
 ## STORY-UND-80: The command line and the page keep their promises
 **Points:** 3
@@ -98,6 +99,7 @@ When this sprint is done, the owner can open the console and see at once whether
 4. Every control on the page is reachable and usable with the keyboard alone, shows where focus is, and has an accessible name and value.
 5. Text meets a contrast ratio of 4.5:1 in each of the three themes in light and dark, or the exception is recorded in the UAT plan with the owner's acceptance.
 6. Rack switching, live following, the failed-run banner, and start and stop each have a repeatable browser check, written down in the UAT plan.
+7. If that check needs a new tool or dependency, Tank approves how it is installed and run through `bobp make` and records it in `docs/SDLC.md` before it is used. Tag: **Tank**.
 
 ---
 
