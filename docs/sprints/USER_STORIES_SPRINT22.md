@@ -71,11 +71,12 @@ When this sprint is done, the owner can open the console and see at once whether
 **so that** I can tune the records that land in review without reading cache files.
 
 ### Acceptance Criteria
-1. A Jev list shows each request of the run: the stage that asked, the question, each option with its probability, and the choice made.
+1. A Jev list shows each read of the run: the stage and source that asked, each level with its probability and the top level; the sketch's question is shown too when the sketch file still exists.
 2. A request whose top option is below the review threshold, or whose choice was `none_of_these`, is flagged, and the list can be filtered to those.
 3. For a replayed run the list shows the answers it replayed; for a run that never asked Jev it shows a plain note saying so.
 4. Two gauges show Jev's confidence in its last choice and how many answers were asked as against reused.
 5. If a run's captured answers are missing, the list says which are missing and the rest of the console still works.
+6. Captures are kept for the last five runs only; for an older run the list says "captures no longer kept".
 
 ## STORY-UND-79: Start, replay and stop a run from the console
 **Points:** 8
@@ -88,7 +89,7 @@ When this sprint is done, the owner can open the console and see at once whether
 1. A list of sketches shows each sketch in the folder given to the console, with its description and the `--with` names it takes.
 2. A sketch that fails `check` is listed greyed out with its check message and cannot be started.
 3. A folder with no sketches, or a path that is not a folder, is refused before the console starts, with one message that says what to fix.
-4. Choosing a sketch shows a field for each `--with` name; a name that must be a file is checked to exist before Play is allowed.
+4. Choosing a sketch shows a field for each `--with` name; Play first runs the sketch's check with these values and shows any problem (a missing file, a bad value) without starting a run.
 5. Play starts the run; it appears in the rack at once and is followed live. Stop ends it and the run is marked stopped.
 6. Replay lists the captured runs the sketch can replay and runs from the chosen one.
 7. A run that cannot start (no key, a missing file) says why on the page; when any run ends the controls unlock and the outcome shows.
