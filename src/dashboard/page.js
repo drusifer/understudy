@@ -27,14 +27,57 @@ function look() {
   for (const button of document.querySelectorAll('.mode-choice')) button.setAttribute('aria-pressed', String(button.dataset.mode === state.mode));
 }
 
-function line(each) {
-  return make('div', { class: `line ${each.tone ?? ''}` }, each.text);
+// The printer holds every line of the chosen run in state.lines; the finder decides which of them are on the paper.
+state.lines = [];
+state.failures = [];
+const finder = () => ({ text: $('find-text').value.trim().toLowerCase(), failures: $('find-failures').checked, stage: $('find-stage').value });
+
+function shown(entry, find) {
+  if (find.failures && entry.tone !== 'held') return false;
+  if (find.stage && !(entry.stage === find.stage || entry.stage.startsWith(`${find.stage}.`) || entry.stage.startsWith(`${find.stage}[`))) return false;
+  return !find.text || entry.text.toLowerCase().includes(find.text);
 }
 
+function line(each, index) {
+  return make('div', { class: `line ${each.tone ?? ''}`, 'data-index': String(index) }, each.text);
+}
+
+function noMatch() {
+  const clear = make('button', { type: 'button', class: 'find-button' }, 'CLEAR FILTERS');
+  clear.addEventListener('click', clearFinder);
+  return make('div', { class: 'no-match', role: 'status' }, 'no lines match ', clear);
+}
+
+function renderPaper() {
+  const find = finder();
+  const nodes = state.lines.flatMap((each, index) => (shown(each, find) ? [line(each, index)] : []));
+  $('paper').replaceChildren(...(nodes.length || !state.lines.length ? nodes : [noMatch()]));
+  $('paper-window').scrollTop = $('paper-window').scrollHeight;
+}
+
+function clearFinder() {
+  $('find-text').value = '';
+  $('find-failures').checked = false;
+  $('find-stage').value = '';
+  renderPaper();
+}
+
+function setFailures(indices) {
+  state.failures = indices;
+  $('jump-failure').disabled = indices.length === 0;
+  $('jump-failure').title = indices.length ? 'Show the first failed line' : 'no failure in this run';
+}
+
+// A new line from a run that is going: kept, and put on the paper only if the finder lets it through.
 function append(each) {
+  state.lines.push(each);
+  const index = state.lines.length - 1;
+  if (each.tone === 'held') setFailures([...state.failures, index]);
+  if (!shown(each, finder())) return;
   const window = $('paper-window');
   const atEnd = window.scrollTop + window.clientHeight >= window.scrollHeight - 8;
-  $('paper').append(line(each));
+  $('paper').querySelector('.no-match')?.remove();
+  $('paper').append(line(each, index));
   if (atEnd) window.scrollTop = window.scrollHeight;
 }
 
@@ -78,9 +121,15 @@ function drawBanner(run) {
   }
 }
 
+// Bring one line (by its place in the whole log) into view; if the finder is hiding it, clear the finder first.
 function jumpTo(index) {
-  const lines = $('paper').children;
-  if (index !== null && lines[index]) lines[index].scrollIntoView({ block: 'center' });
+  if (index === null || index === undefined) return;
+  let node = $('paper').querySelector(`[data-index="${index}"]`);
+  if (!node) {
+    clearFinder();
+    node = $('paper').querySelector(`[data-index="${index}"]`);
+  }
+  node?.scrollIntoView({ block: 'center' });
 }
 
 function drawSummary(run) {
@@ -125,11 +174,24 @@ function drawStatus(run) {
   state.chosenState = run.state;
 }
 
+// The stages the stage filter offers: each top-level stage and each group of nested stages.
+function fillStageFilter(run) {
+  const names = run.tube.flatMap((stage) => [stage.name, ...stage.groups.map((group) => group.name)]);
+  $('find-stage').replaceChildren(make('option', { value: '' }, 'all stages'), ...names.map((name) => make('option', { value: name }, name)));
+}
+
 function draw(run) {
-  $('paper').replaceChildren(...run.lines.map(line));
-  $('paper-window').scrollTop = $('paper-window').scrollHeight;
+  state.lines = run.lines;
+  setFailures(run.failures);
+  fillStageFilter(run);
+  clearFinder();
   drawStatus(run);
 }
+
+for (const id of ['find-text', 'find-failures', 'find-stage']) $(id).addEventListener('input', renderPaper);
+$('jump-start').addEventListener('click', () => { $('paper-window').scrollTop = 0; });
+$('jump-end').addEventListener('click', () => { $('paper-window').scrollTop = $('paper-window').scrollHeight; });
+$('jump-failure').addEventListener('click', () => jumpTo(state.failures[0]));
 
 // A fetch that says so when the server cannot be reached, and recovers by itself on the next one that works.
 async function getJson(url) {

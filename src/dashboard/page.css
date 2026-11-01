@@ -344,3 +344,13 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .rack-group { align-self: center; font-family: Cinzel, serif; font-size: 12px; letter-spacing: 2px; color: var(--brass); text-transform: uppercase; margin-left: 8px; }
 .badge { margin-left: 8px; padding: 1px 6px; border-radius: 4px; font-family: VT323, monospace; font-size: 15px; letter-spacing: 1px; background: #24180f; color: #ffe9b8; }
 .sketch-tab.failed .badge { background: #3a0f0a; color: #ffd9d2; }
+
+/* Sprint 22 UND-88: find a line in the log. */
+.finder { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 8px; font-family: VT323, monospace; font-size: 17px; }
+.find-field { min-width: 0; flex: 1 1 110px; padding: 4px 6px; border: 1px solid var(--brass-deep); border-radius: 4px; background: #fffaf0; color: #24170a; font: inherit; }
+.find-check { display: flex; gap: 4px; align-items: center; color: var(--cream); }
+.find-button { padding: 4px 10px; border: 2px solid var(--brass-deep); border-radius: 4px; background: #24180f; color: #ffe9b8; font-family: Cinzel, serif; font-size: 11px; letter-spacing: 1px; cursor: pointer; }
+.find-button:disabled { opacity: .45; cursor: not-allowed; }
+.find-field:focus-visible, .find-button:focus-visible, .find-check input:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+.no-match { padding: 12px; font-family: VT323, monospace; font-size: 20px; color: #24170a; }
+.paper .line.flash { background: #ffe08a; }

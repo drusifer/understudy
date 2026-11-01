@@ -35,10 +35,10 @@ Complexity levels follow the definitions in `agents/templates/_template_task.md`
 
 ### Phase 3: Find a line in the log (UND-88, 3 pts)
 *Phase goal: filter and jump in the printer.*
-- [ ] **Task 3.1:** Text, failures-only and stage filters; jumps to start, first failure, end; empty-result message; live lines obey the filter; tests for the server's failure index first. **L2**. (*Owner: Neo | Trace: UND-88 AC1-4 | Verification: `bobp make test`, `bobp make lint`*)
-- [ ] **Task 3.2:** UAT on 1,876 lines and on a failed run. **L1**. (*Owner: Trin | Trace: UND-88 AC1-4 | Verification: UAT verdict in `agents/CHAT.md`*)
-- [ ] **Task 3.3:** Security quick pass: filters are client-side text, written with `textContent`. **L1**. (*Owner: Switch | Trace: N/A — quick pass | Verification: `security gate (phase 3): ...` in `agents/CHAT.md`*)
-- [ ] **Task 3.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT22 section 3 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 3.1:** Text, failures-only and stage filters; jumps to start, first failure, end; empty-result message; live lines obey the filter; tests for the server's failure index first. **L2**. (*Owner: Neo | Trace: UND-88 AC1-4 | Verification: `bobp make test`, `bobp make lint`*)
+- [x] **Task 3.2:** UAT on 1,876 lines and on a failed run. **L1**. (*Owner: Trin | Trace: UND-88 AC1-4 | Verification: UAT verdict in `agents/CHAT.md`*)
+- [x] **Task 3.3:** Security quick pass: filters are client-side text, written with `textContent`. **L1**. (*Owner: Switch | Trace: N/A — quick pass | Verification: `security gate (phase 3): ...` in `agents/CHAT.md`*)
+- [x] **Task 3.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT22 section 3 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 4: See Jev's judgements (UND-78, 5 pts)
 *Phase goal: a list of Jev reads from the capture files, flagged by confidence, with two real gauges.*

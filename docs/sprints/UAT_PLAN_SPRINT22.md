@@ -98,9 +98,36 @@
 - **Verdict:** PASS
 - **Evidence / issue:** test name above
 
+### UAT-88-1: Find a line among 1,876
+- **Linked criterion:** UND-88 AC1, AC3, AC4
+- **Preconditions and data:** the real household run (1,876 lines)
+- **Steps:** type `name_merchant[4]`; clear it and choose the stage `readings.judge_payee`; type text that matches nothing; press CLEAR FILTERS
+- **Expected observable outcome:** 6 lines for the text; 50 lines for the stage (25 starts and 25 completions); "no lines match" with a CLEAR FILTERS button; after clearing all 1,876 lines are back and the field is empty, with no reload
+- **Actual outcome:** 6, 50, the message, 1,876 and an empty field; the stage menu offered 9 stages and groups
+- **Verdict:** PASS
+- **Evidence / issue:** session output 2026-11-01
+
+### UAT-88-2: Failures only, and the jumps (failed run)
+- **Linked criterion:** UND-88 AC1, AC2
+- **Preconditions and data:** a 63-line failed run (failure on the last line); the household run (no failure)
+- **Steps:** press FIRST FAILURE on each; tick failures only; type text that hides the failure and press the failure banner; press START and END
+- **Expected observable outcome:** FIRST FAILURE disabled with a reason on the clean run, enabled on the failed one; failures only shows exactly the failed line; the banner clears a hiding filter and shows the line; FIRST FAILURE leaves the failed line fully inside the window; START scrolls to 0 and END to the bottom
+- **Actual outcome:** as expected
+- **Verdict:** PASS
+- **Evidence / issue:** session output 2026-11-01
+
+### UAT-88-3: Lines that arrive while a filter is on are filtered too
+- **Linked criterion:** UND-88 AC1
+- **Preconditions and data:** a growing run; filter text `wanted`
+- **Steps:** append an unwanted stage, a wanted stage and a wanted failure; clear the filter
+- **Expected observable outcome:** only the two wanted lines appear; FIRST FAILURE becomes enabled by the live failure; clearing shows all five lines
+- **Actual outcome:** 2 lines, button enabled, then 5
+- **Verdict:** PASS
+- **Evidence / issue:** session output 2026-11-01
+
 ## Results and Handoff
 
-- **Passed / failed / blocked:** Phase 1: 6 passed (3 after a fix found in the run); Phase 2: 4 passed (1 after a contrast fix); 0 failed, 0 blocked. Phases 3 to 7 not yet run.
+- **Passed / failed / blocked:** Phase 1: 6 passed (3 after a fix found in the run); Phase 2: 4 passed (1 after a contrast fix); Phase 3: 3 passed; 0 failed, 0 blocked. Phases 4 to 7 not yet run.
 - **Open issues and impact:** none for Phase 1. The `with` values in `run.json` are file paths as typed (SEC-004 covers the sketch path, now stored relative).
 - **Overall verdict:** Phase 1 PASS
 - **Handoff evidence:** `agents/CHAT.md` message "UAT phase 1 passed"

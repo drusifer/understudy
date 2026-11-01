@@ -72,7 +72,7 @@ def printed(event: dict) -> dict:
         "stage_failed": lambda: f"  FAILED {event.get('stage', '')}: {event.get('reason', '')}",
         "run_finished": lambda: f"=== {str(event.get('outcome', '')).upper()} ===",
     }.get(kind, lambda: f"  {kind}")()
-    return {"text": f"{clock}  {detail}" if clock else detail, "tone": TONES.get(kind, "")}
+    return {"text": f"{clock}  {detail}" if clock else detail, "tone": TONES.get(kind, ""), "stage": event.get("stage", "")}
 
 
 def _seconds(events: list[dict]) -> float:
@@ -217,6 +217,7 @@ def describe(directory: Path, now: datetime | None = None) -> dict:
         "tube": tube,
         "gauges": gauges_of(summary, events, tube),
         "lines": [printed(each) for each in events],
+        "failures": [index for index, each in enumerate(events) if each.get("event") == "stage_failed"],
         "count": len(events),
     }
 

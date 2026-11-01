@@ -53,6 +53,14 @@
 <main id="console" class="stage watch">
   <section id="printer" class="printer" aria-label="Printer">
     <div class="printer-head"><span>RUN LOG · PRINTER</span><span id="printer-state">IDLE</span></div>
+    <div class="finder" role="search" aria-label="Find a line in the log">
+      <input id="find-text" type="search" class="find-field" placeholder="find text" aria-label="Show only lines containing this text" autocomplete="off">
+      <select id="find-stage" class="find-field" aria-label="Show only one stage"><option value="">all stages</option></select>
+      <label class="find-check"><input id="find-failures" type="checkbox"> failures only</label>
+      <button type="button" id="jump-start" class="find-button">START</button>
+      <button type="button" id="jump-failure" class="find-button" disabled title="no failure in this run">FIRST FAILURE</button>
+      <button type="button" id="jump-end" class="find-button">END</button>
+    </div>
     <div class="roller" aria-hidden="true"></div>
     <div class="glass">
       <div class="paper-window" id="paper-window" tabindex="0" aria-label="Run log - scroll up to rewind, down to wind on">
