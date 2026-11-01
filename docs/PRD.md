@@ -68,7 +68,7 @@ Status: **Delivered** (sprint), **Planned** (sprint), **Open** (not scheduled).
 | R1 | A sketch is one YAML file with sources, sinks, outcomes, data and a machine the owner writes. | Must | Delivered S19 | SKETCHES.md "The file" |
 | R2 | A sketch is a Jinja2 template; values are given with `--with name=value`, and a sketch may call another with `with:`. | Must | Delivered S20 | OWNER_DECISIONS_SPRINT20 |
 | R3 | `understudy check` refuses a wrong sketch before any run, naming the file, the path, the bad value and the nearest valid one. | Must | Delivered S19 | DOMAIN invariant 1 |
-| R4 | A JSON Schema lets editors complete and check a sketch. | Should | Delivered S10 (kept) | `schema/decision_sketch.schema.json` |
+| R4 | A JSON Schema lets editors complete and check a sketch. | Should | Delivered S19 | `schema/decision_sketch.schema.json` (the loader validates against it; the earlier schema for the old format was deleted) |
 | R5 | A sketch may be composed of subsketches, repeated per row (`each`), with results folded (`reduce`). | Must | Delivered S20 | ADR-0047 |
 
 ### 6.2 Deciding
@@ -93,7 +93,7 @@ Status: **Delivered** (sprint), **Planned** (sprint), **Open** (not scheduled).
 | ID | Requirement | Priority | Status | Detail |
 |---|---|---|---|---|
 | R13 | `understudy run` writes sinks only after every stage completed, plus `run.json`, `summary.json` (counts only) and `events.jsonl`; a failed run publishes no sink. | Must | Delivered S19 | DOMAIN `Run` invariants |
-| R14 | Every failure is one `understudy: <message>` line with exit code 1 (failed after start) or 2 (refused before start), never a traceback. | Must | Delivered S19; gaps in the dashboard command | Planned S22 UND-80 |
+| R14 | Every failure is one `understudy: <message>` line with exit code 1 (failed after start) or 2 (refused before start), never a traceback. | Must | Delivered S19 for `run` and `check`; Planned S22 for `dashboard` (a busy port prints a traceback today) | UND-80 AC1 |
 | R15 | The evening (showings, ratings, seats) runs as a sketch. | Must | Delivered S20 | `examples/evening/` |
 | R16 | The household (Monarch and Amex CSVs into one record per transaction with transfers, refunds and categories) runs as a sketch. | Must | Delivered S20 | `examples/household/` |
 | R17 | The owner can tune the household: fewer records in review and a trustworthy net-spending figure. | Should | Open | BACKLOG; G4, G5 |
@@ -123,7 +123,7 @@ Status: **Delivered** (sprint), **Planned** (sprint), **Open** (not scheduled).
 | Q4 | Usability | Every error says what is wrong and how to fix it; every control is reachable by keyboard; text meets a 4.5:1 contrast ratio. | Partly delivered; Planned S22 | UND-80 |
 | Q5 | Security | The console, reachable from the whole network, cannot start a process without the access secret. | Planned S22 | UND-79 AC 8, 11; Switch gate |
 | Q6 | Maintainability | One toolchain, one gate (`bobp make check`) that includes tests, lint and the secret scan. | Delivered S21 | SDLC |
-| Q7 | Performance | A 4,700-pair synthetic run completes within the test suite's time budget; a real 5,074-record run with 932 Jev reads completes in minutes. | Delivered S20 | tests; real run 2026-10-31 |
+| Q7 | Performance | A real household run of about 5,000 records with about 900 Jev reads completes in under 5 minutes, and the whole test suite in under 30 seconds. | Delivered S20 | real run 2026-10-31: 5,074 records, 932 Jev reads, 126 s; suite 233 tests in 13 s |
 
 ## 7. Release Path
 
