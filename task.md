@@ -56,10 +56,10 @@ Complexity levels follow the definitions in `agents/templates/_template_task.md`
 
 ### Phase 6: Start, replay and stop: the page (UND-79 part 2, 3 pts)
 *Phase goal: the sketch list, the form, Play, Replay, Stop and the secret box.*
-- [ ] **Task 6.1:** Sketch list with greyed-out failures, `--with` fields, Play, Replay, Stop, "enter access secret" box kept in `sessionStorage`, controls off with a reason without the secret, can't-start message, controls unlock when a run ends; tests for any new server answers first. **L2**. (*Owner: Neo | Trace: UND-79 AC1-2, 4-7, 10 | Verification: `bobp make test`, `bobp make lint`*)
-- [ ] **Task 6.2:** UAT by hand in a real browser: start the coffee sketch live-free (replay), start the household with the real files (counts only), stop a run, wrong secret, phone width. **L3**. (*Owner: Trin | Trace: UND-79 AC1-10 | Verification: UAT verdict in `agents/CHAT.md` and the UAT plan*)
-- [ ] **Task 6.3:** Security review: where the page keeps and sends the secret; no secret in URL or log. **L2**. (*Owner: Switch | Trace: UND-79 AC8; SEC-005 | Verification: `security gate (phase 6): ...` in `agents/CHAT.md`*)
-- [ ] **Task 6.4:** Code review. **L1**. (*Owner: Morpheus | Trace: UND-79 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 6.1:** Sketch list with greyed-out failures, `--with` fields, Play, Replay, Stop, "enter access secret" box kept in `sessionStorage`, controls off with a reason without the secret, can't-start message, controls unlock when a run ends; tests for any new server answers first. **L2**. (*Owner: Neo | Trace: UND-79 AC1-2, 4-7, 10 | Verification: `bobp make test`, `bobp make lint`*)
+- [x] **Task 6.2:** UAT by hand in a real browser: start the coffee sketch live-free (replay), start the household with the real files (counts only), stop a run, wrong secret, phone width. **L3**. (*Owner: Trin | Trace: UND-79 AC1-10 | Verification: UAT verdict in `agents/CHAT.md` and the UAT plan*)
+- [x] **Task 6.3:** Security review: where the page keeps and sends the secret; no secret in URL or log. **L2**. (*Owner: Switch | Trace: UND-79 AC8; SEC-005 | Verification: `security gate (phase 6): ...` in `agents/CHAT.md`*)
+- [x] **Task 6.4:** Code review. **L1**. (*Owner: Morpheus | Trace: UND-79 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 7: The promises (UND-80, 3 pts)
 *Phase goal: one-line command failures, `understudy runs`, keyboard and contrast, a written browser check.*

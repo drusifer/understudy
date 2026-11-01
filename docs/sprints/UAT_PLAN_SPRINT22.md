@@ -179,9 +179,45 @@
 - **Verdict:** PASS
 - **Evidence / issue:** `StartTest`
 
+### UAT-79-4: The start panel in a real browser: locked, wrong secret, right secret
+- **Linked criterion:** UND-79 AC1, AC2, AC8
+- **Preconditions and data:** a console on a scratch runs folder with `--sketches` holding two copies of the coffee sketch and an unreadable `broken.yaml`; the access secret read from its private file
+- **Steps:** open the page; open START A RUN; read the sketch list; try PLAY; type a wrong secret; type the right one
+- **Expected observable outcome:** the panel is shown; the list offers both coffee sketches and `broken.yaml - unreadable`; locked, PLAY is disabled with the reason "needs the access secret" and a note that you can watch but not start; a wrong secret says it is not this console's secret and stays locked; the right one unlocks, enables PLAY and clears the box
+- **Actual outcome:** exactly that
+- **Verdict:** PASS
+- **Evidence / issue:** `p6.out` in the session scratch folder
+
+### UAT-79-5: Replay a captured run from the page, watch it finish
+- **Linked criterion:** UND-79 AC5, AC6, AC7
+- **Preconditions and data:** the committed coffee capture copied into the cache under a fixture run id (removed afterwards); no Jev key needed
+- **Steps:** choose the coffee sketch; choose the fixture in "Replay from"; PLAY
+- **Expected observable outcome:** a new run appears in the rack, the header reads DONE, and the panel says how it ended
+- **Actual outcome:** `run ended: done after 5 stages`; header DONE; the rack gained the run
+- **Verdict:** PASS
+- **Evidence / issue:** `p6.out`
+
+### UAT-79-6: Stop a real run; a second Play; Stop for a run this console did not start (rejection paths)
+- **Linked criterion:** UND-79 AC5, AC7, AC10
+- **Preconditions and data:** a real run paused with SIGSTOP right after it made its run folder (so it stays running and ignores SIGTERM); a run folder from another source whose status says running
+- **Steps:** PLAY; PLAY again; STOP; choose the foreign run; STOP
+- **Expected observable outcome:** started with its run id, header RUNNING, STOP enabled; the second PLAY says "already running as <run>" with an OPEN THAT RUN button; STOP ends the run (after the 3 s grace, then SIGKILL), the header reads STOPPED, STOP disables and PLAY re-enables; STOP on the foreign run says it was not started by this console
+- **Actual outcome:** as expected after one fix: a run killed before its first stage finished has no `run.json`, so it kept reading RUNNING; the launcher now writes the stopped state itself (test added)
+- **Verdict:** PASS after fix
+- **Evidence / issue:** `p6.out`; `test_a_run_stopped_before_its_first_stage_finished_has_no_run_json_yet_and_still_reads_stopped`
+
+### UAT-79-7: The secret stays out of addresses, page text and long-lived storage; a phone fits
+- **Linked criterion:** UND-79 AC8; SEC-005
+- **Preconditions and data:** the same console; every request URL recorded
+- **Steps:** unlock, run the flows above, then search the URLs, the page text, `localStorage` and `sessionStorage` for the secret; open a second tab and a 390 px window
+- **Expected observable outcome:** the secret appears in no URL, no page text and not in `localStorage`; it is in `sessionStorage` only; every POST carried it in the header; a new tab is locked again; no horizontal scroll on the phone
+- **Actual outcome:** URLs false, page text false, localStorage false, sessionStorage true; 5 of 5 POSTs carried the header; the new tab was locked; no horizontal scroll
+- **Verdict:** PASS
+- **Evidence / issue:** `p6.out`, `p6-phone.png`
+
 ## Results and Handoff
 
-- **Passed / failed / blocked:** Phase 1: 6 passed (3 after a fix found in the run); Phase 2: 4 passed (1 after a contrast fix); Phase 3: 3 passed; Phase 4: 3 passed (1 after a fix; 1 privacy defect found and fixed, SEC-007); Phase 5: 3 passed after fixes (SEC-008 and SEC-009 found by the attack and fixed); 0 failed, 0 blocked. Phases 6 and 7 not yet run.
+- **Passed / failed / blocked:** Phase 1: 6 passed (3 after a fix found in the run); Phase 2: 4 passed (1 after a contrast fix); Phase 3: 3 passed; Phase 4: 3 passed (1 after a fix; 1 privacy defect found and fixed, SEC-007); Phase 5: 3 passed after fixes (SEC-008 and SEC-009 found by the attack and fixed); Phase 6: 4 passed (1 after a fix); 0 failed, 0 blocked. Phase 7 not yet run.
 - **Open issues and impact:** none for Phase 1. The `with` values in `run.json` are file paths as typed (SEC-004 covers the sketch path, now stored relative).
 - **Overall verdict:** Phase 1 PASS
 - **Handoff evidence:** `agents/CHAT.md` message "UAT phase 1 passed"

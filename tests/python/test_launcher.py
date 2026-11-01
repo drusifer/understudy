@@ -15,6 +15,7 @@ from pathlib import Path
 
 from src.dashboard.runs import Launcher, Refused, _Child
 from src.dashboard.server import SECRET_FILE, announce, serve
+from src.dashboard.view import describe
 from src.paths import ROOT
 
 COFFEE = ROOT / "tests" / "fixtures" / "coffee"
@@ -291,6 +292,20 @@ class RealStopTest(LauncherCase):
         self.assertEqual(json.loads((run / "run.json").read_text())["status"], "stopped")
         launcher.start("plain.yaml", {"file": "data/in.csv"})  # the sketch is free to run again
         launcher.stop(run.name)
+
+    def test_a_run_stopped_before_its_first_stage_finished_has_no_run_json_yet_and_still_reads_stopped(self):
+        self.write("plain.yaml", PLAIN)
+        run = self.runs / "run-20261101T100000-cccccccc"
+        run.mkdir()  # the run made its folder and its first event, and nothing else
+        (run / "events.jsonl").write_text(json.dumps({"event": "run_started", "at": "2026-11-01T10:00:00+00:00"}) + "\n")
+
+        def sleeper(argv, **options):
+            return _Child([sys.executable, "-c", "import time; time.sleep(60)"], **options)
+
+        launcher = self.launcher(spawn=sleeper, check=lambda argv: [], find_run=lambda sketch, before: run.name)
+        launcher.start("plain.yaml", {"file": "data/in.csv"})
+        launcher.stop(run.name)
+        self.assertEqual(describe(run)["state"], "stopped")
 
 
 class HttpTest(LauncherCase):

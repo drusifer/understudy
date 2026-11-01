@@ -238,9 +238,9 @@ class Launcher:
 
     def _mark_stopped(self, run_id: str) -> None:
         manifest = self.runs / run_id / "run.json"
-        data = read_json(manifest)
-        if data.get("status") == "running":
-            data["status"] = "stopped"
+        data = read_json(manifest)  # empty when the run was killed before its first stage finished: it never wrote one
+        if data.get("status", "running") == "running":
+            data = {"stages": {}, **data, "status": "stopped"}
             temporary = manifest.with_suffix(".tmp")
             temporary.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
             temporary.replace(manifest)
