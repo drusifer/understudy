@@ -1,7 +1,7 @@
 # SEC-005: The access secret travels over plain HTTP on the network (Sprint 22 design, `ARCH_SPRINT22.md` section 6)
 
 - **Severity:** Medium — anyone who can read traffic on the same network (shared Wi-Fi, a compromised device) can copy the secret and start allowed sketches; the damage is bounded to Jev cost, CPU and the run folders, because the sketches and their output location are fixed.
-- **Status:** Open (design finding; no code exists yet)
+- **Status:** Accepted risk (design finding; no code exists yet)
 - **Verdict:** No blocking findings
 - **Date / author:** 2026-11-01 / Switch
 - **Affected:** the proposed `X-Understudy-Secret` header on `POST /api/start` and `/api/stop`; the console serves HTTP only
@@ -11,8 +11,8 @@
 
 | Who | Does what | By / trigger |
 |---|---|---|
-| User | Choose: (a) accept the risk on the home network, with an expiry (at most 90 days); (b) turn on TLS with a certificate the owner supplies (`--tls-cert`, `--tls-key`, standard-library `ssl`); or (c) allow Play only from the machine itself (loopback) | Before UND-79 is built |
-| Morpheus | Record the choice in ARCH_SPRINT22 and ADR-0049 | After the owner chooses |
+| User | Renew or end the acceptance (options were: accept, TLS with `--tls-cert` and `--tls-key`, or Play from this machine only) | By 2027-01-30 or at the re-check trigger below |
+| Morpheus | Record the choice in ARCH_SPRINT22 and ADR-0049 (done 2026-11-01) | Done |
 
 ## Evidence
 
@@ -32,4 +32,4 @@ Reachable by an attacker who is on the network path. They need the secret, which
 
 ## Risk Acceptance
 
-Not accepted.
+Accepted by the owner on 2026-11-01, option (a), **expires 2027-01-30** (90 days): reason, the console is used on a trusted home network from the owner's own devices; scope, the start, stop and replay secret over plain HTTP; re-check trigger, the expiry, or the machine or the owner's devices joining any other network, or any request to expose the console beyond the home network, whichever is first.

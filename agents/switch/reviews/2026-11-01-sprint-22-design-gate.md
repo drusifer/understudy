@@ -47,7 +47,7 @@
 
 | ID | Title | Severity | Status | Owner |
 |---|---|---|---|---|
-| [SEC-005](../findings/2026-11-01-secret-over-plain-http.md) | The secret travels over plain HTTP | Medium | Open | User |
+| [SEC-005](../findings/2026-11-01-secret-over-plain-http.md) | The secret travels over plain HTTP | Medium | Accepted risk (expires 2027-01-30) | User |
 | [SEC-006](../findings/2026-11-01-with-values-reach-any-file.md) | `--with` file values could point anywhere | Low | Open | Morpheus |
 
 ## Root Causes and Recommendations
@@ -57,5 +57,5 @@ Both findings come from adding control to a server that was designed to read onl
 ## Sign-off
 
 - **Re-review needed:** Yes, after UND-79 is built
-- **Risk acceptance:** None recorded yet; SEC-002 (reads) stays accepted until 2026-12-01
-- **Verification:** Pending: owner's decision on SEC-005; the UND-79 diff review
+- **Risk acceptance:** SEC-005 accepted by the owner on 2026-11-01, **expires 2027-01-30**; SEC-002 (reads) stays accepted until 2026-12-01
+- **Verification:** Owner's decision on SEC-005 recorded; pending: the UND-79 diff review
