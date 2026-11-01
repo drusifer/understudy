@@ -66,6 +66,7 @@ Always go through `bobp make <target>` - it is the front door for people and age
 | Read | When you want to |
 |---|---|
 | [docs/PRD.md](docs/PRD.md) | what understudy is for, who it serves, what it must do and what is planned |
+| [docs/ARCH.md](docs/ARCH.md) · [docs/TEST_STRATEGY.md](docs/TEST_STRATEGY.md) | how the system is put together, and how it is tested |
 | [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | install, run the coffee example, read the output, replay offline, write a sketch, fix errors |
 | [docs/SKETCHES.md](docs/SKETCHES.md) | the reference: the file, the machine and its stages, deciding and conditions, Jev, subsketches, capture and replay; [schema/decision_sketch.schema.json](schema/decision_sketch.schema.json) for editors |
 | [docs/DOMAIN.md](docs/DOMAIN.md) | the vocabulary and the rules that always hold |

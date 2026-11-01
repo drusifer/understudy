@@ -24,3 +24,7 @@
 3. Verify the failing regression turns green through the project Makefile, then run the configured lints. Avoid repeating unchanged JS/model suites unless a relevant production change or required gate justifies it.
 4. Resume Trin UAT at UAT-UND-54-04. Execute one actual `bobp make run` missing-input refusal smoke (no Jev call) to close the Make front-door gap. Record results and remaining live-owner limitations. Address missing judge-trace tooling without claiming a trace audit occurred.
 5. On QA pass, checkpoint and hand off to Smith usability review and Morpheus phase review. Mouse owns task.md updates. No publishing without owner instruction.
+
+---
+## Update 2026-11-01
+Wrote docs/TEST_STRATEGY.md (233 tests, 13 s, gates via bobp make check, known gaps). Next: Sprint 21 UAT plan after the fact; Sprint 22 UAT plan up front; probe SEC-001 fix.

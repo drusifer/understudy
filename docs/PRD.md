@@ -145,4 +145,4 @@ Status: **Delivered** (sprint), **Planned** (sprint), **Open** (not scheduled).
 | 3 | The console is reachable by the whole network with no login while starting runs is added. | Switch (design gate), owner | Access secret for start, stop and replay; watching stays open |
 | 4 | `page.js` has no automated test. | Trin | A written browser check in the UAT plan (UND-80) |
 | 5 | Jev is a paid, networked service; a missing key blocks every live run. | Owner | Replay and check work offline; the capture is committed for the coffee example |
-| 6 | There is no system-level architecture document, test strategy or security baseline; each sprint has its own. | Morpheus, Trin, Switch | Written next (see the foundation gap list) |
+| 6 | Foundation documents: system architecture ([ARCH.md](ARCH.md)), [TEST_STRATEGY.md](TEST_STRATEGY.md) and a security baseline review were written on 2026-11-01. Still missing: UAT plans for sprints 7-15, 20 and 21; an ADR for "Python for all". | Trin, Oracle | Trin writes Sprint 21's UAT plan; Oracle records the ADR |

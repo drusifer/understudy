@@ -29,3 +29,7 @@ Status: Completed. Sprint 20 is closed and pushed. Working tree: only `agents/CH
 - **Sprints 23-24** (`docs/sprints/OLD_VERSION_PARITY.md`): UND-81 richer event stream, 82 statechart diagram, 83 pause/step/stop/`run --watch`, 84 replay a log, 85 decision detail; then 86 YAML editor, 87 typed inputs (owner question OPEN: wanted or plain `--with`?).
 - Gates pending: Smith Gate 1 on the rewritten Sprint 22 stories (earlier approval void); Morpheus arch; Switch design gate before UND-79; Mouse plan.
 - Sprint 21 docs still off-template: ARCH_SPRINT21, task.md, no UAT plan or security review doc (owner not yet asked to redo).
+
+---
+## Update 2026-11-01
+PRD written and checked (docs/PRD.md, template _template_PRD.md). Open: typed inputs, review-share target, net-spending figure.
