@@ -1,5 +1,7 @@
 """UND-79: the console starts, replays and stops runs, behind one secret, and only what it should."""
 
+import contextlib
+import io
 import json
 import shutil
 import socket
@@ -333,6 +335,15 @@ class HttpTest(LauncherCase):
         except urllib.error.HTTPError as error:
             text = error.read().decode()
             return error.code, json.loads(text) if text.startswith(("{", "[")) else text
+
+    def test_a_client_that_hangs_up_before_its_answer_leaves_no_traceback_behind(self):
+        noise = io.StringIO()
+        with contextlib.redirect_stderr(noise):
+            sock = socket.create_connection(("127.0.0.1", self.server.server_address[1]), timeout=5)
+            sock.sendall(b"POST /api/start HTTP/1.1\r\nHost: x\r\nContent-Length: 2\r\n\r\n{}")  # no secret: answered after a pause
+            sock.close()
+            time.sleep(1.6)
+        self.assertNotIn("Traceback", noise.getvalue())
 
     def test_the_sketch_list_is_open_to_read(self):
         status, body = self.call("/api/sketches")

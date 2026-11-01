@@ -144,6 +144,11 @@ class ConsoleHandler(BaseHTTPRequestHandler):
     def log_message(self, *_arguments) -> None:
         return
 
+    def handle(self) -> None:
+        """Serve the connection; a client that hangs up before its answer is not an error worth a traceback."""
+        with contextlib.suppress(BrokenPipeError, ConnectionResetError):
+            super().handle()
+
     def _send(self, status: int, body: bytes, content_type: str) -> None:
         self.send_response(status)
         self.send_header("Content-Type", with_charset(content_type))
