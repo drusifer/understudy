@@ -14,7 +14,7 @@
 | Neo | Fix SEC-001 (cap event streams, idle limit) and SEC-003 (security headers) | Before Sprint 22 UND-77 merges / before UND-79 starts |
 | Switch | Threat-model the start-run access secret (`*sec threat sprint 22`) | Sprint 22 design gate, before any UND-79 code |
 | User | Renew or end the SEC-002 acceptance | By 2026-12-01 or when UND-79 ships |
-| Tank | Add a `security-scan` make target (dependency audit) and record it in `docs/SDLC.md` | Next sprint; until then dependencies are unaudited |
+| Tank | Confirm the new `security-scan` target and its SDLC rows (done 2026-11-01 in this review's follow-up) | At the Sprint 22 SDLC check |
 
 ## Scope and Threat Model
 
@@ -26,8 +26,8 @@
 ## Method and Coverage
 
 - **Reviewed by:** manual read of `server.py` (routing, static allow-list, run-id check, event stream), `page.js` (every DOM write), the dashboard branch of `cli.py`, `run.py` event writing, and the existing tests; a hands-on probe of 200 concurrent event streams; `curl` against the running console.
-- **Tool results:** `bobp make secrets` (gitleaks over history and tracked changes): no leaks found, 2026-11-01 11:13. Dependency audit: **not run**, because no `security-scan` target exists and no audit tool is installed (see Tank action). `ruff` (part of `bobp make check`) passes.
-- **Not covered:** dependency vulnerabilities in `uv.lock`; the Jev capture file contents (they hold the owner's private values and live under git-ignored `.understudy/`); the `understudy run` stages other than their output paths; browser behaviour beyond reading `page.js`; the Sprint 22 start-run design (not designed yet).
+- **Tool results:** `bobp make secrets` (gitleaks over history and tracked changes): no leaks found, 2026-11-01 11:13. Dependency audit: first **not run** (no target); then `bobp make security-scan-python` added the same day (pip-audit 2.10.1 over the 157-line export of `uv.lock`): `No known vulnerabilities found`. `ruff` (part of `bobp make check`) passes.
+- **Not covered:** abandoned or typosquatted packages (the audit lists known advisories only); the Jev capture file contents (they hold the owner's private values and live under git-ignored `.understudy/`); the `understudy run` stages other than their output paths; browser behaviour beyond reading `page.js`; the Sprint 22 start-run design (not designed yet).
 
 ## Area Checklist
 
@@ -39,7 +39,7 @@
 | Secrets and cryptography | No secrets in code, logs, or history | Pass: gitleaks clean; the API key is read from the environment or `.env`, never printed; the console never reads `.env` |
 | Data protection and privacy | Sensitive data minimized and not over-logged | Pass: `summary.json` holds counts only and `events.jsonl` holds stage names and reasons; sink files are never served; SEC-004 notes the sketch path |
 | Error handling and logging | Errors leak no internals; logs free of secrets | Pass: the server logs nothing (`log_message` is silent) and a bad path returns a one-word 404; a failed stage's reason (an exception message) appears in the console, which could include a file name |
-| Dependencies and supply chain | Pinned versions, lockfile audited, vulnerable packages triaged | Incomplete: versions are pinned and locked; not audited (no tool or target) |
+| Dependencies and supply chain | Pinned versions, lockfile audited, vulnerable packages triaged | Pass: versions pinned and locked; `bobp make security-scan-python` found no known vulnerabilities (2026-11-01); it checks advisories only, not whether a package is unmaintained |
 | Configuration, build, and CI | Safe defaults; minimal permissions; no debug in release | SEC-003 (no browser security headers); the listening address is `0.0.0.0` by the owner's choice (SEC-002); there is no CI |
 | Files, processes, and network | Safe paths; subprocess use; outbound requests; resource limits | SEC-001 (no limit on concurrent streams); output refused under `data/` and any tracked folder (UND-54 AC4, tested); the console starts no subprocess yet; the only outbound call is to Jev, by the run, never by the console |
 | Business logic and abuse cases | Workflows cannot be reordered, replayed, or abused for gain | Pass: the console cannot change or create anything today; replay of a capture cannot go live (tested) |
@@ -61,4 +61,4 @@ The console was built read-only for one owner on a trusted machine and then open
 
 - **Re-review needed:** Yes, at the Sprint 22 design gate and again after UND-79 is built
 - **Risk acceptance:** SEC-002 accepted by the owner on 2026-11-01, expires 2026-12-01; no other acceptance
-- **Verification:** SEC-001 and SEC-003 fixed and verified 2026-11-01 (tests added, `bobp make check` green with 237 tests, 200-stream probe held at 34 threads, headers seen with `curl`). Still pending: the dependency audit once a target exists; SEC-004 with Sprint 23.
+- **Verification:** SEC-001 and SEC-003 fixed and verified 2026-11-01 (tests added, `bobp make check` green with 237 tests, 200-stream probe held at 34 threads, headers seen with `curl`). The dependency audit now exists (`bobp make security-scan`, clean 2026-11-01). Still pending: SEC-004 with Sprint 23.

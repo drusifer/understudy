@@ -2,7 +2,7 @@
 #
 # Adding a task: add a one-line target here with a `## description`; `bobp make help` lists them.
 
-.PHONY: help install lock install-py lock-py test test-py lint check secrets hooks push run dashboard clean distclean
+.PHONY: help install lock install-py lock-py test test-py lint check secrets security-scan security-scan-python hooks push run dashboard clean distclean
 
 # Live targets (run) read API keys from .env (gitignored; `export NAME=value` lines);
 # test never does, so it can never reach a paid or networked service.
@@ -42,6 +42,14 @@ secrets: ## gitleaks: every commit + uncommitted changes to tracked files
 	@command -v gitleaks >/dev/null || { echo "gitleaks is not installed - see https://github.com/gitleaks/gitleaks#installing"; exit 1; }
 	gitleaks git --no-banner --redact .
 	gitleaks git --no-banner --redact --pre-commit .
+
+security-scan-python: ## pip-audit over the locked Python dependencies (network); any advisory fails
+	@test -x .venv/bin/pip-audit || { echo "No pip-audit - run 'bobp make install' first"; exit 1; }
+	@mkdir -p build
+	uv export --locked --no-emit-project --no-hashes -o build/audit-requirements.txt
+	.venv/bin/pip-audit -r build/audit-requirements.txt --no-deps --disable-pip
+
+security-scan: secrets security-scan-python ## Secrets and dependency scans (network); clean before a release
 
 hooks: ## Install the gitleaks pre-commit hook (.githooks/)
 	git config core.hooksPath .githooks

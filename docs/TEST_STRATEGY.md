@@ -44,7 +44,7 @@ Authoring and review roles are defined in `agents/trin/SKILL.md`, `agents/neo/SK
 | Lint | `bobp make lint` (ruff over `src` and `tests/python`) | `All checks passed!` | every handoff to Trin; sprint close |
 | Secrets | `bobp make secrets` (gitleaks over history and tracked changes) | `no leaks found` | every commit and push; sprint close |
 | Full gate | `bobp make check` (tests, lint, secrets) | all three pass | before `bobp make push`; sprint close |
-| Dependency audit | none yet | n/a | Tank to add a `security-scan` target (security review, 2026-11-01) |
+| Dependency audit | `bobp make security-scan` (gitleaks and pip-audit over `uv.lock`) | `No known vulnerabilities found` and no leaks; needs the network, so it is not part of `check` | a release; any dependency change |
 
 ## 5. Test Environment & Fixture Management
 
@@ -65,6 +65,6 @@ Defects follow the fix loop in `agents/skills/fix/SKILL.md` (reproduce with a te
 |---|---|---|
 | `page.js` has no automated check | a DOM regression (live follow, tab switch, theme memory) is found only by hand | Sprint 22 UND-80 (a written check; tool approved by Tank) |
 | No UAT plans for sprints 7 to 15, 20 and 21 | acceptance evidence for the console and the household is in chat and retros only | Trin writes Sprint 21's after the fact; Sprint 22 gets one up front |
-| No dependency audit | a vulnerable pinned package would not be seen | Tank, `security-scan` target |
+| Dependency audit is manual and needs the network | a vulnerable pinned package is seen only when `security-scan` is run | run it at release and on every dependency change (SDLC section 5) |
 | Live Jev behavior is verified once per sprint at most | a change in the real service's answers would show only in a live run | owner's go-ahead for a live UAT run at sprint close |
 | The household's category quality has no accepted baseline | "better" cannot be measured (1,706 of 5,074 in review) | owner to set a target (PRD G4) |
