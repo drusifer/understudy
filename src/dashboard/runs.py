@@ -111,7 +111,8 @@ class Launcher:
     def list_sketches(self) -> list[dict]:
         """Each sketch file under the folder that is not only called by another, with what the page needs to show it."""
         scanned = []
-        for path in sorted(self.sketches.rglob("*.yaml")):
+        inside = self.sketches.resolve()
+        for path in sorted(each for each in self.sketches.rglob("*.yaml") if each.resolve().is_relative_to(inside)):
             relative = path.relative_to(self.sketches).as_posix()
             try:
                 document, uses = read_template(path)

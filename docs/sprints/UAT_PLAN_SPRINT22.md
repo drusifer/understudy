@@ -152,9 +152,36 @@
 - **Verdict:** PASS after fix
 - **Evidence / issue:** `test_a_run_whose_captures_were_pruned_says_so`, `test_a_run_that_never_asked_jev_says_so`, `test_a_capture_missing_its_other_half_is_named_and_the_rest_still_lists`
 
+### UAT-79-1: Every refusal on the design's list, from outside (23 requests against a running console)
+- **Linked criterion:** UND-79 AC2, AC3, AC5, AC8, AC9; SEC-005, SEC-006, SEC-008, SEC-009
+- **Preconditions and data:** `understudy dashboard <scratch runs> --sketches <scratch sketches>`; the sketches folder holds a copy of the coffee sketch and a symlink named `link.yaml` pointing at `/etc/hostname`; the committed coffee capture copied into the cache under a fixture run id for the replay, removed afterwards
+- **Steps:** the request list in `uat5.py` (scratch folder): list; session; POST with no secret, a wrong one, a foreign `Origin`, a 20 KB body, a body that is not an object; sketch names `../../../etc/hostname`, `/etc/hostname`, `link.yaml`, `coffee/../../x.yaml`; an unknown `--with` name; a replay id `../../etc`; `Content-Length: -1` and `abc`; DELETE; an unknown POST path; a real replay start; stop of a finished run, of a run it never started, and of `../../x`
+- **Expected observable outcome:** 401 (no or wrong secret), 403 (foreign origin, sketches outside the folder, the symlink), 413, 400, 400, 501, 404; the list offers the coffee sketch only (the symlink is greyed out); the real start answers started, finishes `done` in the watched folder; the secret is not in the output and its file is mode 0600
+- **Actual outcome:** 23 of 23 as expected; two defects found by this attack and fixed before it passed: the secret was printed to captured output (SEC-008) and a negative Content-Length waited (SEC-009); a symlink that leaves the folder was listed (fixed: not listed)
+- **Verdict:** PASS after fixes
+- **Evidence / issue:** `uat5.out` in the session scratch folder; tests `AnnounceTest`, `test_a_negative_or_unreadable_content_length_is_400_not_a_wait_for_more_data`, `test_a_symlink_that_leaves_the_folder_is_not_listed_at_all`
+
+### UAT-79-2: Stop ends a real process and marks its run stopped
+- **Linked criterion:** UND-79 AC5
+- **Preconditions and data:** a real child process that sleeps for a minute, started by the launcher
+- **Steps:** start; stop; start the same sketch again
+- **Expected observable outcome:** the process is gone after Stop; the run's `run.json` says `stopped`; the sketch can be started again
+- **Actual outcome:** as expected
+- **Verdict:** PASS
+- **Evidence / issue:** `RealStopTest`
+
+### UAT-79-3: A second Play and a fifth run are refused (rejection paths)
+- **Linked criterion:** UND-79 AC10
+- **Preconditions and data:** fake processes that stay alive
+- **Steps:** Play the same sketch twice; Play five different sketches
+- **Expected observable outcome:** 409 "already running"; 409 "at most 4 runs at once"; after one ends the sketch may start again
+- **Actual outcome:** as expected
+- **Verdict:** PASS
+- **Evidence / issue:** `StartTest`
+
 ## Results and Handoff
 
-- **Passed / failed / blocked:** Phase 1: 6 passed (3 after a fix found in the run); Phase 2: 4 passed (1 after a contrast fix); Phase 3: 3 passed; Phase 4: 3 passed (1 after a fix; 1 privacy defect found and fixed, SEC-007); 0 failed, 0 blocked. Phases 5 to 7 not yet run.
+- **Passed / failed / blocked:** Phase 1: 6 passed (3 after a fix found in the run); Phase 2: 4 passed (1 after a contrast fix); Phase 3: 3 passed; Phase 4: 3 passed (1 after a fix; 1 privacy defect found and fixed, SEC-007); Phase 5: 3 passed after fixes (SEC-008 and SEC-009 found by the attack and fixed); 0 failed, 0 blocked. Phases 6 and 7 not yet run.
 - **Open issues and impact:** none for Phase 1. The `with` values in `run.json` are file paths as typed (SEC-004 covers the sketch path, now stored relative).
 - **Overall verdict:** Phase 1 PASS
 - **Handoff evidence:** `agents/CHAT.md` message "UAT phase 1 passed"

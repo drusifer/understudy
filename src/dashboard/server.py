@@ -15,6 +15,7 @@ script only draws what `/api/...` returns and follows `/events/<run>` (server-se
 import contextlib
 import hmac
 import json
+import os
 import re
 import threading
 import time
@@ -40,6 +41,7 @@ MAX_BODY = 8192  # bytes of JSON a POST may carry (SEC-006)
 DRAIN_LIMIT = 1 << 20  # an oversized body is read (and thrown away) only up to this many bytes before the answer
 WRONG_SECRET_PAUSE = 1.0  # seconds a request with a missing or wrong secret waits before it is answered (SEC-005)
 SECRET_HEADER = "X-Understudy-Secret"
+SECRET_FILE = ROOT / ".understudy" / "dashboard.secret"  # git-ignored, readable by its owner alone (SEC-008)
 SECURITY_HEADERS = {  # SEC-003
     "X-Content-Type-Options": "nosniff",
     "Content-Security-Policy": "default-src 'self'; frame-ancestors 'none'",
@@ -193,7 +195,11 @@ class ConsoleHandler(BaseHTTPRequestHandler):
 
     def _body(self) -> dict:
         """The JSON object the request carries; raises `Refused` for one too large or not an object."""
-        length = int(self.headers.get("Content-Length") or 0)
+        text = self.headers.get("Content-Length") or "0"
+        if not text.isdigit():  # a negative or unreadable length would make the read wait for data that never comes
+            self.close_connection = True
+            raise Refused(HTTPStatus.BAD_REQUEST, "the request has no usable Content-Length")
+        length = int(text)
         if length > MAX_BODY:
             self.rfile.read(min(length, DRAIN_LIMIT))  # read what was sent so the client sees the answer, not a reset
             self.close_connection = True
@@ -253,11 +259,28 @@ def serve(  # noqa: PLR0913 - the places a console reads from, each overridable 
     return server
 
 
+def save_secret(path: Path, secret: str) -> None:
+    """Write the secret to a file only its owner can read, replacing the last console's."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+        handle.write(secret + "\n")
+    path.chmod(0o600)
+
+
+def announce(stdout, root: Path, port: int, secret: str | None, secret_file: Path) -> None:
+    """Say where the console is and where its access secret was saved, and flush (a pipe or a log file would hold the
+    lines back). The secret itself is never written to the output: `bobp make` copies output into the team chat (SEC-008)."""
+    stdout.write(f"dashboard: listening on 0.0.0.0:{port}  (runs under {root}; Ctrl-C to stop)\n")
+    if secret:
+        save_secret(secret_file, secret)
+        stdout.write(f"access secret for start, replay and stop: saved in {secret_file} (read it there; it changes at every start)\n")
+    stdout.flush()
+
+
 def serve_forever(root: Path, port: int, stdout, launcher: Launcher | None = None, secret: str | None = None) -> None:
     server = serve(root, port, launcher=launcher, secret=secret)
-    stdout.write(f"dashboard: listening on 0.0.0.0:{server.server_address[1]}  (runs under {root}; Ctrl-C to stop)\n")
-    if launcher and secret:
-        stdout.write(f"access secret, for start, replay and stop (shown once, keep it to yourself): {secret}\n")
+    announce(stdout, root, server.server_address[1], secret if launcher else None, SECRET_FILE)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:

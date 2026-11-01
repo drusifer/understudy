@@ -2,6 +2,9 @@
 
 import json
 import shutil
+import socket
+import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -10,8 +13,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from src.dashboard.runs import Launcher, Refused
-from src.dashboard.server import serve
+from src.dashboard.runs import Launcher, Refused, _Child
+from src.dashboard.server import SECRET_FILE, announce, serve
 from src.paths import ROOT
 
 COFFEE = ROOT / "tests" / "fixtures" / "coffee"
@@ -78,6 +81,12 @@ class ListTest(LauncherCase):
         self.write("parent.yaml", PARENT)
         self.write("child.yaml", CHILD)
         self.assertEqual([each["file"] for each in self.launcher().list_sketches()], ["parent.yaml"])
+
+    def test_a_symlink_that_leaves_the_folder_is_not_listed_at_all(self):
+        (self.project / "outside.yaml").write_text(PLAIN)
+        (self.sketches / "plain.yaml").write_text(PLAIN)
+        (self.sketches / "link.yaml").symlink_to(self.project / "outside.yaml")
+        self.assertEqual([each["file"] for each in self.launcher().list_sketches()], ["plain.yaml"])
 
     def test_a_file_that_cannot_be_read_is_listed_greyed_out_with_the_reason(self):
         self.write("broken.yaml", "name: broken\nmachine: [unclosed\n")
@@ -261,6 +270,29 @@ class StopTest(LauncherCase):
             launcher.stop("../../x")
 
 
+class RealStopTest(LauncherCase):
+    """Stop against a real process: it is ended, its whole group with it, and its run is marked stopped."""
+
+    def test_stop_ends_a_real_long_running_process_and_marks_the_run_stopped(self):
+        self.write("plain.yaml", PLAIN)
+        run = self.runs / "run-20261101T100000-bbbbbbbb"
+        run.mkdir()
+        (run / "run.json").write_text(json.dumps({"status": "running", "stages": {}}))
+
+        def sleeper(argv, **options):
+            return _Child([sys.executable, "-c", "import time; time.sleep(60)"], **options)
+
+        launcher = self.launcher(spawn=sleeper, check=lambda argv: [], find_run=lambda sketch, before: run.name)
+        launcher.start("plain.yaml", {"file": "data/in.csv"})
+        child = launcher._children["plain.yaml"]["child"]
+        self.assertIsNone(child.poll())
+        launcher.stop(run.name)
+        self.assertIsNotNone(child.poll())
+        self.assertEqual(json.loads((run / "run.json").read_text())["status"], "stopped")
+        launcher.start("plain.yaml", {"file": "data/in.csv"})  # the sketch is free to run again
+        launcher.stop(run.name)
+
+
 class HttpTest(LauncherCase):
     """The routes: reads stay open; every POST needs the secret, a same-origin request, and a small JSON body."""
 
@@ -315,6 +347,13 @@ class HttpTest(LauncherCase):
         self.assertEqual(self.call("/api/start", b"{not json", headers)[0], 400)
         self.assertEqual(self.call("/api/start", b"[1, 2]", headers)[0], 400)
 
+    def test_a_negative_or_unreadable_content_length_is_400_not_a_wait_for_more_data(self):
+        for length in ("-1", "abc", "1.5"):
+            with socket.create_connection(("127.0.0.1", self.server.server_address[1]), timeout=5) as sock:
+                sock.sendall((f"POST /api/start HTTP/1.1\r\nHost: x\r\nX-Understudy-Secret: {SECRET}\r\n"
+                              f"Content-Length: {length}\r\n\r\n").encode())
+                self.assertIn(b" 400 ", sock.recv(100), length)
+
     def test_methods_other_than_get_and_post_are_refused_and_unknown_posts_are_404(self):
         headers = {"X-Understudy-Secret": SECRET}
         self.assertEqual(self.call("/api/start", None, headers, method="DELETE")[0], 501)
@@ -323,6 +362,53 @@ class HttpTest(LauncherCase):
     def test_the_session_route_says_whether_there_are_controls_and_whether_this_caller_may_use_them(self):
         self.assertEqual(self.call("/api/session")[1], {"controls": True, "authorized": False})
         self.assertEqual(self.call("/api/session", None, {"X-Understudy-Secret": SECRET})[1], {"controls": True, "authorized": True})
+
+
+class AnnounceTest(unittest.TestCase):
+    """SEC-008: the secret goes to a private file, never to the output, which `bobp make` copies into the team chat."""
+
+    class Output:
+        def __init__(self):
+            self.text, self.flushed = "", 0
+
+        def write(self, text):
+            self.text += text
+
+        def flush(self):
+            self.flushed += 1
+
+    def test_the_default_secret_file_is_in_the_git_ignored_cache_folder(self):
+        self.assertEqual(SECRET_FILE, ROOT / ".understudy" / "dashboard.secret")
+        ignored = subprocess.run(["git", "check-ignore", "-q", str(SECRET_FILE)], cwd=ROOT, check=False)
+        self.assertEqual(ignored.returncode, 0)
+
+    def test_the_address_is_written_and_flushed_so_a_pipe_or_log_shows_it(self):
+        shown = self.Output()
+        with tempfile.TemporaryDirectory() as folder:
+            announce(shown, Path("build/runs"), 4180, "the-secret", Path(folder) / "dashboard.secret")
+        self.assertIn("0.0.0.0:4180", shown.text)
+        self.assertEqual(shown.flushed, 1)
+
+    def test_the_secret_is_saved_for_the_owner_alone_and_never_written_to_the_output(self):
+        shown = self.Output()
+        with tempfile.TemporaryDirectory() as folder:
+            target = Path(folder) / "inner" / "dashboard.secret"
+            announce(shown, Path("build/runs"), 4180, "the-secret", target)
+            self.assertEqual(target.read_text(encoding="utf-8").strip(), "the-secret")
+            self.assertEqual(target.stat().st_mode & 0o777, 0o600)
+            announce(shown, Path("build/runs"), 4180, "second-secret", target)  # a new console replaces it
+            self.assertEqual(target.read_text(encoding="utf-8").strip(), "second-secret")
+        self.assertNotIn("the-secret", shown.text)
+        self.assertNotIn("second-secret", shown.text)
+        self.assertIn("dashboard.secret", shown.text)
+
+    def test_a_console_that_cannot_start_runs_has_no_secret_to_save(self):
+        shown = self.Output()
+        with tempfile.TemporaryDirectory() as folder:
+            target = Path(folder) / "dashboard.secret"
+            announce(shown, Path("build/runs"), 4180, None, target)
+            self.assertFalse(target.exists())
+        self.assertNotIn("secret", shown.text)
 
 
 class EndToEndTest(LauncherCase):

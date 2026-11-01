@@ -88,13 +88,13 @@ When this sprint is done, the owner can open the console and see at once whether
 
 ### Acceptance Criteria
 1. A list of sketches shows each sketch in the folder given to the console, with its description and the `--with` names it takes.
-2. A sketch that fails `check` is listed greyed out with its check message and cannot be started.
+2. A file that cannot be read as a sketch (not valid YAML or template, no name or machine) is listed greyed out with the reason and cannot be started; a sketch that is only called by another is not listed; the full check runs when Play is pressed (criterion 4), because it needs the values.
 3. A folder with no sketches, or a path that is not a folder, is refused before the console starts, with one message that says what to fix.
 4. Choosing a sketch shows a field for each `--with` name; Play first runs the sketch's check with these values and shows any problem (a missing file, a bad value) without starting a run.
 5. Play starts the run; it appears in the rack at once and is followed live. Stop ends it and the run is marked stopped.
 6. Replay lists the captured runs the sketch can replay and runs from the chosen one.
 7. A run that cannot start (no key, a missing file) says why on the page; when any run ends the controls unlock and the outcome shows.
-8. Starting, stopping and replaying work only for someone who has the access secret shown when the console started; without it the console still watches and the controls say why they are off. The secret is not in the address bar and not in any log.
+8. Starting, stopping and replaying work only for someone who has the access secret, which the console saves in a private file when it starts and names in its output (the secret itself is never printed, because command output is copied into the team chat); without it the console still watches and the controls say why they are off. The secret is not in the address bar and not in any log.
 9. A sketch outside the chosen folder, or any extra argument, is refused with a message.
 10. A second Play for a sketch that is already running says "already running" and offers to open that run.
 11. Switch's design gate (`*sec threat sprint 22`) clears the access design before any code, and `*sec review` has no blocking findings after the build (the console starts processes and is reachable from the whole network). Tag: **Switch**.

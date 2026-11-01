@@ -98,7 +98,7 @@ graph LR
 
 ### Security & Privacy
 
-* **Trust / access boundaries:** secret generated per console start with `secrets.token_urlsafe(32)`, printed to the terminal only, compared in constant time, held by the page in `sessionStorage` (cleared when the tab closes). Starting is limited to `.yaml` files under `--sketches`. The child gets the console's environment, so `TYPESAFE_API_KEY` reaches it as it would from a terminal; the console never reads or returns it.
+* **Trust / access boundaries:** secret generated per console start with `secrets.token_urlsafe(32)`, saved to `.understudy/dashboard.secret` (git-ignored, mode 0600; never printed, because `bobp make` copies command output into the tracked team chat: SEC-008), compared in constant time, held by the page in `sessionStorage` (cleared when the tab closes). Starting is limited to `.yaml` files under `--sketches`. The child gets the console's environment, so `TYPESAFE_API_KEY` reaches it as it would from a terminal; the console never reads or returns it.
 * **Sensitive data:** run folders hold counts and file names; `with` values are file paths as typed (SEC-004 covers the same exposure; Sprint 23 records them relative). The Jev list shows levels and probabilities only, never the text Jev read.
 * **Switch design gate (done 2026-11-01, no blocking findings):** `agents/switch/reviews/2026-11-01-sprint-22-design-gate.md`. Added to this design by it:
   * **SEC-005 (owner decision):** the secret travels over plain HTTP; the owner accepted this on the home network until **2027-01-30**. No TLS in this sprint.
