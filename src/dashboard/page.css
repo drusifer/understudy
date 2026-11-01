@@ -381,3 +381,14 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .start-message.problem { color: #ff9a8a; }
 .start-message.ok { color: #9be8a6; }
 @media (max-width: 640px) { .start-grid, .start-fields { grid-template-columns: 1fr; } }
+
+/* Sprint 22 UND-80: text that is readable on what it sits on, in every theme and mode (4.5:1; checked by tests/browser). */
+.plate { background: linear-gradient(180deg, #e2c27f 0%, #cfa65f 48%, #bb8d42 100%); }
+.subtitle { color: #1f1408; }
+.status, .theme-label { color: #1f1408; }
+.printer-head { color: #5f5a53; }
+.ended, .tube-panel .panel-head span { color: var(--cream); font-style: normal; }
+.rack-group, .start-panel > summary, .jev > summary { color: var(--cream); }
+.no-match { background: var(--note-bg, #efe6cf); color: var(--note-ink, #24170a); }
+:root[data-theme="steampunk"][data-mode="dark"] .find-check { color: #e8d9b8; }
+:root[data-theme="steampunk"][data-mode="dark"] .printer-head { color: #b3aea6; }

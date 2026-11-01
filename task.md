@@ -63,10 +63,10 @@ Complexity levels follow the definitions in `agents/templates/_template_task.md`
 
 ### Phase 7: The promises (UND-80, 3 pts)
 *Phase goal: one-line command failures, `understudy runs`, keyboard and contrast, a written browser check.*
-- [ ] **Task 7.0:** Approve how any browser-check tool is installed and run, and record it in `docs/SDLC.md` before it is used (UND-80 AC7). **L1**. (*Owner: Tank | Trace: UND-80 AC7 | Verification: `docs/SDLC.md` change and `bobp make install`*)
-- [ ] **Task 7.1:** Busy-port and missing-folder messages, `--help` text with examples, run id printed at the end of `run`, `understudy runs`; focus outlines and accessible names; contrast fixes per theme; tests first for the CLI. **L2**. (*Owner: Neo | Trace: UND-80 AC1-5 | Verification: `bobp make test`, `bobp make lint`*)
-- [ ] **Task 7.2:** Write and run the browser check (rack, live follow, failed banner, start and stop) and the keyboard and contrast pass; record them in the UAT plan. **L2**. (*Owner: Trin | Trace: UND-80 AC4-6 | Verification: the UAT plan section and its results*)
-- [ ] **Task 7.3:** Security quick pass: no new surface. **L1**. (*Owner: Switch | Trace: N/A — quick pass | Verification: `security gate (phase 7): ...` in `agents/CHAT.md`*)
+- [x] **Task 7.0:** Approve how any browser-check tool is installed and run, and record it in `docs/SDLC.md` before it is used (UND-80 AC7). **L1**. (*Owner: Tank | Trace: UND-80 AC7 | Verification: `docs/SDLC.md` change and `bobp make install`*)
+- [x] **Task 7.1:** Busy-port and missing-folder messages, `--help` text with examples, run id printed at the end of `run`, `understudy runs`; focus outlines and accessible names; contrast fixes per theme; tests first for the CLI. **L2**. (*Owner: Neo | Trace: UND-80 AC1-5 | Verification: `bobp make test`, `bobp make lint`*)
+- [x] **Task 7.2:** Write and run the browser check (rack, live follow, failed banner, start and stop) and the keyboard and contrast pass; record them in the UAT plan. **L2**. (*Owner: Trin | Trace: UND-80 AC4-6 | Verification: the UAT plan section and its results*)
+- [x] **Task 7.3:** Security quick pass: no new surface. **L1**. (*Owner: Switch | Trace: N/A — quick pass | Verification: `security gate (phase 7): ...` in `agents/CHAT.md`*)
 
 ---
 

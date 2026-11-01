@@ -61,3 +61,6 @@
 :root[data-theme="steampunk"][data-mode="light"] .roller { background: linear-gradient(180deg, #6b665e, #b8b2a6 45%, #7a756c); }
 :root[data-theme="steampunk"][data-mode="light"] .screw-button { background: #eeebe5; border-color: #8a857c; color: #3a3631; }
 :root[data-theme="steampunk"][data-mode="light"] .bay .about { color: #4a4640; }
+
+/* Sprint 22: the printer panel is light steel in both modes, so the filter label on it is always dark. */
+:root[data-theme="steampunk"][data-mode="light"] .find-check { color: #24170a; }

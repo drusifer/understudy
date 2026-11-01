@@ -215,9 +215,54 @@
 - **Verdict:** PASS
 - **Evidence / issue:** `p6.out`, `p6-phone.png`
 
+### UAT-80-1: Every way the console can fail to start is one plain line (rejection paths)
+- **Linked criterion:** UND-80 AC1, UND-79 AC3
+- **Preconditions and data:** a port already held by another program; a runs path that is a file; a sketches path that is missing or has no sketches
+- **Steps:** `understudy dashboard <runs> --port <busy> --sketches <folder>` and the variants
+- **Expected observable outcome:** each prints exactly one `understudy: <message>` line on standard error, exits 2, shows no traceback
+- **Actual outcome:** `understudy: port N is already in use; choose another with --port`; `... is not a folder of runs`; `... is not a folder` and `no sketches found in ...`
+- **Verdict:** PASS
+- **Evidence / issue:** `tests/python/test_cli_console.py::DashboardFailureTest` (before the fix a busy port printed a Python traceback)
+
+### UAT-80-2: Help teaches, `run` names its run, `runs` lists them
+- **Linked criterion:** UND-80 AC2, AC3
+- **Preconditions and data:** none for help; the committed coffee capture for a replayed run; two run folders for `runs`
+- **Steps:** `understudy --help` and `understudy <command> --help`; a replayed `understudy run`; `understudy runs <folder>`, an empty folder and a missing one
+- **Expected observable outcome:** every command described with examples and its options explained; the run prints `run: <id>` and `watch it: understudy dashboard <folder>` and still ends on its outputs and outcome; `runs` lists newest first with the state, or says "no runs in <folder>" and exits 0
+- **Actual outcome:** as expected; one defect found by existing tests: printing the id after the outcome broke the documented "the outcome is the last line" contract, so the id now comes before the `wrote` lines
+- **Verdict:** PASS after fix
+- **Evidence / issue:** `HelpTest`, `RunEndsWithTheRunIdTest`, `RunsCommandTest`
+
+### UAT-80-3: Every control can be reached and used with the keyboard alone
+- **Linked criterion:** UND-80 AC4
+- **Preconditions and data:** a console with a failed run and a sketch to start
+- **Steps:** press Tab 80 times from the top of the page and record each element that takes focus, its accessible name and whether focus is visible
+- **Expected observable outcome:** the filter, stage menu, failures-only box, jump buttons, secret box, unlock, sketch and replay menus are all reached; none lacks a name; each shows a focus indicator
+- **Actual outcome:** all reached, named and visibly focused (the unit tests cannot see this; the browser check does)
+- **Verdict:** PASS
+- **Evidence / issue:** `tests/browser/test_console.py::KeyboardTest`
+
+### UAT-80-4: Text meets 4.5:1 (3:1 for large text) in all three themes, light and dark
+- **Linked criterion:** UND-80 AC5
+- **Preconditions and data:** six looks (steampunk, professional, starship, each light and dark) of one screen holding a failed run, the banner, the printer with an empty filter result, the start panel and the Jev line; 28 kinds of text
+- **Steps:** for each kind of text in each look, hide the text, screenshot the element, decode the pixels, and compare the text color with every color that fills at least 8% of the interior
+- **Expected observable outcome:** no text below its threshold
+- **Actual outcome:** the first honest measurement found 25 failures in new and old text (header subtitle and status on the brass plate, rack labels, the ended line, panel headings, the start and Jev headings, the empty-filter note, filter labels, the starship orange); all fixed with theme variables and checked again: 0 failures. Three earlier versions of the measuring code were wrong (counted anti-aliased text, borders and child controls as backdrop) and were corrected until a known-good element read right
+- **Verdict:** PASS after fixes
+- **Evidence / issue:** `ContrastTest`; no exception was needed, so none is recorded for the owner to accept
+
+### UAT-80-5: The written, repeatable browser check
+- **Linked criterion:** UND-80 AC6
+- **Preconditions and data:** `bobp make install-browser`; Chromium at `/usr/bin/chromium`
+- **Steps:** `bobp make test-browser`
+- **Expected observable outcome:** rack switching and the failed banner, live following, losing and regaining the server, unlock/play/second play/stop, keyboard and contrast all pass; without the tools every test is skipped with the reason
+- **Actual outcome:** 6 tests pass in about a minute
+- **Verdict:** PASS
+- **Evidence / issue:** `tests/browser/test_console.py`; tool approved by Tank and recorded in `docs/SDLC.md`
+
 ## Results and Handoff
 
-- **Passed / failed / blocked:** Phase 1: 6 passed (3 after a fix found in the run); Phase 2: 4 passed (1 after a contrast fix); Phase 3: 3 passed; Phase 4: 3 passed (1 after a fix; 1 privacy defect found and fixed, SEC-007); Phase 5: 3 passed after fixes (SEC-008 and SEC-009 found by the attack and fixed); Phase 6: 4 passed (1 after a fix); 0 failed, 0 blocked. Phase 7 not yet run.
+- **Passed / failed / blocked:** Phase 1: 6 passed (3 after a fix found in the run); Phase 2: 4 passed (1 after a contrast fix); Phase 3: 3 passed; Phase 4: 3 passed (1 after a fix; 1 privacy defect found and fixed, SEC-007); Phase 5: 3 passed after fixes (SEC-008 and SEC-009 found by the attack and fixed); Phase 6: 4 passed (1 after a fix); Phase 7: 5 passed (2 after fixes); 0 failed, 0 blocked.
 - **Open issues and impact:** none for Phase 1. The `with` values in `run.json` are file paths as typed (SEC-004 covers the sketch path, now stored relative).
-- **Overall verdict:** Phase 1 PASS
-- **Handoff evidence:** `agents/CHAT.md` message "UAT phase 1 passed"
+- **Overall verdict:** PASS for phases 1 to 7. Smith's end-to-end user test (closeout) is still to run.
+- **Handoff evidence:** `agents/CHAT.md` messages "UAT phase N passed" for each phase; screenshots and outputs in the session scratch folder

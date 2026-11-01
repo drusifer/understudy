@@ -178,3 +178,4 @@
 /* Sprint 22: the tube is a light surface here, so the text on it is the page's ink and the lamps sit on no tint. */
 :root[data-theme="professional"] { --tube-ink: var(--ink); }
 :root[data-theme="professional"] .stage-lamp { background: transparent; border-color: var(--line); }
+:root[data-theme="professional"] { --note-bg: var(--surface); --note-ink: var(--ink); }
