@@ -91,6 +91,12 @@ class PrivacyTest(ReadsCase):
         self.assertEqual(reads["from_data"]["levels"], [["option 1", 0.2], ["option 2", 0.8]])
         self.assertEqual(reads["from_data"]["instructions"], "Which charge?")
 
+    def test_the_holder_of_the_secret_sees_the_real_names(self):
+        directory = self.make_run()
+        self.store.write(RUN, "a", rows(**{"refund_x1": 0.2, "refund_x2": 0.8}), "h", levels_from_data=True)
+        self.assertEqual(jev_reads(directory, self.cache, self.root, reveal=True)["reads"][0]["top"], "refund_x2")
+        self.assertEqual(jev_reads(directory, self.cache, self.root)["reads"][0]["top"], "option 2")
+
     def test_the_sketchs_own_none_of_these_stays_readable_so_the_flag_makes_sense(self):
         directory = self.make_run()
         self.store.write(RUN, "a", rows(**{"charge_2026-02-01_-3.00_x3": 0.1, "none_of_these": 0.9}), "h", levels_from_data=True)

@@ -30,10 +30,11 @@ def _hide_names(rows: list[dict]) -> list[dict]:
     return [row if row["level"] == NONE_LEVEL else {**row, "level": f"option {number}"} for number, row in enumerate(rows, 1)]
 
 
-def _one_read(folder: Path, key: str) -> dict:
+def _one_read(folder: Path, key: str, reveal: bool) -> dict:
     rows = [json.loads(line) for line in (folder / f"{key}.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
     meta = json.loads((folder / f"{key}.meta.json").read_text(encoding="utf-8"))
-    if meta.get("levels_from_data") is not False:  # data-derived, or a capture too old to say: do not send the names
+    # data-derived or of unknown origin: the names go only to the holder of the secret
+    if meta.get("levels_from_data") is not False and not reveal:
         rows = _hide_names(rows)
     ranked = sorted(rows, key=lambda row: row["probability"], reverse=True)
     top = ranked[0] if ranked else {"level": "", "probability": 0.0}
@@ -46,8 +47,9 @@ def _one_read(folder: Path, key: str) -> dict:
     }
 
 
-def jev_reads(directory: Path, cache: Path, project: Path = ROOT) -> dict:
-    """The reads of one run, and the two figures the gauges need: the last read's confidence and asked against reused."""
+def jev_reads(directory: Path, cache: Path, project: Path = ROOT, *, reveal: bool = False) -> dict:
+    """The reads of one run, and the two figures the gauges need: the last read's confidence and asked against reused.
+    `reveal` (the caller holds the access secret) shows level names that come from the owner's data."""
     run, summary = read_json(directory / "run.json"), read_json(directory / "summary.json")
     folder = _capture_dir(directory, run, cache, project)
     if folder is None:
@@ -56,7 +58,7 @@ def jev_reads(directory: Path, cache: Path, project: Path = ROOT) -> dict:
         return {"kept": False, "note": note, "reads": [], "missing": [], "confidence": None, "asked": asked, "reused": 0}
     jsonl = {path.name.removesuffix(".jsonl") for path in folder.glob("*.jsonl")}
     metas = {path.name.removesuffix(".meta.json") for path in folder.glob("*.meta.json")}
-    reads = sorted((_one_read(folder, key) for key in jsonl & metas), key=lambda read: (read["captured_at"], read["source"]))
+    reads = sorted((_one_read(folder, key, reveal) for key in jsonl & metas), key=lambda read: (read["captured_at"], read["source"]))
     replayed = run.get("mode") == "replay"
     return {
         "kept": True, "note": "", "reads": reads, "missing": sorted(jsonl ^ metas),

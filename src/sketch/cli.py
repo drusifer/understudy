@@ -6,11 +6,13 @@ one `understudy: <message>` line saying what to fix; there is never a traceback.
 
 import argparse
 import asyncio
+import secrets
 import sys
 from collections.abc import Mapping
 from pathlib import Path
 
 import src.sketch.stages  # noqa: F401 - importing it registers the stages
+from src.dashboard.runs import Launcher, Refused
 from src.dashboard.server import serve_forever
 from src.jev import JevError, TypeSafeJev
 from src.paths import OutputPathError
@@ -57,6 +59,7 @@ def _parser() -> argparse.ArgumentParser:
     dashboard = commands.add_parser("dashboard")
     dashboard.add_argument("runs", type=Path, nargs="?", default=DEFAULT_OUT, help="the folder of runs to watch")
     dashboard.add_argument("--port", type=int, default=4180)
+    dashboard.add_argument("--sketches", type=Path, default=Path("examples"), help="the folder of sketches the console may start")
     run = commands.choices["run"]
     run.add_argument("--out", type=Path, default=DEFAULT_OUT)
     run.add_argument("--replay", nargs="?", const="", default=None, metavar="RUN-ID|DIR")
@@ -69,8 +72,13 @@ def _capture(args, sketch, store, make_jev) -> Capture:
     return Capture.live(store, make_jev() if needs_jev(sketch) else None)
 
 
-def _dashboard(args, stdout) -> int:
-    serve_forever(args.runs, args.port, stdout)
+def _dashboard(args, stdout, stderr) -> int:
+    try:
+        launcher = Launcher(args.sketches, args.runs)
+    except Refused as refusal:
+        stderr.write(f"understudy: {refusal.message}\n")
+        return 2
+    serve_forever(args.runs, args.port, stdout, launcher, secrets.token_urlsafe(32))
     return 0
 
 
@@ -81,7 +89,7 @@ def main(  # noqa: PLR0911, PLR0913 - the command line's injection points
     stdout, stderr = stdout or sys.stdout, stderr or sys.stderr
     args = _parser().parse_args(argv)
     if args.command == "dashboard":
-        return _dashboard(args, stdout)
+        return _dashboard(args, stdout, stderr)
 
     def fail(message: str, code: int) -> int:
         stderr.write(f"understudy: {message}\n")

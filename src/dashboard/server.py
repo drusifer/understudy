@@ -1,24 +1,31 @@
-"""`understudy dashboard`: a read-only console over the runs under a folder (default `build/runs`).
+"""`understudy dashboard`: a console over the runs under a folder (default `build/runs`).
 
-This module is the HTTP side: it routes a request, serves the page files and follows a run's events. What the page
-shows about a run (the printed lines, the stages, the gauges, the rack) is decided in `view.py`, so unittest covers
-it; the browser script only draws what `/api/...` returns and follows `/events/<run>` (server-sent events).
+This module is the HTTP side: it routes a request, serves the page files, follows a run's events and, for someone who
+holds the access secret, starts, replays and stops runs through `runs.py`. What the page shows about a run (the printed
+lines, the stages, the gauges, the rack) is decided in `view.py` and `reads.py`, so unittest covers it; the browser
+script only draws what `/api/...` returns and follows `/events/<run>` (server-sent events).
 
-    /                      the page            /api/runs          the runs, newest first
-    /static files          css, js, fonts      /api/runs/<id>     one run: stages, gauges, printed lines
-    /events/<id>           the lines as they are written (server-sent events)
+    GET  /                      the page            /api/runs          the runs, newest first
+    GET  static files           css, js, fonts      /api/runs/<id>     one run: stages, gauges, printed lines
+    GET  /events/<id>           the lines as they are written (server-sent events)
+    GET  /api/runs/<id>/jev     the run's Jev reads    /api/sketches, /api/replays, /api/session
+    POST /api/start, /api/stop  start (or replay) and stop a run: the secret, a same-origin request, a small JSON body
 """
 
 import contextlib
+import hmac
 import json
 import re
 import threading
 import time
+from dataclasses import dataclass
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import urlparse
 
 from src.dashboard.reads import jev_reads
+from src.dashboard.runs import Launcher, Refused
 from src.dashboard.view import describe, list_runs, printed, read_events
 from src.paths import ROOT
 from src.sketch.sources.capture import CACHE
@@ -29,6 +36,10 @@ STATIC_NAMES = re.compile(r"(page\.html|page\.css|page\.js|theme-[a-z-]+\.css|fo
 RUN_ROUTE = re.compile(r"/(?P<what>api/runs|events)/(?P<run>run-[0-9A-Za-z-]+)(?P<jev>/jev)?")
 MAX_STREAMS = 32  # watchers at once; more get a 503 (SEC-001)
 IDLE_SECONDS = 600  # a stream with no new line for this long ends (SEC-001)
+MAX_BODY = 8192  # bytes of JSON a POST may carry (SEC-006)
+DRAIN_LIMIT = 1 << 20  # an oversized body is read (and thrown away) only up to this many bytes before the answer
+WRONG_SECRET_PAUSE = 1.0  # seconds a request with a missing or wrong secret waits before it is answered (SEC-005)
+SECRET_HEADER = "X-Understudy-Secret"
 SECURITY_HEADERS = {  # SEC-003
     "X-Content-Type-Options": "nosniff",
     "Content-Security-Policy": "default-src 'self'; frame-ancestors 'none'",
@@ -36,29 +47,49 @@ SECURITY_HEADERS = {  # SEC-003
 }
 
 
-def route(root: Path, path: str, cache: Path = CACHE, project: Path = ROOT) -> tuple[str, object]:
-    """What a path asks for: ("json", value), ("static", file name), ("events", run folder) or ("missing", None)."""
+@dataclass(frozen=True)
+class Console:
+    """What a console serves and where it reads: the runs folder, the Jev captures, the project, and (when it can start
+    runs) the launcher and the access secret."""
+
+    root: Path
+    cache: Path = CACHE
+    project: Path = ROOT
+    launcher: Launcher | None = None
+    secret: str | None = None
+
+    def holds(self, presented: str | None) -> bool:
+        """Whether the secret presented is the console's (compared in constant time); false when there is none."""
+        return bool(self.secret and presented and hmac.compare_digest(presented.encode(), self.secret.encode()))
+
+
+def route(console: Console, path: str, *, revealed: bool = False) -> tuple[str, object]:
+    """What a path asks for: ("json", value), ("static", file name), ("events", run folder), ("session", None),
+    ("empty", None) or ("missing", None). `revealed` says the caller holds the secret."""
     if path in {"/", "/index.html"}:
         path = "/page.html"
-    if path == "/favicon.ico":
-        return "empty", None
-    if path == "/api/runs":
-        return "json", list_runs(root)
+    fixed = {
+        "/favicon.ico": ("empty", None), "/api/session": ("session", None), "/api/runs": ("json", list_runs(console.root)),
+        "/api/sketches": ("json", console.launcher.list_sketches() if console.launcher else []),
+        "/api/replays": ("json", console.launcher.replays() if console.launcher else []),
+    }
+    if path in fixed:
+        return fixed[path]
     match = RUN_ROUTE.fullmatch(path)
     if match:
-        directory = root / match["run"]
+        directory = console.root / match["run"]
         if directory.is_dir() and not (match["what"] == "events" and match["jev"]):
-            return _run_answer(directory, match["what"], bool(match["jev"]), cache, project)
+            return _run_answer(console, directory, match["what"], bool(match["jev"]), revealed)
         return "missing", None
     name = path.removeprefix("/")
     return ("static", name) if STATIC_NAMES.fullmatch(name) else ("missing", None)
 
 
-def _run_answer(directory: Path, what: str, jev: bool, cache: Path, project: Path) -> tuple[str, object]:
+def _run_answer(console: Console, directory: Path, what: str, jev: bool, revealed: bool) -> tuple[str, object]:
     """The answer for one run: a stream of its events, its Jev reads, or its description."""
     if what == "events":
         return "events", directory
-    return "json", jev_reads(directory, cache, project) if jev else describe(directory)
+    return "json", jev_reads(directory, console.cache, console.project, reveal=revealed) if jev else describe(directory)
 
 
 def stream_events(handler: BaseHTTPRequestHandler, directory: Path, poll_seconds: float) -> None:
@@ -101,72 +132,132 @@ def follow(directory: Path, poll_seconds: float, idle_seconds: float = IDLE_SECO
         time.sleep(poll_seconds)
 
 
-def make_handler(root: Path, poll_seconds: float = 0.5, max_streams: int = MAX_STREAMS, cache: Path = CACHE, project: Path = ROOT):
-    """The request handler class serving the runs under `root`; at most `max_streams` event streams at once.
-    `cache` is where Jev captures are kept and `project` the folder a replayed capture must lie inside."""
-    places = threading.BoundedSemaphore(max_streams)
+class ConsoleHandler(BaseHTTPRequestHandler):
+    """One request. `console`, `poll_seconds` and `places` (the room for event streams) are set by `make_handler`."""
 
-    class Handler(BaseHTTPRequestHandler):
-        def log_message(self, *_arguments) -> None:
-            return
+    console: Console
+    poll_seconds: float
+    places: threading.BoundedSemaphore
 
-        def _send(self, status: int, body: bytes, content_type: str) -> None:
-            self.send_response(status)
-            self.send_header("Content-Type", with_charset(content_type))
-            self.send_header("Content-Length", str(len(body)))
-            self.send_header("Cache-Control", "no-store")
-            self._security_headers()
-            self.end_headers()
-            self.wfile.write(body)
+    def log_message(self, *_arguments) -> None:
+        return
 
-        def _security_headers(self) -> None:
-            for name, value in SECURITY_HEADERS.items():
-                self.send_header(name, value)
+    def _send(self, status: int, body: bytes, content_type: str) -> None:
+        self.send_response(status)
+        self.send_header("Content-Type", with_charset(content_type))
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        for name, value in SECURITY_HEADERS.items():
+            self.send_header(name, value)
+        self.end_headers()
+        self.wfile.write(body)
 
-        def _json(self, value) -> None:
-            self._send(HTTPStatus.OK, json.dumps(value).encode(), "application/json")
+    def _json(self, value, status: int = HTTPStatus.OK) -> None:
+        self._send(status, json.dumps(value).encode(), "application/json")
 
-        def _missing(self, _value=None) -> None:
-            self._send(HTTPStatus.NOT_FOUND, b"not found", "text/plain")
+    def _missing(self, _value=None) -> None:
+        self._send(HTTPStatus.NOT_FOUND, b"not found", "text/plain")
 
-        def do_GET(self) -> None:  # noqa: N802 - the name http.server calls
-            kind, value = route(root, self.path.split("?", 1)[0], cache, project)
-            answers = {"json": self._json, "static": self._static, "empty": self._empty, "events": self._follow}
-            answers.get(kind, self._missing)(value)
+    def _holds_secret(self) -> bool:
+        return self.console.holds(self.headers.get(SECRET_HEADER))
 
-        def _static(self, name: str) -> None:
-            self._send(HTTPStatus.OK, (HERE / name).read_bytes(), STATIC_TYPES[Path(name).suffix])
+    def do_GET(self) -> None:  # noqa: N802 - the name http.server calls
+        kind, value = route(self.console, self.path.split("?", 1)[0], revealed=self._holds_secret())
+        answers = {"json": self._json, "static": self._static, "empty": self._empty, "events": self._follow, "session": self._session}
+        answers.get(kind, self._missing)(value)
 
-        def _empty(self, _value) -> None:
-            self.send_response(HTTPStatus.NO_CONTENT)
-            self.end_headers()
+    def _session(self, _value) -> None:
+        self._json({"controls": self.console.launcher is not None, "authorized": self._holds_secret()})
 
-        def _follow(self, directory: Path) -> None:
-            """Server-sent events: every printed line, then new ones as they are written, until the run finishes."""
-            with contextlib.suppress(BrokenPipeError, ConnectionResetError):
-                if not places.acquire(blocking=False):
-                    self._send(HTTPStatus.SERVICE_UNAVAILABLE, b"too many watchers", "text/plain")
-                    return
-                try:
-                    stream_events(self, directory, poll_seconds)
-                finally:
-                    places.release()
+    def do_POST(self) -> None:  # noqa: N802 - the name http.server calls
+        action = {"/api/start": self._start, "/api/stop": self._stop}.get(self.path.split("?", 1)[0])
+        if action is None or self.console.launcher is None:
+            return self._missing()
+        refusal = self._refusal()
+        if refusal:
+            return self._json({"problem": refusal[1]}, refusal[0])
+        try:
+            return self._json(action(self._body()))
+        except Refused as refused:
+            return self._json({"problem": refused.message}, refused.status)
 
-    return Handler
+    def _refusal(self) -> tuple[int, str] | None:
+        """Why this POST may not go on (another site, no secret), else None. A wrong secret costs a pause."""
+        origin = self.headers.get("Origin")
+        if origin and urlparse(origin).netloc != self.headers.get("Host"):
+            return HTTPStatus.FORBIDDEN, "that request came from another site"
+        if not self._holds_secret():
+            time.sleep(WRONG_SECRET_PAUSE)
+            return HTTPStatus.UNAUTHORIZED, "this needs the access secret printed where the console was started"
+        return None
+
+    def _body(self) -> dict:
+        """The JSON object the request carries; raises `Refused` for one too large or not an object."""
+        length = int(self.headers.get("Content-Length") or 0)
+        if length > MAX_BODY:
+            self.rfile.read(min(length, DRAIN_LIMIT))  # read what was sent so the client sees the answer, not a reset
+            self.close_connection = True
+            raise Refused(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, "that request is too large")
+        try:
+            body = json.loads(self.rfile.read(length) or b"{}")
+        except ValueError:
+            body = None
+        if not isinstance(body, dict):
+            raise Refused(HTTPStatus.BAD_REQUEST, "the request must be a JSON object")
+        return body
+
+    def _start(self, body: dict) -> dict:
+        values = body.get("with", {})
+        if not isinstance(body.get("sketch"), str) or not isinstance(values, dict):
+            raise Refused(400, "start needs a sketch name and an object of values")
+        return self.console.launcher.start(body["sketch"], values, body.get("replay"))
+
+    def _stop(self, body: dict) -> dict:
+        if not isinstance(body.get("run"), str):
+            raise Refused(400, "stop needs the id of a run")
+        return self.console.launcher.stop(body["run"])
+
+    def _static(self, name: str) -> None:
+        self._send(HTTPStatus.OK, (HERE / name).read_bytes(), STATIC_TYPES[Path(name).suffix])
+
+    def _empty(self, _value) -> None:
+        self.send_response(HTTPStatus.NO_CONTENT)
+        self.end_headers()
+
+    def _follow(self, directory: Path) -> None:
+        """Server-sent events: every printed line, then new ones as they are written, until the run finishes."""
+        with contextlib.suppress(BrokenPipeError, ConnectionResetError):
+            if not self.places.acquire(blocking=False):
+                self._send(HTTPStatus.SERVICE_UNAVAILABLE, b"too many watchers", "text/plain")
+                return
+            try:
+                stream_events(self, directory, self.poll_seconds)
+            finally:
+                self.places.release()
+
+
+def make_handler(console: Console, poll_seconds: float = 0.5, max_streams: int = MAX_STREAMS):
+    """The request handler class for `console`; at most `max_streams` event streams at once."""
+    return type("Handler", (ConsoleHandler,), {"console": console, "poll_seconds": poll_seconds,
+                                              "places": threading.BoundedSemaphore(max_streams)})
 
 
 def serve(  # noqa: PLR0913 - the places a console reads from, each overridable for tests
     root: Path, port: int = 4180, host: str = "0.0.0.0", max_streams: int = MAX_STREAMS, cache: Path = CACHE, project: Path = ROOT,
+    launcher: Launcher | None = None, secret: str | None = None,
 ) -> ThreadingHTTPServer:
     """A server for the runs under `root`; the caller starts and stops it."""
-    server = ThreadingHTTPServer((host, port), make_handler(root, max_streams=max_streams, cache=cache, project=project))
+    console = Console(Path(root), Path(cache), Path(project), launcher, secret)
+    server = ThreadingHTTPServer((host, port), make_handler(console, max_streams=max_streams))
     server.daemon_threads = True
     return server
 
 
-def serve_forever(root: Path, port: int, stdout) -> None:
-    server = serve(root, port)
+def serve_forever(root: Path, port: int, stdout, launcher: Launcher | None = None, secret: str | None = None) -> None:
+    server = serve(root, port, launcher=launcher, secret=secret)
     stdout.write(f"dashboard: listening on 0.0.0.0:{server.server_address[1]}  (runs under {root}; Ctrl-C to stop)\n")
+    if launcher and secret:
+        stdout.write(f"access secret, for start, replay and stop (shown once, keep it to yourself): {secret}\n")
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
