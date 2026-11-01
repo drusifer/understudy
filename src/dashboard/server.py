@@ -18,11 +18,15 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from src.dashboard.view import RUN_ID, describe, list_runs, printed, read_events
+from src.dashboard.reads import jev_reads
+from src.dashboard.view import describe, list_runs, printed, read_events
+from src.paths import ROOT
+from src.sketch.sources.capture import CACHE
 
 HERE = Path(__file__).parent
 STATIC_TYPES = {".html": "text/html", ".css": "text/css", ".js": "text/javascript", ".woff2": "font/woff2"}
 STATIC_NAMES = re.compile(r"(page\.html|page\.css|page\.js|theme-[a-z-]+\.css|fonts/[a-z0-9-]+\.woff2)")
+RUN_ROUTE = re.compile(r"/(?P<what>api/runs|events)/(?P<run>run-[0-9A-Za-z-]+)(?P<jev>/jev)?")
 MAX_STREAMS = 32  # watchers at once; more get a 503 (SEC-001)
 IDLE_SECONDS = 600  # a stream with no new line for this long ends (SEC-001)
 SECURITY_HEADERS = {  # SEC-003
@@ -32,7 +36,7 @@ SECURITY_HEADERS = {  # SEC-003
 }
 
 
-def route(root: Path, path: str) -> tuple[str, object]:
+def route(root: Path, path: str, cache: Path = CACHE, project: Path = ROOT) -> tuple[str, object]:
     """What a path asks for: ("json", value), ("static", file name), ("events", run folder) or ("missing", None)."""
     if path in {"/", "/index.html"}:
         path = "/page.html"
@@ -40,15 +44,21 @@ def route(root: Path, path: str) -> tuple[str, object]:
         return "empty", None
     if path == "/api/runs":
         return "json", list_runs(root)
-    for prefix, kind in (("/api/runs/", "json"), ("/events/", "events")):
-        if path.startswith(prefix):
-            name = path.removeprefix(prefix)
-            directory = root / name
-            if not (RUN_ID.fullmatch(name) and directory.is_dir()):
-                return "missing", None
-            return kind, describe(directory) if kind == "json" else directory
+    match = RUN_ROUTE.fullmatch(path)
+    if match:
+        directory = root / match["run"]
+        if directory.is_dir() and not (match["what"] == "events" and match["jev"]):
+            return _run_answer(directory, match["what"], bool(match["jev"]), cache, project)
+        return "missing", None
     name = path.removeprefix("/")
     return ("static", name) if STATIC_NAMES.fullmatch(name) else ("missing", None)
+
+
+def _run_answer(directory: Path, what: str, jev: bool, cache: Path, project: Path) -> tuple[str, object]:
+    """The answer for one run: a stream of its events, its Jev reads, or its description."""
+    if what == "events":
+        return "events", directory
+    return "json", jev_reads(directory, cache, project) if jev else describe(directory)
 
 
 def stream_events(handler: BaseHTTPRequestHandler, directory: Path, poll_seconds: float) -> None:
@@ -91,8 +101,9 @@ def follow(directory: Path, poll_seconds: float, idle_seconds: float = IDLE_SECO
         time.sleep(poll_seconds)
 
 
-def make_handler(root: Path, poll_seconds: float = 0.5, max_streams: int = MAX_STREAMS):
-    """The request handler class serving the runs under `root`; at most `max_streams` event streams at once."""
+def make_handler(root: Path, poll_seconds: float = 0.5, max_streams: int = MAX_STREAMS, cache: Path = CACHE, project: Path = ROOT):
+    """The request handler class serving the runs under `root`; at most `max_streams` event streams at once.
+    `cache` is where Jev captures are kept and `project` the folder a replayed capture must lie inside."""
     places = threading.BoundedSemaphore(max_streams)
 
     class Handler(BaseHTTPRequestHandler):
@@ -119,7 +130,7 @@ def make_handler(root: Path, poll_seconds: float = 0.5, max_streams: int = MAX_S
             self._send(HTTPStatus.NOT_FOUND, b"not found", "text/plain")
 
         def do_GET(self) -> None:  # noqa: N802 - the name http.server calls
-            kind, value = route(root, self.path.split("?", 1)[0])
+            kind, value = route(root, self.path.split("?", 1)[0], cache, project)
             answers = {"json": self._json, "static": self._static, "empty": self._empty, "events": self._follow}
             answers.get(kind, self._missing)(value)
 
@@ -144,9 +155,11 @@ def make_handler(root: Path, poll_seconds: float = 0.5, max_streams: int = MAX_S
     return Handler
 
 
-def serve(root: Path, port: int = 4180, host: str = "0.0.0.0", max_streams: int = MAX_STREAMS) -> ThreadingHTTPServer:
+def serve(  # noqa: PLR0913 - the places a console reads from, each overridable for tests
+    root: Path, port: int = 4180, host: str = "0.0.0.0", max_streams: int = MAX_STREAMS, cache: Path = CACHE, project: Path = ROOT,
+) -> ThreadingHTTPServer:
     """A server for the runs under `root`; the caller starts and stops it."""
-    server = ThreadingHTTPServer((host, port), make_handler(root, max_streams=max_streams))
+    server = ThreadingHTTPServer((host, port), make_handler(root, max_streams=max_streams, cache=cache, project=project))
     server.daemon_threads = True
     return server
 

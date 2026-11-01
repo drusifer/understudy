@@ -30,6 +30,8 @@ function look() {
 // The printer holds every line of the chosen run in state.lines; the finder decides which of them are on the paper.
 state.lines = [];
 state.failures = [];
+state.jev = null;
+state.jevGauges = [];
 const finder = () => ({ text: $('find-text').value.trim().toLowerCase(), failures: $('find-failures').checked, stage: $('find-stage').value });
 
 function shown(entry, find) {
@@ -163,7 +165,7 @@ function stageBlock(stage) {
 // Everything but the printer's lines, so it can be refreshed while a run goes without losing the reader's place.
 function drawStatus(run) {
   $('tube').replaceChildren(...run.tube.map(stageBlock));
-  $('gauges').replaceChildren(...run.gauges.map(gauge));
+  $('gauges').replaceChildren(...[...run.gauges, ...state.jevGauges].map(gauge));
   $('tube-caption').textContent = `${run.sketch} · ${WORDS[run.state]} · ${run.mode}`;
   $('ended').textContent = run.ended;
   $('printer-state').textContent = run.state === 'running' ? 'PRINTING' : WORDS[run.state];
@@ -180,7 +182,46 @@ function fillStageFilter(run) {
   $('find-stage').replaceChildren(make('option', { value: '' }, 'all stages'), ...names.map((name) => make('option', { value: name }, name)));
 }
 
+// The Jev list: what Jev was asked in this run and how sure it was, from the run's captured answers.
+function drawJev() {
+  const jev = state.jev;
+  const unsure = $('jev-unsure').checked;
+  if (!jev) { $('jev-summary').textContent = 'JEV READS'; $('jev-list').replaceChildren(); return; }
+  const flagged = jev.reads.filter((each) => each.flagged).length;
+  $('jev-summary').textContent = jev.kept ? `JEV READS · ${jev.reads.length} read, ${flagged} unsure` : 'JEV READS · none';
+  const items = jev.reads.filter((each) => !unsure || each.flagged).map((each) => make('details', { class: `jev-read ${each.flagged ? 'unsure' : ''}` },
+    make('summary', {}, `${each.source} · ${each.top} ${each.probability.toFixed(2)}${each.flagged ? ' · UNSURE' : ''}`),
+    ...(each.instructions ? [make('div', { class: 'jev-question' }, each.instructions)] : []),
+    ...each.levels.map(([level, probability]) => make('div', { class: 'jev-level' }, `${level} ${probability.toFixed(2)}`))));
+  const notes = [];
+  if (!jev.kept) notes.push(make('div', { class: 'about' }, jev.note));
+  if (jev.missing.length) notes.push(make('div', { class: 'about' }, `missing capture halves: ${jev.missing.join(', ')}`));
+  if (jev.kept && !items.length) notes.push(make('div', { class: 'about' }, unsure ? 'no unsure reads' : 'no reads'));
+  $('jev-list').replaceChildren(...notes, ...items);
+}
+
+async function loadJev(id) {
+  const jev = await getJson(`api/runs/${id}/jev`);
+  if (state.chosen !== id) return;
+  state.jev = jev;
+  state.jevGauges = [];
+  if (jev?.kept && jev.reads.length) {
+    const total = jev.asked + jev.reused;
+    state.jevGauges = [
+      { name: 'SURE', level: jev.confidence, text: jev.confidence.toFixed(2), about: "how sure Jev was of its last read" },
+      { name: 'ASKED', level: total ? jev.asked / total : null, text: `${jev.asked}·${jev.reused}`, about: 'answers asked live · answers reused from a capture' },
+    ];
+  }
+  drawJev();
+  const run = await getJson(`api/runs/${id}`);
+  if (run && state.chosen === id) drawStatus(run);
+}
+
+$('jev-unsure').addEventListener('input', drawJev);
+
 function draw(run) {
+  state.jev = null;
+  state.jevGauges = [];
   state.lines = run.lines;
   setFailures(run.failures);
   fillStageFilter(run);
@@ -217,12 +258,13 @@ async function choose(id) {
   const run = await getJson(`api/runs/${id}`);
   if (!run) return;
   draw(run);
+  loadJev(id);
   if (run.state !== 'running') return;
   const source = new EventSource(`events/${id}`);
   state.follow = source;
   let skip = run.count;
   source.onmessage = (message) => { if (skip > 0) skip -= 1; else append(JSON.parse(message.data)); };
-  source.addEventListener('end', async () => { source.close(); const done = await getJson(`api/runs/${id}`); if (done) drawStatus(done); loadRuns(); });
+  source.addEventListener('end', async () => { source.close(); const done = await getJson(`api/runs/${id}`); if (done) drawStatus(done); loadJev(id); loadRuns(); });
 }
 
 // run-20261031T012507-46140191 reads "10-31 01:25".

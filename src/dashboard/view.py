@@ -20,7 +20,7 @@ TONES = {"stage_failed": "held", "run_finished": "bold", "run_started": "bold"}
 TAIL_BYTES = 8192  # how much of the end of `events.jsonl` is read to find the last event
 
 
-def _read_json(path: Path) -> dict:
+def read_json(path: Path) -> dict:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -196,7 +196,7 @@ def _ended(state: str, run: dict, failure: dict | None, last_at: str | None, now
 def describe(directory: Path, now: datetime | None = None) -> dict:
     """One run as the page draws it."""
     now = now or datetime.now(UTC)
-    run, summary, events = _read_json(directory / "run.json"), _read_json(directory / "summary.json"), read_events(directory)
+    run, summary, events = read_json(directory / "run.json"), read_json(directory / "summary.json"), read_events(directory)
     started = next((each for each in events if each.get("event") == "run_started"), {})
     last_at = events[-1].get("at") if events else None
     state = _state_of(run, last_at, now)
@@ -234,7 +234,7 @@ def list_runs(root: Path, now: datetime | None = None) -> list[dict]:
 def _rack_entry(directory: Path, now: datetime) -> dict:
     """One tab of the rack: the run's id, the sketch it ran (or `unreadable`) and its state."""
     first, last = _edge_events(directory)
-    run = _read_json(directory / "run.json")
+    run = read_json(directory / "run.json")
     state = _state_of(run, last.get("at"), now)
     sketch = "unreadable" if state == "unreadable" else Path(first.get("sketch", "") or run.get("sketch", "") or "?").stem
     return {"id": directory.name, "sketch": sketch, "state": state}

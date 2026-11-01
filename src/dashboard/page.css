@@ -354,3 +354,14 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .find-field:focus-visible, .find-button:focus-visible, .find-check input:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 .no-match { padding: 12px; font-family: VT323, monospace; font-size: 20px; color: #24170a; }
 .paper .line.flash { background: #ffe08a; }
+
+/* Sprint 22 UND-78: the Jev list, and room for two more gauges. */
+.gauges { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+.jev { align-self: stretch; font-family: VT323, monospace; font-size: 18px; color: var(--cream); }
+.jev > summary { cursor: pointer; font-family: Cinzel, serif; font-size: 12px; letter-spacing: 3px; color: var(--brass); padding: 4px 0; }
+.jev > summary:focus-visible, .jev-read > summary:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+.jev-list { max-height: 260px; overflow: auto; margin-top: 4px; }
+.jev-read > summary { cursor: pointer; padding: 1px 4px; }
+.jev-read.unsure > summary { color: #ff9a3c; }
+.jev-question { margin: 2px 0 2px 18px; font-style: italic; opacity: .85; }
+.jev-level { margin-left: 18px; opacity: .85; }

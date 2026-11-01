@@ -137,6 +137,8 @@ class CoffeeRunTests(CoffeeCase):
         summary = self.summary(lines)
         self.assertEqual((summary["mode"], summary["stale"], summary["jev_requests"]), ("replay", False, 0))
         self.assertEqual(summary["weather_change_weights"], {"hot": 0.8925, "iced": 0.1075})
+        manifest = json.loads((self.folder(lines) / "run.json").read_text(encoding="utf-8"))
+        self.assertEqual(manifest["replay_of"], "tests/fixtures/coffee/replay")  # the console reads the replayed answers from here
         self.assertEqual(read_jsonl(self.folder(lines) / "ingredients.jsonl"),
                          [{"amount": 32000, "ingredient": "coffee_beans", "unit": "g"}])
 

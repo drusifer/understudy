@@ -37,13 +37,16 @@ class CaptureStore:
         """Saved runs, newest first (run ids start with their timestamp)."""
         return sorted((p.name for p in self.root.iterdir() if p.is_dir()), reverse=True) if self.root.is_dir() else []
 
-    def write(self, run_id: str, key: str, rows: list[dict], request_hash: str) -> None:
+    def write(self, run_id: str, key: str, rows: list[dict], request_hash: str, instructions: str | None = None) -> None:
+        """Store one read. `instructions` is the rubric's question (the sketch's own words, never the data Jev read)."""
         directory = self.run_dir(run_id)
         directory.mkdir(parents=True, exist_ok=True)
         lines = "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows)
         (directory / f"{key}.jsonl").write_text(lines, encoding="utf-8")
         meta = {"run_id": run_id, "source": key, "request_hash": request_hash,
                 "captured_at": datetime.now(UTC).isoformat(timespec="seconds")}
+        if instructions is not None:
+            meta["instructions"] = instructions
         (directory / f"{key}.meta.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
 
     def prune(self) -> None:

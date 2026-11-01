@@ -194,8 +194,10 @@ async def run_sketch(
     directory = out / f"run-{datetime.now(UTC).strftime('%Y%m%dT%H%M%S')}-{uuid.uuid4().hex[:8]}"
     directory.mkdir(parents=True)
     files = [f for sink in sketch.sinks.values() for f in (sink.file, f"{sink.file}.part")]
-    record = EventedRecord(directory, announce, cleanup=[*files, "summary.json"], mode=capture.mode, sketch=sketch.name,
-                           **{"with": dict(sketch.variables)})
+    facts = {"with": dict(sketch.variables)}
+    if capture.replay_dir:
+        facts["replay_of"] = _shown_path(capture.replay_dir)
+    record = EventedRecord(directory, announce, cleanup=[*files, "summary.json"], mode=capture.mode, sketch=sketch.name, **facts)
     record.emit("run_started", sketch=_shown_path(sketch.path), mode=capture.mode)
     if capture.replay_dir:
         announce(f"replay: reading captures from {capture.replay_dir}, no live calls")

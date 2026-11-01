@@ -121,5 +121,5 @@ class Sources:
         if self.jev is None:
             raise JevError(f"{key} needs Jev, and this run has none")
         rows = await jev_source.read_live(self.jev, config, asked["state"])
-        self.capture.store.write(self.run_id, key, rows, digest)
+        self.capture.store.write(self.run_id, key, rows, digest, config["instructions"])
         return rows
