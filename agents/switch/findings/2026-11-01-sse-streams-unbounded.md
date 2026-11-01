@@ -1,7 +1,7 @@
 # SEC-001: Event streams in the console are unbounded (`src/dashboard/server.py` `follow`)
 
 - **Severity:** Medium — anyone on the network can open streams until the Pi runs out of threads or memory and the console stops answering; only the console is affected, not the run files.
-- **Status:** Open
+- **Status:** Fixed (2026-11-01): `MAX_STREAMS = 32` (a further watcher gets 503 "too many watchers"), `IDLE_SECONDS = 600` ends a silent stream; tests `StreamLimitTest`. Re-probe: 200 streams now hold 34 threads (was 202) and fall back to 2 when the clients close.
 - **Verdict:** No blocking findings
 - **Date / author:** 2026-11-01 / Switch
 - **Affected:** `src/dashboard/server.py` `follow()` and `ThreadingHTTPServer` (one thread per request, no cap)

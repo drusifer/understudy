@@ -1,14 +1,16 @@
 """The dashboard server: the printed lines, gauges and tube from a run's files, and the HTTP routes."""
 
 import json
+import socket
 import tempfile
 import threading
+import time
 import unittest
 import urllib.error
 import urllib.request
 from pathlib import Path
 
-from src.dashboard.server import describe, gauges_of, list_runs, printed, read_events, serve
+from src.dashboard.server import describe, follow, gauges_of, list_runs, printed, read_events, serve
 
 EVENTS = [
     {"event": "run_started", "at": "2026-10-31T01:00:00+00:00", "sketch": "examples/x/coffee.yaml", "mode": "live"},
@@ -116,6 +118,83 @@ class ServerTest(unittest.TestCase):
         _, body = self.get("/events/run-20261031T010000-aa11bb22")
         self.assertEqual(body.count("data: {"), 5 + 1)  # five lines and the end marker's empty object
         self.assertIn("event: end", body)
+
+
+class StreamLimitTest(unittest.TestCase):
+    """SEC-001: a run that never finishes must not hold a server thread forever, and watchers are capped."""
+
+    def setUp(self):
+        self.folder = tempfile.TemporaryDirectory()
+        self.addCleanup(self.folder.cleanup)
+        self.root = Path(self.folder.name)
+        self.directory = make_run(self.root, "run-20261101T120000-00000000", EVENTS[:2], finished=False)
+
+    def test_a_stream_with_no_new_line_for_the_idle_limit_ends(self):
+        chunks = b"".join(follow(self.directory, poll_seconds=0.01, idle_seconds=0.1))
+        self.assertIn(b"event: end", chunks)
+
+    def test_a_stream_that_keeps_getting_lines_does_not_idle_out(self):
+        stream = follow(self.directory, poll_seconds=0.01, idle_seconds=0.3)
+        next(stream)
+        with (self.directory / "events.jsonl").open("a") as events:
+            events.write(json.dumps({"event": "stage_started", "at": "2026-11-01T12:00:03+00:00", "stage": "more"}) + "\n")
+        chunks = [next(stream) for _ in range(3)]
+        self.assertTrue(any(b"more" in each for each in chunks))
+        stream.close()
+
+    def test_watchers_beyond_the_cap_are_refused_with_503_and_a_freed_place_is_reused(self):
+        server = serve(self.root, port=0, max_streams=2)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        port = server.server_address[1]
+
+        def open_stream() -> socket.socket:
+            sock = socket.create_connection(("127.0.0.1", port), timeout=5)
+            sock.sendall(b"GET /events/run-20261101T120000-00000000 HTTP/1.0\r\n\r\n")
+            return sock
+
+        first, second = open_stream(), open_stream()
+        self.assertIn(b"200", first.recv(64))
+        self.assertIn(b"200", second.recv(64))
+        third = open_stream()
+        self.assertIn(b"503", third.recv(64))
+        third.close()
+        first.close()
+        deadline = time.monotonic() + 5
+        status = b""
+        while b"200" not in status and time.monotonic() < deadline:
+            fourth = open_stream()
+            status = fourth.recv(64)
+            fourth.close()
+            time.sleep(0.1)
+        self.assertIn(b"200", status)
+        second.close()
+
+
+class SecurityHeadersTest(unittest.TestCase):
+    """SEC-003: every response carries the browser security headers."""
+
+    def test_pages_api_and_errors_carry_the_headers(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            make_run(root)
+            server = serve(root, port=0)
+            threading.Thread(target=server.serve_forever, daemon=True).start()
+            self.addCleanup(server.server_close)
+            self.addCleanup(server.shutdown)
+            base = f"http://127.0.0.1:{server.server_address[1]}"
+            for path in ("/", "/api/runs", "/page.js", "/nope"):
+                try:
+                    response = urllib.request.urlopen(base + path, timeout=5)
+                    headers = response.headers
+                    response.close()
+                except urllib.error.HTTPError as error:
+                    headers = error.headers
+                self.assertEqual(headers["X-Content-Type-Options"], "nosniff", path)
+                self.assertIn("frame-ancestors 'none'", headers["Content-Security-Policy"], path)
+                self.assertIn("default-src 'self'", headers["Content-Security-Policy"], path)
+                self.assertEqual(headers["Referrer-Policy"], "no-referrer", path)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 # SEC-003: Console responses carry no browser security headers (`src/dashboard/server.py` `_send`)
 
 - **Severity:** Low — the page loads only its own files and writes text with `textContent`, so no script injection path was found; headers are a second line of defence.
-- **Status:** Open
+- **Status:** Fixed (2026-11-01): the three headers are on every response and on the event stream; test `SecurityHeadersTest`; confirmed with `curl -si` against the restarted console.
 - **Verdict:** No blocking findings
 - **Date / author:** 2026-11-01 / Switch
 - **Affected:** `src/dashboard/server.py` `Handler._send` and `_follow`

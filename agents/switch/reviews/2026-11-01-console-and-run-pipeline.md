@@ -4,7 +4,7 @@
 - **Date / reviewer:** 2026-11-01 / Switch
 - **Target and version:** `understudy dashboard` (`src/dashboard/server.py`, `page.js`, `page.html`), the dashboard command in `src/sketch/cli.py`, run output (`src/sketch/run.py`, `src/paths.py`), Jev capture (`src/sketch/sources/capture.py`), dependency set (`pyproject.toml`, `uv.lock`); `main` at 5cd0927 plus `sprint-22` commit 13d7bbf
 - **Assurance level:** L2 standard — a network-reachable, unauthenticated server that reads files and (from Sprint 22) will start processes, handling the owner's private financial exports
-- **Findings:** 4 total: Critical 0, High 0, Medium 1, Low 2, Info 1
+- **Findings:** 4 total: Critical 0, High 0, Medium 1, Low 2, Info 1 (SEC-001 and SEC-003 fixed the same day; open: SEC-004 Info; SEC-002 accepted)
 - **Related work:** Sprint 21 UND-74, decision 4 (listen on 0.0.0.0); Sprint 22 UND-79; ADR-0048; UND-54 (private output rule)
 
 ## Next Action
@@ -61,4 +61,4 @@ The console was built read-only for one owner on a trusted machine and then open
 
 - **Re-review needed:** Yes, at the Sprint 22 design gate and again after UND-79 is built
 - **Risk acceptance:** SEC-002 accepted by the owner on 2026-11-01, expires 2026-12-01; no other acceptance
-- **Verification:** Pending: SEC-001 and SEC-003 fixes with tests; the dependency audit once a target exists
+- **Verification:** SEC-001 and SEC-003 fixed and verified 2026-11-01 (tests added, `bobp make check` green with 237 tests, 200-stream probe held at 34 threads, headers seen with `curl`). Still pending: the dependency audit once a target exists; SEC-004 with Sprint 23.
