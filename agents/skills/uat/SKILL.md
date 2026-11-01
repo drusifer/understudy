@@ -1,8 +1,6 @@
 ---
 name: uat
 description: User acceptance and usability verification work-loop. Executes end-to-end acceptance scenarios, audits UX ergonomics, and signs off against business criteria.
-triggers: ["*uat", "/uat"]
-requires: ["bob-protocol", "chat", "make", "prep-clear", "fix"]
 ---
 
 User acceptance testing (UAT) and usability verification work-loop: validates whole-system customer experience and acceptance criteria.
@@ -14,6 +12,14 @@ TLDR:
     Defect handling: Any failure halts UAT and immediately spawns a targeted `*fix` loop.
 
 # User Acceptance & Usability Work-Loop (`uat`)
+
+## Triggers
+
+`*uat`, `/uat`
+
+## Requires
+
+`bob-protocol`, `chat`, `make`, `prep-clear`, `fix`
 
 ## Overview
 

@@ -1,8 +1,6 @@
 ---
 name: fix
 description: Defect and bugfix work-loop. Diagnoses, confirms root cause with the user, applies surgical fixes with reproduction tests, and verifies zero regressions.
-triggers: ["*fix", "/fix"]
-requires: ["bob-protocol", "chat", "make", "prep-clear"]
 ---
 
 Defect and bugfix work-loop: diagnoses, confirms root cause, and applies targeted fixes with regression tests.
@@ -14,6 +12,14 @@ TLDR:
     Anti-loop rule: If fix fails twice, consult Oracle before retry; escalate to user before attempt 3.
 
 # Bugfix & Defect Work-Loop (`fix`)
+
+## Triggers
+
+`*fix`, `/fix`
+
+## Requires
+
+`bob-protocol`, `chat`, `make`, `prep-clear`
 
 ## Overview
 

@@ -1,20 +1,26 @@
 ---
 name: bloop
-description: Work-Loops conductor and catalog. Autonomous multi-persona execution loops for features (*impl), bugfixes (*fix), refactoring (*refactor), spikes (*spike), UAT (*uat), and deployments (*deploy).
-triggers: ["*bloop", "/bloop", "*work-loop"]
-requires: ["bob-protocol", "chat", "make", "prep-clear", "impl", "fix", "refactor", "spike", "uat", "deploy"]
+description: Work-Loops conductor and catalog. Autonomous multi-persona execution loops for features (*impl), bugfixes (*fix), refactoring (*refactor), spikes (*spike), UAT (*uat), deployments (*deploy), and agent/skill evaluation (*judge).
 ---
 
 Top-level conductor and catalog for Bob Work-Loops (autonomous multi-persona execution chains).
 
 TLDR:
     Work Loops are the atomic engineering execution units of Bob Protocol, deferred to by Sprint Planning.
-    Six specialized Work Loops: Feature (*impl), Bugfix (*fix), Tech Debt (*refactor), Spike (*spike), UAT (*uat), and Deploy (*deploy).
+    Seven specialized Work Loops: Feature (*impl), Bugfix (*fix), Tech Debt (*refactor), Spike (*spike), UAT (*uat), Deploy (*deploy), and Agent/Skill Quality (*judge).
     Each loop runs autonomously to completion — saving state and posting handoffs at every persona transition.
     Context Budget: If context > 60% between work loops, run *prep-clear before /clear.
     Anti-Loop Guard: Max 2 failures before Oracle consultation and user escalation.
 
 # Bloop — Work-Loops Conductor & Catalog
+
+## Triggers
+
+`*bloop`, `/bloop`, `*work-loop`
+
+## Requires
+
+`bob-protocol`, `chat`, `make`, `prep-clear`, `impl`, `fix`, `refactor`, `spike`, `uat`, `deploy`, `judge`
 
 ## Overview
 
@@ -34,6 +40,7 @@ In the Bob Protocol SDLC hierarchy, **Planning Loops** (`epic` $\rightarrow$ `st
 | **Spike** | `*spike <topic>` | Cunningham / Singer (*Shape Up*) | **Disposable**: Timeboxed exploration. Commits zero production code; produces `FINDING.md`. | [skills/spike](spike/SKILL.md) |
 | **UAT** | `*uat <scope>` | Crispin & Gregory (*Agile Testing*) | **Real-World Experience**: Evaluates whole user journey against acceptance criteria & UX rubrics. | [skills/uat](uat/SKILL.md) |
 | **Deploy** | `*deploy <env>` | Humble & Farley (*Continuous Delivery*) | **Pipeline as Code**: Driven through Makefile targets in `docs/SDLC.md` + post-deploy smoke test. | [skills/deploy](deploy/SKILL.md) |
+| **Agent/Skill Quality** | `*judge <persona-or-skill>` | Eval-driven development | **Evidence-Led Revision**: Run a fixed scenario and rubric, fix diagnosed behavior, then verify in a fresh fixture; never retry unchanged prompts until green. | [skills/judge](judge/SKILL.md) |
 
 ---
 

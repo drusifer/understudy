@@ -1,7 +1,6 @@
 ---
 name: bob-tools
 description: Use when working in a BobProtocol project and you need to understand or run the bobp CLI subcommands, especially chat, chat-diagram, make, setup-agent-links, and teardown-agent-links. This skill explains which commands to run, what each writes, and how to avoid flooding Codex context.
-triggers: ["bobp chat", "bobp make", "bobp setup-agent-links", "bobp teardown-agent-links", "bob tools", "BobProtocol tools"]
 ---
 
 One-line summary: Use BobProtocol's tools through the `bobp` CLI's stable subcommands — never reach for the implementation modules under `bobp.tools` directly.
@@ -14,6 +13,10 @@ TLDR:
     Use `bobp teardown-agent-links --dry-run` to inspect generated links before removing them.
 
 # BobProtocol Tools
+
+## Triggers
+
+`bobp chat`, `bobp make`, `bobp setup-agent-links`, `bobp teardown-agent-links`, `bob tools`, `BobProtocol tools`
 
 ## Tool Map
 
@@ -49,7 +52,7 @@ Notes:
 
 ## bobp chat-diagram
 
-`agents/CHAT.diagram.md` is a derived Mermaid `sequenceDiagram` view of `agents/CHAT.md` — one arrow per `Persona->recipient` message, grouped with a date `Note` whenever the day changes, with build-status entries filtered out by default (they're noise for following the persona-to-persona conversation, not part of it). It's regenerated automatically by `bobp chat`; it's a read-only artifact for humans — don't hand-edit it, and agents shouldn't parse it back for context (read `agents/CHAT.md` itself, per the `chat` skill).
+`agents/CHAT.diagram.md` is a derived Mermaid `sequenceDiagram` view of `agents/CHAT.md` — one arrow per `Persona->recipient` message, grouped with a date `Note` whenever the day changes, with build-status entries filtered out by default (they're noise for following the persona-to-persona conversation, not part of it). It splits the diagram at phase boundaries (`phase <N>` markers), sprint close (`pm launch`), and epic close (the transition from `plan epic` to `plan story`, or an explicit `epic close`): the diagram closes, a markdown section recaps the close-out (and announces the next phase), and a new self-contained diagram begins. These are deterministic recaps of logged outcome messages, not generated from hidden context. It's regenerated automatically by `bobp chat`; it's a read-only artifact for humans — don't hand-edit it, and agents shouldn't parse it back for context (read `agents/CHAT.md` itself, per the `chat` skill).
 
 Regenerate on demand, e.g. after manually editing `CHAT.md` or archiving old messages:
 

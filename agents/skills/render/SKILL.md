@@ -1,8 +1,6 @@
 ---
 name: render
 description: Render CLI usage guide for InvestaCo. All Render operations must be backed by static config (render.yaml) or a repeatable Makefile target — never one-off CLI commands. Covers deploys, logs, blueprint validation, and env var management.
-triggers: ["*render", "*devops deploy", "*devops infra", "*devops monitor", "render cli", "render deploy"]
-requires: ["make", "bob-tools"]
 ---
 
 One-line summary: All Render operations go through `make <target>` or `render.yaml` — never raw one-off CLI commands.
@@ -14,6 +12,14 @@ TLDR:
     render.yaml is the source of truth for service config; CLI is for operations (deploys, logs, sessions).
 
 # Render CLI — InvestaCo
+
+## Triggers
+
+`*render`, `*devops deploy`, `*devops infra`, `*devops monitor`, `render cli`, `render deploy`
+
+## Requires
+
+`make`, `bob-tools`
 
 ## Core Principle
 

@@ -1,8 +1,6 @@
 ---
 name: impl
 description: Feature implementation work-loop. Delivers new capabilities through Test-Driven Development (TDD), acceptance verification, and code review.
-triggers: ["*impl", "/impl"]
-requires: ["bob-protocol", "chat", "make", "prep-clear", "fix"]
 ---
 
 Feature implementation work-loop: executes bounded feature tasks using strict Test-Driven Development (TDD).
@@ -10,10 +8,18 @@ Feature implementation work-loop: executes bounded feature tasks using strict Te
 TLDR:
     Literature: Kent Beck (*Test-Driven Development: By Example* & *Extreme Programming Explained*).
     Invariant: Test-First. Every new capability must be driven by an observable failing test before production code is written.
-    Chain: Neo (TDD: Red-Green-Refactor) → Trin (Verify acceptance) → Morpheus (Code review) → [Tank if infra] → [Smith if UX] → [Context check].
+    Chain: Neo (TDD: Red-Green-Refactor) → Trin (Verify acceptance) → Switch (Security review) → Morpheus (Code review) → [Tank if infra] → [Smith if UX] → [Context check].
     If verification fails: delegates to `*fix` loop; max 2 failures before Oracle escalation.
 
 # Feature Implementation Work-Loop (`impl`)
+
+## Triggers
+
+`*impl`, `/impl`
+
+## Requires
+
+`bob-protocol`, `chat`, `make`, `prep-clear`, `fix`
 
 ## Overview
 
@@ -44,7 +50,11 @@ flowchart TD
     Step2 --> BranchTrin{"Trin Verifies?"}
     BranchTrin -- "Fails" --> FailTrin["Delegate to *fix Loop (max 2)"]
     FailTrin --> Step1
-    BranchTrin -- "Passes" --> Step3["3. Morpheus: Code Review (*lead review)"]
+    BranchTrin -- "Passes" --> Step2a["2a. Switch: Security Review (*sec review)"]
+    Step2a --> BranchSwitch{"Switch Clears?"}
+    BranchSwitch -- "Blocked" --> FailSwitch["Neo applies fix / Switch fixes deps (*fix)"]
+    FailSwitch --> Step1
+    BranchSwitch -- "Clears" --> Step3["3. Morpheus: Code Review (*lead review)"]
     Step3 --> BranchMorph{"Morpheus Approves?"}
     BranchMorph -- "Rejects" --> FailMorph["Revise with Neo (*swe fix)"]
     FailMorph --> Step1
@@ -83,7 +93,20 @@ If `<phase>` is "next phase", read `task.md` or `agents/mouse/state.md` to ident
 - **If tests fail**: Do NOT rewrite code as Trin; hand off immediately to Neo via `*fix` with exact failure logs.
 - **Handoff on Pass:**
   ```bash
-  bobp chat "Phase <N> UAT passed; all tests green. @Morpheus *lead review <phase>" --persona Trin --cmd "qa handoff" --to Morpheus
+  bobp chat "Phase <N> UAT passed; all tests green. @Switch *sec review <phase>" --persona Trin --cmd "qa handoff" --to Switch
+  ```
+
+### Step 2a: Switch — Security Implementation Review (`*sec review <phase>`)
+- Review the phase diff against the design gate's threat model and the area checklist in `agents/templates/_template_SECURITY_REVIEW.md`; confirm gitleaks is set up; run `bobp make security-scan` when dependencies, manifests, workflows, or secrets handling changed.
+- Switch fixes vulnerable dependencies itself and proposes patches for application source; Neo applies those through `*fix`, then Trin re-verifies and Switch re-reviews.
+- **Depth scales with risk**: a phase with no security-relevant change gets a one-line quick pass naming what was checked. The verdict line is always posted: `security gate (phase N): No blocking findings` or `Blocked SEC-NNN`. An open High or Critical finding blocks the phase.
+- **Handoff on Clear:**
+  ```bash
+  bobp chat "Security gate phase <N>: No blocking findings. @Morpheus *lead review <phase>" --persona Switch --cmd "sec handoff" --to Morpheus
+  ```
+- **Handoff on Blocked:**
+  ```bash
+  bobp chat "Security gate phase <N>: Blocked SEC-NNN. Proposed fix in finding. @Neo *swe fix SEC-NNN" --persona Switch --cmd "sec reject" --to Neo
   ```
 
 ### Step 3: Morpheus — Code & Architectural Review (`*lead review <phase>`)

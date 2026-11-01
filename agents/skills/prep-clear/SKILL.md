@@ -1,8 +1,6 @@
 ---
 name: prep-clear
 description: Prepare active persona and workspace state before clearing or compacting LLM context. Flushes in-flight decisions, records completed items, writes an explicit cold-start resume plan to state.md, and posts a checkpoint to CHAT.md.
-triggers: ["*prep-clear", "/prep-clear", "*checkpoint", "*prep-compact", "*chat prep-clear"]
-requires: ["bob-protocol", "chat", "init"]
 ---
 
 Prepares the active agent persona and workspace state before clearing, compacting, or resetting LLM context.
@@ -14,6 +12,14 @@ TLDR:
     Logs checkpoint to `agents/CHAT.md`, confirms memory is saved, and signals user to safely execute `/clear`.
 
 # Bob Protocol — Context Clear Preparation Skill (`prep-clear`)
+
+## Triggers
+
+`*prep-clear`, `/prep-clear`, `*checkpoint`, `*prep-compact`, `*chat prep-clear`
+
+## Requires
+
+`bob-protocol`, `chat`, `init`
 
 ## Overview
 

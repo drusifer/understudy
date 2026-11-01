@@ -1,12 +1,15 @@
 ---
 name: make
 description: Wrap a project's own `make <target>` with output capture (build/build.out) and a CHAT.md status post. Use `bobp make [-v|-vv|-vvv] <target>` — never bare `make`.
-triggers: ["*make", "*build"]
 ---
 
 One-line summary: Run `bobp make <target>` — never call bare `make`, never call `bobp.tools.make` directly, never pipe the output.
 
 # Make Skill
+
+## Triggers
+
+`*make`, `*build`
 
 ## Load this BEFORE your first raw build command
 

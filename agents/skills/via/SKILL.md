@@ -1,11 +1,17 @@
 ---
 name: via
 description: Guidelines for writing efficient via relationship queries.
-triggers: ["*via", "*via help", "*via query"]
-requires: ["bob-protocol", "chat", "make"]
 ---
 
 # Via — Guidelines for Efficient Relationship Queries
+
+## Triggers
+
+`*via`, `*via help`, `*via query`
+
+## Requires
+
+`bob-protocol`, `chat`, `make`
 
 This skill outlines guidelines for writing efficient `via` relationship queries within the project workspace, ensuring optimal token usage, performance, and developer efficiency.
 

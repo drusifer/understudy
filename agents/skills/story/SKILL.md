@@ -1,8 +1,6 @@
 ---
 name: story
 description: User story and architecture specification planning loop. Slices epics into testable, independent stories with explicit acceptance criteria, system architecture, ADRs, and quality strategies.
-triggers: ["*plan story", "/story"]
-requires: ["bob-protocol", "chat", "prep-clear", "sprint"]
 ---
 
 Story and architecture specification planning loop: slices epics into actionable user stories, ADRs, and acceptance criteria.
@@ -14,6 +12,14 @@ TLDR:
     Defers to: Sprint Planning & Cadence Loop (`*plan sprint`).
 
 # Story & Architecture Specification Loop (`story`)
+
+## Triggers
+
+`*plan story`, `/story`
+
+## Requires
+
+`bob-protocol`, `chat`, `prep-clear`, `sprint`
 
 ## Overview
 
