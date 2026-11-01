@@ -21,7 +21,8 @@
     </div>
     <div class="bulbs" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
   </div>
-  <div class="looks">
+  <button type="button" id="looks-toggle" class="looks-toggle" aria-expanded="false" aria-controls="looks">LOOK</button>
+  <div class="looks" id="looks">
     <div class="theme-switch" role="group" aria-label="Theme">
       <span class="theme-label">THEME</span>
       <button type="button" class="theme-choice" data-theme="steampunk" aria-pressed="true">STEAMPUNK</button>
@@ -46,6 +47,9 @@
   <div id="rack" class="rack-list" role="tablist"></div>
 </nav>
 
+<div id="offline" class="offline" role="status" hidden>DISCONNECTED - retrying. What you see may be out of date.</div>
+<div id="banner-slot" role="status"></div>
+
 <main id="console" class="stage watch">
   <section id="printer" class="printer" aria-label="Printer">
     <div class="printer-head"><span>RUN LOG · PRINTER</span><span id="printer-state">IDLE</span></div>
@@ -60,8 +64,10 @@
 
   <section class="tube-panel" aria-label="Stage tube">
     <div class="panel-head"><span>STAGE TUBE</span><span id="tube-caption" class="about">no run chosen</span></div>
+    <div id="ended" class="ended about"></div>
     <div id="tube" class="tube stages"></div>
     <div id="gauges" class="gauges" role="group" aria-label="Gauges"></div>
+    <dl id="summary" class="summary" aria-label="Run summary"></dl>
   </section>
 </main>
 </div>

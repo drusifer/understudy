@@ -8,6 +8,7 @@ import time
 import unittest
 import urllib.error
 import urllib.request
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from src.dashboard.server import describe, follow, gauges_of, list_runs, printed, read_events, serve
@@ -53,7 +54,7 @@ class DescribeTest(unittest.TestCase):
         self.assertEqual((gauges["JEV"]["text"], gauges["JEV"]["level"]), ("250", 0.25))
         self.assertEqual(gauges["ELAPSED"]["text"], "30s")
         self.assertEqual(run["tube"], [{"name": "read", "state": "complete"}, {"name": "write", "state": "failed"}])
-        self.assertEqual((run["sketch"], run["status"], run["count"]), ("coffee", "complete", 5))
+        self.assertEqual((run["sketch"], run["state"], run["count"]), ("coffee", "done", 5))
 
     def test_a_run_with_no_files_reads_as_empty_gauges(self):
         self.assertEqual([each["level"] for each in gauges_of({}, {}, [])], [0, 0, 0, 0])
@@ -118,6 +119,70 @@ class ServerTest(unittest.TestCase):
         _, body = self.get("/events/run-20261031T010000-aa11bb22")
         self.assertEqual(body.count("data: {"), 5 + 1)  # five lines and the end marker's empty object
         self.assertIn("event: end", body)
+
+
+def make_manifest(root: Path, name: str, manifest: dict, events=EVENTS, summary: dict | None = None) -> Path:
+    directory = root / name
+    directory.mkdir(parents=True)
+    (directory / "events.jsonl").write_text("".join(json.dumps(each) + "\n" for each in events), encoding="utf-8")
+    (directory / "run.json").write_text(json.dumps(manifest), encoding="utf-8")
+    (directory / "summary.json").write_text(json.dumps(summary or {}), encoding="utf-8")
+    return directory
+
+
+class RunStateTest(unittest.TestCase):
+    """UND-76: the console says plainly how a run went."""
+
+    def setUp(self):
+        self.folder = tempfile.TemporaryDirectory()
+        self.addCleanup(self.folder.cleanup)
+        self.root = Path(self.folder.name)
+
+    def test_a_finished_run_is_done_and_says_so_in_one_line_with_what_it_produced(self):
+        manifest = {"status": "complete", "mode": "live", "outcome": "all_done", "with": {"mood": "calm"},
+                    "stages": {"read": "complete", "write": "complete"}, "outputs": {"report.jsonl": 3}}
+        run = describe(make_manifest(self.root, "run-20261101T100000-aaaaaaaa", manifest, summary={"stale": False}))
+        self.assertEqual(run["state"], "done")
+        self.assertEqual(run["ended"], "done after 2 stages, outcome all_done")
+        self.assertEqual(run["summary"]["with"], {"mood": "calm"})
+        self.assertEqual(run["summary"]["outputs"], {"report.jsonl": 3})
+        self.assertEqual((run["summary"]["mode"], run["summary"]["stale"], run["summary"]["seconds"]), ("live", False, 30))
+        self.assertIsNone(run["failure"])
+
+    def test_a_failed_run_names_the_stage_the_reason_and_the_printed_line(self):
+        manifest = {"status": "failed", "failed_stage": "write", "error": "boom", "stages": {"read": "complete"}}
+        run = describe(make_manifest(self.root, "run-20261101T100000-bbbbbbbb", manifest))
+        self.assertEqual(run["state"], "failed")
+        self.assertEqual(run["failure"], {"stage": "write", "reason": "boom", "line": 3})
+        self.assertEqual(run["ended"], "failed at write: boom")
+
+    def test_a_stopped_run_reads_as_stopped(self):
+        run = describe(make_manifest(self.root, "run-20261101T100000-cccccccc", {"status": "stopped", "stages": {}}, EVENTS[:2]))
+        self.assertEqual(run["state"], "stopped")
+
+    def test_a_run_still_going_is_running_until_ten_minutes_of_silence_then_stalled(self):
+        directory = make_manifest(self.root, "run-20261101T100000-dddddddd", {"status": "running", "stages": {}}, EVENTS[:2])
+        last = datetime.fromisoformat(EVENTS[1]["at"])
+        self.assertEqual(describe(directory, now=last + timedelta(minutes=5))["state"], "running")
+        self.assertEqual(describe(directory, now=last + timedelta(minutes=11))["state"], "stalled")
+
+    def test_a_stalled_run_says_how_long_in_a_sensible_unit(self):
+        directory = make_manifest(self.root, "run-20261101T100000-ffffffff", {"status": "running", "stages": {}}, EVENTS[:2])
+        last = datetime.fromisoformat(EVENTS[1]["at"])
+        self.assertIn("for 30 minutes", describe(directory, now=last + timedelta(minutes=30))["ended"])
+        self.assertIn("for 5 hours", describe(directory, now=last + timedelta(hours=5))["ended"])
+        self.assertIn("for 10 days", describe(directory, now=last + timedelta(days=10))["ended"])
+
+    def test_the_rack_labels_an_unreadable_run_as_such(self):
+        (self.root / "run-20261101T100000-eeeeeeee").mkdir()
+        self.assertEqual(list_runs(self.root)[0]["sketch"], "unreadable")
+
+    def test_a_folder_with_no_readable_files_is_unreadable_and_does_not_break_the_others(self):
+        (self.root / "run-20261101T100000-eeeeeeee").mkdir()
+        run = describe(self.root / "run-20261101T100000-eeeeeeee")
+        self.assertEqual((run["state"], run["id"]), ("unreadable", "run-20261101T100000-eeeeeeee"))
+        self.assertIn("no details", run["ended"])
+        self.assertEqual(len(list_runs(self.root)), 1)
 
 
 class StreamLimitTest(unittest.TestCase):

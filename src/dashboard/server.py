@@ -14,7 +14,7 @@ import json
 import re
 import threading
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -25,6 +25,10 @@ STATIC_TYPES = {".html": "text/html", ".css": "text/css", ".js": "text/javascrip
 STATIC_NAMES = re.compile(r"(page\.html|page\.css|page\.js|theme-[a-z-]+\.css|fonts/[a-z0-9-]+\.woff2)")
 JEV_FULL_SCALE = 1000  # the JEV gauge reads full at this many requests
 ELAPSED_FULL_SCALE = 600  # the ELAPSED gauge reads full at this many seconds
+DAY = 86400
+AGE_UNITS = (("minutes", 60, 2 * 3600), ("hours", 3600, 2 * DAY))  # unit, seconds per unit, age at which the next unit starts
+STALL_SECONDS = 600  # a running run with no new event for this long reads as stalled
+RUN_STATES = {"complete": "done", "failed": "failed", "stopped": "stopped"}
 MAX_STREAMS = 32  # watchers at once; more get a 503 (SEC-001)
 IDLE_SECONDS = 600  # a stream with no new line for this long ends (SEC-001)
 SECURITY_HEADERS = {  # SEC-003
@@ -93,16 +97,67 @@ def gauges_of(run: dict, summary: dict, events: list[dict]) -> list[dict]:
     ]
 
 
-def describe(directory: Path) -> dict:
+def _state_of(run: dict, events: list[dict], now: datetime) -> str:
+    """running, done, failed, stopped, stalled (a running run silent for ten minutes) or unreadable (nothing to read)."""
+    if not run and not events:
+        return "unreadable"
+    state = RUN_STATES.get(run.get("status", "running"), "running")
+    last = events[-1].get("at") if events else None
+    if state == "running" and last and (now - datetime.fromisoformat(last)).total_seconds() > STALL_SECONDS:
+        return "stalled"
+    return state
+
+
+def _failure_of(run: dict, events: list[dict]) -> dict | None:
+    """The stage and reason a failed run stopped on, and the index of its printed line."""
+    if run.get("status") != "failed":
+        return None
+    line = next((index for index in range(len(events) - 1, -1, -1) if events[index].get("event") == "stage_failed"), None)
+    return {"stage": run.get("failed_stage", "?"), "reason": run.get("error", ""), "line": line}
+
+
+def _ago(seconds: float) -> str:
+    """A length of time in the largest unit that keeps it short: minutes, hours or days."""
+    for unit, size, until in AGE_UNITS:
+        if seconds < until:
+            return f"{int(seconds // size)} {unit}"
+    return f"{int(seconds // DAY)} days"
+
+
+def _ended(state: str, run: dict, failure: dict | None, events: list[dict], now: datetime) -> str:
+    """One line saying how the run ended (empty while it is still going)."""
+    if state == "done":
+        done = sum(1 for each in run.get("stages", {}).values() if each == "complete")
+        outcome = f", outcome {run['outcome']}" if run.get("outcome") else ""
+        return f"done after {done} stages{outcome}"
+    if state == "failed" and failure:
+        return f"failed at {failure['stage']}: {failure['reason']}"
+    if state == "stopped":
+        return "stopped before it finished"
+    if state == "stalled":
+        return f"no new events for {_ago((now - datetime.fromisoformat(events[-1]['at'])).total_seconds())}; the run may have died"
+    return "no details for this run" if state == "unreadable" else ""
+
+
+def describe(directory: Path, now: datetime | None = None) -> dict:
     """One run as the page draws it."""
+    now = now or datetime.now(UTC)
     run, summary, events = _read_json(directory / "run.json"), _read_json(directory / "summary.json"), read_events(directory)
     started = next((each for each in events if each.get("event") == "run_started"), {})
+    state = _state_of(run, events, now)
+    failure = _failure_of(run, events)
     return {
         "id": directory.name,
         "sketch": Path(started.get("sketch", run.get("sketch", "?"))).stem,
-        "status": run.get("status", "running" if events else "empty"),
+        "state": state,
+        "ended": _ended(state, run, failure, events, now),
+        "failure": failure,
+        "summary": {
+            "outcome": run.get("outcome"), "mode": run.get("mode", started.get("mode", "")), "stale": summary.get("stale"),
+            "seconds": round(_seconds(events)), "with": run.get("with", {}), "outputs": run.get("outputs", {}),
+        },
         "mode": run.get("mode", started.get("mode", "")),
-        "tube": [{"name": name, "state": state} for name, state in run.get("stages", {}).items()],
+        "tube": [{"name": name, "state": stage} for name, stage in run.get("stages", {}).items()],
         "gauges": gauges_of(run, summary, events),
         "lines": [printed(each) for each in events],
         "count": len(events),
@@ -114,11 +169,16 @@ def list_runs(root: Path) -> list[dict]:
     if not root.is_dir():
         return []
     names = sorted((each.name for each in root.iterdir() if each.is_dir() and RUN_ID.fullmatch(each.name)), reverse=True)
-    return [
-        {"id": name, "sketch": Path(next((e.get("sketch", "") for e in read_events(root / name)[:1]), "") or "?").stem,
-         "status": _read_json(root / name / "run.json").get("status", "running")}
-        for name in names
-    ]
+    return [_rack_entry(root / name) for name in names]
+
+
+def _rack_entry(directory: Path) -> dict:
+    """One tab of the rack: the run's id, the sketch it ran (or `unreadable`), and its raw status."""
+    events, run = read_events(directory), _read_json(directory / "run.json")
+    if not events and not run:
+        return {"id": directory.name, "sketch": "unreadable", "status": "unreadable"}
+    return {"id": directory.name, "sketch": Path(events[0].get("sketch", "") or "?").stem if events else "?",
+            "status": run.get("status", "running")}
 
 
 def route(root: Path, path: str) -> tuple[str, object]:

@@ -58,29 +58,89 @@ function gauge(each) {
   return node;
 }
 
+const WORDS = { running: 'RUNNING', done: 'DONE', failed: 'FAILED', stopped: 'STOPPED', stalled: 'STALLED', unreadable: 'NO DETAILS' };
+const LAMPS = { running: 'on-air', done: 'done', failed: 'failed', stopped: 'standby', stalled: 'stalled', unreadable: 'dark' };
+
+// The banner above the printer: why a run failed (it jumps to that line), or that a run looks dead.
+function drawBanner(run) {
+  if (run.failure) {
+    const banner = make('button', { type: 'button', class: 'banner', title: 'Show this line in the printer' }, `FAILED at ${run.failure.stage}: ${run.failure.reason}`);
+    banner.addEventListener('click', () => jumpTo(run.failure.line));
+    $('banner-slot').replaceChildren(banner);
+  } else if (run.state === 'stalled') {
+    $('banner-slot').replaceChildren(make('div', { class: 'banner warn' }, run.ended));
+  } else {
+    $('banner-slot').replaceChildren();
+  }
+}
+
+function jumpTo(index) {
+  const lines = $('paper').children;
+  if (index !== null && lines[index]) lines[index].scrollIntoView({ block: 'center' });
+}
+
+function drawSummary(run) {
+  const { summary } = run;
+  const pairs = Object.entries(summary.with);
+  const outputs = Object.entries(summary.outputs);
+  const rows = [
+    ['outcome', summary.outcome ?? '-'], ['mode', summary.mode || '-'], ['stale', summary.stale === null ? '-' : String(summary.stale)],
+    ['took', `${summary.seconds}s`], ['with', pairs.length ? pairs.map(([name, value]) => `${name}=${value}`).join(' ') : '-'],
+    ['wrote', outputs.length ? outputs.map(([file, count]) => `${file} (${count} ${count === 1 ? 'row' : 'rows'})`).join(', ') : '-'],
+  ];
+  $('summary').replaceChildren(...rows.flatMap(([name, value]) => [make('dt', {}, name), make('dd', {}, value)]));
+}
+
+// Everything but the printer's lines, so it can be refreshed while a run goes without losing the reader's place.
+function drawStatus(run) {
+  $('tube').replaceChildren(...run.tube.map((each) => make('div', { class: `stage-lamp ${each.state}` }, make('i'), each.name)));
+  $('gauges').replaceChildren(...run.gauges.map(gauge));
+  $('tube-caption').textContent = `${run.sketch} · ${WORDS[run.state]} · ${run.mode}`;
+  $('ended').textContent = run.ended;
+  $('printer-state').textContent = run.state === 'running' ? 'PRINTING' : WORDS[run.state];
+  $('status-lamp').className = `lamp ${LAMPS[run.state]}`;
+  $('status-text').textContent = WORDS[run.state];
+  drawBanner(run);
+  drawSummary(run);
+  state.chosenState = run.state;
+}
+
 function draw(run) {
   $('paper').replaceChildren(...run.lines.map(line));
   $('paper-window').scrollTop = $('paper-window').scrollHeight;
-  $('tube').replaceChildren(...run.tube.map((each) => make('div', { class: `stage-lamp ${each.state}` }, make('i'), each.name)));
-  $('gauges').replaceChildren(...run.gauges.map(gauge));
-  $('tube-caption').textContent = `${run.sketch} · ${run.status} · ${run.mode}`;
-  $('printer-state').textContent = run.status === 'running' ? 'PRINTING' : run.status.toUpperCase();
-  $('status-lamp').className = `lamp ${run.status === 'running' ? 'on-air' : 'standby'}`;
-  $('status-text').textContent = run.status === 'running' ? 'ON AIR' : 'STANDING BY';
+  drawStatus(run);
+}
+
+// A fetch that says so when the server cannot be reached, and recovers by itself on the next one that works.
+async function getJson(url) {
+  try {
+    const value = await (await fetch(url)).json();
+    setOffline(false);
+    return value;
+  } catch {
+    setOffline(true);
+    return null;
+  }
+}
+
+function setOffline(offline) {
+  $('offline').hidden = !offline;
+  $('console').classList.toggle('stale', offline);
 }
 
 async function choose(id) {
   state.follow?.close();
   state.chosen = id;
   rack();
-  const run = await (await fetch(`api/runs/${id}`)).json();
+  const run = await getJson(`api/runs/${id}`);
+  if (!run) return;
   draw(run);
-  if (run.status !== 'running') return;
+  if (run.state !== 'running') return;
   const source = new EventSource(`events/${id}`);
   state.follow = source;
   let skip = run.count;
   source.onmessage = (message) => { if (skip > 0) skip -= 1; else append(JSON.parse(message.data)); };
-  source.addEventListener('end', async () => { source.close(); draw(await (await fetch(`api/runs/${id}`)).json()); loadRuns(); });
+  source.addEventListener('end', async () => { source.close(); const done = await getJson(`api/runs/${id}`); if (done) drawStatus(done); loadRuns(); });
 }
 
 // run-20261031T012507-46140191 reads "10-31 01:25".
@@ -100,10 +160,21 @@ function rack() {
 }
 
 async function loadRuns() {
-  state.runs = await (await fetch('api/runs')).json();
+  const runs = await getJson('api/runs');
+  if (!runs) return;
+  state.runs = runs;
   rack();
   if (!state.chosen && state.runs.length > 0) choose(state.runs[0].id);
+  else if (state.chosen && ['running', 'stalled'].includes(state.chosenState)) {
+    const run = await getJson(`api/runs/${state.chosen}`);
+    if (run) drawStatus(run);
+  }
 }
+
+$('looks-toggle').addEventListener('click', () => {
+  const open = $('looks').classList.toggle('open');
+  $('looks-toggle').setAttribute('aria-expanded', String(open));
+});
 
 state.theme = known(THEMES, query.get('theme'), remembered('theme'));
 state.mode = known(MODES, query.get('mode'), remembered('mode'));
