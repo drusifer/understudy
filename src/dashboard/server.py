@@ -1,4 +1,4 @@
-"""`understudy dashboard`: a console over the runs under a folder (default `build/runs`).
+"""`understudy dashboard`: a console over the runs under a folder (default `.understudy/runs`).
 
 This module is the HTTP side: it routes a request, serves the page files, follows a run's events and, for someone who
 holds the access secret, starts, replays and stops runs through `runs.py`. What the page shows about a run (the printed

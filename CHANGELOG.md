@@ -9,6 +9,7 @@
 - **The command line keeps its promises:** a busy port or a bad folder is one `understudy:` line and exit 2; `--help` describes each command with examples; `run` prints its run id and how to watch it; `understudy runs` lists runs. **New:** `bobp make security-scan` (gitleaks and pip-audit over every dependency group), `bobp make install-browser` and `test-browser` (the console in a real Chromium: rack, banner, live follow, start and stop, keyboard, and text contrast in all six looks). Text that failed 4.5:1 was fixed in every theme.
 - **Security (Switch):** reviews and findings SEC-001 to SEC-009 in `agents/switch/`: event streams capped and idled out, browser security headers, the sketch path stored relative, the secret kept out of captured output, a Content-Length check; accepted by the owner with expiry: reads open to the network (to 2026-12-01) and the secret over plain HTTP (to 2027-01-30).
 - **Docs:** `docs/PRD.md`, `docs/ARCH.md`, `docs/TEST_STRATEGY.md` and the PRD template are new; ADR-0049.
+- **Breaking:** runs now default to `.understudy/runs` (git-ignored and private, beside the Jev captures) instead of `build/runs`, so `bobp make clean` cannot delete them. Move old runs with `mv build/runs .understudy/runs`; `--out` still chooses another folder.
 
 ## Sprint 21 — the console in Python, and the last Node deleted (2026-11-01, branch `sprint-21`, not yet merged)
 

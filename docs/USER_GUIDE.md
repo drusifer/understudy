@@ -6,7 +6,7 @@ TLDR:
     Setup: `bobp make install`; for a run that asks Jev, `export TYPESAFE_API_KEY=...` (or put it in `.env`).
     Run: `bobp make run ARGS="run tests/fixtures/coffee/coffee_week.yaml"`; check without running: `ARGS="check <sketch>"`.
     Offline: add `--replay` to run from the last captured Jev answer, with no key and no network.
-    Output: ingredient rows and a counts-only summary under `build/runs/run-<stamp>-<id>/`; exit 0 / 1 / 2.
+    Output: ingredient rows and a counts-only summary under `.understudy/runs/run-<stamp>-<id>/`; exit 0 / 1 / 2.
     Your own: copy `tests/fixtures/coffee/coffee_week.yaml`, change the data and the rules, `check` until it says ok.
     Reference: docs/SKETCHES.md. Design: docs/sprints/DESIGN_SKETCH_MODEL.md.
 
@@ -65,12 +65,12 @@ stage split_trade
 stage match_orders
 stage to_ingredients
 stage write
-wrote build/runs/run-20261030T041744-28ee3978/ingredients.jsonl
+wrote .understudy/runs/run-20261030T041744-28ee3978/ingredients.jsonl
 ```
 
 ## 4. Read the output
 
-The run folder, `build/runs/run-<stamp>-<id>/`:
+The run folder, `.understudy/runs/run-<stamp>-<id>/` (git-ignored and private, so `bobp make clean` cannot delete your runs):
 
 * `ingredients.jsonl`: one row per ingredient, `{"amount": 32000, "ingredient": "coffee_beans", "unit": "g"}`, rounded up to whole packs. Written last; a failed run writes none.
 * `summary.json`: counts only: total drinks, drinks per segment, the shares per segment, the weather weights, `jev_requests`, `mode` (`live` or `replay`) and `stale`.
@@ -111,7 +111,7 @@ The reference is [SKETCHES.md](SKETCHES.md).
 | `no saved run captured <source>; do a live run first` | 2 | there is nothing to replay yet: run once without `--replay` |
 | `forbid rule 0 left teens with no option for 'caffeine'` | 1 | a rule dropped every option for that segment; relax the rule, or give the stage `on_empty: skip` or `fallback` |
 | `stage match_orders: 'weather' returned temp='ice', not a declared option` | 1 | a source returned an option that `outcomes` does not declare |
-| `cannot write to ...: it is inside the project and not git-ignored` | 2 | use `build/runs` (the default) or a path outside the project |
+| `cannot write to ...: it is inside the project and not git-ignored` | 2 | use `.understudy/runs` (the default) or another git-ignored path or a path outside the project |
 | `understudy: no .venv - run 'bobp make install' first` | 2 | the Python environment is missing |
 
 ## 8. Command reference
@@ -131,7 +131,7 @@ A run records the `--with` values it was given in its `run.json`, and the consol
 
 ### The console
 
-`understudy dashboard` serves the console on port 4180 of every network interface (`http://<this machine>:4180/`), over the runs under `build/runs` (or the folder you give). There is no login for watching, so use it on a network you trust. A busy port, or a folder that is not a folder, is one plain line and exit 2.
+`understudy dashboard` serves the console on port 4180 of every network interface (`http://<this machine>:4180/`), over the runs under `.understudy/runs` (or the folder you give). There is no login for watching, so use it on a network you trust. A busy port, or a folder that is not a folder, is one plain line and exit 2.
 
 * **The rack** lists the runs grouped by sketch, newest first; a run that is going, failed, stalled or stopped carries a badge in words. The header says RUNNING, DONE, FAILED, STOPPED or STALLED.
 * **A failed run** shows a banner with the stage and the reason; press it to see that line in the printer. The summary under the gauges gives the outcome, mode, duration, the `--with` values and each output with its row count.
@@ -148,7 +148,7 @@ To check the console after a change: `bobp make install-browser`, then `bobp mak
 |---|---|
 | `install` | install dependencies (network) |
 | `run` | `ARGS="run <sketch> [--with name=value]..."` or `"check <sketch>"` |
-| `dashboard` | the console over `build/runs` (`ARGS="build/runs --port 4180 --sketches examples"`) |
+| `dashboard` | the console over `.understudy/runs` (`ARGS="--port 4180 --sketches examples"`) |
 | `test` / `lint` / `check` | unit tests / ruff / the full gate with the secret scan |
 | `security-scan` | gitleaks and pip-audit over every dependency group (network); clean before a release |
 | `install-browser` / `test-browser` | the optional browser tools / the console in a real Chromium |
@@ -184,7 +184,7 @@ What it does, in order:
    named earlier in the run first, then a kind of business and a name from the ISO 18245 list (`name_merchant`,
    run `each` merchant with `reduce` so each one sees the names given before it).
 
-Each run creates a new folder under `build/runs/` (or `--out`): `records.jsonl` (one record per transaction with its
+Each run creates a new folder under `.understudy/runs/` (or `--out`): `records.jsonl` (one record per transaction with its
 `kind`: purchase, refund, credit, transfer, external_transfer or invalid; its link and its category), `legs.jsonl`,
 `judgments.jsonl`, `kinds.jsonl` and `statuses.jsonl` (counts), `summary.json` (run facts) and `run.json`. Amounts
 are signed as Monarch writes them: purchases negative, refunds positive. A failed stage publishes no output.

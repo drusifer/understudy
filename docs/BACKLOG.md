@@ -228,7 +228,7 @@ Everything above this heading about the old player (watch page, dashboard, proce
 ## From the sprint 22 retro (2026-11-01)
 - Sprint 23 "see and drive the machine" (UND-81 richer events, then diagram, pause and step, replay of a log, decision detail) and Sprint 24 (YAML editor; typed inputs if wanted): `docs/sprints/OLD_VERSION_PARITY.md`. (Cypher)
 - Act on the expiries: SEC-002 by 2026-12-01; SEC-005 by 2027-01-30 or add TLS flags. (Switch, owner)
-- `bobp make clean` should leave `build/runs` alone; a pre-Sprint-22 run shows "-" for fields it never recorded: say "not recorded". (Tank, Neo)
+- (Done 2026-11-02: runs now live in `.understudy/runs`, outside `build/`.) A pre-Sprint-22 run shows "-" for fields it never recorded: say "not recorded". (Tank, Neo)
 - Launcher: the lock is held while a sketch is checked; a console restart forgets the children it started. (Neo)
 - Tune the household placement questions with the 481-of-932 unsure reads; the $433,762 net spending; replay of the household run. (owner, Neo)
 - Reconcile the PLAN template's phase size; sync `_template_PRD.md` into bobp. (Bob)

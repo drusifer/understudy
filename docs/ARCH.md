@@ -21,7 +21,7 @@ understudy runs a **sketch**: one YAML file in which the owner writes where data
 graph TD
     Owner["Owner (command line, browser)"] -->|"understudy run / check / dashboard"| App["understudy (Python, one process per command)"]
     App -->|"reads"| Files[("Sketch YAML, JSONL and CSV inputs")]
-    App -->|"writes"| Runs[("build/runs/run-*: sinks, run.json, summary.json, events.jsonl, run.duckdb")]
+    App -->|"writes"| Runs[(".understudy/runs/run-*: sinks, run.json, summary.json, events.jsonl, run.duckdb")]
     App -->|"live reads only"| Jev["Jev (TypeSafe API, network)"]
     App -->|"captures and replays"| Cache[("Capture cache .understudy/cache, git-ignored")]
     Console["Console (browser page)"] -->|"GET /api, /events"| App
@@ -89,7 +89,7 @@ graph LR
 ## 5. Interface & Contract Specifications
 
 * **Commands:** `understudy run <sketch> [--with name=value]... [--source name.path=file]... [--out folder] [--replay[=run-id|folder]]`; `understudy check <sketch> [...]`; `understudy dashboard [runs-folder] [--port N]`. Exit codes: 0 done, 1 a stage failed after start, 2 refused before start. Every failure is one `understudy: <message>` line.
-* **Run folder:** `build/runs/run-<stamp>-<id>/` holds the sink files, `run.json` (status, per-stage state, mode), `summary.json` (counts only), `events.jsonl` (`run_started`, `stage_started`, `stage_completed`, `stage_failed`, `run_finished`; one JSON object per line with `event` and `at`), `run.duckdb`.
+* **Run folder:** `.understudy/runs/run-<stamp>-<id>/` (git-ignored, outside `build/` so `make clean` cannot delete it) holds the sink files, `run.json` (status, per-stage state, mode), `summary.json` (counts only), `events.jsonl` (`run_started`, `stage_started`, `stage_completed`, `stage_failed`, `run_finished`; one JSON object per line with `event` and `at`), `run.duckdb`.
 * **Console API, open to read** (GET, JSON): `/api/runs` list; `/api/runs/<id>` the run as drawn (state, failure, summary, stage groups, gauges, printed lines, failure indices); `/api/runs/<id>/jev` the Jev reads; `/api/sketches`, `/api/replays`, `/api/session`; `/events/<id>` server-sent events; page files from an allow-list. A run id must match `run-[0-9A-Za-z-]+` and be a folder under the root.
 * **Console API, behind the access secret** (POST, JSON object under 8 KB, header `X-Understudy-Secret`, same-origin only): `/api/start {sketch, with, replay?}` and `/api/stop {run}`. Refusals are `{problem}` with 400, 401, 403, 404, 409 or 413. The secret is made at each start of the console and saved in `.understudy/dashboard.secret` (git-ignored, mode 0600); it is never printed, because `bobp make` copies output into the team chat.
 * **Command line:** `understudy run | check | dashboard [RUNS] [--port] [--sketches] | runs [FOLDER]`.
@@ -114,7 +114,7 @@ graph LR
 ### Security & Privacy
 
 * **Trust / access boundaries:** reading is open to the network (SEC-002, accepted until 2026-12-01); starting, replaying and stopping need the access secret, which travels over plain HTTP on the home network (SEC-005, accepted until 2027-01-30). Details: [baseline review](../agents/switch/reviews/2026-11-01-console-and-run-pipeline.md), [design gate](../agents/switch/reviews/2026-11-01-sprint-22-design-gate.md), [phase 5 review](../agents/switch/reviews/2026-11-01-sprint-22-phase-5.md); decisions in [ARCH_SPRINT22](sprints/ARCH_SPRINT22.md) and ADR-0049.
-* **Sensitive data:** the owner's transactions stay in input files and in sink files under `build/runs`; `summary.json` and the console show counts and names only; capture files live in git-ignored `.understudy/`; `paths.py` refuses private output in tracked folders.
+* **Sensitive data:** the owner's transactions stay in input files and in sink files under `.understudy/runs`; `summary.json` and the console show counts and names only; capture files live in git-ignored `.understudy/`; `paths.py` refuses private output in tracked folders.
 * **Reproducibility:** two replays of one capture are byte-identical (DOMAIN invariant 9).
 
 ## 7. Technical Stack & SDLC / Build Impact

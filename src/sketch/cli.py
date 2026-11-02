@@ -26,7 +26,7 @@ from src.sketch.run import run_sketch
 from src.sketch.sources.capture import CaptureStore, ReplayError
 from src.sketch.sources.reader import Capture, needs_jev
 
-DEFAULT_OUT = Path("build/runs")
+DEFAULT_OUT = Path(".understudy/runs")  # git-ignored and private, beside the captures; `make clean` leaves it alone
 
 
 def _overrides(pairs: list[str]) -> dict[str, str]:
@@ -53,8 +53,8 @@ def _values(pairs: list[str]) -> dict[str, str]:
 EXAMPLES = """examples:
   understudy check examples/household/household.yaml --with monarch=in/monarch.csv --with amex=in/amex.csv --with amex_account=Platinum
   understudy run tests/fixtures/coffee/coffee_week.yaml --replay=tests/fixtures/coffee/replay
-  understudy dashboard                    watch runs under build/runs, and start sketches from examples/ (see the access secret file)
-  understudy runs                         the runs under build/runs, newest first
+  understudy dashboard                    watch runs under .understudy/runs; start sketches from examples/ (access secret file)
+  understudy runs                         the runs under .understudy/runs, newest first
 
 A failure is one `understudy: <message>` line; exit 0 is done, 1 a stage failed after the run began, 2 refused before it began."""
 
@@ -83,10 +83,10 @@ def _parser() -> argparse.ArgumentParser:
                            help="the folder of sketches the console may start (default examples)")
     listing = commands.add_parser("runs", help="list the runs in a folder, newest first, with how each ended",
                                   description="List the runs in a folder, newest first, with the sketch and how each ended.")
-    listing.add_argument("folder", type=Path, nargs="?", default=DEFAULT_OUT, help="the folder of runs (default build/runs)")
+    listing.add_argument("folder", type=Path, nargs="?", default=DEFAULT_OUT, help="the folder of runs (default .understudy/runs)")
     run = commands.choices["run"]
     run.add_argument("--out", type=Path, default=DEFAULT_OUT, metavar="FOLDER",
-                     help="the folder to make the run's folder in (default build/runs)")
+                     help="the folder to make the run's folder in (default .understudy/runs)")
     run.add_argument("--replay", nargs="?", const="", default=None, metavar="RUN-ID|DIR",
                      help="read the captured Jev answers of a run or folder instead of calling Jev (no key, no network)")
     return parser

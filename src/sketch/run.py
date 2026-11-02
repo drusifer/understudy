@@ -1,6 +1,6 @@
 """One run of a sketch: its folder, its stages, its outputs (published last).
 
-    build/runs/run-<stamp>-<id>/   run.json  events.jsonl  summary.json  <sink files>
+    .understudy/runs/run-<stamp>-<id>/   run.json  events.jsonl  summary.json  <sink files>
 
 A sink stage writes `<file>.part`; only when the machine reaches a final state are the parts renamed, so a
 failed run publishes nothing. Failed runs keep earlier stage files and `run.json` saying where they stopped.
