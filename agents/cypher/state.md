@@ -37,3 +37,23 @@ PRD written and checked (docs/PRD.md, template _template_PRD.md). Open: typed in
 ---
 ## Sprint 22 close 2026-11-01
 Sprint 22 launched: 29 pts. Open owner questions: typed inputs; review-share and net-spending targets; TLS by 2027-01-30. Branch sprint-22 local, not merged.
+
+---
+## Checkpoint 2026-11-02 (prep-clear)
+
+### Context
+- **Sprint 22 is closed** (29 pts: UND-76..80, 88). Everything is on branch `sprint-22`; this checkpoint is followed by merge to `main` and push (owner asked). Last code commit: runs default to `.understudy/runs` (owner decision 3 of Sprint 22), outside `build/`; the 3 existing runs were moved there.
+- **The console** (`understudy dashboard`, port 4180, 0.0.0.0): `src/dashboard/{server,view,reads,runs}.py` + `page.html/js`, `controls.js`, CSS. Access secret per start in `.understudy/dashboard.secret` (never printed). Real console was running on 4180 at the time of the checkpoint.
+- **Gates:** `bobp make check` 309 tests + ruff + gitleaks; `bobp make security-scan`; `bobp make test-browser` (optional group, system Chromium) 6/6. Docs: `docs/PRD.md`, `ARCH.md`, `TEST_STRATEGY.md`, `UAT_PLAN_SPRINT22.md`, `RETRO_SPRINT22.md`, ADR-0049, security reviews in `agents/switch/`.
+- **Owner rules still in force:** Edit/Write only for edits (I broke it with sed/python several times); read the template and the skill before any artifact; one question at a time; American spelling; push only via `bobp make push` and only when asked.
+- **Real-data finding:** on the real household run 481 of 932 Jev reads were unsure (<0.7 or none_of_these).
+
+### Current Task
+Status: Completed (Sprint 22 closed). Pending: merge `sprint-22` into `main` and push, as asked.
+
+### Next Steps
+1. After /clear: run `/init`, read `agents/CHAT.md` (last 10 messages) and this section.
+2. If the merge and push did not finish: `git status`, then on `sprint-22` run `MSG="Sprint 22 team chat and state" bobp make push`, then `git checkout main && git merge --no-ff sprint-22` and `bobp make push`.
+3. Open owner questions (ask one at a time): typed inputs (dial/faders/stepper/switches) wanted or plain `--with` boxes?; targets for category-review share and net spending; whether the browser check should be a release gate; act on expiries: SEC-002 by 2026-12-01, SEC-005 (secret over plain HTTP) by 2027-01-30 (TLS flags).
+4. Next sprint: Sprint 23 "see and drive the machine" from `docs/sprints/OLD_VERSION_PARITY.md` (UND-81 richer event stream first, then diagram, pause/step, replay of a log, decision detail); write stories to `agents/templates/_template_USER_STORIES.md`, Smith Gate 1 with the template's STORIES check, Morpheus arch, Switch design gate, Mouse plan.
+5. Not done on purpose: `bobp chat-report` (would reset CHAT.md; owner's call); Sprint 21 UAT plan and ARCH_SPRINT21/task.md off-template (owner not yet asked to redo).

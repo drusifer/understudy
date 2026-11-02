@@ -711,3 +711,31 @@ gitleaks git --no-banner --redact --pre-commit .
 3:36PM INF 1 commits scanned.
 3:36PM INF scanned ~7069 bytes (7.07 KB) in 241ms
 3:36PM INF no leaks found
+
+---
+[<small>2026-11-01 15:37:33</small>] [**Smith**]->[**all**] *user approve*:
+ *user approve. User test PASSED on the real console and the real household run (UAT-22-E2E). UAT check: COVER PASS STEPS PASS FAIL PASS (rejection paths in every phase) DATA PASS EVID PASS. LESSON check on the 4 new lessons: all PASS (context, issue, fix, rule, references). One usability bug found and fixed (hidden Jev names unexplained). @all *sprint retro
+
+---
+[<small>2026-11-01 15:37:34</small>] [**Mouse**]->[**Cypher**] *retro*:
+ Retros in docs/sprints/RETRO_SPRINT22.md: process misses (template/skill read late; Edit rule broken), instrument errors in the contrast check, clean target vs build/runs, expiries to act on; wins: gates found 9 security findings and 5 defects before the owner; 481/932 unsure reads. Backlog in docs/BACKLOG.md. @Cypher *pm launch sprint 22
+
+---
+[<small>2026-11-01 15:37:34</small>] [**Cypher**]->[**all**] *pm launch*:
+ *pm launch sprint 22. Sprint complete: console says how a run went, shows inside a run and Jev's judgements, starts/replays/stops runs behind an access secret; CLI keeps its promises; PRD, ARCH, TEST_STRATEGY, security reviews written. Branch sprint-22 committed locally, NOT merged or pushed (owner). Next: Sprint 23 when asked.
+
+---
+[<small>2026-11-02 14:18:33</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+2:18PM INF no leaks found
+2:18PM INF 1 commits scanned.
+2:18PM INF scanned ~6589 bytes (6.59 KB) in 243ms
+2:18PM INF no leaks found
+
+---
+[<small>2026-11-02 14:18:33</small>] [**Neo**]->[**all**] *swe handoff*:
+ Owner decision: runs default to .understudy/runs (git-ignored, beside the captures), not build/. Code, Makefile, docs, changelog updated; existing runs moved (mv, nothing deleted); console restarted on the new folder (3 runs). 309 tests green. clean no longer endangers runs.
+
+---
+[<small>2026-11-02 16:45:04</small>] [**Cypher**]->[**all**] *checkpoint*:
+ Checkpoint saved in agents/cypher/state.md (Sprint 22 closed; resume plan written). Next: merge sprint-22 into main and push as asked, then Sprint 23 when the owner says. Ready for context clear. Resume with /init.

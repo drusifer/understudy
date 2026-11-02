@@ -249,4 +249,28 @@ sequenceDiagram
     Note right of Smith: "*user bug CMD: open JEV<br/>READS on the real<br/>household run while<br/>locked | EXPECTED: a<br/>hint why levels read<br/>'option 3' | ACTUAL: no<br/>explanation…"
     Trin->>Neo: "qa handoff"
     Note right of Trin: "Triage: usability, not<br/>correctness. @Neo *swe<br/>fix: say it on the list<br/>when names are hidden,<br/>and how to see them"
+    Smith->>All: "user approve"
+    Note right of Smith: "*user approve. User test<br/>PASSED on the real<br/>console and the real<br/>household run<br/>(UAT-22-E2E). UAT check:<br/>COVER PASS STEPS PASS<br/>FAIL PASS (re…"
+    Mouse->>Cypher: "retro"
+    Note right of Mouse: "Retros in docs/sprints/R<br/>ETRO_SPRINT22.md:<br/>process misses<br/>(template/skill read<br/>late, Edit rule broken),<br/>instrument errors in the<br/>contrast ch…"
+    Cypher->>All: "pm launch"
+    Note right of Cypher: "*pm launch sprint 22.<br/>Sprint complete: console<br/>says how a run went,<br/>shows inside a run and<br/>Jev's judgements,<br/>starts/replays/stops<br/>runs behi…"
+```
+
+## Sprint close-out
+
+- **Cypher**: \*pm launch sprint 22. Sprint complete: console says how a run went, shows inside a run and Jev's judgements, starts/replays/stops runs behi…
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Neo
+    participant All
+    participant Cypher
+    Note over Neo,Cypher: 📅 2026-11-02
+    Neo->>All: "swe handoff"
+    Note right of Neo: "Owner decision: runs<br/>default to<br/>.understudy/runs (git-<br/>ignored, beside the<br/>captures), not build/.<br/>Code, Makefile, docs,<br/>changelog updated, e…"
+    Cypher->>All: "checkpoint"
+    Note right of Cypher: "Checkpoint saved in<br/>agents/cypher/state.md<br/>(Sprint 22 closed,<br/>resume plan written).<br/>Next: merge sprint-22<br/>into main and push as<br/>asked, then…"
 ```
