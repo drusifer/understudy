@@ -22,14 +22,14 @@ stage split_trade
 stage match_orders
 stage to_ingredients
 stage write
-wrote build/runs/run-20261030T041744-28ee3978/ingredients.jsonl      {"amount": 32000, "ingredient": "coffee_beans", "unit": "g"}
+wrote .understudy/runs/run-20261030T041744-28ee3978/ingredients.jsonl      {"amount": 32000, "ingredient": "coffee_beans", "unit": "g"}
 ```
 
 Every live Jev read is captured, so a run can be replayed offline: `--replay` needs no key and no
 network, and two replays are byte-identical.
 
 > **Status:** the move to Python and this model is done (the [epic](docs/sprints/EPIC_PYTHON_PORT.md)):
-> one runtime, one kind of sketch. `understudy dashboard` serves a read-only console over your runs.
+> one runtime, one kind of sketch. `understudy dashboard` serves a console over your runs: watch them, see inside them and Jev's answers, and (with an access secret) start, replay and stop them.
 
 ## Quick start
 
@@ -49,7 +49,7 @@ The household example (`examples/household/household.yaml`) is an ordinary sketc
 Amex exports as CSV files, merges a charge seen in both into one record, links the two halves of a card
 payment, links refunds to their originals, and asks Jev to judge payees, choose among a refund's candidate
 charges, and place merchants in a category in use or name a new one from the MCC list. It writes
-`records.jsonl` and some counts under `build/runs/<run-id>/`:
+`records.jsonl` and some counts under `.understudy/runs/<run-id>/` (git-ignored and private; `bobp make clean` leaves it alone):
 
 ```sh
 bobp make run ARGS="run examples/household/household.yaml --with monarch=inputs/monarch.csv --with amex=inputs/amex.csv --with amex_account=Platinum"
@@ -65,6 +65,8 @@ Always go through `bobp make <target>` - it is the front door for people and age
 
 | Read | When you want to |
 |---|---|
+| [docs/PRD.md](docs/PRD.md) | what understudy is for, who it serves, what it must do and what is planned |
+| [docs/ARCH.md](docs/ARCH.md) · [docs/TEST_STRATEGY.md](docs/TEST_STRATEGY.md) | how the system is put together, and how it is tested |
 | [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | install, run the coffee example, read the output, replay offline, write a sketch, fix errors |
 | [docs/SKETCHES.md](docs/SKETCHES.md) | the reference: the file, the machine and its stages, deciding and conditions, Jev, subsketches, capture and replay; [schema/decision_sketch.schema.json](schema/decision_sketch.schema.json) for editors |
 | [docs/DOMAIN.md](docs/DOMAIN.md) | the vocabulary and the rules that always hold |
@@ -96,7 +98,9 @@ agents/                the Bob Protocol team (personas, state, chat) - see AGENT
 bobp make test        # unit tests - never calls Jev
 bobp make test-py ARGS="test_sketch*.py"   # only the sketch tests
 bobp make lint        # ruff
-bobp make dashboard   # the console over build/runs, http://<this machine>:4180/ (listens on 0.0.0.0)
+bobp make dashboard   # the console over .understudy/runs, http://<this machine>:4180/ (listens on 0.0.0.0; secret in .understudy/dashboard.secret)
+bobp make security-scan      # gitleaks and pip-audit (network)
+bobp make test-browser       # the console in a real Chromium (after 'bobp make install-browser')
 bobp make check       # test + lint + gitleaks secret scan (the gate)
 ```
 

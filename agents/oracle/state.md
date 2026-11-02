@@ -22,3 +22,7 @@
 1. Smith presents the synthetic UAT evidence and scope limits to the owner; record acceptance or requested changes in CHAT and task board.
 2. After owner acceptance, collect persona retrospectives and backlog notes; hand back to Cypher for launch.
 3. After launch, run the Sprint 16 chat report command and verify it created the archive and reset pointer; mark C.2 complete.
+
+---
+## Sprint 22 close 2026-11-01
+4 lessons added; PRD/ARCH/USER_GUIDE/CHANGELOG/ADR-0049 groomed. Chat archive not run (owner's call).

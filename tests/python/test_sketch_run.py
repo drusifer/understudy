@@ -3,6 +3,7 @@ import io
 import json
 import tempfile
 import unittest
+from dataclasses import replace
 from pathlib import Path
 from unittest.mock import patch
 
@@ -81,6 +82,21 @@ class MachineTests(RunCase):
         self.assertEqual(events.count("stage_started"), 3)
         summary = json.loads((result.directory / "summary.json").read_text(encoding="utf-8"))
         self.assertEqual(summary["mode"], "live")
+
+    def test_the_run_json_records_the_with_values_and_how_many_rows_each_output_has(self):
+        sketch = replace(load_checked(self.sketch()), variables={"mood": "calm"})
+        result = asyncio.run(run_sketch(sketch, self.out, library(), [].append))
+        manifest = json.loads((result.directory / "run.json").read_text(encoding="utf-8"))
+        self.assertEqual(manifest["with"], {"mood": "calm"})
+        self.assertEqual(manifest["outputs"], {result.outputs["report"].name: 1})
+
+    def test_the_run_started_event_names_the_sketch_relative_to_the_project_not_as_typed(self):
+        result, _ = self.run_it(library(), BRANCH)
+        first = json.loads((result.directory / "events.jsonl").read_text(encoding="utf-8").splitlines()[0])
+        self.assertEqual(first["sketch"], "tests/fixtures/machine_branch.yaml")
+        outside, _ = self.run_it(library())
+        first = json.loads((outside.directory / "events.jsonl").read_text(encoding="utf-8").splitlines()[0])
+        self.assertEqual(first["sketch"], "sketch.yaml")
 
     def test_a_failed_stage_publishes_nothing_and_says_where_it_stopped(self):
         with self.assertRaisesRegex(RuntimeError, "boom"):

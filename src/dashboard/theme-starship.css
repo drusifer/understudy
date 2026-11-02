@@ -25,7 +25,7 @@
 }
 :root[data-theme="starship"][data-mode="light"] {
   --void: #ebe8f0; --dim: #c4c0cc; --track: #d6d2dc; --focus: #1a1a2a;
-  --t-orange: #a85400; --t-peach: #6e3f12; --t-lilac: #743a74; --t-violet: #3c3cb0; --t-sky: #1d5a94; --t-red: #a02c2c; --t-gold: #7a5600; --t-problem: #a02c2c;
+  --t-orange: #964c00; --t-peach: #6e3f12; --t-lilac: #743a74; --t-violet: #3c3cb0; --t-sky: #1d5a94; --t-red: #a02c2c; --t-gold: #7a5600; --t-problem: #a02c2c;
   --weight-1: #c83232; --weight-2: #8e488e; --weight-3: #2a74b4; --weight-4: #a87800; --weight-5: #c85a1e; --weight-6: #5050c8;
   --tube-track: #d6d2dc; --tube-shadow: #ebe8f0;
   --tube-edge: #5050c8; --tube-edge-live: #d07000; --tube-edge-tone: #1d5a94;
@@ -199,3 +199,8 @@
 :root[data-theme="starship"] .bay-text { font-family: ui-monospace, Menlo, Consolas, monospace; letter-spacing: 0; }
 :root[data-theme="starship"] .sticker code { font-size: 11px; }
 :root[data-theme="starship"] .bay-text { background: var(--void); color: var(--t-gold); border: 2px solid var(--violet); border-radius: 8px; font-size: 13px; }
+
+/* Sprint 22: the tube is black; its text is the screen's peach. */
+:root[data-theme="starship"] { --tube-ink: var(--cream); }
+:root[data-theme="starship"] .stage-lamp { background: transparent; }
+:root[data-theme="starship"] { --note-bg: var(--void); --note-ink: var(--cream); }

@@ -29,3 +29,7 @@
 2. Tank runs the required clean setup and `bobp make check`, updating `docs/SDLC.md` only if verification discovers drift.
 3. Oracle grooms docs and archives Sprint 16 chat; Smith completes the owner-facing acceptance gate; record team retrospectives and backlog items.
 4. Cypher announces launch only after all gates are complete; never push, merge, or tag without the owner asking.
+
+---
+## Sprint 22 close 2026-11-01
+Sprint 22 closed: 7 phases + closeout. Backlog in docs/BACKLOG.md. Next: plan Sprint 23 from OLD_VERSION_PARITY.md when the owner says.

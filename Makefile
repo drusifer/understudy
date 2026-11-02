@@ -2,7 +2,7 @@
 #
 # Adding a task: add a one-line target here with a `## description`; `bobp make help` lists them.
 
-.PHONY: help install lock install-py lock-py test test-py lint check secrets hooks push run dashboard clean distclean
+.PHONY: help install lock install-py install-browser lock-py test test-py test-browser lint check secrets security-scan security-scan-python hooks push run dashboard clean distclean
 
 # Live targets (run) read API keys from .env (gitignored; `export NAME=value` lines);
 # test never does, so it can never reach a paid or networked service.
@@ -24,6 +24,13 @@ lock-py: ## Refresh uv.lock from pyproject.toml (network)
 
 test: test-py ## Run the unit tests; ARGS="test_sketch*.py" runs only the files matching that pattern
 
+install-browser: ## Add the optional browser-check tools (playwright; uses the system Chromium); a later 'install' removes them again (network)
+	uv sync --locked --group browser
+
+test-browser: ## Drive the console in a real Chromium (needs install-browser and /usr/bin/chromium or CHROMIUM=path); not part of check
+	@.venv/bin/python -c "import playwright" 2>/dev/null || { echo "No playwright - run 'bobp make install-browser' first"; exit 1; }
+	CHROMIUM=$(or $(CHROMIUM),/usr/bin/chromium) .venv/bin/python -m unittest discover -s tests/browser -p '$(if $(ARGS),$(ARGS),test_*.py)'
+
 test-py: ## Run Python unit tests (ARGS="test_sketch*.py" runs only the files matching that pattern)
 	@test -x .venv/bin/python || { echo "No .venv - run 'bobp make install' first"; exit 1; }
 	.venv/bin/python -m unittest discover -s tests/python -p '$(if $(ARGS),$(ARGS),test_*.py)'
@@ -31,17 +38,25 @@ test-py: ## Run Python unit tests (ARGS="test_sketch*.py" runs only the files ma
 run: ## Run the understudy command: ARGS="run coffee_week.yaml" | "check coffee_week.yaml" | "dashboard" | "run examples/household/household.yaml --with monarch=... --with amex=... --with amex_account=..."
 	@$(LOAD_ENV) bin/understudy $(ARGS)
 
-dashboard: ## Serve the operations console over build/runs on 0.0.0.0:4180 (ARGS="build/runs --port 4180")
+dashboard: ## Serve the operations console over .understudy/runs on 0.0.0.0:4180 (ARGS="--port 4180 --sketches examples")
 	@bin/understudy dashboard $(ARGS)
 
 lint: ## ruff over the Python
 	@test -x .venv/bin/ruff || { echo "No .venv - run 'bobp make install' first"; exit 1; }
-	.venv/bin/ruff check src tests/python
+	.venv/bin/ruff check src tests
 
 secrets: ## gitleaks: every commit + uncommitted changes to tracked files
 	@command -v gitleaks >/dev/null || { echo "gitleaks is not installed - see https://github.com/gitleaks/gitleaks#installing"; exit 1; }
 	gitleaks git --no-banner --redact .
 	gitleaks git --no-banner --redact --pre-commit .
+
+security-scan-python: ## pip-audit over the locked Python dependencies (network); any advisory fails
+	@test -x .venv/bin/pip-audit || { echo "No pip-audit - run 'bobp make install' first"; exit 1; }
+	@mkdir -p build
+	uv export --locked --no-emit-project --no-hashes --all-groups -o build/audit-requirements.txt
+	.venv/bin/pip-audit -r build/audit-requirements.txt --no-deps --disable-pip
+
+security-scan: secrets security-scan-python ## Secrets and dependency scans (network); clean before a release
 
 hooks: ## Install the gitleaks pre-commit hook (.githooks/)
 	git config core.hooksPath .githooks

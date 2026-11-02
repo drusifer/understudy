@@ -41,7 +41,7 @@ Code mappings are the proposed symbols for the new package; Morpheus confirms th
 | **Rubric** | Value Object | An ordered list of levels Jev picks among when reading supplied text. | `Rubric` |
 | **Jev Answer** | Value Object | Probabilities over a question's options or levels; never a free value. | `Chosen` (existing) |
 | **Run** | Entity | One execution of a sketch with its inputs; owns a run folder. | `Run` |
-| **Run Folder** | Value Object | The folder under `build/runs/` holding stage files, the manifest and the output. | `RunFolder` |
+| **Run Folder** | Value Object | The folder under `.understudy/runs/` holding stage files, the manifest and the output. | `RunFolder` |
 
 ### Anti-Patterns (Forbidden & Deprecated Terminology)
 

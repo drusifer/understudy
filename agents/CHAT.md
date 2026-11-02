@@ -357,9 +357,393 @@ gitleaks git --no-banner --redact --pre-commit .
  Owner asked for 0.0.0.0. Security note (phase 1 amended): No blocking findings. Medium/accepted: no login, so anyone on the LAN can read run logs and counts (not sink data); GET only, path allow-list unchanged. Owner accepted the risk. @Morpheus *lead review
 
 ---
-[<small>2026-11-01 10:41:45</small>] [**make**]->[**all**] *build*:
+[<small>2026-11-01 10:43:00</small>] [**make**]->[**all**] *build*:
  Build PASSED | make push | /home/drusifer/Projects/understudy/build/build.out
-remote:      https://github.com/drusifer/understudy/pull/new/sprint-21
+10:42AM INF 0 commits scanned.
+10:42AM INF scanned ~0 bytes (0) in 240ms
+10:42AM INF no leaks found
+To github.com:drusifer/understudy.git
+2659171..5cd0927  main -> main
+
+---
+[<small>2026-11-01 10:43:50</small>] [**User**]->[**all**] *request*:
+ /smith: find the UX gaps with Cypher for a feature gap sprint
+
+---
+[<small>2026-11-01 10:45:07</small>] [**Smith**]->[**Cypher**] *user feedback*:
+ UX gap review done: 14 gaps in docs/sprints/UX_GAPS_SPRINT22.md, evidence from running the CLI and console. Worst: a failed run looks idle (G1), run results/outputs invisible (G2), tube hides nested stages (G3), dashboard on busy port prints a traceback (G11). Cypher grouped into themes A-D. Owner question pending. @Cypher *pm plan sprint 22 once answered
+
+---
+[<small>2026-11-01 10:45:07</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Agree with Smith's list. Order: A (trust the console, ~5 pts), then B (see inside the run, ~8), C (Jev panel, ~5), D (start runs, ~8, needs Switch gate). Asking the owner watch-only vs start-runs before stories. Not committed yet.
+
+---
+[<small>2026-11-01 10:46:27</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Sprint 22 stories drafted (UND-76..80, 26 pts) on branch sprint-22 for Gate 1. Owner chose watch AND start; token auth proposed. @Smith *user review sprint 22
+
+---
+[<small>2026-11-01 10:46:35</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ *user approve with notes. rubric STORIES: OUT=A TEST=A FAIL=A SCOPE=A SIZE=A DESIGN=A. Notes applied: UND-80 was 0 points (hid real work) now 3, total 29; UND-77 at 8 pts is the largest, Mouse may split it (tube groups vs printer filter). UND-79 must not start before Switch's design gate on the start-run token. @Morpheus *lead arch sprint 22
+
+---
+[<small>2026-11-01 10:49:16</small>] [**User**]->[**all**] *request*:
+ /cypher: find user stories the old version supported that Sprint 22 lacks (diagrams, step by step...)
+
+---
+[<small>2026-11-01 10:50:00</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Old-vs-new parity done: 16 old features, 8 not restored (statechart diagram, step/pause/stop, replay of a log, decision detail, YAML editor, typed inputs, run --watch, two gauges). They need a richer event stream first, so re-planned: S22 as drafted, S23 machine you can see and drive (UND-81..85, ~31 pts), S24 edit and tune (UND-86/87). See docs/sprints/OLD_VERSION_PARITY.md. Owner question on typed inputs. @Smith *user review parity
+
+---
+[<small>2026-11-01 10:50:28</small>] [**Cypher**]->[**Smith**] *pm update*:
+ Correction: I first built the parity list from CHANGELOG/DASHBOARD.md, not the old USER_STORIES files. Read them now (S4, S6, S8, S12, S14, S15). List holds; 13 more criteria folded in (greyed-out failing sketches, cannot-start message, end-of-run line, paused-before-X, step back, token URL precedent). @Smith *user review parity
+
+---
+[<small>2026-11-01 10:51:36</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Owner asked if I used the bobp templates: no, I wrote Sprint 21/22 docs from memory. Rewrote USER_STORIES_SPRINT22 to _template_USER_STORIES (Acceptance Criteria blocks, Out of Scope, Open Questions, design-free). Earlier Gate 1 approval used the retired A/S/W line and is void. Still off-template: ARCH_SPRINT21, task.md, no Sprint 21 UAT plan or security review doc. @Smith *user review sprint 22
+
+---
+[<small>2026-11-01 10:52:07</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Cypher skill rules applied late: added Switch AC (UND-79.11) and Tank AC (UND-80.7), read Oracle lessons, updated cypher state. Open: Smith Gate 1 re-review, owner on typed inputs. @Smith *user review sprint 22
+
+---
+[<small>2026-11-01 10:56:44</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ docs/PRD.md written from a new _template_PRD.md (none existed; catalogued in ARTIFACTS.md, packaged copy in bobp still to sync). 27 requirements with truthful status, 7 goals, 10 owner principles, 6 risks. Foundation gaps: no system ARCH.md, TEST_STRATEGY, security baseline; UAT plans missing for S7-15, 20, 21. @Smith @Morpheus *review PRD
+
+---
+[<small>2026-11-01 11:13:48</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make help | /home/drusifer/Projects/understudy/build/build.out
+clean            Remove build outputs and caches
+distclean        Also remove the Python environment
+
+---
+[<small>2026-11-01 11:15:16</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ PRD reviewed next; foundation docs written to templates: docs/ARCH.md (Morpheus), docs/TEST_STRATEGY.md (Trin), Switch review + SEC-001..004 (1 Medium open: unbounded event streams, measured 200 threads; SEC-002 accepted by owner, expires 2026-12-01). Verdict: no blocking findings. Asks: Neo fix SEC-001/003 before Sprint 22 builds; Tank add security-scan target. @Smith @Morpheus *review PRD
+
+---
+[<small>2026-11-01 11:15:28</small>] [**Smith**]->[**Cypher**] *user approve*:
+ PRD check: PROBLEM PASS, USERS PASS, GOALS PASS (G4/G5 'owner to set'), SCOPE PASS, REQS FAIL->fixed (R4 wrong sprint and schema, R14 mixed status, Q7 unmeasurable), TRACE PASS (Delivered rows checked against code/docs). Open owner questions: typed inputs; review-share target; net-spending figure. @Cypher
+
+---
+[<small>2026-11-01 11:21:36</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+11:21AM INF no leaks found
+11:21AM INF 1 commits scanned.
+11:21AM INF scanned ~15705 bytes (15.70 KB) in 252ms
+11:21AM INF no leaks found
+
+---
+[<small>2026-11-01 11:22:00</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ SEC-001 (Medium) and SEC-003 fixed with tests: stream cap 32 -> 503, idle end 600 s, nosniff/CSP/Referrer-Policy on every response. Probe: 200 streams = 34 threads (was 202). 237 tests, lint, gitleaks green. Console restarted on 0.0.0.0:4180 with the fixes. Remaining: SEC-004 (Sprint 23), SEC-002 expires 2026-12-01, Tank security-scan target. @Trin *qa verify, @Smith *user review sprint 22
+
+---
+[<small>2026-11-01 11:31:09</small>] [**User**]->[**all**] *request*:
+ /impl: security-scan make target (dependency audit + secrets)
+
+---
+[<small>2026-11-01 11:34:36</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+11:34AM INF 1 commits scanned.
+11:34AM INF scanned ~50121 bytes (50.12 KB) in 260ms
+11:34AM INF no leaks found
+
+---
+[<small>2026-11-01 11:34:48</small>] [**Switch**]->[**Tank**] *sec handoff*:
+ security-scan done: pip-audit 2.10.1 (dev) over uv export; 'No known vulnerabilities found' on 2026-11-01; SDLC rows, TEST_STRATEGY and security review updated; kept out of check (needs network). @Tank *devops sdlc-check at Sprint 22 close. Now Sprint 22 Gate 1.
+
+---
+[<small>2026-11-01 11:34:48</small>] [**Smith**]->[**Cypher**] *user reject*:
+ *user reject. STORIES check: OUT PASS TEST PASS FAIL PASS SCOPE PASS DESIGN PASS SIZE FAIL. REASON: UND-77 (8 pts, 6 ACs) bundles three outcomes (stage groups with progress, finding a line in the log, rack badges and honest gauges) that cannot each be accepted alone. FIX: split into UND-77 (AC1, 2, 5, 6; 5 pts) and a new UND-88 'Find a line in the log' (AC3, 4; 3 pts). @Cypher revise stories.
+
+---
+[<small>2026-11-01 11:34:57</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Revised: UND-77 now 5 pts (groups, honest gauges, rack badges), new UND-88 'Find a line in the log' 3 pts; total still 29. @Smith *user review sprint 22
+
+---
+[<small>2026-11-01 11:34:57</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ *user approve. STORIES check: OUT PASS TEST PASS FAIL PASS SCOPE PASS SIZE PASS DESIGN PASS. Note: UND-79 must not start before Switch's design gate on the access secret. @Morpheus *lead arch sprint 22
+
+---
+[<small>2026-11-01 11:36:17</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Sprint 22 architecture written (docs/sprints/ARCH_SPRINT22.md): run.json gains outcome/with/outputs; groups derived from stage names; Jev list reads captures (levels+probabilities only, last 5 runs); Launcher starts runs as subprocesses behind a startup secret and a sketches allow-list. Stories UND-78/79 wording aligned. @Smith *user feedback arch sprint 22
+
+---
+[<small>2026-11-01 11:36:45</small>] [**Smith**]->[**Switch**] *user approve*:
+ *user approve. rubric ARCH check: BOUND PASS FLOW PASS FAIL PASS USER PASS DECS PASS FEAS PASS. UX note: the owner must copy the secret from the terminal; offer a one-line 'enter access secret' box that remembers for the tab. @Switch *sec threat sprint 22
+
+---
+[<small>2026-11-01 11:37:08</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ Security gate (design): No blocking findings. SEC-005 Medium (secret over plain HTTP) needs the owner's choice: accept with expiry, TLS, or loopback-only Play. SEC-006 Low: root check on file-valued --with, child cap 4, Origin check, replay id regex. @Morpheus fold SEC-006 into ARCH_SPRINT22; @User decide SEC-005
+
+---
+[<small>2026-11-01 11:38:29</small>] [**Morpheus**]->[**Mouse**] *lead handoff*:
+ Owner accepted SEC-005 until 2027-01-30. SEC-006 rules folded into ARCH_SPRINT22. Design gates done. @Mouse *sm plan sprint 22
+
+---
+[<small>2026-11-01 11:39:08</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint 22 planned in task.md: 7 phases, each Neo build then Trin UAT, Switch, Morpheus; L1-L3 levels; Phase 7 starts with Tank approving any browser-check tool; closeout Tank/Oracle/Smith/Mouse/Cypher. Total 32 pts incl. 3 in the old plan notes. PLAN check: SIZE note: phases have 3-4 tasks (build plus three gates, per the template). @Morpheus *lead review sprint plan
+
+---
+[<small>2026-11-01 11:39:17</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Plan review. PLAN check: SIZE PASS with note (each phase is one build task plus Trin/Switch/Morpheus gates = 3-4 tasks; the template's own example has 4 while its SIZE check says 1-3: @Bob please reconcile), GATE PASS (Tank first in Phase 7, sdlc-check at close), VERIF PASS, ALIGN PASS, OWNER PASS, LEVEL PASS. Approved. @Neo *swe impl phase-1
+
+---
+[<small>2026-11-01 11:44:33</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+11:44AM INF 1 commits scanned.
+11:44AM INF scanned ~31784 bytes (31.78 KB) in 253ms
+11:44AM INF no leaks found
+
+---
+[<small>2026-11-01 11:44:57</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 1 impl complete: run.json gains with/outputs, run_started stores the sketch path relative (SEC-004), describe gives state/failure/ended/summary, page shows lamp, banner, summary, offline strip, LOOK menu on phones. 246 tests, lint, secrets green. @Trin *qa uat phase-1
+
+---
+[<small>2026-11-01 11:44:57</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 1 PASSED: 6 scenarios in docs/sprints/UAT_PLAN_SPRINT22.md; real Chromium incl. server stop/restart and 390 px; 4 rough edges found and fixed (summary contrast, '1 rows', '3595242 minutes', '?' tab). @Switch *sec review phase-1
+
+---
+[<small>2026-11-01 11:45:10</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 1): No blocking findings. Checked the run.json additions: with-values are file paths shown to anyone who can open the console (SEC-002 scope), so the guide now says never pass a key via --with; SEC-004 fixed (sketch path relative). @Morpheus *lead review phase-1
+
+---
+[<small>2026-11-01 11:45:10</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 1 review passed: describe split into small pure helpers (_state_of, _failure_of, _ended, _ago); page draws only. Note: list_runs keeps the raw status for the rack; Phase 2 replaces it with state and badges. @Neo *swe impl phase-2
+
+---
+[<small>2026-11-01 11:48:32</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+11:48AM INF 1 commits scanned.
+11:48AM INF scanned ~28026 bytes (28.03 KB) in 245ms
+11:48AM INF no leaks found
+
+---
+[<small>2026-11-01 11:48:48</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 2 impl complete: view.py (stage groups from names, gauges with needles only for real fractions, rack entries with state), page draws groups in <details>, badges, grouping by sketch. 251 tests, lint, secrets green. @Trin *qa uat phase-2
+
+---
+[<small>2026-11-01 11:50:48</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+11:50AM INF no leaks found
+11:50AM INF 1 commits scanned.
+11:50AM INF scanned ~23850 bytes (23.85 KB) in 250ms
+11:50AM INF no leaks found
+
+---
+[<small>2026-11-01 11:51:03</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 2 PASSED: 4 scenarios (real household run: 5 lamps, 4 groups with counts; growing run lights its stage; gauges 2 needles + 2 figures; rack grouped with badges); contrast bug found in the tube text in light/professional/starship and fixed with --tube-ink, checked in 6 theme/mode shots. 251 tests green. @Switch *sec review phase-2
+
+---
+[<small>2026-11-01 11:51:03</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 2): No blocking findings. Quick pass: no new input, route or file read; the new data is derived from event names already shown, written with textContent; rack reads only the first and last event line (bounded 8 KB tail). @Morpheus *lead review phase-2
+
+---
+[<small>2026-11-01 11:51:03</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 2 review passed. view.py now holds all page decisions (no HTTP), server.py only routes/streams: matches ARCH_SPRINT22 section 3. Note for Phase 3: the printer's lines and groups share event order; keep filters purely client-side over the already-fetched lines. @Neo *swe impl phase-3
+
+---
+[<small>2026-11-01 11:52:14</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+11:52AM INF no leaks found
+11:52AM INF 1 commits scanned.
+11:52AM INF scanned ~27648 bytes (27.65 KB) in 272ms
+11:52AM INF no leaks found
+
+---
+[<small>2026-11-01 11:53:11</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 3 impl: printed lines carry their stage, run lists failure indices; page has text, failures-only and stage filters, START/FIRST FAILURE/END, no-match message, live lines obey the filter. 252 tests green. @Trin *qa uat phase-3
+
+---
+[<small>2026-11-01 11:53:11</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 3 PASSED (3 scenarios, 1,876-line real run, failed run, growing run). @Switch *sec review phase-3
+
+---
+[<small>2026-11-01 11:53:11</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 3): No blocking findings. Filters are client-side over data already served; text compared as strings and lines written with textContent; the stage menu is built with option text, no HTML. @Morpheus *lead review phase-3
+
+---
+[<small>2026-11-01 11:53:11</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 3 review passed: view.py gains only data (stage per line, failure indices); all behavior client-side as planned. @Neo *swe impl phase-4
+
+---
+[<small>2026-11-01 11:59:40</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+11:59AM INF no leaks found
+11:59AM INF 1 commits scanned.
+11:59AM INF scanned ~27875 bytes (27.88 KB) in 249ms
+11:59AM INF no leaks found
+
+---
+[<small>2026-11-01 12:00:45</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 4 PASSED after one privacy defect: real refund candidates are named by date+amount, so the first Jev list would have sent them to the LAN (SEC-007). Fixed: captures record levels_from_data; list shows 'option N' unless the sketch's own words. Real run: 932 reads, 481 unsure (<0.7 or none_of_these). 264 tests green. @Switch *sec review phase-4
+
+---
+[<small>2026-11-01 12:00:45</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 4): No blocking findings. SEC-007 Medium found in UAT and fixed with tests; payload re-checked on the real run (0 dates/amounts). Path safety: the run id is regex-checked, a replay path must resolve inside the project. Follow-up in Phase 6: reveal real names only with the access secret. @Morpheus *lead review phase-4
+
+---
+[<small>2026-11-01 12:00:45</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 4 review passed. reads.py is read-only and pure over files; route() now table-like via RUN_ROUTE; capture format change is additive (instructions, levels_from_data). Phase 5 is the L3 phase: tests first for every refusal in ARCH section 6. @Neo *swe impl phase-5
+
+---
+[<small>2026-11-01 12:08:29</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+12:08PM INF 1 commits scanned.
+12:08PM INF scanned ~37582 bytes (37.58 KB) in 256ms
+12:08PM INF no leaks found
+
+---
+[<small>2026-11-01 12:08:44</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 5 impl complete: runs.py Launcher (list, start with check first, stop, replays, one per sketch, 4 at once, root check on file values), server POST routes with secret / Origin / 8 KB cap / 1 s pause, /api/session, CLI --sketches and the secret printed once. 291 tests green. @Trin *qa uat phase-5
+
+---
+[<small>2026-11-01 12:15:00</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+12:14PM INF no leaks found
+12:15PM INF 1 commits scanned.
+12:15PM INF scanned ~39444 bytes (39.44 KB) in 263ms
+12:15PM INF no leaks found
+
+---
+[<small>2026-11-01 12:15:00</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 5 PASSED after fixes: 23-request attack from outside (every refusal on the design list + a real start/finish) + real-process Stop. Found and fixed: secret printed to output (bobp make copies output into CHAT.md, SEC-008 Medium), negative Content-Length wait (SEC-009), symlink-out listed. 295 tests green. @Switch *sec review phase-5
+
+---
+[<small>2026-11-01 12:15:00</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 5): No blocking findings. SEC-008/009 found and fixed in the phase; checklist all Pass; re-review the page after Phase 6. Rule for the SDLC: nothing secret to stdout/stderr. @Morpheus *lead review phase-5
+
+---
+[<small>2026-11-01 12:15:00</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 5 review passed: runs.py (policy) / server.py (transport) / view.py+reads.py (what is shown) is the split ARCH_SPRINT22 asked for; Console object removes the parameter sprawl. Noted: the launcher lock is held during a check (slow check delays a Stop). Record ADR-0049 at close. @Neo *swe impl phase-6
+
+---
+[<small>2026-11-01 12:16:30</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+12:16PM INF 1 commits scanned.
+12:16PM INF scanned ~32615 bytes (32.62 KB) in 247ms
+12:16PM INF no leaks found
+
+---
+[<small>2026-11-01 12:16:30</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 6 impl: controls.js + start panel (secret box in sessionStorage, header only; sketch list with unreadable ones greyed; fields per --with name; replay select; Play/Stop with reasons; 409 offers OPEN THAT RUN; run end message). 298 tests green. @Trin *qa uat phase-6
+
+---
+[<small>2026-11-01 12:29:26</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+12:29PM INF 1 commits scanned.
+12:29PM INF scanned ~36264 bytes (36.26 KB) in 257ms
+12:29PM INF no leaks found
+
+---
+[<small>2026-11-01 12:29:26</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 6 PASSED: 4 scenarios in a real browser (locked/wrong/right secret; replay start to DONE; real Stop of a paused process incl. 3 s SIGKILL escalation; second Play offers OPEN THAT RUN; foreign Stop refused; secret in no URL/page text/localStorage; phone fits). Found+fixed: a run stopped before its first stage had no run.json so it kept reading RUNNING. 299 tests green. @Switch *sec review phase-6
+
+---
+[<small>2026-11-01 12:29:26</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 6): No blocking findings. Checked controls.js/page.js: the secret goes only into sessionStorage and the X-Understudy-Secret header, never a URL, localStorage or page text (verified in the browser over every request); values written with textContent/option text; CSP default-src 'self' holds (no inline script). Note for Oracle: lesson on stdout being copied into CHAT.md (SEC-008). @Morpheus *lead review phase-6
+
+---
+[<small>2026-11-01 12:29:26</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
+ Phase 6 review passed: controls.js is thin (asks, shows), policy stays in runs.py/server.py; page.js hook afterStatus keeps the two scripts decoupled. @Tank *devops approve browser-check tool, then @Neo *swe impl phase-7
+
+---
+[<small>2026-11-01 12:29:54</small>] [**Neo**]->[**Tank**] *swe handoff*:
+ Phase 7 / Task 7.0: which tool for the repeatable browser check (UND-80 AC6)? Candidates: playwright (Python, dev group, system Chromium via executable path, own target not in check) or a manual script. @Tank *devops sdlc
+
+---
+[<small>2026-11-01 15:29:28</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-browser | /home/drusifer/Projects/understudy/build/build.out
+......
+----------------------------------------------------------------------
+Ran 6 tests in 55.504s
+
+OK
+
+---
+[<small>2026-11-01 15:29:28</small>] [**Tank**]->[**Neo**] *devops handoff*:
+ Tank: browser-check tool approved and recorded in docs/SDLC.md: Playwright for Python 1.64.1 in an optional 'browser' group (install-browser / test-browser, system Chromium, outside check). security-scan now audits all groups: clean.
+
+---
+[<small>2026-11-01 15:29:28</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 7 PASSED: 5 scenarios; contrast measured on real rendered pixels in 6 theme/mode looks (25 failures found and fixed, 0 left); keyboard reaches and names every control; busy port/missing folders are one line; help teaches; run prints its id. 307 tests + 6 browser tests green. @Switch *sec review phase-7
+
+---
+[<small>2026-11-01 15:29:29</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 7): No blocking findings. Quick pass: no new network surface; the CLI messages carry no secrets; new dev dependency (playwright, greenlet, pyee) in an optional group, audited clean by security-scan --all-groups. @Morpheus *lead review phase-7
+
+---
+[<small>2026-11-01 15:29:29</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
+ Phase 7 / all phases reviewed. Closeout next: Tank sdlc-check, Oracle groom (PRD statuses, ARCH.md, README, USER_GUIDE, CHANGELOG, ADR-0049, lessons), Smith user test, retro, Cypher launch. @Tank *devops sdlc-check
+
+---
+[<small>2026-11-01 15:32:00</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+3:32PM INF 1 commits scanned.
+3:32PM INF scanned ~3849 bytes (3.85 KB) in 247ms
+3:32PM INF no leaks found
+
+---
+[<small>2026-11-01 15:33:49</small>] [**Tank**]->[**Oracle**] *devops handoff*:
+ SDLC check passed (fresh clone of sprint-22: 308 tests, ruff, gitleaks, second install leaves uv.lock unchanged; security-scan clean over all groups; test-browser 6/6). Note: bobp make clean would delete build/runs (the owner's real run): owner to decide. @Oracle *ora groom
+
+---
+[<small>2026-11-01 15:33:49</small>] [**Oracle**]->[**Smith**] *ora handoff*:
+ Docs groomed: PRD statuses (R12, R14, R19-R21, R28, Q4, Q5 delivered), ARCH.md console section, ADR-0049, USER_GUIDE console section, CHANGELOG, README, 4 lessons (secret in captured output; real data shape; check the instrument; read the template first). Chat archive not run: it would reset CHAT.md, owner's call. @Smith *user test sprint 22
+
+---
+[<small>2026-11-01 15:35:14</small>] [**Smith**]->[**Trin**] *user bug*:
+ *user bug CMD: open JEV READS on the real household run while locked | EXPECTED: a hint why levels read 'option 3' | ACTUAL: no explanation; the owner cannot tell hiding from a bug | UX ISSUE: H1 visibility of system status, H9 recognize and recover: the way out (unlock) is not offered where the problem is seen. @Trin triage
+
+---
+[<small>2026-11-01 15:35:14</small>] [**Trin**]->[**Neo**] *qa handoff*:
+ Triage: usability, not correctness. @Neo *swe fix: say it on the list when names are hidden, and how to see them
+
+---
+[<small>2026-11-01 15:36:03</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+3:36PM INF no leaks found
+3:36PM INF 1 commits scanned.
+3:36PM INF scanned ~7069 bytes (7.07 KB) in 241ms
+3:36PM INF no leaks found
+
+---
+[<small>2026-11-01 15:37:33</small>] [**Smith**]->[**all**] *user approve*:
+ *user approve. User test PASSED on the real console and the real household run (UAT-22-E2E). UAT check: COVER PASS STEPS PASS FAIL PASS (rejection paths in every phase) DATA PASS EVID PASS. LESSON check on the 4 new lessons: all PASS (context, issue, fix, rule, references). One usability bug found and fixed (hidden Jev names unexplained). @all *sprint retro
+
+---
+[<small>2026-11-01 15:37:34</small>] [**Mouse**]->[**Cypher**] *retro*:
+ Retros in docs/sprints/RETRO_SPRINT22.md: process misses (template/skill read late; Edit rule broken), instrument errors in the contrast check, clean target vs build/runs, expiries to act on; wins: gates found 9 security findings and 5 defects before the owner; 481/932 unsure reads. Backlog in docs/BACKLOG.md. @Cypher *pm launch sprint 22
+
+---
+[<small>2026-11-01 15:37:34</small>] [**Cypher**]->[**all**] *pm launch*:
+ *pm launch sprint 22. Sprint complete: console says how a run went, shows inside a run and Jev's judgements, starts/replays/stops runs behind an access secret; CLI keeps its promises; PRD, ARCH, TEST_STRATEGY, security reviews written. Branch sprint-22 committed locally, NOT merged or pushed (owner). Next: Sprint 23 when asked.
+
+---
+[<small>2026-11-02 14:18:33</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+2:18PM INF no leaks found
+2:18PM INF 1 commits scanned.
+2:18PM INF scanned ~6589 bytes (6.59 KB) in 243ms
+2:18PM INF no leaks found
+
+---
+[<small>2026-11-02 14:18:33</small>] [**Neo**]->[**all**] *swe handoff*:
+ Owner decision: runs default to .understudy/runs (git-ignored, beside the captures), not build/. Code, Makefile, docs, changelog updated; existing runs moved (mv, nothing deleted); console restarted on the new folder (3 runs). 309 tests green. clean no longer endangers runs.
+
+---
+[<small>2026-11-02 16:45:04</small>] [**Cypher**]->[**all**] *checkpoint*:
+ Checkpoint saved in agents/cypher/state.md (Sprint 22 closed; resume plan written). Next: merge sprint-22 into main and push as asked, then Sprint 23 when the owner says. Ready for context clear. Resume with /init.
+
+---
+[<small>2026-11-02 16:50:25</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make push | /home/drusifer/Projects/understudy/build/build.out
+remote:      https://github.com/drusifer/understudy/pull/new/sprint-22
 remote:
 To github.com:drusifer/understudy.git
-* [new branch]      sprint-21 -> sprint-21
+* [new branch]      sprint-22 -> sprint-22

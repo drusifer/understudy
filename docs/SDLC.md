@@ -15,6 +15,8 @@ ask `@Tank *devops sdlc <what and why>` — the mechanism and this document chan
 | Local environment | `.venv/` (gitignored) |
 | Test runner | `unittest` (built in) |
 | Linter | ruff 0.9.10 (dev group) |
+| Dependency audit | pip-audit 2.10.1 (dev group) |
+| Browser check | Playwright for Python 1.64.1 (optional `browser` group; drives the system Chromium, downloads none) |
 
 There is no Node: since Sprint 21 (ADR-0048) the repository has no `package.json`, eslint or `node:test`. The dashboard's browser files (`src/dashboard/page.html`, `page.js`, CSS, fonts) are plain files served as they are: no build, no lint, no test runner; what the page shows is decided in Python (`src/dashboard/server.py`) and tested there. The fonts are copied into `src/dashboard/fonts/` (SIL OFL).
 
@@ -53,10 +55,14 @@ The Makefile is the only entry point; its recipes hold the commands. `bobp make 
 | `test` | `test-py` | offline; no Jev or browser calls |
 | `test-py` | `python -m unittest discover -s tests/python` | `ARGS="test_sketch*.py"` runs only the files matching that pattern |
 | `run` | `bin/understudy $(ARGS)` (starts `python -m src.sketch.cli`) | e.g. `ARGS="run tests/fixtures/coffee/coffee_week.yaml --replay"`; a live run reads `TYPESAFE_API_KEY` from `.env` |
-| `dashboard` | `bin/understudy dashboard $(ARGS)` | serves the read-only console over `build/runs` on 0.0.0.0:4180 (all interfaces, no login) |
+| `dashboard` | `bin/understudy dashboard $(ARGS)` | serves the console over `.understudy/runs` on 0.0.0.0:4180 (all interfaces, no login) |
 | `lint` | `.venv/bin/ruff check src tests/python` | ruff 0.9.10 pinned in `pyproject.toml` (dev group); rule sets E, W, F, I, B, SIM, UP, N, C4, PERF, RUF, ERA, ARG, C90 (max complexity 12), PL, T20, RET, PTH, line length 135; test doubles and the CLI stdout are the only per-file ignores |
 | `secrets` | `gitleaks git` over history + uncommitted tracked changes | needs `gitleaks` installed |
 | `hooks` | `git config core.hooksPath .githooks` | installs the gitleaks pre-commit hook |
+| `security-scan-python` | `uv export --locked --no-emit-project --no-hashes --all-groups` (dev and browser tools too) then `pip-audit --no-deps --disable-pip` over that file | audits the locked versions against the PyPI advisory database; any advisory fails; touches the network; pip-audit 2.10.1 is in the dev group |
+| `security-scan` | `secrets` + `security-scan-python` | clean before a release and after any dependency change; not part of `check` because it needs the network |
+| `install-browser` | `uv sync --locked --group browser` | adds the optional browser tools (`playwright`, `greenlet`, `pyee`); a later `install` removes them again; touches the network |
+| `test-browser` | `python -m unittest discover -s tests/browser` with `CHROMIUM` (default `/usr/bin/chromium`) | drives the console in a real Chromium: rack, banner, live follow, start and stop, keyboard reach, and text contrast in all six theme and mode looks (UND-80); skipped with a reason when the group or Chromium is missing; not part of `check` |
 | `check` | `test` + `lint` + `secrets` | the full gate |
 | `push` | `check`, then `scripts/push.sh`: stage all → gitleaks scan of the staged files → commit with `MSG` → `git push --follow-tags origin <current branch>` | the only way changes are committed for publishing and pushed; `MSG="..."` required when anything is uncommitted; `ARGS="--dry-run"` commits nothing and previews; never `--force`; touches the network |
 | `clean` | removes `build/`, `coverage/` | keeps the installed environment |
@@ -85,6 +91,7 @@ Standard targets deliberately absent:
 | Lint | `make lint` | every handoff to Trin; sprint close |
 | Live Jev runs | `bobp make run ARGS="run <sketch>"` with `TYPESAFE_API_KEY` | UAT only, one run with the owner's go-ahead (Sprint 19). `make test` never calls Jev: tests use a Jev double or `--replay` captures. |
 | Secret scan | `make secrets` | every commit (pre-commit hook, if `make hooks` was run); sprint close |
+| Security scan | `make security-scan` | a release; any change to `pyproject.toml` or `uv.lock`; sprint close when dependencies changed. An advisory is fixed (upgrade, swap, remove) or accepted by the owner with an expiry (`agents/skills/security/SKILL.md` section 4); never ignored with a flag |
 | All of the above | `make check` | sprint close |
 
 ## 6. Change management
@@ -150,14 +157,19 @@ None — everything runs locally on the dev Pi. A CI job, if added, must run
   `make secrets` fails with an install hint if it is missing.
 - The dashboard's browser script (`page.js`) has no automated test and no linter (owner: JavaScript is fine in the
   dashboard, Sprint 21). A browser check is done by hand at UAT; page logic that matters lives in Python.
-- Network targets: `install`, `lock`, `install-py`, `lock-py` and `push`.
+- Network targets: `install`, `lock`, `install-py`, `install-browser`, `lock-py` and `push`.
+- The browser check is outside `check` on purpose: it needs a Chromium and the optional group, and takes about a minute. Run it
+  after any change to `src/dashboard/` (Tank, owner decision pending on making it a release gate). Playwright's wheel bundles its
+  own small Node driver (about 130 MB installed); it is a dev-only detail of that package, not a Node toolchain of this project
+  (no `package.json`, no `npm`).
 
 ## 10. Conformance check
 
 Run by Tank at sprint close (`*devops sdlc-check`):
 
 1. `bobp make distclean && bobp make install && bobp make check` passes, and `bobp make test` made no network call
-   to Jev and launched no browser (unit tests use a Jev double or `--replay` captures).
+   to Jev and launched no browser (unit tests use a Jev double or `--replay` captures); `bobp make test-browser` is run
+   separately when `src/dashboard/` changed.
 2. `bobp make install` a second time leaves `uv.lock` unchanged (`git status` clean).
 3. Every imported package is declared in `pyproject.toml` and `uv.lock`.
 4. Every target in section 3 exists in the Makefile.
@@ -167,7 +179,8 @@ Run by Tank at sprint close (`*devops sdlc-check`):
 8. Nothing under `src/` or `tests/` imports from `seed/`.
 
 ---
-*Last verified: 2026-11-01 by Tank (Sprint 21 close: Node removed, Python-only; `bobp make check` green (lint, 233 tests, gitleaks); Makefile targets match section 3; no package.json, eslint, `.mjs` or lockfile other than `uv.lock` remains; the from-clean `distclean` → `install` run was not repeated this sprint because no dependency changed.)*
+*Last verified: 2026-11-01 by Tank (Sprint 22 close: a fresh clone of `sprint-22` installed from `uv.lock` (`uv sync --locked`), `make check` green there (308 tests, ruff, gitleaks), a second install left `uv.lock` unchanged; `bobp make security-scan` clean over all groups; `bobp make test-browser` 6 of 6; targets match section 3 including `install-browser`, `test-browser`, `security-scan`, `runs`/`dashboard`; no Node file, no unlisted dependency. The check ran on a clone, not `distclean`, because `clean` would delete the owner's real run output in `build/runs`: the `clean` target should leave `build/runs` alone, owner to decide.)*
+*Previous verification: 2026-11-01 by Tank (Sprint 21 close: Node removed, Python-only; `bobp make check` green (lint, 233 tests, gitleaks); Makefile targets match section 3; no package.json, eslint, `.mjs` or lockfile other than `uv.lock` remains; the from-clean `distclean` → `install` run was not repeated this sprint because no dependency changed.)*
 *Previous verification: 2026-10-30 by Tank (Sprint 19 close: distclean → install → check green; repeated install passed idempotently; Python manifest matches `pyproject.toml`/`uv.lock` including `ruamel.yaml` and `jsonschema`; the old Node player, its tests, the `test-browser`/`test-live`/`install-browser` targets and nine npm dependencies removed with the owner's decisions (one kind of sketch, old commands may break)).*
 *Previous verification: 2026-10-17 by Tank (sprint-15 close: clean → check green, browser tests green;
 no dependency or mechanism change. Sprint-14 close: clean → check green, browser tests green;

@@ -91,6 +91,7 @@ Bob Protocol organizes autonomous workflows into hierarchical loops and supporti
 Located in `agents/templates/`:
 
 - `ARTIFACTS.md` - Artifact inventory, rubric quality standards, and review gates
+- `_template_PRD.md` - Product requirements (check: PRD); instantiated as `docs/PRD.md`
 - `_template_USER_STORIES.md` - Sprint user stories (rubric: STORIES)
 - `_template_ARCH.md` - System & sprint architecture (rubric: ARCH)
 - `_template_DOMAIN.md` - Domain model & ubiquitous language specification (rubric: DOMAIN)

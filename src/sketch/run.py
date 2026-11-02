@@ -1,6 +1,6 @@
 """One run of a sketch: its folder, its stages, its outputs (published last).
 
-    build/runs/run-<stamp>-<id>/   run.json  events.jsonl  summary.json  <sink files>
+    .understudy/runs/run-<stamp>-<id>/   run.json  events.jsonl  summary.json  <sink files>
 
 A sink stage writes `<file>.part`; only when the machine reaches a final state are the parts renamed, so a
 failed run publishes nothing. Failed runs keep earlier stage files and `run.json` saying where they stopped.
@@ -14,7 +14,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from src.machine_runner import RunRecord, run_machine
-from src.paths import check_writable
+from src.paths import ROOT, check_writable
 from src.sketch.loader import child_path, children, load
 from src.sketch.machine import build_machine
 from src.sketch.model import Sketch
@@ -194,8 +194,11 @@ async def run_sketch(
     directory = out / f"run-{datetime.now(UTC).strftime('%Y%m%dT%H%M%S')}-{uuid.uuid4().hex[:8]}"
     directory.mkdir(parents=True)
     files = [f for sink in sketch.sinks.values() for f in (sink.file, f"{sink.file}.part")]
-    record = EventedRecord(directory, announce, cleanup=[*files, "summary.json"], mode=capture.mode, sketch=sketch.name)
-    record.emit("run_started", sketch=str(sketch.path), mode=capture.mode)
+    facts = {"with": dict(sketch.variables)}
+    if capture.replay_dir:
+        facts["replay_of"] = _shown_path(capture.replay_dir)
+    record = EventedRecord(directory, announce, cleanup=[*files, "summary.json"], mode=capture.mode, sketch=sketch.name, **facts)
+    record.emit("run_started", sketch=_shown_path(sketch.path), mode=capture.mode)
     if capture.replay_dir:
         announce(f"replay: reading captures from {capture.replay_dir}, no live calls")
     sources = Sources(capture, directory.name, announce)
@@ -225,12 +228,25 @@ async def run_sketch(
     def publish() -> None:
         facts = {"mode": capture.mode, "stale": sources.stale, "jev_requests": sources.jev_requests, **summary}
         published.update(_publish(directory, sketch, facts))
+        record.manifest["outputs"] = {path.name: _row_count(path) for path in published.values()}
 
     outcomes = {name: state["outcome"] for name, state in sketch.machine["states"].items() if state.get("outcome")}
     await run_machine(machine, inner, record, publish=publish, outcomes=outcomes)
     if capture.mode == "live":
         capture.store.prune()
     return RunResult(directory, published, summary, record.manifest.get("outcome"))
+
+
+def _shown_path(path: Path) -> str:
+    """The sketch's path as a run records it: relative to the project when inside it, else just the file name (SEC-004)."""
+    resolved = Path(path).resolve()
+    return resolved.relative_to(ROOT).as_posix() if resolved.is_relative_to(ROOT) else resolved.name
+
+
+def _row_count(path: Path) -> int:
+    """Lines in an output file: one JSON record per line."""
+    with path.open("rb") as handle:
+        return sum(1 for _ in handle)
 
 
 def _remember(stage, last: dict):

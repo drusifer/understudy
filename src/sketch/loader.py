@@ -66,6 +66,12 @@ def _read(path: Path, variables: dict[str, str], lenient: bool) -> tuple[dict, f
     return document, used
 
 
+def read_template(path: Path) -> tuple[dict, frozenset[str]]:
+    """A sketch file as written, with every `--with` name given an empty value: its document and the names it takes.
+    Nothing is checked beyond YAML and Jinja syntax, so a sketch that needs its values can still be listed."""
+    return _read(Path(path), {}, True)
+
+
 def _shape(path: Path, document: dict) -> None:
     errors = sorted(Draft202012Validator(SCHEMA).iter_errors(document), key=lambda e: list(e.absolute_path))
     if errors:

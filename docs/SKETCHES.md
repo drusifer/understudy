@@ -348,7 +348,7 @@ A replay says so on its first line (`replay: reading captures from <folder>, no 
 
 ## What a run writes
 
-`build/runs/run-<stamp>-<id>/`, or the folder you give with `--out` (refused under `data/` or any tracked folder):
+`.understudy/runs/run-<stamp>-<id>/` (git-ignored; `make clean` leaves it alone), or the folder you give with `--out` (refused under `data/` or any tracked folder):
 
 * your sink files, written last, so a failed run publishes none;
 * `summary.json`: counts only (total, per segment, the shares, the weather weights, Jev requests, `mode`, `stale`);

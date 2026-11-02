@@ -15,7 +15,7 @@ const remembered = (key) => { try { return localStorage.getItem(`understudy.${ke
 const remember = (key, value) => { try { localStorage.setItem(`understudy.${key}`, value); } catch { /* private mode */ } };
 const known = (list, ...candidates) => candidates.find((each) => list.includes(each)) ?? list[0];
 
-const state = { runs: [], chosen: null, follow: null, theme: 'steampunk', mode: 'auto' };
+const state = { runs: [], chosen: null, chosenState: null, follow: null, openGroups: new Set(), theme: 'steampunk', mode: 'auto' };
 const query = new URLSearchParams(location.search);
 const device = matchMedia('(prefers-color-scheme: dark)');
 
@@ -27,14 +27,59 @@ function look() {
   for (const button of document.querySelectorAll('.mode-choice')) button.setAttribute('aria-pressed', String(button.dataset.mode === state.mode));
 }
 
-function line(each) {
-  return make('div', { class: `line ${each.tone ?? ''}` }, each.text);
+// The printer holds every line of the chosen run in state.lines; the finder decides which of them are on the paper.
+state.lines = [];
+state.failures = [];
+state.jev = null;
+state.jevGauges = [];
+const finder = () => ({ text: $('find-text').value.trim().toLowerCase(), failures: $('find-failures').checked, stage: $('find-stage').value });
+
+function shown(entry, find) {
+  if (find.failures && entry.tone !== 'held') return false;
+  if (find.stage && !(entry.stage === find.stage || entry.stage.startsWith(`${find.stage}.`) || entry.stage.startsWith(`${find.stage}[`))) return false;
+  return !find.text || entry.text.toLowerCase().includes(find.text);
 }
 
+function line(each, index) {
+  return make('div', { class: `line ${each.tone ?? ''}`, 'data-index': String(index) }, each.text);
+}
+
+function noMatch() {
+  const clear = make('button', { type: 'button', class: 'find-button' }, 'CLEAR FILTERS');
+  clear.addEventListener('click', clearFinder);
+  return make('div', { class: 'no-match', role: 'status' }, 'no lines match ', clear);
+}
+
+function renderPaper() {
+  const find = finder();
+  const nodes = state.lines.flatMap((each, index) => (shown(each, find) ? [line(each, index)] : []));
+  $('paper').replaceChildren(...(nodes.length || !state.lines.length ? nodes : [noMatch()]));
+  $('paper-window').scrollTop = $('paper-window').scrollHeight;
+}
+
+function clearFinder() {
+  $('find-text').value = '';
+  $('find-failures').checked = false;
+  $('find-stage').value = '';
+  renderPaper();
+}
+
+function setFailures(indices) {
+  state.failures = indices;
+  $('jump-failure').disabled = indices.length === 0;
+  $('jump-failure').title = indices.length ? 'Show the first failed line' : 'no failure in this run';
+}
+
+// A new line from a run that is going: kept, and put on the paper only if the finder lets it through.
 function append(each) {
+  state.lines.push(each);
+  const index = state.lines.length - 1;
+  if (each.tone === 'held') setFailures([...state.failures, index]);
+  if (!shown(each, finder())) return;
   const window = $('paper-window');
   const atEnd = window.scrollTop + window.clientHeight >= window.scrollHeight - 8;
-  $('paper').append(line(each));
+  $('paper').querySelector('.no-match')?.remove();
+  $('paper').append(line(each, index));
   if (atEnd) window.scrollTop = window.scrollHeight;
 }
 
@@ -52,35 +97,187 @@ function gauge(each) {
   dial.setAttribute('aria-hidden', 'true');
   dial.innerHTML = '<path d="M 10 56 A 46 46 0 0 1 90 56" class="arc" fill="none"/><line x1="50" y1="56" x2="50" y2="14" class="needle"/><circle cx="50" cy="56" r="4" class="hub"/>';
   dial.prepend(...ticks);
-  const node = make('div', { class: 'gauge', role: 'meter', 'aria-valuemin': '0', 'aria-valuemax': '1', 'aria-valuenow': String(each.level), 'aria-valuetext': `${each.name.toLowerCase()} ${each.text}`, 'aria-label': each.about, title: each.about },
+  // A needle only where the run knows a full scale (level is a fraction); otherwise just the figure.
+  const attributes = each.level === null
+    ? { class: 'gauge no-needle', role: 'group' }
+    : { class: 'gauge', role: 'meter', 'aria-valuemin': '0', 'aria-valuemax': '1', 'aria-valuenow': String(each.level) };
+  const node = make('div', { ...attributes, 'aria-valuetext': `${each.name.toLowerCase()} ${each.text}`, 'aria-label': each.about, title: each.about },
     dial, make('div', { class: 'figure' }, each.text), make('div', { class: 'gauge-name' }, each.name));
-  node.style.setProperty('--level', String(each.level));
+  node.style.setProperty('--level', String(each.level ?? 0));
   return node;
 }
 
+const WORDS = { running: 'RUNNING', done: 'DONE', failed: 'FAILED', stopped: 'STOPPED', stalled: 'STALLED', unreadable: 'NO DETAILS' };
+const LAMPS = { running: 'on-air', done: 'done', failed: 'failed', stopped: 'standby', stalled: 'stalled', unreadable: 'dark' };
+
+// The banner above the printer: why a run failed (it jumps to that line), or that a run looks dead.
+function drawBanner(run) {
+  if (run.failure) {
+    const banner = make('button', { type: 'button', class: 'banner', title: 'Show this line in the printer' }, `FAILED at ${run.failure.stage}: ${run.failure.reason}`);
+    banner.addEventListener('click', () => jumpTo(run.failure.line));
+    $('banner-slot').replaceChildren(banner);
+  } else if (run.state === 'stalled') {
+    $('banner-slot').replaceChildren(make('div', { class: 'banner warn' }, run.ended));
+  } else {
+    $('banner-slot').replaceChildren();
+  }
+}
+
+// Bring one line (by its place in the whole log) into view; if the finder is hiding it, clear the finder first.
+function jumpTo(index) {
+  if (index === null || index === undefined) return;
+  let node = $('paper').querySelector(`[data-index="${index}"]`);
+  if (!node) {
+    clearFinder();
+    node = $('paper').querySelector(`[data-index="${index}"]`);
+  }
+  node?.scrollIntoView({ block: 'center' });
+}
+
+function drawSummary(run) {
+  const { summary } = run;
+  const pairs = Object.entries(summary.with);
+  const outputs = Object.entries(summary.outputs);
+  const rows = [
+    ['outcome', summary.outcome ?? '-'], ['mode', summary.mode || '-'], ['stale', summary.stale === null ? '-' : String(summary.stale)],
+    ['took', `${summary.seconds}s`], ['with', pairs.length ? pairs.map(([name, value]) => `${name}=${value}`).join(' ') : '-'],
+    ['wrote', outputs.length ? outputs.map(([file, count]) => `${file} (${count} ${count === 1 ? 'row' : 'rows'})`).join(', ') : '-'],
+  ];
+  $('summary').replaceChildren(...rows.flatMap(([name, value]) => [make('dt', {}, name), make('dd', {}, value)]));
+}
+
+// One top-level stage: its lamp, and under it each group of nested stages (open or closed as the reader left it).
+function stageBlock(stage) {
+  const block = make('div', { class: 'stage-block' }, make('div', { class: `stage-lamp ${stage.state}` }, make('i'), stage.name));
+  for (const group of stage.groups) {
+    const key = `${stage.name}/${group.name}`;
+    const progress = group.seen > 0 ? `${group.done} of ${group.seen} done` : group.state;
+    const details = make('details', { class: `group ${group.state}` },
+      make('summary', {}, `${group.name} · ${progress}${group.seen > 0 && group.state === 'running' ? ' · running' : ''}`),
+      ...group.stages.map((child) => make('div', { class: 'group-stage' }, `${child.name} · ${child.completed} of ${child.started} done`)));
+    details.open = state.openGroups.has(key);
+    details.addEventListener('toggle', () => { if (details.open) state.openGroups.add(key); else state.openGroups.delete(key); });
+    block.append(details);
+  }
+  return block;
+}
+
+// Everything but the printer's lines, so it can be refreshed while a run goes without losing the reader's place.
+function drawStatus(run) {
+  $('tube').replaceChildren(...run.tube.map(stageBlock));
+  $('gauges').replaceChildren(...[...run.gauges, ...state.jevGauges].map(gauge));
+  $('tube-caption').textContent = `${run.sketch} · ${WORDS[run.state]} · ${run.mode}`;
+  $('ended').textContent = run.ended;
+  $('printer-state').textContent = run.state === 'running' ? 'PRINTING' : WORDS[run.state];
+  $('status-lamp').className = `lamp ${LAMPS[run.state]}`;
+  $('status-text').textContent = WORDS[run.state];
+  drawBanner(run);
+  drawSummary(run);
+  state.chosenState = run.state;
+  if (typeof afterStatus === 'function') afterStatus(run); // controls.js: the controls follow the chosen run
+}
+
+// The stages the stage filter offers: each top-level stage and each group of nested stages.
+function fillStageFilter(run) {
+  const names = run.tube.flatMap((stage) => [stage.name, ...stage.groups.map((group) => group.name)]);
+  $('find-stage').replaceChildren(make('option', { value: '' }, 'all stages'), ...names.map((name) => make('option', { value: name }, name)));
+}
+
+// The Jev list: what Jev was asked in this run and how sure it was, from the run's captured answers.
+function drawJev() {
+  const jev = state.jev;
+  const unsure = $('jev-unsure').checked;
+  if (!jev) { $('jev-summary').textContent = 'JEV READS'; $('jev-list').replaceChildren(); return; }
+  const flagged = jev.reads.filter((each) => each.flagged).length;
+  $('jev-summary').textContent = jev.kept ? `JEV READS · ${jev.reads.length} read, ${flagged} unsure` : `JEV READS · ${jev.note}`;
+  const items = jev.reads.filter((each) => !unsure || each.flagged).map((each) => make('details', { class: `jev-read ${each.flagged ? 'unsure' : ''}` },
+    make('summary', {}, `${each.source} · ${each.top} ${each.probability.toFixed(2)}${each.flagged ? ' · UNSURE' : ''}`),
+    ...(each.instructions ? [make('div', { class: 'jev-question' }, each.instructions)] : []),
+    ...each.levels.map(([level, probability]) => make('div', { class: 'jev-level' }, `${level} ${probability.toFixed(2)}`))));
+  const notes = [];
+  if (!jev.kept) notes.push(make('div', { class: 'about' }, jev.note));
+  if (jev.hidden) {
+    notes.push(make('div', { class: 'about' }, `${jev.hidden} of these reads have level names from your own data, shown as "option N"; `
+      + 'unlock with the access secret (START A RUN panel above) to see the names'));
+  }
+  if (jev.missing.length) notes.push(make('div', { class: 'about' }, `missing capture halves: ${jev.missing.join(', ')}`));
+  if (jev.kept && !items.length) notes.push(make('div', { class: 'about' }, unsure ? 'no unsure reads' : 'no reads'));
+  $('jev-list').replaceChildren(...notes, ...items);
+}
+
+async function loadJev(id) {
+  const jev = await getJson(`api/runs/${id}/jev`);
+  if (state.chosen !== id) return;
+  state.jev = jev;
+  state.jevGauges = [];
+  if (jev?.kept && jev.reads.length) {
+    const total = jev.asked + jev.reused;
+    state.jevGauges = [
+      { name: 'SURE', level: jev.confidence, text: jev.confidence.toFixed(2), about: "how sure Jev was of its last read" },
+      { name: 'ASKED', level: total ? jev.asked / total : null, text: `${jev.asked}·${jev.reused}`, about: 'answers asked live · answers reused from a capture' },
+    ];
+  }
+  drawJev();
+  const run = await getJson(`api/runs/${id}`);
+  if (run && state.chosen === id) drawStatus(run);
+}
+
+$('jev-unsure').addEventListener('input', drawJev);
+
 function draw(run) {
-  $('paper').replaceChildren(...run.lines.map(line));
-  $('paper-window').scrollTop = $('paper-window').scrollHeight;
-  $('tube').replaceChildren(...run.tube.map((each) => make('div', { class: `stage-lamp ${each.state}` }, make('i'), each.name)));
-  $('gauges').replaceChildren(...run.gauges.map(gauge));
-  $('tube-caption').textContent = `${run.sketch} · ${run.status} · ${run.mode}`;
-  $('printer-state').textContent = run.status === 'running' ? 'PRINTING' : run.status.toUpperCase();
-  $('status-lamp').className = `lamp ${run.status === 'running' ? 'on-air' : 'standby'}`;
-  $('status-text').textContent = run.status === 'running' ? 'ON AIR' : 'STANDING BY';
+  state.jev = null;
+  state.jevGauges = [];
+  state.lines = run.lines;
+  setFailures(run.failures);
+  fillStageFilter(run);
+  clearFinder();
+  drawStatus(run);
+}
+
+for (const id of ['find-text', 'find-failures', 'find-stage']) $(id).addEventListener('input', renderPaper);
+$('jump-start').addEventListener('click', () => { $('paper-window').scrollTop = 0; });
+$('jump-end').addEventListener('click', () => { $('paper-window').scrollTop = $('paper-window').scrollHeight; });
+$('jump-failure').addEventListener('click', () => jumpTo(state.failures[0]));
+
+// A fetch that says so when the server cannot be reached, and recovers by itself on the next one that works.
+// The access secret lives in this tab only (sessionStorage), and goes out only in a header, never in an address.
+function secretHeaders() {
+  try {
+    const secret = sessionStorage.getItem('understudy.secret');
+    return secret ? { 'X-Understudy-Secret': secret } : {};
+  } catch { return {}; }
+}
+
+async function getJson(url) {
+  try {
+    const value = await (await fetch(url, { headers: secretHeaders() })).json();
+    setOffline(false);
+    return value;
+  } catch {
+    setOffline(true);
+    return null;
+  }
+}
+
+function setOffline(offline) {
+  $('offline').hidden = !offline;
+  $('console').classList.toggle('stale', offline);
 }
 
 async function choose(id) {
   state.follow?.close();
   state.chosen = id;
   rack();
-  const run = await (await fetch(`api/runs/${id}`)).json();
+  const run = await getJson(`api/runs/${id}`);
+  if (!run) return;
   draw(run);
-  if (run.status !== 'running') return;
+  loadJev(id);
+  if (run.state !== 'running') return;
   const source = new EventSource(`events/${id}`);
   state.follow = source;
   let skip = run.count;
   source.onmessage = (message) => { if (skip > 0) skip -= 1; else append(JSON.parse(message.data)); };
-  source.addEventListener('end', async () => { source.close(); draw(await (await fetch(`api/runs/${id}`)).json()); loadRuns(); });
+  source.addEventListener('end', async () => { source.close(); const done = await getJson(`api/runs/${id}`); if (done) drawStatus(done); loadJev(id); loadRuns(); });
 }
 
 // run-20261031T012507-46140191 reads "10-31 01:25".
@@ -89,21 +286,42 @@ function stamp(id) {
   return month ? `${month}-${day} ${hour}:${minute}` : id;
 }
 
+const BADGES = { running: 'RUNNING', failed: 'FAILED', stalled: 'STALLED', stopped: 'STOPPED' };
+
+// The rack: runs grouped by sketch (the runs arrive newest first, so each group and each tab inside it is newest first),
+// each tab carrying a badge in words for a run that is going, failed, stalled or stopped.
 function rack() {
-  $('rack').replaceChildren(...state.runs.map((each) => {
-    const tab = make('button', { type: 'button', role: 'tab', class: 'sketch-tab', 'aria-selected': String(each.id === state.chosen), title: `${each.id} · ${each.status}` },
-      make('span', { class: 'name' }, `${each.sketch} · ${stamp(each.id)}`));
-    tab.addEventListener('click', () => choose(each.id));
-    return tab;
-  }));
-  if (state.runs.length === 0) $('rack').replaceChildren(make('span', { class: 'about' }, 'No runs yet - run a sketch with understudy run.'));
+  const groups = new Map();
+  for (const each of state.runs) groups.set(each.sketch, [...groups.get(each.sketch) ?? [], each]);
+  const nodes = [...groups].flatMap(([sketch, runs]) => [
+    make('span', { class: 'rack-group' }, sketch),
+    ...runs.map((each) => {
+      const label = make('span', { class: 'name' }, stamp(each.id));
+      const tab = make('button', { type: 'button', role: 'tab', class: `sketch-tab ${each.state}`, 'aria-selected': String(each.id === state.chosen), title: `${each.id} · ${each.state}` }, label);
+      if (BADGES[each.state]) tab.append(make('span', { class: 'badge' }, BADGES[each.state]));
+      tab.addEventListener('click', () => choose(each.id));
+      return tab;
+    }),
+  ]);
+  $('rack').replaceChildren(...(nodes.length ? nodes : [make('span', { class: 'about' }, 'No runs yet - run a sketch with understudy run.')]));
 }
 
 async function loadRuns() {
-  state.runs = await (await fetch('api/runs')).json();
+  const runs = await getJson('api/runs');
+  if (!runs) return;
+  state.runs = runs;
   rack();
   if (!state.chosen && state.runs.length > 0) choose(state.runs[0].id);
+  else if (state.chosen && ['running', 'stalled'].includes(state.chosenState)) {
+    const run = await getJson(`api/runs/${state.chosen}`);
+    if (run) drawStatus(run);
+  }
 }
+
+$('looks-toggle').addEventListener('click', () => {
+  const open = $('looks').classList.toggle('open');
+  $('looks-toggle').setAttribute('aria-expanded', String(open));
+});
 
 state.theme = known(THEMES, query.get('theme'), remembered('theme'));
 state.mode = known(MODES, query.get('mode'), remembered('mode'));

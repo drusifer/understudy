@@ -29,3 +29,11 @@
 2. Tank runs the required clean setup and `bobp make check`, recording results in `docs/SDLC.md`.
 3. Oracle grooms the sprint artifacts and archives the chat report; Smith runs the owner-facing acceptance gate; personas record retrospectives and backlog items; Cypher posts launch only after gates pass.
 4. Keep private CSV/transaction data under ignored `build/runs/`; do not add owner exports to git or CHAT.
+
+---
+## Update 2026-11-01
+Wrote docs/ARCH.md (system-wide, from the code). Debt listed: thin event stream, console stream cap and headers, untested page.js, unaudited deps. Next: Sprint 22 arch (UND-79 access secret with Switch) after Gate 1.
+
+---
+## Sprint 22 close 2026-11-01
+ARCH_SPRINT22 built as designed; ADR-0049. Revisit: launcher lock during check. Next: Sprint 23 architecture (events v2) when asked.

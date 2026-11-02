@@ -58,3 +58,11 @@ Rejected USER_STORIES_SPRINT20.md once: rubric STORIES: OUT=A TEST=W FAIL=A SCOP
 
 ---
 *Last updated: 2026-10-30*
+
+---
+## Sprint 21 UX gap review (2026-11-01)
+Ran the CLI and the console (real household run, failed run, empty folder, 390 px). Wrote `docs/sprints/UX_GAPS_SPRINT22.md`: 14 gaps (G1 failed run does not look failed; G2 run result invisible; G3 tube hides nested stages; G4 no start/replay from console; G5 printer filter; G6 Jev panel; G7 arbitrary needle scales; G11 CLI traceback on busy port, no run id printed). Cypher grouped them into themes A-D. Waiting on the owner: watch-only (A,B,C) or also start runs (D). Next: after the answer, Cypher writes Sprint 22 stories, I do Gate 1 with the STORIES rubric.
+
+---
+## Sprint 22 close 2026-11-01
+Sprint 22 user test PASS on the real console and run; one finding (hidden Jev names unexplained) fixed. Next: Gate 1 for Sprint 23 stories.

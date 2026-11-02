@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="theme-professional.css">
 <link rel="stylesheet" href="theme-starship.css">
 <script src="page.js" defer></script>
+<script src="controls.js" defer></script>
 </head>
 <body>
 <div class="room">
@@ -21,7 +22,8 @@
     </div>
     <div class="bulbs" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
   </div>
-  <div class="looks">
+  <button type="button" id="looks-toggle" class="looks-toggle" aria-expanded="false" aria-controls="looks">LOOK</button>
+  <div class="looks" id="looks">
     <div class="theme-switch" role="group" aria-label="Theme">
       <span class="theme-label">THEME</span>
       <button type="button" class="theme-choice" data-theme="steampunk" aria-pressed="true">STEAMPUNK</button>
@@ -46,9 +48,43 @@
   <div id="rack" class="rack-list" role="tablist"></div>
 </nav>
 
+<details id="controls" class="start-panel" hidden>
+  <summary>START A RUN</summary>
+  <div class="start-grid">
+    <div class="start-gate">
+      <label for="secret-box">Access secret</label>
+      <input id="secret-box" type="password" class="find-field" autocomplete="off" placeholder="from .understudy/dashboard.secret">
+      <button type="button" id="unlock" class="find-button">UNLOCK</button>
+      <span id="gate-note" class="about">locked: you can watch, but not start, replay or stop</span>
+    </div>
+    <label for="sketch-pick">Sketch</label>
+    <select id="sketch-pick" class="find-field"></select>
+    <div id="sketch-about" class="about"></div>
+    <div id="fields" class="start-fields"></div>
+    <label for="replay-pick">Replay from</label>
+    <select id="replay-pick" class="find-field"><option value="">no - run live</option></select>
+    <div class="start-buttons">
+      <button type="button" id="play" class="find-button" disabled>PLAY</button>
+      <button type="button" id="stop" class="find-button" disabled>STOP THIS RUN</button>
+    </div>
+    <div id="start-message" class="start-message" role="status" aria-live="polite"></div>
+  </div>
+</details>
+
+<div id="offline" class="offline" role="status" hidden>DISCONNECTED - retrying. What you see may be out of date.</div>
+<div id="banner-slot" role="status"></div>
+
 <main id="console" class="stage watch">
   <section id="printer" class="printer" aria-label="Printer">
     <div class="printer-head"><span>RUN LOG · PRINTER</span><span id="printer-state">IDLE</span></div>
+    <div class="finder" role="search" aria-label="Find a line in the log">
+      <input id="find-text" type="search" class="find-field" placeholder="find text" aria-label="Show only lines containing this text" autocomplete="off">
+      <select id="find-stage" class="find-field" aria-label="Show only one stage"><option value="">all stages</option></select>
+      <label class="find-check"><input id="find-failures" type="checkbox"> failures only</label>
+      <button type="button" id="jump-start" class="find-button">START</button>
+      <button type="button" id="jump-failure" class="find-button" disabled title="no failure in this run">FIRST FAILURE</button>
+      <button type="button" id="jump-end" class="find-button">END</button>
+    </div>
     <div class="roller" aria-hidden="true"></div>
     <div class="glass">
       <div class="paper-window" id="paper-window" tabindex="0" aria-label="Run log - scroll up to rewind, down to wind on">
@@ -60,8 +96,15 @@
 
   <section class="tube-panel" aria-label="Stage tube">
     <div class="panel-head"><span>STAGE TUBE</span><span id="tube-caption" class="about">no run chosen</span></div>
+    <div id="ended" class="ended about"></div>
     <div id="tube" class="tube stages"></div>
     <div id="gauges" class="gauges" role="group" aria-label="Gauges"></div>
+    <dl id="summary" class="summary" aria-label="Run summary"></dl>
+    <details id="jev" class="jev" aria-label="Jev reads of this run">
+      <summary id="jev-summary">JEV READS</summary>
+      <label class="find-check"><input id="jev-unsure" type="checkbox"> unsure only</label>
+      <div id="jev-list" class="jev-list"></div>
+    </details>
   </section>
 </main>
 </div>

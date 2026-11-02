@@ -10,6 +10,14 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+## ADR-0049: The console starts runs as child processes, behind one access secret and an allow-list
+
+*   **Status**: Accepted · **Deciders**: owner (watch and start; plain HTTP accepted until 2027-01-30), Morpheus, Switch · **Date**: 2026-11-01 · **Related**: Sprint 22 UND-79; [ARCH_SPRINT22](sprints/ARCH_SPRINT22.md); SEC-005 to SEC-009; owner decisions 1-2 of Sprint 22
+*   **Context**: the owner wants to start, replay and stop runs without a terminal, from other devices, and the console listens on every network interface with no login for reading.
+*   **Options**: (1) a login page; (2) run sketches inside the console's own process; (3) Play only from the machine itself; (4) child processes behind one startup secret and an allow-list.
+*   **Decision**: (4). The console starts `understudy run` as a child process (an argument list, no shell, its own session; one per sketch, four in all), only for a sketch inside the folder given with `--sketches`, only with names that sketch takes, only with file values inside the project, after the same check `understudy check` makes. The access secret is made at each start, saved in `.understudy/dashboard.secret` (mode 0600, git-ignored) and never printed, and every POST needs it in a header from the same origin. Reading stays open.
+*   **Consequences**: + no accounts or login page; a stolen browser tab loses the secret when it closes; every refusal is a sentence and a test. − the secret crosses the network in plain text (accepted by the owner until 2027-01-30; TLS flags are the fix); one shared secret has no audit trail; a console restart forgets the children it started. Rejected: (1) a second mechanism for one owner; (2) a stage could block or crash the console; (3) the owner works from other devices.
+
 ## ADR-0048: Node is removed; the console is Python-served, with plain browser JavaScript
 
 *   **Status**: Accepted · **Deciders**: owner · **Date**: 2026-11-01 · **Related**: Sprint 21 UND-74, UND-75; [owner decisions 1-2](sprints/OWNER_DECISIONS_SPRINT21.md); epic `EPIC_PYTHON_PORT.md` slices C and D; supersedes the Node parts of ADR-0011, ADR-0018, ADR-0030

@@ -85,6 +85,7 @@ class LiveTests(SourcesCase):
         meta = json.loads((self.store.run_dir(run_id) / f"{KEY}.meta.json").read_text(encoding="utf-8"))
         self.assertEqual((meta["run_id"], meta["source"]), (run_id, KEY))
         self.assertEqual(len(meta["request_hash"]), 64)
+        self.assertIsInstance(meta["instructions"], str)  # the rubric's question, which the console's Jev list shows
         summary = self.summary_of(lines)
         self.assertEqual((summary["mode"], summary["stale"], summary["jev_requests"]), ("live", False, 1))
 

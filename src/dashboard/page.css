@@ -9,6 +9,7 @@
 @font-face { font-family: DotGothic16; src: url(fonts/dotgothic16-400.woff2) format('woff2'); }
 
 :root {
+  --tube-ink: #d8c4a0; /* text on the tube's glass: light on the dark glass, a theme with a light tube sets its own */
   --walnut: #140e0a; --brass: #c9a15a; --brass-dark: #8a6630; --brass-deep: #4a3216;
   --cream: #ead9b8; --muted: #bda887; --amber: #ff9a3c; --paper: #f1e8cf; --ink: #2a2622;
   /* What the script draws (UND-36): each theme sets these. */
@@ -304,9 +305,90 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .stage.watch { grid-template-columns: minmax(280px, 1fr) minmax(0, 1.4fr); }
 .gauges { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .tube.stages { height: auto; min-height: 160px; max-height: 560px; overflow: auto; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 8px; padding: 18px; }
-.stage-lamp { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 6px; border: 1px solid #5a3e1e; background: rgba(0,0,0,.35); font-family: VT323, monospace; font-size: 20px; color: #d8c4a0; }
+.stage-lamp { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 6px; border: 1px solid #5a3e1e; background: rgba(0,0,0,.35); font-family: VT323, monospace; font-size: 20px; color: var(--tube-ink); }
 .stage-lamp i { width: 12px; height: 12px; border-radius: 50%; background: #2a1a0c; border: 1px solid #3b2711; }
 .stage-lamp.complete i { background: #7dff98; box-shadow: 0 0 8px #7dff98; }
 .stage-lamp.running i { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
 .stage-lamp.failed i { background: #ff4838; box-shadow: 0 0 8px #ff4838; }
 @media (max-width: 1100px) { .stage.watch { grid-template-columns: 1fr; } }
+
+/* Sprint 22 UND-76: how the run went. */
+.lamp.done { background: #7dff98; box-shadow: none; }
+.lamp.failed { background: #ff4838; box-shadow: 0 0 12px #ff4838; }
+.lamp.stalled { background: var(--amber); box-shadow: none; }
+.banner { display: block; width: 100%; margin: 0 0 12px; padding: 10px 14px; text-align: left; border-radius: 6px; border: 2px solid #ff4838; background: #3a0f0a; color: #ffd9d2; font-family: VT323, monospace; font-size: 20px; cursor: pointer; }
+.banner.warn { border-color: var(--amber); background: #3a2a0a; color: #ffe9b8; cursor: default; }
+.offline { margin: 0 0 12px; padding: 8px 14px; border-radius: 6px; border: 2px solid var(--amber); background: #3a2a0a; color: #ffe9b8; font-family: VT323, monospace; font-size: 18px; }
+.stage.stale { opacity: .6; }
+.ended { align-self: stretch; min-height: 1.2em; }
+.summary { align-self: stretch; display: grid; grid-template-columns: max-content 1fr; gap: 2px 14px; margin: 0; font-family: VT323, monospace; font-size: 18px; color: var(--cream); }
+.summary dt { color: var(--cream); opacity: .75; }
+.summary dd { margin: 0; overflow-wrap: anywhere; }
+.looks-toggle { display: none; }
+@media (max-width: 640px) {
+  .looks-toggle { display: inline-block; min-height: 40px; padding: 6px 14px; border-radius: 6px; border: 2px solid var(--brass-deep); background: #24180f; color: #d8c4a0; font-family: Cinzel, serif; letter-spacing: 1px; }
+  .looks { display: none; }
+  .looks.open { display: flex; }
+}
+
+/* Sprint 22 UND-77: groups of nested stages, gauges without a needle, badges on the rack. */
+.stage-block { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.group { margin-left: 18px; font-family: VT323, monospace; font-size: 18px; color: var(--tube-ink); }
+.group summary { cursor: pointer; padding: 2px 6px; border-radius: 4px; }
+.group summary:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+.group.failed summary { color: #ff7a6b; }
+.group.running summary::after { content: ' ...'; }
+.group-stage { margin: 2px 0 2px 22px; color: var(--tube-ink); opacity: .8; }
+.gauge.no-needle .dial { display: none; }
+.gauge.no-needle .figure { font-size: clamp(24px, 2vw, 32px); padding: 8px 0; }
+.rack-group { align-self: center; font-family: Cinzel, serif; font-size: 12px; letter-spacing: 2px; color: var(--brass); text-transform: uppercase; margin-left: 8px; }
+.badge { margin-left: 8px; padding: 1px 6px; border-radius: 4px; font-family: VT323, monospace; font-size: 15px; letter-spacing: 1px; background: #24180f; color: #ffe9b8; }
+.sketch-tab.failed .badge { background: #3a0f0a; color: #ffd9d2; }
+
+/* Sprint 22 UND-88: find a line in the log. */
+.finder { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 8px; font-family: VT323, monospace; font-size: 17px; }
+.find-field { min-width: 0; flex: 1 1 110px; padding: 4px 6px; border: 1px solid var(--brass-deep); border-radius: 4px; background: #fffaf0; color: #24170a; font: inherit; }
+.find-check { display: flex; gap: 4px; align-items: center; color: var(--cream); }
+.find-button { padding: 4px 10px; border: 2px solid var(--brass-deep); border-radius: 4px; background: #24180f; color: #ffe9b8; font-family: Cinzel, serif; font-size: 11px; letter-spacing: 1px; cursor: pointer; }
+.find-button:disabled { opacity: .45; cursor: not-allowed; }
+.find-field:focus-visible, .find-button:focus-visible, .find-check input:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+.no-match { padding: 12px; font-family: VT323, monospace; font-size: 20px; color: #24170a; }
+.paper .line.flash { background: #ffe08a; }
+
+/* Sprint 22 UND-78: the Jev list, and room for two more gauges. */
+.gauges { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+.jev { align-self: stretch; font-family: VT323, monospace; font-size: 18px; color: var(--cream); }
+.jev > summary { cursor: pointer; font-family: Cinzel, serif; font-size: 12px; letter-spacing: 3px; color: var(--brass); padding: 4px 0; }
+.jev > summary:focus-visible, .jev-read > summary:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+.jev-list { max-height: 260px; overflow: auto; margin-top: 4px; }
+.jev-read > summary { cursor: pointer; padding: 1px 4px; }
+.jev-read.unsure > summary { color: #ff9a3c; }
+.jev-question { margin: 2px 0 2px 18px; font-style: italic; opacity: .85; }
+.jev-level { margin-left: 18px; opacity: .85; }
+
+/* Sprint 22 UND-79: start, replay and stop. */
+.start-panel { margin: 0 0 12px; padding: 8px 12px; border-radius: 8px; border: 2px solid var(--brass-deep); background: rgba(0,0,0,.18); font-family: VT323, monospace; font-size: 18px; color: var(--cream); }
+.start-panel > summary { cursor: pointer; font-family: Cinzel, serif; font-size: 12px; letter-spacing: 3px; color: var(--brass); padding: 2px 0; }
+.start-panel > summary:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+.start-grid { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 12px; align-items: center; margin-top: 8px; }
+.start-grid > .start-gate, .start-grid > .start-fields, .start-grid > .start-buttons, .start-grid > .start-message, .start-grid > #sketch-about { grid-column: 1 / -1; }
+.start-gate { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.start-gate .find-field { flex: 0 1 260px; }
+.start-fields { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 12px; align-items: center; }
+.start-field { display: contents; }
+.start-buttons { display: flex; gap: 8px; }
+.start-message { min-height: 1.2em; white-space: pre-wrap; overflow-wrap: anywhere; }
+.start-message.problem { color: #ff9a8a; }
+.start-message.ok { color: #9be8a6; }
+@media (max-width: 640px) { .start-grid, .start-fields { grid-template-columns: 1fr; } }
+
+/* Sprint 22 UND-80: text that is readable on what it sits on, in every theme and mode (4.5:1; checked by tests/browser). */
+.plate { background: linear-gradient(180deg, #e2c27f 0%, #cfa65f 48%, #bb8d42 100%); }
+.subtitle { color: #1f1408; }
+.status, .theme-label { color: #1f1408; }
+.printer-head { color: #5f5a53; }
+.ended, .tube-panel .panel-head span { color: var(--cream); font-style: normal; }
+.rack-group, .start-panel > summary, .jev > summary { color: var(--cream); }
+.no-match { background: var(--note-bg, #efe6cf); color: var(--note-ink, #24170a); }
+:root[data-theme="steampunk"][data-mode="dark"] .find-check { color: #e8d9b8; }
+:root[data-theme="steampunk"][data-mode="dark"] .printer-head { color: #b3aea6; }

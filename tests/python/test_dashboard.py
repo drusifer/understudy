@@ -1,14 +1,18 @@
 """The dashboard server: the printed lines, gauges and tube from a run's files, and the HTTP routes."""
 
 import json
+import socket
 import tempfile
 import threading
+import time
 import unittest
 import urllib.error
 import urllib.request
+from datetime import datetime, timedelta
 from pathlib import Path
 
-from src.dashboard.server import describe, gauges_of, list_runs, printed, read_events, serve
+from src.dashboard.server import follow, serve
+from src.dashboard.view import describe, gauges_of, list_runs, printed, read_events
 
 EVENTS = [
     {"event": "run_started", "at": "2026-10-31T01:00:00+00:00", "sketch": "examples/x/coffee.yaml", "mode": "live"},
@@ -34,7 +38,14 @@ class PrintedTest(unittest.TestCase):
     def test_each_event_prints_a_line_with_its_clock(self):
         self.assertEqual(printed(EVENTS[0])["text"], "01:00:00  === UNDERSTUDY RUN LOG ===  examples/x/coffee.yaml  (live)")
         self.assertEqual(printed(EVENTS[1])["text"], "01:00:01    start  read")
-        self.assertEqual(printed(EVENTS[3]), {"text": "01:00:12    FAILED write: boom", "tone": "held"})
+        self.assertEqual(printed(EVENTS[3]), {"text": "01:00:12    FAILED write: boom", "tone": "held", "stage": "write"})
+        self.assertEqual(printed(EVENTS[0])["stage"], "")
+
+    def test_a_run_lists_the_indices_of_its_failed_lines_for_the_jump_to_first_failure(self):
+        with tempfile.TemporaryDirectory() as folder:
+            run = describe(make_run(Path(folder)))
+        self.assertEqual(run["failures"], [3])
+        self.assertEqual(run["lines"][3]["tone"], "held")
         self.assertEqual(printed(EVENTS[4])["text"], "01:00:30  === COMPLETE ===")
 
     def test_an_unknown_event_still_prints(self):
@@ -48,13 +59,15 @@ class DescribeTest(unittest.TestCase):
         gauges = {each["name"]: each for each in run["gauges"]}
         self.assertEqual((gauges["STAGES"]["text"], gauges["STAGES"]["level"]), ("1/2", 0.5))
         self.assertEqual(gauges["FAILED"]["text"], "1")
-        self.assertEqual((gauges["JEV"]["text"], gauges["JEV"]["level"]), ("250", 0.25))
-        self.assertEqual(gauges["ELAPSED"]["text"], "30s")
-        self.assertEqual(run["tube"], [{"name": "read", "state": "complete"}, {"name": "write", "state": "failed"}])
-        self.assertEqual((run["sketch"], run["status"], run["count"]), ("coffee", "complete", 5))
+        self.assertEqual(gauges["FAILED"]["level"], 0.5)
+        self.assertEqual((gauges["JEV"]["text"], gauges["JEV"]["level"]), ("250", None))  # no needle: no known full scale
+        self.assertEqual((gauges["ELAPSED"]["text"], gauges["ELAPSED"]["level"]), ("30s", None))
+        self.assertEqual(run["tube"], [{"name": "read", "state": "complete", "groups": []},
+                                       {"name": "write", "state": "failed", "groups": []}])
+        self.assertEqual((run["sketch"], run["state"], run["count"]), ("coffee", "done", 5))
 
     def test_a_run_with_no_files_reads_as_empty_gauges(self):
-        self.assertEqual([each["level"] for each in gauges_of({}, {}, [])], [0, 0, 0, 0])
+        self.assertEqual([each["level"] for each in gauges_of({}, [])], [0, 0, None, None])
 
     def test_a_half_written_last_line_waits_for_the_next_read(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -69,9 +82,9 @@ class DescribeTest(unittest.TestCase):
             make_run(root, "run-20261030T000000-aaaaaaaa")
             make_run(root, "run-20261031T000000-bbbbbbbb", finished=False)
             (root / "notes").mkdir()
-            runs = list_runs(root)
+            runs = list_runs(root, now=datetime.fromisoformat("2026-10-31T01:00:40+00:00"))
         self.assertEqual([each["id"] for each in runs], ["run-20261031T000000-bbbbbbbb", "run-20261030T000000-aaaaaaaa"])
-        self.assertEqual(runs[0]["status"], "running")
+        self.assertEqual(runs[0]["state"], "running")
         self.assertEqual(list_runs(root / "missing"), [])
 
 
@@ -97,6 +110,7 @@ class ServerTest(unittest.TestCase):
     def test_the_page_and_its_files_are_served(self):
         self.assertIn("OPERATIONS CONSOLE", self.get("/")[1])
         self.assertEqual(self.get("/page.js")[0], 200)
+        self.assertEqual(self.get("/controls.js")[0], 200)
         self.assertEqual(self.get("/theme-starship.css")[0], 200)
         self.assertEqual(self.get("/fonts/cinzel-700.woff2")[0], 200)
 
@@ -116,6 +130,206 @@ class ServerTest(unittest.TestCase):
         _, body = self.get("/events/run-20261031T010000-aa11bb22")
         self.assertEqual(body.count("data: {"), 5 + 1)  # five lines and the end marker's empty object
         self.assertIn("event: end", body)
+
+
+def make_manifest(root: Path, name: str, manifest: dict, events=EVENTS, summary: dict | None = None) -> Path:
+    directory = root / name
+    directory.mkdir(parents=True)
+    (directory / "events.jsonl").write_text("".join(json.dumps(each) + "\n" for each in events), encoding="utf-8")
+    (directory / "run.json").write_text(json.dumps(manifest), encoding="utf-8")
+    (directory / "summary.json").write_text(json.dumps(summary or {}), encoding="utf-8")
+    return directory
+
+
+class RunStateTest(unittest.TestCase):
+    """UND-76: the console says plainly how a run went."""
+
+    def setUp(self):
+        self.folder = tempfile.TemporaryDirectory()
+        self.addCleanup(self.folder.cleanup)
+        self.root = Path(self.folder.name)
+
+    def test_a_finished_run_is_done_and_says_so_in_one_line_with_what_it_produced(self):
+        manifest = {"status": "complete", "mode": "live", "outcome": "all_done", "with": {"mood": "calm"},
+                    "stages": {"read": "complete", "write": "complete"}, "outputs": {"report.jsonl": 3}}
+        run = describe(make_manifest(self.root, "run-20261101T100000-aaaaaaaa", manifest, summary={"stale": False}))
+        self.assertEqual(run["state"], "done")
+        self.assertEqual(run["ended"], "done after 2 stages, outcome all_done")
+        self.assertEqual(run["summary"]["with"], {"mood": "calm"})
+        self.assertEqual(run["summary"]["outputs"], {"report.jsonl": 3})
+        self.assertEqual((run["summary"]["mode"], run["summary"]["stale"], run["summary"]["seconds"]), ("live", False, 30))
+        self.assertIsNone(run["failure"])
+
+    def test_a_failed_run_names_the_stage_the_reason_and_the_printed_line(self):
+        manifest = {"status": "failed", "failed_stage": "write", "error": "boom", "stages": {"read": "complete"}}
+        run = describe(make_manifest(self.root, "run-20261101T100000-bbbbbbbb", manifest))
+        self.assertEqual(run["state"], "failed")
+        self.assertEqual(run["failure"], {"stage": "write", "reason": "boom", "line": 3})
+        self.assertEqual(run["ended"], "failed at write: boom")
+
+    def test_a_stopped_run_reads_as_stopped(self):
+        run = describe(make_manifest(self.root, "run-20261101T100000-cccccccc", {"status": "stopped", "stages": {}}, EVENTS[:2]))
+        self.assertEqual(run["state"], "stopped")
+
+    def test_a_run_still_going_is_running_until_ten_minutes_of_silence_then_stalled(self):
+        directory = make_manifest(self.root, "run-20261101T100000-dddddddd", {"status": "running", "stages": {}}, EVENTS[:2])
+        last = datetime.fromisoformat(EVENTS[1]["at"])
+        self.assertEqual(describe(directory, now=last + timedelta(minutes=5))["state"], "running")
+        self.assertEqual(describe(directory, now=last + timedelta(minutes=11))["state"], "stalled")
+
+    def test_a_stalled_run_says_how_long_in_a_sensible_unit(self):
+        directory = make_manifest(self.root, "run-20261101T100000-ffffffff", {"status": "running", "stages": {}}, EVENTS[:2])
+        last = datetime.fromisoformat(EVENTS[1]["at"])
+        self.assertIn("for 30 minutes", describe(directory, now=last + timedelta(minutes=30))["ended"])
+        self.assertIn("for 5 hours", describe(directory, now=last + timedelta(hours=5))["ended"])
+        self.assertIn("for 10 days", describe(directory, now=last + timedelta(days=10))["ended"])
+
+    def test_the_rack_labels_an_unreadable_run_as_such(self):
+        (self.root / "run-20261101T100000-eeeeeeee").mkdir()
+        self.assertEqual(list_runs(self.root)[0]["sketch"], "unreadable")
+
+    def test_a_folder_with_no_readable_files_is_unreadable_and_does_not_break_the_others(self):
+        (self.root / "run-20261101T100000-eeeeeeee").mkdir()
+        run = describe(self.root / "run-20261101T100000-eeeeeeee")
+        self.assertEqual((run["state"], run["id"]), ("unreadable", "run-20261101T100000-eeeeeeee"))
+        self.assertIn("no details", run["ended"])
+        self.assertEqual(len(list_runs(self.root)), 1)
+
+
+def stage_events(*steps: tuple[str, str]) -> list[dict]:
+    """Events for (kind, stage) pairs, one second apart: kind is start, done or fail."""
+    kinds = {"start": "stage_started", "done": "stage_completed", "fail": "stage_failed"}
+    started = {"event": "run_started", "at": "2026-11-01T10:00:00+00:00", "sketch": "examples/h/household.yaml", "mode": "live"}
+    return [started] + [
+        {"event": kinds[kind], "at": f"2026-11-01T10:00:{index + 1:02d}+00:00", "stage": stage}
+        for index, (kind, stage) in enumerate(steps)
+    ]
+
+
+class StageGroupsTest(unittest.TestCase):
+    """UND-77: nested stages are grouped under the top-level stage that was running."""
+
+    def tube(self, *steps):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            make_manifest(root, "run-20261101T100000-aaaaaaaa", {"status": "running", "stages": {}}, stage_events(*steps))
+            return describe(root / "run-20261101T100000-aaaaaaaa", now=datetime.fromisoformat("2026-11-01T10:01:00+00:00"))["tube"]
+
+    def test_iterations_of_a_child_sketch_form_one_group_with_the_stages_inside(self):
+        tube = self.tube(
+            ("start", "write_records"),
+            ("start", "readings.judge_payee[0].decide"), ("done", "readings.judge_payee[0].decide"),
+            ("start", "readings.judge_payee[1].decide"), ("done", "readings.judge_payee[1].decide"),
+            ("start", "readings.judge_payee[2].decide"),
+        )
+        self.assertEqual([each["name"] for each in tube], ["write_records"])
+        (group,) = tube[0]["groups"]
+        self.assertEqual((group["name"], group["state"], group["done"], group["seen"]), ("readings.judge_payee", "running", 2, 3))
+        self.assertEqual(group["stages"], [{"name": "decide", "started": 3, "completed": 2}])
+
+    def test_a_subsketch_without_iterations_is_a_group_named_for_its_state(self):
+        tube = self.tube(("start", "weather"), ("start", "weather_change.judge"),
+                         ("done", "weather_change.judge"), ("done", "weather"))
+        self.assertEqual(tube[0]["state"], "complete")
+        (group,) = tube[0]["groups"]
+        self.assertEqual((group["name"], group["state"], group["done"], group["seen"]), ("weather_change", "complete", 0, 0))
+
+    def test_a_stage_in_progress_is_running_and_a_failure_marks_its_group_and_stage_failed(self):
+        tube = self.tube(("start", "read"), ("done", "read"), ("start", "write"),
+                         ("start", "a.child[0].go"), ("fail", "a.child[0].go"))
+        self.assertEqual([(each["name"], each["state"]) for each in tube], [("read", "complete"), ("write", "running")])
+        self.assertEqual(tube[1]["groups"][0]["state"], "failed")
+
+    def test_a_run_with_no_nested_stages_has_no_empty_groups(self):
+        tube = self.tube(("start", "read"), ("done", "read"))
+        self.assertEqual(tube, [{"name": "read", "state": "complete", "groups": []}])
+
+    def test_the_rack_entry_carries_the_state_and_the_sketch(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            make_manifest(root, "run-20261101T100000-bbbbbbbb", {"status": "failed", "failed_stage": "x", "error": "e"}, EVENTS)
+            make_manifest(root, "run-20261101T110000-cccccccc", {"status": "complete", "stages": {}}, EVENTS)
+            entries = {each["id"]: each for each in list_runs(root, now=datetime.fromisoformat("2026-10-31T01:01:00+00:00"))}
+        self.assertEqual(entries["run-20261101T100000-bbbbbbbb"]["state"], "failed")
+        self.assertEqual(entries["run-20261101T110000-cccccccc"],
+                         {"id": "run-20261101T110000-cccccccc", "sketch": "coffee", "state": "done"})
+
+
+class StreamLimitTest(unittest.TestCase):
+    """SEC-001: a run that never finishes must not hold a server thread forever, and watchers are capped."""
+
+    def setUp(self):
+        self.folder = tempfile.TemporaryDirectory()
+        self.addCleanup(self.folder.cleanup)
+        self.root = Path(self.folder.name)
+        self.directory = make_run(self.root, "run-20261101T120000-00000000", EVENTS[:2], finished=False)
+
+    def test_a_stream_with_no_new_line_for_the_idle_limit_ends(self):
+        chunks = b"".join(follow(self.directory, poll_seconds=0.01, idle_seconds=0.1))
+        self.assertIn(b"event: end", chunks)
+
+    def test_a_stream_that_keeps_getting_lines_does_not_idle_out(self):
+        stream = follow(self.directory, poll_seconds=0.01, idle_seconds=0.3)
+        next(stream)
+        with (self.directory / "events.jsonl").open("a") as events:
+            events.write(json.dumps({"event": "stage_started", "at": "2026-11-01T12:00:03+00:00", "stage": "more"}) + "\n")
+        chunks = [next(stream) for _ in range(3)]
+        self.assertTrue(any(b"more" in each for each in chunks))
+        stream.close()
+
+    def test_watchers_beyond_the_cap_are_refused_with_503_and_a_freed_place_is_reused(self):
+        server = serve(self.root, port=0, max_streams=2)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        port = server.server_address[1]
+
+        def open_stream() -> socket.socket:
+            sock = socket.create_connection(("127.0.0.1", port), timeout=5)
+            sock.sendall(b"GET /events/run-20261101T120000-00000000 HTTP/1.0\r\n\r\n")
+            return sock
+
+        first, second = open_stream(), open_stream()
+        self.assertIn(b"200", first.recv(64))
+        self.assertIn(b"200", second.recv(64))
+        third = open_stream()
+        self.assertIn(b"503", third.recv(64))
+        third.close()
+        first.close()
+        deadline = time.monotonic() + 5
+        status = b""
+        while b"200" not in status and time.monotonic() < deadline:
+            fourth = open_stream()
+            status = fourth.recv(64)
+            fourth.close()
+            time.sleep(0.1)
+        self.assertIn(b"200", status)
+        second.close()
+
+
+class SecurityHeadersTest(unittest.TestCase):
+    """SEC-003: every response carries the browser security headers."""
+
+    def test_pages_api_and_errors_carry_the_headers(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            make_run(root)
+            server = serve(root, port=0)
+            threading.Thread(target=server.serve_forever, daemon=True).start()
+            self.addCleanup(server.server_close)
+            self.addCleanup(server.shutdown)
+            base = f"http://127.0.0.1:{server.server_address[1]}"
+            for path in ("/", "/api/runs", "/page.js", "/nope"):
+                try:
+                    response = urllib.request.urlopen(base + path, timeout=5)
+                    headers = response.headers
+                    response.close()
+                except urllib.error.HTTPError as error:
+                    headers = error.headers
+                self.assertEqual(headers["X-Content-Type-Options"], "nosniff", path)
+                self.assertIn("frame-ancestors 'none'", headers["Content-Security-Policy"], path)
+                self.assertIn("default-src 'self'", headers["Content-Security-Policy"], path)
+                self.assertEqual(headers["Referrer-Policy"], "no-referrer", path)
 
 
 if __name__ == "__main__":
