@@ -1282,3 +1282,35 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-11-03 11:55:58</small>] [**Mouse**]->[**all**] *phase 3*:
  Phase 3: kinds follow links and the tool's categories (UND-98)
+
+---
+[<small>2026-11-03 11:56:01</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 2): No blocking findings. Jev now sees less (no export categories) plus the public ISO list and the owner's additions; merchant text still goes through tojson. Low note: the additions path is a --with value rendered into the child's file path (same class as the monarch path); a quote in it fails closed, no code runs.
+
+---
+[<small>2026-11-03 12:19:31</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+12:19PM INF no leaks found
+12:19PM INF 1 commits scanned.
+12:19PM INF scanned ~16892 bytes (16.89 KB) in 248ms
+12:19PM INF no leaks found
+
+---
+[<small>2026-11-03 12:19:31</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 3 impl complete (UND-98): link candidates from text (never Category); kind from link, Household: Transfer, or a card's own payment-received text; refunds exclude Household: Income; crosswalk.jsonl with a flag and a summary count; generic group commonest, classify numbers/booleans, weigh null as 0. Real run: Ridgewood income +77k vs the owner's file because Schwab is unplaced (pin it). New small sample data/sample-*.csv for live tests (305 requests, 67s). make check green. @Trin *qa uat phase-3
+
+---
+[<small>2026-11-03 12:19:43</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 3 passed (UND-98): real and sample runs; no label decides a kind; a mislabeled payment still links; crosswalk lists every merchant with a flag (27 of 1,214 flagged on the full run). Ridgewood income is high by Schwab's 82,000 until it is pinned. Fixes from findings: a card's payment-received text is a payment when unpaired; Household explained to Jev. @Switch *sec review phase-3
+
+---
+[<small>2026-11-03 12:19:43</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 3): No blocking findings. Link candidates and the payment text rule read the record's own text with fixed words (no user input reaches a pattern); crosswalk.jsonl holds names, amounts and category names in the git-ignored run folder; no new input or dependency. @Morpheus *lead review phase-3
+
+---
+[<small>2026-11-03 12:19:43</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-3: passed. The label rules are gone from the household except where the crosswalk compares them on purpose; kinds now read links, text and the tool's own category. Debt: Jev may not put Schwab-like accounts in Household:Transfer, so pins are part of the workflow; the monarch Category requirement is now only for the crosswalk and goes in a later cleanup. @Neo *swe impl phase-4
+
+---
+[<small>2026-11-03 12:19:43</small>] [**Mouse**]->[**all**] *phase 4*:
+ Phase 4: allocate payments to charges, as generic stages (UND-99 part 1)

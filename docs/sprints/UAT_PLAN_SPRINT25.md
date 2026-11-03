@@ -30,9 +30,19 @@ Phases are added as they pass UAT.
 - **Verdict:** PASS
 - **Evidence / issue:** run folders above. Findings: (1) the first rule would have sent 73% of records to review, so the rule was amended with the owner told (story AC2, ARCH); (2) refund detection still reads Income, Paycheck, Interest and Payroll labels, so scrambling those makes new refund questions: Phase 3 removes it; (3) a replay takes about four minutes (backlog).
 
+### UAT-25-3: Kinds follow links and the tool's categories (Phase 3)
+
+- **Linked criterion:** UND-98 AC1 to AC6
+- **Preconditions and data:** the full baselines (run `run-20261103T170638-7a523587`, 2,299 requests) and the new small sample `data/sample-monarch.csv` and `data/sample-amex.csv` (60 merchants chosen by size and frequency plus the special cases, all their rows for the year and every card payment line; run `run-20261103T171642-a7bce9a3`, 305 requests in 67 seconds)
+- **Steps:** run live; read `summary.json`, `totals.jsonl`, `crosswalk.jsonl`, `records.jsonl`; unit tests for a mislabeled payment, labels that say transfer, a pin to Household: Transfer, a card payment received with no bank side
+- **Expected observable outcome:** no export label decides a kind; a payment with a misleading category still links; the crosswalk lists every merchant with both categories and a flag; the summary counts the flagged merchants
+- **Actual outcome:** full run: 5,739 purchases, 167 refunds, 68 transfers (36 by link, 32 by category), 62 credits; crosswalk 1,214 merchants, 27 flagged covering 178 records; Ridgewood income $440,201 and expenses $217,266 against the owner's earlier $363,349 and $205,042. The differences are explained: Charles Schwab ($82,000, 8 records) was put in "Service providers: Securities" so it counts as income, and Venmo (-$9,653) counts as spending, as the earlier file's labels treated them as transfers; the two oldest card payments (2025-11-14 and 2025-12-12) have no bank side because Monarch starts in 2026, so they were credits until the text rule below; pairing worked for the other ten payments; sample run: 3,407 records, 105 transfers (81 by category, 22 by link, 2 by payment text), crosswalk 138 merchants with 10 flagged; unit tests: labels never make a transfer, a payment labeled as income still links, a pin to Household: Transfer makes Venmo a transfer, a card payment received with no bank side is a transfer by its text; 461 unit tests green
+- **Verdict:** PASS
+- **Evidence / issue:** two changes made from the findings: a card's own "payment received" text makes a record a payment even when unpaired (`transfer_basis: payment`), and Jev's group question now says what Household is for (own accounts including brokerage). Charles Schwab and the American Express debits are still unplaced after the change; they are the owner's to pin (`Household: Transfer`).
+
 ## Results and Handoff
 
-- **Passed / failed / blocked:** Phase 1: 1 passed (UAT-25-1); Phase 2: 1 passed (UAT-25-2); 0 failed, 0 blocked
+- **Passed / failed / blocked:** Phase 1: 1 passed (UAT-25-1); Phase 2: 1 passed (UAT-25-2); Phase 3: 1 passed (UAT-25-3); 0 failed, 0 blocked
 - **Open issues and impact:** none open for Phase 1.
 - **Overall verdict:** PASS for Phase 1
 - **Handoff evidence:** message in `agents/CHAT.md`

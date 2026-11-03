@@ -46,7 +46,9 @@ sources:
     instructions: >
       Which group of merchant categories does `merchant` belong to? `groups` shows each group with every name in it.
       Choose the group whose names best describe what is bought from, or paid to, `merchant`. Choose none_of_these when
-      no group fits.
+      no group fits. The group Household is for the owner's own household money: rent, mortgage, tuition, income, loan
+      repayments, and money moved between the owner's own accounts, including savings, brokerage and investment
+      accounts and the owner's family; choose it when `merchant` is one of those.
     options: { from: group_choices, key: group }
     state:
       merchant: { from: facts }
@@ -67,7 +69,8 @@ sources:
     kind: jev
     question: choice
     instructions: >
-      Within the group `group`, which name best describes what is bought from, or paid to, `merchant`?
+      Within the group `group`, which name best describes what is bought from, or paid to, `merchant`? In Household,
+      Transfer means money moved between the owner's own accounts (not a payment to a shop or a person).
     options: { from: in_group, key: name }
     state:
       merchant: { from: facts }

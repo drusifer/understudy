@@ -177,16 +177,11 @@ What it does, in order:
 
 1. Reads the two exports; a charge in both (same date and amount, the same text first, then in file order, then
    within three business days) is one record.
-2. Links the two halves of a card payment (opposite amounts in different accounts, within three business days).
-3. Types each record. It is a transfer (money moving between your own accounts, never income, a refund or
-   spending) when its Monarch `Category` is `Transfer` or `Credit Card Payment`, or ends in `: Credit Card Payment`,
-   `: Transfer` or `: Transfers` (the forms with a group in front), or when step 2 linked it to a record in another
-   account, whatever its category. Any other record is not a transfer. The links stay in `legs.jsonl`, and
-   `summary.json` counts the transfers `transfer_basis`: by `label`, by `link`, `both`, and `none` for every other
-   record. The Monarch file must have a `Category` column; without one the run stops before it asks Jev anything.
-4. Links each refund to the earlier charge it reversed: by rule when there is one, by Jev (`link_refund`) when
-   there are several.
-5. Puts each merchant in a category of the clean list (below), in two choices by Jev (`categorize_merchant`): a
+2. Links the two halves of a card payment: opposite amounts in different accounts, within three business days. The
+   records it tries are chosen from their own text (payment words in the description, statement or merchant name, and
+   the card export's "payment received" lines), never from your export's category, so a payment whose category says
+   something else still links. The links are in `legs.jsonl`.
+3. Puts each merchant (every payee that is not one half of a linked payment) in a category of the clean list (below), in two choices by Jev (`categorize_merchant`): a
    group first (shown every name in each), then a name in that group, or none of them. Jev only chooses; it never
    writes a category, and it never sees your export's own categories. A choice counts when it is above 0.7, or at
    least 0.4 and at least twice as sure as the runner-up (a long list spreads the probability); when both choices
@@ -195,6 +190,17 @@ What it does, in order:
    requests each, 2,000 or so and about seven minutes for a year of the household's data), and Jev's answers vary a
    little from run to run near the thresholds; `--replay <run>` reuses a run's captured answers (no requests, the
    same result), which is how to change a pin or a rule and see the effect.
+4. Types each record. It is a transfer (money moving between your own accounts, never income, a refund or
+   spending) when step 2 linked it, or when its merchant's category is "Household: Transfer" (Jev's choice, or your
+   pin), or when a card's own text says it is a payment received (`PAYMENT RECEIVED`, `PAYMENT, THANK YOU`) even if
+   its bank side is not in the data; the export's `Category` never decides. `summary.json` counts the transfers
+   `transfer_basis`: by `link`, by `category`, `both`, by `payment`, and `none` for every other record. A merchant still for review keeps its records as purchases
+   or credits until it is placed or pinned.
+5. Links each refund (money in that is not in "Household: Income") to the earlier charge it reversed: by rule when
+   there is one, by Jev (`link_refund`) when there are several.
+6. Writes `crosswalk.jsonl`: every merchant, biggest first, with the category the tool chose and the export's most
+   common category side by side, and `differs_on_money_moving` where the tool and the export's own labels disagree
+   about whether the money was a transfer; the summary counts them (`crosswalk_flagged`).
 
 **Pinned categories.** `review.jsonl` is your work list. To settle a merchant, add a line to your pin file, one JSON
 object per line: `{"payee": "Amazon", "category": "Retail outlets: Book stores"}`. The category must be in the

@@ -10,6 +10,7 @@ PLAN = {
     "Employer": ("Household", 0.99, "Income", 0.99),
     "Shoe Shop": ("Clothing outlets", 0.35, "Family clothing shops", 0.9),  # not sure of the group: for review
     "Venmo": ("none_of_these", 0.9, None, 0.0),  # fits no group: for review, and the name is never asked
+    "Ridgewood Savings Bank": ("Household", 0.95, "Transfer", 0.95),  # money moved to the owner's own savings
 }
 
 

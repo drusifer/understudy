@@ -122,9 +122,8 @@ class ExportCategoriesAreNotUsedTests(unittest.TestCase):
 
     def test_the_same_questions_are_asked_whatever_the_export_says(self):
         original = (ORACLE / "monarch.csv").read_text(encoding="utf-8")
-        def scramble(line: str) -> str:  # every category but the ones that still say money is moving (Phase 3 retires those)
-            category = line.split(",")[2]
-            return line if "Transfer" in category or "Payment" in category else line.replace(category, '"Scrambled: Nonsense"', 1)
+        def scramble(line: str) -> str:  # every category, whatever it says
+            return line.replace(line.split(",")[2], '"Scrambled: Nonsense"', 1)
 
         scrambled = "\n".join(line if i == 0 else scramble(line) for i, line in enumerate(original.splitlines())) + "\n"
         self.assertNotEqual(scrambled, original)

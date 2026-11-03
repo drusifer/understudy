@@ -35,10 +35,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 3: Kinds follow links and the tool's categories (UND-98, 5 pts)
 *Phase goal: link candidates found from text; a transfer is a link or "Household: Transfer"; a crosswalk shows tool and export side by side.*
-- [ ] **Task 3.1:** Tests first, then `candidates` from the record's own text (never Category), kind from link or category, merchants for review stay unplaced, `crosswalk.jsonl` with the flag, Ridgewood income and expenses in the summary, `transfer_basis` renamed; docs. **L3** (the order of the pipeline and a rule other stories depend on). (*Owner: Neo | Trace: UND-98 AC1-6, ADR-0056 | Verification: `bobp make test`, `bobp make lint`*)
-- [ ] **Task 3.2:** UAT on the real files: a mislabeled bank-side payment still links; no label decides a kind; the crosswalk and its flag; Ridgewood figures reported against the earlier file with the payees that account for the difference. **L3**. (*Owner: Trin | Trace: UND-98 AC1-6 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
-- [ ] **Task 3.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 3): ...`*)
-- [ ] **Task 3.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT25 section 4, ADR-0056 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 3.1:** Tests first, then `candidates` from the record's own text (never Category), kind from link or category, merchants for review stay unplaced, `crosswalk.jsonl` with the flag, Ridgewood income and expenses in the summary, `transfer_basis` renamed; docs. **L3** (the order of the pipeline and a rule other stories depend on). (*Owner: Neo | Trace: UND-98 AC1-6, ADR-0056 | Verification: `bobp make test`, `bobp make lint`*)
+- [x] **Task 3.2:** UAT on the real files: a mislabeled bank-side payment still links; no label decides a kind; the crosswalk and its flag; Ridgewood figures reported against the earlier file with the payees that account for the difference. **L3**. (*Owner: Trin | Trace: UND-98 AC1-6 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
+- [x] **Task 3.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 3): ...`*)
+- [x] **Task 3.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT25 section 4, ADR-0056 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 4: Allocate payments to charges, as generic stages (UND-99 part 1, 4 pts)
 *Phase goal: `map.allocate` and `map.top`, tested on their own.*

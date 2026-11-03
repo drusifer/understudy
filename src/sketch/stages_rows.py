@@ -172,12 +172,14 @@ async def reduce_min(context, source: Source, field: str, take: int = 1) -> list
 @stage("map.group")
 async def group(  # noqa: PLR0913 - the stage's with: keys
     context, source: Source, by: str, collect: dict | None = None, take: int = 3, sums: dict | None = None,
+    commonest: dict | None = None,
 ) -> list[dict]:
     """One row per distinct `by` value (case, spacing and edges ignored), in the order they first appear:
     `{key, <by>: the first spelling, count, <into>: [...]}`. Each `collect` entry, `into: field`, lists up to `take`
     different non-empty values of `field` among the group's rows. Each `sums` entry adds `into`: the total of a field
     over the group's rows, to cents: `into: field`, or `into: { field: <field>, where: <condition> }` to total only
-    the rows that satisfy the condition (0.0 when none do)."""
+    the rows that satisfy the condition (0.0 when none do). Each `commonest` entry, `into: field`, names the value of
+    `field` most of the group's rows have (the first seen wins a tie; null when no row has one)."""
     groups: dict[str, list[dict]] = {}
     for row in await context.read(source):
         groups.setdefault(" ".join(str(row[by] or "").lower().split()), []).append(row)
@@ -185,9 +187,18 @@ async def group(  # noqa: PLR0913 - the stage's with: keys
         {"key": key, by: rows[0][by], "count": len(rows),
          **{into: list(dict.fromkeys(row[field] for row in rows if row.get(field) not in (None, "")))[:take]
             for into, field in (collect or {}).items()},
-         **{into: _total(rows, spec) for into, spec in (sums or {}).items()}}
+         **{into: _total(rows, spec) for into, spec in (sums or {}).items()},
+         **{into: _commonest(rows, field) for into, field in (commonest or {}).items()}}
         for key, rows in groups.items()
     ]
+
+
+def _commonest(rows: list[dict], field: str):
+    counts: dict = {}
+    for row in rows:
+        if row.get(field) not in (None, ""):
+            counts[row[field]] = counts.get(row[field], 0) + 1
+    return max(counts, key=counts.get) if counts else None  # max keeps the first of equal counts
 
 
 def _total(rows: list[dict], spec) -> float:
@@ -211,9 +222,9 @@ async def rows(context, rows: list) -> list[dict]:  # noqa: ARG001 - a stage alw
 
 
 @stage("map.classify")
-async def classify(context, source: Source, into: str, cases: list, otherwise: str) -> list[dict]:
+async def classify(context, source: Source, into: str, cases: list, otherwise: str | int | float | bool) -> list[dict]:
     """Each row of `source` plus `into`: the `then` of the first case whose `if` condition the row satisfies, else
-    `otherwise`. A case is `{ if: <condition>, then: <value> }`."""
+    `otherwise`. A case is `{ if: <condition>, then: <value> }`; a value is text, a number or true or false."""
     return [
         {**row, into: next((case["then"] for case in cases if holds(case["if"], row)), otherwise)}
         for row in await context.read(source)

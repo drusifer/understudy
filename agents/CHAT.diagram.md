@@ -834,7 +834,42 @@ sequenceDiagram
     autonumber
     participant Mouse
     participant All
-    Note over Mouse,All: 📅 2026-11-03
+    participant Switch
+    participant Morpheus
+    participant Neo
+    participant Trin
+    Note over Mouse,Trin: 📅 2026-11-03
     Mouse->>All: "phase 3"
     Note right of Mouse: "Phase 3: kinds follow<br/>links and the tool's<br/>categories (UND-98)"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 2):<br/>No blocking findings.<br/>Jev now sees less (no<br/>export categories) plus<br/>the public ISO list and<br/>the owner's additions,…"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 3 impl complete<br/>(UND-98): link<br/>candidates from text<br/>(never Category), kind<br/>from link, Household:<br/>Transfer, or a card's<br/>own payment-re…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 3 passed<br/>(UND-98): real and<br/>sample runs, no label<br/>decides a kind, a<br/>mislabeled payment still<br/>links, crosswalk lists<br/>every merchan…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 3):<br/>No blocking findings.<br/>Link candidates and the<br/>payment text rule read<br/>the record's own text<br/>with fixed words (no us…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-3:<br/>passed. The label rules<br/>are gone from the<br/>household except where<br/>the crosswalk compares<br/>them on purpose, kinds<br/>now re…"
+```
+
+## Phase 3 close-out
+
+- **Neo**: Phase 3 impl complete (UND-98): link candidates from text (never Category), kind from link, Household: Transfer, or a card's own payment-re…
+- **Trin**: UAT phase 3 passed (UND-98): real and sample runs, no label decides a kind, a mislabeled payment still links, crosswalk lists every merchan…
+- **Morpheus**: \*lead review phase-3: passed. The label rules are gone from the household except where the crosswalk compares them on purpose, kinds now re…
+
+## Phase 4 starts
+
+Phase 4: allocate payments to charges, as generic stages (UND-99 part 1)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    Note over Mouse,All: 📅 2026-11-03
+    Mouse->>All: "phase 4"
+    Note right of Mouse: "Phase 4: allocate<br/>payments to charges, as<br/>generic stages (UND-99<br/>part 1)"
 ```

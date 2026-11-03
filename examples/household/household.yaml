@@ -94,19 +94,27 @@ sources:
         cost: [ amount, other_amount ]
         payee: [ Merchant, other_Description ]
         card: [ Account, "other_Account #" ]
-  candidates:                           # what might be money moving between the owner's own accounts
+  candidates:                           # what might be a payment between the owner's own accounts, from the record's own text
     kind: stage
     do: { map: { action: where } }
     with:
       source: records
       keep:
         or:
-          - { Category: { has: Transfer } }
-          - { Category: { has: transfer } }
-          - { Category: { has: Payment } }
-          - { Category: { has: payment } }
           - { other_Description: { has: "PAYMENT RECEIVED" } }
-          - { other_Description: { has: "Payment Received" } }
+          - { payee: { has: Payment } }
+          - { payee: { has: PAYMENT } }
+          - { payee: { has: Thank You } }
+          - { payee: { has: THANK YOU } }
+          - { payee: { has: American Express } }
+          - { payee: { has: Amex } }
+          - { payee: { has: Citi } }
+          - { Original Statement: { has: PAYMENT } }
+          - { Original Statement: { has: PMT } }
+          - { Original Statement: { has: THANK YOU } }
+          - { Original Statement: { has: AMERICAN } }
+          - { Original Statement: { has: AMEX } }
+          - { Original Statement: { has: CITI } }
   legs:                                 # the two halves of a transfer, linked
     kind: stage
     do: { map: { action: link } }
@@ -119,28 +127,40 @@ sources:
     kind: stage
     do: { map: { action: join } }
     with: { source: keyed, other: legs, on: record_id, keep_unmatched: true }
-  labeled:                              # why a record is a transfer: the owner's label, a link to the other half, or both
+  unlinked:                             # what Jev is asked about: every payee but the two halves of a payment
+    kind: stage
+    do: { map: { action: where } }
+    with: { source: linked, keep: { and: [ { not: { partner: { ne: null } } }, { match: { ne: invalid_key } } ] } }  # no partner field at all for a record that was never a candidate
+  merchants:
+    kind: stage
+    do: { map: { action: group } }
+    with:
+      source: unlinked
+      by: payee
+      collect: { amounts: cost, statements: Original Statement, descriptions: other_Description }
+  categorized:                          # each record with its merchant's category, when Jev or a pin placed it
+    kind: stage
+    do: { map: { action: join } }
+    with: { source: linked, other: categories, on: key, keep_unmatched: true, prefix: category_ }
+  labeled:                              # why a record is a transfer: a link to the other half, the tool's category, or both
     kind: stage
     do: { map: { action: classify } }
     with:
-      source: linked
+      source: categorized
       into: transfer_basis
       cases:
-        - if:
-            and:
-              - &moves                  # the labels for money moving between your own accounts, with or without a group
-                or:
-                  - { Category: { eq: Transfer } }
-                  - { Category: { eq: Credit Card Payment } }
-                  - { Category: { ends: ": Credit Card Payment" } }
-                  - { Category: { ends: ": Transfer" } }
-                  - { Category: { ends: ": Transfers" } }
-              - { partner: { ne: null } }
-          then: both
-        - { if: *moves, then: label }
+        - { if: { and: [ { partner: { ne: null } }, { category_level: { eq: "Household: Transfer" } } ] }, then: both }
         - { if: { partner: { ne: null } }, then: link }
+        - { if: { category_level: { eq: "Household: Transfer" } }, then: category }
+        - if:                           # a card's own "payment received" line is a payment even when its bank side is not in the data
+            or:
+              - { other_Description: { has: "PAYMENT RECEIVED" } }
+              - { Original Statement: { has: "PAYMENT RECEIVED" } }
+              - { Original Statement: { has: "PAYMENT, THANK YOU" } }
+              - { Original Statement: { has: "PAYMENT THANK YOU" } }
+          then: payment
       otherwise: none
-  standing:                             # a transfer by label or by link; the rest is still open
+  standing:                             # a transfer by link or by the tool's category; the rest is still open
     kind: stage
     do: { map: { action: classify } }
     with:
@@ -158,7 +178,7 @@ sources:
     kind: stage
     do: { map: { action: where } }
     with: { source: counted, keep: { kind: { eq: open } } }
-  refunds:                              # money in that is not income
+  refunds:                              # money in that the tool did not put in Household: Income
     kind: stage
     do: { map: { action: where } }
     with:
@@ -166,16 +186,7 @@ sources:
       keep:
         and:
           - { cost: { gt: 0 } }
-          - not:
-              or:
-                - { Category: { has: Income } }
-                - { Category: { has: income } }
-                - { Category: { has: Paycheck } }
-                - { Category: { has: paycheck } }
-                - { Category: { has: Interest } }
-                - { Category: { has: interest } }
-                - { Category: { has: Payroll } }
-                - { Category: { has: payroll } }
+          - not: { category_level: { eq: "Household: Income" } }  # `ne` would skip a record with no category field at all
   charges:
     kind: stage
     do: { map: { action: where } }
@@ -254,13 +265,6 @@ sources:
     kind: stage
     do: { map: { action: where } }
     with: { source: typed, keep: { kind: { in: [purchase, refund, credit] } } }
-  merchants:
-    kind: stage
-    do: { map: { action: group } }
-    with:
-      source: spending
-      by: payee
-      collect: { amounts: cost, statements: Original Statement, descriptions: other_Description }
   unpinned:                             # a pinned merchant is never asked about
     kind: stage
     do: { map: { action: without } }
@@ -302,21 +306,82 @@ sources:
     kind: stage
     do: { map: { action: where } }
     with: { source: decided, keep: { status: { eq: placed } } }
-  categorized:
-    kind: stage
-    do: { map: { action: join } }
-    with: { source: typed, other: categories, on: key, keep_unmatched: true, prefix: category_ }
   finished:                             # whether a record's category was placed, is for review, or was not asked
     kind: stage
     do: { map: { action: classify } }
     with:
-      source: categorized
+      source: typed
       into: category_status
       cases:
         - { if: { kind: { in: [transfer, invalid] } }, then: none }
         - { if: { category_level: { ne: null } }, then: placed }
       otherwise: review
 
+  label_view:                           # what the export's own category says about money moving, kept only to compare
+    kind: stage
+    do: { map: { action: classify } }
+    with:
+      source: finished
+      into: label_says
+      cases:
+        - if:
+            or:
+              - { Category: { eq: Transfer } }
+              - { Category: { eq: Credit Card Payment } }
+              - { Category: { ends: ": Credit Card Payment" } }
+              - { Category: { ends: ": Transfer" } }
+              - { Category: { ends: ": Transfers" } }
+          then: transfer
+      otherwise: spending
+  differs_by_record:                    # 1 where the tool and the export disagree about money moving, else 0
+    kind: stage
+    do: { map: { action: classify } }
+    with:
+      source: label_view
+      into: differs
+      cases:
+        - { if: { and: [ { kind: { eq: transfer } }, { label_says: { eq: spending } } ] }, then: 1 }
+        - { if: { and: [ { kind: { ne: transfer } }, { label_says: { eq: transfer } } ] }, then: 1 }
+      otherwise: 0
+  cross_merchants:
+    kind: stage
+    do: { map: { action: group } }
+    with:
+      source: differs_by_record
+      by: payee
+      sums:
+        amount: cost
+        differing: differs
+        inflow: { field: cost, where: { cost: { gt: 0 } } }
+        outflow: { field: cost, where: { cost: { lt: 0 } } }
+      commonest: { export_category: Category, tool_category: category_level }
+  cross_volume:                         # how much money moved through the merchant, in or out
+    kind: stage
+    do: { map: { action: weigh } }
+    with: { source: cross_merchants, by: { inflow: 1, outflow: -1 }, into: volume }
+  cross_flagged:
+    kind: stage
+    do: { map: { action: classify } }
+    with:
+      source: cross_volume
+      into: differs_on_money_moving
+      cases:
+        - { if: { differing: { gt: 0 } }, then: true }
+      otherwise: false
+  cross_counted:
+    kind: stage
+    do: { reduce: { action: tally } }
+    with: { source: cross_flagged, by: differs_on_money_moving, into: crosswalk_flagged }
+  cross_ranked:                         # the most money first
+    kind: stage
+    do: { reduce: { action: max } }
+    with: { source: cross_counted, field: volume, take: 1000000 }
+  crosswalk:
+    kind: stage
+    do: { map: { action: keep } }
+    with:
+      source: cross_ranked
+      fields: [ payee, count, amount, tool_category, export_category, differs_on_money_moving ]
   review_records:                       # the records Jev was not sure enough about to place
     kind: stage
     do: { map: { action: where } }
@@ -464,6 +529,7 @@ sinks:
   review: review.jsonl
   spending: spending.jsonl
   taxonomy: taxonomy.jsonl
+  crosswalk: crosswalk.jsonl
 
 machine:
   initial: check_additions
@@ -511,6 +577,10 @@ machine:
     write_review:
       do: { sink: { name: review } }
       with: { source: review_list }
+      then: write_crosswalk
+    write_crosswalk:
+      do: { sink: { name: crosswalk } }
+      with: { source: crosswalk }
       then: write_spending
     write_spending:
       do: { sink: { name: spending } }

@@ -77,6 +77,12 @@ class GroupSumsTests(unittest.TestCase):
         found = run(group, context([]), source="rows", by="card", sums=self.SUMS)
         self.assertEqual(found, [])
 
+    def test_commonest_names_the_value_most_rows_of_the_group_have_the_first_seen_winning_a_tie(self):
+        rows = [{"p": "A", "c": "x"}, {"p": "A", "c": "y"}, {"p": "A", "c": "y"}, {"p": "B", "c": "z"}, {"p": "B", "c": "w"},
+                {"p": "C"}, {"p": "C", "c": ""}]
+        found = run(group, context(rows), source="rows", by="p", commonest={"top_c": "c"})
+        self.assertEqual({r["p"]: r["top_c"] for r in found}, {"A": "y", "B": "z", "C": None})
+
     def test_group_without_sums_is_unchanged(self):
         (row,) = run(group, context([{"card": "A", "cost": 1.0}]), source="rows", by="card")
         self.assertEqual(row, {"key": "a", "card": "A", "count": 1})
@@ -189,6 +195,18 @@ class UniqueTests(unittest.TestCase):
     def test_it_is_a_map_stage_asking_for_a_source_and_a_field(self):
         required = [key for key, p in STAGES["map.unique"].params.items() if p.required]
         self.assertEqual(required, ["source", "field"])
+
+
+class ClassifyScalarTests(unittest.TestCase):
+    def test_then_and_otherwise_may_be_numbers_or_booleans_as_well_as_text(self):
+        from src.sketch.stages_rows import classify
+        rows = [{"n": 5}, {"n": 1}]
+        found = run(classify, context(rows), source="rows", into="big", cases=[{"if": {"n": {"gt": 3}}, "then": True}],
+                    otherwise=False)
+        self.assertEqual([r["big"] for r in found], [True, False])
+        found = run(classify, context(rows), source="rows", into="flag", cases=[{"if": {"n": {"gt": 3}}, "then": 1}], otherwise=0)
+        self.assertEqual([r["flag"] for r in found], [1, 0])
+        self.assertIn("otherwise", STAGES["map.classify"].params)
 
 
 class WeighMissingTests(unittest.TestCase):
