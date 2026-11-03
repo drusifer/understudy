@@ -98,6 +98,10 @@ Status: **Delivered** (sprint), **Planned** (sprint), **Open** (not scheduled).
 | R15 | The evening (showings, ratings, seats) runs as a sketch. | Must | Delivered S20 | `examples/evening/` |
 | R16 | The household (Monarch and Amex CSVs into one record per transaction with transfers, refunds and categories) runs as a sketch. | Must | Delivered S20 | `examples/household/` |
 | R17 | The owner can tune the household: fewer records in review and a trustworthy net-spending figure. | Should | Open | BACKLOG; G4, G5 |
+| R29 | Every household merchant has one category from a clean list (ISO 18245 plus the owner's additions) chosen by the tool, not the export; the owner corrects any with a pin. | Must | Delivered S25 (phases 1-3) | UND-96, UND-97, ADR-0055 |
+| R30 | A transfer is a record the run links by text or whose payee is "Household: Transfer"; export labels never decide. | Must | Delivered S25 (phase 3) | UND-98, ADR-0056 |
+| R31 | Each card payment is tied to the charges it settled, oldest first and never past its amount, with the remainder shown; `payments.jsonl` and an open balance say what the lump sums bought. The general stages `map.allocate` and `map.top` do the work. | Should | In progress S25 (phase 4 stages written, household in phase 5) | UND-99, ADR-0057 |
+| R32 | The spending list is built from the tool's categories, with `unplaced` for merchants in review. | Should | Planned S25 (phase 6) | UND-100 |
 
 ### 6.5 The console
 
@@ -134,6 +138,7 @@ Status: **Delivered** (sprint), **Planned** (sprint), **Open** (not scheduled).
 | Sprint 22, "trust and start" (done) | The console says how a run went, shows inside a run and Jev's judgements, and starts runs | R12, R14, R19-R21, R28 |
 | Sprint 23, "see and drive the machine" | Diagram, pause and step, replay of a log, decision detail | R22-R25 |
 | Sprint 24, "edit and tune" | Edit a sketch in the console; typed inputs if wanted | R26, R27 |
+| Sprint 25, "categories and payments" | A clean category list chosen by the tool, kinds from links, card payments tied to their charges, spending by the tool's category | R29-R32 |
 | Unscheduled | Household tuning | R17 |
 | Release tag | Only when the owner asks (v0.1.0 exists on the first sprint's commit) | n/a |
 

@@ -42,10 +42,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 4: Allocate payments to charges, as generic stages (UND-99 part 1, 4 pts)
 *Phase goal: `map.allocate` and `map.top`, tested on their own.*
-- [ ] **Task 4.1:** Tests first, then `map.allocate` (oldest first, never past the amount, remainder, a charge in at most one payment, a charge dated after the payment never used) and `map.top` (the largest few rows per group); docs. **L2**. (*Owner: Neo | Trace: UND-99 AC1, AC5, ADR-0057 | Verification: `bobp make test`, `bobp make lint`*)
-- [ ] **Task 4.2:** UAT on the Amex baseline outside the sketch: 11 of 12 payments within 5%, the first unexplained by $10,437, settled plus open equals all charges to the cent. **L2**. (*Owner: Trin | Trace: UND-99 AC1, AC5, AC6 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
-- [ ] **Task 4.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 4): ...`*)
-- [ ] **Task 4.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT25 section 3, ADR-0057 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 4.1:** Tests first, then `map.allocate` (oldest first, never past the amount, remainder, a charge in at most one payment, a charge dated after the payment never used) and `map.top` (the largest few rows per group); docs. **L2**. (*Owner: Neo | Trace: UND-99 AC1, AC5, ADR-0057 | Verification: `bobp make test`, `bobp make lint`*)
+- [x] **Task 4.2:** UAT on the Amex baseline outside the sketch: 11 of 12 payments within 5%, the first unexplained by $10,437, settled plus open equals all charges to the cent. **L2**. (*Owner: Trin | Trace: UND-99 AC1, AC5, AC6 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
+- [x] **Task 4.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 4): ...`*)
+- [x] **Task 4.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT25 section 3, ADR-0057 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 5: Payments know what they paid for (UND-99 part 2, 4 pts)
 *Phase goal: `payments.jsonl`, `settled_by` on each charge, the open balance.*

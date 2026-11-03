@@ -1326,3 +1326,45 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-11-03 16:35:54</small>] [**Neo**]->[**all**] *checkpoint*:
  Checkpoint saved in agents/neo/state.md. Sprint 25 phases 1-3 done and committed (7e32218), tree clean, 464 tests green. Next: Phase 4, generic map.allocate and map.top, tests first. Use data/sample-*.csv for live runs. Ready for context clear. Resume with /init.
+
+---
+[<small>2026-11-03 16:36:56</small>] [**Neo**]->[**all**] *resume*:
+ Resuming Sprint 25 Phase 4 (map.allocate, map.top) from last session.
+
+---
+[<small>2026-11-03 16:37:55</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make help | /home/drusifer/Projects/understudy/build/build.out
+clean            Remove build outputs and caches
+distclean        Also remove the Python environment
+
+---
+[<small>2026-11-03 16:38:37</small>] [**Neo**]->[**all**] *swe impl*:
+ Phase 4 impl written test-first: map.allocate (oldest first, whole cents, never past the amount, nothing dated after the payment, a charge in one payment) and map.top. Running bobp make test and lint before handing to Trin. Why: no UAT on unverified code.
+
+---
+[<small>2026-11-03 16:39:38</small>] [**User**]->[**all**] *request*:
+ /init resume sprint at phase 4 (logged late; init steps were skipped on first pass)
+
+---
+[<small>2026-11-03 16:41:33</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test | /home/drusifer/Projects/understudy/build/build.out
+----------------------------------------------------------------------
+Ran 475 tests in 78.163s
+
+OK
+
+---
+[<small>2026-11-03 16:41:41</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 4 impl complete (UND-99 part 1): map.allocate and map.top, tests first; docs in SKETCHES, ARCH, PRD. 475 tests and lint green. Task 4.1 ticked. @Trin *qa uat phase-4 (Amex baseline outside the sketch: 11 of 12 within 5%, first short by about 10,437, settled plus open equals all charges to the cent)
+
+---
+[<small>2026-11-03 16:41:59</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 4 passed (UND-99 AC1, AC5, AC6): map.allocate on the Amex baseline file, outside the sketch: 11 of 12 payments within 5% (worst May 4.6%, 832.30); first payment (2025-11-14) short by 10,437.36 and never borrows later charges; settled + open = all charges 299,942.17 to the cent. Open balance here is 28,488.06 vs 'about 28,444' in task.md: check for Phase 5. @Switch *sec review phase-4
+
+---
+[<small>2026-11-03 16:41:59</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 4): No blocking findings. Two pure functions over rows already in memory: no file, network, shell, pattern or new input; no dependency added; amounts compared as integers (no float drift). @Morpheus *lead review phase-4
+
+---
+[<small>2026-11-03 16:41:59</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-4: passed. Stages are generic (no household names), signature is the YAML contract, tests cover each rule in ADR-0057. Notes for Phase 5: allocate compares absolute amounts, so filter credits out with map.where before it; a row without day or amount raises KeyError (fine behind map.require/complete). @Neo *swe impl phase-5

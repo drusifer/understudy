@@ -333,6 +333,42 @@ async def smallest(context, source: Source, fields: list, into: str) -> list[dic
     return found
 
 
+@stage("map.allocate")
+async def allocate(  # noqa: PLR0913 - the stage's with: keys
+    context, source: Source, payments: Source, amount: str, day: str, id: str, into: str,
+) -> list[dict]:
+    """Each row of `source` (the charges) plus `into`: the `id` of the payment that settled it, or null when it is
+    still open. Payments are taken in `day` order; each settles the charges dated on or before its `day`, oldest
+    first, and stops before its `amount` would be passed (what is left of it is the payment's remainder). A charge
+    belongs to at most one payment, and none dated after a payment is used for it. Amounts are compared as
+    absolute values in whole cents; rows keep their order and fields."""
+    def cents(row) -> int:
+        return round(abs(row[amount]) * 100)
+
+    rows = await context.read(source)
+    settled: dict[int, object] = {}
+    queue = sorted(range(len(rows)), key=lambda i: rows[i][day])  # stable: ties keep their order
+    for payment in sorted(await context.read(payments), key=lambda row: row[day]):
+        left = cents(payment)
+        for index in list(queue):
+            if rows[index][day] > payment[day] or cents(rows[index]) > left:
+                break
+            left -= cents(rows[index])
+            settled[index] = payment[id]
+            queue.remove(index)
+    return [{**row, into: settled.get(index)} for index, row in enumerate(rows)]
+
+
+@stage("map.top")
+async def top(context, source: Source, by: str, field: str, take: int = 5) -> list[dict]:
+    """The `take` rows with the highest `field` in each `by` group, highest first, the groups in the order they first
+    appear. Equal values keep the order they had."""
+    groups: dict = {}
+    for row in await context.read(source):
+        groups.setdefault(row[by], []).append(row)
+    return [row for rows in groups.values() for row in sorted(rows, key=lambda r: -r[field])[:take]]
+
+
 @stage("map.unique")
 async def unique(context, source: Source, field: str, among: Source | None = None, among_field: str | None = None) -> list[dict]:
     """The rows of `source` unchanged, after checking no row repeats the `field` of an earlier row, or of any row of

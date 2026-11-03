@@ -870,13 +870,33 @@ sequenceDiagram
     participant Mouse
     participant All
     participant Neo
-    Note over Mouse,Neo: 📅 2026-11-03
+    participant User
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-03
     Mouse->>All: "phase 4"
     Note right of Mouse: "Phase 4: allocate<br/>payments to charges, as<br/>generic stages (UND-99<br/>part 1)"
     Neo->>All: "checkpoint"
     Note right of Neo: "Checkpoint saved in<br/>agents/neo/state.md.<br/>Sprint 25 phases 1-3<br/>done and committed<br/>(7e32218), tree clean,<br/>464 tests green. Next:<br/>Phase 4, gen…"
+    Neo->>All: "resume"
+    Note right of Neo: "Resuming Sprint 25 Phase<br/>4 (map.allocate,<br/>map.top) from last<br/>session."
+    Neo->>All: "swe impl"
+    Note right of Neo: "Phase 4 impl written<br/>test-first: map.allocate<br/>(oldest first, whole<br/>cents, never past the<br/>amount, nothing dated<br/>after the payment, a<br/>charge…"
+    User->>All: "request"
+    Note right of User: "/init resume sprint at<br/>phase 4 (logged late,<br/>init steps were skipped<br/>on first pass)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 4 impl complete<br/>(UND-99 part 1):<br/>map.allocate and<br/>map.top, tests first,<br/>docs in SKETCHES, ARCH,<br/>PRD. 475 tests and lint<br/>green. Task 4…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 4 passed<br/>(UND-99 AC1, AC5, AC6):<br/>map.allocate on the Amex<br/>baseline file, outside<br/>the sketch: 11 of 12<br/>payments within 5%<br/>(worst M…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 4):<br/>No blocking findings.<br/>Two pure functions over<br/>rows already in memory:<br/>no file, network, shell,<br/>pattern or new inpu…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-4:<br/>passed. Stages are<br/>generic (no household<br/>names), signature is the<br/>YAML contract, tests<br/>cover each rule in<br/>ADR-0057. N…"
 ```
 
 ## Phase 4 so far
 
-- **Neo**: Checkpoint saved in agents/neo/state.md. Sprint 25 phases 1-3 done and committed (7e32218), tree clean, 464 tests green. Next: Phase 4, gen…
+- **Neo**: Phase 4 impl complete (UND-99 part 1): map.allocate and map.top, tests first, docs in SKETCHES, ARCH, PRD. 475 tests and lint green. Task 4…
+- **Trin**: UAT phase 4 passed (UND-99 AC1, AC5, AC6): map.allocate on the Amex baseline file, outside the sketch: 11 of 12 payments within 5% (worst M…
+- **Morpheus**: \*lead review phase-4: passed. Stages are generic (no household names), signature is the YAML contract, tests cover each rule in ADR-0057. N…

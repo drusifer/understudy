@@ -4,6 +4,7 @@ from types import MappingProxyType, SimpleNamespace
 
 from src.sketch.registry import STAGES
 from src.sketch.stages_rows import (
+    allocate,
     complete,
     group,
     keep,
@@ -14,6 +15,7 @@ from src.sketch.stages_rows import (
     share,
     smallest,
     tally,
+    top,
     top_two,
     unique,
     without,
@@ -266,3 +268,80 @@ class NoteTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def sources(**named):
+    async def read(name):
+        return named[name]
+
+    return SimpleNamespace(read=read, summary={})
+
+
+def charge(day, amount, name="c"):
+    return {"day": day, "amount": amount, "name": name}
+
+
+ALLOC = {"source": "charges", "payments": "payments", "amount": "amount", "day": "day", "id": "payment_id", "into": "settled_by"}
+
+
+class AllocateTests(unittest.TestCase):
+    def settle(self, charges, payments):
+        found = run(allocate, sources(charges=charges, payments=payments), **ALLOC)
+        return [row["settled_by"] for row in found]
+
+    def test_a_payment_settles_the_oldest_charges_first_and_the_rest_stay_open(self):
+        charges = [charge("2025-01-03", 30.0), charge("2025-01-01", 10.0), charge("2025-01-02", 20.0)]
+        payments = [{"payment_id": "p1", "day": "2025-01-05", "amount": 30.0}]
+        self.assertEqual(self.settle(charges, payments), [None, "p1", "p1"])
+
+    def test_it_stops_before_the_amount_would_be_passed(self):
+        charges = [charge("2025-01-01", 10.0), charge("2025-01-02", 25.0), charge("2025-01-03", 5.0)]
+        payments = [{"payment_id": "p1", "day": "2025-01-05", "amount": 20.0}]
+        self.assertEqual(self.settle(charges, payments), ["p1", None, None])
+
+    def test_a_charge_dated_after_the_payment_is_never_used(self):
+        charges = [charge("2025-01-06", 10.0), charge("2025-01-05", 10.0)]
+        payments = [{"payment_id": "p1", "day": "2025-01-05", "amount": 100.0}]
+        self.assertEqual(self.settle(charges, payments), [None, "p1"])
+
+    def test_a_charge_belongs_to_at_most_one_payment(self):
+        charges = [charge("2025-01-01", 10.0), charge("2025-01-02", 10.0), charge("2025-01-03", 10.0)]
+        payments = [{"payment_id": "p2", "day": "2025-01-10", "amount": 10.0},
+                    {"payment_id": "p1", "day": "2025-01-04", "amount": 20.0}]
+        self.assertEqual(self.settle(charges, payments), ["p1", "p1", "p2"])
+
+    def test_a_payment_before_any_charge_settles_nothing(self):
+        charges = [charge("2025-02-01", 10.0)]
+        payments = [{"payment_id": "p1", "day": "2025-01-01", "amount": 50.0}]
+        self.assertEqual(self.settle(charges, payments), [None])
+
+    def test_no_payments_leave_every_charge_open_and_the_rows_keep_their_order_and_fields(self):
+        charges = [charge("2025-01-02", 1.0, "b"), charge("2025-01-01", 2.0, "a")]
+        found = run(allocate, sources(charges=charges, payments=[]), **ALLOC)
+        self.assertEqual([(r["name"], r["settled_by"]) for r in found], [("b", None), ("a", None)])
+
+    def test_sums_are_exact_to_the_cent(self):
+        charges = [charge("2025-01-01", 0.1), charge("2025-01-02", 0.2)]
+        payments = [{"payment_id": "p1", "day": "2025-01-03", "amount": 0.3}]
+        self.assertEqual(self.settle(charges, payments), ["p1", "p1"])
+
+    def test_it_is_a_map_stage_asking_for_the_two_sources_the_fields_and_a_name(self):
+        required = [key for key, p in STAGES["map.allocate"].params.items() if p.required]
+        self.assertEqual(required, ["source", "payments", "amount", "day", "id", "into"])
+
+
+class TopTests(unittest.TestCase):
+    def test_the_largest_rows_of_each_group_stay_largest_first_in_the_order_groups_first_appear(self):
+        rows = [{"g": "a", "v": 1}, {"g": "b", "v": 9}, {"g": "a", "v": 5}, {"g": "a", "v": 3}, {"g": "b", "v": 2}]
+        found = run(top, context(rows), source="rows", by="g", field="v", take=2)
+        self.assertEqual([(r["g"], r["v"]) for r in found], [("a", 5), ("a", 3), ("b", 9), ("b", 2)])
+
+    def test_take_defaults_to_five_and_a_small_group_keeps_all_its_rows(self):
+        rows = [{"g": "a", "v": n} for n in range(7)] + [{"g": "b", "v": 1}]
+        found = run(top, context(rows), source="rows", by="g", field="v")
+        self.assertEqual([r["v"] for r in found if r["g"] == "a"], [6, 5, 4, 3, 2])
+        self.assertEqual(len([r for r in found if r["g"] == "b"]), 1)
+
+    def test_it_is_a_map_stage_asking_for_a_source_a_group_field_and_a_value_field(self):
+        required = [key for key, p in STAGES["map.top"].params.items() if p.required]
+        self.assertEqual(required, ["source", "by", "field"])
