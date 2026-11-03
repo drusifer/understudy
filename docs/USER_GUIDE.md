@@ -175,11 +175,12 @@ What it does, in order:
 1. Reads the two exports; a charge in both (same date and amount, the same text first, then in file order, then
    within three business days) is one record.
 2. Links the two halves of a card payment (opposite amounts in different accounts, within three business days).
-3. Types each record by the export's own category: a record whose Monarch `Category` is `Transfer` or
-   `Credit Card Payment` is a transfer (money moving between your own accounts, never income, a refund or
-   spending); any other category is not. The links in step 2 stay as evidence in `legs.jsonl`, and
-   `summary.json` counts (`kind_changed_by_category`) the records where the category and the links disagree. The
-   Monarch file must have a `Category` column; without one the run stops before it asks Jev anything.
+3. Types each record. It is a transfer (money moving between your own accounts, never income, a refund or
+   spending) when its Monarch `Category` is `Transfer` or `Credit Card Payment`, or ends in `: Credit Card Payment`,
+   `: Transfer` or `: Transfers` (the forms with a group in front), or when step 2 linked it to a record in another
+   account, whatever its category. Any other record is not a transfer. The links stay in `legs.jsonl`, and
+   `summary.json` counts the transfers `transfer_basis`: by `label`, by `link`, `both`, and `none` for every other
+   record. The Monarch file must have a `Category` column; without one the run stops before it asks Jev anything.
 4. Links each refund to the earlier charge it reversed: by rule when there is one, by Jev (`link_refund`) when
    there are several.
 5. Places each merchant in a category already in use (`place_merchant`) or, when none fits, names one: a category

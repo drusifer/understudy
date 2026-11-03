@@ -130,7 +130,7 @@ Jev is unsure about merchants (below 0.7, or none of the categories fit). The ow
 
 *   **Status**: Accepted · **Deciders**: owner · **Date**: 2026-10-29 · **Related**: STORY-UND-61, STORY-UND-63
 *   **Context**: conditions as strings need a parser; PyYAML reads an unquoted `70:30` as the base-60 number 4230.
-*   **Options**: (1) a field, one operator and a value in YAML (`eq ne lt le gt ge in not_in has`, `and or not`, slices as `a:b`); (2) SQL text; (3) a small expression language.
+*   **Options**: (1) a field, one operator and a value in YAML (`eq ne lt le gt ge in not_in has ends`, `and or not`, slices as `a:b`; `ends` added in Sprint 24); (2) SQL text; (3) a small expression language.
 *   **Decision**: (1), read with ruamel.yaml (YAML 1.2, so slices stay text). `in` takes a list or a slice (start included, stop excluded); `has` is contains; a field a row lacks never matches; a condition compares a field with a fixed value only.
 *   **Consequences**: + a JSON Schema and the checker validate every condition; no parser. − verbose next to one-line expressions.
 

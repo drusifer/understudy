@@ -448,3 +448,82 @@ sequenceDiagram
 ## Sprint close-out
 
 - **Cypher**: \*pm launch sprint 23. Sprint complete: Ridgewood income and expenses match the owner's file to the cent, transfers follow the owner's categ…
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Cypher
+    participant Smith
+    participant Morpheus
+    participant Switch
+    participant Mouse
+    participant Neo
+    Note over Cypher,Neo: 📅 2026-11-02
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Sprint 24 stories ready:<br/>docs/sprints/USER_STORIE<br/>S_SPRINT24.md (UND-93,<br/>94, 95, 87, 82, 27 pts):<br/>card-side labels are<br/>transfers, spending b…"
+    Smith->>Cypher: "user reject"
+    Note right of Smith: "*user reject REASON:<br/>UND-93 AC3 cannot pass<br/>on the labels alone:<br/>after widening, 148<br/>positive non-transfer<br/>records worth 153,085<br/>remain out…"
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Stories revised: UND-93<br/>rule is the widened<br/>label OR a link to a<br/>record in another<br/>account (AC1-6,<br/>assumption 1). Re-check:<br/>20,038 positive…"
+    Smith->>Morpheus: "user approve"
+    Note right of Smith: "*user approve. Stories<br/>approved. rubric<br/>STORIES: OUT=A TEST=S<br/>FAIL=A SCOPE=A SIZE=A<br/>DESIGN=A. Every AC is<br/>checkable on the<br/>baseline file, t…"
+    Morpheus->>Smith: "lead handoff"
+    Note right of Morpheus: "Architecture done: docs/<br/>sprints/ARCH_SPRINT24.md<br/>. Transfer = widened<br/>label OR link<br/>(supersedes part of<br/>ADR-0050),<br/>spending.jsonl with<br/>map.s…"
+    Smith->>Switch: "user approve"
+    Note right of Smith: "*user approve.<br/>Architecture approved.<br/>rubric ARCH: BOUND=A<br/>FLOW=A FAIL=A USER=A<br/>DECS=A FEAS=S. UX notes:<br/>a switch value is on/off<br/>text, kee…"
+    Switch->>Mouse: "sec handoff"
+    Note right of Switch: "security gate (design):<br/>No blocking findings.<br/>Checked: typed values<br/>reach a child process<br/>only as --with arguments<br/>after the allow-list<br/>plu…"
+    Mouse->>Morpheus: "sm handoff"
+    Note right of Mouse: "Sprint 24 planned in<br/>task.md: 7 phases<br/>(UND-93, 94, 95, 87 in<br/>two, 82 in two), each<br/>one build task then<br/>Trin, Switch, Morpheus<br/>gates, close…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review sprint<br/>plan: approved. rubric<br/>PLAN: SIZE=A GATE=A<br/>VERIF=A ALIGN=S OWNER=A<br/>LEVEL=A. One build task<br/>plus the three fixed<br/>gates p…"
+```
+
+## Phase 1 starts
+
+Phase 1: card payments and moves between accounts are not spending (UND-93)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-02
+    Mouse->>All: "phase 1"
+    Note right of Mouse: "Phase 1: card payments<br/>and moves between<br/>accounts are not<br/>spending (UND-93)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 1 impl complete<br/>(UND-93): transfer by<br/>widened label OR link<br/>(new generic condition<br/>ends), transfer_basis<br/>counts replace<br/>kind_changed_…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 1 passed<br/>(UND-93): real run, 0<br/>labeled or linked<br/>records left as<br/>purchase/refund/credit,<br/>positives outside<br/>Ridgewood 169 records…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 1):<br/>No blocking findings.<br/>Quick pass: one new<br/>read-only condition<br/>operator (text ends<br/>with), a YAML anchor, no<br/>new inp…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-1:<br/>passed. The label set is<br/>written once (YAML<br/>anchor) and used for the<br/>taxonomy and the basis,<br/>ends is a one-line<br/>compa…"
+```
+
+## Phase 1 close-out
+
+- **Trin**: UAT phase 1 passed (UND-93): real run, 0 labeled or linked records left as purchase/refund/credit, positives outside Ridgewood 169 records…
+- **Switch**: security gate (phase 1): No blocking findings. Quick pass: one new read-only condition operator (text ends with), a YAML anchor, no new inp…
+- **Morpheus**: \*lead review phase-1: passed. The label set is written once (YAML anchor) and used for the taxonomy and the basis, ends is a one-line compa…
+
+## Phase 2 starts
+
+Phase 2: where the money goes (UND-94)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    Note over Mouse,All: 📅 2026-11-02
+    Mouse->>All: "phase 2"
+    Note right of Mouse: "Phase 2: where the money<br/>goes (UND-94)"
+```

@@ -94,6 +94,7 @@ COMPARATORS = {
     "in": _is_member,
     "not_in": lambda actual, operand: not _is_member(actual, operand),
     "has": _has,
+    "ends": lambda actual, operand: isinstance(actual, str) and actual.endswith(str(operand)),
 }
 
 

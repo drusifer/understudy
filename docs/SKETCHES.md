@@ -148,6 +148,7 @@ segment: { eq: students }            # eq ne lt le gt ge
 job:     { in: [nurse, driver] }     # in not_in: a list ...
 temp:    { in: [80:90] }             # ... or a slice: 80 included, 90 excluded
 merchant: { has: coffee }            # has: the field contains the value (text or list)
+Category: { ends: ": Transfers" }    # ends: the text ends with the value (nothing else matches)
 or:                                  # and or not combine; several fields in one mapping mean and
   - { genre: { eq: horror }, tomato: { ge: 70 } }
   - { tomato: { gt: 90 } }

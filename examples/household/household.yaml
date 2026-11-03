@@ -20,7 +20,19 @@ sources:
   taxonomy_rows:                        # the categories the owner uses, not the ones about moving money
     kind: stage
     do: { map: { action: where } }
-    with: { source: monarch_clean, keep: { and: [ { Category: { ne: "" } }, { Category: { not_in: [ Transfer, Credit Card Payment ] } } ] } }
+    with:
+      source: monarch_clean
+      keep:
+        and:
+          - { Category: { ne: "" } }
+          - not:
+              &moves                    # the labels for money moving between your own accounts, with or without a group
+              or:
+                - { Category: { eq: Transfer } }
+                - { Category: { eq: Credit Card Payment } }
+                - { Category: { ends: ": Credit Card Payment" } }
+                - { Category: { ends: ": Transfer" } }
+                - { Category: { ends: ": Transfers" } }
   taxonomy:
     kind: stage
     do: { map: { action: group } }
@@ -105,30 +117,31 @@ sources:
     kind: stage
     do: { map: { action: join } }
     with: { source: keyed, other: legs, on: record_id, keep_unmatched: true }
-  standing:                             # the owner's category says what is a transfer; the rest is still open
+  labeled:                              # why a record is a transfer: the owner's label, a link to the other half, or both
     kind: stage
     do: { map: { action: classify } }
     with:
       source: linked
-      into: kind
+      into: transfer_basis
       cases:
-        - { if: { match: { eq: invalid_key } }, then: invalid }
-        - { if: { Category: { in: [ Transfer, Credit Card Payment ] } }, then: transfer }
-      otherwise: open
-  changed:                              # where the category and the pairing disagree about a transfer
+        - { if: { and: [ *moves, { partner: { ne: null } } ] }, then: both }
+        - { if: *moves, then: label }
+        - { if: { partner: { ne: null } }, then: link }
+      otherwise: none
+  standing:                             # a transfer by label or by link; the rest is still open
     kind: stage
     do: { map: { action: classify } }
     with:
-      source: standing
-      into: kind_changed
+      source: labeled
+      into: kind
       cases:
-        - { if: { and: [ { kind: { eq: transfer } }, { partner: { eq: null } } ] }, then: "yes" }
-        - { if: { and: [ { kind: { ne: transfer } }, { partner: { ne: null } } ] }, then: "yes" }
-      otherwise: "no"
+        - { if: { match: { eq: invalid_key } }, then: invalid }
+        - { if: { transfer_basis: { ne: none } }, then: transfer }
+      otherwise: open
   counted:
     kind: stage
     do: { reduce: { action: tally } }
-    with: { source: changed, by: kind_changed, into: kind_changed_by_category }
+    with: { source: standing, by: transfer_basis, into: transfer_basis }
   plain:                                # what is left is spending
     kind: stage
     do: { map: { action: where } }

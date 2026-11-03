@@ -85,16 +85,16 @@ class LedgerTests(unittest.TestCase):
     def test_the_card_payment_links_to_the_checking_debit(self):
         self.assertEqual((self.legs["m9"]["partner"], self.legs["m10"]["partner"]), ("m10", "m9"))
 
-    def test_venmo_and_the_savings_bank_are_unpaired_transfer_candidates_kept_as_evidence(self):
+    def test_the_savings_bank_deposit_is_an_unpaired_transfer_candidate_kept_as_evidence(self):
         unpaired = {leg["payee"] for leg in self.legs.values() if leg["partner"] is None}
-        self.assertEqual(unpaired, {"Venmo", "Ridgewood Savings Bank"})
+        self.assertEqual(unpaired, {"Ridgewood Savings Bank"})
 
     def test_the_exports_category_decides_which_records_are_transfers(self):
         transfers = {r["payee"] for r in self.records if r["kind"] == "transfer"}
         self.assertEqual(transfers, {"Payment Thank You", "Amex Payment", "Ridgewood Savings Bank"})
 
-    def test_a_record_whose_category_is_not_transfer_or_card_payment_is_never_a_transfer(self):
-        venmo = next(r for r in self.records if r["payee"] == "Venmo")  # "Transportation: Transfers", paired by no one
+    def test_a_record_with_no_transfer_label_and_no_link_is_never_a_transfer(self):
+        venmo = next(r for r in self.records if r["payee"] == "Venmo")  # "Peer to Peer", paired by no one
         self.assertEqual(venmo["kind"], "purchase")
 
     def test_every_record_has_a_kind_and_there_is_no_external_transfer(self):
@@ -103,9 +103,9 @@ class LedgerTests(unittest.TestCase):
             kinds[record["kind"]] = kinds.get(record["kind"], 0) + 1
         self.assertEqual(kinds, {"purchase": 6, "transfer": 3, "refund": 2, "credit": 1})
 
-    def test_the_summary_counts_the_records_whose_kind_the_category_changed(self):
-        # the savings bank deposit is a transfer by category with no partner; every other record agrees with the pairing
-        self.assertEqual(self.summary["kind_changed_by_category"], {"no": 11, "yes": 1})
+    def test_the_summary_counts_the_transfers_by_label_by_link_and_by_both(self):
+        # the card payment's two halves are labeled and linked; the savings bank deposit is labeled and has no partner
+        self.assertEqual(self.summary["transfer_basis"], {"both": 2, "label": 1, "none": 9})
 
     def money(self, card=None):
         """Income, expenses and net from the records themselves: money in and out, transfers and invalid rows left out."""
@@ -171,6 +171,59 @@ class LedgerTests(unittest.TestCase):
     def test_transfers_are_not_asked_about_and_say_so(self):
         legs = [r for r in self.records if r["kind"] == "transfer"]
         self.assertEqual({r["category_status"] for r in legs}, {"none"})
+
+
+def first_choice(state, instructions, options):
+    """A scripted Jev that is sure of the first option, and picks the original a refund reversed."""
+    if "refund" in state:
+        original = next(label for label in options if "2026-02-15" in label)
+        return Chosen(original, 0.9, {label: 0.9 if label == original else 0.1 for label in options})
+    top = next(iter(options))
+    return Chosen(top, 0.9, {name: 0.9 if name == top else 0.1 for name in options})
+
+
+def run_with_monarch(monarch_text: str):
+    """Run the household on a changed copy of the fixture's Monarch export; returns its records and summary."""
+    with tempfile.TemporaryDirectory() as temporary:
+        directory = Path(temporary)
+        (directory / "monarch.csv").write_text(monarch_text, encoding="utf-8")
+        code = main(
+            ["run", str(LEDGER), "--out", str(directory / "out"), "--with", f"monarch={directory / 'monarch.csv'}",
+             "--with", f"amex={ORACLE / 'amex.csv'}", "--with", "amex_account=Platinum", "--with", "since=2026-01-01",
+             *no_pins(directory)],
+            make_jev=lambda: JevDouble(choose_fn=first_choice), store=CaptureStore(directory / "cache"),
+            stdout=io.StringIO(), stderr=io.StringIO())
+        (folder,) = (directory / "out").iterdir()
+        return code, lines(folder / "records.jsonl"), json.loads((folder / "summary.json").read_text(encoding="utf-8"))
+
+
+class TransferBasisTests(unittest.TestCase):
+    ORIGINAL = (ORACLE / "monarch.csv").read_text(encoding="utf-8")
+
+    def kinds(self, records, *payees):
+        return {payee: next(r["kind"] for r in records if r["payee"] == payee) for payee in payees}
+
+    def test_every_label_form_makes_a_transfer_and_a_lookalike_does_not(self):
+        extra = (
+            '2026-03-06,Bank Transfer,"Transportation: Transfers",Checking (...2222),BANK TRANSFER,,-300.00,,Me,,m13\n'
+            '2026-03-07,Citibank Online,"Food & Dining: Credit Card Payment",Checking (...2222),CITI,,-80.00,,Me,,m14\n'
+            '2026-03-08,Gift Shop,"Shopping: Transferware",Checking (...2222),GIFT SHOP,,-12.00,,Me,,m15\n'
+            '2026-03-09,Savings Move,"Transfer",Checking (...2222),SAVINGS MOVE,,-50.00,,Me,,m16\n')
+        code, records, _ = run_with_monarch(self.ORIGINAL + extra)
+        self.assertEqual(code, 0)
+        self.assertEqual(self.kinds(records, "Bank Transfer", "Citibank Online", "Gift Shop", "Savings Move"),
+                         {"Bank Transfer": "transfer", "Citibank Online": "transfer", "Gift Shop": "purchase",
+                          "Savings Move": "transfer"})
+
+    def test_a_record_linked_to_a_record_in_another_account_is_a_transfer_whatever_its_label(self):
+        # the card's payment received, labeled as income by an earlier categorization, is linked to the checking debit
+        changed = self.ORIGINAL.replace('Payment Thank You,"Credit Card Payment"', 'Payment Thank You,"Income: Paychecks"')
+        self.assertNotEqual(changed, self.ORIGINAL)
+        code, records, summary = run_with_monarch(changed)
+        self.assertEqual(code, 0)
+        self.assertEqual(self.kinds(records, "Payment Thank You", "Amex Payment"),
+                         {"Payment Thank You": "transfer", "Amex Payment": "transfer"})
+        self.assertEqual(summary["transfer_basis"], {"both": 1, "label": 1, "link": 1, "none": 9})
 
 
 class NothingForReviewTests(unittest.TestCase):

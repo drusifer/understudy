@@ -929,3 +929,77 @@ distclean        Also remove the Python environment
 ---
 [<small>2026-11-02 20:05:01</small>] [**Cypher**]->[**all**] *pm launch*:
  *pm launch sprint 23. Sprint complete: Ridgewood income and expenses match the owner's file to the cent; transfers follow the owner's categories; review.jsonl and pinned.jsonl close the loop on unsure merchants; the run tells its story. Branch sprint-23 committed locally in 5 phases, NOT merged or pushed (owner). Next: Sprint 24 (typed inputs, diagram, step, replay, decision detail) when asked.
+
+---
+[<small>2026-11-02 21:56:28</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make push | /home/drusifer/Projects/understudy/build/build.out
+9:56PM INF 0 commits scanned.
+9:56PM INF scanned ~0 bytes (0) in 238ms
+9:56PM INF no leaks found
+To github.com:drusifer/understudy.git
+3d44539..bed2296  main -> main
+
+---
+[<small>2026-11-02 22:07:24</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Sprint 24 stories ready: docs/sprints/USER_STORIES_SPRINT24.md (UND-93, 94, 95, 87, 82; 27 pts): card-side labels are transfers, spending by category in a file and in the console, typed inputs, the statechart diagram. Step/pause, replay, decision detail and the editor move to Sprint 25 (assumption 6). Branch sprint-24 cut from main. STORIES self-check: all PASS. @Smith *user review sprint 24
+
+---
+[<small>2026-11-02 22:07:59</small>] [**Smith**]->[**Cypher**] *user reject*:
+ *user reject REASON: UND-93 AC3 cannot pass on the labels alone: after widening, 148 positive non-transfer records worth 153,085 remain outside Ridgewood, mostly 5 Amex Electronic Payment rows (133,047) the old categorization labeled as income; the pairing already links them to Ridgewood's card-payment debits | FIX: the rule is the widened label OR a link to a record in another account; reword AC1, AC2, AC3 and assumption 1; with both, 20,038 remains. @Cypher revise stories.
+
+---
+[<small>2026-11-02 22:07:59</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Stories revised: UND-93 rule is the widened label OR a link to a record in another account (AC1-6, assumption 1). Re-check: 20,038 positive non-transfer remain outside Ridgewood. @Smith *user review sprint 24
+
+---
+[<small>2026-11-02 22:08:00</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ *user approve. Stories approved. rubric STORIES: OUT=A TEST=S FAIL=A SCOPE=A SIZE=A DESIGN=A. Every AC is checkable on the baseline file; the rejection was the right one (153k of card payments stayed income). Note for Morpheus: this reverses part of ADR-0050 (pairing was evidence only), so record a superseding ADR; and UND-82 needs a layout that is tested without a browser. @Morpheus *lead arch sprint 24
+
+---
+[<small>2026-11-02 22:09:00</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Architecture done: docs/sprints/ARCH_SPRINT24.md. Transfer = widened label OR link (supersedes part of ADR-0050); spending.jsonl with map.share; inputs declared in the sketch with defaults injected; chart layout in Python (src/dashboard/chart.py), plain JS draws SVG; no new deps, no Tank Phase 0. @Smith *user feedback arch sprint 24
+
+---
+[<small>2026-11-02 22:09:07</small>] [**Smith**]->[**Switch**] *user approve*:
+ *user approve. Architecture approved. rubric ARCH: BOUND=A FLOW=A FAIL=A USER=A DECS=A FEAS=S. UX notes: a switch value is on/off text, keep it identical in the CLI and the console; the chart panel must say plainly when a log has no story; summary.json loses kind_changed_by_category, so update the guide in the same phase. @Switch *sec threat sprint 24
+
+---
+[<small>2026-11-02 22:09:07</small>] [**Switch**]->[**Mouse**] *sec handoff*:
+ security gate (design): No blocking findings. Checked: typed values reach a child process only as --with arguments after the allow-list plus the new limit checks (argument list, no shell, access secret unchanged); sketch text (state names, guards, categories) is rendered with textContent only, never markup; spending.jsonl read through the capped reader and holds no merchant names; no new dependency or secret. Condition: Phase 4 review must include a hostile-name test for the chart. @Mouse *sm plan sprint 24
+
+---
+[<small>2026-11-02 22:09:44</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint 24 planned in task.md: 7 phases (UND-93, 94, 95, 87 in two, 82 in two), each one build task then Trin, Switch, Morpheus gates; closeout with Tank sdlc-check. Levels L1-L3. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-11-02 22:09:44</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review sprint plan: approved. rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=S OWNER=A LEVEL=A. One build task plus the three fixed gates per phase (same shape as Sprints 22 and 23); UND-87 and UND-82 are split so each phase is one reviewable change. Order matters inside each pair. Commit once per phase after my review. @Neo *swe impl phase-1
+
+---
+[<small>2026-11-02 22:09:44</small>] [**Mouse**]->[**all**] *phase 1*:
+ Phase 1: card payments and moves between accounts are not spending (UND-93)
+
+---
+[<small>2026-11-02 22:14:29</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make run | /home/drusifer/Projects/understudy/build/build.out
+wrote /home/drusifer/Projects/understudy/.understudy/runs/run-20261103T031222-20544bb5/review.jsonl
+
+---
+[<small>2026-11-02 22:14:48</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 1 impl complete (UND-93): transfer by widened label OR link (new generic condition ends); transfer_basis counts replace kind_changed_by_category; fixture and tests updated, docs updated. make check green (368). @Trin *qa uat phase-1
+
+---
+[<small>2026-11-02 22:14:48</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 1 passed (UND-93): real run, 0 labeled or linked records left as purchase/refund/credit; positives outside Ridgewood 169 records 240,596 down to 143 records 20,038; Ridgewood unchanged to the cent. @Switch *sec review phase-1
+
+---
+[<small>2026-11-02 22:14:48</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 1): No blocking findings. Quick pass: one new read-only condition operator (text ends with), a YAML anchor, no new input, file, dependency or secret; gitleaks clean in make check. @Morpheus *lead review phase-1
+
+---
+[<small>2026-11-02 22:14:48</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-1: passed. The label set is written once (YAML anchor) and used for the taxonomy and the basis; ends is a one-line comparator with tests. ADR-0052 to record at close. @Neo *swe impl phase-2
+
+---
+[<small>2026-11-02 22:14:48</small>] [**Mouse**]->[**all**] *phase 2*:
+ Phase 2: where the money goes (UND-94)
