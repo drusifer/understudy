@@ -60,9 +60,19 @@ Phases are added as they pass UAT.
 - **Verdict:** PASS
 - **Evidence / issue:** screenshots checked by eye; 403 unit tests green. One run of the readability check failed once on a pre-existing selector (`.stage-lamp` in Steampunk dark, 1.20:1) and passed in three repeats; recorded as a flake in the instrument for the retro. The switch first stretched across the whole row; it is now compact.
 
+### UAT-24-6: The statechart is laid out (Phase 6)
+
+- **Linked criterion:** UND-82 AC1 to AC5, AC7 (the drawing is Phase 7)
+- **Preconditions and data:** the real machines of `household`, `evening` and the coffee fixture, a hand-built machine with skips, loops, a self-loop and guards, and six generated 40-state machines; a throwaway SVG rendering of the layout (not part of the product) looked at in Chromium; unit tests for the lit state, last move, ending and no-story cases
+- **Steps:** lay each machine out; check for overlapping boxes, overlapping labels, labels on boxes and arrows through boxes; render the layout and look at it; call `describe` on a run with and without a story
+- **Expected observable outcome:** states in layers from the initial state, finals and the initial state flagged, an arrow per move with a label only where there is a guard, loops drawn beside the boxes, nothing overlapping at 40 states, a lit state and last move from `state_entered`, `chart` null without a story
+- **Actual outcome:** `household` is a straight chain of 11 states ending in a double-bordered `done`; `coffee` a chain of 6; `evening` shows `anything_qualifies`, `seats_free`, `walk_away`, `book` and `done` with `any = false` labels on the two guarded arrows; the loops machine draws the retry loop and the self-loop as dashed red arrows beside the boxes, the skip arrow around the boxes in a gutter, guards as labels; the six generated 40-state machines have no overlaps of any kind (checked by the tests, and the rendering is busy but readable); a run in `b` after `a` lights `b` and marks `a` to `b` as the move just taken; a finished run keeps its last state lit and carries its ending; a log with no story has `chart` null; a state named `<script>alert(1)</script>` and a guard with markup stay plain text in the JSON; 428 unit tests green
+- **Verdict:** PASS
+- **Evidence / issue:** rendering checked by eye (the rendering script is a scratch file). The layout is simple layered, as the architecture says; a 40-state machine is dense but not overlapping.
+
 ## Results and Handoff
 
-- **Passed / failed / blocked:** Phase 1: 1 passed (UAT-24-1); Phase 2: 1 passed (UAT-24-2); Phase 3: 1 passed (UAT-24-3); Phase 4: 1 passed (UAT-24-4); Phase 5: 1 passed (UAT-24-5); 0 failed, 0 blocked
+- **Passed / failed / blocked:** Phase 1: 1 passed (UAT-24-1); Phase 2: 1 passed (UAT-24-2); Phase 3: 1 passed (UAT-24-3); Phase 4: 1 passed (UAT-24-4); Phase 5: 1 passed (UAT-24-5); Phase 6: 1 passed (UAT-24-6); 0 failed, 0 blocked
 - **Open issues and impact:** Phase 2: the oddly grouped categories and a negative `Refund` line are the owner's data, not a defect; noted for the backlog.
 - **Overall verdict:** PASS for Phases 1 to 3
 - **Handoff evidence:** message in `agents/CHAT.md`

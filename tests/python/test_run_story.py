@@ -26,6 +26,7 @@ class RunStoryTests(CoffeeCase):
         self.assertEqual([state["name"] for state in first["states"]],
                          ["weather", "split_trade", "match_orders", "to_ingredients", "write", "done"])
         self.assertEqual([state["name"] for state in first["states"] if state["final"]], ["done"])
+        self.assertEqual(first["initial"], "weather")
         self.assertIn({"from": "weather", "to": "split_trade", "event": "ok"}, first["transitions"])
         self.assertIn({"from": "write", "to": "done", "event": "ok"}, first["transitions"])
 

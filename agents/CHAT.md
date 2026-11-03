@@ -1118,3 +1118,31 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-11-02 22:58:24</small>] [**Mouse**]->[**all**] *phase 6*:
  Phase 6: the statechart is laid out (UND-82 part 1)
+
+---
+[<small>2026-11-02 23:06:19</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+11:06PM INF no leaks found
+11:06PM INF 1 commits scanned.
+11:06PM INF scanned ~703 bytes (703 bytes) in 243ms
+11:06PM INF no leaks found
+
+---
+[<small>2026-11-02 23:07:17</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 6 impl complete (UND-82 part 1): src/dashboard/chart.py lays the machine out (layers, wrapped rows, arrows through gaps and gutters, a lane per label) and overlays the lit state and last move; run_started now carries initial; describe gives chart or null; 25 new tests incl. 40 states with no overlaps. make check green (428). @Trin *qa uat phase-6
+
+---
+[<small>2026-11-02 23:07:17</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 6 passed (UND-82 part 1): real machines (household, evening, coffee), a loops-and-skips machine and six 40-state machines laid out without overlaps; rendering checked by eye; lit state and last move from state_entered; no story means no chart. @Switch *sec review phase-6
+
+---
+[<small>2026-11-02 23:07:17</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 6): No blocking findings. Hostile-name check done in JSON: a state named with a script tag and a guard with an img tag stay plain strings (tests); the layout is pure computation over names from the owner's own sketch, with the recursion bounded by the machine size and no file or network access; chart JSON carries no paths or secrets. The browser must still set them with textContent (phase 7 gate). @Morpheus *lead review phase-6
+
+---
+[<small>2026-11-02 23:07:17</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-6: passed. The layout is isolated, deterministic and tested without a browser, as ADR-0054 intends; refactored into small functions after lint found one too long; arrows touch only gaps and gutters so overlap is checkable. Debt noted: simple layering, dense at 40 states. @Neo *swe impl phase-7
+
+---
+[<small>2026-11-02 23:07:17</small>] [**Mouse**]->[**all**] *phase 7*:
+ Phase 7: see the statechart (UND-82 part 2)

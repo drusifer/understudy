@@ -655,7 +655,40 @@ sequenceDiagram
     autonumber
     participant Mouse
     participant All
-    Note over Mouse,All: 📅 2026-11-02
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-02
     Mouse->>All: "phase 6"
     Note right of Mouse: "Phase 6: the statechart<br/>is laid out (UND-82 part<br/>1)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 6 impl complete<br/>(UND-82 part 1):<br/>src/dashboard/chart.py<br/>lays the machine out<br/>(layers, wrapped rows,<br/>arrows through gaps and<br/>gutters,…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 6 passed<br/>(UND-82 part 1): real<br/>machines (household,<br/>evening, coffee), a<br/>loops-and-skips machine<br/>and six 40-state<br/>machines laid ou…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 6):<br/>No blocking findings.<br/>Hostile-name check done<br/>in JSON: a state named<br/>with a script tag and a<br/>guard with an img tag…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-6:<br/>passed. The layout is<br/>isolated, deterministic<br/>and tested without a<br/>browser, as ADR-0054<br/>intends, refactored into<br/>smal…"
+```
+
+## Phase 6 close-out
+
+- **Neo**: Phase 6 impl complete (UND-82 part 1): src/dashboard/chart.py lays the machine out (layers, wrapped rows, arrows through gaps and gutters,…
+- **Trin**: UAT phase 6 passed (UND-82 part 1): real machines (household, evening, coffee), a loops-and-skips machine and six 40-state machines laid ou…
+- **Morpheus**: \*lead review phase-6: passed. The layout is isolated, deterministic and tested without a browser, as ADR-0054 intends, refactored into smal…
+
+## Phase 7 starts
+
+Phase 7: see the statechart (UND-82 part 2)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    Note over Mouse,All: 📅 2026-11-02
+    Mouse->>All: "phase 7"
+    Note right of Mouse: "Phase 7: see the<br/>statechart (UND-82 part<br/>2)"
 ```

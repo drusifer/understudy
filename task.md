@@ -56,10 +56,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 6: The statechart is laid out (UND-82 part 1, 4 pts)
 *Phase goal: the server lays the machine out and says which state is lit.*
-- [ ] **Task 6.1:** Tests first (no browser), then `src/dashboard/chart.py` (layers, boxes, arrows, labels, no overlaps up to 40 states, back-edges) and `chart` in the run's description (current state, last move, ended, `null` without a story). **L3** (new algorithm, edge cases, interface to the page). (*Owner: Neo | Trace: UND-82 AC1-5, AC7, ADR-0054 | Verification: `bobp make test`, `bobp make lint`*)
-- [ ] **Task 6.2:** UAT on the real machines (household, evening, coffee) and a generated 40-state machine: layout checks, lit state from a real run's events, a log with no story. **L3**. (*Owner: Trin | Trace: UND-82 AC1-5, AC7 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
-- [ ] **Task 6.3:** Security quick pass: hostile state names and guards in JSON. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 6): ...`*)
-- [ ] **Task 6.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT24 sections 3-5, ADR-0054 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 6.1:** Tests first (no browser), then `src/dashboard/chart.py` (layers, boxes, arrows, labels, no overlaps up to 40 states, back-edges) and `chart` in the run's description (current state, last move, ended, `null` without a story). **L3** (new algorithm, edge cases, interface to the page). (*Owner: Neo | Trace: UND-82 AC1-5, AC7, ADR-0054 | Verification: `bobp make test`, `bobp make lint`*)
+- [x] **Task 6.2:** UAT on the real machines (household, evening, coffee) and a generated 40-state machine: layout checks, lit state from a real run's events, a log with no story. **L3**. (*Owner: Trin | Trace: UND-82 AC1-5, AC7 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
+- [x] **Task 6.3:** Security quick pass: hostile state names and guards in JSON. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 6): ...`*)
+- [x] **Task 6.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT24 sections 3-5, ADR-0054 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 7: See the statechart (UND-82 part 2, 4 pts)
 *Phase goal: the page draws the chart, lights the current state and says how the run ended.*
