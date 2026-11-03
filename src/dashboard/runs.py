@@ -20,6 +20,8 @@ from pathlib import Path
 
 from src.dashboard.view import RUN_ID, read_json
 from src.paths import ROOT
+from src.sketch.inputs import problems as input_problems
+from src.sketch.inputs import value_problem
 from src.sketch.loader import SketchError, read_template
 from src.sketch.sources.capture import CACHE
 from src.sketch.vocabulary import stage_of
@@ -117,13 +119,19 @@ class Launcher:
             try:
                 document, uses = read_template(path)
             except SketchError as error:
-                scanned.append({"path": path, "file": relative, "name": path.stem, "description": "", "with": [], "ok": False,
-                                "problem": error.problems[0].removeprefix(f"{path}: "), "called": set()})
+                scanned.append({"path": path, "file": relative, "name": path.stem, "description": "", "with": [], "inputs": [],
+                                "ok": False, "problem": error.problems[0].removeprefix(f"{path}: "), "called": set()})
                 continue
-            valid = isinstance(document.get("machine"), dict) and "name" in document
+            declared = document.get("inputs") if isinstance(document.get("inputs"), dict) else {}
+            wrong = [problem for name, spec in declared.items() for problem in input_problems(name, spec)]
+            valid = isinstance(document.get("machine"), dict) and "name" in document and not wrong
             scanned.append({"path": path, "file": relative, "name": str(document.get("name", path.stem)),
-                            "description": " ".join(str(document.get("description", "")).split()), "with": sorted(uses), "ok": valid,
-                            "problem": "" if valid else "not a sketch: it needs a name and a machine",
+                            "description": " ".join(str(document.get("description", "")).split()),
+                            "with": sorted(uses - set(declared)),
+                            "inputs": [] if wrong else [{**spec, "name": name, "label": spec.get("label", name)}
+                                                        for name, spec in declared.items()],
+                            "ok": valid,
+                            "problem": wrong[0] if wrong else "" if valid else "not a sketch: it needs a name and a machine",
                             "called": _called_files(path, document) if valid else set()})
         children = set().union(*(each["called"] for each in scanned)) if scanned else set()
         return [{key: value for key, value in each.items() if key not in {"path", "called"}}
@@ -190,12 +198,16 @@ class Launcher:
     def _values(self, entry: dict, values: dict) -> list[str]:
         """The `--with name=value` arguments for the values given, refusing a name the sketch does not take, a value over
         several lines, and a value that names an existing file outside the project (SEC-006)."""
-        unknown = sorted(set(values) - set(entry["with"]))
+        declared = {each["name"]: each for each in entry["inputs"]}
+        takes = [*(each["name"] for each in entry["inputs"]), *entry["with"]]
+        unknown = sorted(set(values) - set(takes))
         if unknown:
-            raise Refused(400, f"unknown name {', '.join(unknown)}; this sketch takes: {', '.join(entry['with']) or 'nothing'}")
+            raise Refused(400, f"unknown name {', '.join(unknown)}; this sketch takes: {', '.join(takes) or 'nothing'}")
         arguments = []
         for name, value in values.items():
             text = str(value)
+            if name in declared and (problem := value_problem(name, declared[name], text)):
+                raise Refused(400, problem)
             if "\n" in text or "\r" in text:
                 raise Refused(400, f"{name}: a value must be a single line")
             candidate = (self.project / text) if text else None

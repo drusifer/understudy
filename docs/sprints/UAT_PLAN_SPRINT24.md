@@ -40,9 +40,19 @@ Phases are added as they pass UAT.
 - **Verdict:** PASS
 - **Evidence / issue:** screenshots checked by eye (desktop and phone); 386 unit tests green.
 
+### UAT-24-4: Inputs are declared and checked (Phase 4)
+
+- **Linked criterion:** UND-87 AC1, AC4, AC5, AC6, AC7 (the controls are Phase 5)
+- **Preconditions and data:** `examples/evening/evening.yaml` and a small typed sketch; unit tests for every kind and every wrong declaration; the console's launcher with a fake process
+- **Steps:** `understudy check examples/evening/evening.yaml` with no value, `--with tickets=40`, `--with mood=silly`, `--with tomato=0.33`, and a valid pair; list the sketch through the launcher; post out-of-limit and valid values to start
+- **Expected observable outcome:** `ok` with defaults; one plain line naming the input and the limit for each bad value; the console list gives each input's kind, limits, default and label with undeclared names left in `with`; a bad posted value refused with 400 before anything starts; a valid one reaches the run as `--with`
+- **Actual outcome:** `ok: evening` with no value and with `evenings=off mood=romantic`; `input 'tickets': 40 is outside 1 to 10`; `input 'mood': silly is not one of fun, serious, dramatic, romantic`; `input 'tomato': 0.33 is not a multiple of 0.05 from 0`; each wrong declaration (unknown kind, no options, default not an option, max not above min, step 0, default outside limits, not whole, switch default, no default) names its input; the launcher lists `evening`'s seven inputs in order and refuses bad values with 400; valid values arrive as `--with evenings=off`, `mood=serious` and so on; 402 tests green
+- **Verdict:** PASS
+- **Evidence / issue:** `build/build.out`; `tests/python/test_sketch_inputs.py`. The `evening` sketch no longer repeats its defaults.
+
 ## Results and Handoff
 
-- **Passed / failed / blocked:** Phase 1: 1 passed (UAT-24-1); Phase 2: 1 passed (UAT-24-2); Phase 3: 1 passed (UAT-24-3); 0 failed, 0 blocked
+- **Passed / failed / blocked:** Phase 1: 1 passed (UAT-24-1); Phase 2: 1 passed (UAT-24-2); Phase 3: 1 passed (UAT-24-3); Phase 4: 1 passed (UAT-24-4); 0 failed, 0 blocked
 - **Open issues and impact:** Phase 2: the oddly grouped categories and a negative `Refund` line are the owner's data, not a defect; noted for the backlog.
 - **Overall verdict:** PASS for Phases 1 to 3
 - **Handoff evidence:** message in `agents/CHAT.md`

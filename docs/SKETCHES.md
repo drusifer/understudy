@@ -236,6 +236,23 @@ seat:
 * A `--with` or `with` name the receiving file does not use is refused, with the nearest name it does use.
 * `understudy check` reads the sketch after Jinja has filled it in.
 
+### Typed inputs: `inputs:`
+
+A sketch may declare the values it takes, with a kind, its limits and a default. The console draws a control for each; the command line and the console check a value against the declaration, and a value left alone is its default, so the file does not repeat it (write `{{ tickets }}`, not `{{ tickets | default(2) }}`).
+
+```yaml
+inputs:
+  mood:     { kind: choice, label: Mood, options: [fun, serious, dramatic, romantic], default: fun }
+  weight:   { kind: range, min: 0, max: 1, step: 0.05, default: 0.3 }   # a number on a step between the limits
+  tickets:  { kind: count, min: 1, max: 10, default: 2 }                # a whole number between the limits
+  evenings: { kind: switch, default: "on" }                             # on or off (quote them: YAML reads bare on as a word)
+```
+
+* Values reach the file as text; a switch is `on` or `off`. `label` is what the console shows (default: the name).
+* A wrong declaration (an unknown kind, no options, a default outside the limits, no default) is refused by `understudy check` and `run`, naming the input: `input 'tickets': default 11 is outside 1 to 10`.
+* A value outside its limits is refused the same way, before anything runs: `input 'tomato': 0.33 is not a multiple of 0.05 from 0`.
+* A name the file uses but does not declare is still given as text (the console shows a plain text box).
+
 ## Adding a stage
 
 A stage is one Python function, registered with `@stage`. Its signature is the contract of the YAML, so there is nothing else to keep in step:

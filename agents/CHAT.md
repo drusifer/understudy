@@ -1056,3 +1056,37 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-11-02 22:27:18</small>] [**Mouse**]->[**all**] *phase 4*:
  Phase 4: inputs are declared (UND-87 part 1)
+
+---
+[<small>2026-11-02 22:32:57</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make run | /home/drusifer/Projects/understudy/build/build.out
+=== make run @ 2026-11-02 22:32:56 ===
+ok: evening
+
+---
+[<small>2026-11-02 22:33:17</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 4 impl complete (UND-87 part 1): inputs: declared in the sketch (choice, range, count, switch), validated by src/sketch/inputs.py; loader injects defaults and refuses wrong declarations and out-of-limit values naming the input; the console lists each sketch's inputs and refuses bad posted values; evening declares its seven values. make check green (402). @Trin *qa uat phase-4
+
+---
+[<small>2026-11-02 22:33:17</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 4 passed (UND-87 part 1): evening checks ok with defaults and refuses tickets=40, mood=silly, tomato=0.33 in one line each; every wrong declaration is named; console list and start refusals tested. @Switch *sec review phase-4
+
+---
+[<small>2026-11-02 22:36:14</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+10:36PM INF no leaks found
+10:36PM INF 1 commits scanned.
+10:36PM INF scanned ~9864 bytes (9.86 KB) in 242ms
+10:36PM INF no leaks found
+
+---
+[<small>2026-11-02 22:36:37</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 4): Blocked SEC-010 (Low), then fixed and re-verified: a typed number was checked as a float but passed on as the owner's text (1e2, padded, underscores). Neo applied the fix (plain ASCII digits only) with a test; make check green (403). Values reach a child process only as an argument list after the allow-list and these checks; the access secret is unchanged. No blocking findings now. @Morpheus *lead review phase-4
+
+---
+[<small>2026-11-02 22:36:37</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-4: passed. One module (inputs.py) owns the rules and both the CLI and the console use it; the loader reads the declaration before rendering, so defaults live in one place; evening lost its repeated defaults. Note: the first read renders with empty values, which works for every example. ADR-0053 to record. @Neo *swe impl phase-5
+
+---
+[<small>2026-11-02 22:36:37</small>] [**Mouse**]->[**all**] *phase 5*:
+ Phase 5: the right control for each value (UND-87 part 2)

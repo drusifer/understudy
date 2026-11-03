@@ -589,7 +589,40 @@ sequenceDiagram
     autonumber
     participant Mouse
     participant All
-    Note over Mouse,All: 📅 2026-11-02
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-02
     Mouse->>All: "phase 4"
     Note right of Mouse: "Phase 4: inputs are<br/>declared (UND-87 part 1)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 4 impl complete<br/>(UND-87 part 1): inputs:<br/>declared in the sketch<br/>(choice, range, count,<br/>switch), validated by<br/>src/sketch/inputs.py,<br/>lo…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 4 passed<br/>(UND-87 part 1): evening<br/>checks ok with defaults<br/>and refuses tickets=40,<br/>mood=silly, tomato=0.33<br/>in one line each, every…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 4):<br/>Blocked SEC-010 (Low),<br/>then fixed and re-<br/>verified: a typed number<br/>was checked as a float<br/>but passed on as the<br/>owne…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-4:<br/>passed. One module<br/>(inputs.py) owns the<br/>rules and both the CLI<br/>and the console use it,<br/>the loader reads the<br/>declarati…"
+```
+
+## Phase 4 close-out
+
+- **Trin**: UAT phase 4 passed (UND-87 part 1): evening checks ok with defaults and refuses tickets=40, mood=silly, tomato=0.33 in one line each, every…
+- **Switch**: security gate (phase 4): Blocked SEC-010 (Low), then fixed and re-verified: a typed number was checked as a float but passed on as the owne…
+- **Morpheus**: \*lead review phase-4: passed. One module (inputs.py) owns the rules and both the CLI and the console use it, the loader reads the declarati…
+
+## Phase 5 starts
+
+Phase 5: the right control for each value (UND-87 part 2)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    Note over Mouse,All: 📅 2026-11-02
+    Mouse->>All: "phase 5"
+    Note right of Mouse: "Phase 5: the right<br/>control for each value<br/>(UND-87 part 2)"
 ```

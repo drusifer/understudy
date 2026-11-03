@@ -42,10 +42,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 4: Inputs are declared (UND-87 part 1, 4 pts)
 *Phase goal: a sketch declares typed inputs; the loader fills defaults and checks limits; the console's start refuses out-of-limit values.*
-- [ ] **Task 4.1:** Tests first, then `inputs:` in the schema, model and loader (defaults injected), `check` messages naming the input, `--with` limit checks, `inputs` in `/api/sketches` and server-side value checks; `evening.yaml` declares its inputs and drops repeated defaults; docs. **L3** (schema, loader, CLI and server agree; failure cases). (*Owner: Neo | Trace: UND-87 AC1, AC4-7, ADR-0053 | Verification: `bobp make test`, `bobp make lint`*)
-- [ ] **Task 4.2:** UAT: each kind declared, each wrong declaration refused naming the input, `--with` out of limits refused, defaults used when left alone, the console refuses a bad posted value. **L3**. (*Owner: Trin | Trace: UND-87 AC1, AC4-6 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
-- [ ] **Task 4.3:** Security review: values from the browser reach a child process; the checks and the argument list. **L2**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 4): ...`*)
-- [ ] **Task 4.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT24 sections 4-6, ADR-0053 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 4.1:** Tests first, then `inputs:` in the schema, model and loader (defaults injected), `check` messages naming the input, `--with` limit checks, `inputs` in `/api/sketches` and server-side value checks; `evening.yaml` declares its inputs and drops repeated defaults; docs. **L3** (schema, loader, CLI and server agree; failure cases). (*Owner: Neo | Trace: UND-87 AC1, AC4-7, ADR-0053 | Verification: `bobp make test`, `bobp make lint`*)
+- [x] **Task 4.2:** UAT: each kind declared, each wrong declaration refused naming the input, `--with` out of limits refused, defaults used when left alone, the console refuses a bad posted value. **L3**. (*Owner: Trin | Trace: UND-87 AC1, AC4-6 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
+- [x] **Task 4.3:** Security review: values from the browser reach a child process; the checks and the argument list. **L2**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 4): ...`*)
+- [x] **Task 4.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT24 sections 4-6, ADR-0053 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 5: The right control for each value (UND-87 part 2, 4 pts)
 *Phase goal: the console draws a dial, fader, stepper or switch per declared input.*
