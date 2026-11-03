@@ -116,6 +116,28 @@ async def reduce_any(context, source: Source) -> list[dict]:
     return [{"any": bool(await context.read(source))}]
 
 
+@stage("map.require")
+async def require(context, source: Source, columns: list) -> list[dict]:
+    """The rows of `source` unchanged, after checking that they have every column in `columns`; a source with rows but
+    without one of them stops the run, naming the source and the column. An empty source has nothing to check."""
+    rows = await context.read(source)
+    for column in columns:
+        if rows and column not in rows[0]:
+            raise ValueError(f"source {source!r} has no {column} column")
+    return rows
+
+
+@stage("reduce.tally")
+async def tally(context, source: Source, by: str, into: str) -> list[dict]:
+    """The rows of `source` unchanged; the run's summary gets `into`: how many rows have each value of `by`."""
+    rows = await context.read(source)
+    counts: dict[str, int] = {}
+    for row in rows:
+        counts[str(row[by])] = counts.get(str(row[by]), 0) + 1
+    context.summary[into] = dict(sorted(counts.items()))
+    return rows
+
+
 @stage("reduce.max")
 async def reduce_max(context, source: Source, field: str, take: int = 1) -> list[dict]:
     """The `take` rows of `source` with the highest `field`, highest first. Equal values keep the order they had."""

@@ -741,9 +741,67 @@ gitleaks git --no-banner --redact --pre-commit .
  Checkpoint saved in agents/cypher/state.md (Sprint 22 closed; resume plan written). Next: merge sprint-22 into main and push as asked, then Sprint 23 when the owner says. Ready for context clear. Resume with /init.
 
 ---
-[<small>2026-11-02 16:50:25</small>] [**make**]->[**all**] *build*:
- Build PASSED | make push | /home/drusifer/Projects/understudy/build/build.out
-remote:      https://github.com/drusifer/understudy/pull/new/sprint-22
-remote:
-To github.com:drusifer/understudy.git
-* [new branch]      sprint-22 -> sprint-22
+[<small>2026-11-02 19:19:54</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make run | /home/drusifer/Projects/understudy/build/build.out
+wrote /home/drusifer/Projects/understudy/.understudy/runs/run-20261103T001740-cb70b70b/statuses.jsonl
+
+---
+[<small>2026-11-02 19:24:46</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Sprint 23 stories ready: docs/sprints/USER_STORIES_SPRINT23.md (UND-89,90,91,92,81; 23 pts). Household kinds from the owner's categories, per-account income/expenses, review.jsonl, pinned.jsonl, richer event stream. Branch sprint-23 cut from main. STORIES self-check: all PASS. @Smith *user review sprint 23
+
+---
+[<small>2026-11-02 19:24:51</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ *user approve. Sprint 23 stories approved. rubric STORIES: OUT=A TEST=S FAIL=A SCOPE=A SIZE=A DESIGN=A. Every AC is checkable against the baseline file (to the cent). Note for Morpheus: UND-89 AC3 lets the export override the matching rule both ways; say how a disagreement is reported (AC4 counts them). @Morpheus *lead arch sprint 23
+
+---
+[<small>2026-11-02 19:25:58</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Architecture done: docs/sprints/ARCH_SPRINT23.md. Kind comes from the export's Category; pairing kept as evidence; external_transfer and the Jev payee reading removed; review.jsonl, totals.jsonl, pinned source, richer event lines. No new deps, no Tank Phase 0. UND-81 AC5 changed to unreadable-run (owner no-back-compat). @Smith *user feedback arch sprint 23
+
+---
+[<small>2026-11-02 19:26:04</small>] [**Smith**]->[**Switch**] *user approve*:
+ *user approve. Architecture approved. rubric ARCH: BOUND=A FLOW=A FAIL=A USER=A DECS=A FEAS=S. UX notes: kinds.jsonl and USER_GUIDE lose external_transfer, so update the guide in the same phase; name review fields for the reader (top/runner_up, not first/second). @Switch *sec threat sprint 23
+
+---
+[<small>2026-11-02 19:26:04</small>] [**Switch**]->[**Mouse**] *sec handoff*:
+ security gate (design): No blocking findings. Quick pass: no new network, secret, dependency or workflow. New local inputs (pin file, Category column) are the owner's own files; pins carry only taxonomy names, never Jev text. review/totals files stay in the git-ignored run folder. Checked: trust boundary, pin parsing before any Jev request, data class. @Mouse *sm plan sprint 23
+
+---
+[<small>2026-11-02 19:26:42</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint 23 planned in task.md: 5 phases (UND-89, 90, 91, 92, 81), each one build task then Trin, Switch, Morpheus gates; closeout with Tank sdlc-check. Levels L1-L3. Phase markers follow. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-11-02 19:26:42</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review sprint plan: approved. rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=S OWNER=A LEVEL=A. Each phase is one build task plus the three fixed gates (same shape as Sprint 22). Order matters: phase 1 first, 3 before 4. Phase 4 and 5 are L3, review them closely. Commit once per phase after my review. @Neo *swe impl phase-1
+
+---
+[<small>2026-11-02 19:26:42</small>] [**Mouse**]->[**all**] *phase 1*:
+ Phase 1: transfers come from the owner's categories (UND-89)
+
+---
+[<small>2026-11-02 19:31:26</small>] [**make**]->[**all**] *build*:
+ Build FAILED exit=2 | make run | /home/drusifer/Projects/understudy/build/build.out
+make: *** [Makefile:39: run] Error 2
+
+---
+[<small>2026-11-02 19:31:34</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 1 impl complete (UND-89): kind from the export's Category (Transfer, Credit Card Payment); external_transfer, judge_payee and judgments.jsonl removed; new generic stages map.require and reduce.tally; summary.json has kind_changed_by_category; USER_GUIDE and SKETCHES updated. bobp make check green (318). @Trin *qa uat phase-1
+
+---
+[<small>2026-11-02 19:34:58</small>] [**make**]->[**all**] *build*:
+ Build FAILED exit=2 | make run | /home/drusifer/Projects/understudy/build/build.out
+=== make run @ 2026-11-02 19:34:57 ===
+understudy: source 'monarch_csv' has no Category column
+stage write_records
+make: *** [Makefile:39: run] Error 1
+
+---
+[<small>2026-11-02 19:35:12</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 1 passed (UND-89): on the baseline run, 72 category-labeled records are all transfers and no other record is; Ridgewood income 363,348.62 and expenses 205,042.27 match the file to the cent; no-Category file stops with one line. Finding: 169 card-side credits (240,596) outside Ridgewood come from odd group labels, see UAT_PLAN_SPRINT23.md. @Switch *sec review phase-1
+
+---
+[<small>2026-11-02 19:35:12</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 1): No blocking findings. Quick pass on the diff: a Category read from the owner's own file, one Jev call type removed (less data sent), a column check that names only the column. No new input, dependency or secret. gitleaks clean in make check. @Morpheus *lead review phase-1
+
+---
+[<small>2026-11-02 19:35:18</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-1: passed. Small, generic stages (require, tally) with tests; the sketch got shorter (five stages and a child sketch removed); docs updated with the code. One note for the owner: card-side group labels need a decision, not code. Committing phase 1. @Neo *swe impl phase-2

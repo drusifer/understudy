@@ -175,9 +175,11 @@ What it does, in order:
 1. Reads the two exports; a charge in both (same date and amount, the same text first, then in file order, then
    within three business days) is one record.
 2. Links the two halves of a card payment (opposite amounts in different accounts, within three business days).
-3. Jev judges each payee left over (`judge_payee`): an account the owner holds (above 0.7) is an external
-   transfer, below 0.3 it is spending (Venmo, Zelle, a person, a shop), in between it goes to review. Jev sees the
-   owner's account names, never their numbers.
+3. Types each record by the export's own category: a record whose Monarch `Category` is `Transfer` or
+   `Credit Card Payment` is a transfer (money moving between your own accounts, never income, a refund or
+   spending); any other category is not. The links in step 2 stay as evidence in `legs.jsonl`, and
+   `summary.json` counts (`kind_changed_by_category`) the records where the category and the links disagree. The
+   Monarch file must have a `Category` column; without one the run stops before it asks Jev anything.
 4. Links each refund to the earlier charge it reversed: by rule when there is one, by Jev (`link_refund`) when
    there are several.
 5. Places each merchant in a category already in use (`place_merchant`) or, when none fits, names one: a category
@@ -185,7 +187,7 @@ What it does, in order:
    run `each` merchant with `reduce` so each one sees the names given before it).
 
 Each run creates a new folder under `.understudy/runs/` (or `--out`): `records.jsonl` (one record per transaction with its
-`kind`: purchase, refund, credit, transfer, external_transfer or invalid; its link and its category), `legs.jsonl`,
-`judgments.jsonl`, `kinds.jsonl` and `statuses.jsonl` (counts), `summary.json` (run facts) and `run.json`. Amounts
+`kind`: purchase, refund, credit, transfer or invalid; its link and its category), `legs.jsonl`,
+`kinds.jsonl` and `statuses.jsonl` (counts), `summary.json` (run facts) and `run.json`. Amounts
 are signed as Monarch writes them: purchases negative, refunds positive. A failed stage publishes no output.
 Keep household inputs and outputs in ignored `data/` and `build/` folders.

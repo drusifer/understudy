@@ -27,3 +27,6 @@ Branch sprint-6 from 965bade. 25 pts, 7 phases: 1 switch/when; 2 server+rack; 3 
 Branch `sprint-16`, 18 pts, Tier 1. Phase 0: Tank feasibility review and Python mechanism approval; setup only after approval, before Neo work. Phase 1: local CSV validation/snapshot and SQLMesh reconciliation; Phase 2: Jev taxonomy/map, final models, and review output. Sheets/MCP deferred; private CSVs excluded. Close includes Tank `sdlc-check`, Oracle groom, Smith UAT, retros, Cypher launch. Board: `task.md`.
 
 Plan approved by Morpheus (`PLAN: SIZE=A GATE=S VERIF=A ALIGN=S OWNER=S`). Phase 0 mechanism approved by owner and Tank; pinned CPython/uv, SQLMesh, and matching DuckDB clients installed cleanly. `bobp make distclean`, fresh `install`, `check`, second `install`, and synthetic sequential SQLMesh/Node/Python handoff probe passed. Phase 1 is active; private CSVs were not read.
+
+## Sprint 23 — household numbers you can trust + the run's story (branch sprint-23, started 2026-11-02)
+Phases: 1 transfers from the owner's categories (UND-89) | 2 income/expenses per account (UND-90) | 3 review.jsonl (UND-91) | 4 pinned categories (UND-92) | 5 event stream (UND-81) | close. Board: task.md.

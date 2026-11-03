@@ -9,10 +9,14 @@ description: >
 sources:
   monarch_csv: "{{ monarch }}"
   amex_csv: "{{ amex }}"
+  monarch_checked:                      # the export's own categories decide what is a transfer, so it must have them
+    kind: stage
+    do: { map: { action: require } }
+    with: { source: monarch_csv, columns: [ Category ] }
   monarch_clean:                        # dates and amounts read from the text
     kind: stage
     do: { map: { action: convert } }
-    with: { source: monarch_csv, dates: { Date: date }, amounts: { Amount: amount } }
+    with: { source: monarch_checked, dates: { Date: date }, amounts: { Amount: amount } }
   amex_clean:                           # a card export lists charges as positive amounts
     kind: stage
     do: { map: { action: convert } }
@@ -77,23 +81,6 @@ sources:
     kind: stage
     do: { map: { action: link } }
     with: { source: candidates, date: day, amount: cost, apart: card, id: record_id }
-  unpaired:                             # candidates with no partner: is the payee one of the owner's accounts?
-    kind: stage
-    do: { map: { action: where } }
-    with: { source: legs, keep: { partner: { eq: null } } }
-  payees:
-    kind: stage
-    do: { map: { action: group } }
-    with: { source: unpaired, by: payee, collect: { amounts: cost } }
-  readings:                             # Jev, once per payee
-    kind: stage
-    do: { sketch: { file: judge_payee } }
-    each: payees
-    with: { monarch: "{{ monarch }}" }
-  judged:
-    kind: stage
-    do: { map: { action: unpair } }
-    with: { source: readings }
   keyed:                                # what each payee is called, however it is spelled
     kind: stage
     do: { map: { action: normalize } }
@@ -102,25 +89,34 @@ sources:
     kind: stage
     do: { map: { action: join } }
     with: { source: keyed, other: legs, on: record_id, keep_unmatched: true }
-  read:
-    kind: stage
-    do: { map: { action: join } }
-    with: { source: linked, other: judged, on: key, keep_unmatched: true, prefix: judged_ }
-  standing:                             # transfers and invalid rows are settled; the rest is still open
+  standing:                             # the owner's category says what is a transfer; the rest is still open
     kind: stage
     do: { map: { action: classify } }
     with:
-      source: read
+      source: linked
       into: kind
       cases:
         - { if: { match: { eq: invalid_key } }, then: invalid }
-        - { if: { partner: { ne: null } }, then: transfer }
-        - { if: { and: [ { partner: { eq: null } }, { judged_decision: { eq: external_transfer } } ] }, then: external_transfer }
+        - { if: { Category: { in: [ Transfer, Credit Card Payment ] } }, then: transfer }
       otherwise: open
+  changed:                              # where the category and the pairing disagree about a transfer
+    kind: stage
+    do: { map: { action: classify } }
+    with:
+      source: standing
+      into: kind_changed
+      cases:
+        - { if: { and: [ { kind: { eq: transfer } }, { partner: { eq: null } } ] }, then: "yes" }
+        - { if: { and: [ { kind: { ne: transfer } }, { partner: { ne: null } } ] }, then: "yes" }
+      otherwise: "no"
+  counted:
+    kind: stage
+    do: { reduce: { action: tally } }
+    with: { source: changed, by: kind_changed, into: kind_changed_by_category }
   plain:                                # what is left is spending
     kind: stage
     do: { map: { action: where } }
-    with: { source: standing, keep: { kind: { eq: open } } }
+    with: { source: counted, keep: { kind: { eq: open } } }
   refunds:                              # money in that is not income
     kind: stage
     do: { map: { action: where } }
@@ -200,7 +196,7 @@ sources:
   settled:
     kind: stage
     do: { map: { action: join } }
-    with: { source: standing, other: refund_links, on: record_id, keep_unmatched: true }
+    with: { source: counted, other: refund_links, on: record_id, keep_unmatched: true }
   typed:                                # what each record is
     kind: stage
     do: { map: { action: classify } }
@@ -210,7 +206,6 @@ sources:
       cases:
         - { if: { kind: { eq: invalid } }, then: invalid }
         - { if: { kind: { eq: transfer } }, then: transfer }
-        - { if: { kind: { eq: external_transfer } }, then: external_transfer }
         - { if: { link_status: { ne: null } }, then: refund }
         - { if: { cost: { gt: 0 } }, then: credit }
       otherwise: purchase
@@ -287,7 +282,7 @@ sources:
       source: categorized
       into: category_status
       cases:
-        - { if: { kind: { in: [transfer, external_transfer, invalid] } }, then: none }
+        - { if: { kind: { in: [transfer, invalid] } }, then: none }
         - { if: { category_level: { ne: null } }, then: placed }
       otherwise: review
 
@@ -303,7 +298,6 @@ sources:
 sinks:
   records: records.jsonl
   legs: legs.jsonl
-  judgments: judgments.jsonl
   kinds: kinds.jsonl
   statuses: statuses.jsonl
 
@@ -317,10 +311,6 @@ machine:
     write_legs:
       do: { sink: { name: legs } }
       with: { source: legs }
-      then: write_judgments
-    write_judgments:
-      do: { sink: { name: judgments } }
-      with: { source: judged }
       then: write_kinds
     write_kinds:
       do: { sink: { name: kinds } }

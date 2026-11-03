@@ -91,6 +91,8 @@ A state's `do:` names a stage **type** as a key (a closed set the schema owns) a
 | `map: { action: prefer_middle }` | `rows`, `extent`, `group`, `order`, `into`, `match` | adds `into` to runs: 1.0 centered in their group, 0.0 at its end |
 | `map: { action: weigh }` | `source`, `by`, `into` | adds `into`: the sum of the `by` fields, each times its weight |
 | `reduce: { action: max }`, `min` | `source`, `field`, `take` | the `take` rows (default 1) with the highest (lowest) `field`, best first |
+| `map: { action: require }` | `source`, `columns` | the rows of `source` unchanged, after checking they have every named column; a source with rows but without one stops the run with `source 'x' has no <column> column` (an empty source passes) |
+| `reduce: { action: tally }` | `source`, `by`, `into` | the rows of `source` unchanged; `summary.json` gets `into`: how many rows have each value of `by` |
 | `reduce: { action: any }` | `source` | one row, `{any: true}` if the source has any row, `{any: false}` if none (for a guard) |
 | `sink: { name: <sink> }` | `source` (optional) | writes the rows of the stage before it to the sink file, or the rows of the named `source` |
 | `sketch: { file: <file> }` | | runs `<file>.yaml` beside this one as a nested run and gives back the weighted rows its `outputs` name; `with:` passes it values (see Subsketches) |

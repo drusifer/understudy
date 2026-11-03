@@ -13,9 +13,6 @@ from src.sketch.sources.capture import CaptureStore
 
 LEDGER = ROOT / "examples" / "household" / "household.yaml"
 ORACLE = ROOT / "tests" / "fixtures" / "household"
-OWN = {"Venmo": 0.05, "Ridgewood Savings Bank": 0.93}  # the probability the payee is one of the owner's accounts
-
-
 PLACED = {"Store": ("Shopping & Retail: General", 0.9), "Dunkin'": ("Food & Dining: Coffee & Cafes", 0.95),
           "Employer": ("Income: Paychecks", 0.99), "Shoe Shop": ("Shopping & Retail: General", 0.5),
           "Venmo": ("none_of_these", 0.9)}
@@ -42,7 +39,6 @@ class LedgerTests(unittest.TestCase):
     def setUpClass(cls):
         cls.temporary = tempfile.TemporaryDirectory()
         directory = Path(cls.temporary.name)
-        cls.seen = []
 
         def reading(state, instructions, options):
             if "refund" in state:  # the refund of 45.00 reverses the charge of 45.00 on the 15th
@@ -50,10 +46,7 @@ class LedgerTests(unittest.TestCase):
                 return Chosen(original, 0.8, {label: 0.8 if label == original else 0.2 for label in options})
             if "merchant" in state:
                 return category(state["merchant"][0]["merchant"], options)
-            cls.seen.append(state)
-            own = OWN[state["payee"][0]["payee"]]
-            levels = {"own_account": own, "someone_else": 1 - own}
-            return Chosen(max(levels, key=levels.get), 0.9, levels)
+            raise AssertionError(f"Jev was asked a question the household no longer asks: {list(state)}")
 
         stderr = io.StringIO()
         cls.code = main(
@@ -65,7 +58,8 @@ class LedgerTests(unittest.TestCase):
         (folder,) = (directory / "out").iterdir()
         cls.records = lines(folder / "records.jsonl")
         cls.legs = {leg["record_id"]: leg for leg in lines(folder / "legs.jsonl")}
-        cls.judged = {row["payee"]: row for row in lines(folder / "judgments.jsonl")}
+        cls.folder = folder
+        cls.summary = json.loads((folder / "summary.json").read_text(encoding="utf-8"))
 
     @classmethod
     def tearDownClass(cls):
@@ -82,19 +76,30 @@ class LedgerTests(unittest.TestCase):
     def test_the_card_payment_links_to_the_checking_debit(self):
         self.assertEqual((self.legs["m9"]["partner"], self.legs["m10"]["partner"]), ("m10", "m9"))
 
-    def test_venmo_and_the_savings_bank_are_unpaired_transfer_candidates(self):
+    def test_venmo_and_the_savings_bank_are_unpaired_transfer_candidates_kept_as_evidence(self):
         unpaired = {leg["payee"] for leg in self.legs.values() if leg["partner"] is None}
         self.assertEqual(unpaired, {"Venmo", "Ridgewood Savings Bank"})
 
-    def test_jev_judges_each_unpaired_payee_and_the_thresholds_decide(self):
-        self.assertEqual({payee: row["decision"] for payee, row in self.judged.items()},
-                         {"Venmo": "spending", "Ridgewood Savings Bank": "external_transfer"})
+    def test_the_exports_category_decides_which_records_are_transfers(self):
+        transfers = {r["payee"] for r in self.records if r["kind"] == "transfer"}
+        self.assertEqual(transfers, {"Payment Thank You", "Amex Payment", "Ridgewood Savings Bank"})
 
-    def test_every_record_has_a_kind_and_they_are_the_etls_kinds(self):
+    def test_a_record_whose_category_is_not_transfer_or_card_payment_is_never_a_transfer(self):
+        venmo = next(r for r in self.records if r["payee"] == "Venmo")  # "Transportation: Transfers", paired by no one
+        self.assertEqual(venmo["kind"], "purchase")
+
+    def test_every_record_has_a_kind_and_there_is_no_external_transfer(self):
         kinds = {}
         for record in self.records:
             kinds[record["kind"]] = kinds.get(record["kind"], 0) + 1
-        self.assertEqual(kinds, {"purchase": 6, "transfer": 2, "external_transfer": 1, "refund": 2, "credit": 1})
+        self.assertEqual(kinds, {"purchase": 6, "transfer": 3, "refund": 2, "credit": 1})
+
+    def test_the_summary_counts_the_records_whose_kind_the_category_changed(self):
+        # the savings bank deposit is a transfer by category with no partner; every other record agrees with the pairing
+        self.assertEqual(self.summary["kind_changed_by_category"], {"no": 11, "yes": 1})
+
+    def test_jev_is_no_longer_asked_about_payees_and_the_judgments_file_is_gone(self):
+        self.assertFalse((self.folder / "judgments.jsonl").exists())
 
     def test_a_refund_with_one_original_links_by_rule_and_one_with_several_by_jev(self):
         refunds = {r["payee"]: r for r in self.records if r["kind"] == "refund"}
@@ -117,15 +122,37 @@ class LedgerTests(unittest.TestCase):
         self.assertTrue(venmo["category_level"] and venmo["category_level"] != "none_of_these")
 
     def test_transfers_are_not_asked_about_and_say_so(self):
-        legs = [r for r in self.records if r["kind"] in ("transfer", "external_transfer")]
+        legs = [r for r in self.records if r["kind"] == "transfer"]
         self.assertEqual({r["category_status"] for r in legs}, {"none"})
 
-    def test_jev_sees_the_owners_account_names_but_never_their_numbers(self):
-        self.assertEqual(len(self.seen), 2)
-        shown = json.dumps(self.seen)
-        self.assertIn("Platinum Card", shown)
-        self.assertNotIn("(...", shown)
-        self.assertNotIn("1111", shown)
+
+class MissingCategoryTests(unittest.TestCase):
+    def test_a_monarch_file_without_a_category_column_stops_before_any_request_to_jev(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            lines_in = (ORACLE / "monarch.csv").read_text(encoding="utf-8").splitlines()
+            header = lines_in[0].split(",")
+            keep = [i for i, name in enumerate(header) if name != "Category"]
+            import csv
+            with (directory / "monarch.csv").open("w", encoding="utf-8", newline="") as handle:
+                writer = csv.writer(handle)
+                for row in csv.reader(lines_in):
+                    writer.writerow([row[i] for i in keep])
+            asked = []
+
+            def reading(state, instructions, options):
+                asked.append(state)
+                raise AssertionError("Jev must not be asked")
+
+            stderr = io.StringIO()
+            code = main(
+                ["run", str(LEDGER), "--out", str(directory / "out"), "--with", f"monarch={directory / 'monarch.csv'}",
+                 "--with", f"amex={ORACLE / 'amex.csv'}", "--with", "amex_account=Platinum", "--with", "since=2026-01-01"],
+                make_jev=lambda: JevDouble(choose_fn=reading), store=CaptureStore(directory / "cache"),
+                stdout=io.StringIO(), stderr=stderr)
+        self.assertNotEqual(code, 0)
+        self.assertIn("has no Category column", stderr.getvalue())
+        self.assertEqual(asked, [])
 
 
 
