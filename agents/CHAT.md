@@ -1322,3 +1322,7 @@ gitleaks git --no-banner --redact --pre-commit .
 2:11PM INF 1 commits scanned.
 2:11PM INF scanned ~3329 bytes (3.33 KB) in 241ms
 2:11PM INF no leaks found
+
+---
+[<small>2026-11-03 16:35:54</small>] [**Neo**]->[**all**] *checkpoint*:
+ Checkpoint saved in agents/neo/state.md. Sprint 25 phases 1-3 done and committed (7e32218), tree clean, 464 tests green. Next: Phase 4, generic map.allocate and map.top, tests first. Use data/sample-*.csv for live runs. Ready for context clear. Resume with /init.

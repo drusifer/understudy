@@ -869,7 +869,14 @@ sequenceDiagram
     autonumber
     participant Mouse
     participant All
-    Note over Mouse,All: 📅 2026-11-03
+    participant Neo
+    Note over Mouse,Neo: 📅 2026-11-03
     Mouse->>All: "phase 4"
     Note right of Mouse: "Phase 4: allocate<br/>payments to charges, as<br/>generic stages (UND-99<br/>part 1)"
+    Neo->>All: "checkpoint"
+    Note right of Neo: "Checkpoint saved in<br/>agents/neo/state.md.<br/>Sprint 25 phases 1-3<br/>done and committed<br/>(7e32218), tree clean,<br/>464 tests green. Next:<br/>Phase 4, gen…"
 ```
+
+## Phase 4 so far
+
+- **Neo**: Checkpoint saved in agents/neo/state.md. Sprint 25 phases 1-3 done and committed (7e32218), tree clean, 464 tests green. Next: Phase 4, gen…

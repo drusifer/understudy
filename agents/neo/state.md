@@ -26,3 +26,30 @@
 ---
 ## Sprint 22 close 2026-11-01
 Sprint 22 built (UND-76..80, 88): view/reads/runs/server/controls; 309+6 tests. Rule to keep: Edit/Write only, no sed/python for edits. Next: Sprint 23 UND-81 events v2 after the owner starts it.
+
+---
+## Checkpoint 2026-11-03 (prep-clear): Sprint 25 mid-sprint, phases 1-3 done
+
+### Context
+- **Branches:** `sprint-25` is cut from `sprint-24`, which is cut from `main`. `main` has Sprint 23 (merged and pushed, bed2296). `sprint-24` (Sprint 24, closed) and `sprint-25` are committed locally, NOT merged or pushed (owner decides; merge `sprint-24` first). Working tree clean at `7e32218`. `bobp make check` 464 tests green; `bobp make test-browser` 22/22 (about 104 s, not a release gate).
+- **Sprint 25 plan:** `task.md`, `docs/sprints/USER_STORIES_SPRINT25.md`, `ARCH_SPRINT25.md`, `UAT_PLAN_SPRINT25.md` (UAT-25-1..3 written). Phases 1-3 done and committed (b399720, c93ec24, 917257b) plus follow-ups (7e32218). Phases 4 (allocation stages), 5 (payments.jsonl), 6 (spending from the tool's categories), then closeout (Tank sdlc-check, ADR-0055..0057, lessons, retro, launch) remain.
+- **Owner decisions 10-15** in `docs/sprints/OWNER_DECISIONS_SPRINT22.md`: export categories are not authoritative; ISO 18245 plus the owner's additions is the taxonomy; lump payments connect to their charges (oldest first, charges only, remainder shown); Charles Schwab is the owner's savings (pinned in `.understudy/pinned.jsonl`); business-date logic for matching transfers (already in `link`: 3 business days, US federal holidays).
+- **What exists now** (`examples/household/`): `household.yaml` (taxonomy from `map.mcc` plus `additions.jsonl`; `categorize_merchant.yaml` two Jev choices, group shown every name then a name; placed when each choice is above 0.7 or at least 0.4 and twice the runner-up; link candidates from text; kind from link, "Household: Transfer", or a card's own payment-received text; `crosswalk.jsonl`; `review.jsonl`; `spending.jsonl` still uses export Category first (Phase 6 changes it)). `place_merchant.yaml` and `name_merchant.yaml` are gone. New generic stages: `map.unique`, `map.smallest`, plus `group` option `commonest`, scalar `classify`, null-safe `weigh`.
+- **Live runs:** a live run always asks Jev again (only `--replay <run>` reuses captures); full data is about 2,300 requests and 7 minutes. Use the small sample for live tests: `data/sample-monarch.csv` and `data/sample-amex.csv` (git-ignored; 305 requests, 67 s): `bobp make run ARGS="run examples/household/household.yaml --with monarch=data/sample-monarch.csv --with amex=data/sample-amex.csv --with amex_account=Platinum --with since=2025-11-01"`. Full baselines: `data/Transactions_2026-11-02T19-14-07.csv` (Monarch) and `data/activity-11-03-2026.csv` (Amex from 2025-11-01).
+- **Gotchas learned:** a `holds` condition never matches a field the row lacks, so `ne`/`eq null` miss records with no field (write `not: {x: {ne: null}}`); a stage named like its own `into` value is reported as "reads itself"; chat messages over 512 characters are refused; the edit tool turns `\uXXXX` escapes into the literal character (use `chr()`); the themes still style old `.dial-option`/`.switch`/`.fader` classes.
+- **Owner rules:** Edit/Write only for file edits (I slipped several times with no-op python and sed on scratch files); one question at a time; American spelling; record owner answers in the decisions file at once; push only via `bobp make push` and only when asked; read the template and skill before an artifact; work any target figure out on the real data before the gate.
+
+### Current Task
+Status: In Progress. Sprint 25 phases 1-3 complete; Phase 4 not started.
+- [x] Phase 1 clean list (UND-96), Phase 2 Jev categorizes (UND-97), Phase 3 kinds and crosswalk (UND-98)
+- [ ] Phase 4: generic `map.allocate` (oldest first, never past the amount, remainder, a charge in at most one payment, nothing dated after the payment) and `map.top` (largest few rows per group), tests first
+- [ ] Phase 5: `payments.jsonl`, `settled_by` on each charge, open balance, Amex pool (records with `other_Account #`)
+- [ ] Phase 6: spending from the tool's categories (`unplaced` for review merchants), export categories out of the list
+- [ ] Closeout
+
+### Next Steps
+1. After /clear: `/init`, read `agents/CHAT.md` (last 10 messages) and this section, `git status` (should be clean on `sprint-25`).
+2. Mouse posts `bobp chat "Phase 4: allocate payments to charges, as generic stages (UND-99 part 1)" --persona Mouse --cmd "phase 4"` (already posted once). Neo: read `task.md` Phase 4, `ARCH_SPRINT25.md` section 4 step 6, UND-99 in the stories.
+3. Tests first in `tests/python/test_sketch_stages_checks.py` for `map.allocate` and `map.top`; then `src/sketch/stages_rows.py`; add both to the stage list in `tests/python/test_sketch_coffee.py` (`RegistryTests`); document in `docs/SKETCHES.md`. Then `bobp make check`.
+4. Trin UAT on the Amex baseline outside the sketch: 11 of 12 payments within 5% (worst 4.6%, May), first payment short by $10,437, settled plus open equals all charges to the cent. Then Switch quick pass, Morpheus review, tick `task.md`, commit `Phase 4: ...` with the attribution line.
+5. Open owner items: pins for other own-account merchants (Ridgewood Savings Bank, maybe others); the $20,000 "Deposit"; whether to merge `sprint-24` then `sprint-25` into `main` and push (ask first). Later sprints: Venmo and Zelle histories (use `link`'s business-day matching), then stepping, replay, decision detail, YAML editor.
