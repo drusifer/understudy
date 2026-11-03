@@ -324,6 +324,27 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .summary { align-self: stretch; display: grid; grid-template-columns: max-content 1fr; gap: 2px 14px; margin: 0; font-family: VT323, monospace; font-size: 18px; color: var(--cream); }
 .summary dt { color: var(--cream); opacity: .75; }
 .summary dd { margin: 0; overflow-wrap: anywhere; }
+/* Sprint 24 UND-82: the statechart is drawn on a light canvas with fixed dark and light pairs, so it reads in every theme. */
+.tube-panel { min-width: 0; } /* so a wide diagram scrolls inside its own box instead of widening the page */
+.chart { align-self: stretch; min-width: 0; font-family: VT323, monospace; font-size: 18px; color: var(--cream); }
+.chart-title { margin: 8px 0 4px; font-family: Cinzel, serif; font-size: 12px; font-weight: 400; letter-spacing: 3px; color: var(--cream); }
+.chart-note { margin: 0 0 6px; color: var(--cream); overflow-wrap: anywhere; }
+.chart-wrap { max-width: 100%; overflow: auto; border: 1px solid var(--brass-deep); border-radius: 6px; background: #f3ead2; padding: 4px; }
+.chart-wrap[hidden] { display: none; }
+.chart-wrap:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+.chart-svg { display: block; }
+.chart-svg .edge { fill: none; stroke: #24170a; stroke-width: 1.5; }
+.chart-svg .edge.back { stroke: #8f2d1a; stroke-dasharray: 6 4; }
+.chart-svg .edge.taken { stroke: #c2410c; stroke-width: 3; }
+.chart-svg .arrowhead { fill: #24170a; }
+.chart-svg .arrowhead.taken { fill: #c2410c; }
+.chart-svg .state-box { fill: #fffaf0; stroke: #24170a; stroke-width: 1.5; }
+.chart-svg .final-ring { fill: none; stroke: #24170a; stroke-width: 1.5; }
+.chart-svg .state.current .state-box { fill: #24180f; stroke: #c2410c; stroke-width: 3; }
+.chart-svg .state-name { color: #24170a; fill: currentColor; font: 15px monospace; }
+.chart-svg .state.current .state-name { color: #ffe9b8; }
+.chart-svg .edge-label-box { fill: #fffff0; stroke: #8a6a1f; stroke-width: 1; }
+.chart-svg .edge-label-text { color: #24170a; fill: currentColor; font: 11px monospace; }
 .spending { align-self: stretch; font-family: VT323, monospace; font-size: 18px; color: var(--cream); }
 .spending[hidden] { display: none; }
 .spend-title { margin: 8px 0 4px; font-family: Cinzel, serif; font-size: 12px; font-weight: 400; letter-spacing: 3px; color: var(--cream); }

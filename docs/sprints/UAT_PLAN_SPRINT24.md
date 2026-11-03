@@ -70,9 +70,19 @@ Phases are added as they pass UAT.
 - **Verdict:** PASS
 - **Evidence / issue:** rendering checked by eye (the rendering script is a scratch file). The layout is simple layered, as the architecture says; a 40-state machine is dense but not overlapping.
 
+### UAT-24-7: See the statechart (Phase 7)
+
+- **Linked criterion:** UND-82 AC1 to AC7
+- **Preconditions and data:** the real household run `run-20261103T042130-ca94842f` in a real Chromium (Professional light at 1300 px, Steampunk light at 390 px); built runs for a live run, a finished run, a run without a story, hostile names, and 390 px; the readability check in six looks
+- **Steps:** open the console on `.understudy/runs`, choose the run, read the STATECHART panel; the browser tests append a `state_entered` line to a running run's log and time the light; open a run with markup in a state name
+- **Expected observable outcome:** a box per state with its name, double-bordered finals, an arrow per move with a label only for a guard, the current state lit, the move just taken highlighted, the ending said, a clear message for a log with no story, accessible names, no overflow at 390 px, readable in every look, markup shown as text
+- **Actual outcome:** the real run draws an 11-state chain, `done` double-bordered and lit, the last arrow orange, the note "ended in done: done after 10 stages"; in the tests the light moved to the next state within 1.5 seconds of the log line (the page refreshes from the event stream in 250 ms bursts), exactly one state lit, the `a` to `b` arrow marked taken; a run with no story says "no story" and draws no SVG; a state named `<img src=x onerror=window.pwned=1>` is drawn as that text, no image element exists and `window.pwned` stays undefined; names read "b, current state", "c, final state"; at 390 px the page does not scroll sideways and the diagram scrolls inside its own box; the readability check passes for the heading, note, state names and guard labels in six looks; 22 of 22 browser tests pass (104 seconds)
+- **Verdict:** PASS
+- **Evidence / issue:** screenshot checked by eye; 428 unit tests green. First attempt made the page scroll sideways at 390 px because the right-hand panel could not shrink below the diagram; fixed with `min-width: 0`.
+
 ## Results and Handoff
 
-- **Passed / failed / blocked:** Phase 1: 1 passed (UAT-24-1); Phase 2: 1 passed (UAT-24-2); Phase 3: 1 passed (UAT-24-3); Phase 4: 1 passed (UAT-24-4); Phase 5: 1 passed (UAT-24-5); Phase 6: 1 passed (UAT-24-6); 0 failed, 0 blocked
+- **Passed / failed / blocked:** Phase 1: 1 passed (UAT-24-1); Phase 2: 1 passed (UAT-24-2); Phase 3: 1 passed (UAT-24-3); Phase 4: 1 passed (UAT-24-4); Phase 5: 1 passed (UAT-24-5); Phase 6: 1 passed (UAT-24-6); Phase 7: 1 passed (UAT-24-7); 0 failed, 0 blocked
 - **Open issues and impact:** Phase 2: the oddly grouped categories and a negative `Refund` line are the owner's data, not a defect; noted for the backlog.
 - **Overall verdict:** PASS for Phases 1 to 3
 - **Handoff evidence:** message in `agents/CHAT.md`

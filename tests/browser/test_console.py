@@ -37,6 +37,7 @@ READABLE = [
     ".panel-head span", ".jev > summary", ".offline", ".no-match",
     "#spending-title", ".spend-name", ".spend-amount", ".spend-more",
     ".typed-label", ".pick-option", ".toggle", ".readout", ".count-box", ".step-button",
+    "#chart-title", "#chart-note", ".state-name", ".edge-label-text",
 ]
 
 # While one element is measured its text is invisible and nothing animates, so a screenshot shows only the backdrop.
@@ -178,7 +179,8 @@ class BrowserCase(unittest.TestCase):
 
     def failed_and_done_runs(self):
         failed = write_run(self.runs, "run-20261101T120000-0000000a", [
-            {"event": "run_started", "at": stamp(0), "sketch": "examples/household/household.yaml", "mode": "live"},
+            {"event": "run_started", "at": stamp(0), "sketch": "examples/household/household.yaml", "mode": "live", **STORY},
+            entered(1, "a", "start"), entered(1, "b", "ok"),  # a diagram for the readability check to measure
             {"event": "stage_started", "at": stamp(1), "stage": "read"},
             {"event": "stage_failed", "at": stamp(2), "stage": "read", "reason": "Jev needs a TypeSafe key"}],
             {"status": "failed", "failed_stage": "read", "error": "Jev needs a TypeSafe key", "stages": {}, "mode": "live"})
@@ -456,6 +458,102 @@ class TypedControlsTest(BrowserCase):
         for selector in ("#field-mood", "#field-weight", "#field-tickets", "#field-evenings"):
             box = page.locator(selector).bounding_box()
             self.assertTrue(box and box["x"] >= 0 and box["x"] + box["width"] <= 390, selector)
+
+
+STORY = {"initial": "a", "states": [{"name": "a", "final": False}, {"name": "b", "final": False}, {"name": "c", "final": True}],
+         "transitions": [{"from": "a", "to": "b", "event": "ok"}, {"from": "b", "to": "c", "event": "ok", "when": {"ready": {"eq": True}}}]}
+
+
+def entered(second: int, state_name: str, cause: str) -> dict:
+    return {"event": "state_entered", "at": stamp(second), "state": state_name, "caused_by": cause}
+
+
+class StatechartTest(BrowserCase):
+    def run_with_story(self, name, events, manifest, story=None):
+        started = {"event": "run_started", "at": stamp(0), "sketch": "x/chart.yaml", "mode": "live", **(STORY if story is None else story)}
+        return write_run(self.runs, name, [started, *events], manifest)
+
+    def open(self, name, width=1300, height=900):
+        page = self.page(width, height)
+        page.goto(self.start())
+        page.wait_for_selector(".sketch-tab")
+        page.locator(f".sketch-tab[title^='{name}']").click()
+        return page
+
+    def test_each_state_is_a_box_with_a_name_finals_are_double_bordered_and_only_guarded_moves_have_labels(self):
+        name = "run-20261101T160000-00000001"
+        self.run_with_story(name, [entered(1, "a", "start"), entered(2, "b", "ok")], {"status": "running", "stages": {}})
+        page = self.open(name)
+        page.wait_for_selector(".state")
+        self.assertEqual(page.locator(".state").count(), 3)
+        self.assertEqual(page.locator(".state.final .final-ring").count(), 1)
+        self.assertEqual(page.locator(".edge").count(), 2)
+        self.assertEqual(page.locator(".edge-label-text").count(), 1)
+        self.assertEqual(page.locator(".edge-label-text").text_content(), "ready = true")
+        self.assertEqual(page.get_by_role("img", name="a", exact=True).count(), 1)
+        self.assertEqual(page.get_by_role("img", name="b, current state", exact=True).count(), 1)
+        self.assertEqual(page.get_by_role("img", name="c, final state", exact=True).count(), 1)
+
+    def test_the_state_the_run_is_in_is_lit_and_the_move_just_taken_is_marked(self):
+        name = "run-20261101T160100-00000002"
+        self.run_with_story(name, [entered(-1, "a", "start")], {"status": "running", "stages": {}})
+        page = self.open(name)
+        page.wait_for_selector(".state.current")
+        self.assertEqual(page.locator(".state.current").get_attribute("data-state"), "a")
+        self.assertEqual(page.locator(".edge.taken").count(), 0)
+
+    def test_the_light_moves_to_the_next_state_within_a_second_of_the_change(self):
+        name = "run-20261101T160200-00000003"
+        run = self.run_with_story(name, [entered(-1, "a", "start")], {"status": "running", "stages": {}})
+        page = self.open(name)
+        page.wait_for_selector(".state.current[data-state='a']")
+        with (run / "events.jsonl").open("a", encoding="utf-8") as events:
+            events.write(json.dumps(entered(-1, "b", "ok")) + "\n")
+        page.wait_for_selector(".state.current[data-state='b']", timeout=1500)
+        self.assertEqual(page.locator(".edge.taken").get_attribute("data-to"), "b")
+        self.assertEqual(page.locator(".state.current").count(), 1)
+
+    def test_a_finished_run_keeps_its_last_state_lit_and_says_how_it_ended(self):
+        name = "run-20261101T160300-00000004"
+        self.run_with_story(name, [entered(1, "a", "start"), entered(2, "b", "ok"), entered(3, "c", "ok"),
+                                   {"event": "run_finished", "at": stamp(4), "outcome": "complete"}],
+                            {"status": "complete", "stages": {}, "outcome": "complete"})
+        page = self.open(name)
+        page.wait_for_selector(".state.current[data-state='c']")
+        page.wait_for_function("document.getElementById('status-text').textContent === 'DONE'")
+        self.assertIn("done", page.locator("#chart-note").inner_text().lower())
+
+    def test_a_run_whose_log_has_no_story_says_so_and_draws_nothing(self):
+        name = "run-20261101T160400-00000005"
+        write_run(self.runs, name, [{"event": "run_started", "at": stamp(0), "sketch": "x/old.yaml", "mode": "live"},
+                                    {"event": "run_finished", "at": stamp(1), "outcome": "complete"}],
+                  {"status": "complete", "stages": {}})
+        page = self.open(name)
+        page.wait_for_function("document.getElementById('status-text').textContent === 'DONE'")
+        self.assertIn("no story", page.locator("#chart-note").inner_text())
+        self.assertEqual(page.locator("#chart-wrap svg").count(), 0)
+
+    def test_names_and_guards_with_markup_are_drawn_as_text_and_run_nothing(self):
+        name = "run-20261101T160500-00000006"
+        hostile = "<img src=x onerror=window.pwned=1>"
+        story = {"initial": hostile, "states": [{"name": hostile, "final": False}, {"name": "b", "final": True}],
+                 "transitions": [{"from": hostile, "to": "b", "event": "ok", "when": {"<b>x</b>": {"eq": 1}}}]}
+        self.run_with_story(name, [entered(1, hostile, "start")], {"status": "running", "stages": {}}, story=story)
+        page = self.open(name)
+        page.wait_for_selector(".state")
+        self.assertEqual(page.evaluate("window.pwned"), None)
+        self.assertEqual(page.locator("#chart-wrap img").count(), 0)
+        self.assertIn(hostile, page.locator(".state-name").first.text_content())
+        self.assertEqual(page.locator("#chart-wrap b").count(), 0)
+
+    def test_the_diagram_fits_a_phone_without_sideways_scrolling_of_the_page(self):
+        name = "run-20261101T160600-00000007"
+        self.run_with_story(name, [entered(1, "a", "start")], {"status": "running", "stages": {}})
+        page = self.open(name, width=390, height=900)
+        page.wait_for_selector(".state")
+        self.assertTrue(page.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth"))
+        box = page.locator("#chart-wrap").bounding_box()
+        self.assertTrue(box and box["x"] >= 0 and box["x"] + box["width"] <= 390)
 
 
 class KeyboardTest(BrowserCase):

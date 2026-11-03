@@ -688,7 +688,26 @@ sequenceDiagram
     autonumber
     participant Mouse
     participant All
-    Note over Mouse,All: 📅 2026-11-02
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    participant Tank
+    Note over Mouse,Tank: 📅 2026-11-02
     Mouse->>All: "phase 7"
     Note right of Mouse: "Phase 7: see the<br/>statechart (UND-82 part<br/>2)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 7 impl complete<br/>(UND-82 part 2): the<br/>page draws the chart as<br/>SVG (textContent only),<br/>lights the current<br/>state, marks the last<br/>move an…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 7 passed<br/>(UND-82 part 2): real<br/>run drawn in a real<br/>browser at 1300 and 390<br/>px, the light moves<br/>within 1.5 s in the<br/>test, no-story…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 7):<br/>No blocking findings.<br/>The design-gate<br/>condition is met: a<br/>state named with an img<br/>tag and onerror is drawn<br/>as text…"
+    Morpheus->>Tank: "lead handoff"
+    Note right of Morpheus: "*lead review phase-7:<br/>passed. All five phases<br/>of the diagram and<br/>controls reviewed, the<br/>drawing code is about<br/>sixty lines over the<br/>server's…"
 ```
+
+## Phase 7 so far
+
+- **Neo**: Phase 7 impl complete (UND-82 part 2): the page draws the chart as SVG (textContent only), lights the current state, marks the last move an…
+- **Trin**: UAT phase 7 passed (UND-82 part 2): real run drawn in a real browser at 1300 and 390 px, the light moves within 1.5 s in the test, no-story…
+- **Morpheus**: \*lead review phase-7: passed. All five phases of the diagram and controls reviewed, the drawing code is about sixty lines over the server's…

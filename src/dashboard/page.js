@@ -146,6 +146,60 @@ function drawSummary(run) {
   $('summary').replaceChildren(...rows.flatMap(([name, value]) => [make('dt', {}, name), make('dd', {}, value)]));
 }
 
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+// An SVG element with its attributes; text is only ever set through textContent, never as markup.
+function svgEl(name, attributes = {}, ...children) {
+  const element = document.createElementNS(SVG_NS, name);
+  for (const [key, value] of Object.entries(attributes)) element.setAttribute(key, String(value));
+  for (const child of children) element.append(child);
+  return element;
+}
+
+function arrowMarker(id, className) {
+  return svgEl('marker', { id, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 8, markerHeight: 8, orient: 'auto' },
+    svgEl('path', { d: 'M0 0L10 5L0 10z', class: className }));
+}
+
+function stateGroup(node) {
+  const name = svgEl('text', { class: 'state-name', x: node.x + node.w / 2, y: node.y + node.h / 2 + 5, 'text-anchor': 'middle' });
+  name.textContent = node.id;
+  const label = `${node.id}${node.final ? ', final state' : ''}${node.current ? ', current state' : ''}`;
+  const box = svgEl('rect', { class: 'state-box', x: node.x, y: node.y, width: node.w, height: node.h, rx: 6 });
+  const ring = node.final ? [svgEl('rect', { class: 'final-ring', x: node.x + 4, y: node.y + 4, width: node.w - 8, height: node.h - 8, rx: 4 })] : [];
+  const group = svgEl('g', { class: `state${node.final ? ' final' : ''}${node.current ? ' current' : ''}${node.initial ? ' initial' : ''}`,
+    role: 'img', 'aria-label': label, 'data-state': node.id }, box, ...ring, name);
+  return group;
+}
+
+function edgeGroup(edge) {
+  const line = svgEl('polyline', { class: `edge${edge.back ? ' back' : ''}${edge.taken ? ' taken' : ''}`, points: edge.points.map((point) => point.join(',')).join(' '),
+    'marker-end': `url(#${edge.taken ? 'arrow-taken' : 'arrow'})`, 'data-from': edge.from, 'data-to': edge.to });
+  if (!edge.label) return [line];
+  const box = edge.label_box;
+  const text = svgEl('text', { class: 'edge-label-text', x: box.x + 5, y: box.y + box.h - 5 });
+  text.textContent = edge.label;
+  return [line, svgEl('rect', { class: 'edge-label-box', x: box.x, y: box.y, width: box.w, height: box.h, rx: 3 }), text];
+}
+
+// The machine as boxes and arrows from the server's layout (src/dashboard/chart.py); the page only draws it.
+function drawChart(run) {
+  const chart = run.chart;
+  const wrap = $('chart-wrap');
+  wrap.hidden = !chart;
+  if (!chart) {
+    wrap.replaceChildren();
+    $('chart-note').textContent = 'this run\'s log has no story, so there is no diagram to draw';
+    return;
+  }
+  const current = chart.nodes.find((node) => node.current);
+  $('chart-note').textContent = chart.ended ? `ended${current ? ` in ${current.id}` : ''}: ${chart.ended}`
+    : current ? `in state ${current.id}` : 'waiting for the first state';
+  wrap.replaceChildren(svgEl('svg', { class: 'chart-svg', width: chart.width, height: chart.height, viewBox: `0 0 ${chart.width} ${chart.height}`, 'aria-hidden': 'false' },
+    svgEl('defs', {}, arrowMarker('arrow', 'arrowhead'), arrowMarker('arrow-taken', 'arrowhead taken')),
+    ...chart.edges.flatMap(edgeGroup), ...chart.nodes.map(stateGroup)));
+}
+
 const dollars = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
 // What the money went on: the run's ten largest categories with amount and share; nothing is drawn for a run without the file.
@@ -188,6 +242,7 @@ function drawStatus(run) {
   drawBanner(run);
   drawSummary(run);
   drawSpending(run.spending);
+  drawChart(run);
   state.chosenState = run.state;
   if (typeof afterStatus === 'function') afterStatus(run); // controls.js: the controls follow the chosen run
 }
@@ -291,8 +346,19 @@ async function choose(id) {
   const source = new EventSource(`events/${id}`);
   state.follow = source;
   let skip = run.count;
-  source.onmessage = (message) => { if (skip > 0) skip -= 1; else append(JSON.parse(message.data)); };
+  source.onmessage = (message) => { if (skip > 0) skip -= 1; else { append(JSON.parse(message.data)); refreshSoon(id); } };
   source.addEventListener('end', async () => { source.close(); const done = await getJson(`api/runs/${id}`); if (done) drawStatus(done); loadJev(id); loadRuns(); });
+}
+
+// A new event line while a run goes: refresh what the run says about itself (the lit state, the gauges) soon, but once for a burst.
+let refreshTimer = null;
+function refreshSoon(id) {
+  if (refreshTimer) return;
+  refreshTimer = setTimeout(async () => {
+    refreshTimer = null;
+    const run = await getJson(`api/runs/${id}`);
+    if (run && state.chosen === id) drawStatus(run);
+  }, 250);
 }
 
 // run-20261031T012507-46140191 reads "10-31 01:25".

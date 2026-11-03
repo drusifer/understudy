@@ -63,10 +63,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 7: See the statechart (UND-82 part 2, 4 pts)
 *Phase goal: the page draws the chart, lights the current state and says how the run ended.*
-- [ ] **Task 7.1:** Tests first (browser), then the SVG drawing in `page.js` and `page.css`: boxes, double-bordered finals, arrows, guard labels, lit state moving within a second, highlighted move, ending, no-story message, accessible names, a hostile-name test. **L3**. (*Owner: Neo | Trace: UND-82 AC1-6 | Verification: `bobp make test`, `bobp make lint`, `bobp make test-browser`*)
-- [ ] **Task 7.2:** UAT in a real browser on a live run (the light moves) and a finished one, 390 px, three themes, a run with no story. **L3**. (*Owner: Trin | Trace: UND-82 AC1-6 | Verification: UAT verdict and screenshots noted in `agents/CHAT.md`*)
-- [ ] **Task 7.3:** Security review: the hostile-name test, text only. **L2**. (*Owner: Switch | Trace: design gate condition | Verification: `security gate (phase 7): ...`*)
-- [ ] **Task 7.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT24 sections 3-6 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 7.1:** Tests first (browser), then the SVG drawing in `page.js` and `page.css`: boxes, double-bordered finals, arrows, guard labels, lit state moving within a second, highlighted move, ending, no-story message, accessible names, a hostile-name test. **L3**. (*Owner: Neo | Trace: UND-82 AC1-6 | Verification: `bobp make test`, `bobp make lint`, `bobp make test-browser`*)
+- [x] **Task 7.2:** UAT in a real browser on a live run (the light moves) and a finished one, 390 px, three themes, a run with no story. **L3**. (*Owner: Trin | Trace: UND-82 AC1-6 | Verification: UAT verdict and screenshots noted in `agents/CHAT.md`*)
+- [x] **Task 7.3:** Security review: the hostile-name test, text only. **L2**. (*Owner: Switch | Trace: design gate condition | Verification: `security gate (phase 7): ...`*)
+- [x] **Task 7.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT24 sections 3-6 | Verification: result in `agents/CHAT.md`*)
 
 ---
 
