@@ -556,7 +556,40 @@ sequenceDiagram
     autonumber
     participant Mouse
     participant All
-    Note over Mouse,All: 📅 2026-11-02
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-02
     Mouse->>All: "phase 3"
     Note right of Mouse: "Phase 3: the console<br/>shows what the money<br/>goes on (UND-95)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 3 impl complete<br/>(UND-95): the run's<br/>description carries<br/>spending (top ten, more,<br/>problem, capped reader),<br/>the summary panel lists<br/>the…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 3 passed<br/>(UND-95): real run in a<br/>real browser at 1300 and<br/>390 px, Rent 60,807<br/>first and 'and 80 more',<br/>unreadable file named,<br/>rea…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 3):<br/>No blocking findings.<br/>Category names from the<br/>run file are set with<br/>textContent (no markup),<br/>the file is read thro…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-3:<br/>passed. spending.py is a<br/>small reader apart from<br/>view.py, the page only<br/>draws, the hidden<br/>section is real markup,<br/>not…"
+```
+
+## Phase 3 close-out
+
+- **Neo**: Phase 3 impl complete (UND-95): the run's description carries spending (top ten, more, problem, capped reader), the summary panel lists the…
+- **Trin**: UAT phase 3 passed (UND-95): real run in a real browser at 1300 and 390 px, Rent 60,807 first and 'and 80 more', unreadable file named, rea…
+- **Morpheus**: \*lead review phase-3: passed. spending.py is a small reader apart from view.py, the page only draws, the hidden section is real markup, not…
+
+## Phase 4 starts
+
+Phase 4: inputs are declared (UND-87 part 1)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    Note over Mouse,All: 📅 2026-11-02
+    Mouse->>All: "phase 4"
+    Note right of Mouse: "Phase 4: inputs are<br/>declared (UND-87 part 1)"
 ```

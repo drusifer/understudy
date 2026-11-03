@@ -35,6 +35,7 @@ READABLE = [
     ".rack-group", ".badge", ".printer-head span", ".paper .line", ".find-button", ".find-check", ".ended", ".summary dt", ".summary dd",
     ".stage-lamp", ".group summary", ".gauge .figure", ".gauge-name", ".start-message", ".start-panel > summary", ".banner",
     ".panel-head span", ".jev > summary", ".offline", ".no-match",
+    "#spending-title", ".spend-name", ".spend-amount", ".spend-more",
 ]
 
 # While one element is measured its text is invisible and nothing animates, so a screenshot shows only the backdrop.
@@ -128,6 +129,13 @@ def write_run(root: Path, name: str, events: list[dict], manifest: dict, summary
     return directory
 
 
+def spending(directory: Path, categories: int) -> None:
+    """A `spending.jsonl` of that many categories, the largest first, as the household writes it."""
+    rows = [{"category": f"Group {n}: A rather long category name number {n}", "count": 10 + n, "amount": 5000.0 - n * 100,
+             "share": round(0.3 - n * 0.02, 4)} for n in range(categories)]
+    (directory / "spending.jsonl").write_text("".join(json.dumps(each) + "\n" for each in rows), encoding="utf-8")
+
+
 def stamp(second: int) -> str:
     return datetime.now(UTC).replace(microsecond=0).isoformat() if second < 0 else f"2026-11-01T12:00:{second:02d}+00:00"
 
@@ -168,17 +176,74 @@ class BrowserCase(unittest.TestCase):
         return context.new_page()
 
     def failed_and_done_runs(self):
-        write_run(self.runs, "run-20261101T120000-0000000a", [
+        failed = write_run(self.runs, "run-20261101T120000-0000000a", [
             {"event": "run_started", "at": stamp(0), "sketch": "examples/household/household.yaml", "mode": "live"},
             {"event": "stage_started", "at": stamp(1), "stage": "read"},
             {"event": "stage_failed", "at": stamp(2), "stage": "read", "reason": "Jev needs a TypeSafe key"}],
             {"status": "failed", "failed_stage": "read", "error": "Jev needs a TypeSafe key", "stages": {}, "mode": "live"})
+        spending(failed, 12)  # a long list on the run the readability check looks at
         write_run(self.runs, "run-20261101T120100-0000000b", [
             {"event": "run_started", "at": stamp(0), "sketch": "examples/evening/evening.yaml", "mode": "replay"},
             {"event": "stage_started", "at": stamp(1), "stage": "pick"}, {"event": "stage_completed", "at": stamp(2), "stage": "pick"},
             {"event": "run_finished", "at": stamp(3), "outcome": "booked"}],
             {"status": "complete", "stages": {"pick": "complete"}, "mode": "replay", "outcome": "booked", "outputs": {"booking.jsonl": 1}},
             {"stale": False})
+
+
+class SpendingListTest(BrowserCase):
+    def open_run(self, page, name):
+        page.goto(self.start())
+        page.wait_for_selector(".sketch-tab")
+        page.locator(f".sketch-tab[title^='{name}']").click()
+
+    def test_the_ten_largest_categories_are_listed_with_amount_and_share_and_the_rest_are_counted(self):
+        run = write_run(self.runs, "run-20261101T130000-0000000c", [
+            {"event": "run_started", "at": stamp(0), "sketch": "examples/household/household.yaml", "mode": "live"},
+            {"event": "run_finished", "at": stamp(1), "outcome": "complete"}], {"status": "complete", "stages": {}, "mode": "live"})
+        spending(run, 13)
+        page = self.page()
+        self.open_run(page, "run-20261101T130000-0000000c")
+        page.wait_for_selector("#spending li")
+        rows = page.locator("#spending li")
+        self.assertEqual(rows.count(), 10)
+        self.assertIn("Group 0", rows.nth(0).inner_text())
+        self.assertIn("$5,000.00", rows.nth(0).inner_text())
+        self.assertIn("30.0%", rows.nth(0).inner_text())
+        self.assertIn("3 more", page.locator(".spend-more").inner_text())
+
+    def test_a_run_without_the_file_shows_no_list_and_no_heading(self):
+        write_run(self.runs, "run-20261101T130100-0000000d", [
+            {"event": "run_started", "at": stamp(0), "sketch": "x/plain.yaml", "mode": "live"},
+            {"event": "run_finished", "at": stamp(1), "outcome": "complete"}], {"status": "complete", "stages": {}, "mode": "live"})
+        page = self.page()
+        self.open_run(page, "run-20261101T130100-0000000d")
+        page.wait_for_function("document.getElementById('status-text').textContent === 'DONE'")
+        self.assertFalse(page.locator("#spending").is_visible())
+        self.assertEqual(page.locator("#spending-title").count(), 1)  # the element exists; it is hidden, not drawn empty
+        self.assertFalse(page.locator("#spending-title").is_visible())
+
+    def test_a_spending_file_the_console_cannot_read_is_named_and_the_page_still_works(self):
+        run = write_run(self.runs, "run-20261101T130200-0000000e", [
+            {"event": "run_started", "at": stamp(0), "sketch": "x/household.yaml", "mode": "live"},
+            {"event": "run_finished", "at": stamp(1), "outcome": "complete"}], {"status": "complete", "stages": {}, "mode": "live"})
+        (run / "spending.jsonl").write_text('{"category": "Rent", "amount": 5, "share": 1}\nnot json\n', encoding="utf-8")
+        page = self.page()
+        self.open_run(page, "run-20261101T130200-0000000e")
+        page.wait_for_selector("#spending")
+        self.assertIn("spending.jsonl line 2 is not readable", page.locator("#spending").inner_text())
+        self.assertEqual(page.locator("#status-text").inner_text(), "DONE")
+
+    def test_the_list_fits_a_phone_without_sideways_scrolling(self):
+        run = write_run(self.runs, "run-20261101T130300-0000000f", [
+            {"event": "run_started", "at": stamp(0), "sketch": "x/household.yaml", "mode": "live"},
+            {"event": "run_finished", "at": stamp(1), "outcome": "complete"}], {"status": "complete", "stages": {}, "mode": "live"})
+        spending(run, 12)
+        page = self.page(width=390, height=800)
+        self.open_run(page, "run-20261101T130300-0000000f")
+        page.wait_for_selector("#spending li")
+        self.assertTrue(page.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth"))
+        self.assertTrue(page.evaluate("(() => { const box = document.getElementById('spending').getBoundingClientRect();"
+                                      " return box.left >= 0 && box.right <= window.innerWidth; })()"))
 
 
 class RackAndBannerTest(BrowserCase):

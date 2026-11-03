@@ -1028,3 +1028,31 @@ wrote /home/drusifer/Projects/understudy/.understudy/runs/run-20261103T031634-2a
 ---
 [<small>2026-11-02 22:19:03</small>] [**Mouse**]->[**all**] *phase 3*:
  Phase 3: the console shows what the money goes on (UND-95)
+
+---
+[<small>2026-11-02 22:26:35</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+10:26PM INF 1 commits scanned.
+10:26PM INF scanned ~6537 bytes (6.54 KB) in 251ms
+10:26PM INF no leaks found
+
+---
+[<small>2026-11-02 22:27:17</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 3 impl complete (UND-95): the run's description carries spending (top ten, more, problem; capped reader); the summary panel lists them; browser tests added; make check green (386), browser 10/10. @Trin *qa uat phase-3
+
+---
+[<small>2026-11-02 22:27:18</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 3 passed (UND-95): real run in a real browser at 1300 and 390 px, Rent 60,807 first and 'and 80 more'; unreadable file named; readability check found two failing looks and passes after the fix. @Switch *sec review phase-3
+
+---
+[<small>2026-11-02 22:27:18</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 3): No blocking findings. Category names from the run file are set with textContent (no markup), the file is read through a 1 MB cap and every line is validated; nothing new is exposed that the run folder did not already hold. @Morpheus *lead review phase-3
+
+---
+[<small>2026-11-02 22:27:18</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-3: passed. spending.py is a small reader apart from view.py; the page only draws; the hidden section is real markup, not an empty heading. @Neo *swe impl phase-4
+
+---
+[<small>2026-11-02 22:27:18</small>] [**Mouse**]->[**all**] *phase 4*:
+ Phase 4: inputs are declared (UND-87 part 1)

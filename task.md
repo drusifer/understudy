@@ -35,10 +35,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 3: The console shows what the money goes on (UND-95, 3 pts)
 *Phase goal: the run summary lists the top ten categories.*
-- [ ] **Task 3.1:** Tests first, then `spending` in the run's description (top ten, more, problem) and the summary-panel list with its CSS; text via `textContent`. **L2**. (*Owner: Neo | Trace: UND-95 AC1-4 | Verification: `bobp make test`, `bobp make lint`, `bobp make test-browser`*)
-- [ ] **Task 3.2:** UAT in a real browser on the real run: ten rows, more count, no list for a run without the file, unreadable file named, 390 px, three themes. **L2**. (*Owner: Trin | Trace: UND-95 AC1-4 | Verification: UAT verdict and screenshots noted in `agents/CHAT.md`*)
-- [ ] **Task 3.3:** Security quick pass: rendering of run-folder text. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 3): ...`*)
-- [ ] **Task 3.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT24 sections 5-6 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 3.1:** Tests first, then `spending` in the run's description (top ten, more, problem) and the summary-panel list with its CSS; text via `textContent`. **L2**. (*Owner: Neo | Trace: UND-95 AC1-4 | Verification: `bobp make test`, `bobp make lint`, `bobp make test-browser`*)
+- [x] **Task 3.2:** UAT in a real browser on the real run: ten rows, more count, no list for a run without the file, unreadable file named, 390 px, three themes. **L2**. (*Owner: Trin | Trace: UND-95 AC1-4 | Verification: UAT verdict and screenshots noted in `agents/CHAT.md`*)
+- [x] **Task 3.3:** Security quick pass: rendering of run-folder text. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 3): ...`*)
+- [x] **Task 3.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT24 sections 5-6 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 4: Inputs are declared (UND-87 part 1, 4 pts)
 *Phase goal: a sketch declares typed inputs; the loader fills defaults and checks limits; the console's start refuses out-of-limit values.*

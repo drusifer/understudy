@@ -30,9 +30,19 @@ Phases are added as they pass UAT.
 - **Verdict:** PASS
 - **Evidence / issue:** run folder above; 377 tests green. Findings for the owner: the category `Refund` shows as a negative amount (money back with no original category); some of the owner's own groups read oddly ("Shopping & Retail: Restaurants & Dining" 469 records, $18,332; "Food & Dining: Insurance"), inherited from the earlier categorization.
 
+### UAT-24-3: The console shows what the money goes on (Phase 3)
+
+- **Linked criterion:** UND-95 AC1 to AC4
+- **Preconditions and data:** the real run `run-20261103T031634-2a0afad6` opened in a real Chromium (Professional light at 1300 px, Steampunk light at 390 px); browser tests with built runs for the other cases
+- **Steps:** open the console on `.understudy/runs`, choose the run, read the summary panel; the browser tests open a run with 13 categories, a run without the file, a run with an unreadable file, a run at 390 px; the readability test measures the heading and rows in all six theme and mode looks
+- **Expected observable outcome:** ten largest categories with amount and share and "and N more"; no heading or list when the file is absent; the unreadable file named and the page working; no sideways scrolling at 390 px; readable text everywhere
+- **Actual outcome:** the real run lists Rent $60,807.08 15.0%, Taxes $40,674.00 10.1%, Mortgage $31,348.60 7.8% and seven more, then "and 80 more"; the browser tests: ten rows with the first one's amount and share and "3 more"; a run without the file has the heading hidden; `spending.jsonl line 2 is not readable` shown with the status still DONE; no horizontal overflow at 390 px; the readability check first found the heading unreadable in two light looks (1.06:1 and 1.77:1) and passes after the heading took the theme's heading color; 10 of 10 browser tests pass (69 seconds)
+- **Verdict:** PASS
+- **Evidence / issue:** screenshots checked by eye (desktop and phone); 386 unit tests green.
+
 ## Results and Handoff
 
-- **Passed / failed / blocked:** Phase 1: 1 passed (UAT-24-1); Phase 2: 1 passed (UAT-24-2); 0 failed, 0 blocked
+- **Passed / failed / blocked:** Phase 1: 1 passed (UAT-24-1); Phase 2: 1 passed (UAT-24-2); Phase 3: 1 passed (UAT-24-3); 0 failed, 0 blocked
 - **Open issues and impact:** Phase 2: the oddly grouped categories and a negative `Refund` line are the owner's data, not a defect; noted for the backlog.
-- **Overall verdict:** PASS for Phases 1 and 2
+- **Overall verdict:** PASS for Phases 1 to 3
 - **Handoff evidence:** message in `agents/CHAT.md`

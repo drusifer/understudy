@@ -146,6 +146,20 @@ function drawSummary(run) {
   $('summary').replaceChildren(...rows.flatMap(([name, value]) => [make('dt', {}, name), make('dd', {}, value)]));
 }
 
+const dollars = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+
+// What the money went on: the run's ten largest categories with amount and share; nothing is drawn for a run without the file.
+function drawSpending(spending) {
+  const box = $('spending');
+  box.hidden = !spending;
+  if (!spending) { $('spending-list').replaceChildren(); $('spending-more').textContent = ''; return; }
+  $('spending-list').replaceChildren(...spending.top.map((each) => make('li', {},
+    make('span', { class: 'spend-name' }, each.category),
+    make('span', { class: 'spend-amount' }, `${dollars.format(each.amount)} · ${(each.share * 100).toFixed(1)}%`))));
+  $('spending-more').textContent = spending.problem ?? (spending.top.length === 0 ? 'no spending in this run'
+    : spending.more > 0 ? `and ${spending.more} more` : '');
+}
+
 // One top-level stage: its lamp, and under it each group of nested stages (open or closed as the reader left it).
 function stageBlock(stage) {
   const block = make('div', { class: 'stage-block' }, make('div', { class: `stage-lamp ${stage.state}` }, make('i'), stage.name));
@@ -173,6 +187,7 @@ function drawStatus(run) {
   $('status-text').textContent = WORDS[run.state];
   drawBanner(run);
   drawSummary(run);
+  drawSpending(run.spending);
   state.chosenState = run.state;
   if (typeof afterStatus === 'function') afterStatus(run); // controls.js: the controls follow the chosen run
 }
