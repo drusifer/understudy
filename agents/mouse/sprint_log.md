@@ -30,3 +30,6 @@ Plan approved by Morpheus (`PLAN: SIZE=A GATE=S VERIF=A ALIGN=S OWNER=S`). Phase
 
 ## Sprint 23 — household numbers you can trust + the run's story (branch sprint-23, started 2026-11-02)
 Phases: 1 transfers from the owner's categories (UND-89) | 2 income/expenses per account (UND-90) | 3 review.jsonl (UND-91) | 4 pinned categories (UND-92) | 5 event stream (UND-81) | close. Board: task.md.
+
+## Sprint 24 — what the money goes on, typed inputs, the statechart (branch sprint-24, started 2026-11-02)
+Phases: 1 card payments are transfers (UND-93) | 2 spending.jsonl (UND-94) | 3 console spending list (UND-95) | 4 inputs declared (UND-87a) | 5 typed controls (UND-87b) | 6 chart layout (UND-82a) | 7 chart drawn (UND-82b) | close. Board: task.md.

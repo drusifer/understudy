@@ -243,3 +243,12 @@ Everything above this heading about the old player (watch page, dashboard, proce
 - The browser check takes 63 seconds, so it is not a release gate (owner rule: only if it takes seconds). (Trin)
 - Act on the expiries: SEC-002 by 2026-12-01 (still accepted); SEC-005 by 2027-01-30. (Switch, owner)
 - (Owner, 2026-11-02, decision 9, Sprint 24) Widen the transfer rule to the card-side labels, replacing "relabel in Monarch" above, and add a spending-by-category summary so the owner sees what the money goes on. Check first whether "Transportation: Transfers" are ride transfers (spending) or money moves. (Cypher, Neo)
+
+## From the sprint 24 retro (2026-11-02)
+- Done in Sprint 24: card payments out of income and spending (label or link), the spending list (file and console), typed inputs (declared and drawn), the statechart (laid out and drawn). Owner decisions 4 and 9.
+- Remove the dead theme styles left from the old console (`.dial-option`, `.switch`, `.fader`, `.stepper`, `.channel`, `.drawer`). (Neo)
+- The spending list's `Refund` category is negative and some of the owner's groups read oddly ("Shopping & Retail: Restaurants & Dining", "Food & Dining: Insurance"); purchases under a card-side label (Depop, Soho Deli, Levy Restaurants) count as transfers until relabeled. (Owner)
+- The readability check flaked once on `.stage-lamp` (Steampunk dark); measure it with the glow held still. (Trin)
+- `evening`'s description repeats "Values you can set: --with ..." now that the console shows its inputs. (Cypher)
+- Sprint 25: step, pause, resume and `run --watch`; replay of a finished run from its log; decision detail; the YAML editor. (Cypher)
+- The browser check takes about 104 seconds, so it is not a release gate (owner rule: only if it takes seconds). (Trin)

@@ -32,6 +32,11 @@
       }
     },
     "data": { "type": "object" },
+    "inputs": {
+      "description": "Typed values the sketch takes: each a choice, range, count or switch with a default; checked by understudy check.",
+      "type": "object",
+      "additionalProperties": { "type": "object", "required": ["kind"] }
+    },
     "machine": { "$ref": "#/$defs/machine" }
   },
   "$defs": {

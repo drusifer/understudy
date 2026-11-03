@@ -139,6 +139,9 @@ A run records the `--with` values it was given in its `run.json`, and the consol
 * **The stage tube** shows one lamp per top-level stage; the child sketches that ran inside it are groups you can open (`25 of 25 done`). Four gauges read the run's own files; a needle appears only where the run knows the full scale.
 * **JEV READS** lists what Jev answered in the run (from the captured answers; the last five runs keep them): each read's levels and probabilities, flagged UNSURE when the top level is below 0.7 or is `none_of_these`. Level names that come from your own data (a refund candidate named by its date and amount) show as "option N" unless you have unlocked the console.
 * **START A RUN** (open the panel at the top): unlock with the access secret, choose a sketch, fill in its values, and press PLAY, live or from a captured run. The console checks the sketch with your values first and tells you what is wrong. STOP THIS RUN ends a run the console started. A sketch that is only called by another is not listed, and a file that cannot be read is listed greyed out with the reason.
+* **Typed controls:** a sketch that declares its `inputs` (see `docs/SKETCHES.md`) shows a control for each, set to its default: a choice is a row of options (arrow keys move, stopping at the ends), a range a slider with its value beside it, a count a number with a button either side, a switch ON or OFF. A control cannot be set outside its limits, and PLAY sends every value (the defaults for the ones you left alone). A name the sketch takes without declaring it stays a plain text box.
+* **The statechart:** under the gauges, the sketch's machine drawn as boxes from the first state downward, a double border for a final state, an arrow for each move (labeled with its guard when it has one, dashed red for a loop back), the state the run is in lit and the move just taken in orange; it follows a live run within a second and keeps the last state lit with how the run ended. A log written before Sprint 23 has no story, and the panel says so. A big machine scrolls inside its box.
+* **Where the money went:** a run that wrote `spending.jsonl` lists its ten largest spending categories under the summary, with amount and share, and "and N more".
 * **The access secret** is new at every start of the console and saved in `.understudy/dashboard.secret` (readable by you alone, git-ignored). Read it there (`cat .understudy/dashboard.secret`) and paste it into the panel; it is kept for that tab only. It is never printed, because command output is copied into the team chat. Without it you can watch but not start, replay or stop. It travels over plain HTTP, which you accepted for a home network (until 2027-01-30).
 * **Three themes and light, dark or auto** are remembered by the browser; on a phone the theme controls sit behind LOOK.
 
@@ -175,11 +178,12 @@ What it does, in order:
 1. Reads the two exports; a charge in both (same date and amount, the same text first, then in file order, then
    within three business days) is one record.
 2. Links the two halves of a card payment (opposite amounts in different accounts, within three business days).
-3. Types each record by the export's own category: a record whose Monarch `Category` is `Transfer` or
-   `Credit Card Payment` is a transfer (money moving between your own accounts, never income, a refund or
-   spending); any other category is not. The links in step 2 stay as evidence in `legs.jsonl`, and
-   `summary.json` counts (`kind_changed_by_category`) the records where the category and the links disagree. The
-   Monarch file must have a `Category` column; without one the run stops before it asks Jev anything.
+3. Types each record. It is a transfer (money moving between your own accounts, never income, a refund or
+   spending) when its Monarch `Category` is `Transfer` or `Credit Card Payment`, or ends in `: Credit Card Payment`,
+   `: Transfer` or `: Transfers` (the forms with a group in front), or when step 2 linked it to a record in another
+   account, whatever its category. Any other record is not a transfer. The links stay in `legs.jsonl`, and
+   `summary.json` counts the transfers `transfer_basis`: by `label`, by `link`, `both`, and `none` for every other
+   record. The Monarch file must have a `Category` column; without one the run stops before it asks Jev anything.
 4. Links each refund to the earlier charge it reversed: by rule when there is one, by Jev (`link_refund`) when
    there are several.
 5. Places each merchant in a category already in use (`place_merchant`) or, when none fits, names one: a category
@@ -199,6 +203,6 @@ line.
 
 Each run creates a new folder under `.understudy/runs/` (or `--out`): `records.jsonl` (one record per transaction with its
 `kind`: purchase, refund, credit, transfer or invalid; its link and its category), `legs.jsonl`,
-`kinds.jsonl` and `statuses.jsonl` (counts), `review.jsonl` (one line per merchant Jev was not sure of, most records first: `payee`, `count`, `amount`, Jev's `top` and `runner_up` categories with their probabilities, and the `reason`, `below_0.7` or `none_of_these`; empty when nothing needs review), `totals.jsonl` (for each account, the money in, money out and net of its purchases, refunds and credits, transfers left out, then one `all` row; the `all` row is also `net_spending` in `summary.json`), `summary.json` (run facts) and `run.json`. Amounts
+`kinds.jsonl` and `statuses.jsonl` (counts), `review.jsonl` (one line per merchant Jev was not sure of, most records first: `payee`, `count`, `amount`, Jev's `top` and `runner_up` categories with their probabilities, and the `reason`, `below_0.7` or `none_of_these`; empty when nothing needs review), `spending.jsonl` (what the money goes on: one line per category, biggest first, with `count`, `amount` spent and `share` of all spending; a record's category is your export's own `Category`, else the one Jev placed it in, else `uncategorized`; purchases and refunds only, so a refund lowers its category, and income, credits and transfers are not in it; the total is `spending_total` in `summary.json`), `totals.jsonl` (for each account, the money in, money out and net of its purchases, refunds and credits, transfers left out, then one `all` row; the `all` row is also `net_spending` in `summary.json`), `summary.json` (run facts) and `run.json`. Amounts
 are signed as Monarch writes them: purchases negative, refunds positive. A failed stage publishes no output.
 Keep household inputs and outputs in ignored `data/` and `build/` folders.

@@ -99,7 +99,17 @@
     <div id="ended" class="ended about"></div>
     <div id="tube" class="tube stages"></div>
     <div id="gauges" class="gauges" role="group" aria-label="Gauges"></div>
+    <section id="chart" class="chart" aria-labelledby="chart-title">
+      <h3 id="chart-title" class="chart-title">STATECHART</h3>
+      <p id="chart-note" class="chart-note"></p>
+      <div id="chart-wrap" class="chart-wrap" role="group" aria-label="Statechart diagram" tabindex="0" hidden></div>
+    </section>
     <dl id="summary" class="summary" aria-label="Run summary"></dl>
+    <section id="spending" class="spending" aria-labelledby="spending-title" hidden>
+      <h3 id="spending-title" class="spend-title">WHERE THE MONEY WENT</h3>
+      <ol id="spending-list" class="spend-list"></ol>
+      <p id="spending-more" class="spend-more"></p>
+    </section>
     <details id="jev" class="jev" aria-label="Jev reads of this run">
       <summary id="jev-summary">JEV READS</summary>
       <label class="find-check"><input id="jev-unsure" type="checkbox"> unsure only</label>

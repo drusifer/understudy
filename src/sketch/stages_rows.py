@@ -323,6 +323,15 @@ async def known(context, source: Source, field: str, among: Source, among_field:
     return rows
 
 
+@stage("map.share")
+async def share(context, source: Source, field: str, into: str) -> list[dict]:
+    """Each row of `source` plus `into`: its `field` as a share of the total of `field` over all the rows, to four
+    places (0.0 for every row when the total is zero)."""
+    rows = await context.read(source)
+    total = sum(row[field] for row in rows)
+    return [{**row, into: round(row[field] / total, 4) if total else 0.0} for row in rows]
+
+
 @stage("map.set")
 async def set_fields(context, source: Source, fields: dict) -> list[dict]:
     """Each row of `source` plus the fields in `fields`, the same value on every row."""

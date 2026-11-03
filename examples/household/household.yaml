@@ -20,7 +20,19 @@ sources:
   taxonomy_rows:                        # the categories the owner uses, not the ones about moving money
     kind: stage
     do: { map: { action: where } }
-    with: { source: monarch_clean, keep: { and: [ { Category: { ne: "" } }, { Category: { not_in: [ Transfer, Credit Card Payment ] } } ] } }
+    with:
+      source: monarch_clean
+      keep:
+        and:
+          - { Category: { ne: "" } }
+          - not:
+              &moves                    # the labels for money moving between your own accounts, with or without a group
+              or:
+                - { Category: { eq: Transfer } }
+                - { Category: { eq: Credit Card Payment } }
+                - { Category: { ends: ": Credit Card Payment" } }
+                - { Category: { ends: ": Transfer" } }
+                - { Category: { ends: ": Transfers" } }
   taxonomy:
     kind: stage
     do: { map: { action: group } }
@@ -105,30 +117,31 @@ sources:
     kind: stage
     do: { map: { action: join } }
     with: { source: keyed, other: legs, on: record_id, keep_unmatched: true }
-  standing:                             # the owner's category says what is a transfer; the rest is still open
+  labeled:                              # why a record is a transfer: the owner's label, a link to the other half, or both
     kind: stage
     do: { map: { action: classify } }
     with:
       source: linked
-      into: kind
+      into: transfer_basis
       cases:
-        - { if: { match: { eq: invalid_key } }, then: invalid }
-        - { if: { Category: { in: [ Transfer, Credit Card Payment ] } }, then: transfer }
-      otherwise: open
-  changed:                              # where the category and the pairing disagree about a transfer
+        - { if: { and: [ *moves, { partner: { ne: null } } ] }, then: both }
+        - { if: *moves, then: label }
+        - { if: { partner: { ne: null } }, then: link }
+      otherwise: none
+  standing:                             # a transfer by label or by link; the rest is still open
     kind: stage
     do: { map: { action: classify } }
     with:
-      source: standing
-      into: kind_changed
+      source: labeled
+      into: kind
       cases:
-        - { if: { and: [ { kind: { eq: transfer } }, { partner: { eq: null } } ] }, then: "yes" }
-        - { if: { and: [ { kind: { ne: transfer } }, { partner: { ne: null } } ] }, then: "yes" }
-      otherwise: "no"
+        - { if: { match: { eq: invalid_key } }, then: invalid }
+        - { if: { transfer_basis: { ne: none } }, then: transfer }
+      otherwise: open
   counted:
     kind: stage
     do: { reduce: { action: tally } }
-    with: { source: changed, by: kind_changed, into: kind_changed_by_category }
+    with: { source: standing, by: transfer_basis, into: transfer_basis }
   plain:                                # what is left is spending
     kind: stage
     do: { map: { action: where } }
@@ -367,6 +380,58 @@ sources:
     kind: stage
     do: { reduce: { action: max } }
     with: { source: review_fields, field: count, take: 1000000 }
+  spend_rows:                           # what was spent: purchases, and refunds that give some back
+    kind: stage
+    do: { map: { action: where } }
+    with: { source: finished, keep: { kind: { in: [ purchase, refund ] } } }
+  spend_default:
+    kind: stage
+    do: { map: { action: set } }
+    with: { source: spend_rows, fields: { unlabeled: uncategorized } }
+  spend_named:                          # the owner's own category first, then Jev's, then none
+    kind: stage
+    do: { map: { action: coalesce } }
+    with: { source: spend_default, fields: { category: [ Category, category_level, unlabeled ] } }
+  spend_by_category:
+    kind: stage
+    do: { map: { action: group } }
+    with: { source: spend_named, by: category, sums: { net: cost } }
+  spend_amounts:                          # money out as a positive figure
+    kind: stage
+    do: { map: { action: weigh } }
+    with: { source: spend_by_category, by: { net: -1 }, into: amount }
+  spend_shares:
+    kind: stage
+    do: { map: { action: share } }
+    with: { source: spend_amounts, field: amount, into: share }
+  spend_ranked:                         # the biggest first
+    kind: stage
+    do: { reduce: { action: max } }
+    with: { source: spend_shares, field: amount, take: 1000000 }
+  spend_list:
+    kind: stage
+    do: { map: { action: keep } }
+    with: { source: spend_ranked, fields: [ category, count, amount, share ] }
+  spend_scope:
+    kind: stage
+    do: { map: { action: set } }
+    with: { source: spend_rows, fields: { scope: all } }
+  spend_overall:
+    kind: stage
+    do: { map: { action: group } }
+    with: { source: spend_scope, by: scope, sums: { net: cost } }
+  spend_total_amount:
+    kind: stage
+    do: { map: { action: weigh } }
+    with: { source: spend_overall, by: { net: -1 }, into: amount }
+  spend_total_keep:
+    kind: stage
+    do: { map: { action: keep } }
+    with: { source: spend_total_amount, fields: [ count, amount ] }
+  spend_total:                          # the one figure for all spending, also in summary.json
+    kind: stage
+    do: { reduce: { action: note } }
+    with: { source: spend_total_keep, into: spending_total }
   account_totals:                       # money in, money out and net for each account; transfers are not either
     kind: stage
     do: { map: { action: group } }
@@ -415,6 +480,7 @@ sinks:
   statuses: statuses.jsonl
   totals: totals.jsonl
   review: review.jsonl
+  spending: spending.jsonl
 
 machine:
   initial: check_pins
@@ -450,6 +516,14 @@ machine:
     write_review:
       do: { sink: { name: review } }
       with: { source: review_list }
+      then: write_spending
+    write_spending:
+      do: { sink: { name: spending } }
+      with: { source: spend_list }
+      then: note_spending
+    note_spending:                      # reading the total puts it in summary.json
+      do: { reduce: { action: any } }
+      with: { source: spend_total }
       then: done
     done:
       final: true

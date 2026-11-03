@@ -12,6 +12,7 @@ from ruamel.yaml import YAML
 from ruamel.yaml.error import YAMLError
 
 from src.paths import ROOT
+from src.sketch.inputs import default_text, problems, value_problem
 from src.sketch.model import Candidates, Sink, Sketch, Source
 from src.sketch.vocabulary import stage_of
 
@@ -136,6 +137,24 @@ def unused_variables(sketch: Sketch, how: str = "--with") -> list[tuple[Sketch, 
     return found
 
 
+def _declared_inputs(path: Path, given: dict[str, str]) -> dict[str, dict]:
+    """The sketch's `inputs:` (read before its values are known, as the console lists it), refused when a declaration is
+    wrong or a value given for one is outside its limits. A file that cannot be read at all is left to `load`."""
+    try:
+        document, _ = _read(path, {}, True)
+    except SketchError:
+        return {}
+    declared = document.get("inputs")
+    if not isinstance(declared, dict):
+        return {}
+    found = [f"{path}: {problem}" for name, spec in declared.items() for problem in problems(name, spec)]
+    found += [f"{path}: {problem}" for name, text in given.items() if name in declared
+              and (problem := value_problem(name, declared[name], text))]
+    if found:
+        raise SketchError(found)
+    return declared
+
+
 def load(
     path: Path, overrides: dict[str, str] | None = None, variables: dict[str, str] | None = None, *, lenient: bool = False,
 ) -> Sketch:
@@ -147,7 +166,9 @@ def load(
     path = Path(path)
     overrides = overrides or {}
     variables = variables or {}
-    document, uses = _read(path, variables, lenient)
+    declared = _declared_inputs(path, variables)
+    effective = {**{name: default_text(spec) for name, spec in declared.items()}, **variables}
+    document, uses = _read(path, effective, lenient)
     _shape(path, document)
     unknown = sorted(set(overrides) - set(document.get("sources", {})))
     if unknown:
@@ -163,6 +184,7 @@ def load(
         candidates={n: Candidates(v["from"], v["key"]) for n, v in document.get("outcomes", {}).items() if isinstance(v, dict)},
         data=document.get("data", {}),
         machine=document["machine"],
+        inputs=declared,
         variables=variables,
         uses=uses,
     )

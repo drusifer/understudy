@@ -35,6 +35,9 @@ READABLE = [
     ".rack-group", ".badge", ".printer-head span", ".paper .line", ".find-button", ".find-check", ".ended", ".summary dt", ".summary dd",
     ".stage-lamp", ".group summary", ".gauge .figure", ".gauge-name", ".start-message", ".start-panel > summary", ".banner",
     ".panel-head span", ".jev > summary", ".offline", ".no-match",
+    "#spending-title", ".spend-name", ".spend-amount", ".spend-more",
+    ".typed-label", ".pick-option", ".toggle", ".readout", ".count-box", ".step-button",
+    "#chart-title", "#chart-note", ".state-name", ".edge-label-text",
 ]
 
 # While one element is measured its text is invisible and nothing animates, so a screenshot shows only the backdrop.
@@ -128,6 +131,13 @@ def write_run(root: Path, name: str, events: list[dict], manifest: dict, summary
     return directory
 
 
+def spending(directory: Path, categories: int) -> None:
+    """A `spending.jsonl` of that many categories, the largest first, as the household writes it."""
+    rows = [{"category": f"Group {n}: A rather long category name number {n}", "count": 10 + n, "amount": 5000.0 - n * 100,
+             "share": round(0.3 - n * 0.02, 4)} for n in range(categories)]
+    (directory / "spending.jsonl").write_text("".join(json.dumps(each) + "\n" for each in rows), encoding="utf-8")
+
+
 def stamp(second: int) -> str:
     return datetime.now(UTC).replace(microsecond=0).isoformat() if second < 0 else f"2026-11-01T12:00:{second:02d}+00:00"
 
@@ -168,17 +178,75 @@ class BrowserCase(unittest.TestCase):
         return context.new_page()
 
     def failed_and_done_runs(self):
-        write_run(self.runs, "run-20261101T120000-0000000a", [
-            {"event": "run_started", "at": stamp(0), "sketch": "examples/household/household.yaml", "mode": "live"},
+        failed = write_run(self.runs, "run-20261101T120000-0000000a", [
+            {"event": "run_started", "at": stamp(0), "sketch": "examples/household/household.yaml", "mode": "live", **STORY},
+            entered(1, "a", "start"), entered(1, "b", "ok"),  # a diagram for the readability check to measure
             {"event": "stage_started", "at": stamp(1), "stage": "read"},
             {"event": "stage_failed", "at": stamp(2), "stage": "read", "reason": "Jev needs a TypeSafe key"}],
             {"status": "failed", "failed_stage": "read", "error": "Jev needs a TypeSafe key", "stages": {}, "mode": "live"})
+        spending(failed, 12)  # a long list on the run the readability check looks at
         write_run(self.runs, "run-20261101T120100-0000000b", [
             {"event": "run_started", "at": stamp(0), "sketch": "examples/evening/evening.yaml", "mode": "replay"},
             {"event": "stage_started", "at": stamp(1), "stage": "pick"}, {"event": "stage_completed", "at": stamp(2), "stage": "pick"},
             {"event": "run_finished", "at": stamp(3), "outcome": "booked"}],
             {"status": "complete", "stages": {"pick": "complete"}, "mode": "replay", "outcome": "booked", "outputs": {"booking.jsonl": 1}},
             {"stale": False})
+
+
+class SpendingListTest(BrowserCase):
+    def open_run(self, page, name):
+        page.goto(self.start())
+        page.wait_for_selector(".sketch-tab")
+        page.locator(f".sketch-tab[title^='{name}']").click()
+
+    def test_the_ten_largest_categories_are_listed_with_amount_and_share_and_the_rest_are_counted(self):
+        run = write_run(self.runs, "run-20261101T130000-0000000c", [
+            {"event": "run_started", "at": stamp(0), "sketch": "examples/household/household.yaml", "mode": "live"},
+            {"event": "run_finished", "at": stamp(1), "outcome": "complete"}], {"status": "complete", "stages": {}, "mode": "live"})
+        spending(run, 13)
+        page = self.page()
+        self.open_run(page, "run-20261101T130000-0000000c")
+        page.wait_for_selector("#spending li")
+        rows = page.locator("#spending li")
+        self.assertEqual(rows.count(), 10)
+        self.assertIn("Group 0", rows.nth(0).inner_text())
+        self.assertIn("$5,000.00", rows.nth(0).inner_text())
+        self.assertIn("30.0%", rows.nth(0).inner_text())
+        self.assertIn("3 more", page.locator(".spend-more").inner_text())
+
+    def test_a_run_without_the_file_shows_no_list_and_no_heading(self):
+        write_run(self.runs, "run-20261101T130100-0000000d", [
+            {"event": "run_started", "at": stamp(0), "sketch": "x/plain.yaml", "mode": "live"},
+            {"event": "run_finished", "at": stamp(1), "outcome": "complete"}], {"status": "complete", "stages": {}, "mode": "live"})
+        page = self.page()
+        self.open_run(page, "run-20261101T130100-0000000d")
+        page.wait_for_function("document.getElementById('status-text').textContent === 'DONE'")
+        self.assertFalse(page.locator("#spending").is_visible())
+        self.assertEqual(page.locator("#spending-title").count(), 1)  # the element exists; it is hidden, not drawn empty
+        self.assertFalse(page.locator("#spending-title").is_visible())
+
+    def test_a_spending_file_the_console_cannot_read_is_named_and_the_page_still_works(self):
+        run = write_run(self.runs, "run-20261101T130200-0000000e", [
+            {"event": "run_started", "at": stamp(0), "sketch": "x/household.yaml", "mode": "live"},
+            {"event": "run_finished", "at": stamp(1), "outcome": "complete"}], {"status": "complete", "stages": {}, "mode": "live"})
+        (run / "spending.jsonl").write_text('{"category": "Rent", "amount": 5, "share": 1}\nnot json\n', encoding="utf-8")
+        page = self.page()
+        self.open_run(page, "run-20261101T130200-0000000e")
+        page.wait_for_selector("#spending")
+        self.assertIn("spending.jsonl line 2 is not readable", page.locator("#spending").inner_text())
+        self.assertEqual(page.locator("#status-text").inner_text(), "DONE")
+
+    def test_the_list_fits_a_phone_without_sideways_scrolling(self):
+        run = write_run(self.runs, "run-20261101T130300-0000000f", [
+            {"event": "run_started", "at": stamp(0), "sketch": "x/household.yaml", "mode": "live"},
+            {"event": "run_finished", "at": stamp(1), "outcome": "complete"}], {"status": "complete", "stages": {}, "mode": "live"})
+        spending(run, 12)
+        page = self.page(width=390, height=800)
+        self.open_run(page, "run-20261101T130300-0000000f")
+        page.wait_for_selector("#spending li")
+        self.assertTrue(page.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth"))
+        self.assertTrue(page.evaluate("(() => { const box = document.getElementById('spending').getBoundingClientRect();"
+                                      " return box.left >= 0 && box.right <= window.innerWidth; })()"))
 
 
 class RackAndBannerTest(BrowserCase):
@@ -281,6 +349,213 @@ class StartAndStopTest(BrowserCase):
         self.assertFalse(page.evaluate("JSON.stringify(localStorage)").count(SECRET))
 
 
+TYPED = """name: typed
+description: A sketch with typed inputs and one plain value ({{ note | default('none') }}).
+inputs:
+  mood: { kind: choice, label: Mood, options: [fun, serious, dramatic], default: fun }
+  weight: { kind: range, label: Weight, min: 0, max: 1, step: 0.05, default: 0.3 }
+  tickets: { kind: count, label: Party size, min: 1, max: 3, default: 2 }
+  evenings: { kind: switch, label: Evenings only, default: "on" }
+data: { mood: "{{ mood }}", weight: {{ weight }}, tickets: {{ tickets }}, evenings: "{{ evenings }}" }
+machine: { initial: only, states: { only: { final: true } } }
+"""
+
+
+class TypedControlsTest(BrowserCase):
+    def open(self, width=1300, height=900):
+        sketches = self.root / "sketches"
+        sketches.mkdir()
+        (sketches / "typed.yaml").write_text(TYPED, encoding="utf-8")
+        run = write_run(self.runs, "run-20261101T150000-0000000e", [{"event": "run_started", "at": stamp(-1), "sketch": "typed.yaml",
+                                                                    "mode": "live"}], {"status": "running", "stages": {}})
+        self.started: list[list[str]] = []
+
+        def spawn(argv, **options):
+            self.started.append(argv)
+            return _Child([sys.executable, "-c", "import time; time.sleep(60)"], **options)
+
+        launcher = Launcher(sketches, self.runs, project=self.root, cache=self.root / "cache", spawn=spawn, check=lambda argv: [],
+                            find_run=lambda sketch, before: run.name, settle=0)
+        page = self.page(width, height)
+        page.goto(self.start(launcher, SECRET))
+        page.locator("#controls > summary").click()
+        page.wait_for_selector("#fields [data-input]")
+        return page
+
+    def unlock(self, page):
+        page.fill("#secret-box", SECRET)
+        page.click("#unlock")
+        page.wait_for_function("!document.getElementById('play').disabled")
+
+    def test_each_declared_input_has_the_control_of_its_kind_at_its_default_with_a_name_and_a_readable_value(self):
+        page = self.open()
+        dial = page.get_by_role("radiogroup", name="Mood")
+        self.assertEqual(dial.get_by_role("radio").count(), 3)
+        self.assertEqual(dial.get_by_role("radio", checked=True).inner_text(), "fun")
+        fader = page.get_by_role("slider", name="Weight")
+        self.assertEqual((fader.input_value(), page.locator("#field-weight-readout").inner_text()), ("0.3", "0.3"))
+        stepper = page.get_by_role("spinbutton", name="Party size")
+        self.assertEqual(stepper.input_value(), "2")
+        switch = page.get_by_role("switch", name="Evenings only")
+        self.assertEqual((switch.get_attribute("aria-checked"), switch.inner_text()), ("true", "ON"))
+        self.assertTrue(page.locator("#field-note").is_visible())  # a name the sketch takes but does not declare stays a text box
+        self.assertEqual(page.locator("#field-note").get_attribute("type"), "text")
+
+    def test_every_control_works_from_the_keyboard(self):
+        page = self.open()
+        page.get_by_role("radio", name="fun").focus()
+        page.keyboard.press("ArrowRight")
+        self.assertEqual(page.get_by_role("radiogroup", name="Mood").get_by_role("radio", checked=True).inner_text(), "serious")
+        page.keyboard.press("ArrowRight")
+        page.keyboard.press("ArrowRight")  # the end of the dial: it stops, it does not wrap
+        self.assertEqual(page.get_by_role("radiogroup", name="Mood").get_by_role("radio", checked=True).inner_text(), "dramatic")
+        page.get_by_role("slider", name="Weight").focus()
+        page.keyboard.press("ArrowRight")
+        self.assertEqual(page.locator("#field-weight-readout").inner_text(), "0.35")
+        page.get_by_role("spinbutton", name="Party size").focus()
+        page.keyboard.press("ArrowUp")
+        self.assertEqual(page.get_by_role("spinbutton", name="Party size").input_value(), "3")
+        page.get_by_role("switch", name="Evenings only").focus()
+        page.keyboard.press("Space")
+        self.assertEqual(page.get_by_role("switch", name="Evenings only").get_attribute("aria-checked"), "false")
+        self.assertEqual(page.get_by_role("switch", name="Evenings only").inner_text(), "OFF")
+
+    def test_a_control_cannot_be_set_outside_its_limits(self):
+        page = self.open()
+        stepper = page.get_by_role("spinbutton", name="Party size")
+        page.get_by_role("button", name="increase Party size").click()  # 2 to 3, the most this sketch allows
+        self.assertEqual(stepper.input_value(), "3")
+        self.assertTrue(page.get_by_role("button", name="increase Party size").is_disabled())
+        for _ in range(2):
+            page.get_by_role("button", name="decrease Party size").click()  # 3 to 1, the least
+        self.assertEqual(stepper.input_value(), "1")
+        self.assertTrue(page.get_by_role("button", name="decrease Party size").is_disabled())
+        stepper.fill("99")
+        stepper.blur()
+        self.assertEqual(stepper.input_value(), "3")  # typed past the limit, it is put back inside
+        fader = page.get_by_role("slider", name="Weight")
+        fader.focus()
+        page.keyboard.press("End")
+        self.assertEqual(page.locator("#field-weight-readout").inner_text(), "1")
+        page.keyboard.press("ArrowRight")
+        self.assertEqual(page.locator("#field-weight-readout").inner_text(), "1")
+
+    def test_play_sends_every_value_the_defaults_for_the_ones_left_alone(self):
+        page = self.open()
+        self.unlock(page)
+        page.get_by_role("radio", name="dramatic").click()
+        page.get_by_role("switch", name="Evenings only").click()
+        page.fill("#field-note", "hello")
+        page.click("#play")
+        page.wait_for_function("document.getElementById('start-message').textContent.includes('run-20261101T150000-0000000e')")
+        (argv,) = self.started
+        pairs = sorted(argv[i + 1] for i, word in enumerate(argv) if word == "--with")
+        self.assertEqual(pairs, ["evenings=off", "mood=dramatic", "note=hello", "tickets=2", "weight=0.3"])
+
+    def test_the_controls_fit_a_phone(self):
+        page = self.open(width=390, height=900)
+        self.assertTrue(page.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth"))
+        for selector in ("#field-mood", "#field-weight", "#field-tickets", "#field-evenings"):
+            box = page.locator(selector).bounding_box()
+            self.assertTrue(box and box["x"] >= 0 and box["x"] + box["width"] <= 390, selector)
+
+
+STORY = {"initial": "a", "states": [{"name": "a", "final": False}, {"name": "b", "final": False}, {"name": "c", "final": True}],
+         "transitions": [{"from": "a", "to": "b", "event": "ok"}, {"from": "b", "to": "c", "event": "ok", "when": {"ready": {"eq": True}}}]}
+
+
+def entered(second: int, state_name: str, cause: str) -> dict:
+    return {"event": "state_entered", "at": stamp(second), "state": state_name, "caused_by": cause}
+
+
+class StatechartTest(BrowserCase):
+    def run_with_story(self, name, events, manifest, story=None):
+        started = {"event": "run_started", "at": stamp(0), "sketch": "x/chart.yaml", "mode": "live", **(STORY if story is None else story)}
+        return write_run(self.runs, name, [started, *events], manifest)
+
+    def open(self, name, width=1300, height=900):
+        page = self.page(width, height)
+        page.goto(self.start())
+        page.wait_for_selector(".sketch-tab")
+        page.locator(f".sketch-tab[title^='{name}']").click()
+        return page
+
+    def test_each_state_is_a_box_with_a_name_finals_are_double_bordered_and_only_guarded_moves_have_labels(self):
+        name = "run-20261101T160000-00000001"
+        self.run_with_story(name, [entered(1, "a", "start"), entered(2, "b", "ok")], {"status": "running", "stages": {}})
+        page = self.open(name)
+        page.wait_for_selector(".state")
+        self.assertEqual(page.locator(".state").count(), 3)
+        self.assertEqual(page.locator(".state.final .final-ring").count(), 1)
+        self.assertEqual(page.locator(".edge").count(), 2)
+        self.assertEqual(page.locator(".edge-label-text").count(), 1)
+        self.assertEqual(page.locator(".edge-label-text").text_content(), "ready = true")
+        self.assertEqual(page.get_by_role("img", name="a", exact=True).count(), 1)
+        self.assertEqual(page.get_by_role("img", name="b, current state", exact=True).count(), 1)
+        self.assertEqual(page.get_by_role("img", name="c, final state", exact=True).count(), 1)
+
+    def test_the_state_the_run_is_in_is_lit_and_the_move_just_taken_is_marked(self):
+        name = "run-20261101T160100-00000002"
+        self.run_with_story(name, [entered(-1, "a", "start")], {"status": "running", "stages": {}})
+        page = self.open(name)
+        page.wait_for_selector(".state.current")
+        self.assertEqual(page.locator(".state.current").get_attribute("data-state"), "a")
+        self.assertEqual(page.locator(".edge.taken").count(), 0)
+
+    def test_the_light_moves_to_the_next_state_within_a_second_of_the_change(self):
+        name = "run-20261101T160200-00000003"
+        run = self.run_with_story(name, [entered(-1, "a", "start")], {"status": "running", "stages": {}})
+        page = self.open(name)
+        page.wait_for_selector(".state.current[data-state='a']")
+        with (run / "events.jsonl").open("a", encoding="utf-8") as events:
+            events.write(json.dumps(entered(-1, "b", "ok")) + "\n")
+        page.wait_for_selector(".state.current[data-state='b']", timeout=1500)
+        self.assertEqual(page.locator(".edge.taken").get_attribute("data-to"), "b")
+        self.assertEqual(page.locator(".state.current").count(), 1)
+
+    def test_a_finished_run_keeps_its_last_state_lit_and_says_how_it_ended(self):
+        name = "run-20261101T160300-00000004"
+        self.run_with_story(name, [entered(1, "a", "start"), entered(2, "b", "ok"), entered(3, "c", "ok"),
+                                   {"event": "run_finished", "at": stamp(4), "outcome": "complete"}],
+                            {"status": "complete", "stages": {}, "outcome": "complete"})
+        page = self.open(name)
+        page.wait_for_selector(".state.current[data-state='c']")
+        page.wait_for_function("document.getElementById('status-text').textContent === 'DONE'")
+        self.assertIn("done", page.locator("#chart-note").inner_text().lower())
+
+    def test_a_run_whose_log_has_no_story_says_so_and_draws_nothing(self):
+        name = "run-20261101T160400-00000005"
+        write_run(self.runs, name, [{"event": "run_started", "at": stamp(0), "sketch": "x/old.yaml", "mode": "live"},
+                                    {"event": "run_finished", "at": stamp(1), "outcome": "complete"}],
+                  {"status": "complete", "stages": {}})
+        page = self.open(name)
+        page.wait_for_function("document.getElementById('status-text').textContent === 'DONE'")
+        self.assertIn("no story", page.locator("#chart-note").inner_text())
+        self.assertEqual(page.locator("#chart-wrap svg").count(), 0)
+
+    def test_names_and_guards_with_markup_are_drawn_as_text_and_run_nothing(self):
+        name = "run-20261101T160500-00000006"
+        hostile = "<img src=x onerror=window.pwned=1>"
+        story = {"initial": hostile, "states": [{"name": hostile, "final": False}, {"name": "b", "final": True}],
+                 "transitions": [{"from": hostile, "to": "b", "event": "ok", "when": {"<b>x</b>": {"eq": 1}}}]}
+        self.run_with_story(name, [entered(1, hostile, "start")], {"status": "running", "stages": {}}, story=story)
+        page = self.open(name)
+        page.wait_for_selector(".state")
+        self.assertEqual(page.evaluate("window.pwned"), None)
+        self.assertEqual(page.locator("#chart-wrap img").count(), 0)
+        self.assertIn(hostile, page.locator(".state-name").first.text_content())
+        self.assertEqual(page.locator("#chart-wrap b").count(), 0)
+
+    def test_the_diagram_fits_a_phone_without_sideways_scrolling_of_the_page(self):
+        name = "run-20261101T160600-00000007"
+        self.run_with_story(name, [entered(1, "a", "start")], {"status": "running", "stages": {}})
+        page = self.open(name, width=390, height=900)
+        page.wait_for_selector(".state")
+        self.assertTrue(page.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth"))
+        box = page.locator("#chart-wrap").bounding_box()
+        self.assertTrue(box and box["x"] >= 0 and box["x"] + box["width"] <= 390)
+
+
 class KeyboardTest(BrowserCase):
     def test_every_control_is_reachable_by_keyboard_has_a_name_and_shows_where_focus_is(self):
         self.failed_and_done_runs()
@@ -320,6 +595,7 @@ class ContrastTest(BrowserCase):
         sketches = self.root / "sketches"
         sketches.mkdir()
         (sketches / "plain.yaml").write_text(PLAIN, encoding="utf-8")
+        (sketches / "typed.yaml").write_text(TYPED, encoding="utf-8")
         launcher = Launcher(sketches, self.runs, project=self.root, cache=self.root / "cache")
         base = self.start(launcher, SECRET)
         problems = []
@@ -331,6 +607,7 @@ class ContrastTest(BrowserCase):
             page.locator(".sketch-tab").nth(1).click()
             page.wait_for_selector(".banner")
             page.locator("#controls > summary").click()
+            page.select_option("#sketch-pick", "typed.yaml")  # its dial, fader, stepper and switch are read in every look
             page.fill("#find-text", "zzz-nothing")
             for selector in READABLE:
                 found = page.evaluate(FIRST_VISIBLE_JS, selector)

@@ -448,3 +448,283 @@ sequenceDiagram
 ## Sprint close-out
 
 - **Cypher**: \*pm launch sprint 23. Sprint complete: Ridgewood income and expenses match the owner's file to the cent, transfers follow the owner's categ…
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Cypher
+    participant Smith
+    participant Morpheus
+    participant Switch
+    participant Mouse
+    participant Neo
+    Note over Cypher,Neo: 📅 2026-11-02
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Sprint 24 stories ready:<br/>docs/sprints/USER_STORIE<br/>S_SPRINT24.md (UND-93,<br/>94, 95, 87, 82, 27 pts):<br/>card-side labels are<br/>transfers, spending b…"
+    Smith->>Cypher: "user reject"
+    Note right of Smith: "*user reject REASON:<br/>UND-93 AC3 cannot pass<br/>on the labels alone:<br/>after widening, 148<br/>positive non-transfer<br/>records worth 153,085<br/>remain out…"
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Stories revised: UND-93<br/>rule is the widened<br/>label OR a link to a<br/>record in another<br/>account (AC1-6,<br/>assumption 1). Re-check:<br/>20,038 positive…"
+    Smith->>Morpheus: "user approve"
+    Note right of Smith: "*user approve. Stories<br/>approved. rubric<br/>STORIES: OUT=A TEST=S<br/>FAIL=A SCOPE=A SIZE=A<br/>DESIGN=A. Every AC is<br/>checkable on the<br/>baseline file, t…"
+    Morpheus->>Smith: "lead handoff"
+    Note right of Morpheus: "Architecture done: docs/<br/>sprints/ARCH_SPRINT24.md<br/>. Transfer = widened<br/>label OR link<br/>(supersedes part of<br/>ADR-0050),<br/>spending.jsonl with<br/>map.s…"
+    Smith->>Switch: "user approve"
+    Note right of Smith: "*user approve.<br/>Architecture approved.<br/>rubric ARCH: BOUND=A<br/>FLOW=A FAIL=A USER=A<br/>DECS=A FEAS=S. UX notes:<br/>a switch value is on/off<br/>text, kee…"
+    Switch->>Mouse: "sec handoff"
+    Note right of Switch: "security gate (design):<br/>No blocking findings.<br/>Checked: typed values<br/>reach a child process<br/>only as --with arguments<br/>after the allow-list<br/>plu…"
+    Mouse->>Morpheus: "sm handoff"
+    Note right of Mouse: "Sprint 24 planned in<br/>task.md: 7 phases<br/>(UND-93, 94, 95, 87 in<br/>two, 82 in two), each<br/>one build task then<br/>Trin, Switch, Morpheus<br/>gates, close…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review sprint<br/>plan: approved. rubric<br/>PLAN: SIZE=A GATE=A<br/>VERIF=A ALIGN=S OWNER=A<br/>LEVEL=A. One build task<br/>plus the three fixed<br/>gates p…"
+```
+
+## Phase 1 starts
+
+Phase 1: card payments and moves between accounts are not spending (UND-93)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-02
+    Mouse->>All: "phase 1"
+    Note right of Mouse: "Phase 1: card payments<br/>and moves between<br/>accounts are not<br/>spending (UND-93)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 1 impl complete<br/>(UND-93): transfer by<br/>widened label OR link<br/>(new generic condition<br/>ends), transfer_basis<br/>counts replace<br/>kind_changed_…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 1 passed<br/>(UND-93): real run, 0<br/>labeled or linked<br/>records left as<br/>purchase/refund/credit,<br/>positives outside<br/>Ridgewood 169 records…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 1):<br/>No blocking findings.<br/>Quick pass: one new<br/>read-only condition<br/>operator (text ends<br/>with), a YAML anchor, no<br/>new inp…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-1:<br/>passed. The label set is<br/>written once (YAML<br/>anchor) and used for the<br/>taxonomy and the basis,<br/>ends is a one-line<br/>compa…"
+```
+
+## Phase 1 close-out
+
+- **Trin**: UAT phase 1 passed (UND-93): real run, 0 labeled or linked records left as purchase/refund/credit, positives outside Ridgewood 169 records…
+- **Switch**: security gate (phase 1): No blocking findings. Quick pass: one new read-only condition operator (text ends with), a YAML anchor, no new inp…
+- **Morpheus**: \*lead review phase-1: passed. The label set is written once (YAML anchor) and used for the taxonomy and the basis, ends is a one-line compa…
+
+## Phase 2 starts
+
+Phase 2: where the money goes (UND-94)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-02
+    Mouse->>All: "phase 2"
+    Note right of Mouse: "Phase 2: where the money<br/>goes (UND-94)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 2 impl complete<br/>(UND-94): spending.jsonl<br/>(category, count,<br/>amount, share, biggest<br/>first), spending_total<br/>in summary.json, generic<br/>map…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 2 passed<br/>(UND-94): real run, 90<br/>categories, 403,977<br/>spent, equal to the<br/>summary total, shares<br/>add to 1, Rent 60,807<br/>(15%), Taxes…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 2):<br/>No blocking findings.<br/>Quick pass:<br/>spending.jsonl holds<br/>category names, counts<br/>and totals (no merchant<br/>names or acc…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-2:<br/>passed. Built from<br/>existing generic stages<br/>plus one small<br/>map.share, the household<br/>sketch grew by a<br/>readable block, t…"
+```
+
+## Phase 2 close-out
+
+- **Trin**: UAT phase 2 passed (UND-94): real run, 90 categories, 403,977 spent, equal to the summary total, shares add to 1, Rent 60,807 (15%), Taxes…
+- **Switch**: security gate (phase 2): No blocking findings. Quick pass: spending.jsonl holds category names, counts and totals (no merchant names or acc…
+- **Morpheus**: \*lead review phase-2: passed. Built from existing generic stages plus one small map.share, the household sketch grew by a readable block, t…
+
+## Phase 3 starts
+
+Phase 3: the console shows what the money goes on (UND-95)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-02
+    Mouse->>All: "phase 3"
+    Note right of Mouse: "Phase 3: the console<br/>shows what the money<br/>goes on (UND-95)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 3 impl complete<br/>(UND-95): the run's<br/>description carries<br/>spending (top ten, more,<br/>problem, capped reader),<br/>the summary panel lists<br/>the…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 3 passed<br/>(UND-95): real run in a<br/>real browser at 1300 and<br/>390 px, Rent 60,807<br/>first and 'and 80 more',<br/>unreadable file named,<br/>rea…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 3):<br/>No blocking findings.<br/>Category names from the<br/>run file are set with<br/>textContent (no markup),<br/>the file is read thro…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-3:<br/>passed. spending.py is a<br/>small reader apart from<br/>view.py, the page only<br/>draws, the hidden<br/>section is real markup,<br/>not…"
+```
+
+## Phase 3 close-out
+
+- **Neo**: Phase 3 impl complete (UND-95): the run's description carries spending (top ten, more, problem, capped reader), the summary panel lists the…
+- **Trin**: UAT phase 3 passed (UND-95): real run in a real browser at 1300 and 390 px, Rent 60,807 first and 'and 80 more', unreadable file named, rea…
+- **Morpheus**: \*lead review phase-3: passed. spending.py is a small reader apart from view.py, the page only draws, the hidden section is real markup, not…
+
+## Phase 4 starts
+
+Phase 4: inputs are declared (UND-87 part 1)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-02
+    Mouse->>All: "phase 4"
+    Note right of Mouse: "Phase 4: inputs are<br/>declared (UND-87 part 1)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 4 impl complete<br/>(UND-87 part 1): inputs:<br/>declared in the sketch<br/>(choice, range, count,<br/>switch), validated by<br/>src/sketch/inputs.py,<br/>lo…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 4 passed<br/>(UND-87 part 1): evening<br/>checks ok with defaults<br/>and refuses tickets=40,<br/>mood=silly, tomato=0.33<br/>in one line each, every…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 4):<br/>Blocked SEC-010 (Low),<br/>then fixed and re-<br/>verified: a typed number<br/>was checked as a float<br/>but passed on as the<br/>owne…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-4:<br/>passed. One module<br/>(inputs.py) owns the<br/>rules and both the CLI<br/>and the console use it,<br/>the loader reads the<br/>declarati…"
+```
+
+## Phase 4 close-out
+
+- **Trin**: UAT phase 4 passed (UND-87 part 1): evening checks ok with defaults and refuses tickets=40, mood=silly, tomato=0.33 in one line each, every…
+- **Switch**: security gate (phase 4): Blocked SEC-010 (Low), then fixed and re-verified: a typed number was checked as a float but passed on as the owne…
+- **Morpheus**: \*lead review phase-4: passed. One module (inputs.py) owns the rules and both the CLI and the console use it, the loader reads the declarati…
+
+## Phase 5 starts
+
+Phase 5: the right control for each value (UND-87 part 2)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-02
+    Mouse->>All: "phase 5"
+    Note right of Mouse: "Phase 5: the right<br/>control for each value<br/>(UND-87 part 2)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 5 impl complete<br/>(UND-87 part 2): dial,<br/>slider, stepper and<br/>switch in controls.js<br/>with names, keyboard<br/>use, limits and<br/>defaults, Play…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 5 passed<br/>(UND-87 part 2):<br/>evening's controls in a<br/>real browser at 1000 and<br/>390 px, keyboard and<br/>limits tested, Play<br/>sends the def…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 5):<br/>No blocking findings.<br/>Option text, labels and<br/>values are set with<br/>textContent or<br/>attributes (never<br/>markup), the pa…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-5:<br/>passed. Each kind is one<br/>small function that<br/>keeps its text in data-<br/>value so Play has one<br/>reader, the stale theme<br/>CSS…"
+```
+
+## Phase 5 close-out
+
+- **Neo**: Phase 5 impl complete (UND-87 part 2): dial, slider, stepper and switch in controls.js with names, keyboard use, limits and defaults, Play…
+- **Trin**: UAT phase 5 passed (UND-87 part 2): evening's controls in a real browser at 1000 and 390 px, keyboard and limits tested, Play sends the def…
+- **Morpheus**: \*lead review phase-5: passed. Each kind is one small function that keeps its text in data-value so Play has one reader, the stale theme CSS…
+
+## Phase 6 starts
+
+Phase 6: the statechart is laid out (UND-82 part 1)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-02
+    Mouse->>All: "phase 6"
+    Note right of Mouse: "Phase 6: the statechart<br/>is laid out (UND-82 part<br/>1)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 6 impl complete<br/>(UND-82 part 1):<br/>src/dashboard/chart.py<br/>lays the machine out<br/>(layers, wrapped rows,<br/>arrows through gaps and<br/>gutters,…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 6 passed<br/>(UND-82 part 1): real<br/>machines (household,<br/>evening, coffee), a<br/>loops-and-skips machine<br/>and six 40-state<br/>machines laid ou…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 6):<br/>No blocking findings.<br/>Hostile-name check done<br/>in JSON: a state named<br/>with a script tag and a<br/>guard with an img tag…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-6:<br/>passed. The layout is<br/>isolated, deterministic<br/>and tested without a<br/>browser, as ADR-0054<br/>intends, refactored into<br/>smal…"
+```
+
+## Phase 6 close-out
+
+- **Neo**: Phase 6 impl complete (UND-82 part 1): src/dashboard/chart.py lays the machine out (layers, wrapped rows, arrows through gaps and gutters,…
+- **Trin**: UAT phase 6 passed (UND-82 part 1): real machines (household, evening, coffee), a loops-and-skips machine and six 40-state machines laid ou…
+- **Morpheus**: \*lead review phase-6: passed. The layout is isolated, deterministic and tested without a browser, as ADR-0054 intends, refactored into smal…
+
+## Phase 7 starts
+
+Phase 7: see the statechart (UND-82 part 2)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    participant Tank
+    participant Oracle
+    participant Smith
+    participant Cypher
+    Note over Mouse,Cypher: 📅 2026-11-02
+    Mouse->>All: "phase 7"
+    Note right of Mouse: "Phase 7: see the<br/>statechart (UND-82 part<br/>2)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 7 impl complete<br/>(UND-82 part 2): the<br/>page draws the chart as<br/>SVG (textContent only),<br/>lights the current<br/>state, marks the last<br/>move an…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 7 passed<br/>(UND-82 part 2): real<br/>run drawn in a real<br/>browser at 1300 and 390<br/>px, the light moves<br/>within 1.5 s in the<br/>test, no-story…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 7):<br/>No blocking findings.<br/>The design-gate<br/>condition is met: a<br/>state named with an img<br/>tag and onerror is drawn<br/>as text…"
+    Morpheus->>Tank: "lead handoff"
+    Note right of Morpheus: "*lead review phase-7:<br/>passed. All five phases<br/>of the diagram and<br/>controls reviewed, the<br/>drawing code is about<br/>sixty lines over the<br/>server's…"
+    Tank->>Oracle: "devops handoff"
+    Note right of Tank: "SDLC check passed: no<br/>manifest, lockfile or<br/>Makefile change, make<br/>check green (428),<br/>browser 22/22 but 104s,<br/>so not a release gate<br/>(owner r…"
+    Oracle->>Smith: "ora handoff"
+    Note right of Oracle: "Docs groomed: ADR-0052,<br/>ADR-0053, ADR-0054 in<br/>docs/DECISIONS.md<br/>(DECISION rubric:<br/>WHY=PASS OPTS=PASS<br/>CONS=PASS STATE=PASS,<br/>ADR-0050 marked…"
+    Smith->>All: "user approve"
+    Note right of Smith: "*user approve. User test<br/>PASSED on the real<br/>household files and in a<br/>real browser<br/>(UAT-24-1..7). rubric<br/>UAT: COVER=A STEPS=A<br/>FAIL=A DATA=A…"
+    Mouse->>Cypher: "retro"
+    Note right of Mouse: "Retros in docs/sprints/R<br/>ETRO_SPRINT24.md: wins<br/>(Gate 1 caught an<br/>unreachable target, the<br/>money answer,<br/>readability check twice,<br/>layout test…"
+    Cypher->>All: "pm launch"
+    Note right of Cypher: "*pm launch sprint 24.<br/>Sprint complete: card<br/>payments are out of<br/>income and spending, the<br/>household shows what the<br/>money goes on (03,977<br/>ove…"
+```
+
+## Phase 7 close-out
+
+- **Tank**: SDLC check passed: no manifest, lockfile or Makefile change, make check green (428), browser 22/22 but 104s, so not a release gate (owner r…
+- **Oracle**: Docs groomed: ADR-0052, ADR-0053, ADR-0054 in docs/DECISIONS.md (DECISION rubric: WHY=PASS OPTS=PASS CONS=PASS STATE=PASS, ADR-0050 marked…
+- **Smith**: \*user approve. User test PASSED on the real household files and in a real browser (UAT-24-1..7). rubric UAT: COVER=A STEPS=A FAIL=A DATA=A…
+
+## Sprint close-out
+
+- **Cypher**: \*pm launch sprint 24. Sprint complete: card payments are out of income and spending, the household shows what the money goes on (03,977 ove…

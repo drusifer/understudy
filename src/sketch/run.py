@@ -255,7 +255,8 @@ def _story_of(sketch: Sketch) -> dict:
         moves.extend(
             {"from": name, "to": transition["to"], "event": "ok", **({"when": transition["if"]} if "if" in transition else {})}
             for transition in state.get("transitions", []))
-    return {"states": [{"name": name, "final": bool(state.get("final"))} for name, state in states.items()],
+    return {"initial": sketch.machine["initial"],
+            "states": [{"name": name, "final": bool(state.get("final"))} for name, state in states.items()],
             "transitions": moves}
 
 

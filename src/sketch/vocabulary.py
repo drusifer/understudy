@@ -1,6 +1,6 @@
 """Every name a sketch may use, in one place: the checker validates against it, the stages register against it."""
 
-OPERATORS = ("eq", "ne", "lt", "le", "gt", "ge", "in", "not_in", "has")
+OPERATORS = ("eq", "ne", "lt", "le", "gt", "ge", "in", "not_in", "has", "ends")
 COMBINATORS = ("and", "or", "not")
 ON_EMPTY = ("fail", "fallback", "skip")  # `walk_away` arrives with the evening example (slice B)
 

@@ -80,6 +80,7 @@ A state's `do:` names a stage **type** as a key (a closed set the schema owns) a
 | `map: { action: without }` | `source`, `among`, `on`, `among_on` | the rows of `source` whose `on` value is not the `among_on` (default `on`) value of any row of `among` (the opposite of `matching`) |
 | `map: { action: complete }` | `source`, `fields` | the rows of `source` unchanged, after checking every row has a value in every field; the first that does not stops the run: `source 'x' line 2 has no payee` |
 | `map: { action: known }` | `source`, `field`, `among`, `among_field` | the rows of `source` unchanged, after checking every row's `field` is some row's `among_field` in `among`; the first that is not stops the run, naming the line and the value |
+| `map: { action: share }` | `source`, `field`, `into` | each row plus `into`: its `field` as a share of the total of `field` over all rows, to four places (0.0 when the total is zero) |
 | `map: { action: set }` | `source`, `fields` | each row plus the named fields, the same value on every row |
 | `map: { action: keep }` | `source`, `fields` | each row with only the named fields, in that order (null for a field the row lacks) |
 | `reduce: { action: top_two }` | `source`, `label`, `value` | one row naming the best two rows by `value`: `{<label>, <value>, runner_up, runner_up_probability}` (the runner-up is null when there is only one row; no rows give no row) |
@@ -148,6 +149,7 @@ segment: { eq: students }            # eq ne lt le gt ge
 job:     { in: [nurse, driver] }     # in not_in: a list ...
 temp:    { in: [80:90] }             # ... or a slice: 80 included, 90 excluded
 merchant: { has: coffee }            # has: the field contains the value (text or list)
+Category: { ends: ": Transfers" }    # ends: the text ends with the value (nothing else matches)
 or:                                  # and or not combine; several fields in one mapping mean and
   - { genre: { eq: horror }, tomato: { ge: 70 } }
   - { tomato: { gt: 90 } }
@@ -233,6 +235,23 @@ seat:
 * A variable with no default and no value fails: `needs a value for 'tickets': pass --with tickets=<value>, or write {{ tickets | default(…) }}`.
 * A `--with` or `with` name the receiving file does not use is refused, with the nearest name it does use.
 * `understudy check` reads the sketch after Jinja has filled it in.
+
+### Typed inputs: `inputs:`
+
+A sketch may declare the values it takes, with a kind, its limits and a default. The console draws a control for each; the command line and the console check a value against the declaration, and a value left alone is its default, so the file does not repeat it (write `{{ tickets }}`, not `{{ tickets | default(2) }}`).
+
+```yaml
+inputs:
+  mood:     { kind: choice, label: Mood, options: [fun, serious, dramatic, romantic], default: fun }
+  weight:   { kind: range, min: 0, max: 1, step: 0.05, default: 0.3 }   # a number on a step between the limits
+  tickets:  { kind: count, min: 1, max: 10, default: 2 }                # a whole number between the limits
+  evenings: { kind: switch, default: "on" }                             # on or off (quote them: YAML reads bare on as a word)
+```
+
+* Values reach the file as text; a switch is `on` or `off`. `label` is what the console shows (default: the name).
+* A wrong declaration (an unknown kind, no options, a default outside the limits, no default) is refused by `understudy check` and `run`, naming the input: `input 'tickets': default 11 is outside 1 to 10`.
+* A value outside its limits is refused the same way, before anything runs: `input 'tomato': 0.33 is not a multiple of 0.05 from 0`.
+* A name the file uses but does not declare is still given as text (the console shows a plain text box).
 
 ## Adding a stage
 

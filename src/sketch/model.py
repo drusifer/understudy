@@ -43,5 +43,6 @@ class Sketch:
     data: dict
     machine: dict
     candidates: dict[str, Candidates] = field(default_factory=dict)  # outcomes whose options come from rows
-    variables: dict[str, str] = field(default_factory=dict)  # the `--input` values the file was rendered with
+    inputs: dict[str, dict] = field(default_factory=dict)  # the typed values the sketch declares (`inputs:`), by name
+    variables: dict[str, str] = field(default_factory=dict)  # the `--with` values given (a declared input left alone is not here)
     uses: frozenset[str] = frozenset()  # the template variables this file uses

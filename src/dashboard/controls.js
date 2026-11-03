@@ -40,12 +40,111 @@ function drawButtons() {
   $('gate-note').textContent = controls.authorized ? 'unlocked for this tab: Jev level names are shown too' : GATE_LOCKED;
 }
 
+// A number as the sketch will read it: no more places than its step has, and no trailing zeros (0.30 is 0.3, 1.00 is 1).
+function numberText(value, step) {
+  const places = (String(step).split('.')[1] ?? '').length;
+  const text = Number(value).toFixed(places);
+  return text.includes('.') ? text.replace(/0+$/, '').replace(/\.$/, '') : text;
+}
+
+// Each control keeps the text the run will receive in data-value, so Play reads one place for every kind.
+function markInput(element, spec, value) {
+  element.dataset.input = '';
+  element.dataset.name = spec.name;
+  element.dataset.value = value;
+  return element;
+}
+
+// choice: a dial of the options, one selected; arrow keys move it and stop at the ends.
+function dialControl(spec, id) {
+  const options = spec.options.map(String);
+  const group = markInput(make('div', { id, role: 'radiogroup', 'aria-labelledby': `${id}-label`, class: 'pick-group' }), spec, String(spec.default));
+  const buttons = options.map((option) => make('button', { type: 'button', role: 'radio', class: 'pick-option' }, option));
+  const select = (index, focus) => {
+    buttons.forEach((button, at) => {
+      button.setAttribute('aria-checked', String(at === index));
+      button.tabIndex = at === index ? 0 : -1;
+    });
+    group.dataset.value = options[index];
+    if (focus) buttons[index].focus();
+  };
+  buttons.forEach((button, at) => {
+    button.addEventListener('click', () => select(at, false));
+    button.addEventListener('keydown', (event) => {
+      const moves = { ArrowRight: at + 1, ArrowDown: at + 1, ArrowLeft: at - 1, ArrowUp: at - 1, Home: 0, End: options.length - 1 };
+      if (!(event.key in moves)) return;
+      event.preventDefault();
+      select(Math.min(options.length - 1, Math.max(0, moves[event.key])), true);
+    });
+  });
+  select(Math.max(0, options.indexOf(String(spec.default))), false);
+  group.append(...buttons);
+  return group;
+}
+
+// range: a fader between its limits with its value beside it.
+function faderControl(spec, id) {
+  const fader = markInput(make('input', { id, type: 'range', class: 'slide', min: spec.min, max: spec.max, step: spec.step, value: spec.default }),
+    spec, numberText(spec.default, spec.step));
+  const readout = make('output', { id: `${id}-readout`, for: id, class: 'readout' }, fader.dataset.value);
+  fader.addEventListener('input', () => {
+    fader.dataset.value = numberText(fader.value, spec.step);
+    readout.textContent = fader.dataset.value;
+  });
+  return make('div', { class: 'slide-row' }, fader, readout);
+}
+
+// count: a whole number with a button either side; typed past a limit it is put back inside.
+function stepperControl(spec, id) {
+  const box = markInput(make('input', { id, type: 'number', class: 'find-field count-box', min: spec.min, max: spec.max, step: 1, value: spec.default }),
+    spec, String(spec.default));
+  const less = make('button', { type: 'button', class: 'find-button step-button', 'aria-label': `decrease ${spec.label}` }, '-');
+  const more = make('button', { type: 'button', class: 'find-button step-button', 'aria-label': `increase ${spec.label}` }, '+');
+  const settle = () => {
+    const value = Math.min(spec.max, Math.max(spec.min, Math.round(Number(box.value) || spec.min)));
+    box.value = String(value);
+    box.dataset.value = String(value);
+    less.disabled = value <= spec.min;
+    more.disabled = value >= spec.max;
+  };
+  less.addEventListener('click', () => { box.value = String(Number(box.value) - 1); settle(); });
+  more.addEventListener('click', () => { box.value = String(Number(box.value) + 1); settle(); });
+  box.addEventListener('change', settle);
+  box.addEventListener('input', () => { if (box.value !== '' && Number(box.value) >= spec.min && Number(box.value) <= spec.max) settle(); });
+  settle();
+  return make('div', { class: 'count-stepper' }, less, box, more);
+}
+
+// switch: on or off.
+function switchControl(spec, id) {
+  const button = markInput(make('button', { id, type: 'button', role: 'switch', class: 'toggle', 'aria-labelledby': `${id}-label` }), spec, spec.default);
+  const show = (on) => {
+    button.setAttribute('aria-checked', String(on));
+    button.dataset.value = on ? 'on' : 'off';
+    button.textContent = on ? 'ON' : 'OFF';
+  };
+  button.addEventListener('click', () => show(button.dataset.value !== 'on'));
+  show(spec.default === 'on');
+  return button;
+}
+
+const CONTROLS = { choice: dialControl, range: faderControl, count: stepperControl, switch: switchControl };
+
+function typedField(spec) {
+  const id = `field-${spec.name}`;
+  const control = CONTROLS[spec.kind](spec, id);
+  const label = make('label', { id: `${id}-label`, class: 'typed-label', ...(['range', 'count'].includes(spec.kind) ? { for: id } : {}) }, spec.label);
+  return make('div', { class: 'start-field' }, label, control);
+}
+
 function drawFields() {
   const sketch = currentSketch();
   $('sketch-about').textContent = sketch ? (sketch.ok ? sketch.description : `cannot be read as a sketch: ${sketch.problem}`) : '';
-  $('fields').replaceChildren(...(sketch?.with ?? []).map((name) => make('div', { class: 'start-field' },
-    make('label', { for: `field-${name}` }, name),
-    make('input', { id: `field-${name}`, type: 'text', class: 'find-field', 'data-name': name, autocomplete: 'off' }))));
+  $('fields').replaceChildren(
+    ...(sketch?.inputs ?? []).map(typedField),
+    ...(sketch?.with ?? []).map((name) => make('div', { class: 'start-field' },
+      make('label', { for: `field-${name}`, class: 'typed-label' }, name),
+      make('input', { id: `field-${name}`, type: 'text', class: 'find-field', 'data-name': name, autocomplete: 'off' }))));
   drawButtons();
 }
 
@@ -92,7 +191,8 @@ async function unlock() {
 
 async function play() {
   const values = {};
-  for (const input of document.querySelectorAll('#fields input')) if (input.value.trim()) values[input.dataset.name] = input.value.trim();
+  for (const typed of document.querySelectorAll('#fields [data-input]')) values[typed.dataset.name] = typed.dataset.value;
+  for (const input of document.querySelectorAll('#fields input[type="text"]')) if (input.value.trim()) values[input.dataset.name] = input.value.trim();
   const replay = $('replay-pick').value;
   $('play').disabled = true;
   say('checking the sketch and starting it...');

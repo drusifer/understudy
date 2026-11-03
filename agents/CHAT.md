@@ -929,3 +929,264 @@ distclean        Also remove the Python environment
 ---
 [<small>2026-11-02 20:05:01</small>] [**Cypher**]->[**all**] *pm launch*:
  *pm launch sprint 23. Sprint complete: Ridgewood income and expenses match the owner's file to the cent; transfers follow the owner's categories; review.jsonl and pinned.jsonl close the loop on unsure merchants; the run tells its story. Branch sprint-23 committed locally in 5 phases, NOT merged or pushed (owner). Next: Sprint 24 (typed inputs, diagram, step, replay, decision detail) when asked.
+
+---
+[<small>2026-11-02 21:56:28</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make push | /home/drusifer/Projects/understudy/build/build.out
+9:56PM INF 0 commits scanned.
+9:56PM INF scanned ~0 bytes (0) in 238ms
+9:56PM INF no leaks found
+To github.com:drusifer/understudy.git
+3d44539..bed2296  main -> main
+
+---
+[<small>2026-11-02 22:07:24</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Sprint 24 stories ready: docs/sprints/USER_STORIES_SPRINT24.md (UND-93, 94, 95, 87, 82; 27 pts): card-side labels are transfers, spending by category in a file and in the console, typed inputs, the statechart diagram. Step/pause, replay, decision detail and the editor move to Sprint 25 (assumption 6). Branch sprint-24 cut from main. STORIES self-check: all PASS. @Smith *user review sprint 24
+
+---
+[<small>2026-11-02 22:07:59</small>] [**Smith**]->[**Cypher**] *user reject*:
+ *user reject REASON: UND-93 AC3 cannot pass on the labels alone: after widening, 148 positive non-transfer records worth 153,085 remain outside Ridgewood, mostly 5 Amex Electronic Payment rows (133,047) the old categorization labeled as income; the pairing already links them to Ridgewood's card-payment debits | FIX: the rule is the widened label OR a link to a record in another account; reword AC1, AC2, AC3 and assumption 1; with both, 20,038 remains. @Cypher revise stories.
+
+---
+[<small>2026-11-02 22:07:59</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Stories revised: UND-93 rule is the widened label OR a link to a record in another account (AC1-6, assumption 1). Re-check: 20,038 positive non-transfer remain outside Ridgewood. @Smith *user review sprint 24
+
+---
+[<small>2026-11-02 22:08:00</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ *user approve. Stories approved. rubric STORIES: OUT=A TEST=S FAIL=A SCOPE=A SIZE=A DESIGN=A. Every AC is checkable on the baseline file; the rejection was the right one (153k of card payments stayed income). Note for Morpheus: this reverses part of ADR-0050 (pairing was evidence only), so record a superseding ADR; and UND-82 needs a layout that is tested without a browser. @Morpheus *lead arch sprint 24
+
+---
+[<small>2026-11-02 22:09:00</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Architecture done: docs/sprints/ARCH_SPRINT24.md. Transfer = widened label OR link (supersedes part of ADR-0050); spending.jsonl with map.share; inputs declared in the sketch with defaults injected; chart layout in Python (src/dashboard/chart.py), plain JS draws SVG; no new deps, no Tank Phase 0. @Smith *user feedback arch sprint 24
+
+---
+[<small>2026-11-02 22:09:07</small>] [**Smith**]->[**Switch**] *user approve*:
+ *user approve. Architecture approved. rubric ARCH: BOUND=A FLOW=A FAIL=A USER=A DECS=A FEAS=S. UX notes: a switch value is on/off text, keep it identical in the CLI and the console; the chart panel must say plainly when a log has no story; summary.json loses kind_changed_by_category, so update the guide in the same phase. @Switch *sec threat sprint 24
+
+---
+[<small>2026-11-02 22:09:07</small>] [**Switch**]->[**Mouse**] *sec handoff*:
+ security gate (design): No blocking findings. Checked: typed values reach a child process only as --with arguments after the allow-list plus the new limit checks (argument list, no shell, access secret unchanged); sketch text (state names, guards, categories) is rendered with textContent only, never markup; spending.jsonl read through the capped reader and holds no merchant names; no new dependency or secret. Condition: Phase 4 review must include a hostile-name test for the chart. @Mouse *sm plan sprint 24
+
+---
+[<small>2026-11-02 22:09:44</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint 24 planned in task.md: 7 phases (UND-93, 94, 95, 87 in two, 82 in two), each one build task then Trin, Switch, Morpheus gates; closeout with Tank sdlc-check. Levels L1-L3. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-11-02 22:09:44</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review sprint plan: approved. rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=S OWNER=A LEVEL=A. One build task plus the three fixed gates per phase (same shape as Sprints 22 and 23); UND-87 and UND-82 are split so each phase is one reviewable change. Order matters inside each pair. Commit once per phase after my review. @Neo *swe impl phase-1
+
+---
+[<small>2026-11-02 22:09:44</small>] [**Mouse**]->[**all**] *phase 1*:
+ Phase 1: card payments and moves between accounts are not spending (UND-93)
+
+---
+[<small>2026-11-02 22:14:29</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make run | /home/drusifer/Projects/understudy/build/build.out
+wrote /home/drusifer/Projects/understudy/.understudy/runs/run-20261103T031222-20544bb5/review.jsonl
+
+---
+[<small>2026-11-02 22:14:48</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 1 impl complete (UND-93): transfer by widened label OR link (new generic condition ends); transfer_basis counts replace kind_changed_by_category; fixture and tests updated, docs updated. make check green (368). @Trin *qa uat phase-1
+
+---
+[<small>2026-11-02 22:14:48</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 1 passed (UND-93): real run, 0 labeled or linked records left as purchase/refund/credit; positives outside Ridgewood 169 records 240,596 down to 143 records 20,038; Ridgewood unchanged to the cent. @Switch *sec review phase-1
+
+---
+[<small>2026-11-02 22:14:48</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 1): No blocking findings. Quick pass: one new read-only condition operator (text ends with), a YAML anchor, no new input, file, dependency or secret; gitleaks clean in make check. @Morpheus *lead review phase-1
+
+---
+[<small>2026-11-02 22:14:48</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-1: passed. The label set is written once (YAML anchor) and used for the taxonomy and the basis; ends is a one-line comparator with tests. ADR-0052 to record at close. @Neo *swe impl phase-2
+
+---
+[<small>2026-11-02 22:14:48</small>] [**Mouse**]->[**all**] *phase 2*:
+ Phase 2: where the money goes (UND-94)
+
+---
+[<small>2026-11-02 22:18:45</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make run | /home/drusifer/Projects/understudy/build/build.out
+wrote /home/drusifer/Projects/understudy/.understudy/runs/run-20261103T031634-2a0afad6/spending.jsonl
+
+---
+[<small>2026-11-02 22:19:03</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 2 impl complete (UND-94): spending.jsonl (category, count, amount, share; biggest first), spending_total in summary.json, generic map.share; docs updated. make check green (377). @Trin *qa uat phase-2
+
+---
+[<small>2026-11-02 22:19:03</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 2 passed (UND-94): real run, 90 categories, 403,977 spent, equal to the summary total, shares add to 1; Rent 60,807 (15%), Taxes 40,674, Mortgage 31,349. @Switch *sec review phase-2
+
+---
+[<small>2026-11-02 22:19:03</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 2): No blocking findings. Quick pass: spending.jsonl holds category names, counts and totals (no merchant names or account numbers) in the git-ignored run folder; one arithmetic stage; no new input or dependency. @Morpheus *lead review phase-2
+
+---
+[<small>2026-11-02 22:19:03</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-2: passed. Built from existing generic stages plus one small map.share; the household sketch grew by a readable block; test works the answer out from the records, not from the sketch. @Neo *swe impl phase-3
+
+---
+[<small>2026-11-02 22:19:03</small>] [**Mouse**]->[**all**] *phase 3*:
+ Phase 3: the console shows what the money goes on (UND-95)
+
+---
+[<small>2026-11-02 22:26:35</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+10:26PM INF 1 commits scanned.
+10:26PM INF scanned ~6537 bytes (6.54 KB) in 251ms
+10:26PM INF no leaks found
+
+---
+[<small>2026-11-02 22:27:17</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 3 impl complete (UND-95): the run's description carries spending (top ten, more, problem; capped reader); the summary panel lists them; browser tests added; make check green (386), browser 10/10. @Trin *qa uat phase-3
+
+---
+[<small>2026-11-02 22:27:18</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 3 passed (UND-95): real run in a real browser at 1300 and 390 px, Rent 60,807 first and 'and 80 more'; unreadable file named; readability check found two failing looks and passes after the fix. @Switch *sec review phase-3
+
+---
+[<small>2026-11-02 22:27:18</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 3): No blocking findings. Category names from the run file are set with textContent (no markup), the file is read through a 1 MB cap and every line is validated; nothing new is exposed that the run folder did not already hold. @Morpheus *lead review phase-3
+
+---
+[<small>2026-11-02 22:27:18</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-3: passed. spending.py is a small reader apart from view.py; the page only draws; the hidden section is real markup, not an empty heading. @Neo *swe impl phase-4
+
+---
+[<small>2026-11-02 22:27:18</small>] [**Mouse**]->[**all**] *phase 4*:
+ Phase 4: inputs are declared (UND-87 part 1)
+
+---
+[<small>2026-11-02 22:32:57</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make run | /home/drusifer/Projects/understudy/build/build.out
+=== make run @ 2026-11-02 22:32:56 ===
+ok: evening
+
+---
+[<small>2026-11-02 22:33:17</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 4 impl complete (UND-87 part 1): inputs: declared in the sketch (choice, range, count, switch), validated by src/sketch/inputs.py; loader injects defaults and refuses wrong declarations and out-of-limit values naming the input; the console lists each sketch's inputs and refuses bad posted values; evening declares its seven values. make check green (402). @Trin *qa uat phase-4
+
+---
+[<small>2026-11-02 22:33:17</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 4 passed (UND-87 part 1): evening checks ok with defaults and refuses tickets=40, mood=silly, tomato=0.33 in one line each; every wrong declaration is named; console list and start refusals tested. @Switch *sec review phase-4
+
+---
+[<small>2026-11-02 22:36:14</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+10:36PM INF no leaks found
+10:36PM INF 1 commits scanned.
+10:36PM INF scanned ~9864 bytes (9.86 KB) in 242ms
+10:36PM INF no leaks found
+
+---
+[<small>2026-11-02 22:36:37</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 4): Blocked SEC-010 (Low), then fixed and re-verified: a typed number was checked as a float but passed on as the owner's text (1e2, padded, underscores). Neo applied the fix (plain ASCII digits only) with a test; make check green (403). Values reach a child process only as an argument list after the allow-list and these checks; the access secret is unchanged. No blocking findings now. @Morpheus *lead review phase-4
+
+---
+[<small>2026-11-02 22:36:37</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-4: passed. One module (inputs.py) owns the rules and both the CLI and the console use it; the loader reads the declaration before rendering, so defaults live in one place; evening lost its repeated defaults. Note: the first read renders with empty values, which works for every example. ADR-0053 to record. @Neo *swe impl phase-5
+
+---
+[<small>2026-11-02 22:36:37</small>] [**Mouse**]->[**all**] *phase 5*:
+ Phase 5: the right control for each value (UND-87 part 2)
+
+---
+[<small>2026-11-02 22:58:10</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+10:58PM INF 1 commits scanned.
+10:58PM INF scanned ~16695 bytes (16.69 KB) in 255ms
+10:58PM INF no leaks found
+
+---
+[<small>2026-11-02 22:58:23</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 5 impl complete (UND-87 part 2): dial, slider, stepper and switch in controls.js with names, keyboard use, limits and defaults; Play sends every value; undeclared names stay text boxes; classes renamed because the themes still styled the old console's dial/switch/fader. make check green (403), browser 15/15. @Trin *qa uat phase-5
+
+---
+[<small>2026-11-02 22:58:24</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 5 passed (UND-87 part 2): evening's controls in a real browser at 1000 and 390 px, keyboard and limits tested, Play sends the defaults too; readability passes in six looks (one flake on an old selector, noted). @Switch *sec review phase-5
+
+---
+[<small>2026-11-02 22:58:24</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 5): No blocking findings. Option text, labels and values are set with textContent or attributes (never markup); the page sends only what the server then re-checks against the declaration (phase 4 checks); no new endpoint. @Morpheus *lead review phase-5
+
+---
+[<small>2026-11-02 22:58:24</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-5: passed. Each kind is one small function that keeps its text in data-value so Play has one reader; the stale theme CSS for dial, switch and fader is dead code from the old console and should go (backlog); no new endpoint. @Neo *swe impl phase-6
+
+---
+[<small>2026-11-02 22:58:24</small>] [**Mouse**]->[**all**] *phase 6*:
+ Phase 6: the statechart is laid out (UND-82 part 1)
+
+---
+[<small>2026-11-02 23:06:19</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+11:06PM INF no leaks found
+11:06PM INF 1 commits scanned.
+11:06PM INF scanned ~703 bytes (703 bytes) in 243ms
+11:06PM INF no leaks found
+
+---
+[<small>2026-11-02 23:07:17</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 6 impl complete (UND-82 part 1): src/dashboard/chart.py lays the machine out (layers, wrapped rows, arrows through gaps and gutters, a lane per label) and overlays the lit state and last move; run_started now carries initial; describe gives chart or null; 25 new tests incl. 40 states with no overlaps. make check green (428). @Trin *qa uat phase-6
+
+---
+[<small>2026-11-02 23:07:17</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 6 passed (UND-82 part 1): real machines (household, evening, coffee), a loops-and-skips machine and six 40-state machines laid out without overlaps; rendering checked by eye; lit state and last move from state_entered; no story means no chart. @Switch *sec review phase-6
+
+---
+[<small>2026-11-02 23:07:17</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 6): No blocking findings. Hostile-name check done in JSON: a state named with a script tag and a guard with an img tag stay plain strings (tests); the layout is pure computation over names from the owner's own sketch, with the recursion bounded by the machine size and no file or network access; chart JSON carries no paths or secrets. The browser must still set them with textContent (phase 7 gate). @Morpheus *lead review phase-6
+
+---
+[<small>2026-11-02 23:07:17</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-6: passed. The layout is isolated, deterministic and tested without a browser, as ADR-0054 intends; refactored into small functions after lint found one too long; arrows touch only gaps and gutters so overlap is checkable. Debt noted: simple layering, dense at 40 states. @Neo *swe impl phase-7
+
+---
+[<small>2026-11-02 23:07:17</small>] [**Mouse**]->[**all**] *phase 7*:
+ Phase 7: see the statechart (UND-82 part 2)
+
+---
+[<small>2026-11-02 23:25:09</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+11:25PM INF 1 commits scanned.
+11:25PM INF scanned ~14943 bytes (14.94 KB) in 251ms
+11:25PM INF no leaks found
+
+---
+[<small>2026-11-02 23:25:09</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 7 impl complete (UND-82 part 2): the page draws the chart as SVG (textContent only), lights the current state, marks the last move and the ending, says when a log has no story; the page refreshes from the event stream within 250 ms; 7 new browser tests; readability passes in six looks. make check green (428), browser 22/22. @Trin *qa uat phase-7
+
+---
+[<small>2026-11-02 23:25:09</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 7 passed (UND-82 part 2): real run drawn in a real browser at 1300 and 390 px; the light moves within 1.5 s in the test; no-story message; hostile name drawn as text with nothing executed. @Switch *sec review phase-7
+
+---
+[<small>2026-11-02 23:25:10</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 7): No blocking findings. The design-gate condition is met: a state named with an img tag and onerror is drawn as text, no element is created from it and nothing runs (browser test); every SVG string goes through textContent or setAttribute; no innerHTML anywhere in the new code; the page refreshes only an existing read-only endpoint. @Morpheus *lead review phase-7
+
+---
+[<small>2026-11-02 23:25:10</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
+ *lead review phase-7: passed. All five phases of the diagram and controls reviewed; the drawing code is about sixty lines over the server's layout; the min-width fix belongs in the panel not the chart. All seven phases reviewed. @Tank *devops sdlc-check
+
+---
+[<small>2026-11-02 23:25:19</small>] [**Tank**]->[**Oracle**] *devops handoff*:
+ SDLC check passed: no manifest, lockfile or Makefile change; make check green (428); browser 22/22 but 104s, so not a release gate (owner rule). Last verified line updated. @Oracle *ora groom
+
+---
+[<small>2026-11-02 23:26:09</small>] [**Oracle**]->[**Smith**] *ora handoff*:
+ Docs groomed: ADR-0052, ADR-0053, ADR-0054 in docs/DECISIONS.md (DECISION rubric: WHY=PASS OPTS=PASS CONS=PASS STATE=PASS; ADR-0050 marked partly superseded), CHANGELOG, two lessons in agents/oracle/lessons.md (LESSON: WHEN WHAT RULE CAUSE PLACE all PASS). Chat report not run (owner's call). @Smith *user test sprint 24
+
+---
+[<small>2026-11-02 23:26:28</small>] [**Smith**]->[**all**] *user approve*:
+ *user approve. User test PASSED on the real household files and in a real browser (UAT-24-1..7). rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A. LESSON check on the 2 new lessons: all PASS. Rough edges for the backlog, not blockers: dead theme CSS from the old console, the negative Refund category and oddly grouped categories in the owner's data, the evening description still repeating its --with list. @all *sprint retro
+
+---
+[<small>2026-11-02 23:26:28</small>] [**Mouse**]->[**Cypher**] *retro*:
+ Retros in docs/sprints/RETRO_SPRINT24.md: wins (Gate 1 caught an unreachable target, the money answer, readability check twice, layout tested without a browser, SEC-010); misses (Edit-only slip again, an escape the edit tool changed, slow browser check, dead theme CSS, sprint bigger than first said). Backlog in BACKLOG.md. @Cypher *pm launch sprint 24
+
+---
+[<small>2026-11-02 23:26:28</small>] [**Cypher**]->[**all**] *pm launch*:
+ *pm launch sprint 24. Sprint complete: card payments are out of income and spending, the household shows what the money goes on (03,977 over 90 categories; Rent first) in a file and in the console, sketches declare typed inputs drawn as a dial, sliders, a stepper and a switch, and the console draws the statechart with the current state lit. Branch sprint-24 committed locally in 7 phases plus closeout, NOT merged or pushed (owner). Next: Sprint 25 (step and pause, replay, decision detail, editor) when asked.

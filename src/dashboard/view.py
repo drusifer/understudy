@@ -10,6 +10,9 @@ import re
 from datetime import UTC, datetime
 from pathlib import Path
 
+from src.dashboard.chart import overlay
+from src.dashboard.spending import read_spending
+
 RUN_ID = re.compile(r"run-[0-9A-Za-z-]+")
 DAY = 86400
 AGE_UNITS = (("minutes", 60, 2 * 3600), ("hours", 3600, 2 * DAY))  # unit, seconds per unit, age at which the next unit starts
@@ -215,6 +218,8 @@ def describe(directory: Path, now: datetime | None = None) -> dict:
         },
         "mode": mode,
         "story": "states" in started,  # a log written before the first line told the machine has no story
+        "chart": overlay(started, events, state, _ended(state, run, failure, last_at, now)) if "states" in started else None,
+        "spending": read_spending(directory),
         "tube": tube,
         "gauges": gauges_of(summary, events, tube),
         "lines": [printed(each) for each in events],
