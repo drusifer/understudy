@@ -3,7 +3,18 @@ import unittest
 from types import MappingProxyType, SimpleNamespace
 
 from src.sketch.registry import STAGES
-from src.sketch.stages_rows import group, keep, note, require, tally, top_two
+from src.sketch.stages_rows import (
+    complete,
+    group,
+    keep,
+    known,
+    note,
+    require,
+    set_fields,
+    tally,
+    top_two,
+    without,
+)
 
 
 def context(rows):
@@ -95,6 +106,64 @@ class KeepTests(unittest.TestCase):
         rows = [{"b": 2, "a": 1, "c": 3}, {"a": 4, "c": 6}]
         found = run(keep, context(rows), source="rows", fields=["a", "b"])
         self.assertEqual([list(r.items()) for r in found], [[("a", 1), ("b", 2)], [("a", 4), ("b", None)]])
+
+
+def named(**sources):
+    async def read(name):
+        return sources[name]
+
+    return SimpleNamespace(read=read, summary={})
+
+
+class CompleteTests(unittest.TestCase):
+    def test_rows_with_a_value_in_every_named_field_pass_through(self):
+        rows = [{"payee": "Amazon", "category": "Shopping"}]
+        self.assertEqual(run(complete, named(pins=rows), source="pins", fields=["payee", "category"]), rows)
+
+    def test_a_row_missing_a_field_stops_the_run_naming_its_line_and_the_field(self):
+        rows = [{"payee": "Amazon", "category": "Shopping"}, {"payee": "  ", "category": "Pets"}]
+        with self.assertRaises(ValueError) as stopped:
+            run(complete, named(pins=rows), source="pins", fields=["payee", "category"])
+        self.assertEqual(str(stopped.exception), "source 'pins' line 2 has no payee")
+
+    def test_a_field_that_is_absent_counts_as_missing(self):
+        with self.assertRaises(ValueError) as stopped:
+            run(complete, named(pins=[{"payee": "Amazon"}]), source="pins", fields=["payee", "category"])
+        self.assertEqual(str(stopped.exception), "source 'pins' line 1 has no category")
+
+
+class KnownTests(unittest.TestCase):
+    IN_USE = ({"Category": "Shopping & Retail: Clothing"}, {"Category": "Taxes"})
+
+    def test_rows_whose_value_is_in_the_other_source_pass_through(self):
+        rows = [{"category": "Taxes"}]
+        context_ = named(pins=rows, in_use=list(self.IN_USE))
+        self.assertEqual(run(known, context_, source="pins", field="category", among="in_use", among_field="Category"), rows)
+
+    def test_an_unknown_value_stops_the_run_naming_the_line_and_the_value(self):
+        context_ = named(pins=[{"category": "Taxes"}, {"category": "Fun"}], in_use=list(self.IN_USE))
+        with self.assertRaises(ValueError) as stopped:
+            run(known, context_, source="pins", field="category", among="in_use", among_field="Category")
+        self.assertEqual(str(stopped.exception), "source 'pins' line 2: 'Fun' is not a Category in 'in_use'")
+
+
+class WithoutTests(unittest.TestCase):
+    def test_the_rows_whose_value_is_not_in_the_other_source_are_kept(self):
+        rows = [{"key": "a"}, {"key": "b"}, {"key": "c"}]
+        found = run(without, named(rows=rows, pins=[{"key": "b"}]), source="rows", among="pins", on="key")
+        self.assertEqual(found, [{"key": "a"}, {"key": "c"}])
+
+    def test_the_other_sources_field_may_have_another_name(self):
+        found = run(without, named(rows=[{"key": "a"}, {"key": "b"}], pins=[{"merchant": "a"}]), source="rows",
+                    among="pins", on="key", among_on="merchant")
+        self.assertEqual(found, [{"key": "b"}])
+
+
+class SetTests(unittest.TestCase):
+    def test_every_row_gets_the_named_fields(self):
+        found = run(set_fields, context([{"a": 1}, {"a": 2}]), source="rows", fields={"status": "placed", "probability": 1.0})
+        self.assertEqual(found, [{"a": 1, "status": "placed", "probability": 1.0},
+                                 {"a": 2, "status": "placed", "probability": 1.0}])
 
 
 class NoteTests(unittest.TestCase):

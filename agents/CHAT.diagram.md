@@ -375,7 +375,40 @@ sequenceDiagram
     autonumber
     participant Mouse
     participant All
-    Note over Mouse,All: 📅 2026-11-02
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-02
     Mouse->>All: "phase 4"
     Note right of Mouse: "Phase 4: pinned<br/>categories are kept<br/>(UND-92)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 4 impl complete<br/>(UND-92): optional file<br/>source for pins (default<br/>.understudy/pinned.jsonl<br/>), pins checked in two<br/>states before any Jev…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 4 passed<br/>(UND-92): real run,<br/>Amazon 296 and Duane<br/>Reade 53 records placed<br/>by pin, out of review,<br/>bad pins, missing paths<br/>and abse…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 4):<br/>No blocking findings.<br/>Pin file is a new local<br/>input, parsed and<br/>checked before any Jev<br/>request, the console<br/>alread…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-4:<br/>passed. Optional source<br/>is one schema key, one<br/>loader line, one check<br/>line, one read branch,<br/>all tested, pin checks<br/>s…"
+```
+
+## Phase 4 close-out
+
+- **Neo**: Phase 4 impl complete (UND-92): optional file source for pins (default .understudy/pinned.jsonl), pins checked in two states before any Jev…
+- **Trin**: UAT phase 4 passed (UND-92): real run, Amazon 296 and Duane Reade 53 records placed by pin, out of review, bad pins, missing paths and abse…
+- **Morpheus**: \*lead review phase-4: passed. Optional source is one schema key, one loader line, one check line, one read branch, all tested, pin checks s…
+
+## Phase 5 starts
+
+Phase 5: the run tells its story (UND-81)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    Note over Mouse,All: 📅 2026-11-02
+    Mouse->>All: "phase 5"
+    Note right of Mouse: "Phase 5: the run tells<br/>its story (UND-81)"
 ```

@@ -857,3 +857,28 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-11-02 19:46:56</small>] [**Mouse**]->[**all**] *phase 4*:
  Phase 4: pinned categories are kept (UND-92)
+
+---
+[<small>2026-11-02 19:53:41</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make run | /home/drusifer/Projects/understudy/build/build.out
+wrote /home/drusifer/Projects/understudy/.understudy/runs/run-20261103T005122-529f8f4d/review.jsonl
+
+---
+[<small>2026-11-02 19:53:57</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 4 impl complete (UND-92): optional file source for pins (default .understudy/pinned.jsonl), pins checked in two states before any Jev request, pinned merchants skip Jev and the review list; generic stages without, complete, known, set. make check green (351). @Trin *qa uat phase-4
+
+---
+[<small>2026-11-02 19:53:57</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 4 passed (UND-92): real run, Amazon 296 and Duane Reade 53 records placed by pin, out of review; bad pins, missing paths and absent default file tested; same pins give same records. Quirk: category 'Pharmaceuticals ' has a trailing space. @Switch *sec review phase-4
+
+---
+[<small>2026-11-02 19:54:15</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 4): No blocking findings. Pin file is a new local input, parsed and checked before any Jev request; the console already refuses a --with value naming an existing file outside the project (SEC-006), and a missing path is only named, not read. Errors echo a category value from the owner's own file, same class as the existing monarch path. Pins are taxonomy names, never Jev text. gitleaks clean. @Morpheus *lead review phase-4
+
+---
+[<small>2026-11-02 19:54:15</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-4: passed. Optional source is one schema key, one loader line, one check line, one read branch, all tested; pin checks sit in machine states so they run first; sketch stays code-free. Debt noted: two pins for one merchant keep the first (not checked); a category's edge spaces must match. Committing phase 4. @Neo *swe impl phase-5
+
+---
+[<small>2026-11-02 19:54:15</small>] [**Mouse**]->[**all**] *phase 5*:
+ Phase 5: the run tells its story (UND-81)

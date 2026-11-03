@@ -84,6 +84,8 @@ def _source(name: str, value, base: Path, overrides: dict[str, str]) -> Source:
         config = {"kind": "file", "path": overrides[name]}
     if config["kind"] == "file":
         given = Path(config["path"])
+        if config.get("optional"):  # read from where you run, like the `--with` value that chooses it
+            return Source(name, "file", config, given.absolute())
         return Source(name, "file", config, given if given.is_absolute() else base / given)
     return Source(name, config["kind"], config)
 

@@ -30,6 +30,13 @@ def category(merchant, options):
     return Chosen(top, sure, {name: sure if name == top else rest for name in options})
 
 
+def no_pins(directory: Path) -> list[str]:
+    """`--with` arguments naming an empty pin file, so a run never reads the owner's real pins."""
+    pins = directory / "pins.jsonl"
+    pins.write_text("", encoding="utf-8")
+    return ["--with", f"pinned={pins}"]
+
+
 def lines(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
 
@@ -51,7 +58,8 @@ class LedgerTests(unittest.TestCase):
         stderr = io.StringIO()
         cls.code = main(
             ["run", str(LEDGER), "--out", str(directory / "out"), "--with", f"monarch={ORACLE / 'monarch.csv'}",
-             "--with", f"amex={ORACLE / 'amex.csv'}", "--with", "amex_account=Platinum", "--with", "since=2026-01-01"],
+             "--with", f"amex={ORACLE / 'amex.csv'}", "--with", "amex_account=Platinum", "--with", "since=2026-01-01",
+             *no_pins(directory)],
             make_jev=lambda: JevDouble(choose_fn=reading), store=CaptureStore(directory / "cache"), stdout=io.StringIO(),
             stderr=stderr)
         cls.stderr = stderr.getvalue()
@@ -178,7 +186,8 @@ class NothingForReviewTests(unittest.TestCase):
             directory = Path(temporary)
             code = main(
                 ["run", str(LEDGER), "--out", str(directory / "out"), "--with", f"monarch={ORACLE / 'monarch.csv'}",
-                 "--with", f"amex={ORACLE / 'amex.csv'}", "--with", "amex_account=Platinum", "--with", "since=2026-01-01"],
+                 "--with", f"amex={ORACLE / 'amex.csv'}", "--with", "amex_account=Platinum", "--with", "since=2026-01-01",
+                 *no_pins(directory)],
                 make_jev=lambda: JevDouble(choose_fn=reading), store=CaptureStore(directory / "cache"),
                 stdout=io.StringIO(), stderr=io.StringIO())
             (folder,) = (directory / "out").iterdir()
@@ -207,7 +216,8 @@ class MissingCategoryTests(unittest.TestCase):
             stderr = io.StringIO()
             code = main(
                 ["run", str(LEDGER), "--out", str(directory / "out"), "--with", f"monarch={directory / 'monarch.csv'}",
-                 "--with", f"amex={ORACLE / 'amex.csv'}", "--with", "amex_account=Platinum", "--with", "since=2026-01-01"],
+                 "--with", f"amex={ORACLE / 'amex.csv'}", "--with", "amex_account=Platinum", "--with", "since=2026-01-01",
+                 *no_pins(directory)],
                 make_jev=lambda: JevDouble(choose_fn=reading), store=CaptureStore(directory / "cache"),
                 stdout=io.StringIO(), stderr=stderr)
         self.assertNotEqual(code, 0)

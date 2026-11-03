@@ -292,6 +292,43 @@ async def matching(context, source: Source, among: Source, on: str, among_on: st
     return [row for row in await context.read(source) if row[on] in wanted]
 
 
+@stage("map.without")
+async def without(context, source: Source, among: Source, on: str, among_on: str | None = None) -> list[dict]:
+    """The rows of `source` whose `on` value is not the `among_on` (default: `on`) value of any row of `among`."""
+    unwanted = {row[among_on or on] for row in await context.read(among)}
+    return [row for row in await context.read(source) if row[on] not in unwanted]
+
+
+@stage("map.complete")
+async def complete(context, source: Source, fields: list) -> list[dict]:
+    """The rows of `source` unchanged, after checking every row has a value in every field of `fields`; the first row
+    that lacks one stops the run, naming the source, the row's line (from 1) and the field."""
+    rows = await context.read(source)
+    for number, row in enumerate(rows, 1):
+        for field in fields:
+            if not str(row.get(field) or "").strip():
+                raise ValueError(f"source {source!r} line {number} has no {field}")
+    return rows
+
+
+@stage("map.known")
+async def known(context, source: Source, field: str, among: Source, among_field: str) -> list[dict]:
+    """The rows of `source` unchanged, after checking every row's `field` is the `among_field` value of some row of
+    `among`; the first row that is not stops the run, naming the line and the value."""
+    rows = await context.read(source)
+    allowed = {row.get(among_field) for row in await context.read(among)}
+    for number, row in enumerate(rows, 1):
+        if row[field] not in allowed:
+            raise ValueError(f"source {source!r} line {number}: {row[field]!r} is not a {among_field} in {among!r}")
+    return rows
+
+
+@stage("map.set")
+async def set_fields(context, source: Source, fields: dict) -> list[dict]:
+    """Each row of `source` plus the fields in `fields`, the same value on every row."""
+    return [{**row, **fields} for row in await context.read(source)]
+
+
 @stage("map.attach")
 async def attach(context, source: Source, other: Source, field: str, into: str) -> list[dict]:
     """Each row of `source` plus `into`: the list of the `field` values of all the rows of `other`, as one list for every

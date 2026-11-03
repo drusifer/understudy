@@ -9,6 +9,22 @@ description: >
 sources:
   monarch_csv: "{{ monarch }}"
   amex_csv: "{{ amex }}"
+  pins_file:                            # the owner's own category for a merchant: {payee, category}; none if the default file is absent
+    kind: file
+    path: "{{ pinned | default('.understudy/pinned.jsonl') }}"
+    optional: pinned
+  pins:                                 # what each pinned merchant is called, however it is spelled
+    kind: stage
+    do: { map: { action: normalize } }
+    with: { source: pins_file, field: payee, into: key }
+  taxonomy_rows:                        # the categories the owner uses, not the ones about moving money
+    kind: stage
+    do: { map: { action: where } }
+    with: { source: monarch_clean, keep: { and: [ { Category: { ne: "" } }, { Category: { not_in: [ Transfer, Credit Card Payment ] } } ] } }
+  taxonomy:
+    kind: stage
+    do: { map: { action: group } }
+    with: { source: taxonomy_rows, by: Category }
   monarch_checked:                      # the export's own categories decide what is a transfer, so it must have them
     kind: stage
     do: { map: { action: require } }
@@ -242,10 +258,30 @@ sources:
     kind: stage
     do: { map: { action: attach } }
     with: { source: merchants, other: offered, field: Category, into: categories }
+  unpinned:                             # a pinned merchant is never asked about
+    kind: stage
+    do: { map: { action: without } }
+    with: { source: merchants_and_categories, among: pins, on: key }
+  pinned_merchants:
+    kind: stage
+    do: { map: { action: matching } }
+    with: { source: merchants, among: pins, on: key }
+  pinned_chosen:
+    kind: stage
+    do: { map: { action: join } }
+    with: { source: pinned_merchants, other: pins, on: key, prefix: pin_ }
+  pinned_level:
+    kind: stage
+    do: { map: { action: coalesce } }
+    with: { source: pinned_chosen, fields: { level: [ pin_category ] } }
+  pinned_placed:                        # placed in the owner's category, and marked as pinned
+    kind: stage
+    do: { map: { action: set } }
+    with: { source: pinned_level, fields: { status: placed, probability: 1.0, source: pin } }
   placements:                           # Jev, once per merchant: which category in use, if any
     kind: stage
     do: { sketch: { file: place_merchant } }
-    each: merchants_and_categories
+    each: unpinned
   placed:
     kind: stage
     do: { map: { action: unpair } }
@@ -266,7 +302,7 @@ sources:
   decided:
     kind: stage
     do: { map: { action: concat } }
-    with: { sources: [ fitted, named ] }
+    with: { sources: [ pinned_placed, fitted, named ] }
   categories:
     kind: stage
     do: { map: { action: where } }
@@ -381,8 +417,16 @@ sinks:
   review: review.jsonl
 
 machine:
-  initial: write_records
+  initial: check_pins
   states:
+    check_pins:                         # a bad pin stops the run before anything is asked of Jev
+      do: { map: { action: complete } }
+      with: { source: pins_file, fields: [ payee, category ] }
+      then: check_pin_categories
+    check_pin_categories:
+      do: { map: { action: known } }
+      with: { source: pins_file, field: category, among: taxonomy, among_field: Category }
+      then: write_records
     write_records:
       do: { sink: { name: records } }
       with: { source: finished }

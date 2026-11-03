@@ -77,6 +77,10 @@ A state's `do:` names a stage **type** as a key (a closed set the schema owns) a
 | `map: { action: link }` | `source`, `date`, `amount`, `apart`, `id`, `within`, `rounds` | links rows of one list to each other (opposite amounts, different `apart` values, dates within `within` business days, nearest first, ties by `id`): adds `partner` and `gap` (null when unlinked) |
 | `map: { action: earlier }` | `source`, `other`, `on`, `date`, `amount`, `tie`, `prefix`, `take` | for each row, one row per `other` row with the same `on`, a `date` no later and an `amount` of the opposite sign at least as large (a refund and the charges it could reverse), with the candidate's fields after `prefix` and a `candidates` count |
 | `map: { action: group }` | `source`, `by`, `collect`, `take`, `sums` | one row per distinct `by` value (case and spacing ignored): `{key, <by>, count}` plus, for each `collect` entry `into: field`, up to `take` different values, and for each `sums` entry the total of a field to cents: `into: field`, or `into: { field: f, where: <condition> }` to total only the rows that satisfy the condition (0.0 when none do) |
+| `map: { action: without }` | `source`, `among`, `on`, `among_on` | the rows of `source` whose `on` value is not the `among_on` (default `on`) value of any row of `among` (the opposite of `matching`) |
+| `map: { action: complete }` | `source`, `fields` | the rows of `source` unchanged, after checking every row has a value in every field; the first that does not stops the run: `source 'x' line 2 has no payee` |
+| `map: { action: known }` | `source`, `field`, `among`, `among_field` | the rows of `source` unchanged, after checking every row's `field` is some row's `among_field` in `among`; the first that is not stops the run, naming the line and the value |
+| `map: { action: set }` | `source`, `fields` | each row plus the named fields, the same value on every row |
 | `map: { action: keep }` | `source`, `fields` | each row with only the named fields, in that order (null for a field the row lacks) |
 | `reduce: { action: top_two }` | `source`, `label`, `value` | one row naming the best two rows by `value`: `{<label>, <value>, runner_up, runner_up_probability}` (the runner-up is null when there is only one row; no rows give no row) |
 | `reduce: { action: note }` | `source`, `into` | the rows of `source` unchanged; `summary.json` gets `into`: the first row without its `key` |
@@ -311,6 +315,8 @@ The iterations run in order. The rows each one outputs are appended to a running
 ## Files
 
 A file source whose name ends in `.csv` is read with its header row as the field names; every value is text (turn dates and amounts into values with `map.convert`). Any other file is JSONL.
+
+An **optional** file source, `pins: { kind: file, path: "{{ pinned | default('.understudy/pinned.jsonl') }}", optional: pinned }`, names in `optional` the `--with` value that chooses its file. When that value is not given and the file does not exist, the source has no rows and the run says so; when it is given and the file does not exist, `check` and the run stop and name the file. A relative path in an optional source is read from where you run, like the `--with` value.
 
 ## How a run ends
 

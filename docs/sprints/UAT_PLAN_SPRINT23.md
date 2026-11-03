@@ -50,9 +50,19 @@ Phases are added as they pass UAT.
 - **Verdict:** PASS
 - **Evidence / issue:** run folder above. Nine lines have no runner-up: those merchants were named by the naming sketch, which gives one reading, not a ranking (Venmo, top "Financial institutions -- merchandise and services" 0.63). Accepted as a limit of AC2 for named merchants.
 
+### UAT-23-5: Pinned categories are kept, and bad pins are refused (Phase 4)
+
+- **Linked criterion:** UND-92 AC1 to AC6
+- **Preconditions and data:** the baseline files; a throwaway pin file `build/uat/pins.jsonl` (Amazon to `Shopping`, `duane  reade` to `Pharmaceuticals `, categories the export uses); the owner's real `.understudy/pinned.jsonl` is not touched; unit tests in `tests/python/test_household_pins.py` and `test_sketch_optional_source.py` for the failure paths
+- **Steps:** run with `--with pinned=build/uat/pins.jsonl`; read `records.jsonl` and `review.jsonl`; the unit tests run a bad category, a line without a merchant, a missing explicit path and a missing default file
+- **Expected observable outcome:** pinned merchants' records placed in the pinned category with `category_source: pin`; the merchants absent from `review.jsonl`; no Jev question about them; bad pins and a missing explicit path stop the run before any request, naming the line or path; a missing default file says so and the run goes on; two runs agree
+- **Actual outcome:** Amazon 296 records and Duane Reade 53 records all `placed`, `category_source: pin` in their pinned category; neither is in `review.jsonl` (478 lines, 475 before: Jev's live answers vary a little run to run); unit tests: Shoe Shop pinned is never asked, a category not in use stops with `line 2` and `'Fun'`, an empty payee stops with `line 1 has no payee`, a missing explicit path stops naming it, a missing default file prints `no pins_file: ... so none are used` and the run succeeds, two runs with the same pins give identical `records.jsonl`; Jev asked nothing in the stop cases
+- **Verdict:** PASS
+- **Evidence / issue:** run `run-20261103T005122-529f8f4d`; 351 tests green. Quirk found: the export has a category named `Pharmaceuticals ` with a trailing space, and a pin must spell it that way. Owner: fix the category name in Monarch, or ask for edge spaces to be ignored.
+
 ## Results and Handoff
 
-- **Passed / failed / blocked:** Phase 1: 2 passed (UAT-23-1, UAT-23-2); Phase 2: 1 passed (UAT-23-3); Phase 3: 1 passed (UAT-23-4); 0 failed, 0 blocked
+- **Passed / failed / blocked:** Phase 1: 2 passed (UAT-23-1, UAT-23-2); Phase 2: 1 passed (UAT-23-3); Phase 3: 1 passed (UAT-23-4); Phase 4: 1 passed (UAT-23-5); 0 failed, 0 blocked
 - **Open issue (found in Phase 2):** two lines in `totals.jsonl` are Amex-only rows that matched no Monarch row, shown as accounts named `-38016` and `-33009` (the Amex account numbers), 14 records, about -$77. They are real records, so UND-90 AC4 is not broken, but the names are not accounts the owner knows. Owner: Neo, Phase 3 or a fix after the owner decides whether unmatched Amex rows should be named for their card.
 - **Open issues and impact:** the card-side records. On accounts other than Ridgewood the export still labels some payments "Food & Dining: Credit Card Payment" and "Transportation: Transfers", so they are no longer transfers and count as refunds or credits: 169 positive non-transfer records worth $240,596 outside Ridgewood in this run. Ridgewood is unaffected. Owner: decide whether to relabel those in Monarch or add the group labels to the rule.
 - **Overall verdict:** PASS for Phase 1

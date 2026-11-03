@@ -184,7 +184,18 @@ What it does, in order:
    there are several.
 5. Places each merchant in a category already in use (`place_merchant`) or, when none fits, names one: a category
    named earlier in the run first, then a kind of business and a name from the ISO 18245 list (`name_merchant`,
-   run `each` merchant with `reduce` so each one sees the names given before it).
+   run `each` merchant with `reduce` so each one sees the names given before it). A merchant you have pinned
+   (below) is placed in your category and never asked about.
+
+**Pinned categories.** `review.jsonl` is your work list. To settle a merchant, add a line to your pin file, one JSON
+object per line: `{"payee": "Amazon", "category": "Business & Professional: Online Shopping"}`. The category must be
+one your Monarch export already uses (a Transfer or Credit Card Payment category is not offered); the merchant's
+spelling may differ in case and spacing. The next run places that merchant's records in the category, marks them
+`category_source: pin`, makes no Jev request for it and leaves it out of `review.jsonl`. The pin file is
+`.understudy/pinned.jsonl` (read from where you run, git-ignored) unless you pass `--with pinned=<path>`. If the
+default file is not there the run says so and has no pins; a path you pass that does not exist, a line without a
+`payee` or `category`, or a category the export does not use stops the run before any request to Jev and names the
+line.
 
 Each run creates a new folder under `.understudy/runs/` (or `--out`): `records.jsonl` (one record per transaction with its
 `kind`: purchase, refund, credit, transfer or invalid; its link and its category), `legs.jsonl`,

@@ -79,7 +79,12 @@ class Sources:
         if key not in self._read:
             source = sketch.sources[name]
             if source.kind == "file":
-                self._read[key] = read_rows(source.path)
+                chosen_by = source.config.get("optional")
+                if chosen_by and chosen_by not in sketch.variables and not source.path.is_file():
+                    self.announce(f"no {name}: {source.path} does not exist, so none are used")
+                    self._read[key] = []
+                else:
+                    self._read[key] = read_rows(source.path)
             elif source.kind == "stage":
                 self._read[key] = await self._compute(sketch, name, key)
             else:

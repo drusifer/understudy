@@ -42,10 +42,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 4: Pinned categories are kept (UND-92, 5 pts)
 *Phase goal: a pin file the owner edits; pinned merchants skip Jev and leave the review list.*
-- [ ] **Task 4.1:** Tests first, then the `pinned` source (default `.understudy/pinned.jsonl`, absent means no pins and says so, a missing explicit path stops), the `without` action, pinned records placed with level `pinned`, taxonomy and shape checks before any Jev request, no pinned merchant in `review.jsonl`. **L3** (loader boundary, new action, failure cases, determinism). (*Owner: Neo | Trace: UND-92 AC1-6, ADR-0051 | Verification: `bobp make test`, `bobp make lint`*)
-- [ ] **Task 4.2:** UAT: a pinned merchant causes no Jev request and is placed as pinned; bad pins, a missing explicit path and an absent default file behave as the criteria say; two runs with the same pins agree. **L3**. (*Owner: Trin | Trace: UND-92 AC1-6 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
-- [ ] **Task 4.3:** Security review: the pin file is a new local input parsed before any Jev request; no free text reaches a pin. **L2**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 4): ...`*)
-- [ ] **Task 4.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT23 sections 4-6, ADR-0051 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 4.1:** Tests first, then the `pinned` source (default `.understudy/pinned.jsonl`, absent means no pins and says so, a missing explicit path stops), the `without` action, pinned records placed with level `pinned`, taxonomy and shape checks before any Jev request, no pinned merchant in `review.jsonl`. **L3** (loader boundary, new action, failure cases, determinism). (*Owner: Neo | Trace: UND-92 AC1-6, ADR-0051 | Verification: `bobp make test`, `bobp make lint`*)
+- [x] **Task 4.2:** UAT: a pinned merchant causes no Jev request and is placed as pinned; bad pins, a missing explicit path and an absent default file behave as the criteria say; two runs with the same pins agree. **L3**. (*Owner: Trin | Trace: UND-92 AC1-6 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
+- [x] **Task 4.3:** Security review: the pin file is a new local input parsed before any Jev request; no free text reaches a pin. **L2**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 4): ...`*)
+- [x] **Task 4.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT23 sections 4-6, ADR-0051 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 5: The run tells its story (UND-81, 5 pts)
 *Phase goal: `events.jsonl` carries the machine, each state entered, each decision and the ending; old logs show as unreadable.*

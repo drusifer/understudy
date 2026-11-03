@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 from jev_double import JevDouble
-from test_household import LEDGER, ORACLE, PLACED, category, lines
+from test_household import LEDGER, ORACLE, PLACED, category, lines, no_pins
 
 from src.jev import Chosen
 from src.sketch.cli import main
@@ -40,7 +40,8 @@ class NamingTests(unittest.TestCase):
         stderr = io.StringIO()
         cls.code = main(
             ["run", str(LEDGER), "--out", str(directory / "out"), "--with", f"monarch={ORACLE / 'monarch.csv'}",
-             "--with", f"amex={ORACLE / 'amex.csv'}", "--with", "amex_account=Platinum", "--with", "since=2026-01-01"],
+             "--with", f"amex={ORACLE / 'amex.csv'}", "--with", "amex_account=Platinum", "--with", "since=2026-01-01",
+             *no_pins(directory)],
             make_jev=lambda: JevDouble(choose_fn=reading), store=CaptureStore(directory / "cache"), stdout=io.StringIO(),
             stderr=stderr)
         cls.stderr = stderr.getvalue()
