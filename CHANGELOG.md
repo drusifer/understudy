@@ -1,5 +1,16 @@
 # Changelog
 
+## Sprint 24 — what the money goes on, typed inputs, and the statechart you can see (2026-11-02, branch `sprint-24`, not yet merged)
+
+- **Card payments are not spending:** a household record is a transfer when its Category is `Transfer` or `Credit Card Payment`, or ends in `: Credit Card Payment`, `: Transfer` or `: Transfers`, or when the run links it to a record in another account. Positive records outside Ridgewood that are not transfers fell from 169 records ($240,596) to 143 ($20,038); Ridgewood is unchanged. `summary.json` counts `transfer_basis` (`label`, `link`, `both`, `none`). New sketch condition `ends`.
+- **Where the money goes:** `spending.jsonl`, one line per category (`category`, `count`, `amount`, `share`), biggest first, from your export's own category, else Jev's, else `uncategorized`; `spending_total` in `summary.json`. On the baseline: 90 categories, $403,977 in total, Rent $60,807 first. The console's summary lists the ten largest and "and N more".
+- **Typed inputs:** a sketch declares `inputs:` (`choice`, `range`, `count`, `switch`, each with limits and a default). The console shows a dial, a slider, a stepper or a switch for each, reachable by keyboard; a value outside its limits is refused on the command line and in the console, naming the input; `evening` declares its seven values and no longer repeats their defaults.
+- **The statechart:** the console draws the sketch's machine (double-bordered finals, guard labels, dashed loops), lights the state the run is in within a second, marks the move just taken and says how the run ended; a log without a story says so. The layout is computed in Python (`src/dashboard/chart.py`) and tested to forty states.
+- **Generic sketch parts:** `map.share`, a `sums`-style layout of the existing stages, the `ends` condition, `inputs:`; `run_started` now also carries `initial`.
+- **Breaking:** `summary.json` has `transfer_basis` instead of `kind_changed_by_category`; a sketch's `--with` value for a declared input is checked against its limits.
+- **Security:** SEC-010 (a typed number was checked as a float but passed on as text) found and fixed in Phase 4.
+- **Docs:** ADR-0052 to ADR-0054, `ARCH_SPRINT24.md`, `UAT_PLAN_SPRINT24.md`, two lessons.
+
 ## Sprint 23 — household numbers you can trust, and a run that tells its story (2026-11-02, branch `sprint-23`, not yet merged)
 
 - **Transfers come from your categories:** a household record is a transfer exactly when its Monarch `Category` is `Transfer` or `Credit Card Payment`, otherwise never; savings moved from Schwab into checking are no longer income or refunds. `summary.json` counts the records the category changed (`kind_changed_by_category`). A Monarch file without a `Category` column stops the run before any Jev request. On the baseline file Ridgewood income is $363,348.62 and expenses $205,042.27, equal to the owner's file to the cent.

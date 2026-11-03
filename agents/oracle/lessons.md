@@ -625,3 +625,41 @@ Before accepting "old shape is unreadable", list what exists in the old shape an
 ### Evidence and Scope
 - **References:** `docs/sprints/USER_STORIES_SPRINT23.md` (UND-81 AC5, amended), `src/dashboard/view.py` (`story`)
 - **Applies when:** a change removes support for an old file or log shape.
+
+---
+
+## [2026-11-02] A style name you reuse may already be styled by a theme
+
+> **Tags:** #console #css #Neo #Trin
+
+### Context
+Sprint 24 added a dial, a switch and a fader to the console and named their CSS classes `dial-option`, `switch` and `fader`.
+
+### Observation and Cause
+Every theme file still held rules for those exact names from the old console, whose markup was deleted in Sprint 21. They overrode the new colors, and the readability check found the dial text unreadable in the dark looks. Confirmed cause: the old rules were dead code that nothing had removed; the new names matched them by accident.
+
+### Rule
+Before naming a new CSS class, search every theme file for it; if a rule exists for a deleted feature, choose another name and put removing the dead rules on the backlog.
+
+### Evidence and Scope
+- **References:** `src/dashboard/controls.js`, `src/dashboard/page.css`, `docs/sprints/UAT_PLAN_SPRINT24.md` (UAT-24-5)
+- **Applies when:** adding markup to a page with several theme files after a feature was removed.
+
+---
+
+## [2026-11-02] A target that the first rule cannot reach needs a number before it is approved
+
+> **Tags:** #stories #household #Cypher #Smith
+
+### Context
+UND-93 said widening the transfer rule to card-side labels would bring positive records outside Ridgewood under $30,000.
+
+### Observation and Cause
+Smith checked the target against the last real run before approving: after the label rule, $153,085 remained, mostly five Amex card payments the earlier categorization had labeled as income. The label cannot reach those; the run's own link between the two halves of a payment can. The story was rejected and reworded with both. Confirmed cause: the target was written without a calculation on the real data.
+
+### Rule
+When a story states a figure to hit on real data, work the figure out on the real data first and name what reaches it; Smith recomputes it at the gate.
+
+### Evidence and Scope
+- **References:** `docs/sprints/USER_STORIES_SPRINT24.md` (UND-93 AC4), ADR-0052
+- **Applies when:** a story or criterion contains a number measured on the owner's data.

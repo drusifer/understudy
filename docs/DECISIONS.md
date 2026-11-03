@@ -10,9 +10,111 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
-# ADR-0050: The export's own category decides what is a transfer
+# ADR-0054: The statechart's layout is computed in Python; the page only draws it
 
 *   **Status**: Accepted
+*   **Deciders**: Morpheus
+*   **Date**: 2026-11-02
+*   **Related**: `docs/sprints/ARCH_SPRINT24.md`, UND-82, ADR-0048
+
+## 1. Context and Problem Statement
+
+The old console drew each run's statechart with a browser layout library. The Python-served console (ADR-0048) has one toolchain and no Node, and the owner wants the diagram back with the current state lit.
+
+## 2. Decision Drivers
+
+* One toolchain; everything testable without a browser; the sketch's own machine is the source.
+* The same machine must always give the same drawing, with no box or label on another and no arrow through a box.
+* Text from a sketch must never become markup.
+
+## 3. Considered Options
+
+| Option | Benefits | Costs / risks | Reason selected or rejected |
+|---|---|---|---|
+| A layout library in the browser (elkjs) | A mature layout | A second toolchain and a large file; hard to test | Rejected |
+| Lay out in the page's own JavaScript | No server change | No Python test of overlaps; logic split across two languages | Rejected |
+| Lay out in Python, draw plain SVG in the page | Tested to 40 states without a browser; the page is about sixty lines | A simple layered layout, dense at 40 states | Selected |
+
+## 4. Decision Outcome & Justification
+
+* **Chosen Option:** **`src/dashboard/chart.py`** returns boxes, arrows (routed through the gaps between rows and the gutters beside them) and a lane for each label; `describe` adds the lit state, the move just taken and the ending; `page.js` draws SVG with `textContent` only.
+* **Justification:** the overlap rules are unit-tested on generated 40-state machines and the real machines; a hostile state name is drawn as text (browser test).
+
+### Consequences
+- **Expected benefit:** the diagram follows a live run within a second (the page refreshes in 250 ms bursts from the event stream).
+- **Costs or risks:** the layout is longest-path layering, so a dense machine is busy; a better drawer is a replacement of one module.
+
+# ADR-0053: Inputs are declared in the sketch with defaults, and the loader injects them
+
+*   **Status**: Accepted
+*   **Deciders**: owner (2026-11-02, decision 4: typed inputs wanted), Morpheus
+*   **Date**: 2026-11-02
+*   **Related**: `docs/sprints/ARCH_SPRINT24.md`, UND-87
+
+## 1. Context and Problem Statement
+
+A sketch took values only as template variables, so the console could show a text box and nothing else: no limits, no kinds, no defaults it knew about. The owner wants a dial, faders, a stepper and switches.
+
+## 2. Decision Drivers
+
+* A control cannot be set outside its limits, in the console or on the command line.
+* One place for a default; the template should not repeat it.
+* No fallbacks: a wrong declaration is refused, naming the input.
+
+## 3. Considered Options
+
+| Option | Benefits | Costs / risks | Reason selected or rejected |
+|---|---|---|---|
+| Guess the kind from the template | No new syntax | Cannot know limits or options | Rejected |
+| A settings file beside the sketch | Keeps the sketch plain | A second place to keep in step | Rejected |
+| `inputs:` in the sketch (choice, range, count, switch) | One source for kind, limits, default and label | A new top-level key and a small module | Selected |
+
+## 4. Decision Outcome & Justification
+
+* **Chosen Option:** **`inputs:`**, validated by `src/sketch/inputs.py`, which both the loader and the console use. The loader reads the declaration before rendering and injects each default, so templates write `{{ tickets }}`. A number must be plain ASCII digits (SEC-010). Names the file uses but does not declare keep a text box.
+* **Justification:** `evening` declares seven inputs and lost its repeated defaults; a bad value is refused in one line on the command line and with a 400 in the console.
+
+### Consequences
+- **Expected benefit:** typed controls, the same limits everywhere, defaults in one place.
+- **Costs or risks:** the declaration is read with every value empty first, which works for every example sketch; the themes still hold dead styles from the old console's controls (new classes were named to avoid them).
+
+# ADR-0052: A transfer is the widened label or a link to a record in another account
+
+*   **Status**: Accepted
+*   **Deciders**: owner (2026-11-02, decision 9), Morpheus
+*   **Date**: 2026-11-02
+*   **Related**: `docs/sprints/ARCH_SPRINT24.md`, UND-93, ADR-0050 (partly superseded)
+
+## 1. Context and Problem Statement
+
+ADR-0050 made the export's `Transfer` and `Credit Card Payment` decide what is a transfer. The owner's file still labels card-side payments as "Food & Dining: Credit Card Payment" and "Transportation: Transfers", and five large card payments received ($133,047) are labeled as income, so the all-account figures counted $240,596 of positive records outside Ridgewood as refunds or credits.
+
+## 2. Decision Drivers
+
+* The owner wants to know what the money goes on, with card payments out of both income and spending.
+* The label alone cannot reach the five payments labeled as income; the run already links the two halves of a card payment.
+* A label match must not catch a lookalike such as "Transferware".
+
+## 3. Considered Options
+
+| Option | Benefits | Costs / risks | Reason selected or rejected |
+|---|---|---|---|
+| The widened label only | Simple | Leaves $153,085 of card payments counted as income | Rejected (found at Gate 1) |
+| Relabel in Monarch | The owner's data stays the source | Manual work for a few hundred records | Rejected by the owner |
+| The widened label or a link | Positives outside Ridgewood fall to $20,038 | A few mislabeled purchases (Depop, Soho Deli) count as transfers | Selected |
+
+## 4. Decision Outcome & Justification
+
+* **Chosen Option:** **A record is a transfer when its Category is `Transfer` or `Credit Card Payment`, or ends in `: Credit Card Payment`, `: Transfer` or `: Transfers`, or when the run links it to a record in another account.** A new condition `ends` matches the end of text exactly. `summary.json` counts the basis (`label`, `link`, `both`, `none`).
+* **Justification:** Ridgewood stays $363,348.62 income and $205,042.27 expenses; no labeled or linked record is a purchase, refund or credit.
+
+### Consequences
+- **Expected benefit:** the spending list (`spending.jsonl`, UND-94) is not distorted by card payments.
+- **Costs or risks:** a purchase the export labels with a transfer form is a transfer until the owner relabels it.
+
+# ADR-0050: The export's own category decides what is a transfer
+
+*   **Status**: Accepted (the "never otherwise" part is superseded by ADR-0052: a link also makes a transfer)
 *   **Deciders**: owner (2026-11-02, decision 8), Morpheus
 *   **Date**: 2026-11-02
 *   **Related**: `docs/sprints/ARCH_SPRINT23.md`, UND-89, `OWNER_DECISIONS_SPRINT22.md` 8
