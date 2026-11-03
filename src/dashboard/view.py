@@ -214,6 +214,7 @@ def describe(directory: Path, now: datetime | None = None) -> dict:
             "seconds": round(_seconds(events)), "with": run.get("with", {}), "outputs": run.get("outputs", {}),
         },
         "mode": mode,
+        "story": "states" in started,  # a log written before the first line told the machine has no story
         "tube": tube,
         "gauges": gauges_of(summary, events, tube),
         "lines": [printed(each) for each in events],

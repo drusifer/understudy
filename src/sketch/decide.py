@@ -30,10 +30,14 @@ def weight_of(weight, row: dict) -> float:
     return float(weight)
 
 
-def decide_input(state: dict, row: dict, deciders: dict[str, list[dict]], *, allowed: dict | None = None) -> Distribution:
+def decide_input(
+    state: dict, row: dict, deciders: dict[str, list[dict]], *, allowed: dict | None = None, story: list | None = None,
+) -> Distribution:
     """The weights per dimension for one input row, from a `blend` stage's entries and `forbid` rules.
 
-    `state` is the stage as written; `deciders` holds the rows each named decider (a subsketch) returned.
+    `state` is the stage as written; `deciders` holds the rows each named decider (a subsketch) returned. A list
+    given as `story` gets one entry per dimension: its options with their final weight (0.0 when removed), what
+    removed each, the pick and the pick's weight.
     """
     opinions = [
         Opinion(
@@ -44,8 +48,19 @@ def decide_input(state: dict, row: dict, deciders: dict[str, list[dict]], *, all
     ]
     label = f"{row.get('segment', 'the input row')}"
     policy = Policy(state.get("on_empty", "fail"), allowed)
-    result = forbid(blend(opinions), state.get("forbid", []), row, label, policy)
+    mixed = blend(opinions)
+    removed: dict = {}
+    result = forbid(mixed, state.get("forbid", []), row, label, policy, removed)
     if "shortlist" in state:
-        result = shortlist(result, state["shortlist"])
+        result = shortlist(result, state["shortlist"], removed)
     check_sums(result)
+    if story is not None:
+        for dimension, options in result.items():
+            pick = max(options, key=options.get)
+            story.append({
+                "dimension": dimension, "pick": pick, "probability": round(options[pick], 6),
+                "options": [{"name": name, "weight": round(options.get(name, 0.0), 6),
+                             "removed_by": removed.get((dimension, name))}
+                            for name in mixed.get(dimension, options)],
+            })
     return result

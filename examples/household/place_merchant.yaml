@@ -37,10 +37,10 @@ sources:
     options: { from: choices, key: category }
     state:
       merchant: { from: facts }
-  best:
+  best:                                 # the top level and the runner-up, for the owner's review list
     kind: stage
-    do: { reduce: { action: max } }
-    with: { source: reading, field: probability }
+    do: { reduce: { action: top_two } }
+    with: { source: reading, label: level, value: probability }
 
 machine:
   initial: decide

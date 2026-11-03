@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 from jev_double import JevDouble
-from test_household import LEDGER, ORACLE, OWN, PLACED, category, lines
+from test_household import LEDGER, ORACLE, PLACED, category, lines, no_pins
 
 from src.jev import Chosen
 from src.sketch.cli import main
@@ -31,9 +31,7 @@ class NamingTests(unittest.TestCase):
                     taken = next(name for name in options if name != "none_of_these")
                     return Chosen(taken, 0.9, {name: 0.9 if name == taken else 0.1 for name in options})
                 return category(merchant, options) if "none_of_these" not in options else _place(merchant, options)
-            own = OWN[state["payee"][0]["payee"]]
-            levels = {"own_account": own, "someone_else": 1 - own}
-            return Chosen(max(levels, key=levels.get), 0.9, levels)
+            raise AssertionError(f"Jev was asked a question the household no longer asks: {list(state)}")
 
         def _place(merchant, options):
             top, sure = UNFIT[merchant]
@@ -42,7 +40,8 @@ class NamingTests(unittest.TestCase):
         stderr = io.StringIO()
         cls.code = main(
             ["run", str(LEDGER), "--out", str(directory / "out"), "--with", f"monarch={ORACLE / 'monarch.csv'}",
-             "--with", f"amex={ORACLE / 'amex.csv'}", "--with", "amex_account=Platinum", "--with", "since=2026-01-01"],
+             "--with", f"amex={ORACLE / 'amex.csv'}", "--with", "amex_account=Platinum", "--with", "since=2026-01-01",
+             *no_pins(directory)],
             make_jev=lambda: JevDouble(choose_fn=reading), store=CaptureStore(directory / "cache"), stdout=io.StringIO(),
             stderr=stderr)
         cls.stderr = stderr.getvalue()

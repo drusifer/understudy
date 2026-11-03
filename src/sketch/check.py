@@ -45,9 +45,14 @@ class _Checker:
 
     # sources and data ----------------------------------------------------
 
+    def may_be_missing(self, source) -> bool:
+        """An optional file source may be missing unless the value that chooses it (`optional: <name>`) was given."""
+        chosen_by = source.config.get("optional")
+        return bool(chosen_by) and chosen_by not in self.sketch.variables
+
     def sources(self) -> None:
         for name, source in self.sketch.sources.items():
-            if source.kind == "file" and not (source.path and source.path.is_file()):
+            if source.kind == "file" and not (source.path and source.path.is_file()) and not self.may_be_missing(source):
                 self.problem(f"sources.{name}", f"file {source.path} does not exist")
             if source.kind == "stage":
                 self.stage_source(name, source.config)

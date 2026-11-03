@@ -587,3 +587,41 @@ The first tool call for any artifact is reading its template; the first for any 
 
 ### References
 - **Files:** `agents/templates/_template_PRD.md`, `docs/sprints/USER_STORIES_SPRINT22.md`, `docs/sprints/RETRO_SPRINT21.md`
+
+---
+
+## [2026-11-02] Run a new rule against the whole real file, not the account you tuned it on
+
+> **Tags:** #testing #household #Neo #Trin
+
+### Context
+Sprint 23 made a record a transfer only when its Monarch Category is `Transfer` or `Credit Card Payment`. The fixture and the Ridgewood account both agreed with the rule, and Ridgewood matched the owner's numbers to the cent.
+
+### Observation and Cause
+Outside Ridgewood the same file labels other card payments "Food & Dining: Credit Card Payment" and Venmo "Transportation: Transfers". Those were transfers by the old pairing and stopped being transfers under the new rule: 169 positive records worth $240,596 now count as refunds or credits. Confirmed cause: the rule was checked on the one account the owner cared about; the other accounts were never read.
+
+### Rule
+When you change a rule that classifies every record, run it on the whole real file and count what moved between classes per account, not only the figure you were asked to fix.
+
+### Evidence and Scope
+- **References:** `docs/sprints/UAT_PLAN_SPRINT23.md` (UAT-23-1, open issue), ADR-0050
+- **Applies when:** a rule, threshold or category list changes how many records fall into each class.
+
+---
+
+## [2026-11-02] A criterion that makes existing data unreadable needs the count of what exists
+
+> **Tags:** #design #console #Cypher #Morpheus
+
+### Context
+UND-81 AC5 said a log written before the sprint is shown as an unreadable run (the owner's no-back-compat rule). Nothing in the sprint used the new lines yet.
+
+### Observation and Cause
+The `.understudy/runs` folder held nine real runs, all without the new lines, so the criterion would have hidden every one of them from the console for no gain until the Sprint 24 diagram needs the story. The criterion was written and approved without counting what was on disk.
+
+### Rule
+Before accepting "old shape is unreadable", list what exists in the old shape and what needs the new one; if the new shape has no reader yet, mark the old data (`story: false`) instead of hiding it, and tell the owner.
+
+### Evidence and Scope
+- **References:** `docs/sprints/USER_STORIES_SPRINT23.md` (UND-81 AC5, amended), `src/dashboard/view.py` (`story`)
+- **Applies when:** a change removes support for an old file or log shape.

@@ -10,6 +10,74 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+# ADR-0050: The export's own category decides what is a transfer
+
+*   **Status**: Accepted
+*   **Deciders**: owner (2026-11-02, decision 8), Morpheus
+*   **Date**: 2026-11-02
+*   **Related**: `docs/sprints/ARCH_SPRINT23.md`, UND-89, `OWNER_DECISIONS_SPRINT22.md` 8
+
+## 1. Context and Problem Statement
+
+The household sketch paired candidate transfers, asked Jev whether each unpaired payee was one of the owner's accounts, and read a deposit from a known merchant as that merchant's refund. On the owner's real data, savings moved from Charles Schwab into checking ($3,000 to $25,000 at a time) came out as refunds and income, so Ridgewood income was $404k against the owner's $363k.
+
+## 2. Decision Drivers
+
+* The owner has already labeled these records by hand in Monarch (Transfer, Credit Card Payment).
+* The sketch language stays code-free; fewer Jev requests is better; the owner's labels cannot be beaten by a guess.
+* No back-compat: replace the old shape outright (owner rule).
+
+## 3. Considered Options
+
+| Option | Benefits | Costs / risks | Reason selected or rejected |
+|---|---|---|---|
+| Fix the pairing rule so own-account deposits are transfers | Works on raw exports | The rule cannot know a Schwab deposit is the owner's own savings | Rejected |
+| Keep the Jev payee reading as a second opinion | Catches unlabeled transfers | About 25 requests per run; cannot beat the owner's label | Rejected |
+| The export's Category decides; pairing kept as evidence only | Matches the owner's numbers to the cent; removes a Jev call and `external_transfer` | A raw export without the owner's categories cannot be typed | Selected |
+
+## 4. Decision Outcome & Justification
+
+* **Chosen Option:** **The export's Category decides.** A record is a transfer exactly when its Category is `Transfer` or `Credit Card Payment`, otherwise never. The links stay in `legs.jsonl`, and `summary.json` counts the records where category and pairing disagree. A file with no Category column stops the run before any Jev request.
+* **Justification:** on the baseline file Ridgewood income is $363,348.62 and expenses $205,042.27, equal to the owner's file to the cent.
+
+### Consequences
+- **Expected benefit:** correct per-account totals; `judge_payee.yaml`, `judgments.jsonl` and the `external_transfer` kind are gone.
+- **Costs or risks:** card-side records that the export labels with other groups ("Food & Dining: Credit Card Payment", "Transportation: Transfers") are no longer transfers; about 169 positive records worth $240,596 outside Ridgewood count as refunds or credits. Owner to relabel them in Monarch or widen the rule.
+
+# ADR-0051: A sink is never also a source; the owner's pins come in as a separate source
+
+*   **Status**: Accepted
+*   **Deciders**: owner (2026-11-02, decision 7), Morpheus
+*   **Date**: 2026-11-02
+*   **Related**: `docs/sprints/ARCH_SPRINT23.md`, UND-91, UND-92
+
+## 1. Context and Problem Statement
+
+Jev is unsure about merchants (below 0.7, or none of the categories fit). The owner wants to answer once per merchant and never be asked again. A run's output folder is write-once history; a later run must not depend on files an earlier run wrote there.
+
+## 2. Decision Drivers
+
+* Runs stay reproducible: the same files and pins give the same result.
+* Jev chooses and never writes text; the owner's answers are categories, not free text.
+* No new sketch feature where an ordinary source will do.
+
+## 3. Considered Options
+
+| Option | Benefits | Costs / risks | Reason selected or rejected |
+|---|---|---|---|
+| A sink that is also a source | One file | A run reads and writes the same file; re-running an old run changes | Rejected |
+| Pins only in the console | Friendly | Needs the console first; not scriptable | Rejected for now |
+| `review.jsonl` out, `pinned.jsonl` in as a separate optional file source | Reproducible, scriptable, console button can come later | The owner edits a file for now | Selected |
+
+## 4. Decision Outcome & Justification
+
+* **Chosen Option:** **A per-merchant `review.jsonl` sink and a separate `pinned.jsonl` source** (`--with pinned=<path>`, default `.understudy/pinned.jsonl`, absent default means no pins, a missing explicit path stops the run). A pin is `{payee, category}` with a category the export uses; pins are checked before any Jev request, and a pinned merchant is placed from the file, marked `category_source: pin`, never asked about and left out of `review.jsonl`.
+* **Justification:** a small optional file source (`optional: <name of the --with value>`) and four generic stages (`without`, `complete`, `known`, `set`) did it with no change to how runs are stored.
+
+### Consequences
+- **Expected benefit:** the review list shrinks each run; the same pins give the same records.
+- **Costs or risks:** two pins for one merchant keep the first (not checked); a category's edge spaces must match (the export has `Pharmaceuticals ` with a trailing space); a pin file is edited by hand until the console offers a button.
+
 ## ADR-0049: The console starts runs as child processes, behind one access secret and an allow-list
 
 *   **Status**: Accepted · **Deciders**: owner (watch and start; plain HTTP accepted until 2027-01-30), Morpheus, Switch · **Date**: 2026-11-01 · **Related**: Sprint 22 UND-79; [ARCH_SPRINT22](sprints/ARCH_SPRINT22.md); SEC-005 to SEC-009; owner decisions 1-2 of Sprint 22

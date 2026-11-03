@@ -76,7 +76,14 @@ A state's `do:` names a stage **type** as a key (a closed set the schema owns) a
 | `map: { action: pair }` | `source`, `other`, `date`, `amount`, `within`, `only`, `text`, `other_text`, `rounds` | every row of two lists once, paired one to one when `date` and `amount` are equal (rows whose `text` is equal first, then in file order), then within `within` business days, nearest first: flat rows `{match, method, <source fields>, other_<other fields>}`; `only` is a condition on which source rows may pair |
 | `map: { action: link }` | `source`, `date`, `amount`, `apart`, `id`, `within`, `rounds` | links rows of one list to each other (opposite amounts, different `apart` values, dates within `within` business days, nearest first, ties by `id`): adds `partner` and `gap` (null when unlinked) |
 | `map: { action: earlier }` | `source`, `other`, `on`, `date`, `amount`, `tie`, `prefix`, `take` | for each row, one row per `other` row with the same `on`, a `date` no later and an `amount` of the opposite sign at least as large (a refund and the charges it could reverse), with the candidate's fields after `prefix` and a `candidates` count |
-| `map: { action: group }` | `source`, `by`, `collect`, `take` | one row per distinct `by` value (case and spacing ignored): `{key, <by>, count}` plus, for each `collect` entry `into: field`, up to `take` different values |
+| `map: { action: group }` | `source`, `by`, `collect`, `take`, `sums` | one row per distinct `by` value (case and spacing ignored): `{key, <by>, count}` plus, for each `collect` entry `into: field`, up to `take` different values, and for each `sums` entry the total of a field to cents: `into: field`, or `into: { field: f, where: <condition> }` to total only the rows that satisfy the condition (0.0 when none do) |
+| `map: { action: without }` | `source`, `among`, `on`, `among_on` | the rows of `source` whose `on` value is not the `among_on` (default `on`) value of any row of `among` (the opposite of `matching`) |
+| `map: { action: complete }` | `source`, `fields` | the rows of `source` unchanged, after checking every row has a value in every field; the first that does not stops the run: `source 'x' line 2 has no payee` |
+| `map: { action: known }` | `source`, `field`, `among`, `among_field` | the rows of `source` unchanged, after checking every row's `field` is some row's `among_field` in `among`; the first that is not stops the run, naming the line and the value |
+| `map: { action: set }` | `source`, `fields` | each row plus the named fields, the same value on every row |
+| `map: { action: keep }` | `source`, `fields` | each row with only the named fields, in that order (null for a field the row lacks) |
+| `reduce: { action: top_two }` | `source`, `label`, `value` | one row naming the best two rows by `value`: `{<label>, <value>, runner_up, runner_up_probability}` (the runner-up is null when there is only one row; no rows give no row) |
+| `reduce: { action: note }` | `source`, `into` | the rows of `source` unchanged; `summary.json` gets `into`: the first row without its `key` |
 | `map: { action: attach }` | `source`, `other`, `field`, `into` | adds `into` to every row: the list of the `field` values of all rows of `other` (what a repeated sketch needs to see) |
 | `map: { action: concat }` | `sources` | the rows of every source named, one after the other |
 | `map: { action: matching }` | `source`, `among`, `on`, `among_on` | the rows of `source` whose `on` value is a value of `among_on` in some row of `among` |
@@ -91,6 +98,8 @@ A state's `do:` names a stage **type** as a key (a closed set the schema owns) a
 | `map: { action: prefer_middle }` | `rows`, `extent`, `group`, `order`, `into`, `match` | adds `into` to runs: 1.0 centered in their group, 0.0 at its end |
 | `map: { action: weigh }` | `source`, `by`, `into` | adds `into`: the sum of the `by` fields, each times its weight |
 | `reduce: { action: max }`, `min` | `source`, `field`, `take` | the `take` rows (default 1) with the highest (lowest) `field`, best first |
+| `map: { action: require }` | `source`, `columns` | the rows of `source` unchanged, after checking they have every named column; a source with rows but without one stops the run with `source 'x' has no <column> column` (an empty source passes) |
+| `reduce: { action: tally }` | `source`, `by`, `into` | the rows of `source` unchanged; `summary.json` gets `into`: how many rows have each value of `by` |
 | `reduce: { action: any }` | `source` | one row, `{any: true}` if the source has any row, `{any: false}` if none (for a guard) |
 | `sink: { name: <sink> }` | `source` (optional) | writes the rows of the stage before it to the sink file, or the rows of the named `source` |
 | `sketch: { file: <file> }` | | runs `<file>.yaml` beside this one as a nested run and gives back the weighted rows its `outputs` name; `with:` passes it values (see Subsketches) |
@@ -307,6 +316,8 @@ The iterations run in order. The rows each one outputs are appended to a running
 
 A file source whose name ends in `.csv` is read with its header row as the field names; every value is text (turn dates and amounts into values with `map.convert`). Any other file is JSONL.
 
+An **optional** file source, `pins: { kind: file, path: "{{ pinned | default('.understudy/pinned.jsonl') }}", optional: pinned }`, names in `optional` the `--with` value that chooses its file. When that value is not given and the file does not exist, the source has no rows and the run says so; when it is given and the file does not exist, `check` and the run stop and name the file. A relative path in an optional source is read from where you run, like the `--with` value.
+
 ## How a run ends
 
 A guard (`if:` on a transition) tests the fields of a stage's result when that result is a mapping or a **single row**, which is what a scalar reducer such as `reduce.any` returns. So a sketch can route on "is there anything?":
@@ -352,7 +363,9 @@ A replay says so on its first line (`replay: reading captures from <folder>, no 
 
 * your sink files, written last, so a failed run publishes none;
 * `summary.json`: counts only (total, per segment, the shares, the weather weights, Jev requests, `mode`, `stale`);
-* `run.json` (each stage complete or failed), `events.jsonl` (one JSON line per run event), `run.duckdb`.
+* `run.json` (each stage complete or failed), `events.jsonl` (one JSON line per run event, below), `run.duckdb`.
+
+The story in `events.jsonl`: the first line, `run_started`, carries `sketch`, `mode`, `states` (each `{name, final}`) and `transitions` (each `{from, to, event, when?}`, the event always `ok`; `when` is the guard). Then `stage_started` and `stage_completed` for every stage (nested stages are named `parent.child[n].stage`), `state_entered` (`state`, `caused_by`: `start`, `ok` or `fail`) each time the top-level machine enters a state, and for every `reduce.blend` a `decision` line per input row and dimension: `stage`, `row`, `dimension`, `options` (each `{name, weight, removed_by}`, `weight` the final weight and 0.0 when removed, `removed_by` `forbid rule N`, `shortlist` or null), `pick` and its `probability`. A run ends with `run_finished` and its `outcome`, or a failed one with `stage_failed` and its `reason`. A log written before this sprint has no `states`.
 
 Exit codes: 0 done, 1 a stage failed after the run started, 2 refused before starting (a wrong sketch, a missing file, a missing key, a replay with nothing to replay). Every failure ends with one `understudy: <message>` line, never a traceback.
 

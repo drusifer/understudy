@@ -116,10 +116,50 @@ async def reduce_any(context, source: Source) -> list[dict]:
     return [{"any": bool(await context.read(source))}]
 
 
+@stage("map.require")
+async def require(context, source: Source, columns: list) -> list[dict]:
+    """The rows of `source` unchanged, after checking that they have every column in `columns`; a source with rows but
+    without one of them stops the run, naming the source and the column. An empty source has nothing to check."""
+    rows = await context.read(source)
+    for column in columns:
+        if rows and column not in rows[0]:
+            raise ValueError(f"source {source!r} has no {column} column")
+    return rows
+
+
+@stage("reduce.tally")
+async def tally(context, source: Source, by: str, into: str) -> list[dict]:
+    """The rows of `source` unchanged; the run's summary gets `into`: how many rows have each value of `by`."""
+    rows = await context.read(source)
+    counts: dict[str, int] = {}
+    for row in rows:
+        counts[str(row[by])] = counts.get(str(row[by]), 0) + 1
+    context.summary[into] = dict(sorted(counts.items()))
+    return rows
+
+
 @stage("reduce.max")
 async def reduce_max(context, source: Source, field: str, take: int = 1) -> list[dict]:
     """The `take` rows of `source` with the highest `field`, highest first. Equal values keep the order they had."""
     return sorted(await context.read(source), key=lambda row: -row[field])[:take]
+
+
+@stage("reduce.top_two")
+async def top_two(context, source: Source, label: str, value: str) -> list[dict]:
+    """One row naming the best two of `source` by `value`: `{<label>, <value>, runner_up, runner_up_probability}`, the
+    first being the highest and the runner-up (None when there is only one row) the next. No rows give no row."""
+    ranked = sorted(await context.read(source), key=lambda row: -row[value])
+    if not ranked:
+        return []
+    best, second = ranked[0], (ranked[1] if len(ranked) > 1 else None)
+    return [{label: best[label], value: best[value], "runner_up": second and second[label],
+             "runner_up_probability": second and second[value]}]
+
+
+@stage("map.keep")
+async def keep(context, source: Source, fields: list) -> list[dict]:
+    """Each row of `source` with only the fields in `fields`, in that order (None for a field the row lacks)."""
+    return [{field: row.get(field) for field in fields} for row in await context.read(source)]
 
 
 @stage("reduce.min")
@@ -129,19 +169,38 @@ async def reduce_min(context, source: Source, field: str, take: int = 1) -> list
 
 
 @stage("map.group")
-async def group(context, source: Source, by: str, collect: dict | None = None, take: int = 3) -> list[dict]:
+async def group(  # noqa: PLR0913 - the stage's with: keys
+    context, source: Source, by: str, collect: dict | None = None, take: int = 3, sums: dict | None = None,
+) -> list[dict]:
     """One row per distinct `by` value (case, spacing and edges ignored), in the order they first appear:
     `{key, <by>: the first spelling, count, <into>: [...]}`. Each `collect` entry, `into: field`, lists up to `take`
-    different non-empty values of `field` among the group's rows."""
+    different non-empty values of `field` among the group's rows. Each `sums` entry adds `into`: the total of a field
+    over the group's rows, to cents: `into: field`, or `into: { field: <field>, where: <condition> }` to total only
+    the rows that satisfy the condition (0.0 when none do)."""
     groups: dict[str, list[dict]] = {}
     for row in await context.read(source):
         groups.setdefault(" ".join(str(row[by] or "").lower().split()), []).append(row)
     return [
         {"key": key, by: rows[0][by], "count": len(rows),
          **{into: list(dict.fromkeys(row[field] for row in rows if row.get(field) not in (None, "")))[:take]
-            for into, field in (collect or {}).items()}}
+            for into, field in (collect or {}).items()},
+         **{into: _total(rows, spec) for into, spec in (sums or {}).items()}}
         for key, rows in groups.items()
     ]
+
+
+def _total(rows: list[dict], spec) -> float:
+    field, where = (spec, None) if isinstance(spec, str) else (spec["field"], spec.get("where"))
+    return round(float(sum(row[field] for row in rows if where is None or holds(where, row))), 2)
+
+
+@stage("reduce.note")
+async def note(context, source: Source, into: str) -> list[dict]:
+    """The rows of `source` unchanged; the run's summary gets `into`: the first row, without its grouping `key`."""
+    rows = await context.read(source)
+    if rows:
+        context.summary[into] = {name: value for name, value in rows[0].items() if name != "key"}
+    return rows
 
 
 @stage("map.rows")
@@ -231,6 +290,43 @@ async def matching(context, source: Source, among: Source, on: str, among_on: st
     """The rows of `source` whose `on` value is also the `among_on` (default: `on`) value of some row of `among`."""
     wanted = {row[among_on or on] for row in await context.read(among)}
     return [row for row in await context.read(source) if row[on] in wanted]
+
+
+@stage("map.without")
+async def without(context, source: Source, among: Source, on: str, among_on: str | None = None) -> list[dict]:
+    """The rows of `source` whose `on` value is not the `among_on` (default: `on`) value of any row of `among`."""
+    unwanted = {row[among_on or on] for row in await context.read(among)}
+    return [row for row in await context.read(source) if row[on] not in unwanted]
+
+
+@stage("map.complete")
+async def complete(context, source: Source, fields: list) -> list[dict]:
+    """The rows of `source` unchanged, after checking every row has a value in every field of `fields`; the first row
+    that lacks one stops the run, naming the source, the row's line (from 1) and the field."""
+    rows = await context.read(source)
+    for number, row in enumerate(rows, 1):
+        for field in fields:
+            if not str(row.get(field) or "").strip():
+                raise ValueError(f"source {source!r} line {number} has no {field}")
+    return rows
+
+
+@stage("map.known")
+async def known(context, source: Source, field: str, among: Source, among_field: str) -> list[dict]:
+    """The rows of `source` unchanged, after checking every row's `field` is the `among_field` value of some row of
+    `among`; the first row that is not stops the run, naming the line and the value."""
+    rows = await context.read(source)
+    allowed = {row.get(among_field) for row in await context.read(among)}
+    for number, row in enumerate(rows, 1):
+        if row[field] not in allowed:
+            raise ValueError(f"source {source!r} line {number}: {row[field]!r} is not a {among_field} in {among!r}")
+    return rows
+
+
+@stage("map.set")
+async def set_fields(context, source: Source, fields: dict) -> list[dict]:
+    """Each row of `source` plus the fields in `fields`, the same value on every row."""
+    return [{**row, **fields} for row in await context.read(source)]
 
 
 @stage("map.attach")

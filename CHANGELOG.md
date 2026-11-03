@@ -1,5 +1,16 @@
 # Changelog
 
+## Sprint 23 — household numbers you can trust, and a run that tells its story (2026-11-02, branch `sprint-23`, not yet merged)
+
+- **Transfers come from your categories:** a household record is a transfer exactly when its Monarch `Category` is `Transfer` or `Credit Card Payment`, otherwise never; savings moved from Schwab into checking are no longer income or refunds. `summary.json` counts the records the category changed (`kind_changed_by_category`). A Monarch file without a `Category` column stops the run before any Jev request. On the baseline file Ridgewood income is $363,348.62 and expenses $205,042.27, equal to the owner's file to the cent.
+- **Income, expenses and net per account:** `totals.jsonl` (one line per account, then an `all` row, also `net_spending` in `summary.json`), transfers left out.
+- **Merchants for review, as a list:** `review.jsonl`, one line per merchant Jev was unsure of (`payee`, `count`, `amount`, `top` and `runner_up` with probabilities, `reason`), most records first.
+- **Pinned categories:** `{payee, category}` lines in `.understudy/pinned.jsonl` (or `--with pinned=<path>`) place a merchant in your category, mark it `category_source: pin`, skip Jev and leave it out of `review.jsonl`; bad pins stop the run before any request.
+- **The run tells its story:** the first `events.jsonl` line lists the sketch's states and moves; `state_entered` lines; `decision` lines for each `reduce.blend` dimension (options, what removed each, pick and probability). The console's description of a run says `story: true` or `false`.
+- **Generic sketch parts:** `map.require`, `map.keep`, `map.without`, `map.complete`, `map.known`, `map.set`, `reduce.tally`, `reduce.note`, `reduce.top_two`, a `sums` option on `map.group`, and optional file sources.
+- **Breaking:** `external_transfer`, `judge_payee.yaml` and `judgments.jsonl` are gone from the household sketch (Jev is no longer asked about payees).
+- **Docs:** ADR-0050 and ADR-0051, `ARCH_SPRINT23.md`, `UAT_PLAN_SPRINT23.md`, two lessons.
+
 ## Sprint 22 — the console you can trust, see into, and start runs from (2026-11-01, branch `sprint-22`, not yet merged)
 
 - **A run says how it went:** the header reads RUNNING, DONE, FAILED, STOPPED or STALLED; a failed run shows a banner naming the stage and the reason (it jumps to that line); a summary shows the outcome, mode, stale, duration, the `--with` values and each output with its row count; the page says "disconnected, retrying" when the server is gone and recovers by itself; phones show the status first.

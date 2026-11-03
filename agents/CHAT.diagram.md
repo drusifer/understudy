@@ -268,9 +268,183 @@ sequenceDiagram
     participant Neo
     participant All
     participant Cypher
-    Note over Neo,Cypher: 📅 2026-11-02
+    participant Smith
+    participant Morpheus
+    participant Switch
+    participant Mouse
+    Note over Neo,Mouse: 📅 2026-11-02
     Neo->>All: "swe handoff"
     Note right of Neo: "Owner decision: runs<br/>default to<br/>.understudy/runs (git-<br/>ignored, beside the<br/>captures), not build/.<br/>Code, Makefile, docs,<br/>changelog updated, e…"
     Cypher->>All: "checkpoint"
     Note right of Cypher: "Checkpoint saved in<br/>agents/cypher/state.md<br/>(Sprint 22 closed,<br/>resume plan written).<br/>Next: merge sprint-22<br/>into main and push as<br/>asked, then…"
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Sprint 23 stories ready:<br/>docs/sprints/USER_STORIE<br/>S_SPRINT23.md<br/>(UND-89,90,91,92,81, 23<br/>pts). Household kinds<br/>from the owner's<br/>categories, p…"
+    Smith->>Morpheus: "user approve"
+    Note right of Smith: "*user approve. Sprint 23<br/>stories approved. rubric<br/>STORIES: OUT=A TEST=S<br/>FAIL=A SCOPE=A SIZE=A<br/>DESIGN=A. Every AC is<br/>checkable against the b…"
+    Morpheus->>Smith: "lead handoff"
+    Note right of Morpheus: "Architecture done: docs/<br/>sprints/ARCH_SPRINT23.md<br/>. Kind comes from the<br/>export's Category,<br/>pairing kept as<br/>evidence,<br/>external_transfer and<br/>th…"
+    Smith->>Switch: "user approve"
+    Note right of Smith: "*user approve.<br/>Architecture approved.<br/>rubric ARCH: BOUND=A<br/>FLOW=A FAIL=A USER=A<br/>DECS=A FEAS=S. UX notes:<br/>kinds.jsonl and<br/>USER_GUIDE lose ex…"
+    Switch->>Mouse: "sec handoff"
+    Note right of Switch: "security gate (design):<br/>No blocking findings.<br/>Quick pass: no new<br/>network, secret,<br/>dependency or workflow.<br/>New local inputs (pin<br/>file, Categ…"
+    Mouse->>Morpheus: "sm handoff"
+    Note right of Mouse: "Sprint 23 planned in<br/>task.md: 5 phases<br/>(UND-89, 90, 91, 92,<br/>81), each one build task<br/>then Trin, Switch,<br/>Morpheus gates, closeout<br/>with Tank…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review sprint<br/>plan: approved. rubric<br/>PLAN: SIZE=A GATE=A<br/>VERIF=A ALIGN=S OWNER=A<br/>LEVEL=A. Each phase is<br/>one build task plus the<br/>three…"
 ```
+
+## Phase 1 starts
+
+Phase 1: transfers come from the owner's categories (UND-89)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-02
+    Mouse->>All: "phase 1"
+    Note right of Mouse: "Phase 1: transfers come<br/>from the owner's<br/>categories (UND-89)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 1 impl complete<br/>(UND-89): kind from the<br/>export's Category<br/>(Transfer, Credit Card<br/>Payment),<br/>external_transfer,<br/>judge_payee and judgmen…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 1 passed<br/>(UND-89): on the<br/>baseline run, 72<br/>category-labeled records<br/>are all transfers and no<br/>other record is,<br/>Ridgewood income 36…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 1):<br/>No blocking findings.<br/>Quick pass on the diff:<br/>a Category read from the<br/>owner's own file, one<br/>Jev call type removed…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-1:<br/>passed. Small, generic<br/>stages (require, tally)<br/>with tests, the sketch<br/>got shorter (five stages<br/>and a child sketch rem…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 2 passed<br/>(UND-90): Ridgewood<br/>income 363,348.62 and<br/>expenses 205,042.27<br/>equal the baseline's<br/>sums to the cent, all-<br/>account net in…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 2):<br/>No blocking findings.<br/>Quick pass: totals.jsonl<br/>holds account names and<br/>sums, same data class as<br/>records.jsonl, wri…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-2:<br/>passed. group gained a<br/>general sums option and<br/>note is a 6-line stage,<br/>both documented and<br/>tested, the sketch reads<br/>t…"
+```
+
+## Phase 1 close-out
+
+- **Trin**: UAT phase 2 passed (UND-90): Ridgewood income 363,348.62 and expenses 205,042.27 equal the baseline's sums to the cent, all-account net in…
+- **Switch**: security gate (phase 2): No blocking findings. Quick pass: totals.jsonl holds account names and sums, same data class as records.jsonl, wri…
+- **Morpheus**: \*lead review phase-2: passed. group gained a general sums option and note is a 6-line stage, both documented and tested, the sketch reads t…
+
+## Phase 3 starts
+
+Phase 3: merchants for review, as a list (UND-91)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-02
+    Mouse->>All: "phase 3"
+    Note right of Mouse: "Phase 3: merchants for<br/>review, as a list<br/>(UND-91)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 3 impl complete<br/>(UND-91): review.jsonl<br/>one line per merchant,<br/>top two guesses, reason,<br/>most records first, new<br/>generic stages reduce.…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 3 passed<br/>(UND-91): real run gives<br/>475 merchants for 1,717<br/>review records, sorted,<br/>295 below 0.7 and 180<br/>none of these, empty-<br/>file…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 3):<br/>No blocking findings.<br/>Quick pass: review.jsonl<br/>holds merchant names,<br/>amounts and category<br/>names already in<br/>records…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-3:<br/>passed. top_two and keep<br/>are small and generic,<br/>the sketch derives the<br/>list from existing rows,<br/>no Python for the hou…"
+```
+
+## Phase 3 close-out
+
+- **Trin**: UAT phase 3 passed (UND-91): real run gives 475 merchants for 1,717 review records, sorted, 295 below 0.7 and 180 none of these, empty-file…
+- **Switch**: security gate (phase 3): No blocking findings. Quick pass: review.jsonl holds merchant names, amounts and category names already in records…
+- **Morpheus**: \*lead review phase-3: passed. top\_two and keep are small and generic, the sketch derives the list from existing rows, no Python for the hou…
+
+## Phase 4 starts
+
+Phase 4: pinned categories are kept (UND-92)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-02
+    Mouse->>All: "phase 4"
+    Note right of Mouse: "Phase 4: pinned<br/>categories are kept<br/>(UND-92)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 4 impl complete<br/>(UND-92): optional file<br/>source for pins (default<br/>.understudy/pinned.jsonl<br/>), pins checked in two<br/>states before any Jev…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 4 passed<br/>(UND-92): real run,<br/>Amazon 296 and Duane<br/>Reade 53 records placed<br/>by pin, out of review,<br/>bad pins, missing paths<br/>and abse…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 4):<br/>No blocking findings.<br/>Pin file is a new local<br/>input, parsed and<br/>checked before any Jev<br/>request, the console<br/>alread…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-4:<br/>passed. Optional source<br/>is one schema key, one<br/>loader line, one check<br/>line, one read branch,<br/>all tested, pin checks<br/>s…"
+```
+
+## Phase 4 close-out
+
+- **Neo**: Phase 4 impl complete (UND-92): optional file source for pins (default .understudy/pinned.jsonl), pins checked in two states before any Jev…
+- **Trin**: UAT phase 4 passed (UND-92): real run, Amazon 296 and Duane Reade 53 records placed by pin, out of review, bad pins, missing paths and abse…
+- **Morpheus**: \*lead review phase-4: passed. Optional source is one schema key, one loader line, one check line, one read branch, all tested, pin checks s…
+
+## Phase 5 starts
+
+Phase 5: the run tells its story (UND-81)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    participant Tank
+    participant Oracle
+    participant Smith
+    participant Cypher
+    Note over Mouse,Cypher: 📅 2026-11-02
+    Mouse->>All: "phase 5"
+    Note right of Mouse: "Phase 5: the run tells<br/>its story (UND-81)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 5 impl complete<br/>(UND-81): run_started<br/>now lists states and<br/>transitions,<br/>state_entered lines,<br/>decision lines from<br/>reduce.blend with op…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 5 passed<br/>(UND-81): real household<br/>run has 9 states, 8<br/>moves, 9 state_entered<br/>lines, run_finished, 9<br/>older runs story false<br/>and st…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 5):<br/>No blocking findings.<br/>Quick pass: new event<br/>lines carry state names,<br/>option names and weights<br/>already in the run f…"
+    Morpheus->>Tank: "lead handoff"
+    Note right of Morpheus: "*lead review phase-5:<br/>passed. The story rides<br/>on existing lines<br/>(run_started) and one<br/>new method on the<br/>record, blend traces are<br/>opt-in so…"
+    Tank->>Oracle: "devops handoff"
+    Note right of Tank: "SDLC check passed: no<br/>manifest, lockfile or<br/>Makefile change since<br/>Sprint 22, make check<br/>green (362), browser<br/>check 6/6 but 63s, so<br/>not a re…"
+    Oracle->>Smith: "ora handoff"
+    Note right of Oracle: "Docs groomed: ADR-0050<br/>and ADR-0051 in<br/>docs/DECISIONS.md<br/>(DECISION rubric:<br/>WHY=PASS OPTS=PASS<br/>CONS=PASS STATE=PASS),<br/>CHANGELOG, two lessons…"
+    Smith->>All: "user approve"
+    Note right of Smith: "*user approve. User test<br/>PASSED on the real<br/>household files<br/>(UAT-23-1..6). rubric<br/>UAT: COVER=A STEPS=A<br/>FAIL=A DATA=A EVID=A.<br/>LESSON check o…"
+    Mouse->>Cypher: "retro"
+    Note right of Mouse: "Retros in docs/sprints/R<br/>ETRO_SPRINT23.md: wins<br/>(numbers to the cent,<br/>real-data findings,<br/>small generic parts, AC5<br/>caught), misses (Edit-<br/>onl…"
+    Cypher->>All: "pm launch"
+    Note right of Cypher: "*pm launch sprint 23.<br/>Sprint complete:<br/>Ridgewood income and<br/>expenses match the<br/>owner's file to the<br/>cent, transfers follow<br/>the owner's categ…"
+```
+
+## Phase 5 close-out
+
+- **Tank**: SDLC check passed: no manifest, lockfile or Makefile change since Sprint 22, make check green (362), browser check 6/6 but 63s, so not a re…
+- **Oracle**: Docs groomed: ADR-0050 and ADR-0051 in docs/DECISIONS.md (DECISION rubric: WHY=PASS OPTS=PASS CONS=PASS STATE=PASS), CHANGELOG, two lessons…
+- **Smith**: \*user approve. User test PASSED on the real household files (UAT-23-1..6). rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A. LESSON check o…
+
+## Sprint close-out
+
+- **Cypher**: \*pm launch sprint 23. Sprint complete: Ridgewood income and expenses match the owner's file to the cent, transfers follow the owner's categ…

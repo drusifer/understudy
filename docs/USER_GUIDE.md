@@ -175,17 +175,30 @@ What it does, in order:
 1. Reads the two exports; a charge in both (same date and amount, the same text first, then in file order, then
    within three business days) is one record.
 2. Links the two halves of a card payment (opposite amounts in different accounts, within three business days).
-3. Jev judges each payee left over (`judge_payee`): an account the owner holds (above 0.7) is an external
-   transfer, below 0.3 it is spending (Venmo, Zelle, a person, a shop), in between it goes to review. Jev sees the
-   owner's account names, never their numbers.
+3. Types each record by the export's own category: a record whose Monarch `Category` is `Transfer` or
+   `Credit Card Payment` is a transfer (money moving between your own accounts, never income, a refund or
+   spending); any other category is not. The links in step 2 stay as evidence in `legs.jsonl`, and
+   `summary.json` counts (`kind_changed_by_category`) the records where the category and the links disagree. The
+   Monarch file must have a `Category` column; without one the run stops before it asks Jev anything.
 4. Links each refund to the earlier charge it reversed: by rule when there is one, by Jev (`link_refund`) when
    there are several.
 5. Places each merchant in a category already in use (`place_merchant`) or, when none fits, names one: a category
    named earlier in the run first, then a kind of business and a name from the ISO 18245 list (`name_merchant`,
-   run `each` merchant with `reduce` so each one sees the names given before it).
+   run `each` merchant with `reduce` so each one sees the names given before it). A merchant you have pinned
+   (below) is placed in your category and never asked about.
+
+**Pinned categories.** `review.jsonl` is your work list. To settle a merchant, add a line to your pin file, one JSON
+object per line: `{"payee": "Amazon", "category": "Business & Professional: Online Shopping"}`. The category must be
+one your Monarch export already uses (a Transfer or Credit Card Payment category is not offered); the merchant's
+spelling may differ in case and spacing. The next run places that merchant's records in the category, marks them
+`category_source: pin`, makes no Jev request for it and leaves it out of `review.jsonl`. The pin file is
+`.understudy/pinned.jsonl` (read from where you run, git-ignored) unless you pass `--with pinned=<path>`. If the
+default file is not there the run says so and has no pins; a path you pass that does not exist, a line without a
+`payee` or `category`, or a category the export does not use stops the run before any request to Jev and names the
+line.
 
 Each run creates a new folder under `.understudy/runs/` (or `--out`): `records.jsonl` (one record per transaction with its
-`kind`: purchase, refund, credit, transfer, external_transfer or invalid; its link and its category), `legs.jsonl`,
-`judgments.jsonl`, `kinds.jsonl` and `statuses.jsonl` (counts), `summary.json` (run facts) and `run.json`. Amounts
+`kind`: purchase, refund, credit, transfer or invalid; its link and its category), `legs.jsonl`,
+`kinds.jsonl` and `statuses.jsonl` (counts), `review.jsonl` (one line per merchant Jev was not sure of, most records first: `payee`, `count`, `amount`, Jev's `top` and `runner_up` categories with their probabilities, and the `reason`, `below_0.7` or `none_of_these`; empty when nothing needs review), `totals.jsonl` (for each account, the money in, money out and net of its purchases, refunds and credits, transfers left out, then one `all` row; the `all` row is also `net_spending` in `summary.json`), `summary.json` (run facts) and `run.json`. Amounts
 are signed as Monarch writes them: purchases negative, refunds positive. A failed stage publishes no output.
 Keep household inputs and outputs in ignored `data/` and `build/` folders.

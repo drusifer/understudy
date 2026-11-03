@@ -102,7 +102,11 @@ async def blend(
             _validate(deciders[entry["from"]], entry["from"], outcomes, context.name)
     weighted: list[dict] = []
     for row in context.last:
-        distribution = decide_input(state, row, deciders, allowed=outcomes)
+        story: list[dict] = []
+        distribution = decide_input(state, row, deciders, allowed=outcomes, story=story)
+        for decision in story:
+            if context.emit:
+                context.emit("decision", stage=context.name, row=row.get("segment", "the input row"), **decision)
         # options read from rows are known only now, so what the blend produced is checked against them
         _validate([{d: o} for d, options in distribution.items() for o in options], "the blend", outcomes, context.name)
         weighted += [{**row, "dimension": d, "option": o, "weight": w}

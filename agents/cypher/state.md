@@ -57,3 +57,21 @@ Status: Completed (Sprint 22 closed). Pending: merge `sprint-22` into `main` and
 3. Open owner questions (ask one at a time): typed inputs (dial/faders/stepper/switches) wanted or plain `--with` boxes?; targets for category-review share and net spending; whether the browser check should be a release gate; act on expiries: SEC-002 by 2026-12-01, SEC-005 (secret over plain HTTP) by 2027-01-30 (TLS flags).
 4. Next sprint: Sprint 23 "see and drive the machine" from `docs/sprints/OLD_VERSION_PARITY.md` (UND-81 richer event stream first, then diagram, pause/step, replay of a log, decision detail); write stories to `agents/templates/_template_USER_STORIES.md`, Smith Gate 1 with the template's STORIES check, Morpheus arch, Switch design gate, Mouse plan.
 5. Not done on purpose: `bobp chat-report` (would reset CHAT.md; owner's call); Sprint 21 UAT plan and ARCH_SPRINT21/task.md off-template (owner not yet asked to redo).
+
+---
+## Sprint 23 close 2026-11-02 (prep-clear)
+
+### Context
+- **Sprint 23 is closed** (23 pts: UND-89, 90, 91, 92, 81). Five phase commits on branch `sprint-23` (9be3417, 5760c78, 3bc1a2c, 4fca974, 4ce1eaa) plus a closeout commit; NOT merged or pushed (owner decides). `bobp make check` 362 tests green.
+- **Owner decisions recorded** in `docs/sprints/OWNER_DECISIONS_SPRINT22.md` 4-8: typed inputs wanted; browser check a gate only if it takes seconds (it takes 63s, so no); SEC-002 and SEC-005 still accepted; review list plus separate pin file; the export's Category decides transfers.
+- **Baseline file:** `data/Transactions_2026-11-02T19-14-07.csv` (git-ignored). Ridgewood income $363,348.62, expenses $205,042.27, matched to the cent.
+- **Deviation to tell the owner:** UND-81 AC5 was amended during Phase 5 (old logs show `story: false` and stay visible, not "unreadable").
+
+### Current Task
+Status: Completed (Sprint 23 closed).
+
+### Next Steps
+1. After /clear: `/init`, read `agents/CHAT.md` (last 10 messages) and this section.
+2. Owner questions, one at a time: merge `sprint-23` into `main` and push when asked (`bobp make push`); card-side group labels (relabel in Monarch or widen the transfer rule: 169 records, $240,596 count as refunds/credits outside Ridgewood); name unmatched Amex rows for their card; pin spelling (edge spaces).
+3. Next sprint: Sprint 24 from `docs/sprints/OLD_VERSION_PARITY.md`: typed inputs, YAML editor, statechart diagram, pause and step, replay of a log, decision detail. Read `agents/templates/_template_USER_STORIES.md` and this skill first.
+4. Owner rules in force: Edit/Write only for file edits (broken twice more this sprint: a Python one-liner), one question at a time, American spelling, record owner answers at once, push only on request.

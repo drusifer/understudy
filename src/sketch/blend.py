@@ -68,8 +68,12 @@ def blend(opinions: list[Opinion]) -> Distribution:
     return {d: {o: w / named[d] for o, w in options.items()} for d, options in mixed.items()}
 
 
-def forbid(distribution: Distribution, rules: list[dict], row: dict, label: str, policy: Policy | None = None) -> Distribution:
-    """Drop the options each matching rule forbids and renormalise."""
+def forbid(  # noqa: PLR0913 - the rules' inputs, and where to say what was removed
+    distribution: Distribution, rules: list[dict], row: dict, label: str, policy: Policy | None = None,
+    removed: dict | None = None,
+) -> Distribution:
+    """Drop the options each matching rule forbids and renormalise. A dict given as `removed` gets
+    `(dimension, option): "forbid rule N"` for each option dropped, the first rule to drop it."""
     policy = policy or Policy()
     result = {d: dict(options) for d, options in distribution.items()}
     for index, rule in enumerate(rules):
@@ -78,6 +82,9 @@ def forbid(distribution: Distribution, rules: list[dict], row: dict, label: str,
         for dimension in list(result):
             kept = _normalised({o: w for o, w in result[dimension].items() if not holds(rule["drop"], {dimension: o})})
             if kept:
+                for option in result[dimension].keys() - kept.keys():
+                    if removed is not None:
+                        removed.setdefault((dimension, option), f"forbid rule {index}")
                 result[dimension] = kept
             else:
                 where = f"forbid rule {index} left {label} with no option for {dimension!r}"
@@ -95,12 +102,18 @@ def _emptied(result: Distribution, dimension: str, rule: dict, policy: Policy, w
     raise EmptyResultError(where)
 
 
-def shortlist(distribution: Distribution, best: int) -> Distribution:
-    """Keep each dimension's `best` heaviest options (ties keep their order) and renormalise."""
-    return {
+def shortlist(distribution: Distribution, best: int, removed: dict | None = None) -> Distribution:
+    """Keep each dimension's `best` heaviest options (ties keep their order) and renormalise. A dict given as
+    `removed` gets `(dimension, option): "shortlist"` for each option left out."""
+    result = {
         dimension: _normalised(dict(sorted(options.items(), key=lambda item: -item[1])[:best]))
         for dimension, options in distribution.items()
     }
+    if removed is not None:
+        for dimension, options in distribution.items():
+            for option in options.keys() - result[dimension].keys():
+                removed.setdefault((dimension, option), "shortlist")
+    return result
 
 
 def check_sums(distribution: Distribution) -> None:

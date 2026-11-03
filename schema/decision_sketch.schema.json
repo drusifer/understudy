@@ -79,7 +79,8 @@
           "additionalProperties": false,
           "properties": {
             "kind": { "const": "file" },
-            "path": { "type": "string", "minLength": 1 }
+            "path": { "type": "string", "minLength": 1 },
+            "optional": { "type": "string", "minLength": 1 }
           }
         },
         {
