@@ -981,3 +981,45 @@ sequenceDiagram
 ## Sprint close-out
 
 - **Cypher**: \*pm launch sprint-25. Sprint complete: 5 stories (UND-96..100), 6 phases, 491 tests. Branches sprint-24 and sprint-25 are committed locally…
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Cypher
+    participant Smith
+    participant Morpheus
+    participant Switch
+    participant Mouse
+    participant Neo
+    Note over Cypher,Neo: 📅 2026-11-03
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Sprint 26 planning:<br/>stories for pause/step,<br/>replay, decision detail<br/>(18 pts) in docs/sprints<br/>/USER_STORIES_SPRINT26.m<br/>d, owner decision 16 re…"
+    Smith->>Morpheus: "user approve"
+    Note right of Smith: "rubric STORIES: OUT=A<br/>TEST=A VALUE=S SIZE=A.<br/>*user approve. Stories<br/>approved, notes: AC4 of<br/>UND-83 must show a held<br/>run as paused, not stal…"
+    Morpheus->>Smith: "lead handoff"
+    Note right of Morpheus: "Architecture complete (d<br/>ocs/sprints/ARCH_SPRINT2<br/>6.md): control.json in<br/>the run folder read<br/>between top-level<br/>stages, paused/resumed<br/>events,…"
+    Smith->>Switch: "user approve"
+    Note right of Smith: "rubric ARCH: BOUND=A<br/>FLOW=A FAIL=A USER=A<br/>DECS=A FEAS=A. *user<br/>approve. Notes: the page<br/>says 'pausing after<br/><stage>' while a long<br/>stage fin…"
+    Switch->>Mouse: "sec handoff"
+    Note right of Switch: "security gate (design):<br/>No blocking findings.<br/>New control channel is<br/>gated by the existing<br/>secret, same-origin and<br/>body cap, run id<br/>pattern…"
+    Mouse->>Morpheus: "sm handoff"
+    Note right of Mouse: "Sprint planned: 5 phases<br/>(hold the runner 4,<br/>console and --watch 4,<br/>replay in Python 3,<br/>replay bar 2, decision<br/>detail 5) plus closeout,<br/>tas…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "rubric PLAN: SIZE=A<br/>GATE=A VERIF=A ALIGN=A<br/>OWNER=A LEVEL=A. Sprint<br/>plan approved. Phase 1<br/>ready. @Neo *swe impl<br/>phase-1"
+```
+
+## Phase 1 starts
+
+Phase 1: the runner can be held (UND-83 part 1)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    Note over Mouse,All: 📅 2026-11-03
+    Mouse->>All: "phase 1"
+    Note right of Mouse: "Phase 1: the runner can<br/>be held (UND-83 part 1)"
+```

@@ -1451,8 +1451,41 @@ OK
  *pm launch sprint-25. Sprint complete: 5 stories (UND-96..100), 6 phases, 491 tests. Branches sprint-24 and sprint-25 are committed locally and NOT merged or pushed; merge sprint-24 first, then sprint-25, only when the owner asks.
 
 ---
-[<small>2026-11-03 17:49:50</small>] [**make**]->[**all**] *build*:
- Build FAILED exit=2 | make push | /home/drusifer/Projects/understudy/build/build.out
-5:49PM INF no leaks found
-push: there are uncommitted changes - give a commit message: bobp make push MSG="..."
-make: *** [Makefile:68: push] Error 1
+[<small>2026-11-03 17:51:35</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make push | /home/drusifer/Projects/understudy/build/build.out
+5:51PM INF scanned ~309 bytes (309 bytes) in 239ms
+5:51PM INF no leaks found
+To github.com:drusifer/understudy.git
+bed2296..3317797  main -> main
+
+---
+[<small>2026-11-03 18:56:13</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Sprint 26 planning: stories for pause/step, replay, decision detail (18 pts) in docs/sprints/USER_STORIES_SPRINT26.md; owner decision 16 recorded; branch sprint-26 cut from main. @Smith *user review sprint-26
+
+---
+[<small>2026-11-03 18:57:00</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ rubric STORIES: OUT=A TEST=A VALUE=S SIZE=A. *user approve. Stories approved; notes: AC4 of UND-83 must show a held run as paused, not stalled (done); UND-85 AC4 keeps names as text. @Morpheus *lead arch sprint-26
+
+---
+[<small>2026-11-03 18:57:00</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Architecture complete (docs/sprints/ARCH_SPRINT26.md): control.json in the run folder read between top-level stages, paused/resumed events, replay computed in Python from events up to N, decisions API; run --watch binds 127.0.0.1. No new dependency. @Smith *user feedback arch-26
+
+---
+[<small>2026-11-03 18:57:00</small>] [**Smith**]->[**Switch**] *user approve*:
+ rubric ARCH: BOUND=A FLOW=A FAIL=A USER=A DECS=A FEAS=A. *user approve. Notes: the page says 'pausing after <stage>' while a long stage finishes; --pause alone gives a one-line refusal. @Switch *sec threat sprint-26
+
+---
+[<small>2026-11-03 18:57:01</small>] [**Switch**]->[**Mouse**] *sec handoff*:
+ security gate (design): No blocking findings. New control channel is gated by the existing secret, same-origin and body cap; run id pattern-matched and resolved under the runs root; control file size-capped and fail-open to run; --watch binds 127.0.0.1. Phase 2 gets a full review, not a quick pass. @Mouse *sm plan sprint-26
+
+---
+[<small>2026-11-03 18:57:24</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint planned: 5 phases (hold the runner 4, console and --watch 4, replay in Python 3, replay bar 2, decision detail 5) plus closeout; task.md written. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-11-03 18:57:24</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A LEVEL=A. Sprint plan approved. Phase 1 ready. @Neo *swe impl phase-1
+
+---
+[<small>2026-11-03 18:57:24</small>] [**Mouse**]->[**all**] *phase 1*:
+ Phase 1: the runner can be held (UND-83 part 1)
