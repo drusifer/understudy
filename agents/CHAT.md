@@ -805,3 +805,27 @@ make: *** [Makefile:39: run] Error 1
 ---
 [<small>2026-11-02 19:35:18</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
  *lead review phase-1: passed. Small, generic stages (require, tally) with tests; the sketch got shorter (five stages and a child sketch removed); docs updated with the code. One note for the owner: card-side group labels need a decision, not code. Committing phase 1. @Neo *swe impl phase-2
+
+---
+[<small>2026-11-02 19:41:08</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+7:41PM INF 1 commits scanned.
+7:41PM INF scanned ~7241 bytes (7.24 KB) in 255ms
+7:41PM INF no leaks found
+
+---
+[<small>2026-11-02 19:41:21</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 2 passed (UND-90): Ridgewood income 363,348.62 and expenses 205,042.27 equal the baseline's sums to the cent; all-account net in summary.json. Finding: 14 unmatched Amex-only rows show as accounts named by Amex number. @Switch *sec review phase-2
+
+---
+[<small>2026-11-02 19:41:21</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 2): No blocking findings. Quick pass: totals.jsonl holds account names and sums, same data class as records.jsonl, written to the git-ignored run folder; new stages read rows and write numbers, no new input. @Morpheus *lead review phase-2
+
+---
+[<small>2026-11-02 19:41:21</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-2: passed. group gained a general sums option and note is a 6-line stage; both documented and tested; the sketch reads transfers out by construction (it sums from spending). Unmatched Amex rows named by number is accepted as a finding for the owner. Committing phase 2. @Neo *swe impl phase-3
+
+---
+[<small>2026-11-02 19:41:21</small>] [**Mouse**]->[**all**] *phase 3*:
+ Phase 3: merchants for review, as a list (UND-91)

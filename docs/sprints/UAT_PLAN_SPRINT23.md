@@ -30,9 +30,20 @@ Phases are added as they pass UAT.
 - **Verdict:** PASS
 - **Evidence / issue:** `build/build.out`; `tests/python/test_household.py`
 
+### UAT-23-3: Income, expenses and net per account (Phase 2)
+
+- **Linked criterion:** UND-90 AC1, AC2, AC3, AC4
+- **Preconditions and data:** the baseline files as in UAT-23-1; live run `run-20261103T003702-035bf72b` (0 new Jev requests beyond the cached ones)
+- **Steps:** run the household sketch, then read `totals.jsonl` and `summary.json`; sum the baseline file's Ridgewood rows by hand, setting Transfer and Credit Card Payment aside
+- **Expected observable outcome:** one line per account with income, expenses and net, transfers left out; Ridgewood income 363,348.62 and expenses -205,042.27; a last `all` row that is also `net_spending` in `summary.json`; no line for an account with no records
+- **Actual outcome:** Ridgewood income 363,348.62, expenses -205,042.27, net 158,306.35, equal to the baseline's sums to the cent; the `all` row is income 603,944.54, expenses -476,342.42, net 127,602.12 and matches `summary.json`; accounts with no records have no line; an account with no income showed `0` and now shows `0.0` (fixed, tested)
+- **Verdict:** PASS
+- **Evidence / issue:** run folder above; `tests/python/test_household.py` checks every account's totals against the records.
+
 ## Results and Handoff
 
-- **Passed / failed / blocked:** Phase 1: 2 passed (UAT-23-1, UAT-23-2), 0 failed, 0 blocked
+- **Passed / failed / blocked:** Phase 1: 2 passed (UAT-23-1, UAT-23-2); Phase 2: 1 passed (UAT-23-3); 0 failed, 0 blocked
+- **Open issue (found in Phase 2):** two lines in `totals.jsonl` are Amex-only rows that matched no Monarch row, shown as accounts named `-38016` and `-33009` (the Amex account numbers), 14 records, about -$77. They are real records, so UND-90 AC4 is not broken, but the names are not accounts the owner knows. Owner: Neo, Phase 3 or a fix after the owner decides whether unmatched Amex rows should be named for their card.
 - **Open issues and impact:** the card-side records. On accounts other than Ridgewood the export still labels some payments "Food & Dining: Credit Card Payment" and "Transportation: Transfers", so they are no longer transfers and count as refunds or credits: 169 positive non-transfer records worth $240,596 outside Ridgewood in this run. Ridgewood is unaffected. Owner: decide whether to relabel those in Monarch or add the group labels to the rule.
 - **Overall verdict:** PASS for Phase 1
 - **Handoff evidence:** message in `agents/CHAT.md`

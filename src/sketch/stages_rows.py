@@ -151,19 +151,38 @@ async def reduce_min(context, source: Source, field: str, take: int = 1) -> list
 
 
 @stage("map.group")
-async def group(context, source: Source, by: str, collect: dict | None = None, take: int = 3) -> list[dict]:
+async def group(  # noqa: PLR0913 - the stage's with: keys
+    context, source: Source, by: str, collect: dict | None = None, take: int = 3, sums: dict | None = None,
+) -> list[dict]:
     """One row per distinct `by` value (case, spacing and edges ignored), in the order they first appear:
     `{key, <by>: the first spelling, count, <into>: [...]}`. Each `collect` entry, `into: field`, lists up to `take`
-    different non-empty values of `field` among the group's rows."""
+    different non-empty values of `field` among the group's rows. Each `sums` entry adds `into`: the total of a field
+    over the group's rows, to cents: `into: field`, or `into: { field: <field>, where: <condition> }` to total only
+    the rows that satisfy the condition (0.0 when none do)."""
     groups: dict[str, list[dict]] = {}
     for row in await context.read(source):
         groups.setdefault(" ".join(str(row[by] or "").lower().split()), []).append(row)
     return [
         {"key": key, by: rows[0][by], "count": len(rows),
          **{into: list(dict.fromkeys(row[field] for row in rows if row.get(field) not in (None, "")))[:take]
-            for into, field in (collect or {}).items()}}
+            for into, field in (collect or {}).items()},
+         **{into: _total(rows, spec) for into, spec in (sums or {}).items()}}
         for key, rows in groups.items()
     ]
+
+
+def _total(rows: list[dict], spec) -> float:
+    field, where = (spec, None) if isinstance(spec, str) else (spec["field"], spec.get("where"))
+    return round(float(sum(row[field] for row in rows if where is None or holds(where, row))), 2)
+
+
+@stage("reduce.note")
+async def note(context, source: Source, into: str) -> list[dict]:
+    """The rows of `source` unchanged; the run's summary gets `into`: the first row, without its grouping `key`."""
+    rows = await context.read(source)
+    if rows:
+        context.summary[into] = {name: value for name, value in rows[0].items() if name != "key"}
+    return rows
 
 
 @stage("map.rows")

@@ -318,10 +318,31 @@ sequenceDiagram
     Note right of Switch: "security gate (phase 1):<br/>No blocking findings.<br/>Quick pass on the diff:<br/>a Category read from the<br/>owner's own file, one<br/>Jev call type removed…"
     Morpheus->>Neo: "lead handoff"
     Note right of Morpheus: "*lead review phase-1:<br/>passed. Small, generic<br/>stages (require, tally)<br/>with tests, the sketch<br/>got shorter (five stages<br/>and a child sketch rem…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 2 passed<br/>(UND-90): Ridgewood<br/>income 363,348.62 and<br/>expenses 205,042.27<br/>equal the baseline's<br/>sums to the cent, all-<br/>account net in…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 2):<br/>No blocking findings.<br/>Quick pass: totals.jsonl<br/>holds account names and<br/>sums, same data class as<br/>records.jsonl, wri…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-2:<br/>passed. group gained a<br/>general sums option and<br/>note is a 6-line stage,<br/>both documented and<br/>tested, the sketch reads<br/>t…"
 ```
 
-## Phase 1 so far
+## Phase 1 close-out
 
-- **Trin**: UAT phase 1 passed (UND-89): on the baseline run, 72 category-labeled records are all transfers and no other record is, Ridgewood income 36…
-- **Switch**: security gate (phase 1): No blocking findings. Quick pass on the diff: a Category read from the owner's own file, one Jev call type removed…
-- **Morpheus**: \*lead review phase-1: passed. Small, generic stages (require, tally) with tests, the sketch got shorter (five stages and a child sketch rem…
+- **Trin**: UAT phase 2 passed (UND-90): Ridgewood income 363,348.62 and expenses 205,042.27 equal the baseline's sums to the cent, all-account net in…
+- **Switch**: security gate (phase 2): No blocking findings. Quick pass: totals.jsonl holds account names and sums, same data class as records.jsonl, wri…
+- **Morpheus**: \*lead review phase-2: passed. group gained a general sums option and note is a 6-line stage, both documented and tested, the sketch reads t…
+
+## Phase 3 starts
+
+Phase 3: merchants for review, as a list (UND-91)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    Note over Mouse,All: 📅 2026-11-02
+    Mouse->>All: "phase 3"
+    Note right of Mouse: "Phase 3: merchants for<br/>review, as a list<br/>(UND-91)"
+```

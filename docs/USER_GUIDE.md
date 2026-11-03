@@ -188,6 +188,6 @@ What it does, in order:
 
 Each run creates a new folder under `.understudy/runs/` (or `--out`): `records.jsonl` (one record per transaction with its
 `kind`: purchase, refund, credit, transfer or invalid; its link and its category), `legs.jsonl`,
-`kinds.jsonl` and `statuses.jsonl` (counts), `summary.json` (run facts) and `run.json`. Amounts
+`kinds.jsonl` and `statuses.jsonl` (counts), `totals.jsonl` (for each account, the money in, money out and net of its purchases, refunds and credits, transfers left out, then one `all` row; the `all` row is also `net_spending` in `summary.json`), `summary.json` (run facts) and `run.json`. Amounts
 are signed as Monarch writes them: purchases negative, refunds positive. A failed stage publishes no output.
 Keep household inputs and outputs in ignored `data/` and `build/` folders.

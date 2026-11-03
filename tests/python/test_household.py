@@ -59,6 +59,7 @@ class LedgerTests(unittest.TestCase):
         cls.records = lines(folder / "records.jsonl")
         cls.legs = {leg["record_id"]: leg for leg in lines(folder / "legs.jsonl")}
         cls.folder = folder
+        cls.totals = lines(folder / "totals.jsonl")
         cls.summary = json.loads((folder / "summary.json").read_text(encoding="utf-8"))
 
     @classmethod
@@ -97,6 +98,26 @@ class LedgerTests(unittest.TestCase):
     def test_the_summary_counts_the_records_whose_kind_the_category_changed(self):
         # the savings bank deposit is a transfer by category with no partner; every other record agrees with the pairing
         self.assertEqual(self.summary["kind_changed_by_category"], {"no": 11, "yes": 1})
+
+    def money(self, card=None):
+        """Income, expenses and net from the records themselves: money in and out, transfers and invalid rows left out."""
+        rows = [r for r in self.records if r["kind"] in ("purchase", "refund", "credit") and card in (None, r["card"])]
+        income = round(sum(r["cost"] for r in rows if r["cost"] > 0), 2)
+        expenses = round(sum(r["cost"] for r in rows if r["cost"] < 0), 2)
+        return income, expenses, round(income + expenses, 2)
+
+    def test_each_account_has_income_expenses_and_net_that_leave_transfers_out(self):
+        by_card = {row["card"]: row for row in self.totals if "card" in row}
+        self.assertEqual(set(by_card), {r["card"] for r in self.records if r["kind"] in ("purchase", "refund", "credit")})
+        for card, row in by_card.items():
+            self.assertEqual((row["income"], row["expenses"], row["net"]), self.money(card), card)
+        self.assertNotIn("Checking (...2222)", {c for c in by_card if self.money(c) == (0.0, 0.0, 0.0)})
+
+    def test_one_net_spending_figure_covers_every_account_and_is_in_the_summary(self):
+        income, expenses, net = self.money()
+        self.assertEqual(self.summary["net_spending"], {"scope": "all", "count": 9, "income": income,
+                                                        "expenses": expenses, "net": net})
+        self.assertEqual(self.totals[-1]["net"], net)
 
     def test_jev_is_no_longer_asked_about_payees_and_the_judgments_file_is_gone(self):
         self.assertFalse((self.folder / "judgments.jsonl").exists())

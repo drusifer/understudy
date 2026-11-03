@@ -286,6 +286,38 @@ sources:
         - { if: { category_level: { ne: null } }, then: placed }
       otherwise: review
 
+  account_totals:                       # money in, money out and net for each account; transfers are not either
+    kind: stage
+    do: { map: { action: group } }
+    with:
+      source: spending
+      by: card
+      sums:
+        income: { field: cost, where: { cost: { gt: 0 } } }
+        expenses: { field: cost, where: { cost: { lt: 0 } } }
+        net: cost
+  everywhere:
+    kind: stage
+    do: { map: { action: classify } }
+    with: { source: spending, into: scope, cases: [], otherwise: all }
+  overall_total:
+    kind: stage
+    do: { map: { action: group } }
+    with:
+      source: everywhere
+      by: scope
+      sums:
+        income: { field: cost, where: { cost: { gt: 0 } } }
+        expenses: { field: cost, where: { cost: { lt: 0 } } }
+        net: cost
+  net_figure:                           # the one figure for the whole run, also in summary.json
+    kind: stage
+    do: { reduce: { action: note } }
+    with: { source: overall_total, into: net_spending }
+  totals:
+    kind: stage
+    do: { map: { action: concat } }
+    with: { sources: [ account_totals, net_figure ] }
   kinds:                                # how many records of each kind, and how many were placed or are for review
     kind: stage
     do: { map: { action: group } }
@@ -300,6 +332,7 @@ sinks:
   legs: legs.jsonl
   kinds: kinds.jsonl
   statuses: statuses.jsonl
+  totals: totals.jsonl
 
 machine:
   initial: write_records
@@ -319,6 +352,10 @@ machine:
     write_statuses:
       do: { sink: { name: statuses } }
       with: { source: statuses }
+      then: write_totals
+    write_totals:
+      do: { sink: { name: totals } }
+      with: { source: totals }
       then: done
     done:
       final: true

@@ -28,10 +28,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 2: Income and expenses I can check (UND-90, 3 pts)
 *Phase goal: the summary gives income, expenses and net per account and overall, transfers set aside.*
-- [ ] **Task 2.1:** Tests first, then a `sum` option on `group` (generic, documented), the `totals` stages and `totals.jsonl`, and the net-spending figure in `summary.json`; accounts with no records left out. **L2**. (*Owner: Neo | Trace: UND-90 AC1-4 | Verification: `bobp make test`, `bobp make lint`*)
-- [ ] **Task 2.2:** UAT: Ridgewood income $363,348.62 and expenses $205,042.27 equal the baseline's sums to the cent; the overall figure uses the same rule. **L2**. (*Owner: Trin | Trace: UND-90 AC1-4 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
-- [ ] **Task 2.3:** Security quick pass: new sink holds merchant-class data in the ignored run folder. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 2): ...`*)
-- [ ] **Task 2.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT23 section 5 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 2.1:** Tests first, then a `sum` option on `group` (generic, documented), the `totals` stages and `totals.jsonl`, and the net-spending figure in `summary.json`; accounts with no records left out. **L2**. (*Owner: Neo | Trace: UND-90 AC1-4 | Verification: `bobp make test`, `bobp make lint`*)
+- [x] **Task 2.2:** UAT: Ridgewood income $363,348.62 and expenses $205,042.27 equal the baseline's sums to the cent; the overall figure uses the same rule. **L2**. (*Owner: Trin | Trace: UND-90 AC1-4 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
+- [x] **Task 2.3:** Security quick pass: new sink holds merchant-class data in the ignored run folder. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 2): ...`*)
+- [x] **Task 2.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT23 section 5 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 3: Merchants for review, as a list (UND-91, 5 pts)
 *Phase goal: `review.jsonl`, one line per merchant, sorted by records, with Jev's top two guesses.*
