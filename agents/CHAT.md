@@ -1449,3 +1449,10 @@ OK
 ---
 [<small>2026-11-03 17:40:46</small>] [**Cypher**]->[**all**] *pm launch*:
  *pm launch sprint-25. Sprint complete: 5 stories (UND-96..100), 6 phases, 491 tests. Branches sprint-24 and sprint-25 are committed locally and NOT merged or pushed; merge sprint-24 first, then sprint-25, only when the owner asks.
+
+---
+[<small>2026-11-03 17:49:50</small>] [**make**]->[**all**] *build*:
+ Build FAILED exit=2 | make push | /home/drusifer/Projects/understudy/build/build.out
+5:49PM INF no leaks found
+push: there are uncommitted changes - give a commit message: bobp make push MSG="..."
+make: *** [Makefile:68: push] Error 1
