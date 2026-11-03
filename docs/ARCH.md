@@ -60,7 +60,7 @@ graph LR
 | `check.py` | Whole-sketch checks before anything runs (stages exist, transitions reach a final state, outcomes declared, names validated) | `Sketch` | list of one-line problems |
 | `machine.py` | Builds the owner's state machine for python-statemachine | `Sketch` | machine class |
 | `machine_runner.py` | The one loop: the machine picks the next state; each state names a stage; records stage start, completion or failure | machine, stages, a record | stage results, outcome |
-| `registry.py`, `stages.py`, `stages_rows.py`, `stages_pair.py` | General typed stages registered with `@stage`; the function signature is the YAML contract | stage name, `with:` values, rows | rows or a value |
+| `registry.py`, `stages.py`, `stages_rows.py`, `stages_pair.py` | General typed stages registered with `@stage`; the function signature is the YAML contract. Since Sprint 25 they include `map.allocate` (oldest-first allocation of charges to payments, in whole cents, never past a payment's amount; ADR-0057) and `map.top` (the largest few rows per group) | stage name, `with:` values, rows | rows or a value |
 | `decide.py`, `conditions.py`, `blend.py` | The owner's if/then/else trees, explicit conditions, weighted blend and hard `forbid` rules | rows, tree | weighted rows |
 | `sources/file.py`, `jev.py`, `reader.py` | Read a source: JSONL/CSV file, or Jev (live or replayed) | source declaration | rows |
 | `sources/capture.py` | Capture every live non-file read; replay from one complete capture | a read | stored read / replayed read |

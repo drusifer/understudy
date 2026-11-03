@@ -4,16 +4,22 @@ from types import MappingProxyType, SimpleNamespace
 
 from src.sketch.registry import STAGES
 from src.sketch.stages_rows import (
+    allocate,
     complete,
     group,
     keep,
     known,
+    nest,
     note,
     require,
     set_fields,
     share,
+    smallest,
     tally,
+    top,
     top_two,
+    unique,
+    weigh,
     without,
 )
 
@@ -74,6 +80,12 @@ class GroupSumsTests(unittest.TestCase):
     def test_a_group_with_no_matching_rows_sums_to_zero_and_nothing_is_made_for_a_missing_group(self):
         found = run(group, context([]), source="rows", by="card", sums=self.SUMS)
         self.assertEqual(found, [])
+
+    def test_commonest_names_the_value_most_rows_of_the_group_have_the_first_seen_winning_a_tie(self):
+        rows = [{"p": "A", "c": "x"}, {"p": "A", "c": "y"}, {"p": "A", "c": "y"}, {"p": "B", "c": "z"}, {"p": "B", "c": "w"},
+                {"p": "C"}, {"p": "C", "c": ""}]
+        found = run(group, context(rows), source="rows", by="p", commonest={"top_c": "c"})
+        self.assertEqual({r["p"]: r["top_c"] for r in found}, {"A": "y", "B": "z", "C": None})
 
     def test_group_without_sums_is_unchanged(self):
         (row,) = run(group, context([{"card": "A", "cost": 1.0}]), source="rows", by="card")
@@ -167,6 +179,64 @@ class SetTests(unittest.TestCase):
                                  {"a": 2, "status": "placed", "probability": 1.0}])
 
 
+class UniqueTests(unittest.TestCase):
+    def test_rows_that_do_not_repeat_pass_through_unchanged(self):
+        rows = [{"name": "Rent"}, {"name": "Mortgage"}]
+        self.assertEqual(run(unique, named(rows=rows), source="rows", field="name"), rows)
+
+    def test_a_repeat_stops_the_run_naming_the_line_and_the_first_line_it_repeats(self):
+        rows = [{"name": "Rent"}, {"name": "Mortgage"}, {"name": "rent  "}]  # case, spacing and edges do not make it new
+        with self.assertRaises(ValueError) as stopped:
+            run(unique, named(rows=rows), source="rows", field="name")
+        self.assertEqual(str(stopped.exception), "source 'rows' line 3 repeats 'rent  ' (first on line 1)")
+
+    def test_a_row_that_repeats_a_value_in_another_source_is_named_with_that_source(self):
+        context_ = named(rows=[{"name": "Rent"}, {"name": "Taxi-cabs"}], iso=[{"name": "Taxi-cabs"}])
+        with self.assertRaises(ValueError) as stopped:
+            run(unique, context_, source="rows", field="name", among="iso")
+        self.assertEqual(str(stopped.exception), "source 'rows' line 2 repeats 'Taxi-cabs' (also in 'iso')")
+
+    def test_it_is_a_map_stage_asking_for_a_source_and_a_field(self):
+        required = [key for key, p in STAGES["map.unique"].params.items() if p.required]
+        self.assertEqual(required, ["source", "field"])
+
+
+class ClassifyScalarTests(unittest.TestCase):
+    def test_then_and_otherwise_may_be_numbers_or_booleans_as_well_as_text(self):
+        from src.sketch.stages_rows import classify
+        rows = [{"n": 5}, {"n": 1}]
+        found = run(classify, context(rows), source="rows", into="big", cases=[{"if": {"n": {"gt": 3}}, "then": True}],
+                    otherwise=False)
+        self.assertEqual([r["big"] for r in found], [True, False])
+        found = run(classify, context(rows), source="rows", into="flag", cases=[{"if": {"n": {"gt": 3}}, "then": 1}], otherwise=0)
+        self.assertEqual([r["flag"] for r in found], [1, 0])
+        self.assertIn("otherwise", STAGES["map.classify"].params)
+
+
+class WeighMissingTests(unittest.TestCase):
+    def test_a_field_a_row_lacks_or_has_as_null_counts_as_zero(self):
+        from src.sketch.stages_rows import weigh
+        rows = [{"p": 0.6, "q": 0.2}, {"p": 0.6, "q": None}, {"p": 0.6}]
+        found = run(weigh, context(rows), source="rows", by={"p": 1, "q": -2}, into="lead")
+        self.assertEqual([round(r["lead"], 2) for r in found], [0.2, 0.6, 0.6])
+
+
+class SmallestTests(unittest.TestCase):
+    def test_each_row_gets_the_smallest_of_the_named_fields(self):
+        rows = [{"a": 0.9, "b": 0.5}, {"a": 0.3, "b": 0.8}]
+        found = run(smallest, context(rows), source="rows", fields=["a", "b"], into="least")
+        self.assertEqual([r["least"] for r in found], [0.5, 0.3])
+        self.assertEqual(found[0]["a"], 0.9)  # the rows keep their fields
+
+    def test_a_field_the_row_lacks_is_left_out_and_a_row_with_none_gets_null(self):
+        found = run(smallest, context([{"a": 0.4}, {"c": 1}]), source="rows", fields=["a", "b"], into="least")
+        self.assertEqual([r["least"] for r in found], [0.4, None])
+
+    def test_it_is_a_map_stage_asking_for_a_source_fields_and_a_name(self):
+        required = [key for key, p in STAGES["map.smallest"].params.items() if p.required]
+        self.assertEqual(required, ["source", "fields", "into"])
+
+
 class ShareTests(unittest.TestCase):
     def test_each_row_gets_its_share_of_the_fields_total(self):
         found = run(share, context([{"a": 1.0}, {"a": 3.0}]), source="rows", field="a", into="share")
@@ -200,3 +270,121 @@ class NoteTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def sources(**named):
+    async def read(name):
+        return named[name]
+
+    return SimpleNamespace(read=read, summary={})
+
+
+def charge(day, amount, name="c"):
+    return {"day": day, "amount": amount, "name": name}
+
+
+ALLOC = {"source": "charges", "payments": "payments", "amount": "amount", "day": "day", "id": "payment_id", "into": "settled_by"}
+
+
+class AllocateTests(unittest.TestCase):
+    def settle(self, charges, payments):
+        found = run(allocate, sources(charges=charges, payments=payments), **ALLOC)
+        return [row["settled_by"] for row in found]
+
+    def test_a_payment_settles_the_oldest_charges_first_and_the_rest_stay_open(self):
+        charges = [charge("2025-01-03", 30.0), charge("2025-01-01", 10.0), charge("2025-01-02", 20.0)]
+        payments = [{"payment_id": "p1", "day": "2025-01-05", "amount": 30.0}]
+        self.assertEqual(self.settle(charges, payments), [None, "p1", "p1"])
+
+    def test_it_stops_before_the_amount_would_be_passed(self):
+        charges = [charge("2025-01-01", 10.0), charge("2025-01-02", 25.0), charge("2025-01-03", 5.0)]
+        payments = [{"payment_id": "p1", "day": "2025-01-05", "amount": 20.0}]
+        self.assertEqual(self.settle(charges, payments), ["p1", None, None])
+
+    def test_a_charge_dated_after_the_payment_is_never_used(self):
+        charges = [charge("2025-01-06", 10.0), charge("2025-01-05", 10.0)]
+        payments = [{"payment_id": "p1", "day": "2025-01-05", "amount": 100.0}]
+        self.assertEqual(self.settle(charges, payments), [None, "p1"])
+
+    def test_a_charge_belongs_to_at_most_one_payment(self):
+        charges = [charge("2025-01-01", 10.0), charge("2025-01-02", 10.0), charge("2025-01-03", 10.0)]
+        payments = [{"payment_id": "p2", "day": "2025-01-10", "amount": 10.0},
+                    {"payment_id": "p1", "day": "2025-01-04", "amount": 20.0}]
+        self.assertEqual(self.settle(charges, payments), ["p1", "p1", "p2"])
+
+    def test_charges_of_the_same_day_go_smallest_first_whatever_order_the_rows_came_in(self):
+        payments = [{"payment_id": "p1", "day": "2025-01-05", "amount": 20.0}]
+        big_first = [charge("2025-01-01", 15.0), charge("2025-01-01", 5.0), charge("2025-01-01", 12.0)]
+        self.assertEqual(self.settle(big_first, payments), [None, "p1", "p1"])  # 5 and 12 fit; 15 would pass 20
+        self.assertEqual(self.settle(big_first[::-1], payments), ["p1", "p1", None])
+
+    def test_a_payment_before_any_charge_settles_nothing(self):
+        charges = [charge("2025-02-01", 10.0)]
+        payments = [{"payment_id": "p1", "day": "2025-01-01", "amount": 50.0}]
+        self.assertEqual(self.settle(charges, payments), [None])
+
+    def test_no_payments_leave_every_charge_open_and_the_rows_keep_their_order_and_fields(self):
+        charges = [charge("2025-01-02", 1.0, "b"), charge("2025-01-01", 2.0, "a")]
+        found = run(allocate, sources(charges=charges, payments=[]), **ALLOC)
+        self.assertEqual([(r["name"], r["settled_by"]) for r in found], [("b", None), ("a", None)])
+
+    def test_sums_are_exact_to_the_cent(self):
+        charges = [charge("2025-01-01", 0.1), charge("2025-01-02", 0.2)]
+        payments = [{"payment_id": "p1", "day": "2025-01-03", "amount": 0.3}]
+        self.assertEqual(self.settle(charges, payments), ["p1", "p1"])
+
+    def test_it_is_a_map_stage_asking_for_the_two_sources_the_fields_and_a_name(self):
+        required = [key for key, p in STAGES["map.allocate"].params.items() if p.required]
+        self.assertEqual(required, ["source", "payments", "amount", "day", "id", "into"])
+
+
+class TopTests(unittest.TestCase):
+    def test_the_largest_rows_of_each_group_stay_largest_first_in_the_order_groups_first_appear(self):
+        rows = [{"g": "a", "v": 1}, {"g": "b", "v": 9}, {"g": "a", "v": 5}, {"g": "a", "v": 3}, {"g": "b", "v": 2}]
+        found = run(top, context(rows), source="rows", by="g", field="v", take=2)
+        self.assertEqual([(r["g"], r["v"]) for r in found], [("a", 5), ("a", 3), ("b", 9), ("b", 2)])
+
+    def test_take_defaults_to_five_and_a_small_group_keeps_all_its_rows(self):
+        rows = [{"g": "a", "v": n} for n in range(7)] + [{"g": "b", "v": 1}]
+        found = run(top, context(rows), source="rows", by="g", field="v")
+        self.assertEqual([r["v"] for r in found if r["g"] == "a"], [6, 5, 4, 3, 2])
+        self.assertEqual(len([r for r in found if r["g"] == "b"]), 1)
+
+    def test_it_is_a_map_stage_asking_for_a_source_a_group_field_and_a_value_field(self):
+        required = [key for key, p in STAGES["map.top"].params.items() if p.required]
+        self.assertEqual(required, ["source", "by", "field"])
+
+
+class ShareByTests(unittest.TestCase):
+    def test_with_by_each_group_shares_its_own_total(self):
+        rows = [{"g": "a", "v": 1.0}, {"g": "b", "v": 5.0}, {"g": "a", "v": 3.0}]
+        found = run(share, context(rows), source="rows", field="v", into="s", by="g")
+        self.assertEqual([r["s"] for r in found], [0.25, 1.0, 0.75])
+
+
+class NestTests(unittest.TestCase):
+    def nest(self, rows, other, **extra):
+        ctx = sources(rows=rows, other=other)
+        return run(nest, ctx, source="rows", other="other", on="id", other_on="owner", fields=["name", "n"], into="items", **extra)
+
+    def test_each_row_gets_the_listed_fields_of_every_matching_row_in_order(self):
+        other = [{"owner": 1, "name": "x", "n": 2, "skip": 0}, {"owner": 2, "name": "y", "n": 3}, {"owner": 1, "name": "z", "n": 1}]
+        found = self.nest([{"id": 1}, {"id": 2}], other)
+        self.assertEqual(found[0]["items"], [{"name": "x", "n": 2}, {"name": "z", "n": 1}])
+        self.assertEqual(found[1]["items"], [{"name": "y", "n": 3}])
+
+    def test_a_row_with_no_match_gets_an_empty_list_and_keeps_its_fields(self):
+        found = self.nest([{"id": 9, "keep": True}], [{"owner": 1, "name": "x", "n": 1}])
+        self.assertEqual(found, [{"id": 9, "keep": True, "items": []}])
+
+    def test_it_is_a_map_stage_asking_for_two_sources_a_key_the_fields_and_a_name(self):
+        required = [key for key, p in STAGES["map.nest"].params.items() if p.required]
+        self.assertEqual(required, ["source", "other", "on", "fields", "into"])
+
+
+class WeighPlacesTests(unittest.TestCase):
+    def test_places_rounds_the_sum_and_without_it_the_float_stays_as_it_is(self):
+        rows = [{"a": 22873.66, "b": 22862.32}]
+        by = {"a": 1, "b": -1}
+        self.assertEqual(run(weigh, context(rows), source="rows", by=by, into="d", places=2)[0]["d"], 11.34)
+        self.assertNotEqual(run(weigh, context(rows), source="rows", by=by, into="d")[0]["d"], 11.34)

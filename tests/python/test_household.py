@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from household_jev import choose, first_choice
 from jev_double import JevDouble
 
 from src.jev import Chosen
@@ -13,23 +14,6 @@ from src.sketch.sources.capture import CaptureStore
 
 LEDGER = ROOT / "examples" / "household" / "household.yaml"
 ORACLE = ROOT / "tests" / "fixtures" / "household"
-PLACED = {"Store": ("Shopping & Retail: General", 0.9), "Dunkin'": ("Food & Dining: Coffee & Cafes", 0.95),
-          "Employer": ("Income: Paychecks", 0.99), "Shoe Shop": ("Shopping & Retail: General", 0.5),
-          "Venmo": ("none_of_these", 0.9)}
-
-
-def category(merchant, options):
-    """A scripted Jev for the three category questions: which category in use, which kind of business, which name."""
-    if "none_of_these" in options:
-        top, sure = PLACED[merchant]
-    elif "Utilities" in options:
-        top, sure = "Utilities", 0.8
-    else:
-        top, sure = next(iter(options)), 0.9
-    rest = (1 - sure) / max(len(options) - 1, 1)
-    return Chosen(top, sure, {name: sure if name == top else rest for name in options})
-
-
 def no_pins(directory: Path) -> list[str]:
     """`--with` arguments naming an empty pin file, so a run never reads the owner's real pins."""
     pins = directory / "pins.jsonl"
@@ -47,20 +31,12 @@ class LedgerTests(unittest.TestCase):
         cls.temporary = tempfile.TemporaryDirectory()
         directory = Path(cls.temporary.name)
 
-        def reading(state, instructions, options):
-            if "refund" in state:  # the refund of 45.00 reverses the charge of 45.00 on the 15th
-                original = next(label for label in options if "2026-02-15" in label)
-                return Chosen(original, 0.8, {label: 0.8 if label == original else 0.2 for label in options})
-            if "merchant" in state:
-                return category(state["merchant"][0]["merchant"], options)
-            raise AssertionError(f"Jev was asked a question the household no longer asks: {list(state)}")
-
         stderr = io.StringIO()
         cls.code = main(
             ["run", str(LEDGER), "--out", str(directory / "out"), "--with", f"monarch={ORACLE / 'monarch.csv'}",
              "--with", f"amex={ORACLE / 'amex.csv'}", "--with", "amex_account=Platinum", "--with", "since=2026-01-01",
              *no_pins(directory)],
-            make_jev=lambda: JevDouble(choose_fn=reading), store=CaptureStore(directory / "cache"), stdout=io.StringIO(),
+            make_jev=lambda: JevDouble(choose_fn=choose), store=CaptureStore(directory / "cache"), stdout=io.StringIO(),
             stderr=stderr)
         cls.stderr = stderr.getvalue()
         (folder,) = (directory / "out").iterdir()
@@ -85,16 +61,15 @@ class LedgerTests(unittest.TestCase):
     def test_the_card_payment_links_to_the_checking_debit(self):
         self.assertEqual((self.legs["m9"]["partner"], self.legs["m10"]["partner"]), ("m10", "m9"))
 
-    def test_the_savings_bank_deposit_is_an_unpaired_transfer_candidate_kept_as_evidence(self):
-        unpaired = {leg["payee"] for leg in self.legs.values() if leg["partner"] is None}
-        self.assertEqual(unpaired, {"Ridgewood Savings Bank"})
+    def test_only_the_card_payment_halves_are_link_candidates_the_savings_bank_is_found_by_its_category_not_its_text(self):
+        self.assertEqual({leg["payee"] for leg in self.legs.values()}, {"Payment Thank You", "Amex Payment"})
 
-    def test_the_exports_category_decides_which_records_are_transfers(self):
+    def test_the_transfers_are_the_linked_payment_and_the_merchant_jev_put_in_household_transfer(self):
         transfers = {r["payee"] for r in self.records if r["kind"] == "transfer"}
         self.assertEqual(transfers, {"Payment Thank You", "Amex Payment", "Ridgewood Savings Bank"})
 
-    def test_a_record_with_no_transfer_label_and_no_link_is_never_a_transfer(self):
-        venmo = next(r for r in self.records if r["payee"] == "Venmo")  # "Peer to Peer", paired by no one
+    def test_a_record_that_is_not_linked_and_not_in_household_transfer_is_never_a_transfer(self):
+        venmo = next(r for r in self.records if r["payee"] == "Venmo")  # no group fits, paired by no one
         self.assertEqual(venmo["kind"], "purchase")
 
     def test_every_record_has_a_kind_and_there_is_no_external_transfer(self):
@@ -103,9 +78,9 @@ class LedgerTests(unittest.TestCase):
             kinds[record["kind"]] = kinds.get(record["kind"], 0) + 1
         self.assertEqual(kinds, {"purchase": 6, "transfer": 3, "refund": 2, "credit": 1})
 
-    def test_the_summary_counts_the_transfers_by_label_by_link_and_by_both(self):
-        # the card payment's two halves are labeled and linked; the savings bank deposit is labeled and has no partner
-        self.assertEqual(self.summary["transfer_basis"], {"both": 2, "label": 1, "none": 9})
+    def test_the_summary_counts_the_transfers_by_link_by_category_and_by_both(self):
+        # the card payment's two halves are linked; the savings bank deposit is in Household: Transfer and has no partner
+        self.assertEqual(self.summary["transfer_basis"], {"category": 1, "link": 2, "none": 9})
 
     def money(self, card=None):
         """Income, expenses and net from the records themselves: money in and out, transfers and invalid rows left out."""
@@ -141,9 +116,9 @@ class LedgerTests(unittest.TestCase):
         self.assertEqual(set(shoes), {"payee", "count", "amount", "top", "top_probability", "runner_up",
                                       "runner_up_probability", "reason"})
         self.assertEqual((shoes["top"], shoes["top_probability"], shoes["reason"]),
-                         ("Shopping & Retail: General", 0.5, "below_0.7"))
+                         ("Clothing outlets: Family clothing shops", 0.35, "below_0.7"))
         self.assertTrue(shoes["runner_up"])
-        self.assertLess(shoes["runner_up_probability"], shoes["top_probability"])
+        self.assertLessEqual(shoes["runner_up_probability"], shoes["top_probability"])
 
     def test_jev_is_no_longer_asked_about_payees_and_the_judgments_file_is_gone(self):
         self.assertFalse((self.folder / "judgments.jsonl").exists())
@@ -155,31 +130,9 @@ class LedgerTests(unittest.TestCase):
         original = next(r for r in self.records if r["record_id"] == refunds["Store"]["candidate_record_id"])
         self.assertEqual((original["cost"], original["day"]), (-45.0, "2026-02-15"))
 
-    def test_merchants_are_placed_in_the_categories_in_use_and_an_unsure_one_goes_to_review(self):
-        by = {(r["payee"], r["kind"]): r for r in self.records}
-        self.assertEqual(by["Store", "purchase"]["category_level"], "Shopping & Retail: General")
-        self.assertEqual(by["Dunkin'", "purchase"]["category_level"], "Food & Dining: Coffee & Cafes")
-        self.assertEqual(by["Employer", "credit"]["category_status"], "placed")
-        shoes = by["Shoe Shop", "purchase"]
-        self.assertEqual((shoes["category_status"], shoes.get("category_level")), ("review", None))
-
-    def test_a_merchant_that_fits_no_category_is_named_from_the_mcc_list_by_choosing_a_group_and_a_name(self):
-        venmo = next(r for r in self.records if r["payee"] == "Venmo")
-        self.assertEqual(venmo["category_status"], "placed")
-        self.assertTrue(venmo["category_level"] and venmo["category_level"] != "none_of_these")
-
     def test_transfers_are_not_asked_about_and_say_so(self):
         legs = [r for r in self.records if r["kind"] == "transfer"]
         self.assertEqual({r["category_status"] for r in legs}, {"none"})
-
-
-def first_choice(state, instructions, options):
-    """A scripted Jev that is sure of the first option, and picks the original a refund reversed."""
-    if "refund" in state:
-        original = next(label for label in options if "2026-02-15" in label)
-        return Chosen(original, 0.9, {label: 0.9 if label == original else 0.1 for label in options})
-    top = next(iter(options))
-    return Chosen(top, 0.9, {name: 0.9 if name == top else 0.1 for name in options})
 
 
 def run_with_monarch(monarch_text: str, since: str = "2026-01-01"):
@@ -188,7 +141,7 @@ def run_with_monarch(monarch_text: str, since: str = "2026-01-01"):
     return code, folder_lines["records"], folder_lines["summary"]
 
 
-def run_folder(monarch_text: str, since: str = "2026-01-01") -> tuple[int, dict]:
+def run_folder(monarch_text: str, since: str = "2026-01-01", pinned: str | None = None, jev=first_choice) -> tuple[int, dict]:
     """Run the household as `run_with_monarch` does and read back its records, summary and spending lines."""
     with tempfile.TemporaryDirectory() as temporary:
         directory = Path(temporary)
@@ -196,8 +149,8 @@ def run_folder(monarch_text: str, since: str = "2026-01-01") -> tuple[int, dict]
         code = main(
             ["run", str(LEDGER), "--out", str(directory / "out"), "--with", f"monarch={directory / 'monarch.csv'}",
              "--with", f"amex={ORACLE / 'amex.csv'}", "--with", "amex_account=Platinum", "--with", f"since={since}",
-             *no_pins(directory)],
-            make_jev=lambda: JevDouble(choose_fn=first_choice), store=CaptureStore(directory / "cache"),
+             *(["--with", f"pinned={pinned}"] if pinned else no_pins(directory))],
+            make_jev=lambda: JevDouble(choose_fn=jev), store=CaptureStore(directory / "cache"),
             stdout=io.StringIO(), stderr=io.StringIO())
         (folder,) = (directory / "out").iterdir()
         spending = folder / "spending.jsonl"
@@ -212,33 +165,48 @@ class TransferBasisTests(unittest.TestCase):
     def kinds(self, records, *payees):
         return {payee: next(r["kind"] for r in records if r["payee"] == payee) for payee in payees}
 
-    def test_every_label_form_makes_a_transfer_and_a_lookalike_does_not(self):
+    def test_a_label_that_says_transfer_or_card_payment_makes_nothing_a_transfer(self):
         extra = (
             '2026-03-06,Bank Transfer,"Transportation: Transfers",Checking (...2222),BANK TRANSFER,,-300.00,,Me,,m13\n'
             '2026-03-07,Citibank Online,"Food & Dining: Credit Card Payment",Checking (...2222),CITI,,-80.00,,Me,,m14\n'
-            '2026-03-08,Gift Shop,"Shopping: Transferware",Checking (...2222),GIFT SHOP,,-12.00,,Me,,m15\n'
             '2026-03-09,Savings Move,"Transfer",Checking (...2222),SAVINGS MOVE,,-50.00,,Me,,m16\n')
         code, records, _ = run_with_monarch(self.ORIGINAL + extra)
         self.assertEqual(code, 0)
-        self.assertEqual(self.kinds(records, "Bank Transfer", "Citibank Online", "Gift Shop", "Savings Move"),
-                         {"Bank Transfer": "transfer", "Citibank Online": "transfer", "Gift Shop": "purchase",
-                          "Savings Move": "transfer"})
+        self.assertEqual(self.kinds(records, "Bank Transfer", "Savings Move"),
+                         {"Bank Transfer": "purchase", "Savings Move": "purchase"})  # Jev's first choice is not Household: Transfer
 
-    def test_a_record_linked_to_a_record_in_another_account_is_a_transfer_whatever_its_label(self):
-        # the card's payment received, labeled as income by an earlier categorization, is linked to the checking debit
+    def test_a_payment_whose_category_says_something_misleading_still_links_and_neither_half_counts_as_income(self):
+        # the card's payment received is labeled as income, as an earlier categorization did; the link comes from the text
         changed = self.ORIGINAL.replace('Payment Thank You,"Credit Card Payment"', 'Payment Thank You,"Income: Paychecks"')
         self.assertNotEqual(changed, self.ORIGINAL)
         code, records, summary = run_with_monarch(changed)
         self.assertEqual(code, 0)
         self.assertEqual(self.kinds(records, "Payment Thank You", "Amex Payment"),
                          {"Payment Thank You": "transfer", "Amex Payment": "transfer"})
-        self.assertEqual(summary["transfer_basis"], {"both": 1, "label": 1, "link": 1, "none": 9})
+        self.assertEqual(summary["transfer_basis"], {"link": 2, "none": 10})
+
+    def test_a_card_payment_received_is_a_transfer_even_when_the_bank_side_is_not_in_the_data(self):
+        # the Monarch export starts after the payment left the bank: the card's own text still says it is a payment
+        alone = "\n".join(line for line in self.ORIGINAL.splitlines() if not line.endswith(",m9")) + "\n"
+        self.assertNotEqual(alone, self.ORIGINAL)
+        code, records, summary = run_with_monarch(alone)
+        self.assertEqual(code, 0)
+        self.assertEqual(self.kinds(records, "Payment Thank You"), {"Payment Thank You": "transfer"})
+        self.assertEqual(summary["transfer_basis"].get("payment"), 1)
+
+    def test_a_merchant_the_owner_pins_to_household_transfer_makes_its_records_transfers(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            pins = Path(temporary) / "pins.jsonl"
+            pins.write_text(json.dumps({"payee": "Venmo", "category": "Household: Transfer"}) + "\n", encoding="utf-8")
+            code, found = run_folder(self.ORIGINAL, pinned=str(pins))
+        self.assertEqual(code, 0)
+        self.assertEqual(self.kinds(found["records"], "Venmo"), {"Venmo": "transfer"})
 
 
 class SpendingTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        code, found = run_folder((ORACLE / "monarch.csv").read_text(encoding="utf-8"))
+        code, found = run_folder((ORACLE / "monarch.csv").read_text(encoding="utf-8"), jev=choose)
         assert code == 0
         cls.records, cls.summary, cls.spending = found["records"], found["summary"], found["spending"]
 
@@ -247,7 +215,7 @@ class SpendingTests(unittest.TestCase):
         totals: dict[str, float] = {}
         for r in self.records:
             if r["kind"] in ("purchase", "refund"):
-                name = r.get("Category") or r.get("category_level") or "uncategorized"
+                name = r.get("category_level") or "unplaced"
                 totals[name] = round(totals.get(name, 0.0) + r["cost"], 2)
         return {name: round(-total, 2) for name, total in totals.items()}
 
@@ -257,10 +225,12 @@ class SpendingTests(unittest.TestCase):
         self.assertEqual(sum(line["count"] for line in self.spending),
                          sum(r["kind"] in ("purchase", "refund") for r in self.records))
 
-    def test_the_export_category_comes_first_then_jevs_then_uncategorized(self):
+    def test_the_list_holds_only_the_tools_categories_and_unplaced_never_the_exports(self):
         names = {line["category"] for line in self.spending}
-        self.assertIn("Shopping & Retail: General", names)  # the export's own
-        self.assertNotIn(None, names)
+        placed = {r["category_level"] for r in self.records if r.get("category_level")}
+        self.assertEqual(names - placed, {"unplaced"})  # the shoe shop and Venmo are for review
+        self.assertNotIn("Shopping & Retail: General", names)  # the export's own word for the Store
+        self.assertNotIn("uncategorized", names)
 
     def test_income_credits_and_transfers_are_not_in_the_list(self):
         self.assertNotIn("Income: Paychecks", {line["category"] for line in self.spending})

@@ -102,12 +102,14 @@ async def prefer_middle(  # noqa: PLR0913 - the stage's with: keys
 
 
 @stage("map.weigh")
-async def weigh(context, source: Source, by: dict, into: str) -> list[dict]:
-    """Each row of `source` plus `into`: the sum of its `by` fields, each times its weight."""
-    return [
-        {**row, into: sum(weight * row[field] for field, weight in by.items())}
-        for row in await context.read(source)
-    ]
+async def weigh(context, source: Source, by: dict, into: str, places: int | None = None) -> list[dict]:
+    """Each row of `source` plus `into`: the sum of its `by` fields, each times its weight (a field the row lacks, or
+    has as null, counts as zero), rounded to `places` decimal places when given."""
+    def total(row) -> float:
+        value = sum(weight * (row.get(field) or 0) for field, weight in by.items())
+        return value if places is None else round(value, places)
+
+    return [{**row, into: total(row)} for row in await context.read(source)]
 
 
 @stage("reduce.any")
@@ -171,12 +173,14 @@ async def reduce_min(context, source: Source, field: str, take: int = 1) -> list
 @stage("map.group")
 async def group(  # noqa: PLR0913 - the stage's with: keys
     context, source: Source, by: str, collect: dict | None = None, take: int = 3, sums: dict | None = None,
+    commonest: dict | None = None,
 ) -> list[dict]:
     """One row per distinct `by` value (case, spacing and edges ignored), in the order they first appear:
     `{key, <by>: the first spelling, count, <into>: [...]}`. Each `collect` entry, `into: field`, lists up to `take`
     different non-empty values of `field` among the group's rows. Each `sums` entry adds `into`: the total of a field
     over the group's rows, to cents: `into: field`, or `into: { field: <field>, where: <condition> }` to total only
-    the rows that satisfy the condition (0.0 when none do)."""
+    the rows that satisfy the condition (0.0 when none do). Each `commonest` entry, `into: field`, names the value of
+    `field` most of the group's rows have (the first seen wins a tie; null when no row has one)."""
     groups: dict[str, list[dict]] = {}
     for row in await context.read(source):
         groups.setdefault(" ".join(str(row[by] or "").lower().split()), []).append(row)
@@ -184,9 +188,18 @@ async def group(  # noqa: PLR0913 - the stage's with: keys
         {"key": key, by: rows[0][by], "count": len(rows),
          **{into: list(dict.fromkeys(row[field] for row in rows if row.get(field) not in (None, "")))[:take]
             for into, field in (collect or {}).items()},
-         **{into: _total(rows, spec) for into, spec in (sums or {}).items()}}
+         **{into: _total(rows, spec) for into, spec in (sums or {}).items()},
+         **{into: _commonest(rows, field) for into, field in (commonest or {}).items()}}
         for key, rows in groups.items()
     ]
+
+
+def _commonest(rows: list[dict], field: str):
+    counts: dict = {}
+    for row in rows:
+        if row.get(field) not in (None, ""):
+            counts[row[field]] = counts.get(row[field], 0) + 1
+    return max(counts, key=counts.get) if counts else None  # max keeps the first of equal counts
 
 
 def _total(rows: list[dict], spec) -> float:
@@ -210,9 +223,9 @@ async def rows(context, rows: list) -> list[dict]:  # noqa: ARG001 - a stage alw
 
 
 @stage("map.classify")
-async def classify(context, source: Source, into: str, cases: list, otherwise: str) -> list[dict]:
+async def classify(context, source: Source, into: str, cases: list, otherwise: str | int | float | bool) -> list[dict]:
     """Each row of `source` plus `into`: the `then` of the first case whose `if` condition the row satisfies, else
-    `otherwise`. A case is `{ if: <condition>, then: <value> }`."""
+    `otherwise`. A case is `{ if: <condition>, then: <value> }`; a value is text, a number or true or false."""
     return [
         {**row, into: next((case["then"] for case in cases if holds(case["if"], row)), otherwise)}
         for row in await context.read(source)
@@ -311,6 +324,74 @@ async def complete(context, source: Source, fields: list) -> list[dict]:
     return rows
 
 
+@stage("map.smallest")
+async def smallest(context, source: Source, fields: list, into: str) -> list[dict]:
+    """Each row of `source` plus `into`: the smallest of its `fields` that it has (null when it has none)."""
+    found = []
+    for row in await context.read(source):
+        values = [row[name] for name in fields if row.get(name) is not None]
+        found.append({**row, into: min(values) if values else None})
+    return found
+
+
+@stage("map.allocate")
+async def allocate(  # noqa: PLR0913 - the stage's with: keys
+    context, source: Source, payments: Source, amount: str, day: str, id: str, into: str,
+) -> list[dict]:
+    """Each row of `source` (the charges) plus `into`: the `id` of the payment that settled it, or null when it is
+    still open. Payments are taken in `day` order; each settles the charges dated on or before its `day`, oldest
+    first (charges of one day, smallest first, so the result does not depend on the order of the rows), and stops
+    before its `amount` would be passed (what is left of it is the payment's remainder). A charge
+    belongs to at most one payment, and none dated after a payment is used for it. Amounts are compared as
+    absolute values in whole cents; rows keep their order and fields."""
+    def cents(row) -> int:
+        return round(abs(row[amount]) * 100)
+
+    rows = await context.read(source)
+    settled: dict[int, object] = {}
+    queue = sorted(range(len(rows)), key=lambda i: (rows[i][day], cents(rows[i])))  # a day's charges: smallest first
+    for payment in sorted(await context.read(payments), key=lambda row: row[day]):
+        left = cents(payment)
+        for index in list(queue):
+            if rows[index][day] > payment[day] or cents(rows[index]) > left:
+                break
+            left -= cents(rows[index])
+            settled[index] = payment[id]
+            queue.remove(index)
+    return [{**row, into: settled.get(index)} for index, row in enumerate(rows)]
+
+
+@stage("map.top")
+async def top(context, source: Source, by: str, field: str, take: int = 5) -> list[dict]:
+    """The `take` rows with the highest `field` in each `by` group, highest first, the groups in the order they first
+    appear. Equal values keep the order they had."""
+    groups: dict = {}
+    for row in await context.read(source):
+        groups.setdefault(row[by], []).append(row)
+    return [row for rows in groups.values() for row in sorted(rows, key=lambda r: -r[field])[:take]]
+
+
+@stage("map.unique")
+async def unique(context, source: Source, field: str, among: Source | None = None, among_field: str | None = None) -> list[dict]:
+    """The rows of `source` unchanged, after checking no row repeats the `field` of an earlier row, or of any row of
+    `among` (its `among_field`, default `field`); case, spacing and edges do not make a value new. The first repeat stops
+    the run, naming the source, the line (from 1) and where the value is already."""
+    def key(value) -> str:
+        return " ".join(str(value or "").lower().split())
+
+    rows = await context.read(source)
+    elsewhere = {key(row.get(among_field or field)) for row in await context.read(among)} if among else set()
+    first: dict[str, int] = {}
+    for number, row in enumerate(rows, 1):
+        value = key(row.get(field))
+        if value in elsewhere:
+            raise ValueError(f"source {source!r} line {number} repeats {row.get(field)!r} (also in {among!r})")
+        if value in first:
+            raise ValueError(f"source {source!r} line {number} repeats {row.get(field)!r} (first on line {first[value]})")
+        first[value] = number
+    return rows
+
+
 @stage("map.known")
 async def known(context, source: Source, field: str, among: Source, among_field: str) -> list[dict]:
     """The rows of `source` unchanged, after checking every row's `field` is the `among_field` value of some row of
@@ -324,12 +405,32 @@ async def known(context, source: Source, field: str, among: Source, among_field:
 
 
 @stage("map.share")
-async def share(context, source: Source, field: str, into: str) -> list[dict]:
-    """Each row of `source` plus `into`: its `field` as a share of the total of `field` over all the rows, to four
-    places (0.0 for every row when the total is zero)."""
+async def share(context, source: Source, field: str, into: str, by: str | None = None) -> list[dict]:
+    """Each row of `source` plus `into`: its `field` as a share of the total of `field` over all the rows (or, with
+    `by`, over the rows with the same `by` value), to four places (0.0 for every row when the total is zero)."""
     rows = await context.read(source)
-    total = sum(row[field] for row in rows)
-    return [{**row, into: round(row[field] / total, 4) if total else 0.0} for row in rows]
+    def group_of(row):
+        return row[by] if by else None
+
+    totals: dict = {}
+    for row in rows:
+        totals[group_of(row)] = totals.get(group_of(row), 0) + row[field]
+    return [
+        {**row, into: round(row[field] / totals[group_of(row)], 4) if totals[group_of(row)] else 0.0} for row in rows
+    ]
+
+
+@stage("map.nest")
+async def nest(  # noqa: PLR0913 - the stage's with: keys
+    context, source: Source, other: Source, on: str, fields: list, into: str, other_on: str | None = None,
+) -> list[dict]:
+    """Each row of `source` plus `into`: a list with one entry for every row of `other` whose `other_on` (default `on`)
+    equals the row's `on`, in the order they come, each entry holding only the named `fields`. A row with no match gets
+    an empty list."""
+    nested: dict = {}
+    for row in await context.read(other):
+        nested.setdefault(row[other_on or on], []).append({field: row.get(field) for field in fields})
+    return [{**row, into: nested.get(row[on], [])} for row in await context.read(source)]
 
 
 @stage("map.set")

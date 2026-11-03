@@ -79,8 +79,15 @@ A state's `do:` names a stage **type** as a key (a closed set the schema owns) a
 | `map: { action: group }` | `source`, `by`, `collect`, `take`, `sums` | one row per distinct `by` value (case and spacing ignored): `{key, <by>, count}` plus, for each `collect` entry `into: field`, up to `take` different values, and for each `sums` entry the total of a field to cents: `into: field`, or `into: { field: f, where: <condition> }` to total only the rows that satisfy the condition (0.0 when none do) |
 | `map: { action: without }` | `source`, `among`, `on`, `among_on` | the rows of `source` whose `on` value is not the `among_on` (default `on`) value of any row of `among` (the opposite of `matching`) |
 | `map: { action: complete }` | `source`, `fields` | the rows of `source` unchanged, after checking every row has a value in every field; the first that does not stops the run: `source 'x' line 2 has no payee` |
+| (`map: group`, `commonest`) | `commonest: { <into>: <field> }` | each entry names the value of `field` most of the group's rows have (the first seen wins a tie; null when no row has one) |
+| `map: { action: smallest }` | `source`, `fields`, `into` | each row plus `into`: the smallest of its named fields that it has (null when it has none) |
+| `map: { action: unique }` | `source`, `field`, `among`, `among_field` | the rows of `source` unchanged, after checking no row repeats the `field` of an earlier row (or, with `among`, of any row of that source); case, spacing and edges do not make a value new; the first repeat stops the run: `source 'x' line 2 repeats 'Rent' (first on line 1)` or `(also in 'iso')` |
 | `map: { action: known }` | `source`, `field`, `among`, `among_field` | the rows of `source` unchanged, after checking every row's `field` is some row's `among_field` in `among`; the first that is not stops the run, naming the line and the value |
-| `map: { action: share }` | `source`, `field`, `into` | each row plus `into`: its `field` as a share of the total of `field` over all rows, to four places (0.0 when the total is zero) |
+| `map: { action: share }` | `source`, `field`, `into`, `by` | each row plus `into`: its `field` as a share of the total of `field` over all rows (with `by`, over the rows with the same `by` value), to four places (0.0 when the total is zero) |
+| `map: { action: nest }` | `source`, `other`, `on`, `other_on`, `fields`, `into` | each row plus `into`: a list with one entry for every row of `other` whose `other_on` (default `on`) equals the row's `on`, in order, each holding only the named `fields`; a row with no match gets an empty list |
+| (`map: weigh`, `places`) | `places` | rounds each sum to that many decimal places (without it the float is left as it is) |
+| `map: { action: allocate }` | `source`, `payments`, `amount`, `day`, `id`, `into` | each row of `source` (the charges) plus `into`: the `id` of the payment that settled it, or null while it is open. Payments go in `day` order; each settles the charges dated on or before it, oldest first (a day's charges smallest first, so the result does not depend on the order of the rows), and stops before its `amount` would be passed (what is left is its remainder). A charge belongs to at most one payment; none dated after a payment is used for it. Amounts compare as absolute values in whole cents |
+| `map: { action: top }` | `source`, `by`, `field`, `take` | the `take` rows (default 5) with the highest `field` in each `by` group, highest first, groups in the order they first appear |
 | `map: { action: set }` | `source`, `fields` | each row plus the named fields, the same value on every row |
 | `map: { action: keep }` | `source`, `fields` | each row with only the named fields, in that order (null for a field the row lacks) |
 | `reduce: { action: top_two }` | `source`, `label`, `value` | one row naming the best two rows by `value`: `{<label>, <value>, runner_up, runner_up_probability}` (the runner-up is null when there is only one row; no rows give no row) |
@@ -324,8 +331,8 @@ When each iteration should see what the earlier ones produced, add `reduce`:
 
 ```yaml
 named:
-  do: { sketch: { file: name_merchant } }
-  each: unfit
+  do: { sketch: { file: name_each } }
+  each: unnamed
   reduce: { action: concat, into: earlier }
 ```
 

@@ -5,14 +5,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from household_jev import choose
 from jev_double import JevDouble
-from test_household import LEDGER, ORACLE, category, lines
+from test_household import LEDGER, ORACLE, lines
 
-from src.jev import Chosen
 from src.sketch.cli import main
 from src.sketch.sources.capture import CaptureStore
 
-CLOTHING = "Shopping & Retail: Clothing"  # a category the fixture export uses
+CLOTHING = "Clothing outlets: Family clothing shops"  # a category in the clean list (ISO 18245)
 
 
 class PinCase(unittest.TestCase):
@@ -28,14 +28,9 @@ class PinCase(unittest.TestCase):
         return ["--with", f"pinned={path}"]
 
     def reading(self, state, instructions, options):
-        if "refund" in state:
-            original = next(label for label in options if "2026-02-15" in label)
-            return Chosen(original, 0.8, {label: 0.8 if label == original else 0.2 for label in options})
         if "merchant" in state:
-            merchant = state["merchant"][0]["merchant"]
-            self.asked.append(merchant)
-            return category(merchant, options)
-        raise AssertionError(f"unexpected question: {list(state)}")
+            self.asked.append(state["merchant"][0]["merchant"])
+        return choose(state, instructions, options)
 
     def run_household(self, *extra, name="out"):
         stdout, stderr = io.StringIO(), io.StringIO()

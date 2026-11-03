@@ -53,7 +53,10 @@ class _Checker:
     def sources(self) -> None:
         for name, source in self.sketch.sources.items():
             if source.kind == "file" and not (source.path and source.path.is_file()) and not self.may_be_missing(source):
-                self.problem(f"sources.{name}", f"file {source.path} does not exist")
+                typed = source.config.get("path", "") if isinstance(source.config, dict) else ""
+                said = f"file {typed} does not exist (looked for {source.path})" if typed and typed != str(source.path) \
+                    else f"file {source.path} does not exist"
+                self.problem(f"sources.{name}", said)
             if source.kind == "stage":
                 self.stage_source(name, source.config)
             if source.kind == "jev":

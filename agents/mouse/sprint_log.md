@@ -33,3 +33,6 @@ Phases: 1 transfers from the owner's categories (UND-89) | 2 income/expenses per
 
 ## Sprint 24 — what the money goes on, typed inputs, the statechart (branch sprint-24, started 2026-11-02)
 Phases: 1 card payments are transfers (UND-93) | 2 spending.jsonl (UND-94) | 3 console spending list (UND-95) | 4 inputs declared (UND-87a) | 5 typed controls (UND-87b) | 6 chart layout (UND-82a) | 7 chart drawn (UND-82b) | close. Board: task.md.
+
+## Sprint 25 — the tool fixes the categories, payments know what they paid for (branch sprint-25, from sprint-24, started 2026-11-03)
+Phases: 1 clean list (UND-96) | 2 Jev categorizes every merchant (UND-97) | 3 kinds from links and categories + crosswalk (UND-98) | 4 allocation stages (UND-99a) | 5 payments.jsonl (UND-99b) | 6 spending from the tool's categories (UND-100) | close. Board: task.md.

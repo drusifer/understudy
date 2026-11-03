@@ -1190,3 +1190,262 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-11-02 23:26:28</small>] [**Cypher**]->[**all**] *pm launch*:
  *pm launch sprint 24. Sprint complete: card payments are out of income and spending, the household shows what the money goes on (03,977 over 90 categories; Rent first) in a file and in the console, sketches declare typed inputs drawn as a dial, sliders, a stepper and a switch, and the console draws the statechart with the current state lit. Branch sprint-24 committed locally in 7 phases plus closeout, NOT merged or pushed (owner). Next: Sprint 25 (step and pause, replay, decision detail, editor) when asked.
+
+---
+[<small>2026-11-03 11:06:15</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Sprint 25 stories ready: docs/sprints/USER_STORIES_SPRINT25.md (UND-96..100; 29 pts): ISO 18245 plus the owner's additions as the clean list, Jev puts every merchant in it in two steps, transfers from links and the tool's categories not Monarch labels, payments own the charges they settled, spending from the tool's categories. Venmo/Zelle later. Branch sprint-25 cut from sprint-24 (not merged). STORIES self-check: all PASS. @Smith *user review sprint 25
+
+---
+[<small>2026-11-03 11:06:46</small>] [**Smith**]->[**Cypher**] *user reject*:
+ *user reject REASON: UND-98 AC1 says labels never decide a transfer, but linking the two halves of a payment finds its candidates by Category, so a mislabeled bank-side payment never pairs | FIX: choose link candidates from the record's own text, never Category; add a criterion that a payment with a misleading Category still links. @Cypher revise stories.
+
+---
+[<small>2026-11-03 11:06:46</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Stories revised: UND-98 gains AC3 (link candidates come from the record's own text, never Category; a payment with a misleading label still links) and is renumbered to six criteria. @Smith *user review sprint 25
+
+---
+[<small>2026-11-03 11:06:46</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ *user approve. Stories approved. rubric STORIES: OUT=A TEST=S FAIL=A SCOPE=A SIZE=A DESIGN=A. Figures rechecked on the baseline: 13 groups and 280 names; 11 of 12 payments within 832 (4.6% at most, May); first payment short by 10,437. Note for Morpheus: Jev's two-step choice means about two requests per merchant; say what it costs and how it is cached. @Morpheus *lead arch sprint 25
+
+---
+[<small>2026-11-03 11:07:49</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Architecture done: docs/sprints/ARCH_SPRINT25.md. Clean list = ISO 18245 + additions file; new categorize_merchant sketch (two Jev choices, group then name, about 1,650 requests first run, then cached); kinds from text-found links or Household: Transfer; map.allocate oldest-first; payments.jsonl. No new deps. Disagreement is read as differing about money moving (flagged for Smith). @Smith *user feedback arch sprint 25
+
+---
+[<small>2026-11-03 11:08:12</small>] [**Smith**]->[**Switch**] *user approve*:
+ *user approve. Architecture approved after one amendment (disagreements.jsonl became crosswalk.jsonl: every merchant, both categories, a flag where they differ about money moving; story AC4 and ARCH updated). rubric ARCH: BOUND=A FLOW=A FAIL=A USER=S DECS=A FEAS=S. UX note: first run is about four minutes of Jev; say so in the guide and print progress. @Switch *sec threat sprint 25
+
+---
+[<small>2026-11-03 11:08:12</small>] [**Switch**]->[**Mouse**] *sec handoff*:
+ security gate (design): No blocking findings. Checked: the additions file is a new local input of the pin-file class, validated before any Jev request, its names are options Jev chooses among (never Jev output); Jev no longer sees export categories (less data sent); payments.jsonl and crosswalk.jsonl hold names, amounts and categories in the git-ignored run folder; no new endpoint, dependency or secret. @Mouse *sm plan sprint 25
+
+---
+[<small>2026-11-03 11:08:47</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint 25 planned in task.md: 6 phases (UND-96, 97, 98, 99 in two, 100), each one build task then Trin, Switch, Morpheus gates; closeout with Tank sdlc-check. Levels L1-L3. First live Jev run of the new categorization is about 1,650 requests. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-11-03 11:08:47</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review sprint plan: approved. rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=S OWNER=A LEVEL=A. One build task plus the three fixed gates per phase; UND-99 split so the allocation is proven alone before the sketch uses it. Order matters: 1, 2, 3 then 4, 5, 6. Commit once per phase after my review. @Neo *swe impl phase-1
+
+---
+[<small>2026-11-03 11:08:47</small>] [**Mouse**]->[**all**] *phase 1*:
+ Phase 1: a clean list of categories (UND-96)
+
+---
+[<small>2026-11-03 11:16:30</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+11:16AM INF no leaks found
+11:16AM INF 1 commits scanned.
+11:16AM INF scanned ~7019 bytes (7.02 KB) in 250ms
+11:16AM INF no leaks found
+
+---
+[<small>2026-11-03 11:16:49</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 1 impl complete (UND-96): the clean list (ISO 18245 plus additions file) written to taxonomy.jsonl; generic map.unique; shipped additions.jsonl; pins checked against the list; bad additions/pins refused before any Jev request; relative missing paths named as typed. make check green (441). @Trin *qa uat phase-1
+
+---
+[<small>2026-11-03 11:16:49</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 1 passed (UND-96): real run writes 286 categories (280 ISO, 6 owner); missing path, line without a name, repeated name and a pin naming an export category each stop before any Jev request with one line. @Switch *sec review phase-1
+
+---
+[<small>2026-11-03 11:16:49</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 1): No blocking findings. The additions file is a new local input of the pin-file class: read before any Jev request, shape-checked, names only (no paths or secrets read from it); a missing path is named, not read; the check message adds the as-typed path, which the owner supplied. No dependency or endpoint change. @Morpheus *lead review phase-1
+
+---
+[<small>2026-11-03 11:16:50</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-1: passed. One small generic stage, one data file, the list written to its own sink; the old export-derived taxonomy stages are gone. The moves anchor now sits at its first use and goes in Phase 3 with the label rules. @Neo *swe impl phase-2
+
+---
+[<small>2026-11-03 11:16:50</small>] [**Mouse**]->[**all**] *phase 2*:
+ Phase 2: Jev puts every merchant in a category (UND-97)
+
+---
+[<small>2026-11-03 11:55:43</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+11:55AM INF 1 commits scanned.
+11:55AM INF scanned ~8501 bytes (8.50 KB) in 249ms
+11:55AM INF no leaks found
+
+---
+[<small>2026-11-03 11:55:43</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 2 impl complete (UND-97): categorize_merchant.yaml (Jev chooses a group shown every name in each, then a name; none_of_these allowed); place_merchant and name_merchant removed; export categories never shown or used (replay on a scrambled export: 0 requests, same result for 1,220 merchants); placing rule amended after the first real run (73% went to review): above 0.7, or 0.4+ and twice the runner-up; category_source jev/pin. make check green (452). @Trin *qa uat phase-2
+
+---
+[<small>2026-11-03 11:55:58</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 2 passed (UND-97): real runs; first rule sent 73% to review, amended (every name shown, 0.4+ and twice the runner-up) to 48% with sensible categories; replay on a scrambled export: 0 requests, identical for 1,220 merchants; live runs vary on 101 merchants. Wrong claim corrected: only replay reuses captures. @Switch *sec review phase-2
+
+---
+[<small>2026-11-03 11:55:58</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-2: passed. The child sketch is about 130 lines of declarative stages, no household Python; the old placing and naming sketches and their special cases are gone. The amended rule (0.7, or 0.4 and twice the runner-up) is stated once in the child's description, the guide and ADR-0055. Debt: Jev drifts between live runs, so pins matter. @Neo *swe impl phase-3
+
+---
+[<small>2026-11-03 11:55:58</small>] [**Mouse**]->[**all**] *phase 3*:
+ Phase 3: kinds follow links and the tool's categories (UND-98)
+
+---
+[<small>2026-11-03 11:56:01</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 2): No blocking findings. Jev now sees less (no export categories) plus the public ISO list and the owner's additions; merchant text still goes through tojson. Low note: the additions path is a --with value rendered into the child's file path (same class as the monarch path); a quote in it fails closed, no code runs.
+
+---
+[<small>2026-11-03 12:19:31</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+12:19PM INF no leaks found
+12:19PM INF 1 commits scanned.
+12:19PM INF scanned ~16892 bytes (16.89 KB) in 248ms
+12:19PM INF no leaks found
+
+---
+[<small>2026-11-03 12:19:31</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 3 impl complete (UND-98): link candidates from text (never Category); kind from link, Household: Transfer, or a card's own payment-received text; refunds exclude Household: Income; crosswalk.jsonl with a flag and a summary count; generic group commonest, classify numbers/booleans, weigh null as 0. Real run: Ridgewood income +77k vs the owner's file because Schwab is unplaced (pin it). New small sample data/sample-*.csv for live tests (305 requests, 67s). make check green. @Trin *qa uat phase-3
+
+---
+[<small>2026-11-03 12:19:43</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 3 passed (UND-98): real and sample runs; no label decides a kind; a mislabeled payment still links; crosswalk lists every merchant with a flag (27 of 1,214 flagged on the full run). Ridgewood income is high by Schwab's 82,000 until it is pinned. Fixes from findings: a card's payment-received text is a payment when unpaired; Household explained to Jev. @Switch *sec review phase-3
+
+---
+[<small>2026-11-03 12:19:43</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 3): No blocking findings. Link candidates and the payment text rule read the record's own text with fixed words (no user input reaches a pattern); crosswalk.jsonl holds names, amounts and category names in the git-ignored run folder; no new input or dependency. @Morpheus *lead review phase-3
+
+---
+[<small>2026-11-03 12:19:43</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-3: passed. The label rules are gone from the household except where the crosswalk compares them on purpose; kinds now read links, text and the tool's own category. Debt: Jev may not put Schwab-like accounts in Household:Transfer, so pins are part of the workflow; the monarch Category requirement is now only for the crosswalk and goes in a later cleanup. @Neo *swe impl phase-4
+
+---
+[<small>2026-11-03 12:19:43</small>] [**Mouse**]->[**all**] *phase 4*:
+ Phase 4: allocate payments to charges, as generic stages (UND-99 part 1)
+
+---
+[<small>2026-11-03 14:11:30</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+2:11PM INF no leaks found
+2:11PM INF 1 commits scanned.
+2:11PM INF scanned ~3329 bytes (3.33 KB) in 241ms
+2:11PM INF no leaks found
+
+---
+[<small>2026-11-03 16:35:54</small>] [**Neo**]->[**all**] *checkpoint*:
+ Checkpoint saved in agents/neo/state.md. Sprint 25 phases 1-3 done and committed (7e32218), tree clean, 464 tests green. Next: Phase 4, generic map.allocate and map.top, tests first. Use data/sample-*.csv for live runs. Ready for context clear. Resume with /init.
+
+---
+[<small>2026-11-03 16:36:56</small>] [**Neo**]->[**all**] *resume*:
+ Resuming Sprint 25 Phase 4 (map.allocate, map.top) from last session.
+
+---
+[<small>2026-11-03 16:37:55</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make help | /home/drusifer/Projects/understudy/build/build.out
+clean            Remove build outputs and caches
+distclean        Also remove the Python environment
+
+---
+[<small>2026-11-03 16:38:37</small>] [**Neo**]->[**all**] *swe impl*:
+ Phase 4 impl written test-first: map.allocate (oldest first, whole cents, never past the amount, nothing dated after the payment, a charge in one payment) and map.top. Running bobp make test and lint before handing to Trin. Why: no UAT on unverified code.
+
+---
+[<small>2026-11-03 16:39:38</small>] [**User**]->[**all**] *request*:
+ /init resume sprint at phase 4 (logged late; init steps were skipped on first pass)
+
+---
+[<small>2026-11-03 16:41:33</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test | /home/drusifer/Projects/understudy/build/build.out
+----------------------------------------------------------------------
+Ran 475 tests in 78.163s
+
+OK
+
+---
+[<small>2026-11-03 16:41:41</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 4 impl complete (UND-99 part 1): map.allocate and map.top, tests first; docs in SKETCHES, ARCH, PRD. 475 tests and lint green. Task 4.1 ticked. @Trin *qa uat phase-4 (Amex baseline outside the sketch: 11 of 12 within 5%, first short by about 10,437, settled plus open equals all charges to the cent)
+
+---
+[<small>2026-11-03 16:41:59</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 4 passed (UND-99 AC1, AC5, AC6): map.allocate on the Amex baseline file, outside the sketch: 11 of 12 payments within 5% (worst May 4.6%, 832.30); first payment (2025-11-14) short by 10,437.36 and never borrows later charges; settled + open = all charges 299,942.17 to the cent. Open balance here is 28,488.06 vs 'about 28,444' in task.md: check for Phase 5. @Switch *sec review phase-4
+
+---
+[<small>2026-11-03 16:41:59</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 4): No blocking findings. Two pure functions over rows already in memory: no file, network, shell, pattern or new input; no dependency added; amounts compared as integers (no float drift). @Morpheus *lead review phase-4
+
+---
+[<small>2026-11-03 16:41:59</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-4: passed. Stages are generic (no household names), signature is the YAML contract, tests cover each rule in ADR-0057. Notes for Phase 5: allocate compares absolute amounts, so filter credits out with map.where before it; a row without day or amount raises KeyError (fine behind map.require/complete). @Neo *swe impl phase-5
+
+---
+[<small>2026-11-03 16:42:51</small>] [**Mouse**]->[**all**] *phase 5*:
+ Phase 5: payments know what they paid for (UND-99 part 2)
+
+---
+[<small>2026-11-03 16:47:29</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+4:47PM INF no leaks found
+4:47PM INF 1 commits scanned.
+4:47PM INF scanned ~11355 bytes (11.35 KB) in 252ms
+4:47PM INF no leaks found
+
+---
+[<small>2026-11-03 16:47:43</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 5 impl complete (UND-99 part 2): pay_* stages, payments.jsonl, settled_by on each card charge, open_balance in summary; new generic map.nest, map.share by, map.weigh places; docs updated. 489 tests, lint, secrets green. 'Unexplained' = over 5% of the payment has no earlier charge (reading of AC5 for Smith). @Trin *qa uat phase-5
+
+---
+[<small>2026-11-03 17:10:46</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+5:10PM INF no leaks found
+5:10PM INF 1 commits scanned.
+5:10PM INF scanned ~14615 bytes (14.61 KB) in 249ms
+5:10PM INF no leaks found
+
+---
+[<small>2026-11-03 17:10:56</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 5): No blocking findings. payments.jsonl holds amounts and category names in the git-ignored run folder, same class as records.jsonl; no new input, dependency, shell or pattern; stages work on rows already in memory. @Morpheus *lead review phase-5
+
+---
+[<small>2026-11-03 17:10:56</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-5: passed. Generic parts (nest, share by, weigh places, allocate) carry no household names; the household only wires them. Debt: allocation is approximate by design (remainder shown); ADR-0057 needs the day-order rule (card's dates, smallest first within a day); a run with no open charges writes no open_balance. @Neo *swe impl phase-6
+
+---
+[<small>2026-11-03 17:28:47</small>] [**Mouse**]->[**all**] *phase 6*:
+ Phase 6: spending by the tool's category (UND-100)
+
+---
+[<small>2026-11-03 17:39:14</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-browser | /home/drusifer/Projects/understudy/build/build.out
+......................
+----------------------------------------------------------------------
+Ran 22 tests in 101.674s
+
+OK
+
+---
+[<small>2026-11-03 17:39:28</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 6 impl complete (UND-100): spending.jsonl uses the tool's category (category_level: Jev or pin), unplaced for a merchant in review, never the export's Category; tests and docs updated; make check 491 green, test-browser 22/22. @Trin *qa uat phase-6
+
+---
+[<small>2026-11-03 17:39:29</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 6 passed (UND-100 AC1-4) on the full baseline (replay): 99 categories, none outside the clean list except unplaced; shares add to 1.0001; amounts add to 450,144.50 = spending_total (5,812 records); transfers and card payments absent. Finding for the owner: unplaced is 38.6% of spending (173,565.40, 2,041 records) until more merchants are pinned. @Switch *sec review phase-6
+
+---
+[<small>2026-11-03 17:39:29</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 6): No blocking findings. One sketch edit (which field names a spending category) and test changes; no new input, output, dependency or pattern. @Morpheus *lead review phase-6
+
+---
+[<small>2026-11-03 17:39:29</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
+ *lead review phase-6: passed. The list now follows the same category as every other report; the old export-first rule is gone with no fallback. All phases reviewed. @Tank *devops sdlc-check
+
+---
+[<small>2026-11-03 17:40:45</small>] [**Tank**]->[**Oracle**] *devops handoff*:
+ SDLC check passed (Sprint 25): pyproject.toml, uv.lock, .python-version and Makefile unchanged since sprint-24; make check green (491 tests, ruff, gitleaks); test-browser 22/22 in 102 s; Last verified updated. @Oracle *ora groom
+
+---
+[<small>2026-11-03 17:40:45</small>] [**Oracle**]->[**Smith**] *ora handoff*:
+ Docs groomed: ADR-0055..0057 recorded (ADR-0052's label rule marked superseded), 2 lessons, CHANGELOG, USER_GUIDE, SKETCHES, ARCH, PRD, UAT plan results, RETRO_SPRINT25. Chat archive left for the owner (CHAT.md reset is a release step). @Smith *user test sprint-25
+
+---
+[<small>2026-11-03 17:40:46</small>] [**Smith**]->[**all**] *user approve*:
+ rubric UAT: COVER=A STEPS=A FAIL=A DATA=S EVID=A. User testing passed (UAT-25-1..6, real baselines). Rough edges for the owner: unplaced is 38.6% of spending; Ridgewood income looks high until own-account merchants are pinned; 'unexplained' reads as over 5% of a payment with no earlier charge (AC5 reading, accepted). @all *sprint retro
+
+---
+[<small>2026-11-03 17:40:46</small>] [**Mouse**]->[**Cypher**] *retro*:
+ Sprint 25 retro posted in docs/sprints/RETRO_SPRINT25.md. Backlog: pin own-account merchants and work down review.jsonl; make the monarch Category optional; write open_balance 0 when none; Venmo/Zelle; console stepping/replay/editor. @Cypher *pm launch sprint-25
+
+---
+[<small>2026-11-03 17:40:46</small>] [**Cypher**]->[**all**] *pm launch*:
+ *pm launch sprint-25. Sprint complete: 5 stories (UND-96..100), 6 phases, 491 tests. Branches sprint-24 and sprint-25 are committed locally and NOT merged or pushed; merge sprint-24 first, then sprint-25, only when the owner asks.

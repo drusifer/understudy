@@ -1,5 +1,16 @@
 # Changelog
 
+## Sprint 25 — the tool fixes the categories, and payments know what they paid for (2026-11-03, branch `sprint-25`, not yet merged)
+
+- **One clean list of categories:** ISO 18245 (13 groups, 280 names) plus your own additions under "Household" (Rent, Mortgage, Tuition, Income, Transfer, Loan repayment); `--with additions=<path>` swaps in your file. A bad additions line or a pin naming a category outside the list stops the run before any Jev request.
+- **Jev puts every merchant in a category:** two choices (a group, then a name), placed when sure enough; otherwise the merchant is in `review.jsonl`. The export's own `Category` is never shown to Jev and decides nothing.
+- **Kinds follow links and the tool's categories:** a transfer is a payment the run linked from its own text, a merchant in "Household: Transfer", or a card's own "payment received" line. New `crosswalk.jsonl` lists every merchant with the tool's category beside the export's and flags where they differ about money moving.
+- **Payments know what they paid for:** `payments.jsonl` (one line per card payment: charges settled, amount settled, remainder, whether it is partly unexplained, and its five largest categories), `settled_by` on each card charge, and `open_balance` in `summary.json`. On the baseline, 11 of 12 payments settle within 5%, and settled plus open equal all the card's charges ($299,942.17) to the cent; open balance $28,443.67.
+- **Spending by the tool's category:** `spending.jsonl` and the console's list use the tool's categories, with `unplaced` for a merchant in review (38.6% of spending on the baseline until you pin more).
+- **Generic sketch parts:** `map.unique`, `map.smallest`, `map.allocate`, `map.top`, `map.nest`, a `by` option on `map.share`, `places` on `map.weigh`, `commonest` on `map.group`.
+- **Breaking:** the export-first category rule and the label rules for transfers are gone; `uncategorized` is now `unplaced`; `place_merchant.yaml` and `name_merchant.yaml` are gone.
+- **Docs:** ADR-0055 to ADR-0057, `ARCH_SPRINT25.md`, `UAT_PLAN_SPRINT25.md`, `RETRO_SPRINT25.md`, two lessons.
+
 ## Sprint 24 — what the money goes on, typed inputs, and the statechart you can see (2026-11-02, branch `sprint-24`, not yet merged)
 
 - **Card payments are not spending:** a household record is a transfer when its Category is `Transfer` or `Credit Card Payment`, or ends in `: Credit Card Payment`, `: Transfer` or `: Transfers`, or when the run links it to a record in another account. Positive records outside Ridgewood that are not transfers fell from 169 records ($240,596) to 143 ($20,038); Ridgewood is unchanged. `summary.json` counts `transfer_basis` (`label`, `link`, `both`, `none`). New sketch condition `ends`.

@@ -663,3 +663,41 @@ When a story states a figure to hit on real data, work the figure out on the rea
 ### Evidence and Scope
 - **References:** `docs/sprints/USER_STORIES_SPRINT24.md` (UND-93 AC4), ADR-0052
 - **Applies when:** a story or criterion contains a number measured on the owner's data.
+
+---
+
+## [2026-11-03] A rule that stops at the first thing that does not fit depends on the order of ties
+
+> **Tags:** #allocation #household #Neo #Trin
+
+### Context
+`map.allocate` stopped a payment's list at the first charge that would pass its amount. On the real Amex file two payments (May, July) were 6% and 7% off, while the same rule on the raw file gave 4.6% and 2.8%.
+
+### Observation and Cause
+Two inputs differed: merged records carried the bank's date instead of the card's, and charges of one day came in a different order, so a different charge was the one that did not fit. A test with distinct dates could not show either.
+
+### Rule
+When a rule stops at the first item that does not fit, sort ties by a stated key (here smallest first) so the answer does not depend on file order, and use the date of the source the rule is about. Run the stage on the real file before the gate.
+
+### Evidence and Scope
+- **References:** ADR-0057, `UAT_PLAN_SPRINT25.md` (UAT-25-5)
+- **Applies when:** a stage fills a budget from an ordered list.
+
+---
+
+## [2026-11-03] A replay is refused after any change to the sketch
+
+> **Tags:** #replay #testing #Neo
+
+### Context
+Replaying a full live run to check a new stage was refused as stale ("the sketch or its rubric changed") after an edit to an unrelated stage's `with`.
+
+### Observation and Cause
+A replay reuses Jev's captured answers only for the sketch version that produced them; the first attempt after Phase 5's edits was stale, the next, after a replay-produced run, worked. A live full run costs about 2,300 requests.
+
+### Rule
+For a change that does not touch Jev's questions, replay the newest run made after the last sketch edit; if it is refused, run the small sample live (305 requests) and only then the full data.
+
+### Evidence and Scope
+- **References:** `docs/USER_GUIDE.md` (replay), Sprint 25 Phases 5 and 6
+- **Applies when:** checking a household change against the full baselines.

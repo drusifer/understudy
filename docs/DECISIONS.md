@@ -10,6 +10,84 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+# ADR-0057: A card payment settles the card's charges oldest first, never past its amount
+
+*   **Status**: Accepted
+*   **Deciders**: Morpheus
+*   **Date**: 2026-11-03
+*   **Related**: `docs/sprints/ARCH_SPRINT25.md`, UND-99, owner decision 12
+
+## 1. Context and Problem Statement
+
+A card payment is a lump sum; the export has no statement dates, so nothing says which charges it paid. The owner wants each payment tied to its charges.
+
+## 2. Considered Options
+
+| Option | Costs / risks | Reason |
+|---|---|---|
+| Match a run of charges to the cent | No payment on the baseline matches exactly | Rejected |
+| Count credits (refunds) in the allocation | Gaps up to $6,304 on the baseline | Rejected |
+| Fill each payment with the card's charges dated on or before it, oldest first, stopping before its amount is passed; show the remainder | Approximate; the first payment is partly unexplained | Selected |
+
+## 3. Decision Outcome
+
+* **Chosen Option:** the generic stage `map.allocate`: payments in date order; charges by the card's own date (not the bank's), a day's charges smallest first (so the result does not depend on file order); whole cents; a charge in at most one payment; none dated after the payment. A payment is "unexplained" when more than 5% of it has no earlier charge.
+* **Consequences:** on the baseline 11 of 12 payments settle within 5% (worst 4.6%); settled plus open equals all the card's charges to the cent. The rule is approximate by nature and the remainder is shown, never hidden. Only the Amex pool is allocated until another card export exists.
+
+---
+
+# ADR-0056: A transfer is a link found in the text or the category "Household: Transfer"; export labels never decide
+
+*   **Status**: Accepted (supersedes the label rule of ADR-0052)
+*   **Deciders**: Morpheus, owner decisions 10 and 11
+*   **Date**: 2026-11-03
+*   **Related**: `docs/sprints/ARCH_SPRINT25.md`, UND-98
+
+## 1. Context and Problem Statement
+
+The export's own categories are a mess (the owner's words), so a rule that reads them decides wrongly in both directions.
+
+## 2. Considered Options
+
+| Option | Costs / risks | Reason |
+|---|---|---|
+| Keep the label rule as a hint | Inherits the mess | Rejected |
+| Records linked as the two halves of a payment (found from their own text, within three business days), or whose merchant is in "Household: Transfer", or a card's own "payment received" text | Jev may not put every own-account merchant in Household: Transfer, so the owner pins them | Selected |
+
+## 3. Decision Outcome
+
+* **Chosen Option:** kinds read links, the tool's own category and the card's payment text; the export's `Category` is only compared with the tool's answer in `crosswalk.jsonl`, flagged where they differ about money moving.
+* **Consequences:** `summary.json` counts `transfer_basis` as `link`, `category`, `both`, `payment` and `none`. Pins are part of the workflow (Charles Schwab is pinned as the owner's savings).
+
+---
+
+# ADR-0055: The category list is ISO 18245 plus the owner's additions; Jev chooses a group and then a name
+
+*   **Status**: Accepted
+*   **Deciders**: Morpheus, owner decisions 10 and 11
+*   **Date**: 2026-11-03
+*   **Related**: `docs/sprints/ARCH_SPRINT25.md`, UND-96, UND-97
+
+## 1. Context and Problem Statement
+
+Categories copied from the export are inconsistent. Every merchant should get one category from a clean list, chosen by the tool.
+
+## 2. Considered Options
+
+| Option | Costs / risks | Reason |
+|---|---|---|
+| Build the list from the export | Inherits the mess | Rejected |
+| One question over all 286 names | Too long to answer reliably | Rejected |
+| Let Jev propose new names | Jev would write text | Rejected (Jev chooses, never writes) |
+| 13 ISO groups plus a "Household" group of the owner's additions (Rent, Mortgage, Tuition, Income, Transfer, Loan repayment); Jev picks a group, then a name in it | About two requests per merchant | Selected |
+
+## 3. Decision Outcome
+
+* **Chosen Option:** a merchant is placed when each choice is above 0.7, or at least 0.4 and twice the runner-up's (amended after the first real run sent 73% of records to review); otherwise it is listed in `review.jsonl`. The owner's pins override Jev and are checked against the list before any request. Every report, the spending list included, uses this category and `unplaced` for a merchant in review.
+* **Consequences:** a live run asks again (about 2,300 requests, seven minutes); only `--replay` reuses answers. On the baseline 38.6% of spending is still `unplaced` until the owner pins more merchants.
+
+---
+
 # ADR-0054: The statechart's layout is computed in Python; the page only draws it
 
 *   **Status**: Accepted
@@ -80,7 +158,7 @@ A sketch took values only as template variables, so the console could show a tex
 
 # ADR-0052: A transfer is the widened label or a link to a record in another account
 
-*   **Status**: Accepted
+*   **Status**: Accepted (the label rule is superseded by ADR-0056: export labels no longer decide)
 *   **Deciders**: owner (2026-11-02, decision 9), Morpheus
 *   **Date**: 2026-11-02
 *   **Related**: `docs/sprints/ARCH_SPRINT24.md`, UND-93, ADR-0050 (partly superseded)
