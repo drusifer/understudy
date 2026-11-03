@@ -59,10 +59,22 @@ class CrosswalkTests(unittest.TestCase):
                          ("Household: Transfer", "Transfer", False))
         self.assertIsNone(self.by["Venmo"]["tool_category"])  # no group fits: for review, so no category yet
 
+    def test_a_payment_the_run_linked_says_so_instead_of_showing_no_category(self):
+        for payee in ("Payment Thank You", "Amex Payment"):
+            self.assertEqual(self.by[payee]["tool_category"], "Transfer (linked payment)", payee)
+
     def test_the_summary_counts_the_flagged_merchants(self):
         flagged = sum(1 for row in self.rows if row["differs_on_money_moving"])
         self.assertEqual(self.summary["crosswalk_flagged"].get("True", 0), flagged)  # a count by value, so the keys are text
         self.assertEqual(sum(self.summary["crosswalk_flagged"].values()), len(self.rows))
+
+
+class UnpairedPaymentTests(unittest.TestCase):
+    def test_a_card_payment_received_with_no_bank_side_says_it_is_a_card_payment(self):
+        alone = "\n".join(line for line in ORIGINAL.splitlines() if not line.endswith(",m9")) + "\n"
+        _, rows, _ = run_crosswalk(alone)
+        by = {row["payee"]: row for row in rows}
+        self.assertEqual(by["Payment Thank You"]["tool_category"], "Transfer (card payment received)")
 
 
 class FlagTests(unittest.TestCase):

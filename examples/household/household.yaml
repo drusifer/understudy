@@ -130,7 +130,19 @@ sources:
   unlinked:                             # what Jev is asked about: every payee but the two halves of a payment
     kind: stage
     do: { map: { action: where } }
-    with: { source: linked, keep: { and: [ { not: { partner: { ne: null } } }, { match: { ne: invalid_key } } ] } }  # no partner field at all for a record that was never a candidate
+    with:
+      source: linked
+      keep:
+        and:
+          - not: { partner: { ne: null } }  # no partner field at all for a record that was never a candidate
+          - { match: { ne: invalid_key } }
+          - not:                        # a card's own "payment received" line is a payment, never a merchant
+              &paytext
+              or:
+                - { other_Description: { has: "PAYMENT RECEIVED" } }
+                - { Original Statement: { has: "PAYMENT RECEIVED" } }
+                - { Original Statement: { has: "PAYMENT, THANK YOU" } }
+                - { Original Statement: { has: "PAYMENT THANK YOU" } }
   merchants:
     kind: stage
     do: { map: { action: group } }
@@ -152,13 +164,7 @@ sources:
         - { if: { and: [ { partner: { ne: null } }, { category_level: { eq: "Household: Transfer" } } ] }, then: both }
         - { if: { partner: { ne: null } }, then: link }
         - { if: { category_level: { eq: "Household: Transfer" } }, then: category }
-        - if:                           # a card's own "payment received" line is a payment even when its bank side is not in the data
-            or:
-              - { other_Description: { has: "PAYMENT RECEIVED" } }
-              - { Original Statement: { has: "PAYMENT RECEIVED" } }
-              - { Original Statement: { has: "PAYMENT, THANK YOU" } }
-              - { Original Statement: { has: "PAYMENT THANK YOU" } }
-          then: payment
+        - { if: *paytext, then: payment }  # a card's own "payment received" line, even when its bank side is not in the data
       otherwise: none
   standing:                             # a transfer by link or by the tool's category; the rest is still open
     kind: stage
@@ -317,11 +323,25 @@ sources:
         - { if: { category_level: { ne: null } }, then: placed }
       otherwise: review
 
-  label_view:                           # what the export's own category says about money moving, kept only to compare
+  tool_note:                            # what the tool did with a payment it never asked Jev about
     kind: stage
     do: { map: { action: classify } }
     with:
       source: finished
+      into: transfer_note
+      cases:
+        - { if: { transfer_basis: { eq: link } }, then: "Transfer (linked payment)" }
+        - { if: { transfer_basis: { eq: payment } }, then: "Transfer (card payment received)" }
+      otherwise: ""
+  tool_shown:                           # the category the tool chose, or what it did instead
+    kind: stage
+    do: { map: { action: coalesce } }
+    with: { source: tool_note, fields: { shown_category: [ category_level, transfer_note ] } }
+  label_view:                           # what the export's own category says about money moving, kept only to compare
+    kind: stage
+    do: { map: { action: classify } }
+    with:
+      source: tool_shown
       into: label_says
       cases:
         - if:
@@ -354,7 +374,7 @@ sources:
         differing: differs
         inflow: { field: cost, where: { cost: { gt: 0 } } }
         outflow: { field: cost, where: { cost: { lt: 0 } } }
-      commonest: { export_category: Category, tool_category: category_level }
+      commonest: { export_category: Category, tool_category: shown_category }
   cross_volume:                         # how much money moved through the merchant, in or out
     kind: stage
     do: { map: { action: weigh } }

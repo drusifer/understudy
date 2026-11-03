@@ -1316,6 +1316,9 @@ gitleaks git --no-banner --redact --pre-commit .
  Phase 4: allocate payments to charges, as generic stages (UND-99 part 1)
 
 ---
-[<small>2026-11-03 13:37:12</small>] [**make**]->[**all**] *build*:
- Build PASSED | make run | /home/drusifer/Projects/understudy/build/build.out
-wrote /home/drusifer/Projects/understudy/.understudy/runs/run-20261103T183606-07d8da14/crosswalk.jsonl
+[<small>2026-11-03 14:11:30</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+2:11PM INF no leaks found
+2:11PM INF 1 commits scanned.
+2:11PM INF scanned ~3329 bytes (3.33 KB) in 241ms
+2:11PM INF no leaks found
