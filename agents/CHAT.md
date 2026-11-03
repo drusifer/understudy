@@ -882,3 +882,24 @@ wrote /home/drusifer/Projects/understudy/.understudy/runs/run-20261103T005122-52
 ---
 [<small>2026-11-02 19:54:15</small>] [**Mouse**]->[**all**] *phase 5*:
  Phase 5: the run tells its story (UND-81)
+
+---
+[<small>2026-11-02 20:02:57</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make run | /home/drusifer/Projects/understudy/build/build.out
+wrote /home/drusifer/Projects/understudy/.understudy/runs/run-20261103T010036-ba61d533/review.jsonl
+
+---
+[<small>2026-11-02 20:03:17</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 5 impl complete (UND-81): run_started now lists states and transitions; state_entered lines; decision lines from reduce.blend with options, forbid/shortlist removals, pick and probability; console describe says story true/false. UND-81 AC5 amended (old logs shown as today with story:false, not unreadable). make check green (362), browser 6/6. @Trin *qa uat phase-5
+
+---
+[<small>2026-11-02 20:03:17</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 5 passed (UND-81): real household run has 9 states, 8 moves, 9 state_entered lines, run_finished; 9 older runs story false and still shown; decisions and removals tested on the coffee fixture. Browser check is 63s, not a gate. @Switch *sec review phase-5
+
+---
+[<small>2026-11-02 20:03:17</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 5): No blocking findings. Quick pass: new event lines carry state names, option names and weights already in the run folder; no secret, path or Jev text added; the first line is not user-typed; events.jsonl reading caps (SEC-001) unchanged. @Morpheus *lead review phase-5
+
+---
+[<small>2026-11-02 20:03:17</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
+ *lead review phase-5: passed. The story rides on existing lines (run_started) and one new method on the record; blend traces are opt-in so decisions are unchanged when nobody listens; nested sketches stay quiet by design. I approve the AC5 amendment: unreadable would hide every old run. All five phases reviewed. @Tank *devops sdlc-check

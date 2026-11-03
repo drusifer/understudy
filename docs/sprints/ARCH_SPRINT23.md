@@ -30,7 +30,7 @@ The household sketch (`examples/household/household.yaml`) types each record by 
 | `src/sketch/stages_rows.py` | New generic row actions: `sum` option of `group`, `without` | rows | rows |
 | `src/sketch/sources/file.py` | Optional source with a default path (`pins`) | `--with pinned` | rows or none |
 | `src/machine_runner.py` `RunRecord` | Writes `machine`, `state_entered`, `decision` and ending lines to `events.jsonl` (UND-81) | machine, stages | event lines |
-| `src/dashboard/view.py` | Names a missing story line as an unreadable run | `events.jsonl` | state `unreadable` |
+| `src/dashboard/view.py` | Says whether a run's log has the story | `events.jsonl` | `story` true or false in the run's description |
 
 ## 4. Runtime Interaction & Critical Flows
 
@@ -46,7 +46,7 @@ The household sketch (`examples/household/household.yaml`) types each record by 
 * **New sinks:** `review.jsonl` (`payee, count, amount, first, first_probability, second, second_probability, reason`), `totals.jsonl` (`account, income, expenses, net`; an `all` row last). Both declared in the sketch.
 * **New source:** `pinned` (JSONL: `{payee, category}`), `--with pinned=<path>`, default `.understudy/pinned.jsonl`.
 * **Changed kinds:** `external_transfer` is removed (the Category covers it); the Jev payee reading (`judge_payee.yaml`) goes with it, and so do its requests. Readers of `kind` (docs, `kinds.jsonl`, `finished`) are updated in the same phase.
-* **Event lines:** `{"event":"machine","states":[...],"transitions":[{"from","event","to"}]}`; `{"event":"state_entered","state","caused_by"}`; `{"event":"decision","stage","options":[{"name","removed_by"|"held_by"}],"pick","probability"}`; the ending line carries `outcome` and any `error`.
+* **Event lines (as built):** the first line, `run_started`, gains `states` (`[{"name","final"}]`) and `transitions` (`[{"from","to","event":"ok","when"?}]`) beside `sketch` and `mode`, so no consumer of the first line changes; `{"event":"state_entered","state","caused_by"}` for each state of the top-level machine (`start`, `ok` or `fail`); `{"event":"decision","stage","row","dimension","options":[{"name","weight","removed_by"}],"pick","probability"}` for each dimension of each input row of a `reduce.blend` (`removed_by` is `forbid rule N` or `shortlist`, `weight` the final weight, 0.0 when removed); a failed run ends with `stage_failed` and its `reason`, a finished one with `run_finished` and its `outcome`. The console's description of a run says `story: true` when `run_started` has `states`; logs without it are shown as today (amended from "unreadable", which would hide every existing run before anything needs the story).
 
 ## 6. Cross-Cutting Concepts & Resilience
 
@@ -57,7 +57,7 @@ The household sketch (`examples/household/household.yaml`) types each record by 
 | `Bad pin` | Category not in taxonomy, or no merchant | Stops before any Jev request, names the line | Owner fixes the line | None |
 | `Pin path missing` | `--with pinned=` path not found | Stops, names the path | Owner fixes the path | None |
 | `Default pin file absent` | `.understudy/pinned.jsonl` not there | No pins; the run says so | None | None |
-| `Old events log` | No `machine` line | Console shows unreadable, names the line | Owner sees why | One run row |
+| `Old events log` | No `states` in `run_started` | Console shows it as today with `story: false` | None | One run row |
 | `Jev fails` | As today | Run fails as today | As today | The run |
 
 ### Security & Privacy

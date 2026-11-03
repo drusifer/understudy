@@ -363,7 +363,9 @@ A replay says so on its first line (`replay: reading captures from <folder>, no 
 
 * your sink files, written last, so a failed run publishes none;
 * `summary.json`: counts only (total, per segment, the shares, the weather weights, Jev requests, `mode`, `stale`);
-* `run.json` (each stage complete or failed), `events.jsonl` (one JSON line per run event), `run.duckdb`.
+* `run.json` (each stage complete or failed), `events.jsonl` (one JSON line per run event, below), `run.duckdb`.
+
+The story in `events.jsonl`: the first line, `run_started`, carries `sketch`, `mode`, `states` (each `{name, final}`) and `transitions` (each `{from, to, event, when?}`, the event always `ok`; `when` is the guard). Then `stage_started` and `stage_completed` for every stage (nested stages are named `parent.child[n].stage`), `state_entered` (`state`, `caused_by`: `start`, `ok` or `fail`) each time the top-level machine enters a state, and for every `reduce.blend` a `decision` line per input row and dimension: `stage`, `row`, `dimension`, `options` (each `{name, weight, removed_by}`, `weight` the final weight and 0.0 when removed, `removed_by` `forbid rule N`, `shortlist` or null), `pick` and its `probability`. A run ends with `run_finished` and its `outcome`, or a failed one with `stage_failed` and its `reason`. A log written before this sprint has no `states`.
 
 Exit codes: 0 done, 1 a stage failed after the run started, 2 refused before starting (a wrong sketch, a missing file, a missing key, a replay with nothing to replay). Every failure ends with one `understudy: <message>` line, never a traceback.
 

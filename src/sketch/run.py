@@ -36,6 +36,7 @@ class StageContext:
     directory: Path
     summary: dict = field(default_factory=dict)
     sources: Sources | None = None
+    emit: Callable[..., None] | None = None  # records an event in the run's story (`events.jsonl`)
 
     async def read(self, name: str) -> list[dict]:
         """The rows of one of this sketch's sources."""
@@ -57,6 +58,9 @@ class EventedRecord(RunRecord):
         line = {"event": kind, "at": datetime.now(UTC).isoformat(timespec="seconds"), **fields}
         with (self.directory / "events.jsonl").open("a", encoding="utf-8") as events:
             events.write(json.dumps(line) + "\n")
+
+    def entered(self, state: str, caused_by: str) -> None:
+        self.emit("state_entered", state=state, caused_by=caused_by)
 
     def started(self, name: str) -> None:
         super().started(name)
@@ -95,6 +99,9 @@ class NestedRecord:
     def __init__(self, parent: EventedRecord, prefix: str):
         self.parent, self.prefix = parent, prefix
         self.outcome: str | None = None
+
+    def entered(self, state: str, caused_by: str) -> None:
+        """A subsketch's moves are not told: the parent's story is the top-level machine's."""
 
     def started(self, name: str) -> None:
         self.parent.started(f"{self.prefix}.{name}")
@@ -145,7 +152,8 @@ async def _run_child(context: StageContext, library: Mapping[str, StageFn], reco
     last = {"value": None}
 
     def make_context(name: str, state: dict) -> StageContext:
-        return StageContext(child, name, state, results, last["value"], context.directory, context.summary, context.sources)
+        return StageContext(child, name, state, results, last["value"], context.directory, context.summary, context.sources,
+                            context.emit)
 
     stages = {name: _remember(stage, last) for name, stage in _stages(child, library, make_context, results, record).items()}
     nested = NestedRecord(record, child.name)
@@ -198,7 +206,7 @@ async def run_sketch(
     if capture.replay_dir:
         facts["replay_of"] = _shown_path(capture.replay_dir)
     record = EventedRecord(directory, announce, cleanup=[*files, "summary.json"], mode=capture.mode, sketch=sketch.name, **facts)
-    record.emit("run_started", sketch=_shown_path(sketch.path), mode=capture.mode)
+    record.emit("run_started", sketch=_shown_path(sketch.path), mode=capture.mode, **_story_of(sketch))
     if capture.replay_dir:
         announce(f"replay: reading captures from {capture.replay_dir}, no live calls")
     sources = Sources(capture, directory.name, announce)
@@ -207,14 +215,14 @@ async def run_sketch(
     last = {"value": None}
 
     def make_context(name: str, state: dict) -> StageContext:
-        return StageContext(sketch, name, state, results, last["value"], directory, summary, sources)
+        return StageContext(sketch, name, state, results, last["value"], directory, summary, sources, record.emit)
 
     async def compute(owner: Sketch, name: str) -> list[dict]:
         """Run a stage source's stage (`kind: stage`): the source's `do` and `with`, as a state would have them."""
         config = owner.sources[name].config
         state = {key: config[key] for key in ("do", "with", "each", "reduce") if key in config}
         state.setdefault("with", {})
-        context = StageContext(owner, name, state, results, None, directory, summary, sources)
+        context = StageContext(owner, name, state, results, None, directory, summary, sources, record.emit)
         if "each" in state:
             return await _run_each(context, library, record)
         return await _stage_function(state, library)(context, **state["with"])
@@ -235,6 +243,20 @@ async def run_sketch(
     if capture.mode == "live":
         capture.store.prune()
     return RunResult(directory, published, summary, record.manifest.get("outcome"))
+
+
+def _story_of(sketch: Sketch) -> dict:
+    """The machine as the first line of the event stream tells it: its states, and the moves between them."""
+    states = sketch.machine["states"]
+    moves = []
+    for name, state in states.items():
+        if state.get("then"):
+            moves.append({"from": name, "to": state["then"], "event": "ok"})
+        moves.extend(
+            {"from": name, "to": transition["to"], "event": "ok", **({"when": transition["if"]} if "if" in transition else {})}
+            for transition in state.get("transitions", []))
+    return {"states": [{"name": name, "final": bool(state.get("final"))} for name, state in states.items()],
+            "transitions": moves}
 
 
 def _shown_path(path: Path) -> str:

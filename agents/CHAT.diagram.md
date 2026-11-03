@@ -408,7 +408,26 @@ sequenceDiagram
     autonumber
     participant Mouse
     participant All
-    Note over Mouse,All: 📅 2026-11-02
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    participant Tank
+    Note over Mouse,Tank: 📅 2026-11-02
     Mouse->>All: "phase 5"
     Note right of Mouse: "Phase 5: the run tells<br/>its story (UND-81)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 5 impl complete<br/>(UND-81): run_started<br/>now lists states and<br/>transitions,<br/>state_entered lines,<br/>decision lines from<br/>reduce.blend with op…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 5 passed<br/>(UND-81): real household<br/>run has 9 states, 8<br/>moves, 9 state_entered<br/>lines, run_finished, 9<br/>older runs story false<br/>and st…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 5):<br/>No blocking findings.<br/>Quick pass: new event<br/>lines carry state names,<br/>option names and weights<br/>already in the run f…"
+    Morpheus->>Tank: "lead handoff"
+    Note right of Morpheus: "*lead review phase-5:<br/>passed. The story rides<br/>on existing lines<br/>(run_started) and one<br/>new method on the<br/>record, blend traces are<br/>opt-in so…"
 ```
+
+## Phase 5 so far
+
+- **Trin**: UAT phase 5 passed (UND-81): real household run has 9 states, 8 moves, 9 state\_entered lines, run\_finished, 9 older runs story false and st…
+- **Switch**: security gate (phase 5): No blocking findings. Quick pass: new event lines carry state names, option names and weights already in the run f…
+- **Morpheus**: \*lead review phase-5: passed. The story rides on existing lines (run\_started) and one new method on the record, blend traces are opt-in so…

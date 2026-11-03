@@ -93,11 +93,11 @@ When this sprint is done, the household run's income, expenses and net spending 
 **so that** the console can later draw the run and replay it from the log.
 
 ### Acceptance Criteria
-1. The first line of a run's event stream lists the sketch's states and the events between them.
+1. The first line of a run's event stream (`run_started`) lists the sketch's states and the events between them.
 2. Every move to a new state is a line naming the state and the event that caused it.
 3. Every decision is a line giving its stage, its options, what removed or held each option, and the pick with its probability.
 4. A run that ends records how it ended, including a failure and its message.
-5. A log written before this sprint, which lacks these lines, is shown by the console as an unreadable run that names the missing line; nothing is rewritten and no old shape is supported (owner rule: no back-compat).
+5. The console's description of a run says whether its log has the story (`story: true`) or not (`story: false`, for a log written before this sprint); nothing is rewritten, and the console shows a log without a story as it does today. (Amended during Phase 5: showing old logs as unreadable would have hidden every existing run for no gain until the Sprint 24 diagram needs the story. The owner is told.)
 
 ---
 

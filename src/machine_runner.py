@@ -23,6 +23,9 @@ class RunRecord:
     def save(self) -> None:
         (self.directory / "run.json").write_text(json.dumps(self.manifest, indent=2) + "\n", encoding="utf-8")
 
+    def entered(self, state: str, caused_by: str) -> None:
+        """The machine is now in `state`, having been `caused_by` `start`, `ok` or `fail`; the base record keeps no story."""
+
     def started(self, name: str) -> None:
         self.announce(f"stage {name}")
 
@@ -56,6 +59,7 @@ async def run_machine(
     `publish` runs once the machine has ended and before the run is recorded as complete; if it fails, so does the run.
     `outcomes` names what a final state means (`outcome:` in the sketch); the run records the one it ended in.
     """
+    record.entered(current_state(machine), "start")
     while not machine.is_terminated:
         name = current_state(machine)
         if name not in stages:
@@ -66,11 +70,13 @@ async def run_machine(
         except Exception as error:
             with suppress(TransitionNotAllowed):
                 machine.send("fail")
+                record.entered(current_state(machine), "fail")
             record.failed(name, error)
             raise
         machine.model.result = result
         machine.send("ok")
         record.completed(name)
+        record.entered(current_state(machine), "ok")
     try:
         if publish:
             publish()

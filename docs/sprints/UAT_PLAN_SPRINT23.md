@@ -60,9 +60,19 @@ Phases are added as they pass UAT.
 - **Verdict:** PASS
 - **Evidence / issue:** run `run-20261103T005122-529f8f4d`; 351 tests green. Quirk found: the export has a category named `Pharmaceuticals ` with a trailing space, and a pin must spell it that way. Owner: fix the category name in Monarch, or ask for edge spaces to be ignored.
 
+### UAT-23-6: The run tells its story (Phase 5)
+
+- **Linked criterion:** UND-81 AC1 to AC5 (AC5 as amended)
+- **Preconditions and data:** a live household run `run-20261103T010036-ba61d533`; the coffee fixture run and unit tests in `tests/python/test_run_story.py` for decisions; the nine older runs in `.understudy/runs`
+- **Steps:** read the new run's `events.jsonl`; call the console's `describe` on every run folder; run `bobp make test-browser`
+- **Expected observable outcome:** first line lists the states and moves; a `state_entered` line per top-level state with its cause; decisions with options, removals, pick and probability; the ending recorded; old logs described as `story: false` and still shown
+- **Actual outcome:** first line has 9 states and 8 moves; 9 `state_entered` lines from `check_pins` (start) to `done` (ok); the run ends `run_finished` / `complete`; the new run is `story: true` and all nine older runs `story: false`, shown as before; coffee run: decisions for each segment and dimension, and unit tests show a forbid rule and a shortlist naming what they removed (weight 0.0); a failed run ends with `stage_failed` and its reason; browser check 6 of 6 pass in 63 seconds
+- **Verdict:** PASS
+- **Evidence / issue:** run folder above; 362 tests green. The household sketch has no `reduce.blend`, so a household run has no decision lines (they come from the coffee and evening style sketches). AC5 was amended from "unreadable" to `story: false`, with the owner to be told. The browser check takes 63 seconds, so under the owner's rule (a gate only if it takes seconds) it is not a release gate.
+
 ## Results and Handoff
 
-- **Passed / failed / blocked:** Phase 1: 2 passed (UAT-23-1, UAT-23-2); Phase 2: 1 passed (UAT-23-3); Phase 3: 1 passed (UAT-23-4); Phase 4: 1 passed (UAT-23-5); 0 failed, 0 blocked
+- **Passed / failed / blocked:** Phase 1: 2 passed (UAT-23-1, UAT-23-2); Phase 2: 1 passed (UAT-23-3); Phase 3: 1 passed (UAT-23-4); Phase 4: 1 passed (UAT-23-5); Phase 5: 1 passed (UAT-23-6); 0 failed, 0 blocked
 - **Open issue (found in Phase 2):** two lines in `totals.jsonl` are Amex-only rows that matched no Monarch row, shown as accounts named `-38016` and `-33009` (the Amex account numbers), 14 records, about -$77. They are real records, so UND-90 AC4 is not broken, but the names are not accounts the owner knows. Owner: Neo, Phase 3 or a fix after the owner decides whether unmatched Amex rows should be named for their card.
 - **Open issues and impact:** the card-side records. On accounts other than Ridgewood the export still labels some payments "Food & Dining: Credit Card Payment" and "Transportation: Transfers", so they are no longer transfers and count as refunds or credits: 169 positive non-transfer records worth $240,596 outside Ridgewood in this run. Ridgewood is unaffected. Owner: decide whether to relabel those in Monarch or add the group labels to the rule.
 - **Overall verdict:** PASS for Phase 1

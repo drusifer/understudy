@@ -49,10 +49,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 5: The run tells its story (UND-81, 5 pts)
 *Phase goal: `events.jsonl` carries the machine, each state entered, each decision and the ending; old logs show as unreadable.*
-- [ ] **Task 5.1:** Tests first, then `machine`, `state_entered`, `decision` and ending lines from `RunRecord`/the runner; the console names a missing story line as an unreadable run. **L3** (runner, sketches and console agree on one stream). (*Owner: Neo | Trace: UND-81 AC1-5 | Verification: `bobp make test`, `bobp make lint`, `bobp make test-browser`*)
-- [ ] **Task 5.2:** UAT on a new run and on an old run folder in the console: story lines present; the old run shows unreadable and names the line. **L2**. (*Owner: Trin | Trace: UND-81 AC1-5 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
-- [ ] **Task 5.3:** Security quick pass: decision lines carry option names and probabilities already in the run folder. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 5): ...`*)
-- [ ] **Task 5.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT23 section 5 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 5.1:** Tests first, then `machine`, `state_entered`, `decision` and ending lines from `RunRecord`/the runner; the console names a missing story line as an unreadable run. **L3** (runner, sketches and console agree on one stream). (*Owner: Neo | Trace: UND-81 AC1-5 | Verification: `bobp make test`, `bobp make lint`, `bobp make test-browser`*)
+- [x] **Task 5.2:** UAT on a new run and on an old run folder in the console: story lines present; the old run shows unreadable and names the line. **L2**. (*Owner: Trin | Trace: UND-81 AC1-5 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
+- [x] **Task 5.3:** Security quick pass: decision lines carry option names and probabilities already in the run folder. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 5): ...`*)
+- [x] **Task 5.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT23 section 5 | Verification: result in `agents/CHAT.md`*)
 
 ---
 
