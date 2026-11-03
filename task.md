@@ -1,79 +1,72 @@
-# Sprint 24 Task Board: what the money goes on, typed inputs, and the statechart you can see
+# Sprint 25 Task Board: the tool fixes the categories, and payments know what they paid for
 
-*   **Goal**: The owner can see what the household money goes on (card payments no longer count as income; a ranked spending list in the run and the console), set a sketch's values with typed controls, and follow a run on a drawn statechart.
+*   **Goal**: Every merchant gets one category from a clean list (ISO 18245 plus the owner's additions) chosen by Jev, not copied from Monarch or Amex; transfers come from text-found links and the tool's categories; each credit card payment shows the charges it settled and what they were for; spending is built from the tool's categories.
 *   **Tier**: Tier 1 (Major)
-*   **Total Points** (optional): 27
-*   **Branch**: `sprint-24`
-*   **Status**: CLOSED 2026-11-02. All seven phases and the closeout done; not merged or pushed (owner). Retro: `docs/sprints/RETRO_SPRINT24.md`.
-*   **Plan**: `docs/sprints/USER_STORIES_SPRINT24.md` (Gate 1 approved after one rejection), `ARCH_SPRINT24.md` (Gate 2 approved), security design gate: no blocking findings. Decisions: `OWNER_DECISIONS_SPRINT22.md` 4 and 9. Baseline: `data/Transactions_2026-11-02T19-14-07.csv`.
+*   **Total Points** (optional): 29
+*   **Branch**: `sprint-25` (cut from `sprint-24`, not merged)
+*   **Status**: Planning — awaiting Morpheus Step 3a Review
+*   **Plan**: `docs/sprints/USER_STORIES_SPRINT25.md` (Gate 1 approved after one rejection), `ARCH_SPRINT25.md` (Gate 2 approved after one amendment), security design gate: no blocking findings. Decisions: `OWNER_DECISIONS_SPRINT22.md` 10 to 13b. Baselines: `data/Transactions_2026-11-02T19-14-07.csv` (Monarch) and `data/activity-11-03-2026.csv` (Amex, from 2025-11-01).
 
 ---
 
 ## Stage 0: SDLC Gate (Blocker)
 
-- [x] **Task 0.1:** Verify `docs/SDLC.md` exists and is current. (*Owner: Mouse | Trace: N/A — sprint gate | Verification: `test -f docs/SDLC.md`; present 2026-11-02*)
+- [x] **Task 0.1:** Verify `docs/SDLC.md` exists and is current. (*Owner: Mouse | Trace: N/A — sprint gate | Verification: `test -f docs/SDLC.md`; present 2026-11-03*)
 
 ---
 
 ## Sprint Execution Phases
 
-Complexity levels follow `agents/templates/_template_task.md`. Each phase is one build task followed by its three gates; a phase is not done until Morpheus passes it. Edit files with Edit/Write only (owner rule). Real-data checks use the baseline file and run live; the Jev answers are cached, so a repeat run costs few requests. Console changes are checked in a real Chromium (`bobp make test-browser`, 63 seconds, not a release gate).
+Complexity levels follow `agents/templates/_template_task.md`. Each phase is one build task followed by its three gates; a phase is not done until Morpheus passes it. Edit files with Edit/Write only (owner rule). The first live run of the new categorization costs about 1,650 Jev requests (about four minutes); later runs reuse the capture. Real-data checks use the two baselines with `since=2025-11-01`.
 
-### Phase 1: Card payments and moves between accounts are not spending (UND-93, 3 pts)
-*Phase goal: a record is a transfer by label, by link, or both; the summary says which.*
-- [x] **Task 1.1:** Tests first, then `labeled` and `standing` in `household.yaml` (label forms and the link make a transfer, nothing else does); `transfer_basis` counts replace `kind_changed_by_category`; update the household tests, `docs/USER_GUIDE.md` and `docs/SKETCHES.md`. **L2** (one sketch, tests and docs; pattern known). (*Owner: Neo | Trace: UND-93 AC1-6 | Verification: `bobp make test`, `bobp make lint`*)
-- [x] **Task 1.2:** UAT on the baseline: no labeled or linked record is a purchase, refund or credit; positives outside Ridgewood under $30,000; Ridgewood unchanged. **L2**. (*Owner: Trin | Trace: UND-93 AC4-5 | Verification: UAT verdict and evidence in `agents/CHAT.md` and `docs/sprints/UAT_PLAN_SPRINT24.md`*)
-- [x] **Task 1.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 1): ...` in `agents/CHAT.md`*)
-- [x] **Task 1.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT24 sections 3-4, ADR-0052 | Verification: result in `agents/CHAT.md`*)
+### Phase 1: A clean list of categories (UND-96, 5 pts)
+*Phase goal: the ISO list plus the owner's additions as one list, with its checks; pins are checked against it.*
+- [ ] **Task 1.1:** Tests first, then generic `map.unique`; the `additions` source and shipped starting file `examples/household/additions.jsonl`; the `taxonomy` stages ("Group: Name"); checks before any Jev request (missing path, line without group or name, repeated name); pins checked against this list instead of the export's categories; docs. **L2** (one sketch, one stage, one data file; pattern known). (*Owner: Neo | Trace: UND-96 AC1-5, ADR-0055 | Verification: `bobp make test`, `bobp make lint`*)
+- [ ] **Task 1.2:** UAT: 13 ISO groups and 280 names plus six additions; an owner's file replaces the shipped one; each bad additions line and a bad pin stops the run naming it before any Jev request. **L2**. (*Owner: Trin | Trace: UND-96 AC1-5 | Verification: UAT verdict and evidence in `agents/CHAT.md` and `docs/sprints/UAT_PLAN_SPRINT25.md`*)
+- [ ] **Task 1.3:** Security quick pass: the additions file as a new local input. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 1): ...` in `agents/CHAT.md`*)
+- [ ] **Task 1.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT25 sections 3-5, ADR-0055 | Verification: result in `agents/CHAT.md`*)
 
-### Phase 2: Where the money goes (UND-94, 5 pts)
-*Phase goal: `spending.jsonl` ranked by category, with shares and a total in the summary.*
-- [x] **Task 2.1:** Tests first, then generic `map.share`; the `spend_*` stages and `spending.jsonl`; `spending_total` in `summary.json`; empty file when no spending; docs. **L2**. (*Owner: Neo | Trace: UND-94 AC1-6 | Verification: `bobp make test`, `bobp make lint`*)
-- [x] **Task 2.2:** UAT on the baseline: order, shares sum to 100%, amounts sum to `spending_total`, categories from the export first. **L2**. (*Owner: Trin | Trace: UND-94 AC1-6 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
-- [x] **Task 2.3:** Security quick pass: category names and totals only. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 2): ...`*)
-- [x] **Task 2.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT24 section 5 | Verification: result in `agents/CHAT.md`*)
+### Phase 2: Jev puts every merchant in a category (UND-97, 8 pts)
+*Phase goal: a two-step Jev choice from the clean list replaces placing by export categories; the export's category is no longer shown or used.*
+- [ ] **Task 2.1:** Tests first (a Jev double that fails if it is shown an export category), then `categorize_merchant.yaml` (group, then name, then status), `household.yaml` wired to it, `place_merchant.yaml` and `name_merchant.yaml` removed, pins and `review.jsonl` kept, `category` and `category_source` on every record, progress printed; docs. **L3** (a new Jev flow, the pipeline's order of stages changes, failure cases). (*Owner: Neo | Trace: UND-97 AC1-6, ADR-0055 | Verification: `bobp make test`, `bobp make lint`*)
+- [ ] **Task 2.2:** UAT on the real files, live: every merchant placed or for review; the same questions whatever the export's categories say (run once on a copy of the export with its categories scrambled); pinned merchants never asked; a replay costs no requests. **L3**. (*Owner: Trin | Trace: UND-97 AC1-6 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
+- [ ] **Task 2.3:** Security review: what Jev now sees (less) and the additions names as options. **L2**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 2): ...`*)
+- [ ] **Task 2.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT25 sections 3-4, ADR-0055 | Verification: result in `agents/CHAT.md`*)
 
-### Phase 3: The console shows what the money goes on (UND-95, 3 pts)
-*Phase goal: the run summary lists the top ten categories.*
-- [x] **Task 3.1:** Tests first, then `spending` in the run's description (top ten, more, problem) and the summary-panel list with its CSS; text via `textContent`. **L2**. (*Owner: Neo | Trace: UND-95 AC1-4 | Verification: `bobp make test`, `bobp make lint`, `bobp make test-browser`*)
-- [x] **Task 3.2:** UAT in a real browser on the real run: ten rows, more count, no list for a run without the file, unreadable file named, 390 px, three themes. **L2**. (*Owner: Trin | Trace: UND-95 AC1-4 | Verification: UAT verdict and screenshots noted in `agents/CHAT.md`*)
-- [x] **Task 3.3:** Security quick pass: rendering of run-folder text. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 3): ...`*)
-- [x] **Task 3.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT24 sections 5-6 | Verification: result in `agents/CHAT.md`*)
+### Phase 3: Kinds follow links and the tool's categories (UND-98, 5 pts)
+*Phase goal: link candidates found from text; a transfer is a link or "Household: Transfer"; a crosswalk shows tool and export side by side.*
+- [ ] **Task 3.1:** Tests first, then `candidates` from the record's own text (never Category), kind from link or category, merchants for review stay unplaced, `crosswalk.jsonl` with the flag, Ridgewood income and expenses in the summary, `transfer_basis` renamed; docs. **L3** (the order of the pipeline and a rule other stories depend on). (*Owner: Neo | Trace: UND-98 AC1-6, ADR-0056 | Verification: `bobp make test`, `bobp make lint`*)
+- [ ] **Task 3.2:** UAT on the real files: a mislabeled bank-side payment still links; no label decides a kind; the crosswalk and its flag; Ridgewood figures reported against the earlier file with the payees that account for the difference. **L3**. (*Owner: Trin | Trace: UND-98 AC1-6 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
+- [ ] **Task 3.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 3): ...`*)
+- [ ] **Task 3.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT25 section 4, ADR-0056 | Verification: result in `agents/CHAT.md`*)
 
-### Phase 4: Inputs are declared (UND-87 part 1, 4 pts)
-*Phase goal: a sketch declares typed inputs; the loader fills defaults and checks limits; the console's start refuses out-of-limit values.*
-- [x] **Task 4.1:** Tests first, then `inputs:` in the schema, model and loader (defaults injected), `check` messages naming the input, `--with` limit checks, `inputs` in `/api/sketches` and server-side value checks; `evening.yaml` declares its inputs and drops repeated defaults; docs. **L3** (schema, loader, CLI and server agree; failure cases). (*Owner: Neo | Trace: UND-87 AC1, AC4-7, ADR-0053 | Verification: `bobp make test`, `bobp make lint`*)
-- [x] **Task 4.2:** UAT: each kind declared, each wrong declaration refused naming the input, `--with` out of limits refused, defaults used when left alone, the console refuses a bad posted value. **L3**. (*Owner: Trin | Trace: UND-87 AC1, AC4-6 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
-- [x] **Task 4.3:** Security review: values from the browser reach a child process; the checks and the argument list. **L2**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 4): ...`*)
-- [x] **Task 4.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT24 sections 4-6, ADR-0053 | Verification: result in `agents/CHAT.md`*)
+### Phase 4: Allocate payments to charges, as generic stages (UND-99 part 1, 4 pts)
+*Phase goal: `map.allocate` and `map.top`, tested on their own.*
+- [ ] **Task 4.1:** Tests first, then `map.allocate` (oldest first, never past the amount, remainder, a charge in at most one payment, a charge dated after the payment never used) and `map.top` (the largest few rows per group); docs. **L2**. (*Owner: Neo | Trace: UND-99 AC1, AC5, ADR-0057 | Verification: `bobp make test`, `bobp make lint`*)
+- [ ] **Task 4.2:** UAT on the Amex baseline outside the sketch: 11 of 12 payments within 5%, the first unexplained by $10,437, settled plus open equals all charges to the cent. **L2**. (*Owner: Trin | Trace: UND-99 AC1, AC5, AC6 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
+- [ ] **Task 4.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 4): ...`*)
+- [ ] **Task 4.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT25 section 3, ADR-0057 | Verification: result in `agents/CHAT.md`*)
 
-### Phase 5: The right control for each value (UND-87 part 2, 4 pts)
-*Phase goal: the console draws a dial, fader, stepper or switch per declared input.*
-- [x] **Task 5.1:** Tests first (browser), then the four controls in `controls.js` and `page.css`: keyboard use, accessible name and value, limits, defaults, undeclared names keep a text box; Play posts every value. **L3** (browser behavior across three themes and keyboard). (*Owner: Neo | Trace: UND-87 AC2-4, AC6 | Verification: `bobp make test`, `bobp make lint`, `bobp make test-browser`*)
-- [x] **Task 5.2:** UAT in a real browser on `evening`: each control by mouse and keyboard, defaults, limits, a run started with the values, 390 px, three themes. **L3**. (*Owner: Trin | Trace: UND-87 AC2-4, AC6, AC7 | Verification: UAT verdict and screenshots noted in `agents/CHAT.md`*)
-- [x] **Task 5.3:** Security quick pass: values rendered back; no markup from option text. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 5): ...`*)
-- [x] **Task 5.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT24 sections 3, 5 | Verification: result in `agents/CHAT.md`*)
+### Phase 5: Payments know what they paid for (UND-99 part 2, 4 pts)
+*Phase goal: `payments.jsonl`, `settled_by` on each charge, the open balance.*
+- [ ] **Task 5.1:** Tests first, then the `pay_*` stages in the household: payments from the linked card-side halves, the Amex pool, `payments.jsonl` with the five largest categories, `settled_by`, `open_balance`, a card with no payments left open; docs. **L3** (depends on kinds, categories and the allocation; failure cases). (*Owner: Neo | Trace: UND-99 AC1-7 | Verification: `bobp make test`, `bobp make lint`*)
+- [ ] **Task 5.2:** UAT on the real files: 12 payment lines, each payment's breakdown by category, the open balance of about $28,444, the first payment marked unexplained. **L3**. (*Owner: Trin | Trace: UND-99 AC1-7 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
+- [ ] **Task 5.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 5): ...`*)
+- [ ] **Task 5.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT25 sections 4-5, ADR-0057 | Verification: result in `agents/CHAT.md`*)
 
-### Phase 6: The statechart is laid out (UND-82 part 1, 4 pts)
-*Phase goal: the server lays the machine out and says which state is lit.*
-- [x] **Task 6.1:** Tests first (no browser), then `src/dashboard/chart.py` (layers, boxes, arrows, labels, no overlaps up to 40 states, back-edges) and `chart` in the run's description (current state, last move, ended, `null` without a story). **L3** (new algorithm, edge cases, interface to the page). (*Owner: Neo | Trace: UND-82 AC1-5, AC7, ADR-0054 | Verification: `bobp make test`, `bobp make lint`*)
-- [x] **Task 6.2:** UAT on the real machines (household, evening, coffee) and a generated 40-state machine: layout checks, lit state from a real run's events, a log with no story. **L3**. (*Owner: Trin | Trace: UND-82 AC1-5, AC7 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
-- [x] **Task 6.3:** Security quick pass: hostile state names and guards in JSON. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 6): ...`*)
-- [x] **Task 6.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT24 sections 3-5, ADR-0054 | Verification: result in `agents/CHAT.md`*)
-
-### Phase 7: See the statechart (UND-82 part 2, 4 pts)
-*Phase goal: the page draws the chart, lights the current state and says how the run ended.*
-- [x] **Task 7.1:** Tests first (browser), then the SVG drawing in `page.js` and `page.css`: boxes, double-bordered finals, arrows, guard labels, lit state moving within a second, highlighted move, ending, no-story message, accessible names, a hostile-name test. **L3**. (*Owner: Neo | Trace: UND-82 AC1-6 | Verification: `bobp make test`, `bobp make lint`, `bobp make test-browser`*)
-- [x] **Task 7.2:** UAT in a real browser on a live run (the light moves) and a finished one, 390 px, three themes, a run with no story. **L3**. (*Owner: Trin | Trace: UND-82 AC1-6 | Verification: UAT verdict and screenshots noted in `agents/CHAT.md`*)
-- [x] **Task 7.3:** Security review: the hostile-name test, text only. **L2**. (*Owner: Switch | Trace: design gate condition | Verification: `security gate (phase 7): ...`*)
-- [x] **Task 7.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT24 sections 3-6 | Verification: result in `agents/CHAT.md`*)
+### Phase 6: Spending by the tool's category (UND-100, 3 pts)
+*Phase goal: `spending.jsonl` and the console's list use the tool's categories.*
+- [ ] **Task 6.1:** Tests first, then the `spend_*` stages take the tool's category (`unplaced` for a merchant for review), no export category in the list, transfers and the card payments themselves out; docs. **L2**. (*Owner: Neo | Trace: UND-100 AC1-4 | Verification: `bobp make test`, `bobp make lint`, `bobp make test-browser`*)
+- [ ] **Task 6.2:** UAT on the real run and in the console: the list is ISO and Household categories only; shares add to 1; amounts equal `spending_total`. **L2**. (*Owner: Trin | Trace: UND-100 AC1-4 | Verification: UAT verdict and screenshot noted in `agents/CHAT.md`*)
+- [ ] **Task 6.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 6): ...`*)
+- [ ] **Task 6.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT25 section 5 | Verification: result in `agents/CHAT.md`*)
 
 ---
 
 ## Stage 3: Sprint Closeout
 
-- [x] **Task C.1:** SDLC conformance check. (*Owner: Tank | Trace: N/A — closeout | Verification: `bobp make check`, and `docs/SDLC.md` "Last verified" updated*)
-- [x] **Task C.2:** Document grooming, ADR-0052 to ADR-0054, lessons. Chat report only if the owner asks. (*Owner: Oracle | Trace: N/A — closeout | Verification: ADRs in `docs/DECISIONS.md`; groom noted in `agents/CHAT.md`*)
-- [x] **Task C.3:** End-to-end user testing on the baseline run and the console, against `docs/sprints/UAT_PLAN_SPRINT24.md`, and lesson review. (*Owner: Smith | Trace: UND-93, 94, 95, 87, 82 | Verification: Smith acceptance verdict and evidence in `agents/CHAT.md`*)
-- [x] **Task C.4:** Sprint retrospective and backlog grooming. (*Owner: Mouse | Trace: N/A — closeout | Verification: retros in `docs/sprints/RETRO_SPRINT24.md`, posted in `agents/CHAT.md`*)
-- [x] **Task C.5:** Sprint launch and release announcement; merge `sprint-24` into `main` only when the owner asks. (*Owner: Cypher | Trace: N/A — release decision | Verification: launch recorded in `agents/CHAT.md`*)
+- [ ] **Task C.1:** SDLC conformance check. (*Owner: Tank | Trace: N/A — closeout | Verification: `bobp make check`, and `docs/SDLC.md` "Last verified" updated*)
+- [ ] **Task C.2:** Document grooming, ADR-0055 to ADR-0057, lessons. Chat report only if the owner asks. (*Owner: Oracle | Trace: N/A — closeout | Verification: ADRs in `docs/DECISIONS.md`; groom noted in `agents/CHAT.md`*)
+- [ ] **Task C.3:** End-to-end user testing on the baselines and the console, against `docs/sprints/UAT_PLAN_SPRINT25.md`, and lesson review. (*Owner: Smith | Trace: UND-96..100 | Verification: Smith acceptance verdict and evidence in `agents/CHAT.md`*)
+- [ ] **Task C.4:** Sprint retrospective and backlog grooming. (*Owner: Mouse | Trace: N/A — closeout | Verification: retros in `docs/sprints/RETRO_SPRINT25.md`, posted in `agents/CHAT.md`*)
+- [ ] **Task C.5:** Sprint launch and release announcement; merge `sprint-25` (with `sprint-24` before it) into `main` only when the owner asks. (*Owner: Cypher | Trace: N/A — release decision | Verification: launch recorded in `agents/CHAT.md`*)

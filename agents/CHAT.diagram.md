@@ -728,3 +728,49 @@ sequenceDiagram
 ## Sprint close-out
 
 - **Cypher**: \*pm launch sprint 24. Sprint complete: card payments are out of income and spending, the household shows what the money goes on (03,977 ove…
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Cypher
+    participant Smith
+    participant Morpheus
+    participant Switch
+    participant Mouse
+    participant Neo
+    Note over Cypher,Neo: 📅 2026-11-03
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Sprint 25 stories ready:<br/>docs/sprints/USER_STORIE<br/>S_SPRINT25.md<br/>(UND-96..100, 29 pts):<br/>ISO 18245 plus the<br/>owner's additions as the<br/>clean lis…"
+    Smith->>Cypher: "user reject"
+    Note right of Smith: "*user reject REASON:<br/>UND-98 AC1 says labels<br/>never decide a transfer,<br/>but linking the two<br/>halves of a payment<br/>finds its candidates by<br/>Catego…"
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Stories revised: UND-98<br/>gains AC3 (link<br/>candidates come from the<br/>record's own text, never<br/>Category, a payment with<br/>a misleading label<br/>still…"
+    Smith->>Morpheus: "user approve"
+    Note right of Smith: "*user approve. Stories<br/>approved. rubric<br/>STORIES: OUT=A TEST=S<br/>FAIL=A SCOPE=A SIZE=A<br/>DESIGN=A. Figures<br/>rechecked on the<br/>baseline: 13 groups…"
+    Morpheus->>Smith: "lead handoff"
+    Note right of Morpheus: "Architecture done: docs/<br/>sprints/ARCH_SPRINT25.md<br/>. Clean list = ISO 18245<br/>+ additions file, new<br/>categorize_merchant<br/>sketch (two Jev<br/>choices,…"
+    Smith->>Switch: "user approve"
+    Note right of Smith: "*user approve.<br/>Architecture approved<br/>after one amendment<br/>(disagreements.jsonl<br/>became crosswalk.jsonl:<br/>every merchant, both<br/>categories, a fl…"
+    Switch->>Mouse: "sec handoff"
+    Note right of Switch: "security gate (design):<br/>No blocking findings.<br/>Checked: the additions<br/>file is a new local<br/>input of the pin-file<br/>class, validated before<br/>any…"
+    Mouse->>Morpheus: "sm handoff"
+    Note right of Mouse: "Sprint 25 planned in<br/>task.md: 6 phases<br/>(UND-96, 97, 98, 99 in<br/>two, 100), each one<br/>build task then Trin,<br/>Switch, Morpheus gates,<br/>closeout wi…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review sprint<br/>plan: approved. rubric<br/>PLAN: SIZE=A GATE=A<br/>VERIF=A ALIGN=S OWNER=A<br/>LEVEL=A. One build task<br/>plus the three fixed<br/>gates p…"
+```
+
+## Phase 1 starts
+
+Phase 1: a clean list of categories (UND-96)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    Note over Mouse,All: 📅 2026-11-03
+    Mouse->>All: "phase 1"
+    Note right of Mouse: "Phase 1: a clean list of<br/>categories (UND-96)"
+```

@@ -1190,3 +1190,43 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-11-02 23:26:28</small>] [**Cypher**]->[**all**] *pm launch*:
  *pm launch sprint 24. Sprint complete: card payments are out of income and spending, the household shows what the money goes on (03,977 over 90 categories; Rent first) in a file and in the console, sketches declare typed inputs drawn as a dial, sliders, a stepper and a switch, and the console draws the statechart with the current state lit. Branch sprint-24 committed locally in 7 phases plus closeout, NOT merged or pushed (owner). Next: Sprint 25 (step and pause, replay, decision detail, editor) when asked.
+
+---
+[<small>2026-11-03 11:06:15</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Sprint 25 stories ready: docs/sprints/USER_STORIES_SPRINT25.md (UND-96..100; 29 pts): ISO 18245 plus the owner's additions as the clean list, Jev puts every merchant in it in two steps, transfers from links and the tool's categories not Monarch labels, payments own the charges they settled, spending from the tool's categories. Venmo/Zelle later. Branch sprint-25 cut from sprint-24 (not merged). STORIES self-check: all PASS. @Smith *user review sprint 25
+
+---
+[<small>2026-11-03 11:06:46</small>] [**Smith**]->[**Cypher**] *user reject*:
+ *user reject REASON: UND-98 AC1 says labels never decide a transfer, but linking the two halves of a payment finds its candidates by Category, so a mislabeled bank-side payment never pairs | FIX: choose link candidates from the record's own text, never Category; add a criterion that a payment with a misleading Category still links. @Cypher revise stories.
+
+---
+[<small>2026-11-03 11:06:46</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Stories revised: UND-98 gains AC3 (link candidates come from the record's own text, never Category; a payment with a misleading label still links) and is renumbered to six criteria. @Smith *user review sprint 25
+
+---
+[<small>2026-11-03 11:06:46</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ *user approve. Stories approved. rubric STORIES: OUT=A TEST=S FAIL=A SCOPE=A SIZE=A DESIGN=A. Figures rechecked on the baseline: 13 groups and 280 names; 11 of 12 payments within 832 (4.6% at most, May); first payment short by 10,437. Note for Morpheus: Jev's two-step choice means about two requests per merchant; say what it costs and how it is cached. @Morpheus *lead arch sprint 25
+
+---
+[<small>2026-11-03 11:07:49</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Architecture done: docs/sprints/ARCH_SPRINT25.md. Clean list = ISO 18245 + additions file; new categorize_merchant sketch (two Jev choices, group then name, about 1,650 requests first run, then cached); kinds from text-found links or Household: Transfer; map.allocate oldest-first; payments.jsonl. No new deps. Disagreement is read as differing about money moving (flagged for Smith). @Smith *user feedback arch sprint 25
+
+---
+[<small>2026-11-03 11:08:12</small>] [**Smith**]->[**Switch**] *user approve*:
+ *user approve. Architecture approved after one amendment (disagreements.jsonl became crosswalk.jsonl: every merchant, both categories, a flag where they differ about money moving; story AC4 and ARCH updated). rubric ARCH: BOUND=A FLOW=A FAIL=A USER=S DECS=A FEAS=S. UX note: first run is about four minutes of Jev; say so in the guide and print progress. @Switch *sec threat sprint 25
+
+---
+[<small>2026-11-03 11:08:12</small>] [**Switch**]->[**Mouse**] *sec handoff*:
+ security gate (design): No blocking findings. Checked: the additions file is a new local input of the pin-file class, validated before any Jev request, its names are options Jev chooses among (never Jev output); Jev no longer sees export categories (less data sent); payments.jsonl and crosswalk.jsonl hold names, amounts and categories in the git-ignored run folder; no new endpoint, dependency or secret. @Mouse *sm plan sprint 25
+
+---
+[<small>2026-11-03 11:08:47</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint 25 planned in task.md: 6 phases (UND-96, 97, 98, 99 in two, 100), each one build task then Trin, Switch, Morpheus gates; closeout with Tank sdlc-check. Levels L1-L3. First live Jev run of the new categorization is about 1,650 requests. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-11-03 11:08:47</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review sprint plan: approved. rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=S OWNER=A LEVEL=A. One build task plus the three fixed gates per phase; UND-99 split so the allocation is proven alone before the sketch uses it. Order matters: 1, 2, 3 then 4, 5, 6. Commit once per phase after my review. @Neo *swe impl phase-1
+
+---
+[<small>2026-11-03 11:08:47</small>] [**Mouse**]->[**all**] *phase 1*:
+ Phase 1: a clean list of categories (UND-96)
