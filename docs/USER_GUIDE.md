@@ -192,14 +192,22 @@ What it does, in order:
    (below) is placed in your category and never asked about.
 
 **Pinned categories.** `review.jsonl` is your work list. To settle a merchant, add a line to your pin file, one JSON
-object per line: `{"payee": "Amazon", "category": "Business & Professional: Online Shopping"}`. The category must be
-one your Monarch export already uses (a Transfer or Credit Card Payment category is not offered); the merchant's
-spelling may differ in case and spacing. The next run places that merchant's records in the category, marks them
+object per line: `{"payee": "Amazon", "category": "Retail outlets: Book stores"}`. The category must be in the
+clean list (see below and `taxonomy.jsonl` in the run folder): an ISO 18245 category or one of your own additions;
+the merchant's spelling may differ in case and spacing. The next run places that merchant's records in the category, marks them
 `category_source: pin`, makes no Jev request for it and leaves it out of `review.jsonl`. The pin file is
 `.understudy/pinned.jsonl` (read from where you run, git-ignored) unless you pass `--with pinned=<path>`. If the
 default file is not there the run says so and has no pins; a path you pass that does not exist, a line without a
-`payee` or `category`, or a category the export does not use stops the run before any request to Jev and names the
-line.
+`payee` or `category`, or a category that is not in the clean list stops the run before any request to Jev and names
+the line.
+
+**The clean list of categories.** Your export's own categories are not used. The list is the ISO 18245 merchant
+categories (13 groups, 280 names, each written `Group: Name`) plus your own additions where ISO has no good match.
+`examples/household/additions.jsonl` ships with six under the group `Household`: Rent, Mortgage, Tuition, Income,
+Transfer and Loan repayment. Copy it, edit it (one `{"group": ..., "name": ...}` per line) and pass
+`--with additions=<path>`. A path that does not exist, a line without a group or a name, or a name that repeats an
+ISO name or an earlier line stops the run before any request to Jev and names the line. The whole list is written to
+`taxonomy.jsonl` in the run folder (`group`, `name`, `category`, and `origin`: `iso` or `owner`).
 
 Each run creates a new folder under `.understudy/runs/` (or `--out`): `records.jsonl` (one record per transaction with its
 `kind`: purchase, refund, credit, transfer or invalid; its link and its category), `legs.jsonl`,

@@ -17,26 +17,28 @@ sources:
     kind: stage
     do: { map: { action: normalize } }
     with: { source: pins_file, field: payee, into: key }
-  taxonomy_rows:                        # the categories the owner uses, not the ones about moving money
+  additions_file:                       # the owner's own categories where ISO has no good match: {group, name}
+    kind: file
+    path: "{{ additions | default('additions.jsonl') }}"
+  iso:                                  # the ISO 18245 merchant categories in use: {group, name}
     kind: stage
-    do: { map: { action: where } }
-    with:
-      source: monarch_clean
-      keep:
-        and:
-          - { Category: { ne: "" } }
-          - not:
-              &moves                    # the labels for money moving between your own accounts, with or without a group
-              or:
-                - { Category: { eq: Transfer } }
-                - { Category: { eq: Credit Card Payment } }
-                - { Category: { ends: ": Credit Card Payment" } }
-                - { Category: { ends: ": Transfer" } }
-                - { Category: { ends: ": Transfers" } }
-  taxonomy:
+    do: { map: { action: mcc } }
+  iso_marked:
     kind: stage
-    do: { map: { action: group } }
-    with: { source: taxonomy_rows, by: Category }
+    do: { map: { action: set } }
+    with: { source: iso, fields: { origin: iso } }
+  additions_marked:
+    kind: stage
+    do: { map: { action: set } }
+    with: { source: additions_file, fields: { origin: owner } }
+  taxonomy_all:
+    kind: stage
+    do: { map: { action: concat } }
+    with: { sources: [ iso_marked, additions_marked ] }
+  taxonomy:                             # the clean list of categories, each "Group: Name"
+    kind: stage
+    do: { map: { action: format } }
+    with: { source: taxonomy_all, template: "{group}: {name}", into: category }
   monarch_checked:                      # the export's own categories decide what is a transfer, so it must have them
     kind: stage
     do: { map: { action: require } }
@@ -124,7 +126,17 @@ sources:
       source: linked
       into: transfer_basis
       cases:
-        - { if: { and: [ *moves, { partner: { ne: null } } ] }, then: both }
+        - if:
+            and:
+              - &moves                  # the labels for money moving between your own accounts, with or without a group
+                or:
+                  - { Category: { eq: Transfer } }
+                  - { Category: { eq: Credit Card Payment } }
+                  - { Category: { ends: ": Credit Card Payment" } }
+                  - { Category: { ends: ": Transfer" } }
+                  - { Category: { ends: ": Transfers" } }
+              - { partner: { ne: null } }
+          then: both
         - { if: *moves, then: label }
         - { if: { partner: { ne: null } }, then: link }
       otherwise: none
@@ -481,17 +493,30 @@ sinks:
   totals: totals.jsonl
   review: review.jsonl
   spending: spending.jsonl
+  taxonomy: taxonomy.jsonl
 
 machine:
-  initial: check_pins
+  initial: check_additions
   states:
-    check_pins:                         # a bad pin stops the run before anything is asked of Jev
+    check_additions:                    # a bad additions file or pin stops the run before anything is asked of Jev
+      do: { map: { action: complete } }
+      with: { source: additions_file, fields: [ group, name ] }
+      then: check_additions_unique
+    check_additions_unique:
+      do: { map: { action: unique } }
+      with: { source: additions_file, field: name, among: iso }
+      then: check_pins
+    check_pins:
       do: { map: { action: complete } }
       with: { source: pins_file, fields: [ payee, category ] }
       then: check_pin_categories
     check_pin_categories:
       do: { map: { action: known } }
-      with: { source: pins_file, field: category, among: taxonomy, among_field: Category }
+      with: { source: pins_file, field: category, among: taxonomy, among_field: category }
+      then: write_taxonomy
+    write_taxonomy:
+      do: { sink: { name: taxonomy } }
+      with: { source: taxonomy }
       then: write_records
     write_records:
       do: { sink: { name: records } }

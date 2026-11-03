@@ -14,6 +14,7 @@ from src.sketch.stages_rows import (
     share,
     tally,
     top_two,
+    unique,
     without,
 )
 
@@ -165,6 +166,28 @@ class SetTests(unittest.TestCase):
         found = run(set_fields, context([{"a": 1}, {"a": 2}]), source="rows", fields={"status": "placed", "probability": 1.0})
         self.assertEqual(found, [{"a": 1, "status": "placed", "probability": 1.0},
                                  {"a": 2, "status": "placed", "probability": 1.0}])
+
+
+class UniqueTests(unittest.TestCase):
+    def test_rows_that_do_not_repeat_pass_through_unchanged(self):
+        rows = [{"name": "Rent"}, {"name": "Mortgage"}]
+        self.assertEqual(run(unique, named(rows=rows), source="rows", field="name"), rows)
+
+    def test_a_repeat_stops_the_run_naming_the_line_and_the_first_line_it_repeats(self):
+        rows = [{"name": "Rent"}, {"name": "Mortgage"}, {"name": "rent  "}]  # case, spacing and edges do not make it new
+        with self.assertRaises(ValueError) as stopped:
+            run(unique, named(rows=rows), source="rows", field="name")
+        self.assertEqual(str(stopped.exception), "source 'rows' line 3 repeats 'rent  ' (first on line 1)")
+
+    def test_a_row_that_repeats_a_value_in_another_source_is_named_with_that_source(self):
+        context_ = named(rows=[{"name": "Rent"}, {"name": "Taxi-cabs"}], iso=[{"name": "Taxi-cabs"}])
+        with self.assertRaises(ValueError) as stopped:
+            run(unique, context_, source="rows", field="name", among="iso")
+        self.assertEqual(str(stopped.exception), "source 'rows' line 2 repeats 'Taxi-cabs' (also in 'iso')")
+
+    def test_it_is_a_map_stage_asking_for_a_source_and_a_field(self):
+        required = [key for key, p in STAGES["map.unique"].params.items() if p.required]
+        self.assertEqual(required, ["source", "field"])
 
 
 class ShareTests(unittest.TestCase):

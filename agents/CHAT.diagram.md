@@ -770,7 +770,40 @@ sequenceDiagram
     autonumber
     participant Mouse
     participant All
-    Note over Mouse,All: 📅 2026-11-03
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-03
     Mouse->>All: "phase 1"
     Note right of Mouse: "Phase 1: a clean list of<br/>categories (UND-96)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 1 impl complete<br/>(UND-96): the clean list<br/>(ISO 18245 plus<br/>additions file) written<br/>to taxonomy.jsonl,<br/>generic map.unique,<br/>shipped addit…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 1 passed<br/>(UND-96): real run<br/>writes 286 categories<br/>(280 ISO, 6 owner),<br/>missing path, line<br/>without a name, repeated<br/>name and a pin…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 1):<br/>No blocking findings.<br/>The additions file is a<br/>new local input of the<br/>pin-file class: read<br/>before any Jev request,…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-1:<br/>passed. One small<br/>generic stage, one data<br/>file, the list written<br/>to its own sink, the old<br/>export-derived taxonomy<br/>sta…"
+```
+
+## Phase 1 close-out
+
+- **Neo**: Phase 1 impl complete (UND-96): the clean list (ISO 18245 plus additions file) written to taxonomy.jsonl, generic map.unique, shipped addit…
+- **Trin**: UAT phase 1 passed (UND-96): real run writes 286 categories (280 ISO, 6 owner), missing path, line without a name, repeated name and a pin…
+- **Morpheus**: \*lead review phase-1: passed. One small generic stage, one data file, the list written to its own sink, the old export-derived taxonomy sta…
+
+## Phase 2 starts
+
+Phase 2: Jev puts every merchant in a category (UND-97)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    Note over Mouse,All: 📅 2026-11-03
+    Mouse->>All: "phase 2"
+    Note right of Mouse: "Phase 2: Jev puts every<br/>merchant in a category<br/>(UND-97)"
 ```

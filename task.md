@@ -21,10 +21,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 1: A clean list of categories (UND-96, 5 pts)
 *Phase goal: the ISO list plus the owner's additions as one list, with its checks; pins are checked against it.*
-- [ ] **Task 1.1:** Tests first, then generic `map.unique`; the `additions` source and shipped starting file `examples/household/additions.jsonl`; the `taxonomy` stages ("Group: Name"); checks before any Jev request (missing path, line without group or name, repeated name); pins checked against this list instead of the export's categories; docs. **L2** (one sketch, one stage, one data file; pattern known). (*Owner: Neo | Trace: UND-96 AC1-5, ADR-0055 | Verification: `bobp make test`, `bobp make lint`*)
-- [ ] **Task 1.2:** UAT: 13 ISO groups and 280 names plus six additions; an owner's file replaces the shipped one; each bad additions line and a bad pin stops the run naming it before any Jev request. **L2**. (*Owner: Trin | Trace: UND-96 AC1-5 | Verification: UAT verdict and evidence in `agents/CHAT.md` and `docs/sprints/UAT_PLAN_SPRINT25.md`*)
-- [ ] **Task 1.3:** Security quick pass: the additions file as a new local input. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 1): ...` in `agents/CHAT.md`*)
-- [ ] **Task 1.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT25 sections 3-5, ADR-0055 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 1.1:** Tests first, then generic `map.unique`; the `additions` source and shipped starting file `examples/household/additions.jsonl`; the `taxonomy` stages ("Group: Name"); checks before any Jev request (missing path, line without group or name, repeated name); pins checked against this list instead of the export's categories; docs. **L2** (one sketch, one stage, one data file; pattern known). (*Owner: Neo | Trace: UND-96 AC1-5, ADR-0055 | Verification: `bobp make test`, `bobp make lint`*)
+- [x] **Task 1.2:** UAT: 13 ISO groups and 280 names plus six additions; an owner's file replaces the shipped one; each bad additions line and a bad pin stops the run naming it before any Jev request. **L2**. (*Owner: Trin | Trace: UND-96 AC1-5 | Verification: UAT verdict and evidence in `agents/CHAT.md` and `docs/sprints/UAT_PLAN_SPRINT25.md`*)
+- [x] **Task 1.3:** Security quick pass: the additions file as a new local input. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 1): ...` in `agents/CHAT.md`*)
+- [x] **Task 1.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT25 sections 3-5, ADR-0055 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 2: Jev puts every merchant in a category (UND-97, 8 pts)
 *Phase goal: a two-step Jev choice from the clean list replaces placing by export categories; the export's category is no longer shown or used.*

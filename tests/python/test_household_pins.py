@@ -12,7 +12,7 @@ from src.jev import Chosen
 from src.sketch.cli import main
 from src.sketch.sources.capture import CaptureStore
 
-CLOTHING = "Shopping & Retail: Clothing"  # a category the fixture export uses
+CLOTHING = "Clothing outlets: Family clothing shops"  # a category in the clean list (ISO 18245)
 
 
 class PinCase(unittest.TestCase):

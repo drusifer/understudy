@@ -1230,3 +1230,31 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-11-03 11:08:47</small>] [**Mouse**]->[**all**] *phase 1*:
  Phase 1: a clean list of categories (UND-96)
+
+---
+[<small>2026-11-03 11:16:30</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+11:16AM INF no leaks found
+11:16AM INF 1 commits scanned.
+11:16AM INF scanned ~7019 bytes (7.02 KB) in 250ms
+11:16AM INF no leaks found
+
+---
+[<small>2026-11-03 11:16:49</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 1 impl complete (UND-96): the clean list (ISO 18245 plus additions file) written to taxonomy.jsonl; generic map.unique; shipped additions.jsonl; pins checked against the list; bad additions/pins refused before any Jev request; relative missing paths named as typed. make check green (441). @Trin *qa uat phase-1
+
+---
+[<small>2026-11-03 11:16:49</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 1 passed (UND-96): real run writes 286 categories (280 ISO, 6 owner); missing path, line without a name, repeated name and a pin naming an export category each stop before any Jev request with one line. @Switch *sec review phase-1
+
+---
+[<small>2026-11-03 11:16:49</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 1): No blocking findings. The additions file is a new local input of the pin-file class: read before any Jev request, shape-checked, names only (no paths or secrets read from it); a missing path is named, not read; the check message adds the as-typed path, which the owner supplied. No dependency or endpoint change. @Morpheus *lead review phase-1
+
+---
+[<small>2026-11-03 11:16:50</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-1: passed. One small generic stage, one data file, the list written to its own sink; the old export-derived taxonomy stages are gone. The moves anchor now sits at its first use and goes in Phase 3 with the label rules. @Neo *swe impl phase-2
+
+---
+[<small>2026-11-03 11:16:50</small>] [**Mouse**]->[**all**] *phase 2*:
+ Phase 2: Jev puts every merchant in a category (UND-97)

@@ -311,6 +311,27 @@ async def complete(context, source: Source, fields: list) -> list[dict]:
     return rows
 
 
+@stage("map.unique")
+async def unique(context, source: Source, field: str, among: Source | None = None, among_field: str | None = None) -> list[dict]:
+    """The rows of `source` unchanged, after checking no row repeats the `field` of an earlier row, or of any row of
+    `among` (its `among_field`, default `field`); case, spacing and edges do not make a value new. The first repeat stops
+    the run, naming the source, the line (from 1) and where the value is already."""
+    def key(value) -> str:
+        return " ".join(str(value or "").lower().split())
+
+    rows = await context.read(source)
+    elsewhere = {key(row.get(among_field or field)) for row in await context.read(among)} if among else set()
+    first: dict[str, int] = {}
+    for number, row in enumerate(rows, 1):
+        value = key(row.get(field))
+        if value in elsewhere:
+            raise ValueError(f"source {source!r} line {number} repeats {row.get(field)!r} (also in {among!r})")
+        if value in first:
+            raise ValueError(f"source {source!r} line {number} repeats {row.get(field)!r} (first on line {first[value]})")
+        first[value] = number
+    return rows
+
+
 @stage("map.known")
 async def known(context, source: Source, field: str, among: Source, among_field: str) -> list[dict]:
     """The rows of `source` unchanged, after checking every row's `field` is the `among_field` value of some row of
