@@ -53,3 +53,20 @@ Status: In Progress. Sprint 25 phases 1-3 complete; Phase 4 not started.
 3. Tests first in `tests/python/test_sketch_stages_checks.py` for `map.allocate` and `map.top`; then `src/sketch/stages_rows.py`; add both to the stage list in `tests/python/test_sketch_coffee.py` (`RegistryTests`); document in `docs/SKETCHES.md`. Then `bobp make check`.
 4. Trin UAT on the Amex baseline outside the sketch: 11 of 12 payments within 5% (worst 4.6%, May), first payment short by $10,437, settled plus open equals all charges to the cent. Then Switch quick pass, Morpheus review, tick `task.md`, commit `Phase 4: ...` with the attribution line.
 5. Open owner items: pins for other own-account merchants (Ridgewood Savings Bank, maybe others); the $20,000 "Deposit"; whether to merge `sprint-24` then `sprint-25` into `main` and push (ask first). Later sprints: Venmo and Zelle histories (use `link`'s business-day matching), then stepping, replay, decision detail, YAML editor.
+
+---
+## Checkpoint 2026-11-03 (end of Sprint 25)
+
+### Context
+- Sprint 25 is complete and committed on `sprint-25` (phases 1-6 plus closeout). `sprint-24` and `sprint-25` are NOT merged or pushed; the owner decides (merge `sprint-24` first, then `sprint-25`; push only via `bobp make push` when asked). 491 tests, lint, gitleaks green; `bobp make test-browser` 22/22.
+- New this stretch: generic `map.allocate` (card's own dates, a day's charges smallest first), `map.top`, `map.nest`, `map.share by`, `map.weigh places`; household `pay_*` stages, `payments.jsonl`, `settled_by`, `open_balance`; spending by the tool's category (`unplaced`); ADR-0055..0057; `RETRO_SPRINT25.md`.
+- Baseline results: 11 of 12 payments within 5% (worst 4.6%), open balance $28,443.67, spending $450,144.50 with `unplaced` 38.6%.
+- Lessons: replay is refused after sketch edits (use the newest run after the last edit, or the small sample live); stop-at-first-misfit rules need a stated tie order. Owner rules: Edit/Write only (I used `sed` once to tick tasks), one question at a time, American spelling, run the real file before the gate.
+
+### Current Task
+Status: Complete. Nothing in progress.
+
+### Next Steps
+1. Ask the owner whether to merge `sprint-24` then `sprint-25` into `main` and push.
+2. Owner items: pin own-account merchants (Ridgewood Savings Bank and others) and the $20,000 "Deposit"; work down `review.jsonl`.
+3. Backlog in `docs/sprints/RETRO_SPRINT25.md` (make the monarch Category optional, write `open_balance` 0 when none, Venmo/Zelle, console stepping/replay/editor).

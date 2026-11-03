@@ -40,9 +40,39 @@ Phases are added as they pass UAT.
 - **Verdict:** PASS
 - **Evidence / issue:** two changes made from the findings: a card's own "payment received" text makes a record a payment even when unpaired (`transfer_basis: payment`), and Jev's group question now says what Household is for (own accounts including brokerage). Charles Schwab and the American Express debits are still unplaced after the change; they are the owner's to pin (`Household: Transfer`).
 
+### UAT-25-4: The allocation stages (Phase 4)
+
+- **Linked criterion:** UND-99 AC1, AC5, AC6 (the generic part)
+- **Preconditions and data:** `data/activity-11-03-2026.csv` read outside the sketch (a scratch script calling `map.allocate`)
+- **Steps:** allocate the file's charges to its 12 payment lines; compare each remainder with its amount
+- **Expected observable outcome:** 11 of 12 within 5%; the first short by about $10,437; settled plus open equal all charges to the cent
+- **Actual outcome:** 11 of 12 within 5% (worst May 4.6%, $832.30); first payment short $10,437.36; settled plus open $299,942.17 equal all charges
+- **Verdict:** PASS
+- **Evidence / issue:** chat message "UAT phase 4 passed"
+
+### UAT-25-5: Payments know what they paid for (Phase 5)
+
+- **Linked criterion:** UND-99 AC1 to AC7
+- **Preconditions and data:** the full baselines with `since=2025-11-01`; live run `run-20261103T215207-620ddcce` and replays of it; the small fixture for a card with no payments
+- **Steps:** read `payments.jsonl`, `records.jsonl` (`settled_by`) and `summary.json` (`open_balance`); unit tests for a card with no payments and for the card's dates against the bank's
+- **Expected observable outcome:** 12 payment lines; every payment after the first within 5%; the first unexplained; settled plus open equal all the card's charges; open balance about $28,444
+- **Actual outcome:** 12 lines, 11 of 12 within 5% (worst 4.6%), first short $10,437.36 and unexplained; settled $271,498.50 + open $28,443.67 = $299,942.17 over 5,299 charges
+- **Verdict:** PASS
+- **Evidence / issue:** two defects found in the first real run and fixed test-first: merged records carried the bank's date (the allocation now reads the card's), and the order of a day's charges changed the result (now smallest first). Finding: "unplaced" is the largest category of every payment (23 to 61%) until more merchants are pinned.
+
+### UAT-25-6: Spending by the tool's category (Phase 6)
+
+- **Linked criterion:** UND-100 AC1 to AC4
+- **Preconditions and data:** the full baselines (replay of `run-20261103T215207-620ddcce`); `bobp make test-browser`
+- **Steps:** read `spending.jsonl`, `taxonomy.jsonl` and `summary.json`; run the browser suite, which draws the console's list
+- **Expected observable outcome:** every category in the clean list or `unplaced`; shares add to 1 within 0.001; amounts add to `spending_total`
+- **Actual outcome:** 99 categories, none outside the list except `unplaced`; shares add to 1.0001; amounts add to $450,144.50, equal to `spending_total` (5,812 records); `unplaced` is 38.6% ($173,565.40, 2,041 records); browser suite 22 of 22
+- **Verdict:** PASS
+- **Evidence / issue:** chat message "UAT phase 6 passed"
+
 ## Results and Handoff
 
-- **Passed / failed / blocked:** Phase 1: 1 passed (UAT-25-1); Phase 2: 1 passed (UAT-25-2); Phase 3: 1 passed (UAT-25-3); 0 failed, 0 blocked
-- **Open issues and impact:** none open for Phase 1.
-- **Overall verdict:** PASS for Phase 1
+- **Passed / failed / blocked:** Phases 1 to 6: 6 passed (UAT-25-1 to UAT-25-6); 0 failed, 0 blocked
+- **Open issues and impact:** "unplaced" is 38.6% of spending until the owner pins more merchants; pins for Ridgewood Savings Bank and other own-account merchants are the owner's to add; Ridgewood income is high by Schwab's $82,000 until Schwab is pinned (decision 14 is in the owner's pins file).
+- **Overall verdict:** PASS
 - **Handoff evidence:** message in `agents/CHAT.md`

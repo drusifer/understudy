@@ -946,7 +946,10 @@ sequenceDiagram
     participant Switch
     participant Morpheus
     participant Tank
-    Note over Mouse,Tank: 📅 2026-11-03
+    participant Oracle
+    participant Smith
+    participant Cypher
+    Note over Mouse,Cypher: 📅 2026-11-03
     Mouse->>All: "phase 6"
     Note right of Mouse: "Phase 6: spending by the<br/>tool's category<br/>(UND-100)"
     Neo->>Trin: "swe handoff"
@@ -957,10 +960,24 @@ sequenceDiagram
     Note right of Switch: "security gate (phase 6):<br/>No blocking findings.<br/>One sketch edit (which<br/>field names a spending<br/>category) and test<br/>changes, no new input,<br/>outp…"
     Morpheus->>Tank: "lead handoff"
     Note right of Morpheus: "*lead review phase-6:<br/>passed. The list now<br/>follows the same<br/>category as every other<br/>report, the old export-<br/>first rule is gone with<br/>no fallb…"
+    Tank->>Oracle: "devops handoff"
+    Note right of Tank: "SDLC check passed<br/>(Sprint 25):<br/>pyproject.toml, uv.lock,<br/>.python-version and<br/>Makefile unchanged since<br/>sprint-24, make check<br/>green (491 tests…"
+    Oracle->>Smith: "ora handoff"
+    Note right of Oracle: "Docs groomed:<br/>ADR-0055..0057 recorded<br/>(ADR-0052's label rule<br/>marked superseded), 2<br/>lessons, CHANGELOG,<br/>USER_GUIDE, SKETCHES,<br/>ARCH, PRD, UAT…"
+    Smith->>All: "user approve"
+    Note right of Smith: "rubric UAT: COVER=A<br/>STEPS=A FAIL=A DATA=S<br/>EVID=A. User testing<br/>passed (UAT-25-1..6,<br/>real baselines). Rough<br/>edges for the owner:<br/>unplaced is…"
+    Mouse->>Cypher: "retro"
+    Note right of Mouse: "Sprint 25 retro posted<br/>in docs/sprints/RETRO_SP<br/>RINT25.md. Backlog: pin<br/>own-account merchants<br/>and work down<br/>review.jsonl, make the<br/>monarch C…"
+    Cypher->>All: "pm launch"
+    Note right of Cypher: "*pm launch sprint-25.<br/>Sprint complete: 5<br/>stories (UND-96..100), 6<br/>phases, 491 tests.<br/>Branches sprint-24 and<br/>sprint-25 are committed<br/>locally…"
 ```
 
-## Phase 6 so far
+## Phase 6 close-out
 
-- **Neo**: Phase 6 impl complete (UND-100): spending.jsonl uses the tool's category (category\_level: Jev or pin), unplaced for a merchant in review, n…
-- **Trin**: UAT phase 6 passed (UND-100 AC1-4) on the full baseline (replay): 99 categories, none outside the clean list except unplaced, shares add to…
 - **Morpheus**: \*lead review phase-6: passed. The list now follows the same category as every other report, the old export-first rule is gone with no fallb…
+- **Tank**: SDLC check passed (Sprint 25): pyproject.toml, uv.lock, .python-version and Makefile unchanged since sprint-24, make check green (491 tests…
+- **Smith**: rubric UAT: COVER=A STEPS=A FAIL=A DATA=S EVID=A. User testing passed (UAT-25-1..6, real baselines). Rough edges for the owner: unplaced is…
+
+## Sprint close-out
+
+- **Cypher**: \*pm launch sprint-25. Sprint complete: 5 stories (UND-96..100), 6 phases, 491 tests. Branches sprint-24 and sprint-25 are committed locally…

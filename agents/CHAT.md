@@ -1429,3 +1429,23 @@ OK
 ---
 [<small>2026-11-03 17:39:29</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
  *lead review phase-6: passed. The list now follows the same category as every other report; the old export-first rule is gone with no fallback. All phases reviewed. @Tank *devops sdlc-check
+
+---
+[<small>2026-11-03 17:40:45</small>] [**Tank**]->[**Oracle**] *devops handoff*:
+ SDLC check passed (Sprint 25): pyproject.toml, uv.lock, .python-version and Makefile unchanged since sprint-24; make check green (491 tests, ruff, gitleaks); test-browser 22/22 in 102 s; Last verified updated. @Oracle *ora groom
+
+---
+[<small>2026-11-03 17:40:45</small>] [**Oracle**]->[**Smith**] *ora handoff*:
+ Docs groomed: ADR-0055..0057 recorded (ADR-0052's label rule marked superseded), 2 lessons, CHANGELOG, USER_GUIDE, SKETCHES, ARCH, PRD, UAT plan results, RETRO_SPRINT25. Chat archive left for the owner (CHAT.md reset is a release step). @Smith *user test sprint-25
+
+---
+[<small>2026-11-03 17:40:46</small>] [**Smith**]->[**all**] *user approve*:
+ rubric UAT: COVER=A STEPS=A FAIL=A DATA=S EVID=A. User testing passed (UAT-25-1..6, real baselines). Rough edges for the owner: unplaced is 38.6% of spending; Ridgewood income looks high until own-account merchants are pinned; 'unexplained' reads as over 5% of a payment with no earlier charge (AC5 reading, accepted). @all *sprint retro
+
+---
+[<small>2026-11-03 17:40:46</small>] [**Mouse**]->[**Cypher**] *retro*:
+ Sprint 25 retro posted in docs/sprints/RETRO_SPRINT25.md. Backlog: pin own-account merchants and work down review.jsonl; make the monarch Category optional; write open_balance 0 when none; Venmo/Zelle; console stepping/replay/editor. @Cypher *pm launch sprint-25
+
+---
+[<small>2026-11-03 17:40:46</small>] [**Cypher**]->[**all**] *pm launch*:
+ *pm launch sprint-25. Sprint complete: 5 stories (UND-96..100), 6 phases, 491 tests. Branches sprint-24 and sprint-25 are committed locally and NOT merged or pushed; merge sprint-24 first, then sprint-25, only when the owner asks.
