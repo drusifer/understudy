@@ -286,6 +286,51 @@ sources:
         - { if: { category_level: { ne: null } }, then: placed }
       otherwise: review
 
+  review_records:                       # the records Jev was not sure enough about to place
+    kind: stage
+    do: { map: { action: where } }
+    with: { source: finished, keep: { category_status: { eq: review } } }
+  review_totals:                        # one row per merchant: how many records, how much money
+    kind: stage
+    do: { map: { action: group } }
+    with: { source: review_records, by: payee, sums: { amount: cost } }
+  review_asks:                          # what Jev said about each merchant it was not sure of
+    kind: stage
+    do: { map: { action: where } }
+    with: { source: decided, keep: { status: { eq: review } } }
+  review_joined:
+    kind: stage
+    do: { map: { action: join } }
+    with: { source: review_totals, other: review_asks, on: key, keep_unmatched: true, prefix: guess_ }
+  review_reasons:
+    kind: stage
+    do: { map: { action: classify } }
+    with:
+      source: review_joined
+      into: reason
+      cases:
+        - { if: { guess_level: { eq: none_of_these } }, then: none_of_these }
+      otherwise: below_0.7
+  review_named:
+    kind: stage
+    do: { map: { action: coalesce } }
+    with:
+      source: review_reasons
+      fields:
+        top: [ guess_level ]
+        top_probability: [ guess_probability ]
+        runner_up: [ guess_runner_up ]
+        runner_up_probability: [ guess_runner_up_probability ]
+  review_fields:
+    kind: stage
+    do: { map: { action: keep } }
+    with:
+      source: review_named
+      fields: [ payee, count, amount, top, top_probability, runner_up, runner_up_probability, reason ]
+  review_list:                          # the merchants with the most records first
+    kind: stage
+    do: { reduce: { action: max } }
+    with: { source: review_fields, field: count, take: 1000000 }
   account_totals:                       # money in, money out and net for each account; transfers are not either
     kind: stage
     do: { map: { action: group } }
@@ -333,6 +378,7 @@ sinks:
   kinds: kinds.jsonl
   statuses: statuses.jsonl
   totals: totals.jsonl
+  review: review.jsonl
 
 machine:
   initial: write_records
@@ -356,6 +402,10 @@ machine:
     write_totals:
       do: { sink: { name: totals } }
       with: { source: totals }
+      then: write_review
+    write_review:
+      do: { sink: { name: review } }
+      with: { source: review_list }
       then: done
     done:
       final: true

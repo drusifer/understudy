@@ -3,7 +3,7 @@ import unittest
 from types import MappingProxyType, SimpleNamespace
 
 from src.sketch.registry import STAGES
-from src.sketch.stages_rows import group, note, require, tally
+from src.sketch.stages_rows import group, keep, note, require, tally, top_two
 
 
 def context(rows):
@@ -66,6 +66,35 @@ class GroupSumsTests(unittest.TestCase):
     def test_group_without_sums_is_unchanged(self):
         (row,) = run(group, context([{"card": "A", "cost": 1.0}]), source="rows", by="card")
         self.assertEqual(row, {"key": "a", "card": "A", "count": 1})
+
+
+class TopTwoTests(unittest.TestCase):
+    READINGS = ({"level": "Coffee", "probability": 0.2}, {"level": "Groceries", "probability": 0.6},
+                {"level": "none_of_these", "probability": 0.15}, {"level": "Pets", "probability": 0.05})
+
+    def test_one_row_names_the_best_and_the_runner_up_with_their_values(self):
+        (row,) = run(top_two, context(list(self.READINGS)), source="rows", label="level", value="probability")
+        self.assertEqual(row, {"level": "Groceries", "probability": 0.6, "runner_up": "Coffee",
+                               "runner_up_probability": 0.2})
+
+    def test_with_only_one_row_there_is_no_runner_up(self):
+        (row,) = run(top_two, context([{"level": "A", "probability": 1.0}]), source="rows", label="level",
+                     value="probability")
+        self.assertEqual(row, {"level": "A", "probability": 1.0, "runner_up": None, "runner_up_probability": None})
+
+    def test_no_rows_give_no_row(self):
+        self.assertEqual(run(top_two, context([]), source="rows", label="level", value="probability"), [])
+
+    def test_it_is_a_reduce_stage_asking_for_a_source_a_label_and_a_value(self):
+        required = [key for key, p in STAGES["reduce.top_two"].params.items() if p.required]
+        self.assertEqual(required, ["source", "label", "value"])
+
+
+class KeepTests(unittest.TestCase):
+    def test_each_row_keeps_only_the_named_fields_in_that_order(self):
+        rows = [{"b": 2, "a": 1, "c": 3}, {"a": 4, "c": 6}]
+        found = run(keep, context(rows), source="rows", fields=["a", "b"])
+        self.assertEqual([list(r.items()) for r in found], [[("a", 1), ("b", 2)], [("a", 4), ("b", None)]])
 
 
 class NoteTests(unittest.TestCase):

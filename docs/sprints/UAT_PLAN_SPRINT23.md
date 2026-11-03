@@ -40,9 +40,19 @@ Phases are added as they pass UAT.
 - **Verdict:** PASS
 - **Evidence / issue:** run folder above; `tests/python/test_household.py` checks every account's totals against the records.
 
+### UAT-23-4: The merchants for review, as a list (Phase 3)
+
+- **Linked criterion:** UND-91 AC1, AC2, AC3, AC4, AC5
+- **Preconditions and data:** the baseline files as in UAT-23-1; live run `run-20261103T004342-690932b0`; a scripted Jev that is sure of everything (unit test) for the empty case
+- **Steps:** run the household sketch; read `review.jsonl` and compare it with the records whose `category_status` is review
+- **Expected observable outcome:** one line per merchant with `payee`, `count`, `amount`, `top`, `top_probability`, `runner_up`, `runner_up_probability`, `reason`; most records first; as many lines as merchants among the review records; an empty file when nothing needs review
+- **Actual outcome:** 475 lines for 1,717 review records (the counts add up to 1,717); the same 475 distinct merchants by the run's own key (case and spacing ignored); sorted largest first (Amazon 296 records, -$10,332.61, top guess Business & Professional: Online Shopping at 0.51, runner-up Shopping & Retail: Software & Subscriptions at 0.35); reasons: 295 `below_0.7`, 180 `none_of_these`; unit test `NothingForReviewTests` writes an empty file
+- **Verdict:** PASS
+- **Evidence / issue:** run folder above. Nine lines have no runner-up: those merchants were named by the naming sketch, which gives one reading, not a ranking (Venmo, top "Financial institutions -- merchandise and services" 0.63). Accepted as a limit of AC2 for named merchants.
+
 ## Results and Handoff
 
-- **Passed / failed / blocked:** Phase 1: 2 passed (UAT-23-1, UAT-23-2); Phase 2: 1 passed (UAT-23-3); 0 failed, 0 blocked
+- **Passed / failed / blocked:** Phase 1: 2 passed (UAT-23-1, UAT-23-2); Phase 2: 1 passed (UAT-23-3); Phase 3: 1 passed (UAT-23-4); 0 failed, 0 blocked
 - **Open issue (found in Phase 2):** two lines in `totals.jsonl` are Amex-only rows that matched no Monarch row, shown as accounts named `-38016` and `-33009` (the Amex account numbers), 14 records, about -$77. They are real records, so UND-90 AC4 is not broken, but the names are not accounts the owner knows. Owner: Neo, Phase 3 or a fix after the owner decides whether unmatched Amex rows should be named for their card.
 - **Open issues and impact:** the card-side records. On accounts other than Ridgewood the export still labels some payments "Food & Dining: Credit Card Payment" and "Transportation: Transfers", so they are no longer transfers and count as refunds or credits: 169 positive non-transfer records worth $240,596 outside Ridgewood in this run. Ridgewood is unaffected. Owner: decide whether to relabel those in Monarch or add the group labels to the rule.
 - **Overall verdict:** PASS for Phase 1

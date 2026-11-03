@@ -66,7 +66,8 @@ class RegistryTests(unittest.TestCase):
             "map.convert", "map.pair", "map.link", "map.group", "map.rows", "map.classify",
             "map.number", "map.coalesce",
             "map.replace", "map.normalize", "map.format", "map.earlier", "map.concat", "map.matching",
-            "map.attach", "map.mcc", "map.require", "reduce.tally", "reduce.note"})
+            "map.attach", "map.mcc", "map.require", "reduce.tally", "reduce.note",
+            "reduce.top_two", "map.keep"})
 
     def test_a_stage_declares_its_with_keys_by_its_signature(self):
         self.assertEqual(STAGES["map.split_by_share"].params, {

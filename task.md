@@ -35,10 +35,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 3: Merchants for review, as a list (UND-91, 5 pts)
 *Phase goal: `review.jsonl`, one line per merchant, sorted by records, with Jev's top two guesses.*
-- [ ] **Task 3.1:** Tests first, then `place_merchant` outputs the runner-up beside `status`; `review.jsonl` with `payee, count, amount, top, top_probability, runner_up, runner_up_probability, reason`; sorted by count; empty file when nothing needs review. **L2**. (*Owner: Neo | Trace: UND-91 AC1-5 | Verification: `bobp make test`, `bobp make lint`*)
-- [ ] **Task 3.2:** UAT on a replayed household run: line count equals distinct review merchants; order; reasons. **L2**. (*Owner: Trin | Trace: UND-91 AC1-5 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
-- [ ] **Task 3.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 3): ...`*)
-- [ ] **Task 3.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT23 sections 4-5 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 3.1:** Tests first, then `place_merchant` outputs the runner-up beside `status`; `review.jsonl` with `payee, count, amount, top, top_probability, runner_up, runner_up_probability, reason`; sorted by count; empty file when nothing needs review. **L2**. (*Owner: Neo | Trace: UND-91 AC1-5 | Verification: `bobp make test`, `bobp make lint`*)
+- [x] **Task 3.2:** UAT on a replayed household run: line count equals distinct review merchants; order; reasons. **L2**. (*Owner: Trin | Trace: UND-91 AC1-5 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
+- [x] **Task 3.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 3): ...`*)
+- [x] **Task 3.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT23 sections 4-5 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 4: Pinned categories are kept (UND-92, 5 pts)
 *Phase goal: a pin file the owner edits; pinned merchants skip Jev and leave the review list.*

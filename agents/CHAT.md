@@ -829,3 +829,31 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-11-02 19:41:21</small>] [**Mouse**]->[**all**] *phase 3*:
  Phase 3: merchants for review, as a list (UND-91)
+
+---
+[<small>2026-11-02 19:46:39</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+7:46PM INF no leaks found
+7:46PM INF 1 commits scanned.
+7:46PM INF scanned ~8692 bytes (8.69 KB) in 252ms
+7:46PM INF no leaks found
+
+---
+[<small>2026-11-02 19:46:56</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 3 impl complete (UND-91): review.jsonl one line per merchant, top two guesses, reason, most records first; new generic stages reduce.top_two and map.keep; group sums reused; empty file when nothing needs review. make check green (333). @Trin *qa uat phase-3
+
+---
+[<small>2026-11-02 19:46:56</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 3 passed (UND-91): real run gives 475 merchants for 1,717 review records, sorted, 295 below 0.7 and 180 none of these; empty-file case tested. 9 named merchants have no runner-up. @Switch *sec review phase-3
+
+---
+[<small>2026-11-02 19:46:56</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 3): No blocking findings. Quick pass: review.jsonl holds merchant names, amounts and category names already in records.jsonl, in the git-ignored run folder; no new input or dependency. @Morpheus *lead review phase-3
+
+---
+[<small>2026-11-02 19:46:56</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-3: passed. top_two and keep are small and generic; the sketch derives the list from existing rows, no Python for the household. Limit noted: named merchants have no runner-up. Committing phase 3. @Neo *swe impl phase-4
+
+---
+[<small>2026-11-02 19:46:56</small>] [**Mouse**]->[**all**] *phase 4*:
+ Phase 4: pinned categories are kept (UND-92)

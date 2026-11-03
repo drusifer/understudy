@@ -342,7 +342,40 @@ sequenceDiagram
     autonumber
     participant Mouse
     participant All
-    Note over Mouse,All: 📅 2026-11-02
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-02
     Mouse->>All: "phase 3"
     Note right of Mouse: "Phase 3: merchants for<br/>review, as a list<br/>(UND-91)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 3 impl complete<br/>(UND-91): review.jsonl<br/>one line per merchant,<br/>top two guesses, reason,<br/>most records first, new<br/>generic stages reduce.…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 3 passed<br/>(UND-91): real run gives<br/>475 merchants for 1,717<br/>review records, sorted,<br/>295 below 0.7 and 180<br/>none of these, empty-<br/>file…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 3):<br/>No blocking findings.<br/>Quick pass: review.jsonl<br/>holds merchant names,<br/>amounts and category<br/>names already in<br/>records…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-3:<br/>passed. top_two and keep<br/>are small and generic,<br/>the sketch derives the<br/>list from existing rows,<br/>no Python for the hou…"
+```
+
+## Phase 3 close-out
+
+- **Trin**: UAT phase 3 passed (UND-91): real run gives 475 merchants for 1,717 review records, sorted, 295 below 0.7 and 180 none of these, empty-file…
+- **Switch**: security gate (phase 3): No blocking findings. Quick pass: review.jsonl holds merchant names, amounts and category names already in records…
+- **Morpheus**: \*lead review phase-3: passed. top\_two and keep are small and generic, the sketch derives the list from existing rows, no Python for the hou…
+
+## Phase 4 starts
+
+Phase 4: pinned categories are kept (UND-92)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    Note over Mouse,All: 📅 2026-11-02
+    Mouse->>All: "phase 4"
+    Note right of Mouse: "Phase 4: pinned<br/>categories are kept<br/>(UND-92)"
 ```

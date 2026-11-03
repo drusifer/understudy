@@ -144,6 +144,24 @@ async def reduce_max(context, source: Source, field: str, take: int = 1) -> list
     return sorted(await context.read(source), key=lambda row: -row[field])[:take]
 
 
+@stage("reduce.top_two")
+async def top_two(context, source: Source, label: str, value: str) -> list[dict]:
+    """One row naming the best two of `source` by `value`: `{<label>, <value>, runner_up, runner_up_probability}`, the
+    first being the highest and the runner-up (None when there is only one row) the next. No rows give no row."""
+    ranked = sorted(await context.read(source), key=lambda row: -row[value])
+    if not ranked:
+        return []
+    best, second = ranked[0], (ranked[1] if len(ranked) > 1 else None)
+    return [{label: best[label], value: best[value], "runner_up": second and second[label],
+             "runner_up_probability": second and second[value]}]
+
+
+@stage("map.keep")
+async def keep(context, source: Source, fields: list) -> list[dict]:
+    """Each row of `source` with only the fields in `fields`, in that order (None for a field the row lacks)."""
+    return [{field: row.get(field) for field in fields} for row in await context.read(source)]
+
+
 @stage("reduce.min")
 async def reduce_min(context, source: Source, field: str, take: int = 1) -> list[dict]:
     """The `take` rows of `source` with the lowest `field`, lowest first. Equal values keep the order they had."""

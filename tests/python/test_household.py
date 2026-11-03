@@ -119,6 +119,24 @@ class LedgerTests(unittest.TestCase):
                                                         "expenses": expenses, "net": net})
         self.assertEqual(self.totals[-1]["net"], net)
 
+    def test_review_has_one_line_per_merchant_with_records_for_review_biggest_first(self):
+        review = lines(self.folder / "review.jsonl")
+        asked = [r for r in self.records if r["category_status"] == "review"]
+        self.assertEqual(len(review), len({r["payee"] for r in asked}))
+        for line in review:
+            mine = [r for r in asked if r["payee"] == line["payee"]]
+            self.assertEqual((line["count"], line["amount"]), (len(mine), round(sum(r["cost"] for r in mine), 2)))
+        self.assertEqual([line["count"] for line in review], sorted((line["count"] for line in review), reverse=True))
+
+    def test_a_review_line_has_jevs_top_two_guesses_and_why_it_is_for_review(self):
+        (shoes,) = (line for line in lines(self.folder / "review.jsonl") if line["payee"] == "Shoe Shop")
+        self.assertEqual(set(shoes), {"payee", "count", "amount", "top", "top_probability", "runner_up",
+                                      "runner_up_probability", "reason"})
+        self.assertEqual((shoes["top"], shoes["top_probability"], shoes["reason"]),
+                         ("Shopping & Retail: General", 0.5, "below_0.7"))
+        self.assertTrue(shoes["runner_up"])
+        self.assertLess(shoes["runner_up_probability"], shoes["top_probability"])
+
     def test_jev_is_no_longer_asked_about_payees_and_the_judgments_file_is_gone(self):
         self.assertFalse((self.folder / "judgments.jsonl").exists())
 
@@ -145,6 +163,27 @@ class LedgerTests(unittest.TestCase):
     def test_transfers_are_not_asked_about_and_say_so(self):
         legs = [r for r in self.records if r["kind"] == "transfer"]
         self.assertEqual({r["category_status"] for r in legs}, {"none"})
+
+
+class NothingForReviewTests(unittest.TestCase):
+    def test_when_jev_is_sure_of_every_merchant_the_review_file_is_written_and_empty(self):
+        def reading(state, instructions, options):
+            if "refund" in state:
+                original = next(label for label in options if "2026-02-15" in label)
+                return Chosen(original, 0.95, {label: 0.95 if label == original else 0.05 for label in options})
+            top = next(iter(options))
+            return Chosen(top, 0.95, {name: 0.95 if name == top else 0.05 for name in options})
+
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            code = main(
+                ["run", str(LEDGER), "--out", str(directory / "out"), "--with", f"monarch={ORACLE / 'monarch.csv'}",
+                 "--with", f"amex={ORACLE / 'amex.csv'}", "--with", "amex_account=Platinum", "--with", "since=2026-01-01"],
+                make_jev=lambda: JevDouble(choose_fn=reading), store=CaptureStore(directory / "cache"),
+                stdout=io.StringIO(), stderr=io.StringIO())
+            (folder,) = (directory / "out").iterdir()
+            self.assertEqual(code, 0)
+            self.assertEqual((folder / "review.jsonl").read_text(encoding="utf-8"), "")
 
 
 class MissingCategoryTests(unittest.TestCase):
