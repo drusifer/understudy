@@ -232,3 +232,13 @@ Everything above this heading about the old player (watch page, dashboard, proce
 - Launcher: the lock is held while a sketch is checked; a console restart forgets the children it started. (Neo)
 - Tune the household placement questions with the 481-of-932 unsure reads; the $433,762 net spending; replay of the household run. (owner, Neo)
 - Reconcile the PLAN template's phase size; sync `_template_PRD.md` into bobp. (Bob)
+
+## From the sprint 23 retro (2026-11-02)
+- Done in Sprint 23: the review pile (list plus pins), the net-spending figure (Ridgewood to the cent), the run's story (UND-81). Owner decisions 4-8 in `docs/sprints/OWNER_DECISIONS_SPRINT22.md`.
+- Card-side labels: relabel in Monarch ("Food & Dining: Credit Card Payment", "Transportation: Transfers") or widen the transfer rule; today 169 positive records ($240,596) outside Ridgewood count as refunds or credits. (Owner, then Neo)
+- Unmatched Amex rows show as accounts named by Amex number; name them for their card. (Neo)
+- A pinned category must match the export's spelling exactly (one has a trailing space); ignore edge spaces and case, or say the exact spelling. Two pins for one merchant keep the first: check it. (Neo)
+- A console button that turns a `review.jsonl` line into a pin. Named merchants have no runner-up in `review.jsonl`. (Smith, Cypher, Neo)
+- Sprint 24: typed inputs (the owner wants them: dial, faders, stepper, switches), the YAML editor, and now that the story exists, the statechart diagram, pause and step, replay of a log and decision detail: `docs/sprints/OLD_VERSION_PARITY.md`. (Cypher)
+- The browser check takes 63 seconds, so it is not a release gate (owner rule: only if it takes seconds). (Trin)
+- Act on the expiries: SEC-002 by 2026-12-01 (still accepted); SEC-005 by 2027-01-30. (Switch, owner)

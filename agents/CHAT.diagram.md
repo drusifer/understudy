@@ -413,7 +413,10 @@ sequenceDiagram
     participant Switch
     participant Morpheus
     participant Tank
-    Note over Mouse,Tank: 📅 2026-11-02
+    participant Oracle
+    participant Smith
+    participant Cypher
+    Note over Mouse,Cypher: 📅 2026-11-02
     Mouse->>All: "phase 5"
     Note right of Mouse: "Phase 5: the run tells<br/>its story (UND-81)"
     Neo->>Trin: "swe handoff"
@@ -424,10 +427,24 @@ sequenceDiagram
     Note right of Switch: "security gate (phase 5):<br/>No blocking findings.<br/>Quick pass: new event<br/>lines carry state names,<br/>option names and weights<br/>already in the run f…"
     Morpheus->>Tank: "lead handoff"
     Note right of Morpheus: "*lead review phase-5:<br/>passed. The story rides<br/>on existing lines<br/>(run_started) and one<br/>new method on the<br/>record, blend traces are<br/>opt-in so…"
+    Tank->>Oracle: "devops handoff"
+    Note right of Tank: "SDLC check passed: no<br/>manifest, lockfile or<br/>Makefile change since<br/>Sprint 22, make check<br/>green (362), browser<br/>check 6/6 but 63s, so<br/>not a re…"
+    Oracle->>Smith: "ora handoff"
+    Note right of Oracle: "Docs groomed: ADR-0050<br/>and ADR-0051 in<br/>docs/DECISIONS.md<br/>(DECISION rubric:<br/>WHY=PASS OPTS=PASS<br/>CONS=PASS STATE=PASS),<br/>CHANGELOG, two lessons…"
+    Smith->>All: "user approve"
+    Note right of Smith: "*user approve. User test<br/>PASSED on the real<br/>household files<br/>(UAT-23-1..6). rubric<br/>UAT: COVER=A STEPS=A<br/>FAIL=A DATA=A EVID=A.<br/>LESSON check o…"
+    Mouse->>Cypher: "retro"
+    Note right of Mouse: "Retros in docs/sprints/R<br/>ETRO_SPRINT23.md: wins<br/>(numbers to the cent,<br/>real-data findings,<br/>small generic parts, AC5<br/>caught), misses (Edit-<br/>onl…"
+    Cypher->>All: "pm launch"
+    Note right of Cypher: "*pm launch sprint 23.<br/>Sprint complete:<br/>Ridgewood income and<br/>expenses match the<br/>owner's file to the<br/>cent, transfers follow<br/>the owner's categ…"
 ```
 
-## Phase 5 so far
+## Phase 5 close-out
 
-- **Trin**: UAT phase 5 passed (UND-81): real household run has 9 states, 8 moves, 9 state\_entered lines, run\_finished, 9 older runs story false and st…
-- **Switch**: security gate (phase 5): No blocking findings. Quick pass: new event lines carry state names, option names and weights already in the run f…
-- **Morpheus**: \*lead review phase-5: passed. The story rides on existing lines (run\_started) and one new method on the record, blend traces are opt-in so…
+- **Tank**: SDLC check passed: no manifest, lockfile or Makefile change since Sprint 22, make check green (362), browser check 6/6 but 63s, so not a re…
+- **Oracle**: Docs groomed: ADR-0050 and ADR-0051 in docs/DECISIONS.md (DECISION rubric: WHY=PASS OPTS=PASS CONS=PASS STATE=PASS), CHANGELOG, two lessons…
+- **Smith**: \*user approve. User test PASSED on the real household files (UAT-23-1..6). rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A. LESSON check o…
+
+## Sprint close-out
+
+- **Cypher**: \*pm launch sprint 23. Sprint complete: Ridgewood income and expenses match the owner's file to the cent, transfers follow the owner's categ…
