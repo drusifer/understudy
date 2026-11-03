@@ -6,7 +6,7 @@
 - **Where the money goes:** `spending.jsonl`, one line per category (`category`, `count`, `amount`, `share`), biggest first, from your export's own category, else Jev's, else `uncategorized`; `spending_total` in `summary.json`. On the baseline: 90 categories, $403,977 in total, Rent $60,807 first. The console's summary lists the ten largest and "and N more".
 - **Typed inputs:** a sketch declares `inputs:` (`choice`, `range`, `count`, `switch`, each with limits and a default). The console shows a dial, a slider, a stepper or a switch for each, reachable by keyboard; a value outside its limits is refused on the command line and in the console, naming the input; `evening` declares its seven values and no longer repeats their defaults.
 - **The statechart:** the console draws the sketch's machine (double-bordered finals, guard labels, dashed loops), lights the state the run is in within a second, marks the move just taken and says how the run ended; a log without a story says so. The layout is computed in Python (`src/dashboard/chart.py`) and tested to forty states.
-- **Generic sketch parts:** `map.share`, a `sums`-style layout of the existing stages, the `ends` condition, `inputs:`; `run_started` now also carries `initial`.
+- **Generic sketch parts:** `map.share`, the `ends` condition and `inputs:`; `run_started` now also carries `initial`.
 - **Breaking:** `summary.json` has `transfer_basis` instead of `kind_changed_by_category`; a sketch's `--with` value for a declared input is checked against its limits.
 - **Security:** SEC-010 (a typed number was checked as a float but passed on as text) found and fixed in Phase 4.
 - **Docs:** ADR-0052 to ADR-0054, `ARCH_SPRINT24.md`, `UAT_PLAN_SPRINT24.md`, two lessons.

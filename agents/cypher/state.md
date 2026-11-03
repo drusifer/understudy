@@ -75,3 +75,22 @@ Status: Completed (Sprint 23 closed).
 2. Owner questions, one at a time: merge `sprint-23` into `main` and push when asked (`bobp make push`); card-side group labels (relabel in Monarch or widen the transfer rule: 169 records, $240,596 count as refunds/credits outside Ridgewood); name unmatched Amex rows for their card; pin spelling (edge spaces).
 3. Next sprint: Sprint 24 from `docs/sprints/OLD_VERSION_PARITY.md`: typed inputs, YAML editor, statechart diagram, pause and step, replay of a log, decision detail. Read `agents/templates/_template_USER_STORIES.md` and this skill first.
 4. Owner rules in force: Edit/Write only for file edits (broken twice more this sprint: a Python one-liner), one question at a time, American spelling, record owner answers at once, push only on request.
+
+---
+## Sprint 24 close 2026-11-02 (prep-clear)
+
+### Context
+- **Sprint 24 is closed** (27 pts: UND-93, 94, 95, 87, 82). Seven phase commits plus a closeout on branch `sprint-24`; NOT merged or pushed (owner decides). `bobp make check` 428 tests green; `bobp make test-browser` 22/22 (104 s, so not a release gate by the owner's rule).
+- **Delivered:** card payments are transfers by label or link (ADR-0052); `spending.jsonl` and the console's spending list (the owner's question answered: $403,977 over 90 categories, Rent first); `inputs:` typed controls (ADR-0053); the statechart drawn from a Python layout (ADR-0054). Sprint 23 is merged to `main` and pushed (bed2296).
+- **Owner decisions** are in `docs/sprints/OWNER_DECISIONS_SPRINT22.md` 4-9. Baseline file `data/Transactions_2026-11-02T19-14-07.csv` (git-ignored).
+- **Told to the owner in the stories:** step/pause, replay of a log, decision detail and the editor moved to Sprint 25.
+
+### Current Task
+Status: Completed (Sprint 24 closed).
+
+### Next Steps
+1. After /clear: `/init`, read `agents/CHAT.md` (last 10 messages) and this section.
+2. When the owner asks: merge `sprint-24` into `main` with `git merge --no-ff` and push with `bobp make push` (no tag unless asked).
+3. Owner questions, one at a time: relabel the few purchases under card-side labels in Monarch (Depop, Soho Deli, Levy Restaurants); the negative `Refund` category and oddly grouped categories in the spending list.
+4. Next sprint: Sprint 25 from `docs/sprints/OLD_VERSION_PARITY.md` (step, pause, resume, `run --watch`; replay of a log; decision detail; YAML editor). Read `agents/templates/_template_USER_STORIES.md` and this skill first; work any target figure out on the real data before the gate.
+5. Owner rules in force: Edit/Write only for file edits, one question at a time, American spelling, record owner answers at once, push only on request.

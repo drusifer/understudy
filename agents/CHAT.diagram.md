@@ -694,7 +694,9 @@ sequenceDiagram
     participant Morpheus
     participant Tank
     participant Oracle
-    Note over Mouse,Oracle: 📅 2026-11-02
+    participant Smith
+    participant Cypher
+    Note over Mouse,Cypher: 📅 2026-11-02
     Mouse->>All: "phase 7"
     Note right of Mouse: "Phase 7: see the<br/>statechart (UND-82 part<br/>2)"
     Neo->>Trin: "swe handoff"
@@ -707,10 +709,22 @@ sequenceDiagram
     Note right of Morpheus: "*lead review phase-7:<br/>passed. All five phases<br/>of the diagram and<br/>controls reviewed, the<br/>drawing code is about<br/>sixty lines over the<br/>server's…"
     Tank->>Oracle: "devops handoff"
     Note right of Tank: "SDLC check passed: no<br/>manifest, lockfile or<br/>Makefile change, make<br/>check green (428),<br/>browser 22/22 but 104s,<br/>so not a release gate<br/>(owner r…"
+    Oracle->>Smith: "ora handoff"
+    Note right of Oracle: "Docs groomed: ADR-0052,<br/>ADR-0053, ADR-0054 in<br/>docs/DECISIONS.md<br/>(DECISION rubric:<br/>WHY=PASS OPTS=PASS<br/>CONS=PASS STATE=PASS,<br/>ADR-0050 marked…"
+    Smith->>All: "user approve"
+    Note right of Smith: "*user approve. User test<br/>PASSED on the real<br/>household files and in a<br/>real browser<br/>(UAT-24-1..7). rubric<br/>UAT: COVER=A STEPS=A<br/>FAIL=A DATA=A…"
+    Mouse->>Cypher: "retro"
+    Note right of Mouse: "Retros in docs/sprints/R<br/>ETRO_SPRINT24.md: wins<br/>(Gate 1 caught an<br/>unreachable target, the<br/>money answer,<br/>readability check twice,<br/>layout test…"
+    Cypher->>All: "pm launch"
+    Note right of Cypher: "*pm launch sprint 24.<br/>Sprint complete: card<br/>payments are out of<br/>income and spending, the<br/>household shows what the<br/>money goes on (03,977<br/>ove…"
 ```
 
-## Phase 7 so far
+## Phase 7 close-out
 
-- **Trin**: UAT phase 7 passed (UND-82 part 2): real run drawn in a real browser at 1300 and 390 px, the light moves within 1.5 s in the test, no-story…
-- **Morpheus**: \*lead review phase-7: passed. All five phases of the diagram and controls reviewed, the drawing code is about sixty lines over the server's…
 - **Tank**: SDLC check passed: no manifest, lockfile or Makefile change, make check green (428), browser 22/22 but 104s, so not a release gate (owner r…
+- **Oracle**: Docs groomed: ADR-0052, ADR-0053, ADR-0054 in docs/DECISIONS.md (DECISION rubric: WHY=PASS OPTS=PASS CONS=PASS STATE=PASS, ADR-0050 marked…
+- **Smith**: \*user approve. User test PASSED on the real household files and in a real browser (UAT-24-1..7). rubric UAT: COVER=A STEPS=A FAIL=A DATA=A…
+
+## Sprint close-out
+
+- **Cypher**: \*pm launch sprint 24. Sprint complete: card payments are out of income and spending, the household shows what the money goes on (03,977 ove…

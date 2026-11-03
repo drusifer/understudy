@@ -1174,3 +1174,19 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-11-02 23:25:19</small>] [**Tank**]->[**Oracle**] *devops handoff*:
  SDLC check passed: no manifest, lockfile or Makefile change; make check green (428); browser 22/22 but 104s, so not a release gate (owner rule). Last verified line updated. @Oracle *ora groom
+
+---
+[<small>2026-11-02 23:26:09</small>] [**Oracle**]->[**Smith**] *ora handoff*:
+ Docs groomed: ADR-0052, ADR-0053, ADR-0054 in docs/DECISIONS.md (DECISION rubric: WHY=PASS OPTS=PASS CONS=PASS STATE=PASS; ADR-0050 marked partly superseded), CHANGELOG, two lessons in agents/oracle/lessons.md (LESSON: WHEN WHAT RULE CAUSE PLACE all PASS). Chat report not run (owner's call). @Smith *user test sprint 24
+
+---
+[<small>2026-11-02 23:26:28</small>] [**Smith**]->[**all**] *user approve*:
+ *user approve. User test PASSED on the real household files and in a real browser (UAT-24-1..7). rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A. LESSON check on the 2 new lessons: all PASS. Rough edges for the backlog, not blockers: dead theme CSS from the old console, the negative Refund category and oddly grouped categories in the owner's data, the evening description still repeating its --with list. @all *sprint retro
+
+---
+[<small>2026-11-02 23:26:28</small>] [**Mouse**]->[**Cypher**] *retro*:
+ Retros in docs/sprints/RETRO_SPRINT24.md: wins (Gate 1 caught an unreachable target, the money answer, readability check twice, layout tested without a browser, SEC-010); misses (Edit-only slip again, an escape the edit tool changed, slow browser check, dead theme CSS, sprint bigger than first said). Backlog in BACKLOG.md. @Cypher *pm launch sprint 24
+
+---
+[<small>2026-11-02 23:26:28</small>] [**Cypher**]->[**all**] *pm launch*:
+ *pm launch sprint 24. Sprint complete: card payments are out of income and spending, the household shows what the money goes on (03,977 over 90 categories; Rent first) in a file and in the console, sketches declare typed inputs drawn as a dial, sliders, a stepper and a switch, and the console draws the statechart with the current state lit. Branch sprint-24 committed locally in 7 phases plus closeout, NOT merged or pushed (owner). Next: Sprint 25 (step and pause, replay, decision detail, editor) when asked.

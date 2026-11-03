@@ -4,7 +4,7 @@
 *   **Tier**: Tier 1 (Major)
 *   **Total Points** (optional): 27
 *   **Branch**: `sprint-24`
-*   **Status**: Planning — awaiting Morpheus Step 3a Review
+*   **Status**: CLOSED 2026-11-02. All seven phases and the closeout done; not merged or pushed (owner). Retro: `docs/sprints/RETRO_SPRINT24.md`.
 *   **Plan**: `docs/sprints/USER_STORIES_SPRINT24.md` (Gate 1 approved after one rejection), `ARCH_SPRINT24.md` (Gate 2 approved), security design gate: no blocking findings. Decisions: `OWNER_DECISIONS_SPRINT22.md` 4 and 9. Baseline: `data/Transactions_2026-11-02T19-14-07.csv`.
 
 ---
@@ -72,8 +72,8 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ## Stage 3: Sprint Closeout
 
-- [ ] **Task C.1:** SDLC conformance check. (*Owner: Tank | Trace: N/A — closeout | Verification: `bobp make check`, and `docs/SDLC.md` "Last verified" updated*)
-- [ ] **Task C.2:** Document grooming, ADR-0052 to ADR-0054, lessons. Chat report only if the owner asks. (*Owner: Oracle | Trace: N/A — closeout | Verification: ADRs in `docs/DECISIONS.md`; groom noted in `agents/CHAT.md`*)
-- [ ] **Task C.3:** End-to-end user testing on the baseline run and the console, against `docs/sprints/UAT_PLAN_SPRINT24.md`, and lesson review. (*Owner: Smith | Trace: UND-93, 94, 95, 87, 82 | Verification: Smith acceptance verdict and evidence in `agents/CHAT.md`*)
-- [ ] **Task C.4:** Sprint retrospective and backlog grooming. (*Owner: Mouse | Trace: N/A — closeout | Verification: retros in `docs/sprints/RETRO_SPRINT24.md`, posted in `agents/CHAT.md`*)
-- [ ] **Task C.5:** Sprint launch and release announcement; merge `sprint-24` into `main` only when the owner asks. (*Owner: Cypher | Trace: N/A — release decision | Verification: launch recorded in `agents/CHAT.md`*)
+- [x] **Task C.1:** SDLC conformance check. (*Owner: Tank | Trace: N/A — closeout | Verification: `bobp make check`, and `docs/SDLC.md` "Last verified" updated*)
+- [x] **Task C.2:** Document grooming, ADR-0052 to ADR-0054, lessons. Chat report only if the owner asks. (*Owner: Oracle | Trace: N/A — closeout | Verification: ADRs in `docs/DECISIONS.md`; groom noted in `agents/CHAT.md`*)
+- [x] **Task C.3:** End-to-end user testing on the baseline run and the console, against `docs/sprints/UAT_PLAN_SPRINT24.md`, and lesson review. (*Owner: Smith | Trace: UND-93, 94, 95, 87, 82 | Verification: Smith acceptance verdict and evidence in `agents/CHAT.md`*)
+- [x] **Task C.4:** Sprint retrospective and backlog grooming. (*Owner: Mouse | Trace: N/A — closeout | Verification: retros in `docs/sprints/RETRO_SPRINT24.md`, posted in `agents/CHAT.md`*)
+- [x] **Task C.5:** Sprint launch and release announcement; merge `sprint-24` into `main` only when the owner asks. (*Owner: Cypher | Trace: N/A — release decision | Verification: launch recorded in `agents/CHAT.md`*)
