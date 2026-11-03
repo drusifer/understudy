@@ -182,19 +182,28 @@ def first_choice(state, instructions, options):
     return Chosen(top, 0.9, {name: 0.9 if name == top else 0.1 for name in options})
 
 
-def run_with_monarch(monarch_text: str):
+def run_with_monarch(monarch_text: str, since: str = "2026-01-01"):
     """Run the household on a changed copy of the fixture's Monarch export; returns its records and summary."""
+    code, folder_lines = run_folder(monarch_text, since)
+    return code, folder_lines["records"], folder_lines["summary"]
+
+
+def run_folder(monarch_text: str, since: str = "2026-01-01") -> tuple[int, dict]:
+    """Run the household as `run_with_monarch` does and read back its records, summary and spending lines."""
     with tempfile.TemporaryDirectory() as temporary:
         directory = Path(temporary)
         (directory / "monarch.csv").write_text(monarch_text, encoding="utf-8")
         code = main(
             ["run", str(LEDGER), "--out", str(directory / "out"), "--with", f"monarch={directory / 'monarch.csv'}",
-             "--with", f"amex={ORACLE / 'amex.csv'}", "--with", "amex_account=Platinum", "--with", "since=2026-01-01",
+             "--with", f"amex={ORACLE / 'amex.csv'}", "--with", "amex_account=Platinum", "--with", f"since={since}",
              *no_pins(directory)],
             make_jev=lambda: JevDouble(choose_fn=first_choice), store=CaptureStore(directory / "cache"),
             stdout=io.StringIO(), stderr=io.StringIO())
         (folder,) = (directory / "out").iterdir()
-        return code, lines(folder / "records.jsonl"), json.loads((folder / "summary.json").read_text(encoding="utf-8"))
+        spending = folder / "spending.jsonl"
+        return code, {"records": lines(folder / "records.jsonl"),
+                      "summary": json.loads((folder / "summary.json").read_text(encoding="utf-8")),
+                      "spending": lines(spending), "spending_text": spending.read_text(encoding="utf-8")}
 
 
 class TransferBasisTests(unittest.TestCase):
@@ -224,6 +233,46 @@ class TransferBasisTests(unittest.TestCase):
         self.assertEqual(self.kinds(records, "Payment Thank You", "Amex Payment"),
                          {"Payment Thank You": "transfer", "Amex Payment": "transfer"})
         self.assertEqual(summary["transfer_basis"], {"both": 1, "label": 1, "link": 1, "none": 9})
+
+
+class SpendingTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        code, found = run_folder((ORACLE / "monarch.csv").read_text(encoding="utf-8"))
+        assert code == 0
+        cls.records, cls.summary, cls.spending = found["records"], found["summary"], found["spending"]
+
+    def expected(self):
+        """What the list should say, worked out from the records alone: money out of purchases and refunds by category."""
+        totals: dict[str, float] = {}
+        for r in self.records:
+            if r["kind"] in ("purchase", "refund"):
+                name = r.get("Category") or r.get("category_level") or "uncategorized"
+                totals[name] = round(totals.get(name, 0.0) + r["cost"], 2)
+        return {name: round(-total, 2) for name, total in totals.items()}
+
+    def test_one_line_per_category_with_its_records_amount_and_share_biggest_first(self):
+        self.assertEqual({line["category"]: line["amount"] for line in self.spending}, self.expected())
+        self.assertEqual([line["amount"] for line in self.spending], sorted((line["amount"] for line in self.spending), reverse=True))
+        self.assertEqual(sum(line["count"] for line in self.spending),
+                         sum(r["kind"] in ("purchase", "refund") for r in self.records))
+
+    def test_the_export_category_comes_first_then_jevs_then_uncategorized(self):
+        names = {line["category"] for line in self.spending}
+        self.assertIn("Shopping & Retail: General", names)  # the export's own
+        self.assertNotIn(None, names)
+
+    def test_income_credits_and_transfers_are_not_in_the_list(self):
+        self.assertNotIn("Income: Paychecks", {line["category"] for line in self.spending})
+
+    def test_shares_add_to_one_and_the_amounts_add_to_the_summary_total(self):
+        self.assertAlmostEqual(sum(line["share"] for line in self.spending), 1.0, delta=0.001)
+        self.assertEqual(self.summary["spending_total"]["amount"], round(sum(line["amount"] for line in self.spending), 2))
+        self.assertEqual(self.summary["spending_total"]["count"], sum(line["count"] for line in self.spending))
+
+    def test_a_run_with_no_spending_writes_an_empty_file(self):
+        code, found = run_folder((ORACLE / "monarch.csv").read_text(encoding="utf-8"), since="2027-01-01")
+        self.assertEqual((code, found["spending_text"]), (0, ""))
 
 
 class NothingForReviewTests(unittest.TestCase):

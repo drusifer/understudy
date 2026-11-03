@@ -11,6 +11,7 @@ from src.sketch.stages_rows import (
     note,
     require,
     set_fields,
+    share,
     tally,
     top_two,
     without,
@@ -164,6 +165,24 @@ class SetTests(unittest.TestCase):
         found = run(set_fields, context([{"a": 1}, {"a": 2}]), source="rows", fields={"status": "placed", "probability": 1.0})
         self.assertEqual(found, [{"a": 1, "status": "placed", "probability": 1.0},
                                  {"a": 2, "status": "placed", "probability": 1.0}])
+
+
+class ShareTests(unittest.TestCase):
+    def test_each_row_gets_its_share_of_the_fields_total(self):
+        found = run(share, context([{"a": 1.0}, {"a": 3.0}]), source="rows", field="a", into="share")
+        self.assertEqual([r["share"] for r in found], [0.25, 0.75])
+
+    def test_shares_are_rounded_to_four_places_and_the_rows_keep_their_fields(self):
+        found = run(share, context([{"a": 1.0, "n": "x"}, {"a": 2.0, "n": "y"}]), source="rows", field="a", into="share")
+        self.assertEqual(found, [{"a": 1.0, "n": "x", "share": 0.3333}, {"a": 2.0, "n": "y", "share": 0.6667}])
+
+    def test_a_total_of_zero_gives_every_row_a_share_of_zero(self):
+        found = run(share, context([{"a": 0.0}, {"a": 0.0}]), source="rows", field="a", into="share")
+        self.assertEqual([r["share"] for r in found], [0.0, 0.0])
+
+    def test_it_is_a_map_stage_asking_for_a_source_a_field_and_a_name(self):
+        required = [key for key, p in STAGES["map.share"].params.items() if p.required]
+        self.assertEqual(required, ["source", "field", "into"])
 
 
 class NoteTests(unittest.TestCase):

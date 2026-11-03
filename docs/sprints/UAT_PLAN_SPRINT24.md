@@ -20,9 +20,19 @@ Phases are added as they pass UAT.
 - **Verdict:** PASS
 - **Evidence / issue:** run folder above; 368 tests green. A condition `ends` was added so `: Transfer` cannot match `Transferware`. The mislabeled purchases the owner knows of (Depop, Soho Deli, Levy Restaurants) are now transfers until relabeled in Monarch.
 
+### UAT-24-2: Where the money goes (Phase 2)
+
+- **Linked criterion:** UND-94 AC1 to AC6
+- **Preconditions and data:** the baseline files; live run `run-20261103T031634-2a0afad6`; unit tests against the fixture, worked out independently from the records, and for a run with no records (`since` after the data)
+- **Steps:** run the household sketch; read `spending.jsonl` and `summary.json`; add up the lines
+- **Expected observable outcome:** one line per category with `category`, `count`, `amount`, `share`; biggest first; the export's Category first, then Jev's, then `uncategorized`; shares add to 1 within 0.001; amounts and counts equal `spending_total`; income, credits and transfers absent; an empty file when no spending
+- **Actual outcome:** 90 lines for 4,951 records; $403,977.13 in total, equal to `spending_total` in `summary.json`; shares add to 1.0 and counts to 4,951; biggest are Housing & Real Estate: Rent $60,807.08 (15.05%, 14 records), Taxes $40,674.00 (10.07%), Mortgage $31,348.60 (7.76%), Bills & Utilities: Medical & Healthcare $24,156.74 (164 records), Food & Dining: Insurance $20,408.00; none `uncategorized` on this file; the empty case writes an empty file
+- **Verdict:** PASS
+- **Evidence / issue:** run folder above; 377 tests green. Findings for the owner: the category `Refund` shows as a negative amount (money back with no original category); some of the owner's own groups read oddly ("Shopping & Retail: Restaurants & Dining" 469 records, $18,332; "Food & Dining: Insurance"), inherited from the earlier categorization.
+
 ## Results and Handoff
 
-- **Passed / failed / blocked:** Phase 1: 1 passed (UAT-24-1); 0 failed, 0 blocked
-- **Open issues and impact:** none open for Phase 1.
-- **Overall verdict:** PASS for Phase 1
+- **Passed / failed / blocked:** Phase 1: 1 passed (UAT-24-1); Phase 2: 1 passed (UAT-24-2); 0 failed, 0 blocked
+- **Open issues and impact:** Phase 2: the oddly grouped categories and a negative `Refund` line are the owner's data, not a defect; noted for the backlog.
+- **Overall verdict:** PASS for Phases 1 and 2
 - **Handoff evidence:** message in `agents/CHAT.md`

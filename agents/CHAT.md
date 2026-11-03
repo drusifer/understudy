@@ -1003,3 +1003,28 @@ wrote /home/drusifer/Projects/understudy/.understudy/runs/run-20261103T031222-20
 ---
 [<small>2026-11-02 22:14:48</small>] [**Mouse**]->[**all**] *phase 2*:
  Phase 2: where the money goes (UND-94)
+
+---
+[<small>2026-11-02 22:18:45</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make run | /home/drusifer/Projects/understudy/build/build.out
+wrote /home/drusifer/Projects/understudy/.understudy/runs/run-20261103T031634-2a0afad6/spending.jsonl
+
+---
+[<small>2026-11-02 22:19:03</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 2 impl complete (UND-94): spending.jsonl (category, count, amount, share; biggest first), spending_total in summary.json, generic map.share; docs updated. make check green (377). @Trin *qa uat phase-2
+
+---
+[<small>2026-11-02 22:19:03</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 2 passed (UND-94): real run, 90 categories, 403,977 spent, equal to the summary total, shares add to 1; Rent 60,807 (15%), Taxes 40,674, Mortgage 31,349. @Switch *sec review phase-2
+
+---
+[<small>2026-11-02 22:19:03</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 2): No blocking findings. Quick pass: spending.jsonl holds category names, counts and totals (no merchant names or account numbers) in the git-ignored run folder; one arithmetic stage; no new input or dependency. @Morpheus *lead review phase-2
+
+---
+[<small>2026-11-02 22:19:03</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-2: passed. Built from existing generic stages plus one small map.share; the household sketch grew by a readable block; test works the answer out from the records, not from the sketch. @Neo *swe impl phase-3
+
+---
+[<small>2026-11-02 22:19:03</small>] [**Mouse**]->[**all**] *phase 3*:
+ Phase 3: the console shows what the money goes on (UND-95)

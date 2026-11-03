@@ -28,10 +28,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 2: Where the money goes (UND-94, 5 pts)
 *Phase goal: `spending.jsonl` ranked by category, with shares and a total in the summary.*
-- [ ] **Task 2.1:** Tests first, then generic `map.share`; the `spend_*` stages and `spending.jsonl`; `spending_total` in `summary.json`; empty file when no spending; docs. **L2**. (*Owner: Neo | Trace: UND-94 AC1-6 | Verification: `bobp make test`, `bobp make lint`*)
-- [ ] **Task 2.2:** UAT on the baseline: order, shares sum to 100%, amounts sum to `spending_total`, categories from the export first. **L2**. (*Owner: Trin | Trace: UND-94 AC1-6 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
-- [ ] **Task 2.3:** Security quick pass: category names and totals only. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 2): ...`*)
-- [ ] **Task 2.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT24 section 5 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 2.1:** Tests first, then generic `map.share`; the `spend_*` stages and `spending.jsonl`; `spending_total` in `summary.json`; empty file when no spending; docs. **L2**. (*Owner: Neo | Trace: UND-94 AC1-6 | Verification: `bobp make test`, `bobp make lint`*)
+- [x] **Task 2.2:** UAT on the baseline: order, shares sum to 100%, amounts sum to `spending_total`, categories from the export first. **L2**. (*Owner: Trin | Trace: UND-94 AC1-6 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
+- [x] **Task 2.3:** Security quick pass: category names and totals only. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 2): ...`*)
+- [x] **Task 2.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT24 section 5 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 3: The console shows what the money goes on (UND-95, 3 pts)
 *Phase goal: the run summary lists the top ten categories.*

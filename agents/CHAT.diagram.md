@@ -523,7 +523,40 @@ sequenceDiagram
     autonumber
     participant Mouse
     participant All
-    Note over Mouse,All: 📅 2026-11-02
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-02
     Mouse->>All: "phase 2"
     Note right of Mouse: "Phase 2: where the money<br/>goes (UND-94)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 2 impl complete<br/>(UND-94): spending.jsonl<br/>(category, count,<br/>amount, share, biggest<br/>first), spending_total<br/>in summary.json, generic<br/>map…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 2 passed<br/>(UND-94): real run, 90<br/>categories, 403,977<br/>spent, equal to the<br/>summary total, shares<br/>add to 1, Rent 60,807<br/>(15%), Taxes…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 2):<br/>No blocking findings.<br/>Quick pass:<br/>spending.jsonl holds<br/>category names, counts<br/>and totals (no merchant<br/>names or acc…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-2:<br/>passed. Built from<br/>existing generic stages<br/>plus one small<br/>map.share, the household<br/>sketch grew by a<br/>readable block, t…"
+```
+
+## Phase 2 close-out
+
+- **Trin**: UAT phase 2 passed (UND-94): real run, 90 categories, 403,977 spent, equal to the summary total, shares add to 1, Rent 60,807 (15%), Taxes…
+- **Switch**: security gate (phase 2): No blocking findings. Quick pass: spending.jsonl holds category names, counts and totals (no merchant names or acc…
+- **Morpheus**: \*lead review phase-2: passed. Built from existing generic stages plus one small map.share, the household sketch grew by a readable block, t…
+
+## Phase 3 starts
+
+Phase 3: the console shows what the money goes on (UND-95)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    Note over Mouse,All: 📅 2026-11-02
+    Mouse->>All: "phase 3"
+    Note right of Mouse: "Phase 3: the console<br/>shows what the money<br/>goes on (UND-95)"
 ```

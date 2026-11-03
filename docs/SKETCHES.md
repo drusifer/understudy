@@ -80,6 +80,7 @@ A state's `do:` names a stage **type** as a key (a closed set the schema owns) a
 | `map: { action: without }` | `source`, `among`, `on`, `among_on` | the rows of `source` whose `on` value is not the `among_on` (default `on`) value of any row of `among` (the opposite of `matching`) |
 | `map: { action: complete }` | `source`, `fields` | the rows of `source` unchanged, after checking every row has a value in every field; the first that does not stops the run: `source 'x' line 2 has no payee` |
 | `map: { action: known }` | `source`, `field`, `among`, `among_field` | the rows of `source` unchanged, after checking every row's `field` is some row's `among_field` in `among`; the first that is not stops the run, naming the line and the value |
+| `map: { action: share }` | `source`, `field`, `into` | each row plus `into`: its `field` as a share of the total of `field` over all rows, to four places (0.0 when the total is zero) |
 | `map: { action: set }` | `source`, `fields` | each row plus the named fields, the same value on every row |
 | `map: { action: keep }` | `source`, `fields` | each row with only the named fields, in that order (null for a field the row lacks) |
 | `reduce: { action: top_two }` | `source`, `label`, `value` | one row naming the best two rows by `value`: `{<label>, <value>, runner_up, runner_up_probability}` (the runner-up is null when there is only one row; no rows give no row) |
