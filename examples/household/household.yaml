@@ -261,32 +261,10 @@ sources:
       source: spending
       by: payee
       collect: { amounts: cost, statements: Original Statement, descriptions: other_Description }
-  monarch_labels:                       # Monarch's own labels for spending, not the ones about moving money
-    kind: stage
-    do: { map: { action: where } }
-    with:
-      source: typed
-      keep:
-        and:
-          - { Category: { has: ": " } }
-          - not:
-              or:
-                - { Category: { has: Transfer } }
-                - { Category: { has: transfer } }
-                - { Category: { has: Payment } }
-                - { Category: { has: payment } }
-  offered:
-    kind: stage
-    do: { map: { action: group } }
-    with: { source: monarch_labels, by: Category }
-  merchants_and_categories:
-    kind: stage
-    do: { map: { action: attach } }
-    with: { source: merchants, other: offered, field: Category, into: categories }
   unpinned:                             # a pinned merchant is never asked about
     kind: stage
     do: { map: { action: without } }
-    with: { source: merchants_and_categories, among: pins, on: key }
+    with: { source: merchants, among: pins, on: key }
   pinned_merchants:
     kind: stage
     do: { map: { action: matching } }
@@ -303,31 +281,23 @@ sources:
     kind: stage
     do: { map: { action: set } }
     with: { source: pinned_level, fields: { status: placed, probability: 1.0, source: pin } }
-  placements:                           # Jev, once per merchant: which category in use, if any
+  placements:                           # Jev, once per merchant: a group and a name from the clean list, or neither
     kind: stage
-    do: { sketch: { file: place_merchant } }
+    do: { sketch: { file: categorize_merchant } }
     each: unpinned
+    with: { additions: "{{ additions | default('additions.jsonl') }}" }
   placed:
     kind: stage
     do: { map: { action: unpair } }
     with: { source: placements }
-  unfit:                                # no category in use fits
+  jev_placed:                           # marked as Jev's, as a pin is marked as the owner's
     kind: stage
-    do: { map: { action: where } }
-    with: { source: placed, keep: { status: { eq: unfit } } }
-  fitted:
-    kind: stage
-    do: { map: { action: where } }
-    with: { source: placed, keep: { status: { ne: unfit } } }
-  named:                                # Jev names the rest in turn, each seeing the names given before it
-    kind: stage
-    do: { sketch: { file: name_merchant } }
-    each: unfit
-    reduce: { action: concat, into: earlier }
+    do: { map: { action: set } }
+    with: { source: placed, fields: { source: jev } }
   decided:
     kind: stage
     do: { map: { action: concat } }
-    with: { sources: [ pinned_placed, fitted, named ] }
+    with: { sources: [ pinned_placed, jev_placed ] }
   categories:
     kind: stage
     do: { map: { action: where } }

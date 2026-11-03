@@ -79,6 +79,7 @@ A state's `do:` names a stage **type** as a key (a closed set the schema owns) a
 | `map: { action: group }` | `source`, `by`, `collect`, `take`, `sums` | one row per distinct `by` value (case and spacing ignored): `{key, <by>, count}` plus, for each `collect` entry `into: field`, up to `take` different values, and for each `sums` entry the total of a field to cents: `into: field`, or `into: { field: f, where: <condition> }` to total only the rows that satisfy the condition (0.0 when none do) |
 | `map: { action: without }` | `source`, `among`, `on`, `among_on` | the rows of `source` whose `on` value is not the `among_on` (default `on`) value of any row of `among` (the opposite of `matching`) |
 | `map: { action: complete }` | `source`, `fields` | the rows of `source` unchanged, after checking every row has a value in every field; the first that does not stops the run: `source 'x' line 2 has no payee` |
+| `map: { action: smallest }` | `source`, `fields`, `into` | each row plus `into`: the smallest of its named fields that it has (null when it has none) |
 | `map: { action: unique }` | `source`, `field`, `among`, `among_field` | the rows of `source` unchanged, after checking no row repeats the `field` of an earlier row (or, with `among`, of any row of that source); case, spacing and edges do not make a value new; the first repeat stops the run: `source 'x' line 2 repeats 'Rent' (first on line 1)` or `(also in 'iso')` |
 | `map: { action: known }` | `source`, `field`, `among`, `among_field` | the rows of `source` unchanged, after checking every row's `field` is some row's `among_field` in `among`; the first that is not stops the run, naming the line and the value |
 | `map: { action: share }` | `source`, `field`, `into` | each row plus `into`: its `field` as a share of the total of `field` over all rows, to four places (0.0 when the total is zero) |
@@ -325,8 +326,8 @@ When each iteration should see what the earlier ones produced, add `reduce`:
 
 ```yaml
 named:
-  do: { sketch: { file: name_merchant } }
-  each: unfit
+  do: { sketch: { file: name_each } }
+  each: unnamed
   reduce: { action: concat, into: earlier }
 ```
 

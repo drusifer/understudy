@@ -103,9 +103,10 @@ async def prefer_middle(  # noqa: PLR0913 - the stage's with: keys
 
 @stage("map.weigh")
 async def weigh(context, source: Source, by: dict, into: str) -> list[dict]:
-    """Each row of `source` plus `into`: the sum of its `by` fields, each times its weight."""
+    """Each row of `source` plus `into`: the sum of its `by` fields, each times its weight (a field the row lacks, or
+    has as null, counts as zero)."""
     return [
-        {**row, into: sum(weight * row[field] for field, weight in by.items())}
+        {**row, into: sum(weight * (row.get(field) or 0) for field, weight in by.items())}
         for row in await context.read(source)
     ]
 
@@ -309,6 +310,16 @@ async def complete(context, source: Source, fields: list) -> list[dict]:
             if not str(row.get(field) or "").strip():
                 raise ValueError(f"source {source!r} line {number} has no {field}")
     return rows
+
+
+@stage("map.smallest")
+async def smallest(context, source: Source, fields: list, into: str) -> list[dict]:
+    """Each row of `source` plus `into`: the smallest of its `fields` that it has (null when it has none)."""
+    found = []
+    for row in await context.read(source):
+        values = [row[name] for name in fields if row.get(name) is not None]
+        found.append({**row, into: min(values) if values else None})
+    return found
 
 
 @stage("map.unique")

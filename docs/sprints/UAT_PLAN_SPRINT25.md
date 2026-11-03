@@ -20,9 +20,19 @@ Phases are added as they pass UAT.
 - **Verdict:** PASS
 - **Evidence / issue:** run folder above; `build/uat25/`. Finding fixed in the phase: a relative path that does not exist was named against the sketch's folder, not as typed; it now says both.
 
+### UAT-25-2: Jev puts every merchant in a category (Phase 2)
+
+- **Linked criterion:** UND-97 AC1 to AC6
+- **Preconditions and data:** the two baselines with `since=2025-11-01`; live runs `run-20261103T162337-b0e16ede` (first version), `run-20261103T163411-3e645dc1` (after the changes below) and `run-20261103T164205-5e3254bb`; a replay on a copy of the Monarch file with its categories scrambled (`build/uat25/monarch-scrambled.csv`)
+- **Steps:** run live and read `records.jsonl`, `review.jsonl` and `statuses.jsonl`; replay the second run's captures against the scrambled export; compare each merchant's category and status
+- **Expected observable outcome:** every merchant placed or for review; Jev chooses a group then a name from the clean list; the export's categories change nothing about what Jev is asked or answers; pinned merchants never asked
+- **Actual outcome:** first version (placed only above 0.7 in both steps, four example names per group): 4,404 of 6,036 records for review (73%), 386 merchants (1,035 records) "none of these" including Seamless and Cash & ATM, and right answers at 0.45 to 0.67 (MTA, FreshDirect). Two changes: Jev is shown every name in each group, and a choice also counts at 0.4 or more when it is twice as sure as the runner-up. Result: 2,985 placed and 2,908 for review (48%), 687 merchants for review (508 below the bar, 179 none of these, 392 records); the largest placed merchants are MTA and the Apple Pay and Google Pay NYCT lines (local commuter transport), Seamless (eating places and restaurants), Gristedes and FreshDirect (groceries), Uber, Curb and Lyft (taxi-cabs), Cash & ATM (financial institutions: automated cash disbursements), Deposit / Income (Household: Income); a sample of 14 small merchants was reasonable except Amex placed in Government services and Apple.com/bill in Utilities; replay of the second run on the scrambled export: 0 Jev requests, not stale, and all 1,220 merchants have the same category and status; two live runs differ on 101 of 1,220 merchants (Jev varies near the thresholds); a live run takes about seven minutes and 2,280 requests, a replay about four minutes and none; 452 unit tests green
+- **Verdict:** PASS
+- **Evidence / issue:** run folders above. Findings: (1) the first rule would have sent 73% of records to review, so the rule was amended with the owner told (story AC2, ARCH); (2) refund detection still reads Income, Paycheck, Interest and Payroll labels, so scrambling those makes new refund questions: Phase 3 removes it; (3) a replay takes about four minutes (backlog).
+
 ## Results and Handoff
 
-- **Passed / failed / blocked:** Phase 1: 1 passed (UAT-25-1); 0 failed, 0 blocked
+- **Passed / failed / blocked:** Phase 1: 1 passed (UAT-25-1); Phase 2: 1 passed (UAT-25-2); 0 failed, 0 blocked
 - **Open issues and impact:** none open for Phase 1.
 - **Overall verdict:** PASS for Phase 1
 - **Handoff evidence:** message in `agents/CHAT.md`

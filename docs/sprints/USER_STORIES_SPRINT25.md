@@ -49,7 +49,7 @@ When this sprint is done, every merchant in the household run has one category f
 
 ### Acceptance Criteria
 1. Each merchant gets one category from the list, chosen by Jev in two steps (a group, then a name in it); Jev never writes a category.
-2. A merchant is placed when both choices are above 0.7; otherwise it is for review, with Jev's best guess, its probability and the reason (`below_0.7` or `none_of_these`).
+2. A merchant is placed when each choice is above 0.7, or at least 0.4 and at least twice as sure as the runner-up; otherwise it is for review, with Jev's best guess, its probability and the reason (`below_0.7` or `none_of_these`). (Amended in Phase 2: on the first real run a long list spread Jev's probability, so right answers such as MTA at 0.67 and FreshDirect at 0.67 fell under 0.7 and 73% of records went to review.)
 3. The export's own Category is not shown to Jev, is not offered as an option and does not change the answer: the run asks Jev the same questions for the same merchants whatever the export's categories say.
 4. A pinned merchant is placed in its pinned category, is never asked about, and is not in the review list.
 5. `review.jsonl` is still one line per merchant, most records first, with the best guess and the reason.

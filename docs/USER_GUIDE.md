@@ -186,10 +186,15 @@ What it does, in order:
    record. The Monarch file must have a `Category` column; without one the run stops before it asks Jev anything.
 4. Links each refund to the earlier charge it reversed: by rule when there is one, by Jev (`link_refund`) when
    there are several.
-5. Places each merchant in a category already in use (`place_merchant`) or, when none fits, names one: a category
-   named earlier in the run first, then a kind of business and a name from the ISO 18245 list (`name_merchant`,
-   run `each` merchant with `reduce` so each one sees the names given before it). A merchant you have pinned
-   (below) is placed in your category and never asked about.
+5. Puts each merchant in a category of the clean list (below), in two choices by Jev (`categorize_merchant`): a
+   group first (shown every name in each), then a name in that group, or none of them. Jev only chooses; it never
+   writes a category, and it never sees your export's own categories. A choice counts when it is above 0.7, or at
+   least 0.4 and at least twice as sure as the runner-up (a long list spreads the probability); when both choices
+   count the merchant is placed (`category_source: jev` on its records), otherwise it goes to `review.jsonl`. A merchant you have
+   pinned (below) is placed in your category and never asked about. A live run asks about every merchant (about two
+   requests each, 2,000 or so and about seven minutes for a year of the household's data), and Jev's answers vary a
+   little from run to run near the thresholds; `--replay <run>` reuses a run's captured answers (no requests, the
+   same result), which is how to change a pin or a rule and see the effect.
 
 **Pinned categories.** `review.jsonl` is your work list. To settle a merchant, add a line to your pin file, one JSON
 object per line: `{"payee": "Amazon", "category": "Retail outlets: Book stores"}`. The category must be in the

@@ -12,6 +12,7 @@ from src.sketch.stages_rows import (
     require,
     set_fields,
     share,
+    smallest,
     tally,
     top_two,
     unique,
@@ -188,6 +189,30 @@ class UniqueTests(unittest.TestCase):
     def test_it_is_a_map_stage_asking_for_a_source_and_a_field(self):
         required = [key for key, p in STAGES["map.unique"].params.items() if p.required]
         self.assertEqual(required, ["source", "field"])
+
+
+class WeighMissingTests(unittest.TestCase):
+    def test_a_field_a_row_lacks_or_has_as_null_counts_as_zero(self):
+        from src.sketch.stages_rows import weigh
+        rows = [{"p": 0.6, "q": 0.2}, {"p": 0.6, "q": None}, {"p": 0.6}]
+        found = run(weigh, context(rows), source="rows", by={"p": 1, "q": -2}, into="lead")
+        self.assertEqual([round(r["lead"], 2) for r in found], [0.2, 0.6, 0.6])
+
+
+class SmallestTests(unittest.TestCase):
+    def test_each_row_gets_the_smallest_of_the_named_fields(self):
+        rows = [{"a": 0.9, "b": 0.5}, {"a": 0.3, "b": 0.8}]
+        found = run(smallest, context(rows), source="rows", fields=["a", "b"], into="least")
+        self.assertEqual([r["least"] for r in found], [0.5, 0.3])
+        self.assertEqual(found[0]["a"], 0.9)  # the rows keep their fields
+
+    def test_a_field_the_row_lacks_is_left_out_and_a_row_with_none_gets_null(self):
+        found = run(smallest, context([{"a": 0.4}, {"c": 1}]), source="rows", fields=["a", "b"], into="least")
+        self.assertEqual([r["least"] for r in found], [0.4, None])
+
+    def test_it_is_a_map_stage_asking_for_a_source_fields_and_a_name(self):
+        required = [key for key, p in STAGES["map.smallest"].params.items() if p.required]
+        self.assertEqual(required, ["source", "fields", "into"])
 
 
 class ShareTests(unittest.TestCase):

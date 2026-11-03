@@ -803,7 +803,38 @@ sequenceDiagram
     autonumber
     participant Mouse
     participant All
-    Note over Mouse,All: 📅 2026-11-03
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-03
     Mouse->>All: "phase 2"
     Note right of Mouse: "Phase 2: Jev puts every<br/>merchant in a category<br/>(UND-97)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 2 impl complete<br/>(UND-97):<br/>categorize_merchant.yaml<br/>(Jev chooses a group<br/>shown every name in<br/>each, then a name,<br/>none_of_these allowed)…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 2 passed<br/>(UND-97): real runs,<br/>first rule sent 73% to<br/>review, amended (every<br/>name shown, 0.4+ and<br/>twice the runner-up) to<br/>48% with…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-2:<br/>passed. The child sketch<br/>is about 130 lines of<br/>declarative stages, no<br/>household Python, the<br/>old placing and naming<br/>sk…"
+```
+
+## Phase 2 close-out
+
+- **Neo**: Phase 2 impl complete (UND-97): categorize\_merchant.yaml (Jev chooses a group shown every name in each, then a name, none\_of\_these allowed)…
+- **Trin**: UAT phase 2 passed (UND-97): real runs, first rule sent 73% to review, amended (every name shown, 0.4+ and twice the runner-up) to 48% with…
+- **Morpheus**: \*lead review phase-2: passed. The child sketch is about 130 lines of declarative stages, no household Python, the old placing and naming sk…
+
+## Phase 3 starts
+
+Phase 3: kinds follow links and the tool's categories (UND-98)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    Note over Mouse,All: 📅 2026-11-03
+    Mouse->>All: "phase 3"
+    Note right of Mouse: "Phase 3: kinds follow<br/>links and the tool's<br/>categories (UND-98)"
 ```

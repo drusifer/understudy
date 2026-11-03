@@ -40,7 +40,7 @@ The owner gives a Monarch export, an Amex export, an additions file (a shipped s
 1. **Checks first, before any Jev request:** the additions file (path exists, every line has a group and a name, no repeat of an ISO or earlier name) and the pins (each names a category in the clean list).
 2. **Link by text:** the card export's payment lines and records with payment words in their description, statement or payee are candidates; they are paired by opposite amount in different accounts within three business days (the existing link stage). The export's Category is not read.
 3. **Merchants:** the payees of records that are not linked halves; pinned ones leave the list; the rest are asked.
-4. **Jev, per merchant:** step one chooses a group (13 ISO groups, Household, none_of_these); step two chooses a name in it. Both above 0.7 places the merchant; otherwise it goes to `review.jsonl`. Cost: about two requests per merchant (about 1,650 for the household's 820), each cached, so a repeat run or a replay costs none.
+4. **Jev, per merchant:** step one chooses a group (13 ISO groups, Household, none_of_these); step two chooses a name in it. Both above 0.7 places the merchant; otherwise it goes to `review.jsonl`. Cost: about two requests per merchant (2,279 for the household's 1,220 merchants, about seven minutes); every live run asks again, and only `--replay` reuses a run's captured answers (amended in Phase 2: this was first written as "cached", which is wrong for a live run). A choice counts when it is above 0.7, or at least 0.4 and at least twice as sure as the runner-up (amended in Phase 2).
 5. **Kind:** linked, or category "Household: Transfer", is a transfer; refund linking, credits and purchases follow as today. A merchant for review keeps its records as purchases or credits and is listed unplaced.
 6. **Allocation:** for the Amex pool (records that came from the Amex export), each payment's amount is filled with that pool's charges dated on or before it, oldest first, stopping before the amount would be passed; what is left of the amount is the remainder. Each charge gets `settled_by` (a payment id) or stays open.
 7. **Reports:** `payments.jsonl` (the payment, charges settled, amount, remainder, five largest categories), the open balance and spending total in `summary.json`, `spending.jsonl` by the tool's category.
@@ -86,7 +86,7 @@ The owner gives a Monarch export, an Amex export, an additions file (a shipped s
 * ADR-0057 (to record): a card payment settles the card's charges oldest first, charges only, never past its amount, with a stated remainder. Alternatives rejected: matching a run of charges to the cent (no statement dates in the export, so no payment matches); counting credits in the allocation (gaps up to $6,304 on the baseline).
 
 ### Acknowledged Technical Debt & Trade-offs
-* The first run costs about 1,650 Jev requests (about four minutes); a repeat is free from the capture.
+* A live run costs about 2,300 Jev requests (about seven minutes) and Jev's answers vary a little between live runs (101 of 1,220 merchants differed between two runs); a replay is free and exact.
 * The allocation is approximate by nature: the remainder is shown, never hidden.
 * Only the Amex pool is allocated until another card export exists.
 * The Monarch-label disagreement is read as "differ about money moving", not as a comparison of category words.

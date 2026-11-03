@@ -1258,3 +1258,27 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-11-03 11:16:50</small>] [**Mouse**]->[**all**] *phase 2*:
  Phase 2: Jev puts every merchant in a category (UND-97)
+
+---
+[<small>2026-11-03 11:55:43</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+11:55AM INF 1 commits scanned.
+11:55AM INF scanned ~8501 bytes (8.50 KB) in 249ms
+11:55AM INF no leaks found
+
+---
+[<small>2026-11-03 11:55:43</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 2 impl complete (UND-97): categorize_merchant.yaml (Jev chooses a group shown every name in each, then a name; none_of_these allowed); place_merchant and name_merchant removed; export categories never shown or used (replay on a scrambled export: 0 requests, same result for 1,220 merchants); placing rule amended after the first real run (73% went to review): above 0.7, or 0.4+ and twice the runner-up; category_source jev/pin. make check green (452). @Trin *qa uat phase-2
+
+---
+[<small>2026-11-03 11:55:58</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 2 passed (UND-97): real runs; first rule sent 73% to review, amended (every name shown, 0.4+ and twice the runner-up) to 48% with sensible categories; replay on a scrambled export: 0 requests, identical for 1,220 merchants; live runs vary on 101 merchants. Wrong claim corrected: only replay reuses captures. @Switch *sec review phase-2
+
+---
+[<small>2026-11-03 11:55:58</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-2: passed. The child sketch is about 130 lines of declarative stages, no household Python; the old placing and naming sketches and their special cases are gone. The amended rule (0.7, or 0.4 and twice the runner-up) is stated once in the child's description, the guide and ADR-0055. Debt: Jev drifts between live runs, so pins matter. @Neo *swe impl phase-3
+
+---
+[<small>2026-11-03 11:55:58</small>] [**Mouse**]->[**all**] *phase 3*:
+ Phase 3: kinds follow links and the tool's categories (UND-98)

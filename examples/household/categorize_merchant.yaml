@@ -1,0 +1,157 @@
+name: categorize_merchant
+description: >
+  Puts one merchant in one category of the clean list: the ISO 18245 merchant categories and the owner's additions.
+  Jev chooses a group first (shown every name in each) and then a name in that group, or says that no group fits. Jev
+  only chooses; it never writes a category, and it never sees the export's own categories. A choice counts when it is
+  above 0.7, or at least 0.4 and at least twice as sure as the runner-up (a long list spreads the probability, so a
+  right answer is often 0.45 to 0.67); when both choices count the merchant is placed, otherwise it goes to review. Give it the merchant's `payee`, `count`, `amounts`,
+  `statements` and `descriptions`, and the path of the `additions` file.
+
+sources:
+  facts:
+    kind: stage
+    do: { map: { action: rows } }
+    with:
+      rows:
+        - { merchant: {{ payee | tojson }}, also_seen_as: {{ (statements + descriptions) | tojson }}, payments: {{ count | tojson }}, example_amounts: {{ amounts | tojson }} }
+  additions_file:
+    kind: file
+    path: "{{ additions }}"
+  iso:
+    kind: stage
+    do: { map: { action: mcc } }
+  list:                                 # the clean list: {group, name}
+    kind: stage
+    do: { map: { action: concat } }
+    with: { sources: [ iso, additions_file ] }
+  groups:                               # each group with all its names, so Jev can tell what the group covers
+    kind: stage
+    do: { map: { action: group } }
+    with: { source: list, by: group, collect: { names: name }, take: 100 }
+  group_names:
+    kind: stage
+    do: { map: { action: keep } }
+    with: { source: groups, fields: [ group, names ] }
+  none:
+    kind: stage
+    do: { map: { action: rows } }
+    with: { rows: [ { group: none_of_these } ] }
+  group_choices:
+    kind: stage
+    do: { map: { action: concat } }
+    with: { sources: [ groups, none ] }
+  group_reading:
+    kind: jev
+    question: choice
+    instructions: >
+      Which group of merchant categories does `merchant` belong to? `groups` shows each group with every name in it.
+      Choose the group whose names best describe what is bought from, or paid to, `merchant`. Choose none_of_these when
+      no group fits.
+    options: { from: group_choices, key: group }
+    state:
+      merchant: { from: facts }
+      groups: { from: group_names }
+  group_best:
+    kind: stage
+    do: { reduce: { action: top_two } }
+    with: { source: group_reading, label: level, value: probability }
+  group_fit:                            # a real group was chosen, not none_of_these
+    kind: stage
+    do: { map: { action: where } }
+    with: { source: group_best, keep: { level: { ne: none_of_these } } }
+  in_group:                             # the names in the chosen group
+    kind: stage
+    do: { map: { action: matching } }
+    with: { source: list, among: group_best, on: group, among_on: level }
+  name_reading:
+    kind: jev
+    question: choice
+    instructions: >
+      Within the group `group`, which name best describes what is bought from, or paid to, `merchant`?
+    options: { from: in_group, key: name }
+    state:
+      merchant: { from: facts }
+      group: { from: group_best }
+  name_best:
+    kind: stage
+    do: { reduce: { action: top_two } }
+    with: { source: name_reading, label: level, value: probability }
+  group_led:                            # how far the group answer is ahead of twice the runner-up (0 or more: clearly ahead)
+    kind: stage
+    do: { map: { action: weigh } }
+    with: { source: group_best, by: { probability: 1, runner_up_probability: -2 }, into: lead }
+  name_led:
+    kind: stage
+    do: { map: { action: weigh } }
+    with: { source: name_best, by: { probability: 1, runner_up_probability: -2 }, into: lead }
+  group_one:
+    kind: stage
+    do: { map: { action: set } }
+    with: { source: group_led, fields: { one: 1 } }
+  name_one:
+    kind: stage
+    do: { map: { action: set } }
+    with: { source: name_led, fields: { one: 1 } }
+  both:                                 # the name's answer with the group's beside it (group_level, group_probability, ...)
+    kind: stage
+    do: { map: { action: join } }
+    with: { source: name_one, other: group_one, on: one, prefix: group_ }
+  least:                                # as sure as the less sure of the two choices
+    kind: stage
+    do: { map: { action: smallest } }
+    with: { source: both, fields: [ probability, group_probability ], into: least_sure }
+  judged:
+    kind: stage
+    do: { map: { action: classify } }
+    with:
+      source: least
+      into: status
+      cases:
+        - if:                           # each choice is above 0.7, or at least 0.4 and twice as sure as the runner-up
+            and:
+              - or:
+                  - { group_probability: { gt: 0.7 } }
+                  - { and: [ { group_probability: { ge: 0.4 } }, { group_lead: { ge: 0 } } ] }
+              - or:
+                  - { probability: { gt: 0.7 } }
+                  - { and: [ { probability: { ge: 0.4 } }, { lead: { ge: 0 } } ] }
+          then: placed
+      otherwise: review
+  named:                                # "Group: Name", with the least sure probability
+    kind: stage
+    do: { map: { action: format } }
+    with: { source: judged, template: "{group_level}: {level}", into: level }
+  chosen:
+    kind: stage
+    do: { map: { action: keep } }
+    with: { source: named, fields: [ level, least_sure, status, runner_up, runner_up_probability ] }
+  answer:
+    kind: stage
+    do: { map: { action: coalesce } }
+    with: { source: chosen, fields: { probability: [ least_sure ] } }
+  no_fit_row:                           # no group fits: for review, with the group answer as the guess
+    kind: stage
+    do: { map: { action: classify } }
+    with: { source: group_best, into: status, cases: [], otherwise: review }
+
+machine:
+  initial: ask_group
+  states:
+    ask_group:
+      do: { reduce: { action: any } }
+      with: { source: group_fit }
+      transitions:
+        - if: { any: { eq: true } }
+          to: fit
+        - to: no_fit
+    fit:
+      do: { map: { action: where } }
+      with: { source: answer, keep: { level: { ne: "" } } }
+      then: done
+    no_fit:
+      do: { map: { action: where } }
+      with: { source: no_fit_row, keep: { level: { ne: "" } } }
+      then: done
+    done:
+      final: true
+      outputs: [status]

@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from household_jev import choose, first_choice
 from jev_double import JevDouble
 
 from src.jev import Chosen
@@ -13,23 +14,6 @@ from src.sketch.sources.capture import CaptureStore
 
 LEDGER = ROOT / "examples" / "household" / "household.yaml"
 ORACLE = ROOT / "tests" / "fixtures" / "household"
-PLACED = {"Store": ("Shopping & Retail: General", 0.9), "Dunkin'": ("Food & Dining: Coffee & Cafes", 0.95),
-          "Employer": ("Income: Paychecks", 0.99), "Shoe Shop": ("Shopping & Retail: General", 0.5),
-          "Venmo": ("none_of_these", 0.9)}
-
-
-def category(merchant, options):
-    """A scripted Jev for the three category questions: which category in use, which kind of business, which name."""
-    if "none_of_these" in options:
-        top, sure = PLACED[merchant]
-    elif "Utilities" in options:
-        top, sure = "Utilities", 0.8
-    else:
-        top, sure = next(iter(options)), 0.9
-    rest = (1 - sure) / max(len(options) - 1, 1)
-    return Chosen(top, sure, {name: sure if name == top else rest for name in options})
-
-
 def no_pins(directory: Path) -> list[str]:
     """`--with` arguments naming an empty pin file, so a run never reads the owner's real pins."""
     pins = directory / "pins.jsonl"
@@ -47,20 +31,12 @@ class LedgerTests(unittest.TestCase):
         cls.temporary = tempfile.TemporaryDirectory()
         directory = Path(cls.temporary.name)
 
-        def reading(state, instructions, options):
-            if "refund" in state:  # the refund of 45.00 reverses the charge of 45.00 on the 15th
-                original = next(label for label in options if "2026-02-15" in label)
-                return Chosen(original, 0.8, {label: 0.8 if label == original else 0.2 for label in options})
-            if "merchant" in state:
-                return category(state["merchant"][0]["merchant"], options)
-            raise AssertionError(f"Jev was asked a question the household no longer asks: {list(state)}")
-
         stderr = io.StringIO()
         cls.code = main(
             ["run", str(LEDGER), "--out", str(directory / "out"), "--with", f"monarch={ORACLE / 'monarch.csv'}",
              "--with", f"amex={ORACLE / 'amex.csv'}", "--with", "amex_account=Platinum", "--with", "since=2026-01-01",
              *no_pins(directory)],
-            make_jev=lambda: JevDouble(choose_fn=reading), store=CaptureStore(directory / "cache"), stdout=io.StringIO(),
+            make_jev=lambda: JevDouble(choose_fn=choose), store=CaptureStore(directory / "cache"), stdout=io.StringIO(),
             stderr=stderr)
         cls.stderr = stderr.getvalue()
         (folder,) = (directory / "out").iterdir()
@@ -141,9 +117,9 @@ class LedgerTests(unittest.TestCase):
         self.assertEqual(set(shoes), {"payee", "count", "amount", "top", "top_probability", "runner_up",
                                       "runner_up_probability", "reason"})
         self.assertEqual((shoes["top"], shoes["top_probability"], shoes["reason"]),
-                         ("Shopping & Retail: General", 0.5, "below_0.7"))
+                         ("Clothing outlets: Family clothing shops", 0.35, "below_0.7"))
         self.assertTrue(shoes["runner_up"])
-        self.assertLess(shoes["runner_up_probability"], shoes["top_probability"])
+        self.assertLessEqual(shoes["runner_up_probability"], shoes["top_probability"])
 
     def test_jev_is_no_longer_asked_about_payees_and_the_judgments_file_is_gone(self):
         self.assertFalse((self.folder / "judgments.jsonl").exists())
@@ -155,31 +131,9 @@ class LedgerTests(unittest.TestCase):
         original = next(r for r in self.records if r["record_id"] == refunds["Store"]["candidate_record_id"])
         self.assertEqual((original["cost"], original["day"]), (-45.0, "2026-02-15"))
 
-    def test_merchants_are_placed_in_the_categories_in_use_and_an_unsure_one_goes_to_review(self):
-        by = {(r["payee"], r["kind"]): r for r in self.records}
-        self.assertEqual(by["Store", "purchase"]["category_level"], "Shopping & Retail: General")
-        self.assertEqual(by["Dunkin'", "purchase"]["category_level"], "Food & Dining: Coffee & Cafes")
-        self.assertEqual(by["Employer", "credit"]["category_status"], "placed")
-        shoes = by["Shoe Shop", "purchase"]
-        self.assertEqual((shoes["category_status"], shoes.get("category_level")), ("review", None))
-
-    def test_a_merchant_that_fits_no_category_is_named_from_the_mcc_list_by_choosing_a_group_and_a_name(self):
-        venmo = next(r for r in self.records if r["payee"] == "Venmo")
-        self.assertEqual(venmo["category_status"], "placed")
-        self.assertTrue(venmo["category_level"] and venmo["category_level"] != "none_of_these")
-
     def test_transfers_are_not_asked_about_and_say_so(self):
         legs = [r for r in self.records if r["kind"] == "transfer"]
         self.assertEqual({r["category_status"] for r in legs}, {"none"})
-
-
-def first_choice(state, instructions, options):
-    """A scripted Jev that is sure of the first option, and picks the original a refund reversed."""
-    if "refund" in state:
-        original = next(label for label in options if "2026-02-15" in label)
-        return Chosen(original, 0.9, {label: 0.9 if label == original else 0.1 for label in options})
-    top = next(iter(options))
-    return Chosen(top, 0.9, {name: 0.9 if name == top else 0.1 for name in options})
 
 
 def run_with_monarch(monarch_text: str, since: str = "2026-01-01"):
