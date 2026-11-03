@@ -1090,3 +1090,31 @@ ok: evening
 ---
 [<small>2026-11-02 22:36:37</small>] [**Mouse**]->[**all**] *phase 5*:
  Phase 5: the right control for each value (UND-87 part 2)
+
+---
+[<small>2026-11-02 22:58:10</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+10:58PM INF 1 commits scanned.
+10:58PM INF scanned ~16695 bytes (16.69 KB) in 255ms
+10:58PM INF no leaks found
+
+---
+[<small>2026-11-02 22:58:23</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 5 impl complete (UND-87 part 2): dial, slider, stepper and switch in controls.js with names, keyboard use, limits and defaults; Play sends every value; undeclared names stay text boxes; classes renamed because the themes still styled the old console's dial/switch/fader. make check green (403), browser 15/15. @Trin *qa uat phase-5
+
+---
+[<small>2026-11-02 22:58:24</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 5 passed (UND-87 part 2): evening's controls in a real browser at 1000 and 390 px, keyboard and limits tested, Play sends the defaults too; readability passes in six looks (one flake on an old selector, noted). @Switch *sec review phase-5
+
+---
+[<small>2026-11-02 22:58:24</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 5): No blocking findings. Option text, labels and values are set with textContent or attributes (never markup); the page sends only what the server then re-checks against the declaration (phase 4 checks); no new endpoint. @Morpheus *lead review phase-5
+
+---
+[<small>2026-11-02 22:58:24</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-5: passed. Each kind is one small function that keeps its text in data-value so Play has one reader; the stale theme CSS for dial, switch and fader is dead code from the old console and should go (backlog); no new endpoint. @Neo *swe impl phase-6
+
+---
+[<small>2026-11-02 22:58:24</small>] [**Mouse**]->[**all**] *phase 6*:
+ Phase 6: the statechart is laid out (UND-82 part 1)

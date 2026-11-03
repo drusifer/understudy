@@ -36,6 +36,7 @@ READABLE = [
     ".stage-lamp", ".group summary", ".gauge .figure", ".gauge-name", ".start-message", ".start-panel > summary", ".banner",
     ".panel-head span", ".jev > summary", ".offline", ".no-match",
     "#spending-title", ".spend-name", ".spend-amount", ".spend-more",
+    ".typed-label", ".pick-option", ".toggle", ".readout", ".count-box", ".step-button",
 ]
 
 # While one element is measured its text is invisible and nothing animates, so a screenshot shows only the backdrop.
@@ -346,6 +347,117 @@ class StartAndStopTest(BrowserCase):
         self.assertFalse(page.evaluate("JSON.stringify(localStorage)").count(SECRET))
 
 
+TYPED = """name: typed
+description: A sketch with typed inputs and one plain value ({{ note | default('none') }}).
+inputs:
+  mood: { kind: choice, label: Mood, options: [fun, serious, dramatic], default: fun }
+  weight: { kind: range, label: Weight, min: 0, max: 1, step: 0.05, default: 0.3 }
+  tickets: { kind: count, label: Party size, min: 1, max: 3, default: 2 }
+  evenings: { kind: switch, label: Evenings only, default: "on" }
+data: { mood: "{{ mood }}", weight: {{ weight }}, tickets: {{ tickets }}, evenings: "{{ evenings }}" }
+machine: { initial: only, states: { only: { final: true } } }
+"""
+
+
+class TypedControlsTest(BrowserCase):
+    def open(self, width=1300, height=900):
+        sketches = self.root / "sketches"
+        sketches.mkdir()
+        (sketches / "typed.yaml").write_text(TYPED, encoding="utf-8")
+        run = write_run(self.runs, "run-20261101T150000-0000000e", [{"event": "run_started", "at": stamp(-1), "sketch": "typed.yaml",
+                                                                    "mode": "live"}], {"status": "running", "stages": {}})
+        self.started: list[list[str]] = []
+
+        def spawn(argv, **options):
+            self.started.append(argv)
+            return _Child([sys.executable, "-c", "import time; time.sleep(60)"], **options)
+
+        launcher = Launcher(sketches, self.runs, project=self.root, cache=self.root / "cache", spawn=spawn, check=lambda argv: [],
+                            find_run=lambda sketch, before: run.name, settle=0)
+        page = self.page(width, height)
+        page.goto(self.start(launcher, SECRET))
+        page.locator("#controls > summary").click()
+        page.wait_for_selector("#fields [data-input]")
+        return page
+
+    def unlock(self, page):
+        page.fill("#secret-box", SECRET)
+        page.click("#unlock")
+        page.wait_for_function("!document.getElementById('play').disabled")
+
+    def test_each_declared_input_has_the_control_of_its_kind_at_its_default_with_a_name_and_a_readable_value(self):
+        page = self.open()
+        dial = page.get_by_role("radiogroup", name="Mood")
+        self.assertEqual(dial.get_by_role("radio").count(), 3)
+        self.assertEqual(dial.get_by_role("radio", checked=True).inner_text(), "fun")
+        fader = page.get_by_role("slider", name="Weight")
+        self.assertEqual((fader.input_value(), page.locator("#field-weight-readout").inner_text()), ("0.3", "0.3"))
+        stepper = page.get_by_role("spinbutton", name="Party size")
+        self.assertEqual(stepper.input_value(), "2")
+        switch = page.get_by_role("switch", name="Evenings only")
+        self.assertEqual((switch.get_attribute("aria-checked"), switch.inner_text()), ("true", "ON"))
+        self.assertTrue(page.locator("#field-note").is_visible())  # a name the sketch takes but does not declare stays a text box
+        self.assertEqual(page.locator("#field-note").get_attribute("type"), "text")
+
+    def test_every_control_works_from_the_keyboard(self):
+        page = self.open()
+        page.get_by_role("radio", name="fun").focus()
+        page.keyboard.press("ArrowRight")
+        self.assertEqual(page.get_by_role("radiogroup", name="Mood").get_by_role("radio", checked=True).inner_text(), "serious")
+        page.keyboard.press("ArrowRight")
+        page.keyboard.press("ArrowRight")  # the end of the dial: it stops, it does not wrap
+        self.assertEqual(page.get_by_role("radiogroup", name="Mood").get_by_role("radio", checked=True).inner_text(), "dramatic")
+        page.get_by_role("slider", name="Weight").focus()
+        page.keyboard.press("ArrowRight")
+        self.assertEqual(page.locator("#field-weight-readout").inner_text(), "0.35")
+        page.get_by_role("spinbutton", name="Party size").focus()
+        page.keyboard.press("ArrowUp")
+        self.assertEqual(page.get_by_role("spinbutton", name="Party size").input_value(), "3")
+        page.get_by_role("switch", name="Evenings only").focus()
+        page.keyboard.press("Space")
+        self.assertEqual(page.get_by_role("switch", name="Evenings only").get_attribute("aria-checked"), "false")
+        self.assertEqual(page.get_by_role("switch", name="Evenings only").inner_text(), "OFF")
+
+    def test_a_control_cannot_be_set_outside_its_limits(self):
+        page = self.open()
+        stepper = page.get_by_role("spinbutton", name="Party size")
+        page.get_by_role("button", name="increase Party size").click()  # 2 to 3, the most this sketch allows
+        self.assertEqual(stepper.input_value(), "3")
+        self.assertTrue(page.get_by_role("button", name="increase Party size").is_disabled())
+        for _ in range(2):
+            page.get_by_role("button", name="decrease Party size").click()  # 3 to 1, the least
+        self.assertEqual(stepper.input_value(), "1")
+        self.assertTrue(page.get_by_role("button", name="decrease Party size").is_disabled())
+        stepper.fill("99")
+        stepper.blur()
+        self.assertEqual(stepper.input_value(), "3")  # typed past the limit, it is put back inside
+        fader = page.get_by_role("slider", name="Weight")
+        fader.focus()
+        page.keyboard.press("End")
+        self.assertEqual(page.locator("#field-weight-readout").inner_text(), "1")
+        page.keyboard.press("ArrowRight")
+        self.assertEqual(page.locator("#field-weight-readout").inner_text(), "1")
+
+    def test_play_sends_every_value_the_defaults_for_the_ones_left_alone(self):
+        page = self.open()
+        self.unlock(page)
+        page.get_by_role("radio", name="dramatic").click()
+        page.get_by_role("switch", name="Evenings only").click()
+        page.fill("#field-note", "hello")
+        page.click("#play")
+        page.wait_for_function("document.getElementById('start-message').textContent.includes('run-20261101T150000-0000000e')")
+        (argv,) = self.started
+        pairs = sorted(argv[i + 1] for i, word in enumerate(argv) if word == "--with")
+        self.assertEqual(pairs, ["evenings=off", "mood=dramatic", "note=hello", "tickets=2", "weight=0.3"])
+
+    def test_the_controls_fit_a_phone(self):
+        page = self.open(width=390, height=900)
+        self.assertTrue(page.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth"))
+        for selector in ("#field-mood", "#field-weight", "#field-tickets", "#field-evenings"):
+            box = page.locator(selector).bounding_box()
+            self.assertTrue(box and box["x"] >= 0 and box["x"] + box["width"] <= 390, selector)
+
+
 class KeyboardTest(BrowserCase):
     def test_every_control_is_reachable_by_keyboard_has_a_name_and_shows_where_focus_is(self):
         self.failed_and_done_runs()
@@ -385,6 +497,7 @@ class ContrastTest(BrowserCase):
         sketches = self.root / "sketches"
         sketches.mkdir()
         (sketches / "plain.yaml").write_text(PLAIN, encoding="utf-8")
+        (sketches / "typed.yaml").write_text(TYPED, encoding="utf-8")
         launcher = Launcher(sketches, self.runs, project=self.root, cache=self.root / "cache")
         base = self.start(launcher, SECRET)
         problems = []
@@ -396,6 +509,7 @@ class ContrastTest(BrowserCase):
             page.locator(".sketch-tab").nth(1).click()
             page.wait_for_selector(".banner")
             page.locator("#controls > summary").click()
+            page.select_option("#sketch-pick", "typed.yaml")  # its dial, fader, stepper and switch are read in every look
             page.fill("#find-text", "zzz-nothing")
             for selector in READABLE:
                 found = page.evaluate(FIRST_VISIBLE_JS, selector)

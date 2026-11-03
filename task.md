@@ -49,10 +49,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 5: The right control for each value (UND-87 part 2, 4 pts)
 *Phase goal: the console draws a dial, fader, stepper or switch per declared input.*
-- [ ] **Task 5.1:** Tests first (browser), then the four controls in `controls.js` and `page.css`: keyboard use, accessible name and value, limits, defaults, undeclared names keep a text box; Play posts every value. **L3** (browser behavior across three themes and keyboard). (*Owner: Neo | Trace: UND-87 AC2-4, AC6 | Verification: `bobp make test`, `bobp make lint`, `bobp make test-browser`*)
-- [ ] **Task 5.2:** UAT in a real browser on `evening`: each control by mouse and keyboard, defaults, limits, a run started with the values, 390 px, three themes. **L3**. (*Owner: Trin | Trace: UND-87 AC2-4, AC6, AC7 | Verification: UAT verdict and screenshots noted in `agents/CHAT.md`*)
-- [ ] **Task 5.3:** Security quick pass: values rendered back; no markup from option text. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 5): ...`*)
-- [ ] **Task 5.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT24 sections 3, 5 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 5.1:** Tests first (browser), then the four controls in `controls.js` and `page.css`: keyboard use, accessible name and value, limits, defaults, undeclared names keep a text box; Play posts every value. **L3** (browser behavior across three themes and keyboard). (*Owner: Neo | Trace: UND-87 AC2-4, AC6 | Verification: `bobp make test`, `bobp make lint`, `bobp make test-browser`*)
+- [x] **Task 5.2:** UAT in a real browser on `evening`: each control by mouse and keyboard, defaults, limits, a run started with the values, 390 px, three themes. **L3**. (*Owner: Trin | Trace: UND-87 AC2-4, AC6, AC7 | Verification: UAT verdict and screenshots noted in `agents/CHAT.md`*)
+- [x] **Task 5.3:** Security quick pass: values rendered back; no markup from option text. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 5): ...`*)
+- [x] **Task 5.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT24 sections 3, 5 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 6: The statechart is laid out (UND-82 part 1, 4 pts)
 *Phase goal: the server lays the machine out and says which state is lit.*

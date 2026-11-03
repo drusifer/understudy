@@ -384,6 +384,20 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .start-gate .find-field { flex: 0 1 260px; }
 .start-fields { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 12px; align-items: center; }
 .start-field { display: contents; }
+/* Sprint 24 UND-87: a control for each kind of value. Text-bearing parts use the same fixed light and dark pairs as .find-field
+   and .find-button, so they read in every theme. */
+.typed-label { color: var(--cream); }
+.pick-group { display: flex; flex-wrap: wrap; gap: 4px; }
+.pick-option, .toggle { padding: 3px 10px; border: 2px solid var(--brass-deep); border-radius: 4px; background: #fffaf0; color: #24170a; font: inherit; cursor: pointer; }
+.pick-option[aria-checked="true"], .toggle[aria-checked="true"] { background: #24180f; color: #ffe9b8; }
+.toggle { min-width: 4.5ch; border-radius: 12px; justify-self: start; }
+.slide-row { display: flex; gap: 10px; align-items: center; min-width: 0; }
+.slide { flex: 1 1 auto; min-width: 0; accent-color: var(--amber); }
+.readout { min-width: 4ch; text-align: right; color: var(--cream); }
+.count-stepper { display: flex; gap: 4px; align-items: center; }
+.count-box { flex: 0 0 5ch; width: 5ch; min-width: 0; text-align: center; }
+.step-button { min-width: 2em; }
+.pick-option:focus-visible, .toggle:focus-visible, .slide:focus-visible, .count-box:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 .start-buttons { display: flex; gap: 8px; }
 .start-message { min-height: 1.2em; white-space: pre-wrap; overflow-wrap: anywhere; }
 .start-message.problem { color: #ff9a8a; }

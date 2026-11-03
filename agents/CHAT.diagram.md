@@ -622,7 +622,40 @@ sequenceDiagram
     autonumber
     participant Mouse
     participant All
-    Note over Mouse,All: 📅 2026-11-02
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-02
     Mouse->>All: "phase 5"
     Note right of Mouse: "Phase 5: the right<br/>control for each value<br/>(UND-87 part 2)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 5 impl complete<br/>(UND-87 part 2): dial,<br/>slider, stepper and<br/>switch in controls.js<br/>with names, keyboard<br/>use, limits and<br/>defaults, Play…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 5 passed<br/>(UND-87 part 2):<br/>evening's controls in a<br/>real browser at 1000 and<br/>390 px, keyboard and<br/>limits tested, Play<br/>sends the def…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 5):<br/>No blocking findings.<br/>Option text, labels and<br/>values are set with<br/>textContent or<br/>attributes (never<br/>markup), the pa…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-5:<br/>passed. Each kind is one<br/>small function that<br/>keeps its text in data-<br/>value so Play has one<br/>reader, the stale theme<br/>CSS…"
+```
+
+## Phase 5 close-out
+
+- **Neo**: Phase 5 impl complete (UND-87 part 2): dial, slider, stepper and switch in controls.js with names, keyboard use, limits and defaults, Play…
+- **Trin**: UAT phase 5 passed (UND-87 part 2): evening's controls in a real browser at 1000 and 390 px, keyboard and limits tested, Play sends the def…
+- **Morpheus**: \*lead review phase-5: passed. Each kind is one small function that keeps its text in data-value so Play has one reader, the stale theme CSS…
+
+## Phase 6 starts
+
+Phase 6: the statechart is laid out (UND-82 part 1)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    Note over Mouse,All: 📅 2026-11-02
+    Mouse->>All: "phase 6"
+    Note right of Mouse: "Phase 6: the statechart<br/>is laid out (UND-82 part<br/>1)"
 ```

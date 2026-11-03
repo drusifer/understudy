@@ -50,9 +50,19 @@ Phases are added as they pass UAT.
 - **Verdict:** PASS
 - **Evidence / issue:** `build/build.out`; `tests/python/test_sketch_inputs.py`. The `evening` sketch no longer repeats its defaults.
 
+### UAT-24-5: The right control for each value (Phase 5)
+
+- **Linked criterion:** UND-87 AC2, AC3, AC4, AC6, AC7
+- **Preconditions and data:** the `evening` example listed by the console in a real Chromium (Professional light at 1000 px, Steampunk dark at 390 px); a typed fixture sketch with a text-only value in the browser tests
+- **Steps:** open START A RUN, choose `evening`; use each control by mouse and keyboard; Play against a fake process and read the `--with` arguments; the readability check measures the controls in all six looks
+- **Expected observable outcome:** a dial, stepper, switch and four faders at their defaults with a name and a readable value; keyboard use; limits held; Play sends every value; an undeclared name stays a text box; no overflow at 390 px; readable in every look
+- **Actual outcome:** `evening` shows Mood (fun, serious, dramatic, romantic with `fun` selected), Party size 2 with - and +, Evenings only ON and four faders (0.3, 0.7, 0.7, 1) beside their values; the browser tests: roles and names found for the radio group, slider, spin button and switch; arrow keys move the dial and stop at the end, a slider arrow moves it one step (0.30 to 0.35), the number takes ArrowUp, Space flips the switch to OFF; + disables at the maximum and - at the minimum, a typed 99 is put back to 3, End on the slider reads 1 and one more arrow stays at 1; Play posted `evenings=off, mood=dramatic, note=hello, tickets=2, weight=0.3` (the defaults for the untouched ones); `#field-note` is a text input; no horizontal overflow at 390 px; the readability check passed in six looks after the controls' class names were renamed (the themes still held styles for the old console's `.dial-option`, `.switch` and `.fader`, and made two of them unreadable in the dark looks); 15 of 15 browser tests pass
+- **Verdict:** PASS
+- **Evidence / issue:** screenshots checked by eye; 403 unit tests green. One run of the readability check failed once on a pre-existing selector (`.stage-lamp` in Steampunk dark, 1.20:1) and passed in three repeats; recorded as a flake in the instrument for the retro. The switch first stretched across the whole row; it is now compact.
+
 ## Results and Handoff
 
-- **Passed / failed / blocked:** Phase 1: 1 passed (UAT-24-1); Phase 2: 1 passed (UAT-24-2); Phase 3: 1 passed (UAT-24-3); Phase 4: 1 passed (UAT-24-4); 0 failed, 0 blocked
+- **Passed / failed / blocked:** Phase 1: 1 passed (UAT-24-1); Phase 2: 1 passed (UAT-24-2); Phase 3: 1 passed (UAT-24-3); Phase 4: 1 passed (UAT-24-4); Phase 5: 1 passed (UAT-24-5); 0 failed, 0 blocked
 - **Open issues and impact:** Phase 2: the oddly grouped categories and a negative `Refund` line are the owner's data, not a defect; noted for the backlog.
 - **Overall verdict:** PASS for Phases 1 to 3
 - **Handoff evidence:** message in `agents/CHAT.md`
