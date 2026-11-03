@@ -895,8 +895,38 @@ sequenceDiagram
     Note right of Morpheus: "*lead review phase-4:<br/>passed. Stages are<br/>generic (no household<br/>names), signature is the<br/>YAML contract, tests<br/>cover each rule in<br/>ADR-0057. N…"
 ```
 
-## Phase 4 so far
+## Phase 4 close-out
 
 - **Neo**: Phase 4 impl complete (UND-99 part 1): map.allocate and map.top, tests first, docs in SKETCHES, ARCH, PRD. 475 tests and lint green. Task 4…
 - **Trin**: UAT phase 4 passed (UND-99 AC1, AC5, AC6): map.allocate on the Amex baseline file, outside the sketch: 11 of 12 payments within 5% (worst M…
 - **Morpheus**: \*lead review phase-4: passed. Stages are generic (no household names), signature is the YAML contract, tests cover each rule in ADR-0057. N…
+
+## Phase 5 starts
+
+Phase 5: payments know what they paid for (UND-99 part 2)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-03
+    Mouse->>All: "phase 5"
+    Note right of Mouse: "Phase 5: payments know<br/>what they paid for<br/>(UND-99 part 2)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 5 impl complete<br/>(UND-99 part 2): pay_*<br/>stages, payments.jsonl,<br/>settled_by on each card<br/>charge, open_balance in<br/>summary, new generic m…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 5):<br/>No blocking findings.<br/>payments.jsonl holds<br/>amounts and category<br/>names in the git-ignored<br/>run folder, same class<br/>as…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-5:<br/>passed. Generic parts<br/>(nest, share by, weigh<br/>places, allocate) carry<br/>no household names, the<br/>household only wires<br/>the…"
+```
+
+## Phase 5 so far
+
+- **Neo**: Phase 5 impl complete (UND-99 part 2): pay\_\* stages, payments.jsonl, settled\_by on each card charge, open\_balance in summary, new generic m…
+- **Morpheus**: \*lead review phase-5: passed. Generic parts (nest, share by, weigh places, allocate) carry no household names, the household only wires the…

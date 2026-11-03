@@ -49,10 +49,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 5: Payments know what they paid for (UND-99 part 2, 4 pts)
 *Phase goal: `payments.jsonl`, `settled_by` on each charge, the open balance.*
-- [ ] **Task 5.1:** Tests first, then the `pay_*` stages in the household: payments from the linked card-side halves, the Amex pool, `payments.jsonl` with the five largest categories, `settled_by`, `open_balance`, a card with no payments left open; docs. **L3** (depends on kinds, categories and the allocation; failure cases). (*Owner: Neo | Trace: UND-99 AC1-7 | Verification: `bobp make test`, `bobp make lint`*)
-- [ ] **Task 5.2:** UAT on the real files: 12 payment lines, each payment's breakdown by category, the open balance of about $28,444, the first payment marked unexplained. **L3**. (*Owner: Trin | Trace: UND-99 AC1-7 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
-- [ ] **Task 5.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 5): ...`*)
-- [ ] **Task 5.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT25 sections 4-5, ADR-0057 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 5.1:** Tests first, then the `pay_*` stages in the household: payments from the linked card-side halves, the Amex pool, `payments.jsonl` with the five largest categories, `settled_by`, `open_balance`, a card with no payments left open; docs. **L3** (depends on kinds, categories and the allocation; failure cases). (*Owner: Neo | Trace: UND-99 AC1-7 | Verification: `bobp make test`, `bobp make lint`*)
+- [x] **Task 5.2:** UAT on the real files: 12 payment lines, each payment's breakdown by category, the open balance of about $28,444, the first payment marked unexplained. **L3**. (*Owner: Trin | Trace: UND-99 AC1-7 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
+- [x] **Task 5.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 5): ...`*)
+- [x] **Task 5.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT25 sections 4-5, ADR-0057 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 6: Spending by the tool's category (UND-100, 3 pts)
 *Phase goal: `spending.jsonl` and the console's list use the tool's categories.*

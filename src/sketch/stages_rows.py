@@ -102,13 +102,14 @@ async def prefer_middle(  # noqa: PLR0913 - the stage's with: keys
 
 
 @stage("map.weigh")
-async def weigh(context, source: Source, by: dict, into: str) -> list[dict]:
+async def weigh(context, source: Source, by: dict, into: str, places: int | None = None) -> list[dict]:
     """Each row of `source` plus `into`: the sum of its `by` fields, each times its weight (a field the row lacks, or
-    has as null, counts as zero)."""
-    return [
-        {**row, into: sum(weight * (row.get(field) or 0) for field, weight in by.items())}
-        for row in await context.read(source)
-    ]
+    has as null, counts as zero), rounded to `places` decimal places when given."""
+    def total(row) -> float:
+        value = sum(weight * (row.get(field) or 0) for field, weight in by.items())
+        return value if places is None else round(value, places)
+
+    return [{**row, into: total(row)} for row in await context.read(source)]
 
 
 @stage("reduce.any")
@@ -339,7 +340,8 @@ async def allocate(  # noqa: PLR0913 - the stage's with: keys
 ) -> list[dict]:
     """Each row of `source` (the charges) plus `into`: the `id` of the payment that settled it, or null when it is
     still open. Payments are taken in `day` order; each settles the charges dated on or before its `day`, oldest
-    first, and stops before its `amount` would be passed (what is left of it is the payment's remainder). A charge
+    first (charges of one day, smallest first, so the result does not depend on the order of the rows), and stops
+    before its `amount` would be passed (what is left of it is the payment's remainder). A charge
     belongs to at most one payment, and none dated after a payment is used for it. Amounts are compared as
     absolute values in whole cents; rows keep their order and fields."""
     def cents(row) -> int:
@@ -347,7 +349,7 @@ async def allocate(  # noqa: PLR0913 - the stage's with: keys
 
     rows = await context.read(source)
     settled: dict[int, object] = {}
-    queue = sorted(range(len(rows)), key=lambda i: rows[i][day])  # stable: ties keep their order
+    queue = sorted(range(len(rows)), key=lambda i: (rows[i][day], cents(rows[i])))  # a day's charges: smallest first
     for payment in sorted(await context.read(payments), key=lambda row: row[day]):
         left = cents(payment)
         for index in list(queue):
@@ -403,12 +405,32 @@ async def known(context, source: Source, field: str, among: Source, among_field:
 
 
 @stage("map.share")
-async def share(context, source: Source, field: str, into: str) -> list[dict]:
-    """Each row of `source` plus `into`: its `field` as a share of the total of `field` over all the rows, to four
-    places (0.0 for every row when the total is zero)."""
+async def share(context, source: Source, field: str, into: str, by: str | None = None) -> list[dict]:
+    """Each row of `source` plus `into`: its `field` as a share of the total of `field` over all the rows (or, with
+    `by`, over the rows with the same `by` value), to four places (0.0 for every row when the total is zero)."""
     rows = await context.read(source)
-    total = sum(row[field] for row in rows)
-    return [{**row, into: round(row[field] / total, 4) if total else 0.0} for row in rows]
+    def group_of(row):
+        return row[by] if by else None
+
+    totals: dict = {}
+    for row in rows:
+        totals[group_of(row)] = totals.get(group_of(row), 0) + row[field]
+    return [
+        {**row, into: round(row[field] / totals[group_of(row)], 4) if totals[group_of(row)] else 0.0} for row in rows
+    ]
+
+
+@stage("map.nest")
+async def nest(  # noqa: PLR0913 - the stage's with: keys
+    context, source: Source, other: Source, on: str, fields: list, into: str, other_on: str | None = None,
+) -> list[dict]:
+    """Each row of `source` plus `into`: a list with one entry for every row of `other` whose `other_on` (default `on`)
+    equals the row's `on`, in the order they come, each entry holding only the named `fields`. A row with no match gets
+    an empty list."""
+    nested: dict = {}
+    for row in await context.read(other):
+        nested.setdefault(row[other_on or on], []).append({field: row.get(field) for field in fields})
+    return [{**row, into: nested.get(row[on], [])} for row in await context.read(source)]
 
 
 @stage("map.set")

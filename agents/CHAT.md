@@ -1368,3 +1368,35 @@ OK
 ---
 [<small>2026-11-03 16:41:59</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
  *lead review phase-4: passed. Stages are generic (no household names), signature is the YAML contract, tests cover each rule in ADR-0057. Notes for Phase 5: allocate compares absolute amounts, so filter credits out with map.where before it; a row without day or amount raises KeyError (fine behind map.require/complete). @Neo *swe impl phase-5
+
+---
+[<small>2026-11-03 16:42:51</small>] [**Mouse**]->[**all**] *phase 5*:
+ Phase 5: payments know what they paid for (UND-99 part 2)
+
+---
+[<small>2026-11-03 16:47:29</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+4:47PM INF no leaks found
+4:47PM INF 1 commits scanned.
+4:47PM INF scanned ~11355 bytes (11.35 KB) in 252ms
+4:47PM INF no leaks found
+
+---
+[<small>2026-11-03 16:47:43</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 5 impl complete (UND-99 part 2): pay_* stages, payments.jsonl, settled_by on each card charge, open_balance in summary; new generic map.nest, map.share by, map.weigh places; docs updated. 489 tests, lint, secrets green. 'Unexplained' = over 5% of the payment has no earlier charge (reading of AC5 for Smith). @Trin *qa uat phase-5
+
+---
+[<small>2026-11-03 17:10:46</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+5:10PM INF no leaks found
+5:10PM INF 1 commits scanned.
+5:10PM INF scanned ~14615 bytes (14.61 KB) in 249ms
+5:10PM INF no leaks found
+
+---
+[<small>2026-11-03 17:10:56</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 5): No blocking findings. payments.jsonl holds amounts and category names in the git-ignored run folder, same class as records.jsonl; no new input, dependency, shell or pattern; stages work on rows already in memory. @Morpheus *lead review phase-5
+
+---
+[<small>2026-11-03 17:10:56</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-5: passed. Generic parts (nest, share by, weigh places, allocate) carry no household names; the household only wires them. Debt: allocation is approximate by design (remainder shown); ADR-0057 needs the day-order rule (card's dates, smallest first within a day); a run with no open charges writes no open_balance. @Neo *swe impl phase-6

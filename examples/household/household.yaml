@@ -531,6 +531,134 @@ sources:
     kind: stage
     do: { map: { action: concat } }
     with: { sources: [ account_totals, net_figure ] }
+  pay_pool:                             # the Amex pool: the records that came from the card's own export
+    kind: stage
+    do: { map: { action: where } }
+    with: { source: finished, keep: { "other_Account #": { ne: null } } }
+  pay_charges:
+    kind: stage
+    do: { map: { action: where } }
+    with: { source: pay_pool, keep: { cost: { lt: 0 } } }
+  pay_payments:                         # the card's "payment received" lines: transfers that put money on the card
+    kind: stage
+    do: { map: { action: where } }
+    with: { source: pay_pool, keep: { and: [ { kind: { eq: transfer } }, { cost: { gt: 0 } } ] } }
+  pay_allocated:                        # each charge with the payment that settled it, or null while it is open; by the card's own dates, not the bank's
+    kind: stage
+    do: { map: { action: allocate } }
+    with: { source: pay_charges, payments: pay_payments, amount: cost, day: other_date, id: record_id, into: settled_by }
+  pay_links:
+    kind: stage
+    do: { map: { action: keep } }
+    with: { source: pay_allocated, fields: [ record_id, settled_by ] }
+  final_records:                        # the records, each card charge saying which payment settled it
+    kind: stage
+    do: { map: { action: join } }
+    with: { source: finished, other: pay_links, on: record_id, keep_unmatched: true }
+  pay_unplaced:
+    kind: stage
+    do: { map: { action: set } }
+    with: { source: pay_allocated, fields: { unlabeled: unplaced } }
+  pay_named:                            # what each charge was for: the tool's category, or unplaced for a merchant in review
+    kind: stage
+    do: { map: { action: coalesce } }
+    with: { source: pay_unplaced, fields: { category: [ category_level, unlabeled ] } }
+  pay_settled:
+    kind: stage
+    do: { map: { action: where } }
+    with: { source: pay_named, keep: { settled_by: { ne: null } } }
+  pay_keyed:
+    kind: stage
+    do: { map: { action: format } }
+    with: { source: pay_settled, template: "{settled_by}|{category}", into: pay_key }
+  pay_by_category:
+    kind: stage
+    do: { map: { action: group } }
+    with:
+      source: pay_keyed
+      by: pay_key
+      sums: { spent: cost }
+      commonest: { settled_by: settled_by, category: category }
+  pay_amounts:                          # money out as a positive figure
+    kind: stage
+    do: { map: { action: weigh } }
+    with: { source: pay_by_category, by: { spent: -1 }, into: amount, places: 2 }
+  pay_shares:                           # each category's share of its payment's settled charges
+    kind: stage
+    do: { map: { action: share } }
+    with: { source: pay_amounts, field: amount, into: share, by: settled_by }
+  pay_top:                              # the five largest categories of each payment
+    kind: stage
+    do: { map: { action: top } }
+    with: { source: pay_shares, by: settled_by, field: amount, take: 5 }
+  pay_totals:                           # what each payment settled: how many charges and how much
+    kind: stage
+    do: { map: { action: group } }
+    with: { source: pay_settled, by: settled_by, sums: { spent: cost } }
+  pay_joined:
+    kind: stage
+    do: { map: { action: join } }
+    with: { source: pay_payments, other: pay_totals, on: record_id, other_on: settled_by, keep_unmatched: true, prefix: t_ }
+  pay_settled_amount:
+    kind: stage
+    do: { map: { action: weigh } }
+    with: { source: pay_joined, by: { t_spent: -1 }, into: settled, places: 2 }
+  pay_charge_count:
+    kind: stage
+    do: { map: { action: weigh } }
+    with: { source: pay_settled_amount, by: { t_count: 1 }, into: charges }
+  pay_remainder:                        # what the payment paid beyond the charges that came before it
+    kind: stage
+    do: { map: { action: weigh } }
+    with: { source: pay_charge_count, by: { cost: 1, settled: -1 }, into: remainder, places: 2 }
+  pay_overshoot:                        # positive when more than 5% of the payment is not explained by a charge
+    kind: stage
+    do: { map: { action: weigh } }
+    with: { source: pay_remainder, by: { remainder: 1, cost: -0.05 }, into: overshoot, places: 2 }
+  pay_flagged:
+    kind: stage
+    do: { map: { action: classify } }
+    with: { source: pay_overshoot, into: unexplained, cases: [ { if: { overshoot: { gt: 0 } }, then: true } ], otherwise: false }
+  pay_named_payments:
+    kind: stage
+    do: { map: { action: coalesce } }
+    with: { source: pay_flagged, fields: { payment_id: [ record_id ], amount: [ cost ] } }
+  pay_nested:
+    kind: stage
+    do: { map: { action: nest } }
+    with: { source: pay_named_payments, other: pay_top, on: record_id, other_on: settled_by, fields: [ category, amount, share ], into: top }
+  pay_ordered:                          # oldest payment first
+    kind: stage
+    do: { reduce: { action: min } }
+    with: { source: pay_nested, field: day, take: 1000000 }
+  payments:
+    kind: stage
+    do: { map: { action: keep } }
+    with: { source: pay_ordered, fields: [ payment_id, day, card, amount, charges, settled, remainder, unexplained, top ] }
+  pay_open:                             # the card's charges no payment has settled yet
+    kind: stage
+    do: { map: { action: where } }
+    with: { source: pay_allocated, keep: { settled_by: { eq: null } } }
+  pay_open_scope:
+    kind: stage
+    do: { map: { action: set } }
+    with: { source: pay_open, fields: { scope: all } }
+  pay_open_sum:
+    kind: stage
+    do: { map: { action: group } }
+    with: { source: pay_open_scope, by: scope, sums: { net: cost } }
+  pay_open_amount:
+    kind: stage
+    do: { map: { action: weigh } }
+    with: { source: pay_open_sum, by: { net: -1 }, into: amount, places: 2 }
+  open_balance_keep:
+    kind: stage
+    do: { map: { action: keep } }
+    with: { source: pay_open_amount, fields: [ scope, count, amount ] }
+  open_balance_noted:                   # the one figure for what the card still owes from open charges, also in summary.json
+    kind: stage
+    do: { reduce: { action: note } }
+    with: { source: open_balance_keep, into: open_balance }
   kinds:                                # how many records of each kind, and how many were placed or are for review
     kind: stage
     do: { map: { action: group } }
@@ -550,6 +678,7 @@ sinks:
   spending: spending.jsonl
   taxonomy: taxonomy.jsonl
   crosswalk: crosswalk.jsonl
+  payments: payments.jsonl
 
 machine:
   initial: check_additions
@@ -576,7 +705,11 @@ machine:
       then: write_records
     write_records:
       do: { sink: { name: records } }
-      with: { source: finished }
+      with: { source: final_records }
+      then: write_payments
+    write_payments:
+      do: { sink: { name: payments } }
+      with: { source: payments }
       then: write_legs
     write_legs:
       do: { sink: { name: legs } }
@@ -609,6 +742,10 @@ machine:
     note_spending:                      # reading the total puts it in summary.json
       do: { reduce: { action: any } }
       with: { source: spend_total }
+      then: note_open
+    note_open:
+      do: { reduce: { action: any } }
+      with: { source: open_balance_noted }
       then: done
     done:
       final: true
