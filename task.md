@@ -56,10 +56,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 6: Spending by the tool's category (UND-100, 3 pts)
 *Phase goal: `spending.jsonl` and the console's list use the tool's categories.*
-- [ ] **Task 6.1:** Tests first, then the `spend_*` stages take the tool's category (`unplaced` for a merchant for review), no export category in the list, transfers and the card payments themselves out; docs. **L2**. (*Owner: Neo | Trace: UND-100 AC1-4 | Verification: `bobp make test`, `bobp make lint`, `bobp make test-browser`*)
-- [ ] **Task 6.2:** UAT on the real run and in the console: the list is ISO and Household categories only; shares add to 1; amounts equal `spending_total`. **L2**. (*Owner: Trin | Trace: UND-100 AC1-4 | Verification: UAT verdict and screenshot noted in `agents/CHAT.md`*)
-- [ ] **Task 6.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 6): ...`*)
-- [ ] **Task 6.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT25 section 5 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 6.1:** Tests first, then the `spend_*` stages take the tool's category (`unplaced` for a merchant for review), no export category in the list, transfers and the card payments themselves out; docs. **L2**. (*Owner: Neo | Trace: UND-100 AC1-4 | Verification: `bobp make test`, `bobp make lint`, `bobp make test-browser`*)
+- [x] **Task 6.2:** UAT on the real run and in the console: the list is ISO and Household categories only; shares add to 1; amounts equal `spending_total`. **L2**. (*Owner: Trin | Trace: UND-100 AC1-4 | Verification: UAT verdict and screenshot noted in `agents/CHAT.md`*)
+- [x] **Task 6.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 6): ...`*)
+- [x] **Task 6.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT25 section 5 | Verification: result in `agents/CHAT.md`*)
 
 ---
 

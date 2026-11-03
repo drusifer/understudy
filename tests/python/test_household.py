@@ -215,7 +215,7 @@ class SpendingTests(unittest.TestCase):
         totals: dict[str, float] = {}
         for r in self.records:
             if r["kind"] in ("purchase", "refund"):
-                name = r.get("Category") or r.get("category_level") or "uncategorized"
+                name = r.get("category_level") or "unplaced"
                 totals[name] = round(totals.get(name, 0.0) + r["cost"], 2)
         return {name: round(-total, 2) for name, total in totals.items()}
 
@@ -225,10 +225,12 @@ class SpendingTests(unittest.TestCase):
         self.assertEqual(sum(line["count"] for line in self.spending),
                          sum(r["kind"] in ("purchase", "refund") for r in self.records))
 
-    def test_the_export_category_comes_first_then_jevs_then_uncategorized(self):
+    def test_the_list_holds_only_the_tools_categories_and_unplaced_never_the_exports(self):
         names = {line["category"] for line in self.spending}
-        self.assertIn("Shopping & Retail: General", names)  # the export's own
-        self.assertNotIn(None, names)
+        placed = {r["category_level"] for r in self.records if r.get("category_level")}
+        self.assertEqual(names - placed, {"unplaced"})  # the shoe shop and Venmo are for review
+        self.assertNotIn("Shopping & Retail: General", names)  # the export's own word for the Store
+        self.assertNotIn("uncategorized", names)
 
     def test_income_credits_and_transfers_are_not_in_the_list(self):
         self.assertNotIn("Income: Paychecks", {line["category"] for line in self.spending})

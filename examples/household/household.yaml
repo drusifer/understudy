@@ -454,11 +454,11 @@ sources:
   spend_default:
     kind: stage
     do: { map: { action: set } }
-    with: { source: spend_rows, fields: { unlabeled: uncategorized } }
-  spend_named:                          # the owner's own category first, then Jev's, then none
+    with: { source: spend_rows, fields: { unlabeled: unplaced } }
+  spend_named:                          # the tool's category (Jev's, or the owner's pin); unplaced for a merchant in review
     kind: stage
     do: { map: { action: coalesce } }
-    with: { source: spend_default, fields: { category: [ Category, category_level, unlabeled ] } }
+    with: { source: spend_default, fields: { category: [ category_level, unlabeled ] } }
   spend_by_category:
     kind: stage
     do: { map: { action: group } }

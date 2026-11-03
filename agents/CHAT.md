@@ -1400,3 +1400,32 @@ OK
 ---
 [<small>2026-11-03 17:10:56</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
  *lead review phase-5: passed. Generic parts (nest, share by, weigh places, allocate) carry no household names; the household only wires them. Debt: allocation is approximate by design (remainder shown); ADR-0057 needs the day-order rule (card's dates, smallest first within a day); a run with no open charges writes no open_balance. @Neo *swe impl phase-6
+
+---
+[<small>2026-11-03 17:28:47</small>] [**Mouse**]->[**all**] *phase 6*:
+ Phase 6: spending by the tool's category (UND-100)
+
+---
+[<small>2026-11-03 17:39:14</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-browser | /home/drusifer/Projects/understudy/build/build.out
+......................
+----------------------------------------------------------------------
+Ran 22 tests in 101.674s
+
+OK
+
+---
+[<small>2026-11-03 17:39:28</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 6 impl complete (UND-100): spending.jsonl uses the tool's category (category_level: Jev or pin), unplaced for a merchant in review, never the export's Category; tests and docs updated; make check 491 green, test-browser 22/22. @Trin *qa uat phase-6
+
+---
+[<small>2026-11-03 17:39:29</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 6 passed (UND-100 AC1-4) on the full baseline (replay): 99 categories, none outside the clean list except unplaced; shares add to 1.0001; amounts add to 450,144.50 = spending_total (5,812 records); transfers and card payments absent. Finding for the owner: unplaced is 38.6% of spending (173,565.40, 2,041 records) until more merchants are pinned. @Switch *sec review phase-6
+
+---
+[<small>2026-11-03 17:39:29</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 6): No blocking findings. One sketch edit (which field names a spending category) and test changes; no new input, output, dependency or pattern. @Morpheus *lead review phase-6
+
+---
+[<small>2026-11-03 17:39:29</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
+ *lead review phase-6: passed. The list now follows the same category as every other report; the old export-first rule is gone with no fallback. All phases reviewed. @Tank *devops sdlc-check

@@ -926,7 +926,41 @@ sequenceDiagram
     Note right of Morpheus: "*lead review phase-5:<br/>passed. Generic parts<br/>(nest, share by, weigh<br/>places, allocate) carry<br/>no household names, the<br/>household only wires<br/>the…"
 ```
 
-## Phase 5 so far
+## Phase 5 close-out
 
 - **Neo**: Phase 5 impl complete (UND-99 part 2): pay\_\* stages, payments.jsonl, settled\_by on each card charge, open\_balance in summary, new generic m…
 - **Morpheus**: \*lead review phase-5: passed. Generic parts (nest, share by, weigh places, allocate) carry no household names, the household only wires the…
+
+## Phase 6 starts
+
+Phase 6: spending by the tool's category (UND-100)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    participant Tank
+    Note over Mouse,Tank: 📅 2026-11-03
+    Mouse->>All: "phase 6"
+    Note right of Mouse: "Phase 6: spending by the<br/>tool's category<br/>(UND-100)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 6 impl complete<br/>(UND-100):<br/>spending.jsonl uses the<br/>tool's category<br/>(category_level: Jev or<br/>pin), unplaced for a<br/>merchant in review, n…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 6 passed<br/>(UND-100 AC1-4) on the<br/>full baseline (replay):<br/>99 categories, none<br/>outside the clean list<br/>except unplaced, shares<br/>add to…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 6):<br/>No blocking findings.<br/>One sketch edit (which<br/>field names a spending<br/>category) and test<br/>changes, no new input,<br/>outp…"
+    Morpheus->>Tank: "lead handoff"
+    Note right of Morpheus: "*lead review phase-6:<br/>passed. The list now<br/>follows the same<br/>category as every other<br/>report, the old export-<br/>first rule is gone with<br/>no fallb…"
+```
+
+## Phase 6 so far
+
+- **Neo**: Phase 6 impl complete (UND-100): spending.jsonl uses the tool's category (category\_level: Jev or pin), unplaced for a merchant in review, n…
+- **Trin**: UAT phase 6 passed (UND-100 AC1-4) on the full baseline (replay): 99 categories, none outside the clean list except unplaced, shares add to…
+- **Morpheus**: \*lead review phase-6: passed. The list now follows the same category as every other report, the old export-first rule is gone with no fallb…

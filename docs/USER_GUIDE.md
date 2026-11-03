@@ -201,6 +201,14 @@ What it does, in order:
 6. Writes `crosswalk.jsonl`: every merchant, biggest first, with the category the tool chose and the export's most
    common category side by side, and `differs_on_money_moving` where the tool and the export's own labels disagree
    about whether the money was a transfer; the summary counts them (`crosswalk_flagged`).
+7. Ties each card payment to the charges it settled: for the Amex export, a payment settles that card's charges
+   oldest first by the card's own dates (a day's charges smallest first), never past its amount, never a charge dated
+   after it, and a charge in at most one payment. `payments.jsonl` has one line per payment (`payment_id`, `day`,
+   `card`, `amount`, `charges` settled, `settled` amount, `remainder`, `unexplained` when more than 5% of the payment
+   has no earlier charge to explain it, and `top`: its five largest categories with `amount` and `share`). Each card
+   charge in `records.jsonl` has `settled_by` (the payment's id, or null while it is open), and `summary.json` has
+   `open_balance` (the count and amount of charges after the last payment). A card with no payments has no lines and
+   every charge open.
 
 **Pinned categories.** `review.jsonl` is your work list. To settle a merchant, add a line to your pin file, one JSON
 object per line: `{"payee": "Amazon", "category": "Retail outlets: Book stores"}`. The category must be in the
@@ -222,6 +230,6 @@ ISO name or an earlier line stops the run before any request to Jev and names th
 
 Each run creates a new folder under `.understudy/runs/` (or `--out`): `records.jsonl` (one record per transaction with its
 `kind`: purchase, refund, credit, transfer or invalid; its link and its category), `legs.jsonl`,
-`kinds.jsonl` and `statuses.jsonl` (counts), `review.jsonl` (one line per merchant Jev was not sure of, most records first: `payee`, `count`, `amount`, Jev's `top` and `runner_up` categories with their probabilities, and the `reason`, `below_0.7` or `none_of_these`; empty when nothing needs review), `spending.jsonl` (what the money goes on: one line per category, biggest first, with `count`, `amount` spent and `share` of all spending; a record's category is your export's own `Category`, else the one Jev placed it in, else `uncategorized`; purchases and refunds only, so a refund lowers its category, and income, credits and transfers are not in it; the total is `spending_total` in `summary.json`), `totals.jsonl` (for each account, the money in, money out and net of its purchases, refunds and credits, transfers left out, then one `all` row; the `all` row is also `net_spending` in `summary.json`), `summary.json` (run facts) and `run.json`. Amounts
+`kinds.jsonl` and `statuses.jsonl` (counts), `review.jsonl` (one line per merchant Jev was not sure of, most records first: `payee`, `count`, `amount`, Jev's `top` and `runner_up` categories with their probabilities, and the `reason`, `below_0.7` or `none_of_these`; empty when nothing needs review), `spending.jsonl` (what the money goes on: one line per category, biggest first, with `count`, `amount` spent and `share` of all spending; a record's category is the tool's own (Jev's or your pin), `unplaced` for a merchant still for review, and never the export's `Category`; purchases and refunds only, so a refund lowers its category, and income, credits and transfers are not in it; the total is `spending_total` in `summary.json`), `totals.jsonl` (for each account, the money in, money out and net of its purchases, refunds and credits, transfers left out, then one `all` row; the `all` row is also `net_spending` in `summary.json`), `summary.json` (run facts) and `run.json`. Amounts
 are signed as Monarch writes them: purchases negative, refunds positive. A failed stage publishes no output.
 Keep household inputs and outputs in ignored `data/` and `build/` folders.
