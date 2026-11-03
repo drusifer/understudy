@@ -242,3 +242,4 @@ Everything above this heading about the old player (watch page, dashboard, proce
 - Sprint 24: typed inputs (the owner wants them: dial, faders, stepper, switches), the YAML editor, and now that the story exists, the statechart diagram, pause and step, replay of a log and decision detail: `docs/sprints/OLD_VERSION_PARITY.md`. (Cypher)
 - The browser check takes 63 seconds, so it is not a release gate (owner rule: only if it takes seconds). (Trin)
 - Act on the expiries: SEC-002 by 2026-12-01 (still accepted); SEC-005 by 2027-01-30. (Switch, owner)
+- (Owner, 2026-11-02, decision 9, Sprint 24) Widen the transfer rule to the card-side labels, replacing "relabel in Monarch" above, and add a spending-by-category summary so the owner sees what the money goes on. Check first whether "Transportation: Transfers" are ride transfers (spending) or money moves. (Cypher, Neo)
