@@ -43,6 +43,7 @@ async function openReplay() {
   $('replay-scrub').max = String(info.events);
   replayEnable(true);
   $('replay-open').disabled = true;
+  if (typeof drawJumps === 'function') drawJumps(); // decisions.js: a decision can now move the cursor
   await replayTo(0);
 }
 
@@ -113,6 +114,7 @@ function endReplay(restore = true) {
   replay.ticket += 1;
   $('replay').hidden = true;
   replaySay('');
+  if (typeof drawJumps === 'function') drawJumps();
   if (wasOpen && restore && state.chosen) choose(state.chosen);
 }
 

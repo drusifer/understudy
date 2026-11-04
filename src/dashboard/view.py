@@ -74,8 +74,11 @@ def printed(event: dict) -> dict:
         "stage_completed": lambda: f"  done   {event.get('stage', '')}",
         "stage_failed": lambda: f"  FAILED {event.get('stage', '')}: {event.get('reason', '')}",
         "run_finished": lambda: f"=== {str(event.get('outcome', '')).upper()} ===",
+        "decision": lambda: (f"  decision {event.get('stage', '')}: {event.get('row', '?')} {event.get('dimension', '?')}"
+                             f" = {event.get('pick', '?')} ({event.get('probability', '?')})"),
     }.get(kind, lambda: f"  {kind}")()
-    return {"text": f"{clock}  {detail}" if clock else detail, "tone": TONES.get(kind, ""), "stage": event.get("stage", "")}
+    return {"text": f"{clock}  {detail}" if clock else detail, "tone": TONES.get(kind, ""), "stage": event.get("stage", ""),
+            "event": kind}
 
 
 def _seconds(events: list[dict]) -> float:

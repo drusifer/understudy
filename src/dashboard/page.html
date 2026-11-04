@@ -11,6 +11,7 @@
 <script src="page.js" defer></script>
 <script src="controls.js" defer></script>
 <script src="replay.js" defer></script>
+<script src="decisions.js" defer></script>
 </head>
 <body>
 <div class="room">
@@ -127,6 +128,10 @@
       <ol id="spending-list" class="spend-list"></ol>
       <p id="spending-more" class="spend-more"></p>
     </section>
+    <details id="decisions" class="jev" aria-label="Decisions of this run">
+      <summary id="decisions-summary">DECISIONS</summary>
+      <div id="decisions-list" class="jev-list"></div>
+    </details>
     <details id="jev" class="jev" aria-label="Jev reads of this run">
       <summary id="jev-summary">JEV READS</summary>
       <label class="find-check"><input id="jev-unsure" type="checkbox"> unsure only</label>

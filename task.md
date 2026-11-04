@@ -49,10 +49,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 5: See the decision (UND-85, 5 pts)
 *Phase goal: list a run's decisions, open one, jump to it in a replay.*
-- [ ] **Task 5.1:** Tests first, then `decisions(dir)`, `GET /api/runs/<id>/decisions`, the list and panel in the page (options with weight and `removed_by`, blend, pick), the jump from a decision to its event in a replay, a run with none, an incomplete line. **L3**. (*Owner: Neo | Trace: UND-85 AC1-4 | Verification: `bobp make test`, `bobp make lint`, `bobp make test-browser`*)
-- [ ] **Task 5.2:** UAT on a coffee run and an evening run (they decide): every decision opens with its options, rule and pick; the jump lands on the right event; a household run says it has none. **L2**. (*Owner: Trin | Trace: UND-85 AC1-3 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
-- [ ] **Task 5.3:** Security quick pass: names from a log shown as text. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 5): ...`*)
-- [ ] **Task 5.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT26 sections 4-5 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 5.1:** Tests first, then `decisions(dir)`, `GET /api/runs/<id>/decisions`, the list and panel in the page (options with weight and `removed_by`, blend, pick), the jump from a decision to its event in a replay, a run with none, an incomplete line. **L3**. (*Owner: Neo | Trace: UND-85 AC1-4 | Verification: `bobp make test`, `bobp make lint`, `bobp make test-browser`*)
+- [x] **Task 5.2:** UAT on a coffee run and an evening run (they decide): every decision opens with its options, rule and pick; the jump lands on the right event; a household run says it has none. **L2**. (*Owner: Trin | Trace: UND-85 AC1-3 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
+- [x] **Task 5.3:** Security quick pass: names from a log shown as text. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 5): ...`*)
+- [x] **Task 5.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT26 sections 4-5 | Verification: result in `agents/CHAT.md`*)
 
 ---
 

@@ -1127,7 +1127,41 @@ sequenceDiagram
     Note right of Morpheus: "*lead review phase-4:<br/>passed. The page reuses<br/>drawStatus and<br/>renderPaper (no second<br/>drawing),<br/>state.chosenState is<br/>saved and restored so<br/>th…"
 ```
 
-## Phase 4 so far
+## Phase 4 close-out
 
 - **Neo**: Phase 4 impl complete (UND-84 part 2): replay bar (REPLAY, STEP BACK, PLAY/PAUSE, STEP, scrubber, 'event N of M', LIVE), replay.js drawing…
 - **Morpheus**: \*lead review phase-4: passed. The page reuses drawStatus and renderPaper (no second drawing), state.chosenState is saved and restored so th…
+
+## Phase 5 starts
+
+Phase 5: see the decision (UND-85)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    participant Tank
+    Note over Mouse,Tank: 📅 2026-11-03
+    Mouse->>All: "phase 5"
+    Note right of Mouse: "Phase 5: see the<br/>decision (UND-85)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 5 impl complete<br/>(UND-85): decisions() +<br/>GET /api/runs/<id>/decis<br/>ions, decision lines<br/>printed readably<br/>(printed() now carries<br/>the even…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 5 passed<br/>(UND-85 AC1-4): real<br/>coffee run (replay<br/>mode): 11 decisions,<br/>each at the event the<br/>list gives and shown<br/>there in a repla…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 5):<br/>No blocking findings.<br/>Log-derived text (stage,<br/>row, dimension, pick,<br/>option names,<br/>removed_by) is set with<br/>textCon…"
+    Morpheus->>Tank: "lead handoff"
+    Note right of Morpheus: "*lead review phase-5:<br/>passed. All phases<br/>reviewed. Debt for the<br/>retro: the console's<br/>end-to-end tests are<br/>growing faster than they<br/>should (…"
+```
+
+## Phase 5 so far
+
+- **Neo**: Phase 5 impl complete (UND-85): decisions() + GET /api/runs/&lt;id&gt;/decisions, decision lines printed readably (printed() now carries the even…
+- **Trin**: UAT phase 5 passed (UND-85 AC1-4): real coffee run (replay mode): 11 decisions, each at the event the list gives and shown there in a repla…
+- **Morpheus**: \*lead review phase-5: passed. All phases reviewed. Debt for the retro: the console's end-to-end tests are growing faster than they should (…

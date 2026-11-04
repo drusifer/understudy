@@ -28,7 +28,7 @@ from urllib.parse import parse_qs, urlparse
 
 from src.dashboard.hold import ACTIONS, GONE, apply_hold
 from src.dashboard.reads import jev_reads
-from src.dashboard.replay import replay
+from src.dashboard.replay import decisions, replay
 from src.dashboard.runs import Launcher, Refused
 from src.dashboard.view import describe, list_runs, printed, read_events
 from src.paths import ROOT
@@ -36,8 +36,9 @@ from src.sketch.sources.capture import CACHE
 
 HERE = Path(__file__).parent
 STATIC_TYPES = {".html": "text/html", ".css": "text/css", ".js": "text/javascript", ".woff2": "font/woff2"}
-STATIC_NAMES = re.compile(r"(page\.html|page\.css|page\.js|controls\.js|replay\.js|theme-[a-z-]+\.css|fonts/[a-z0-9-]+\.woff2)")
-RUN_ROUTE = re.compile(r"/(?P<what>api/runs|events)/(?P<run>run-[0-9A-Za-z-]+)(?P<more>/jev|/replay)?")
+STATIC_NAMES = re.compile(
+    r"(page\.html|page\.css|page\.js|controls\.js|replay\.js|decisions\.js|theme-[a-z-]+\.css|fonts/[a-z0-9-]+\.woff2)")
+RUN_ROUTE = re.compile(r"/(?P<what>api/runs|events)/(?P<run>run-[0-9A-Za-z-]+)(?P<more>/jev|/replay|/decisions)?")
 MAX_STREAMS = 32  # watchers at once; more get a 503 (SEC-001)
 IDLE_SECONDS = 600  # a stream with no new line for this long ends (SEC-001)
 MAX_BODY = 8192  # bytes of JSON a POST may carry (SEC-006)
@@ -97,9 +98,9 @@ def _run_answer(console: Console, directory: Path, match: re.Match, revealed: bo
         return "events", directory
     if match["more"] == "/jev":
         return "json", jev_reads(directory, console.cache, console.project, reveal=revealed)
-    if match["more"] == "/replay":
+    if match["more"] in ("/replay", "/decisions"):
         try:
-            return "json", replay(directory, _position(query))
+            return "json", decisions(directory) if match["more"] == "/decisions" else replay(directory, _position(query))
         except Refused as refused:
             return "refused", (refused.status, refused.message)
     return "json", describe(directory)

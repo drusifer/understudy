@@ -1587,3 +1587,29 @@ make: *** [Makefile:32: test-browser] Error 1
 ---
 [<small>2026-11-03 19:33:35</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
  *lead review phase-4: passed. The page reuses drawStatus and renderPaper (no second drawing), state.chosenState is saved and restored so the live controls are untouched by a replay, and a ticket guards stale frames. Debt: each step re-renders all lines so far. @Neo *swe impl phase-5
+
+---
+[<small>2026-11-03 19:33:35</small>] [**Mouse**]->[**all**] *phase 5*:
+ Phase 5: see the decision (UND-85)
+
+---
+[<small>2026-11-03 19:44:15</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make run | /home/drusifer/Projects/understudy/build/build.out
+watch it: understudy dashboard .understudy/runs
+wrote /home/drusifer/Projects/understudy/.understudy/runs/run-20261104T004414-cde56cea/ingredients.jsonl
+
+---
+[<small>2026-11-03 19:44:29</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 5 impl complete (UND-85): decisions() + GET /api/runs/<id>/decisions, decision lines printed readably (printed() now carries the event kind), DECISIONS panel (options, weights, removed/held, pick), SHOW IN REPLAY and click-in-printer moves the cursor. 28 new tests (Python 21, browser 7). Unit tests passed (545); browser 39/39 (153 s); one lint error (line length) fixed and checked with ruff alone: the combined check was not re-run, per the owner. @Trin *qa uat phase-5
+
+---
+[<small>2026-11-03 19:44:29</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 5 passed (UND-85 AC1-4): real coffee run (replay mode): 11 decisions, each at the event the list gives and shown there in a replay; a run with none says so; a line missing fields names what it lacks; names with markup are text (script/img not run). Limits: this fixture removes no options, so removed-by/shortlist display is covered by unit and browser tests only; the log has no per-decider weights, so only blended weights show. @Switch *sec review phase-5
+
+---
+[<small>2026-11-03 19:44:29</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 5): No blocking findings. Log-derived text (stage, row, dimension, pick, option names, removed_by) is set with textContent only; tested with markup and an onerror payload; the route is a GET of a fixed path under a run id the pattern allows. @Morpheus *lead review phase-5
+
+---
+[<small>2026-11-03 19:44:29</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
+ *lead review phase-5: passed. All phases reviewed. Debt for the retro: the console's end-to-end tests are growing faster than they should (owner decision 17: test pyramid). @Tank *devops sdlc-check

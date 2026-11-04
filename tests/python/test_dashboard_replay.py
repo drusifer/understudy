@@ -9,10 +9,10 @@ import urllib.request
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from src.dashboard.replay import replay
+from src.dashboard.replay import decisions, replay
 from src.dashboard.runs import Refused
 from src.dashboard.server import serve
-from src.dashboard.view import describe
+from src.dashboard.view import describe, printed
 
 RUN = "run-20261103T100000-aaaaaaaa"
 NOW = datetime(2026, 11, 3, 10, 0, 30, tzinfo=UTC)
@@ -184,3 +184,78 @@ class ReplayHttpTests(ReplayCase):
 
     def test_a_run_that_is_not_there_is_404(self):
         self.assertEqual(self.get("/api/runs/run-20990101T000000-bbbbbbbb/replay")[0], 404)
+
+
+def decision(row="teens", dimension="temp", pick="hot", options=None, **extra):
+    options = options or [{"name": "hot", "weight": 0.7, "removed_by": None}, {"name": "iced", "weight": 0.3, "removed_by": None}]
+    return {"event": "decision", "stage": "match", "row": row, "dimension": dimension, "pick": pick, "probability": 0.7,
+            "options": options, **extra}
+
+
+class DecisionsTests(ReplayCase):
+    def folder(self, events):
+        return write(self.root, [STORY, *events, {"event": "run_finished", "outcome": "complete"}], COMPLETE)
+
+    def test_each_decision_is_listed_with_its_event_number_stage_row_dimension_pick_and_options(self):
+        folder = self.folder([{"event": "stage_started", "stage": "match"}, decision(),
+                              decision(row="adults", dimension="size", pick="large", options=[
+                                  {"name": "small", "weight": 0.0, "removed_by": "forbid rule 2"},
+                                  {"name": "large", "weight": 0.7, "removed_by": None},
+                                  {"name": "medium", "weight": 0.3, "removed_by": "shortlist"}])])
+        found = decisions(folder)
+        self.assertEqual([(d["index"], d["row"], d["dimension"], d["pick"]) for d in found],
+                         [(2, "teens", "temp", "hot"), (3, "adults", "size", "large")])  # index = the event's position (0-based)
+        self.assertEqual(found[1]["options"][0], {"name": "small", "weight": 0.0, "removed_by": "forbid rule 2"})
+        self.assertEqual(found[1]["options"][2]["removed_by"], "shortlist")
+        self.assertEqual((found[0]["stage"], found[0]["probability"]), ("match", 0.7))
+
+    def test_a_run_with_no_decisions_lists_none(self):
+        self.assertEqual(decisions(write(self.root, FINISHED, COMPLETE)), [])
+
+    def test_a_decision_missing_fields_shows_what_it_has_and_names_what_is_missing(self):
+        folder = self.folder([{"event": "decision", "stage": "match", "dimension": "temp"}])
+        (found,) = decisions(folder)
+        self.assertEqual((found["dimension"], found["pick"], found["options"]), ("temp", None, []))
+        self.assertEqual(found["missing"], ["row", "pick", "probability", "options"])
+
+    def test_options_that_are_not_a_list_of_objects_are_dropped_not_crashed_on(self):
+        folder = self.folder([decision(options=["hot", {"name": "iced"}, None, {"weight": "heavy"}])])
+        (found,) = decisions(folder)
+        self.assertEqual([o["name"] for o in found["options"]], ["iced", None])
+        self.assertIn("options", found["missing"])  # only part of them could be shown
+
+    def test_names_with_markup_are_returned_as_they_are_for_the_page_to_draw_as_text(self):
+        folder = self.folder([decision(row="<b>x</b>", pick="<script>1</script>")])
+        (found,) = decisions(folder)
+        self.assertEqual((found["row"], found["pick"]), ("<b>x</b>", "<script>1</script>"))
+
+    def test_an_unreadable_log_is_refused_like_a_replay(self):
+        folder = self.folder([decision()])
+        (folder / "events.jsonl").write_text("{broken\n", encoding="utf-8")
+        with self.assertRaises(Refused) as refused:
+            decisions(folder)
+        self.assertEqual(refused.exception.status, 422)
+
+    def test_the_printed_line_of_a_decision_names_the_choice(self):
+        self.assertEqual(printed({"event": "decision", "at": "2026-11-03T10:00:01+00:00", "stage": "match", "row": "teens",
+                                  "dimension": "temp", "pick": "hot", "probability": 0.7})["text"],
+                         "10:00:01    decision match: teens temp = hot (0.7)")
+
+    def test_a_decision_line_can_be_told_from_the_rest_so_the_page_can_open_it(self):
+        self.assertEqual(printed({"event": "decision"})["event"], "decision")
+
+
+class DecisionsHttpTests(ReplayCase):
+    def test_the_list_is_served_for_a_run_and_a_bad_log_is_422(self):
+        folder = write(self.root, [STORY, decision(), {"event": "run_finished", "outcome": "complete"}], COMPLETE)
+        server = serve(self.root, port=0)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        base = f"http://127.0.0.1:{server.server_address[1]}"
+        with urllib.request.urlopen(f"{base}/api/runs/{RUN}/decisions", timeout=10) as response:
+            self.assertEqual([d["pick"] for d in json.loads(response.read().decode())], ["hot"])
+        (folder / "events.jsonl").write_text("{broken\n", encoding="utf-8")
+        with self.assertRaises(urllib.error.HTTPError) as refused:
+            urllib.request.urlopen(f"{base}/api/runs/{RUN}/decisions", timeout=10)
+        self.assertEqual(refused.exception.code, 422)

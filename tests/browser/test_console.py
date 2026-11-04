@@ -811,5 +811,111 @@ class ReplayBarTest(BrowserCase):
         self.assertEqual(problems, [], "\n" + "\n".join(problems))
 
 
+def a_decision(second, row, pick, options):
+    return {"event": "decision", "at": stamp(second), "stage": "match", "row": row, "dimension": "temp", "pick": pick,
+            "probability": 0.7, "options": options}
+
+
+HOT = [{"name": "hot", "weight": 0.7, "removed_by": None}, {"name": "iced", "weight": 0.3, "removed_by": None}]
+FORBIDDEN = [{"name": "small", "weight": 0.0, "removed_by": "forbid rule 2"}, {"name": "large", "weight": 0.7, "removed_by": None},
+             {"name": "medium", "weight": 0.3, "removed_by": "shortlist"}]
+
+
+class DecisionPanelTest(BrowserCase):
+    NAME = "run-20261101T180000-00000001"
+
+    def deciding(self, decisions, name=None):
+        started = {"event": "run_started", "at": stamp(0), "sketch": "x/chart.yaml", "mode": "live", **STORY}
+        events = [started, entered(1, "a", "start"), {"event": "stage_started", "at": stamp(2), "stage": "match"}, *decisions,
+                  {"event": "stage_completed", "at": stamp(8), "stage": "match"}, {"event": "run_finished", "at": stamp(9), "outcome": "complete"}]
+        return write_run(self.runs, name or self.NAME, events,
+                         {"status": "complete", "stages": {"match": "complete"}, "mode": "live", "outcome": "complete"})
+
+    def open(self):
+        page = self.page()
+        page.add_init_script("window.understudyReplayMs = 40;")
+        page.goto(self.start())
+        page.wait_for_function("document.getElementById('status-text').textContent === 'DONE'")
+        return page
+
+    def test_each_decision_opens_to_its_options_the_rule_that_removed_them_and_the_pick(self):
+        self.deciding([a_decision(3, "teens", "hot", HOT), a_decision(4, "adults", "large", FORBIDDEN)])
+        page = self.open()
+        page.wait_for_function("document.getElementById('decisions-summary').textContent === 'DECISIONS · 2'")
+        page.locator("#decisions-summary").click()
+        self.assertEqual(page.locator(".decision-read").count(), 2)
+        page.locator(".decision-read > summary").nth(1).click()
+        text = page.locator(".decision-read").nth(1).inner_text()
+        for expected in ("match", "adults", "temp", "large", "small", "removed by forbid rule 2", "held back by the shortlist", "picked"):
+            self.assertIn(expected, text)
+        self.assertEqual(page.locator(".decision-read").nth(1).locator(".option-row").count(), 3)
+        self.assertEqual(page.locator(".decision-read").nth(1).locator(".option-row.picked").count(), 1)
+
+    def test_a_run_with_no_decisions_says_so(self):
+        self.deciding([])
+        page = self.open()
+        page.wait_for_function("document.getElementById('decisions-summary').textContent === 'DECISIONS'")
+        page.locator("#decisions-summary").click()
+        self.assertIn("made no decisions", page.locator("#decisions-list").inner_text())
+
+    def test_a_decision_with_a_missing_field_shows_what_it_has_and_names_what_is_missing(self):
+        self.deciding([{"event": "decision", "at": stamp(3), "stage": "match", "dimension": "temp"}])
+        page = self.open()
+        page.wait_for_function("document.getElementById('decisions-summary').textContent === 'DECISIONS · 1'")
+        page.locator("#decisions-summary").click()
+        page.locator(".decision-read > summary").first.click()
+        self.assertIn("lacks row, pick, probability, options", page.locator(".decision-read").first.inner_text())
+
+    def test_names_from_a_log_are_drawn_as_text_and_run_nothing(self):
+        self.deciding([a_decision(3, "<b id='x'>teens</b>", "<img src=x onerror=window.pwned=1>", HOT)])
+        page = self.open()
+        page.wait_for_function("document.getElementById('decisions-summary').textContent === 'DECISIONS · 1'")
+        page.locator("#decisions-summary").click()
+        self.assertEqual(page.locator("#decisions-list b, #decisions-list img").count(), 0)
+        self.assertIn("<b id='x'>teens</b>", page.locator("#decisions-list").inner_text())
+        self.assertFalse(page.evaluate("Boolean(window.pwned)"))
+
+    def test_the_printer_names_each_decision(self):
+        self.deciding([a_decision(3, "teens", "hot", HOT)])
+        page = self.open()
+        self.assertIn("decision match: teens temp = hot (0.7)", page.locator("#paper .line.decision").first.inner_text())
+
+    def test_in_a_replay_a_decision_in_the_list_or_in_the_printer_moves_the_cursor_to_its_event(self):
+        self.deciding([a_decision(3, "teens", "hot", HOT), a_decision(4, "adults", "large", FORBIDDEN)])  # events 3 and 4 (0-based)
+        page = self.open()
+        page.locator("#decisions-summary").click()
+        self.assertTrue(page.locator(".decision-read .jump").first.is_disabled())  # no replay open: nothing to move
+        page.click("#replay-open")
+        page.wait_for_function("!document.getElementById('replay-scrub').disabled")
+        page.locator(".decision-read > summary").nth(1).click()
+        page.locator(".decision-read").nth(1).locator(".jump").click()
+        page.wait_for_function("document.getElementById('replay-at').textContent.startsWith('event 5 of ')")  # index 4 + 1
+        page.locator("#paper .line.decision").first.click()
+        page.wait_for_function("document.getElementById('replay-at').textContent.startsWith('event 4 of ')")  # index 3 + 1
+
+    def test_the_panel_is_readable_in_every_theme_and_mode(self):
+        self.deciding([a_decision(3, "teens", "hot", HOT), a_decision(4, "adults", "large", FORBIDDEN)])
+        base = self.start()
+        problems = []
+        for theme, mode in LOOKS:
+            page = self.page()
+            page.goto(f"{base}/?theme={theme}&mode={mode}")
+            page.add_style_tag(content=HIDE_TEXT)
+            page.wait_for_function("document.getElementById('decisions-summary').textContent === 'DECISIONS · 2'")
+            page.locator("#decisions-summary").click()
+            page.locator(".decision-read > summary").nth(1).click()
+            for selector in ("#decisions-summary", ".decision-read > summary", ".option-row", ".decision-note"):
+                found = page.evaluate(FIRST_VISIBLE_JS, selector)
+                if found is None:
+                    continue
+                target = page.locator("[data-contrast-target]").first
+                pixels = decode_png(target.screenshot())
+                page.evaluate("document.querySelector('[data-contrast-target]').removeAttribute('data-contrast-target')")
+                worst = min((contrast(found["color"], background) for background in backdrops(pixels)), default=21.0)
+                if worst < 4.5:
+                    problems.append(f"{theme}/{mode} {selector}: {worst:.2f}")
+        self.assertEqual(problems, [], "\n" + "\n".join(problems))
+
+
 if __name__ == "__main__":
     unittest.main()

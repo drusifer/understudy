@@ -47,6 +47,36 @@ def read_log(directory: Path) -> list[dict]:
     return events
 
 
+DECISION_FIELDS = ("stage", "row", "dimension", "pick", "probability", "options")
+
+
+def _option(each) -> dict | None:
+    """One option of a decision as the page shows it, or None for an entry that is not an object."""
+    if not isinstance(each, dict):
+        return None
+    weight = each.get("weight")
+    return {"name": each.get("name"), "weight": weight if isinstance(weight, int | float) else None,
+            "removed_by": each.get("removed_by")}
+
+
+def decisions(directory: Path) -> list[dict]:
+    """The run's decisions, in the order made: where each sits in the log (`index`, the 0-based position of its event, so
+    a replay shows it at position index + 1), what it was about, every option with its final weight and what removed it,
+    and the pick. A decision whose line lacks something is shown with what it has and `missing` names the rest."""
+    found = []
+    for index, event in enumerate(read_log(directory)):
+        if event.get("event") != "decision":
+            continue
+        raw = event.get("options") if isinstance(event.get("options"), list) else []
+        options = [shown for shown in map(_option, raw) if shown is not None]
+        missing = [name for name in DECISION_FIELDS if name not in event]
+        if len(options) < len(raw) and "options" not in missing:
+            missing.append("options")  # only some of them could be shown
+        found.append({"index": index, "stage": event.get("stage"), "row": event.get("row"), "dimension": event.get("dimension"),
+                      "pick": event.get("pick"), "probability": event.get("probability"), "options": options, "missing": missing})
+    return found
+
+
 def _state_at(prefix: list[dict], run: dict, at: int, total: int) -> str:
     """What the run was doing after these events: running, paused, failed, stopped or done."""
     kinds = [each.get("event") for each in prefix]

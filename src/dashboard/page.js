@@ -41,7 +41,7 @@ function shown(entry, find) {
 }
 
 function line(each, index) {
-  return make('div', { class: `line ${each.tone ?? ''}`, 'data-index': String(index) }, each.text);
+  return make('div', { class: `line ${each.tone ?? ''}${each.event === 'decision' ? ' decision' : ''}`, 'data-index': String(index) }, each.text);
 }
 
 function noMatch() {
@@ -344,12 +344,13 @@ async function choose(id) {
   if (!run) return;
   draw(run);
   loadJev(id);
+  if (typeof loadDecisions === 'function') loadDecisions(id); // decisions.js: the run's decisions
   if (!['running', 'paused'].includes(run.state)) return;
   const source = new EventSource(`events/${id}`);
   state.follow = source;
   let skip = run.count;
   source.onmessage = (message) => { if (skip > 0) skip -= 1; else { append(JSON.parse(message.data)); refreshSoon(id); } };
-  source.addEventListener('end', async () => { source.close(); const done = await getJson(`api/runs/${id}`); if (done) drawStatus(done); loadJev(id); loadRuns(); });
+  source.addEventListener('end', async () => { source.close(); const done = await getJson(`api/runs/${id}`); if (done) drawStatus(done); loadJev(id); if (typeof loadDecisions === 'function') loadDecisions(id); loadRuns(); });
 }
 
 // A new event line while a run goes: refresh what the run says about itself (the lit state, the gauges) soon, but once for a burst.
