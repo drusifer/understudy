@@ -981,3 +981,204 @@ sequenceDiagram
 ## Sprint close-out
 
 - **Cypher**: \*pm launch sprint-25. Sprint complete: 5 stories (UND-96..100), 6 phases, 491 tests. Branches sprint-24 and sprint-25 are committed locally…
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Cypher
+    participant Smith
+    participant Morpheus
+    participant Switch
+    participant Mouse
+    participant Neo
+    Note over Cypher,Neo: 📅 2026-11-03
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Sprint 26 planning:<br/>stories for pause/step,<br/>replay, decision detail<br/>(18 pts) in docs/sprints<br/>/USER_STORIES_SPRINT26.m<br/>d, owner decision 16 re…"
+    Smith->>Morpheus: "user approve"
+    Note right of Smith: "rubric STORIES: OUT=A<br/>TEST=A VALUE=S SIZE=A.<br/>*user approve. Stories<br/>approved, notes: AC4 of<br/>UND-83 must show a held<br/>run as paused, not stal…"
+    Morpheus->>Smith: "lead handoff"
+    Note right of Morpheus: "Architecture complete (d<br/>ocs/sprints/ARCH_SPRINT2<br/>6.md): control.json in<br/>the run folder read<br/>between top-level<br/>stages, paused/resumed<br/>events,…"
+    Smith->>Switch: "user approve"
+    Note right of Smith: "rubric ARCH: BOUND=A<br/>FLOW=A FAIL=A USER=A<br/>DECS=A FEAS=A. *user<br/>approve. Notes: the page<br/>says 'pausing after<br/><stage>' while a long<br/>stage fin…"
+    Switch->>Mouse: "sec handoff"
+    Note right of Switch: "security gate (design):<br/>No blocking findings.<br/>New control channel is<br/>gated by the existing<br/>secret, same-origin and<br/>body cap, run id<br/>pattern…"
+    Mouse->>Morpheus: "sm handoff"
+    Note right of Mouse: "Sprint planned: 5 phases<br/>(hold the runner 4,<br/>console and --watch 4,<br/>replay in Python 3,<br/>replay bar 2, decision<br/>detail 5) plus closeout,<br/>tas…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "rubric PLAN: SIZE=A<br/>GATE=A VERIF=A ALIGN=A<br/>OWNER=A LEVEL=A. Sprint<br/>plan approved. Phase 1<br/>ready. @Neo *swe impl<br/>phase-1"
+```
+
+## Phase 1 starts
+
+Phase 1: the runner can be held (UND-83 part 1)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-03
+    Mouse->>All: "phase 1"
+    Note right of Mouse: "Phase 1: the runner can<br/>be held (UND-83 part 1)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 1 impl complete<br/>(UND-83 part 1):<br/>control.py<br/>(control.json, fail-open<br/>to run, atomic write,<br/>Hold gate), gate before<br/>each top-level sta…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 1 passed<br/>(UND-83 AC3-5): real<br/>household sketch started<br/>held and stepped from<br/>outside: 16 steps, 16<br/>paused and 16 resumed<br/>events,…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 1):<br/>No blocking findings.<br/>control.json is read<br/>from the run's own<br/>folder, capped at 1 KiB,<br/>parsed as JSON only,<br/>valida…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-1:<br/>passed. The gate is a<br/>hook on the generic loop<br/>(run_machine before=),<br/>the control file is one<br/>small module, the conso…"
+```
+
+## Phase 1 close-out
+
+- **Neo**: Phase 1 impl complete (UND-83 part 1): control.py (control.json, fail-open to run, atomic write, Hold gate), gate before each top-level sta…
+- **Trin**: UAT phase 1 passed (UND-83 AC3-5): real household sketch started held and stepped from outside: 16 steps, 16 paused and 16 resumed events,…
+- **Morpheus**: \*lead review phase-1: passed. The gate is a hook on the generic loop (run\_machine before=), the control file is one small module, the conso…
+
+## Phase 2 starts
+
+Phase 2: drive it from the console and the command line (UND-83 part 2)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-03
+    Mouse->>All: "phase 2"
+    Note right of Mouse: "Phase 2: drive it from<br/>the console and the<br/>command line (UND-83<br/>part 2)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 2 impl complete<br/>(UND-83 part 2): hold.py<br/>+ POST<br/>/api/pause|step|resume<br/>(secret, same-origin,<br/>run id pattern, resolved<br/>under the runs…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-2:<br/>passed. The runner knows<br/>only the file, the<br/>console only writes it,<br/>run --watch is a thin<br/>wrapper (Watch) over the<br/>sa…"
+```
+
+## Phase 2 close-out
+
+- **Neo**: Phase 2 impl complete (UND-83 part 2): hold.py + POST /api/pause|step|resume (secret, same-origin, run id pattern, resolved under the runs…
+- **Morpheus**: \*lead review phase-2: passed. The runner knows only the file, the console only writes it, run --watch is a thin wrapper (Watch) over the sa…
+
+## Phase 3 starts
+
+Phase 3: the run as it was (UND-84 part 1)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-03
+    Mouse->>All: "phase 3"
+    Note right of Mouse: "Phase 3: the run as it<br/>was (UND-84 part 1)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 3 impl complete<br/>(UND-84 part 1):<br/>replay.py (replay(dir,<br/>at) from the events<br/>alone with the live<br/>view's own functions),<br/>GET /api/runs/…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 3 passed<br/>(UND-84 AC1,3,4): real<br/>runs coffee_week (14<br/>events) and household<br/>(5,027 events): last<br/>event equals the live<br/>view in sta…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 3):<br/>No blocking findings.<br/>Read-only: the run id is<br/>matched by the route<br/>pattern and must be a<br/>folder under the runs<br/>ro…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-3:<br/>passed. One module, no<br/>second implementation of<br/>the view. Debt noted:<br/>each step resends all<br/>printed lines (fine to<br/>~1…"
+```
+
+## Phase 3 close-out
+
+- **Neo**: Phase 3 impl complete (UND-84 part 1): replay.py (replay(dir, at) from the events alone with the live view's own functions), GET /api/runs/…
+- **Trin**: UAT phase 3 passed (UND-84 AC1,3,4): real runs coffee\_week (14 events) and household (5,027 events): last event equals the live view in sta…
+- **Morpheus**: \*lead review phase-3: passed. One module, no second implementation of the view. Debt noted: each step resends all printed lines (fine to ~1…
+
+## Phase 4 starts
+
+Phase 4: play it back (UND-84 part 2)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-03
+    Mouse->>All: "phase 4"
+    Note right of Mouse: "Phase 4: play it back<br/>(UND-84 part 2)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 4 impl complete<br/>(UND-84 part 2): replay<br/>bar (REPLAY, STEP BACK,<br/>PLAY/PAUSE, STEP,<br/>scrubber, 'event N of<br/>M', LIVE), replay.js<br/>drawing…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 4):<br/>No blocking findings.<br/>replay.js sets all log-<br/>derived text with<br/>textContent / the page's<br/>existing text-only<br/>drawing…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-4:<br/>passed. The page reuses<br/>drawStatus and<br/>renderPaper (no second<br/>drawing),<br/>state.chosenState is<br/>saved and restored so<br/>th…"
+```
+
+## Phase 4 close-out
+
+- **Neo**: Phase 4 impl complete (UND-84 part 2): replay bar (REPLAY, STEP BACK, PLAY/PAUSE, STEP, scrubber, 'event N of M', LIVE), replay.js drawing…
+- **Morpheus**: \*lead review phase-4: passed. The page reuses drawStatus and renderPaper (no second drawing), state.chosenState is saved and restored so th…
+
+## Phase 5 starts
+
+Phase 5: see the decision (UND-85)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    participant Tank
+    participant Oracle
+    participant Smith
+    participant Cypher
+    Note over Mouse,Cypher: 📅 2026-11-03
+    Mouse->>All: "phase 5"
+    Note right of Mouse: "Phase 5: see the<br/>decision (UND-85)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 5 impl complete<br/>(UND-85): decisions() +<br/>GET /api/runs/<id>/decis<br/>ions, decision lines<br/>printed readably<br/>(printed() now carries<br/>the even…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 5 passed<br/>(UND-85 AC1-4): real<br/>coffee run (replay<br/>mode): 11 decisions,<br/>each at the event the<br/>list gives and shown<br/>there in a repla…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 5):<br/>No blocking findings.<br/>Log-derived text (stage,<br/>row, dimension, pick,<br/>option names,<br/>removed_by) is set with<br/>textCon…"
+    Morpheus->>Tank: "lead handoff"
+    Note right of Morpheus: "*lead review phase-5:<br/>passed. All phases<br/>reviewed. Debt for the<br/>retro: the console's<br/>end-to-end tests are<br/>growing faster than they<br/>should (…"
+    Tank->>Oracle: "devops handoff"
+    Note right of Tank: "SDLC check passed<br/>(Sprint 26):<br/>pyproject.toml, uv.lock,<br/>.python-version and<br/>Makefile unchanged since<br/>main, unit tests (545)<br/>and lint passed…"
+    Oracle->>Smith: "ora handoff"
+    Note right of Oracle: "Docs groomed: ADR-0058<br/>and ADR-0059, 2 lessons,<br/>CHANGELOG (Sprint 25 now<br/>merged), USER_GUIDE,<br/>ARCH/stories notes, UAT<br/>plan results, RETRO_S…"
+    Smith->>All: "user approve"
+    Note right of Smith: "rubric UAT: COVER=A<br/>STEPS=A FAIL=A DATA=A<br/>EVID=A. User testing<br/>passed (UAT-26-1..5).<br/>Rough edges for the<br/>owner: a pause waits for<br/>a long st…"
+    Mouse->>Cypher: "retro"
+    Note right of Mouse: "Sprint 26 retro posted<br/>in docs/sprints/RETRO_SP<br/>RINT26.md. Backlog: test<br/>pyramid (decision 17) as<br/>Sprint 27, per-decider<br/>weights, 'pausing'…"
+    Cypher->>All: "pm launch"
+    Note right of Cypher: "*pm launch sprint-26.<br/>Sprint complete: 3<br/>stories (UND-83..85), 5<br/>phases, 545 unit + 39<br/>browser tests. Branch<br/>sprint-26 is committed<br/>locally…"
+```
+
+## Phase 5 close-out
+
+- **Morpheus**: \*lead review phase-5: passed. All phases reviewed. Debt for the retro: the console's end-to-end tests are growing faster than they should (…
+- **Tank**: SDLC check passed (Sprint 26): pyproject.toml, uv.lock, .python-version and Makefile unchanged since main, unit tests (545) and lint passed…
+- **Smith**: rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A. User testing passed (UAT-26-1..5). Rough edges for the owner: a pause waits for a long st…
+
+## Sprint close-out
+
+- **Cypher**: \*pm launch sprint-26. Sprint complete: 3 stories (UND-83..85), 5 phases, 545 unit + 39 browser tests. Branch sprint-26 is committed locally…

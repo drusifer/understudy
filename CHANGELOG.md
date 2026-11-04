@@ -1,6 +1,15 @@
 # Changelog
 
-## Sprint 25 — the tool fixes the categories, and payments know what they paid for (2026-11-03, branch `sprint-25`, not yet merged)
+## Sprint 26 — see and drive the machine (2026-11-03, branch `sprint-26`, not yet merged)
+
+- **Hold, step and resume a run:** PAUSE, STEP and RESUME in the console hold a running run before its next stage (a stage already running, Jev included, finishes first), let exactly one stage through, or run on. A held run reads PAUSED with "paused before `<stage>`", never stalled. `understudy run <sketch> --watch [--pause] [--port N]` opens a console for that run on this machine only (secret in `.understudy/watch.secret`) and can start it held. The run folder gains `control.json`; the log gains `paused` and `resumed` lines.
+- **Replay a finished run's story:** REPLAY above the log opens a bar with STEP BACK, PLAY, STEP, a scrubber and "event N of M"; the stages, gauges, diagram and printed lines show the run as it was after event N. It reads `events.jsonl` alone; a log with an unreadable line is refused, naming it. `GET /api/runs/<id>/replay[?at=N]`.
+- **See the decision:** a DECISIONS panel lists a run's decisions with their options, final weights, what removed or held each, and the pick; the log prints each as `decision <stage>: <row> <dimension> = <pick> (<probability>)`; in a replay a decision moves the cursor to its event. `GET /api/runs/<id>/decisions`. The log records only the blended weight, not each decider's.
+- **Generic sketch parts:** none this sprint.
+- **Breaking:** `/api/session` gains `holdable`; printed log lines gain an `event` field.
+- **Docs:** ADR-0058 and ADR-0059, `ARCH_SPRINT26.md`, `UAT_PLAN_SPRINT26.md`, `RETRO_SPRINT26.md`, two lessons, owner decisions 16 and 17.
+
+## Sprint 25 — the tool fixes the categories, and payments know what they paid for (2026-11-03, merged into `main`)
 
 - **One clean list of categories:** ISO 18245 (13 groups, 280 names) plus your own additions under "Household" (Rent, Mortgage, Tuition, Income, Transfer, Loan repayment); `--with additions=<path>` swaps in your file. A bad additions line or a pin naming a category outside the list stops the run before any Jev request.
 - **Jev puts every merchant in a category:** two choices (a group, then a name), placed when sure enough; otherwise the merchant is in `review.jsonl`. The export's own `Category` is never shown to Jev and decides nothing.

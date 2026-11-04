@@ -38,7 +38,8 @@ class PrintedTest(unittest.TestCase):
     def test_each_event_prints_a_line_with_its_clock(self):
         self.assertEqual(printed(EVENTS[0])["text"], "01:00:00  === UNDERSTUDY RUN LOG ===  examples/x/coffee.yaml  (live)")
         self.assertEqual(printed(EVENTS[1])["text"], "01:00:01    start  read")
-        self.assertEqual(printed(EVENTS[3]), {"text": "01:00:12    FAILED write: boom", "tone": "held", "stage": "write"})
+        self.assertEqual(printed(EVENTS[3]), {"text": "01:00:12    FAILED write: boom", "tone": "held", "stage": "write",
+                                              "event": "stage_failed"})
         self.assertEqual(printed(EVENTS[0])["stage"], "")
 
     def test_a_run_lists_the_indices_of_its_failed_lines_for_the_jump_to_first_failure(self):

@@ -423,6 +423,15 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .start-message { min-height: 1.2em; white-space: pre-wrap; overflow-wrap: anywhere; }
 .start-message.problem { color: #ff9a8a; }
 .start-message.ok { color: #9be8a6; }
+/* Sprint 26 UND-85: a decision opens to its options; the picked one is marked, and a line in the printer can be clicked in a replay. */
+.option-row { margin: 1px 0 1px 18px; overflow-wrap: anywhere; }
+.option-row.picked { font-weight: 700; }
+.decision-read > .jump { margin: 4px 0 4px 18px; }
+.paper .line.decision { cursor: default; }
+/* Sprint 26 UND-84: the replay bar reuses the start panel's look; its buttons, scrubber and readout wrap on a phone. */
+.replay-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.replay-bar .slide { flex: 1 1 160px; min-width: 120px; }
+.replay-bar .readout { min-width: 0; text-align: left; }
 @media (max-width: 640px) { .start-grid, .start-fields { grid-template-columns: 1fr; } }
 
 /* Sprint 22 UND-80: text that is readable on what it sits on, in every theme and mode (4.5:1; checked by tests/browser). */

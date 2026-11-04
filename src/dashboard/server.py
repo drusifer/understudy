@@ -19,13 +19,16 @@ import os
 import re
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
+from src.dashboard.hold import ACTIONS, GONE, apply_hold
 from src.dashboard.reads import jev_reads
+from src.dashboard.replay import decisions, replay
 from src.dashboard.runs import Launcher, Refused
 from src.dashboard.view import describe, list_runs, printed, read_events
 from src.paths import ROOT
@@ -33,8 +36,9 @@ from src.sketch.sources.capture import CACHE
 
 HERE = Path(__file__).parent
 STATIC_TYPES = {".html": "text/html", ".css": "text/css", ".js": "text/javascript", ".woff2": "font/woff2"}
-STATIC_NAMES = re.compile(r"(page\.html|page\.css|page\.js|controls\.js|theme-[a-z-]+\.css|fonts/[a-z0-9-]+\.woff2)")
-RUN_ROUTE = re.compile(r"/(?P<what>api/runs|events)/(?P<run>run-[0-9A-Za-z-]+)(?P<jev>/jev)?")
+STATIC_NAMES = re.compile(
+    r"(page\.html|page\.css|page\.js|controls\.js|replay\.js|decisions\.js|theme-[a-z-]+\.css|fonts/[a-z0-9-]+\.woff2)")
+RUN_ROUTE = re.compile(r"/(?P<what>api/runs|events)/(?P<run>run-[0-9A-Za-z-]+)(?P<more>/jev|/replay|/decisions)?")
 MAX_STREAMS = 32  # watchers at once; more get a 503 (SEC-001)
 IDLE_SECONDS = 600  # a stream with no new line for this long ends (SEC-001)
 MAX_BODY = 8192  # bytes of JSON a POST may carry (SEC-006)
@@ -59,15 +63,16 @@ class Console:
     project: Path = ROOT
     launcher: Launcher | None = None
     secret: str | None = None
+    controllable: Callable[[str], bool] | None = None  # whether this console may hold, step and resume a run (by its id)
 
     def holds(self, presented: str | None) -> bool:
         """Whether the secret presented is the console's (compared in constant time); false when there is none."""
         return bool(self.secret and presented and hmac.compare_digest(presented.encode(), self.secret.encode()))
 
 
-def route(console: Console, path: str, *, revealed: bool = False) -> tuple[str, object]:
-    """What a path asks for: ("json", value), ("static", file name), ("events", run folder), ("session", None),
-    ("empty", None) or ("missing", None). `revealed` says the caller holds the secret."""
+def route(console: Console, path: str, *, revealed: bool = False, query: str = "") -> tuple[str, object]:
+    """What a path asks for: ("json", value), ("refused", (status, message)), ("static", file name), ("events", run
+    folder), ("session", None), ("empty", None) or ("missing", None). `revealed` says the caller holds the secret."""
     if path in {"/", "/index.html"}:
         path = "/page.html"
     fixed = {
@@ -80,18 +85,35 @@ def route(console: Console, path: str, *, revealed: bool = False) -> tuple[str, 
     match = RUN_ROUTE.fullmatch(path)
     if match:
         directory = console.root / match["run"]
-        if directory.is_dir() and not (match["what"] == "events" and match["jev"]):
-            return _run_answer(console, directory, match["what"], bool(match["jev"]), revealed)
+        if directory.is_dir() and not (match["what"] == "events" and match["more"]):
+            return _run_answer(console, directory, match, revealed, query)
         return "missing", None
     name = path.removeprefix("/")
     return ("static", name) if STATIC_NAMES.fullmatch(name) else ("missing", None)
 
 
-def _run_answer(console: Console, directory: Path, what: str, jev: bool, revealed: bool) -> tuple[str, object]:
-    """The answer for one run: a stream of its events, its Jev reads, or its description."""
-    if what == "events":
+def _run_answer(console: Console, directory: Path, match: re.Match, revealed: bool, query: str) -> tuple[str, object]:
+    """The answer for one run: a stream of its events, its Jev reads, its replay or its description."""
+    if match["what"] == "events":
         return "events", directory
-    return "json", jev_reads(directory, console.cache, console.project, reveal=revealed) if jev else describe(directory)
+    if match["more"] == "/jev":
+        return "json", jev_reads(directory, console.cache, console.project, reveal=revealed)
+    if match["more"] in ("/replay", "/decisions"):
+        try:
+            return "json", decisions(directory) if match["more"] == "/decisions" else replay(directory, _position(query))
+        except Refused as refused:
+            return "refused", (refused.status, refused.message)
+    return "json", describe(directory)
+
+
+def _position(query: str) -> int | None:
+    """The `at` of a replay request (a whole number), None when the request has none; anything else is refused."""
+    values = parse_qs(query, keep_blank_values=True).get("at")
+    if not values:
+        return None
+    if not re.fullmatch(r"[0-9]{1,9}", values[0]):
+        raise Refused(HTTPStatus.BAD_REQUEST, "at must be a whole number of events")
+    return int(values[0])
 
 
 def stream_events(handler: BaseHTTPRequestHandler, directory: Path, poll_seconds: float) -> None:
@@ -169,16 +191,24 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         return self.console.holds(self.headers.get(SECRET_HEADER))
 
     def do_GET(self) -> None:  # noqa: N802 - the name http.server calls
-        kind, value = route(self.console, self.path.split("?", 1)[0], revealed=self._holds_secret())
-        answers = {"json": self._json, "static": self._static, "empty": self._empty, "events": self._follow, "session": self._session}
+        parts = urlparse(self.path)
+        kind, value = route(self.console, parts.path, revealed=self._holds_secret(), query=parts.query)
+        answers = {"json": self._json, "static": self._static, "empty": self._empty, "events": self._follow, "session": self._session,
+                   "refused": self._refused_get}
         answers.get(kind, self._missing)(value)
 
+    def _refused_get(self, refusal: tuple[int, str]) -> None:
+        self._json({"problem": refusal[1]}, refusal[0])
+
     def _session(self, _value) -> None:
-        self._json({"controls": self.console.launcher is not None, "authorized": self._holds_secret()})
+        self._json({"controls": self.console.launcher is not None, "holdable": self.console.controllable is not None,
+                    "authorized": self._holds_secret()})
 
     def do_POST(self) -> None:  # noqa: N802 - the name http.server calls
-        action = {"/api/start": self._start, "/api/stop": self._stop}.get(self.path.split("?", 1)[0])
-        if action is None or self.console.launcher is None:
+        path = self.path.split("?", 1)[0]
+        holding = path.startswith("/api/") and path.removeprefix("/api/") in ACTIONS
+        action = self._hold if holding else {"/api/start": self._start, "/api/stop": self._stop}.get(path)
+        if action is None or (self.console.controllable is None if holding else self.console.launcher is None):
             return self._missing()
         refusal = self._refusal()
         if refusal:
@@ -228,6 +258,15 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             raise Refused(400, "stop needs the id of a run")
         return self.console.launcher.stop(body["run"])
 
+    def _hold(self, body: dict) -> dict:
+        """Pause, step or resume (the last word of the path) a run this console is allowed to control."""
+        run = body.get("run")
+        if not isinstance(run, str):
+            raise Refused(400, "this needs the id of a run")
+        if not self.console.controllable(run):
+            raise Refused(404, GONE)
+        return apply_hold(self.console.root, run, self.path.split("?", 1)[0].removeprefix("/api/"))
+
     def _static(self, name: str) -> None:
         self._send(HTTPStatus.OK, (HERE / name).read_bytes(), STATIC_TYPES[Path(name).suffix])
 
@@ -255,10 +294,10 @@ def make_handler(console: Console, poll_seconds: float = 0.5, max_streams: int =
 
 def serve(  # noqa: PLR0913 - the places a console reads from, each overridable for tests
     root: Path, port: int = 4180, host: str = "0.0.0.0", max_streams: int = MAX_STREAMS, cache: Path = CACHE, project: Path = ROOT,
-    launcher: Launcher | None = None, secret: str | None = None,
+    launcher: Launcher | None = None, secret: str | None = None, controllable: Callable[[str], bool] | None = None,
 ) -> ThreadingHTTPServer:
-    """A server for the runs under `root`; the caller starts and stops it."""
-    console = Console(Path(root), Path(cache), Path(project), launcher, secret)
+    """A server for the runs under `root`; the caller starts and stops it. `controllable` says which runs it may hold."""
+    console = Console(Path(root), Path(cache), Path(project), launcher, secret, controllable)
     server = ThreadingHTTPServer((host, port), make_handler(console, max_streams=max_streams))
     server.daemon_threads = True
     return server
@@ -284,7 +323,7 @@ def announce(stdout, root: Path, port: int, secret: str | None, secret_file: Pat
 
 
 def serve_forever(root: Path, port: int, stdout, launcher: Launcher | None = None, secret: str | None = None) -> None:
-    server = serve(root, port, launcher=launcher, secret=secret)
+    server = serve(root, port, launcher=launcher, secret=secret, controllable=launcher.holds if launcher else None)
     announce(stdout, root, server.server_address[1], secret if launcher else None, SECRET_FILE)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()

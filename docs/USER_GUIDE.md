@@ -117,7 +117,7 @@ The reference is [SKETCHES.md](SKETCHES.md).
 ## 8. Command reference
 
 ```text
-understudy run <sketch.yaml> [--with name=value]... [--source name.path=file]... [--out folder] [--replay[=run-id|folder]]
+understudy run <sketch.yaml> [--with name=value]... [--source name.path=file]... [--out folder] [--replay[=run-id|folder]] [--watch [--pause] [--port N]]
 understudy check <sketch.yaml> [--with name=value]... [--source name.path=file]...
 understudy dashboard [runs-folder] [--port 4180] [--sketches examples]
 understudy runs [runs-folder]
@@ -130,6 +130,12 @@ A run records the `--with` values it was given in its `run.json`, and the consol
 `understudy runs` lists the runs in a folder, newest first, with how each ended. A finished `understudy run` prints its run id and how to watch it.
 
 ### The console
+
+**Hold and step a run.** `understudy run <sketch> --watch` also opens a console for that one run, on this machine only (`http://127.0.0.1:<port>`, a free port unless you give `--port`), and prints its address and where its access secret was saved (`.understudy/watch.secret`, a different file from the dashboard's so the two never lock each other out); `--pause` starts the run held before its first stage (it needs `--watch`, and without it the command stops with `understudy: --pause needs --watch`). In the console (unlock with the access secret) PAUSE holds a running run before its next stage, STEP lets exactly one stage run and holds again, RESUME runs on, and STOP ends it. A stage that is already running, Jev requests included, finishes first; nothing starts, and Jev is not asked, while the run is held. A held run reads PAUSED (never stalled), however long it waits, and says `paused before <stage>`. The console started by `understudy dashboard` can do the same for the runs it started. The hold is a small file, `control.json`, in the run's folder; the run's events gain `paused` and `resumed` lines. After a watched run ends the console stays up until Ctrl-C, so you can read how it ended.
+
+**Replay a run's story.** Choose a run that has ended (done, failed or stopped) and press REPLAY above the log. A bar opens with STEP BACK, PLAY (it becomes PAUSE), STEP, a scrubber and "event N of M"; the stage list, gauges, diagram and printed lines show the run as it was after event N, and the status reads REPLAY. LIVE closes the bar and shows the run as it is. A replay reads only the run's `events.jsonl`: it makes no Jev request and changes nothing. A log with a line that cannot be read is refused with one line naming it (`events.jsonl line 4 is not readable`), and a run with no events says so. The Jev request count shows `-` until the last event, because the log does not record it event by event. The same data is at `GET /api/runs/<id>/replay` (the number of events) and `?at=N` (the run after N events).
+
+**See a decision.** A run whose sketch decides (a `reduce.blend` stage) logs one `decision` line per input row and dimension, and the DECISIONS panel under the gauges lists them (`DECISIONS · 3`). Open one to see its stage, row and dimension, every option with its final weight, what removed it (`removed by forbid rule 2`) or held it back (`held back by the shortlist`), and which was picked. Each decision is also printed in the run log (`decision match: teens temp = hot (0.7)`). While a replay is open, SHOW IN REPLAY on a decision, or a click on its line in the log, moves the replay to that event. A run with no decisions says so; a decision whose log line lacks something is shown with what it has and names what is missing. The weights are the blended result: the log does not record each decider's own weight. The same list is at `GET /api/runs/<id>/decisions`.
 
 `understudy dashboard` serves the console on port 4180 of every network interface (`http://<this machine>:4180/`), over the runs under `.understudy/runs` (or the folder you give). There is no login for watching, so use it on a network you trust. A busy port, or a folder that is not a folder, is one plain line and exit 2.
 

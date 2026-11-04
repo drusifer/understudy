@@ -167,6 +167,12 @@ class Launcher:
             self._children[sketch] = {"child": child, "run": run}
             return {"started": True, "run": run}
 
+    def holds(self, run_id: str) -> bool:
+        """Whether this launcher started the run `run_id` and it is still going (the runs it may hold, step and resume)."""
+        with self._lock:
+            self._reap()
+            return bool(RUN_ID.fullmatch(run_id)) and any(each["run"] == run_id for each in self._children.values())
+
     def stop(self, run_id: str) -> dict:
         """End a run this console started, and mark its run `stopped` (the killed process cannot)."""
         with self._lock:

@@ -41,7 +41,7 @@ function shown(entry, find) {
 }
 
 function line(each, index) {
-  return make('div', { class: `line ${each.tone ?? ''}`, 'data-index': String(index) }, each.text);
+  return make('div', { class: `line ${each.tone ?? ''}${each.event === 'decision' ? ' decision' : ''}`, 'data-index': String(index) }, each.text);
 }
 
 function noMatch() {
@@ -107,8 +107,8 @@ function gauge(each) {
   return node;
 }
 
-const WORDS = { running: 'RUNNING', done: 'DONE', failed: 'FAILED', stopped: 'STOPPED', stalled: 'STALLED', unreadable: 'NO DETAILS' };
-const LAMPS = { running: 'on-air', done: 'done', failed: 'failed', stopped: 'standby', stalled: 'stalled', unreadable: 'dark' };
+const WORDS = { running: 'RUNNING', paused: 'PAUSED', done: 'DONE', failed: 'FAILED', stopped: 'STOPPED', stalled: 'STALLED', unreadable: 'NO DETAILS' };
+const LAMPS = { running: 'on-air', paused: 'standby', done: 'done', failed: 'failed', stopped: 'standby', stalled: 'stalled', unreadable: 'dark' };
 
 // The banner above the printer: why a run failed (it jumps to that line), or that a run looks dead.
 function drawBanner(run) {
@@ -245,6 +245,7 @@ function drawStatus(run) {
   drawChart(run);
   state.chosenState = run.state;
   if (typeof afterStatus === 'function') afterStatus(run); // controls.js: the controls follow the chosen run
+  if (typeof afterReplayStatus === 'function') afterReplayStatus(run); // replay.js: REPLAY follows the chosen run
 }
 
 // The stages the stage filter offers: each top-level stage and each group of nested stages.
@@ -335,6 +336,7 @@ function setOffline(offline) {
 }
 
 async function choose(id) {
+  if (typeof endReplay === 'function') endReplay(false); // replay.js: choosing a run closes a replay
   state.follow?.close();
   state.chosen = id;
   rack();
@@ -342,12 +344,13 @@ async function choose(id) {
   if (!run) return;
   draw(run);
   loadJev(id);
-  if (run.state !== 'running') return;
+  if (typeof loadDecisions === 'function') loadDecisions(id); // decisions.js: the run's decisions
+  if (!['running', 'paused'].includes(run.state)) return;
   const source = new EventSource(`events/${id}`);
   state.follow = source;
   let skip = run.count;
   source.onmessage = (message) => { if (skip > 0) skip -= 1; else { append(JSON.parse(message.data)); refreshSoon(id); } };
-  source.addEventListener('end', async () => { source.close(); const done = await getJson(`api/runs/${id}`); if (done) drawStatus(done); loadJev(id); loadRuns(); });
+  source.addEventListener('end', async () => { source.close(); const done = await getJson(`api/runs/${id}`); if (done) drawStatus(done); loadJev(id); if (typeof loadDecisions === 'function') loadDecisions(id); loadRuns(); });
 }
 
 // A new event line while a run goes: refresh what the run says about itself (the lit state, the gauges) soon, but once for a burst.
@@ -367,7 +370,7 @@ function stamp(id) {
   return month ? `${month}-${day} ${hour}:${minute}` : id;
 }
 
-const BADGES = { running: 'RUNNING', failed: 'FAILED', stalled: 'STALLED', stopped: 'STOPPED' };
+const BADGES = { running: 'RUNNING', paused: 'PAUSED', failed: 'FAILED', stalled: 'STALLED', stopped: 'STOPPED' };
 
 // The rack: runs grouped by sketch (the runs arrive newest first, so each group and each tab inside it is newest first),
 // each tab carrying a badge in words for a run that is going, failed, stalled or stopped.
@@ -393,7 +396,7 @@ async function loadRuns() {
   state.runs = runs;
   rack();
   if (!state.chosen && state.runs.length > 0) choose(state.runs[0].id);
-  else if (state.chosen && ['running', 'stalled'].includes(state.chosenState)) {
+  else if (state.chosen && ['running', 'paused', 'stalled'].includes(state.chosenState)) {
     const run = await getJson(`api/runs/${state.chosen}`);
     if (run) drawStatus(run);
   }

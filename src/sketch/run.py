@@ -15,6 +15,7 @@ from pathlib import Path
 
 from src.machine_runner import RunRecord, run_machine
 from src.paths import ROOT, check_writable
+from src.sketch.control import Hold, write_control
 from src.sketch.loader import child_path, children, load
 from src.sketch.machine import build_machine
 from src.sketch.model import Sketch
@@ -191,16 +192,21 @@ def _stages(
     return stages
 
 
-async def run_sketch(
+async def run_sketch(  # noqa: PLR0913 - what a run takes: the sketch, where, its stages, how to announce, capture, pause
     sketch: Sketch, out: Path, library: Mapping[str, StageFn], announce: Callable[[str], None] = print,
-    capture: Capture | None = None,
+    capture: Capture | None = None, pause: bool = False, on_start: Callable[[Path], None] | None = None,
 ) -> RunResult:
-    """Run the sketch's machine. Raises whatever a stage raises, after recording the failure."""
+    """Run the sketch's machine. Raises whatever a stage raises, after recording the failure. With `pause` the run
+    starts held before its first stage (see `control.py`); `on_start` is told the run's folder as soon as it exists."""
     capture = capture or Capture.live(CaptureStore())
     out = Path(out).resolve()
     check_writable(out)
     directory = out / f"run-{datetime.now(UTC).strftime('%Y%m%dT%H%M%S')}-{uuid.uuid4().hex[:8]}"
     directory.mkdir(parents=True)
+    if pause:
+        write_control(directory, "hold", 0)
+    if on_start:
+        on_start(directory)
     files = [f for sink in sketch.sinks.values() for f in (sink.file, f"{sink.file}.part")]
     facts = {"with": dict(sketch.variables)}
     if capture.replay_dir:
@@ -239,7 +245,7 @@ async def run_sketch(
         record.manifest["outputs"] = {path.name: _row_count(path) for path in published.values()}
 
     outcomes = {name: state["outcome"] for name, state in sketch.machine["states"].items() if state.get("outcome")}
-    await run_machine(machine, inner, record, publish=publish, outcomes=outcomes)
+    await run_machine(machine, inner, record, publish=publish, outcomes=outcomes, before=Hold(directory, record.emit).before)
     if capture.mode == "live":
         capture.store.prune()
     return RunResult(directory, published, summary, record.manifest.get("outcome"))

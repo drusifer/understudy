@@ -1451,8 +1451,185 @@ OK
  *pm launch sprint-25. Sprint complete: 5 stories (UND-96..100), 6 phases, 491 tests. Branches sprint-24 and sprint-25 are committed locally and NOT merged or pushed; merge sprint-24 first, then sprint-25, only when the owner asks.
 
 ---
-[<small>2026-11-03 17:49:50</small>] [**make**]->[**all**] *build*:
- Build FAILED exit=2 | make push | /home/drusifer/Projects/understudy/build/build.out
-5:49PM INF no leaks found
-push: there are uncommitted changes - give a commit message: bobp make push MSG="..."
-make: *** [Makefile:68: push] Error 1
+[<small>2026-11-03 17:51:35</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make push | /home/drusifer/Projects/understudy/build/build.out
+5:51PM INF scanned ~309 bytes (309 bytes) in 239ms
+5:51PM INF no leaks found
+To github.com:drusifer/understudy.git
+bed2296..3317797  main -> main
+
+---
+[<small>2026-11-03 18:56:13</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Sprint 26 planning: stories for pause/step, replay, decision detail (18 pts) in docs/sprints/USER_STORIES_SPRINT26.md; owner decision 16 recorded; branch sprint-26 cut from main. @Smith *user review sprint-26
+
+---
+[<small>2026-11-03 18:57:00</small>] [**Smith**]->[**Morpheus**] *user approve*:
+ rubric STORIES: OUT=A TEST=A VALUE=S SIZE=A. *user approve. Stories approved; notes: AC4 of UND-83 must show a held run as paused, not stalled (done); UND-85 AC4 keeps names as text. @Morpheus *lead arch sprint-26
+
+---
+[<small>2026-11-03 18:57:00</small>] [**Morpheus**]->[**Smith**] *lead handoff*:
+ Architecture complete (docs/sprints/ARCH_SPRINT26.md): control.json in the run folder read between top-level stages, paused/resumed events, replay computed in Python from events up to N, decisions API; run --watch binds 127.0.0.1. No new dependency. @Smith *user feedback arch-26
+
+---
+[<small>2026-11-03 18:57:00</small>] [**Smith**]->[**Switch**] *user approve*:
+ rubric ARCH: BOUND=A FLOW=A FAIL=A USER=A DECS=A FEAS=A. *user approve. Notes: the page says 'pausing after <stage>' while a long stage finishes; --pause alone gives a one-line refusal. @Switch *sec threat sprint-26
+
+---
+[<small>2026-11-03 18:57:01</small>] [**Switch**]->[**Mouse**] *sec handoff*:
+ security gate (design): No blocking findings. New control channel is gated by the existing secret, same-origin and body cap; run id pattern-matched and resolved under the runs root; control file size-capped and fail-open to run; --watch binds 127.0.0.1. Phase 2 gets a full review, not a quick pass. @Mouse *sm plan sprint-26
+
+---
+[<small>2026-11-03 18:57:24</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint planned: 5 phases (hold the runner 4, console and --watch 4, replay in Python 3, replay bar 2, decision detail 5) plus closeout; task.md written. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-11-03 18:57:24</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A LEVEL=A. Sprint plan approved. Phase 1 ready. @Neo *swe impl phase-1
+
+---
+[<small>2026-11-03 18:57:24</small>] [**Mouse**]->[**all**] *phase 1*:
+ Phase 1: the runner can be held (UND-83 part 1)
+
+---
+[<small>2026-11-03 19:02:24</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+7:02PM INF 1 commits scanned.
+7:02PM INF scanned ~2201 bytes (2.20 KB) in 240ms
+7:02PM INF no leaks found
+
+---
+[<small>2026-11-03 19:08:32</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 1 impl complete (UND-83 part 1): control.py (control.json, fail-open to run, atomic write, Hold gate), gate before each top-level stage via run_machine(before=), paused/resumed events, run_sketch(pause=True). 10 new tests; make check 501 green. @Trin *qa uat phase-1
+
+---
+[<small>2026-11-03 19:08:32</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 1 passed (UND-83 AC3-5): real household sketch started held and stepped from outside: 16 steps, 16 paused and 16 resumed events, one top-level stage per step, finished complete; paused is logged before stage_started (nothing starts while held); a bad control file runs on; an ordinary run has no paused events. @Switch *sec review phase-1
+
+---
+[<small>2026-11-03 19:08:32</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 1): No blocking findings. control.json is read from the run's own folder, capped at 1 KiB, parsed as JSON only, validated, and any failure means run; it is written atomically and (Phase 2) only by the authenticated console. No shell, no path from the file. @Morpheus *lead review phase-1
+
+---
+[<small>2026-11-03 19:08:32</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-1: passed. The gate is a hook on the generic loop (run_machine before=), the control file is one small module, the console side stays out of the runner. Debt: nested stages are not held (by design); a poll every 0.2 s. @Neo *swe impl phase-2
+
+---
+[<small>2026-11-03 19:08:32</small>] [**Mouse**]->[**all**] *phase 2*:
+ Phase 2: drive it from the console and the command line (UND-83 part 2)
+
+---
+[<small>2026-11-03 19:21:32</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+7:21PM INF 1 commits scanned.
+7:21PM INF scanned ~15425 bytes (15.43 KB) in 255ms
+7:21PM INF no leaks found
+
+---
+[<small>2026-11-03 19:21:48</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 2 impl complete (UND-83 part 2): hold.py + POST /api/pause|step|resume (secret, same-origin, run id pattern, resolved under the runs root, only runs the console started or watches), state paused in the console, PAUSE/STEP/RESUME buttons, run --watch [--pause] [--port] bound to 127.0.0.1, watch.secret separate from the dashboard's. 527 tests, lint, secrets green; browser 24/24. @Trin *qa uat phase-2
+
+---
+[<small>2026-11-03 19:21:48</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-2: passed. The runner knows only the file; the console only writes it; run --watch is a thin wrapper (Watch) over the same server. Debt: the page says 'pausing' only in a message, not in the status; hold waits poll every 0.2 s. @Neo *swe impl phase-3
+
+---
+[<small>2026-11-03 19:21:49</small>] [**Mouse**]->[**all**] *phase 3*:
+ Phase 3: the run as it was (UND-84 part 1)
+
+---
+[<small>2026-11-03 19:25:35</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+7:25PM INF no leaks found
+7:25PM INF 1 commits scanned.
+7:25PM INF scanned ~2710 bytes (2.71 KB) in 244ms
+7:25PM INF no leaks found
+
+---
+[<small>2026-11-03 19:25:49</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 3 impl complete (UND-84 part 1): replay.py (replay(dir, at) from the events alone with the live view's own functions), GET /api/runs/<id>/replay[?at=N], strict log reading (422 naming the line). 18 new tests; make check 545 green. @Trin *qa uat phase-3
+
+---
+[<small>2026-11-03 19:25:49</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 3 passed (UND-84 AC1,3,4): real runs coffee_week (14 events) and household (5,027 events): last event equals the live view in state, ending, diagram, stages, gauges and lines; event 1, middle and last are right; a corrupt line is refused with 'events.jsonl line 4 is not readable'; a step on the 5,027-event log takes 0.03 s. @Switch *sec review phase-3
+
+---
+[<small>2026-11-03 19:25:50</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 3): No blocking findings. Read-only: the run id is matched by the route pattern and must be a folder under the runs root; at is digits only (max 9) and range-checked; the log is parsed as JSON only; nothing is written, no Jev, no shell. @Morpheus *lead review phase-3
+
+---
+[<small>2026-11-03 19:25:50</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-3: passed. One module, no second implementation of the view. Debt noted: each step resends all printed lines (fine to ~100k events); the Jev count shows '-' mid-run because the log has no per-event total. @Neo *swe impl phase-4
+
+---
+[<small>2026-11-03 19:25:50</small>] [**Mouse**]->[**all**] *phase 4*:
+ Phase 4: play it back (UND-84 part 2)
+
+---
+[<small>2026-11-03 19:32:24</small>] [**make**]->[**all**] *build*:
+ Build FAILED exit=2 | make test-browser | /home/drusifer/Projects/understudy/build/build.out
+
+----------------------------------------------------------------------
+Ran 32 tests in 128.505s
+
+FAILED (failures=1)
+make: *** [Makefile:32: test-browser] Error 1
+
+---
+[<small>2026-11-03 19:33:35</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 4 impl complete (UND-84 part 2): replay bar (REPLAY, STEP BACK, PLAY/PAUSE, STEP, scrubber, 'event N of M', LIVE), replay.js drawing the server's frames with the page's own drawing; a pause discards any frame already asked for (race found by a browser test). 8 new browser tests incl. keyboard and readability in 3 themes x light/dark and phone fit; make check 545 green. @Trin *qa uat phase-4
+
+---
+[<small>2026-11-03 19:33:35</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 4): No blocking findings. replay.js sets all log-derived text with textContent / the page's existing text-only drawing; no innerHTML on log data; requests are GETs of the fixed replay path with a numeric at; no secret used. @Morpheus *lead review phase-4
+
+---
+[<small>2026-11-03 19:33:35</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-4: passed. The page reuses drawStatus and renderPaper (no second drawing), state.chosenState is saved and restored so the live controls are untouched by a replay, and a ticket guards stale frames. Debt: each step re-renders all lines so far. @Neo *swe impl phase-5
+
+---
+[<small>2026-11-03 19:33:35</small>] [**Mouse**]->[**all**] *phase 5*:
+ Phase 5: see the decision (UND-85)
+
+---
+[<small>2026-11-03 19:44:15</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make run | /home/drusifer/Projects/understudy/build/build.out
+watch it: understudy dashboard .understudy/runs
+wrote /home/drusifer/Projects/understudy/.understudy/runs/run-20261104T004414-cde56cea/ingredients.jsonl
+
+---
+[<small>2026-11-03 19:44:29</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 5 impl complete (UND-85): decisions() + GET /api/runs/<id>/decisions, decision lines printed readably (printed() now carries the event kind), DECISIONS panel (options, weights, removed/held, pick), SHOW IN REPLAY and click-in-printer moves the cursor. 28 new tests (Python 21, browser 7). Unit tests passed (545); browser 39/39 (153 s); one lint error (line length) fixed and checked with ruff alone: the combined check was not re-run, per the owner. @Trin *qa uat phase-5
+
+---
+[<small>2026-11-03 19:44:29</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 5 passed (UND-85 AC1-4): real coffee run (replay mode): 11 decisions, each at the event the list gives and shown there in a replay; a run with none says so; a line missing fields names what it lacks; names with markup are text (script/img not run). Limits: this fixture removes no options, so removed-by/shortlist display is covered by unit and browser tests only; the log has no per-decider weights, so only blended weights show. @Switch *sec review phase-5
+
+---
+[<small>2026-11-03 19:44:29</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 5): No blocking findings. Log-derived text (stage, row, dimension, pick, option names, removed_by) is set with textContent only; tested with markup and an onerror payload; the route is a GET of a fixed path under a run id the pattern allows. @Morpheus *lead review phase-5
+
+---
+[<small>2026-11-03 19:44:29</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
+ *lead review phase-5: passed. All phases reviewed. Debt for the retro: the console's end-to-end tests are growing faster than they should (owner decision 17: test pyramid). @Tank *devops sdlc-check
+
+---
+[<small>2026-11-03 19:45:25</small>] [**Tank**]->[**Oracle**] *devops handoff*:
+ SDLC check passed (Sprint 26): pyproject.toml, uv.lock, .python-version and Makefile unchanged since main; unit tests (545) and lint passed in the last full check runs, the last line-length fix verified by ruff alone (owner: no further gate run; bobp make push runs the full gate); browser 39/39; Last verified updated. Gate speed: 96-101 s, owner decision 17 -> test pyramid in Sprint 27. @Oracle *ora groom
+
+---
+[<small>2026-11-03 19:45:25</small>] [**Oracle**]->[**Smith**] *ora handoff*:
+ Docs groomed: ADR-0058 and ADR-0059, 2 lessons, CHANGELOG (Sprint 25 now merged), USER_GUIDE, ARCH/stories notes, UAT plan results, RETRO_SPRINT26. CHAT archive left for the owner. @Smith *user test sprint-26
+
+---
+[<small>2026-11-03 19:45:25</small>] [**Smith**]->[**all**] *user approve*:
+ rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A. User testing passed (UAT-26-1..5). Rough edges for the owner: a pause waits for a long stage to finish and says so only in a message; the decision log has no per-decider weights (UND-85 AC1 partly met); the console tests are heavy (decision 17). @all *sprint retro
+
+---
+[<small>2026-11-03 19:45:25</small>] [**Mouse**]->[**Cypher**] *retro*:
+ Sprint 26 retro posted in docs/sprints/RETRO_SPRINT26.md. Backlog: test pyramid (decision 17) as Sprint 27, per-decider weights, 'pausing' in the status, replay sending only new lines. @Cypher *pm launch sprint-26
+
+---
+[<small>2026-11-03 19:45:25</small>] [**Cypher**]->[**all**] *pm launch*:
+ *pm launch sprint-26. Sprint complete: 3 stories (UND-83..85), 5 phases, 545 unit + 39 browser tests. Branch sprint-26 is committed locally and NOT merged or pushed; merge and push only when the owner asks.

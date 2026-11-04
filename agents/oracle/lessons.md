@@ -701,3 +701,41 @@ For a change that does not touch Jev's questions, replay the newest run made aft
 ### Evidence and Scope
 - **References:** `docs/USER_GUIDE.md` (replay), Sprint 25 Phases 5 and 6
 - **Applies when:** checking a household change against the full baselines.
+
+---
+
+## [2026-11-03] The gate's cheap checks belong before its slow ones, and a chained command hides the first failure
+
+> **Tags:** #gate #testing #Neo #Tank
+
+### Context
+`make check` runs the unit tests (about 96 s) and then lint (well under a second). A line-length error was found only after the tests finished, and a follow-on `;`-chained browser run (about 150 s) then printed an older result.
+
+### Observation and Cause
+The order puts the slowest step first and the cheapest last, and chaining with `;` lets a later step's output stand in for an earlier failure. Reading the log files' creation and last-write times gave the real durations.
+
+### Rule
+Run the cheapest checks first, chain gate steps with `&&`, and read each step's own result before quoting any "OK". When a gate gets slow, measure it from the logs before choosing a fix; the owner's direction is to move checks down the test pyramid (decision 17).
+
+### Evidence and Scope
+- **References:** `OWNER_DECISIONS_SPRINT22.md` 17, `UAT_PLAN_SPRINT26.md` (open issues)
+- **Applies when:** a gate step fails late, or a command chains several long steps.
+
+---
+
+## [2026-11-03] A browser test found a race a unit test could not: a late frame after PAUSE
+
+> **Tags:** #replay #browser #Neo #Trin
+
+### Context
+The replay's PLAY asked the server for the next event on a timer; PAUSE cleared the timer.
+
+### Observation and Cause
+A request already in flight when PAUSE was pressed could still land and move the replay on one more event. Only a real page with real timing showed it.
+
+### Rule
+Give any asynchronous view a ticket: every new request or stop bumps it, and a response whose ticket is stale is dropped. Keep the browser test that proves it, and keep such tests few and about timing and drawing only.
+
+### Evidence and Scope
+- **References:** `src/dashboard/replay.js` (`replay.ticket`), `tests/browser/test_console.py` (`ReplayBarTest`)
+- **Applies when:** a page asks for frames, polls, or plays something back.

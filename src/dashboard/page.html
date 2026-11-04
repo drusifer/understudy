@@ -10,6 +10,8 @@
 <link rel="stylesheet" href="theme-starship.css">
 <script src="page.js" defer></script>
 <script src="controls.js" defer></script>
+<script src="replay.js" defer></script>
+<script src="decisions.js" defer></script>
 </head>
 <body>
 <div class="room">
@@ -57,19 +59,34 @@
       <button type="button" id="unlock" class="find-button">UNLOCK</button>
       <span id="gate-note" class="about">locked: you can watch, but not start, replay or stop</span>
     </div>
-    <label for="sketch-pick">Sketch</label>
-    <select id="sketch-pick" class="find-field"></select>
-    <div id="sketch-about" class="about"></div>
-    <div id="fields" class="start-fields"></div>
-    <label for="replay-pick">Replay from</label>
-    <select id="replay-pick" class="find-field"><option value="">no - run live</option></select>
+    <label for="sketch-pick" data-launcher>Sketch</label>
+    <select id="sketch-pick" class="find-field" data-launcher></select>
+    <div id="sketch-about" class="about" data-launcher></div>
+    <div id="fields" class="start-fields" data-launcher></div>
+    <label for="replay-pick" data-launcher>Replay from</label>
+    <select id="replay-pick" class="find-field" data-launcher><option value="">no - run live</option></select>
     <div class="start-buttons">
-      <button type="button" id="play" class="find-button" disabled>PLAY</button>
-      <button type="button" id="stop" class="find-button" disabled>STOP THIS RUN</button>
+      <button type="button" id="play" class="find-button" data-launcher disabled>PLAY</button>
+      <button type="button" id="stop" class="find-button" data-launcher disabled>STOP THIS RUN</button>
+      <button type="button" id="pause" class="find-button" data-hold disabled>PAUSE</button>
+      <button type="button" id="step" class="find-button" data-hold disabled>STEP</button>
+      <button type="button" id="resume" class="find-button" data-hold disabled>RESUME</button>
     </div>
     <div id="start-message" class="start-message" role="status" aria-live="polite"></div>
   </div>
 </details>
+
+<section id="replay" class="start-panel replay-bar" aria-label="Replay" hidden>
+  <div class="replay-row">
+    <button type="button" id="replay-back" class="find-button" disabled>STEP BACK</button>
+    <button type="button" id="replay-play" class="find-button" disabled>PLAY</button>
+    <button type="button" id="replay-step" class="find-button" disabled>STEP</button>
+    <input type="range" id="replay-scrub" class="slide" min="0" max="0" value="0" step="1" disabled aria-label="Event position in the replay">
+    <span id="replay-at" class="readout" role="status" aria-live="polite">event 0 of 0</span>
+    <button type="button" id="replay-live" class="find-button">LIVE</button>
+  </div>
+  <div id="replay-message" class="start-message" role="status" aria-live="polite"></div>
+</section>
 
 <div id="offline" class="offline" role="status" hidden>DISCONNECTED - retrying. What you see may be out of date.</div>
 <div id="banner-slot" role="status"></div>
@@ -84,6 +101,7 @@
       <button type="button" id="jump-start" class="find-button">START</button>
       <button type="button" id="jump-failure" class="find-button" disabled title="no failure in this run">FIRST FAILURE</button>
       <button type="button" id="jump-end" class="find-button">END</button>
+      <button type="button" id="replay-open" class="find-button" disabled title="choose a finished run to replay">REPLAY</button>
     </div>
     <div class="roller" aria-hidden="true"></div>
     <div class="glass">
@@ -110,6 +128,10 @@
       <ol id="spending-list" class="spend-list"></ol>
       <p id="spending-more" class="spend-more"></p>
     </section>
+    <details id="decisions" class="jev" aria-label="Decisions of this run">
+      <summary id="decisions-summary">DECISIONS</summary>
+      <div id="decisions-list" class="jev-list"></div>
+    </details>
     <details id="jev" class="jev" aria-label="Jev reads of this run">
       <summary id="jev-summary">JEV READS</summary>
       <label class="find-check"><input id="jev-unsure" type="checkbox"> unsure only</label>

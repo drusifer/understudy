@@ -6,9 +6,11 @@ one `understudy: <message>` line saying what to fix; there is never a traceback.
 
 import argparse
 import asyncio
+import contextlib
 import errno
 import secrets
 import sys
+import threading
 from collections.abc import Mapping
 from pathlib import Path
 
@@ -16,6 +18,7 @@ import src.sketch.stages  # noqa: F401 - importing it registers the stages
 from src.dashboard.runs import Launcher, Refused
 from src.dashboard.server import serve_forever
 from src.dashboard.view import list_runs
+from src.dashboard.watch import Watch
 from src.jev import JevError, TypeSafeJev
 from src.paths import OutputPathError
 from src.sketch.check import load_checked
@@ -53,6 +56,7 @@ def _values(pairs: list[str]) -> dict[str, str]:
 EXAMPLES = """examples:
   understudy check examples/household/household.yaml --with monarch=in/monarch.csv --with amex=in/amex.csv --with amex_account=Platinum
   understudy run tests/fixtures/coffee/coffee_week.yaml --replay=tests/fixtures/coffee/replay
+  understudy run <sketch> --watch --pause   start held, with a console on this machine to step it (secret file)
   understudy dashboard                    watch runs under .understudy/runs; start sketches from examples/ (access secret file)
   understudy runs                         the runs under .understudy/runs, newest first
 
@@ -89,6 +93,10 @@ def _parser() -> argparse.ArgumentParser:
                      help="the folder to make the run's folder in (default .understudy/runs)")
     run.add_argument("--replay", nargs="?", const="", default=None, metavar="RUN-ID|DIR",
                      help="read the captured Jev answers of a run or folder instead of calling Jev (no key, no network)")
+    run.add_argument("--watch", action="store_true",
+                     help="open a console on this machine for this run, where you can pause, step and resume it")
+    run.add_argument("--pause", action="store_true", help="start the run held before its first stage (needs --watch)")
+    run.add_argument("--port", type=int, default=0, help="the port --watch listens on (default: any free one)")
     return parser
 
 
@@ -129,9 +137,10 @@ def _runs(args, stdout) -> int:
 
 def main(  # noqa: PLR0911, PLR0913 - the command line's injection points
     argv=None, *, library: Mapping[str, StageFn] | None = None, make_jev=TypeSafeJev, store: CaptureStore | None = None,
-    stdout=None, stderr=None,
+    stdout=None, stderr=None, hold_open=None,
 ) -> int:
     stdout, stderr = stdout or sys.stdout, stderr or sys.stderr
+    hold_open = hold_open or _until_interrupted
     args = _parser().parse_args(argv)
     if args.command == "dashboard":
         return _dashboard(args, stdout, stderr)
@@ -141,6 +150,9 @@ def main(  # noqa: PLR0911, PLR0913 - the command line's injection points
     def fail(message: str, code: int) -> int:
         stderr.write(f"understudy: {message}\n")
         return code
+
+    if getattr(args, "pause", False) and not args.watch:
+        return fail("--pause needs --watch", 2)
 
     try:
         sketch = load_checked(args.sketch, _overrides(args.source), _values(args.values))
@@ -155,19 +167,51 @@ def main(  # noqa: PLR0911, PLR0913 - the command line's injection points
         capture = _capture(args, sketch, store or CaptureStore(), make_jev)
     except (ReplayError, JevError) as error:
         return fail(str(error), 2)
+    watch = None
+    if args.watch:
+        try:
+            watch = Watch(args.out, args.port, stdout)
+        except OSError as error:
+            busy = error.errno == errno.EADDRINUSE
+            return fail(f"port {args.port} is already in use; choose another with --port" if busy
+                        else f"cannot start the console: {error.strerror or error}", 2)
     try:
-        stages = registered() if library is None else library
-        result = asyncio.run(run_sketch(sketch, args.out, stages, lambda line: stdout.write(line + "\n"), capture))
+        plan = (sketch, capture, registered() if library is None else library)
+        return _execute(args, plan, (stdout, stderr), watch)
+    finally:
+        if watch:
+            stdout.write(f"the run is over; the console stays at {watch.address} until you press Ctrl-C\n")
+            stdout.flush()
+            hold_open()
+            watch.close()
+
+
+def _execute(args, plan, streams, watch) -> int:
+    """Run the sketch and say what it made; every way it can fail is one line and its exit code. `plan` is the sketch,
+    its capture and the stages that run it."""
+    sketch, capture, stages = plan
+    stdout, stderr = streams
+    try:
+        result = asyncio.run(run_sketch(sketch, args.out, stages, lambda line: stdout.write(line + "\n"), capture,
+                                        pause=args.pause, on_start=watch.started if watch else None))
     except OutputPathError as error:
-        return fail(str(error), 2)
+        stderr.write(f"understudy: {error}\n")
+        return 2
     except Exception as error:
-        return fail(str(error) or type(error).__name__, 1)
+        stderr.write(f"understudy: {str(error) or type(error).__name__}\n")
+        return 1
     stdout.write(f"run: {result.directory.name}\nwatch it: understudy dashboard {args.out}\n")
     for path in result.outputs.values():  # the outputs and the outcome stay last: scripts read the last line
         stdout.write(f"wrote {path}\n")
     if result.outcome:
         stdout.write(f"outcome: {result.outcome}\n")
     return 0
+
+
+def _until_interrupted() -> None:
+    """Keep a watching console open after its run ends, until Ctrl-C."""
+    with contextlib.suppress(KeyboardInterrupt):
+        threading.Event().wait()
 
 
 if __name__ == "__main__":

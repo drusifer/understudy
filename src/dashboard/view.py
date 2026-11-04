@@ -74,8 +74,11 @@ def printed(event: dict) -> dict:
         "stage_completed": lambda: f"  done   {event.get('stage', '')}",
         "stage_failed": lambda: f"  FAILED {event.get('stage', '')}: {event.get('reason', '')}",
         "run_finished": lambda: f"=== {str(event.get('outcome', '')).upper()} ===",
+        "decision": lambda: (f"  decision {event.get('stage', '')}: {event.get('row', '?')} {event.get('dimension', '?')}"
+                             f" = {event.get('pick', '?')} ({event.get('probability', '?')})"),
     }.get(kind, lambda: f"  {kind}")()
-    return {"text": f"{clock}  {detail}" if clock else detail, "tone": TONES.get(kind, ""), "stage": event.get("stage", "")}
+    return {"text": f"{clock}  {detail}" if clock else detail, "tone": TONES.get(kind, ""), "stage": event.get("stage", ""),
+            "event": kind}
 
 
 def _seconds(events: list[dict]) -> float:
@@ -155,11 +158,14 @@ def gauges_of(summary: dict, events: list[dict], tube: list[dict] | None = None)
     ]
 
 
-def _state_of(run: dict, last_at: str | None, now: datetime) -> str:
-    """running, done, failed, stopped, stalled (a running run silent for ten minutes) or unreadable (nothing to read)."""
+def _state_of(run: dict, last_at: str | None, now: datetime, last_event: str | None = None) -> str:
+    """running, paused (held before a stage, however long ago), done, failed, stopped, stalled (a running run silent
+    for ten minutes) or unreadable (nothing to read)."""
     if not run and not last_at:
         return "unreadable"
     state = RUN_STATES.get(run.get("status", "running"), "running")
+    if state == "running" and last_event == "paused":
+        return "paused"
     if state == "running" and last_at and (now - datetime.fromisoformat(last_at)).total_seconds() > STALL_SECONDS:
         return "stalled"
     return state
@@ -202,15 +208,18 @@ def describe(directory: Path, now: datetime | None = None) -> dict:
     run, summary, events = read_json(directory / "run.json"), read_json(directory / "summary.json"), read_events(directory)
     started = next((each for each in events if each.get("event") == "run_started"), {})
     last_at = events[-1].get("at") if events else None
-    state = _state_of(run, last_at, now)
+    state = _state_of(run, last_at, now, events[-1].get("event") if events else None)
+    held = {"stage": events[-1].get("stage", "?")} if state == "paused" else None
     failure = _failure_of(run, events)
     tube = stage_tree(events)
     mode = run.get("mode", started.get("mode", ""))
+    ended = f"paused before {held['stage']}" if held else _ended(state, run, failure, last_at, now)
     return {
         "id": directory.name,
         "sketch": Path(started.get("sketch", run.get("sketch", "?"))).stem,
         "state": state,
-        "ended": _ended(state, run, failure, last_at, now),
+        "ended": ended,
+        "hold": held,
         "failure": failure,
         "summary": {
             "outcome": run.get("outcome"), "mode": mode, "stale": summary.get("stale"),
@@ -218,7 +227,7 @@ def describe(directory: Path, now: datetime | None = None) -> dict:
         },
         "mode": mode,
         "story": "states" in started,  # a log written before the first line told the machine has no story
-        "chart": overlay(started, events, state, _ended(state, run, failure, last_at, now)) if "states" in started else None,
+        "chart": overlay(started, events, state, ended) if "states" in started else None,
         "spending": read_spending(directory),
         "tube": tube,
         "gauges": gauges_of(summary, events, tube),
@@ -241,6 +250,6 @@ def _rack_entry(directory: Path, now: datetime) -> dict:
     """One tab of the rack: the run's id, the sketch it ran (or `unreadable`) and its state."""
     first, last = _edge_events(directory)
     run = read_json(directory / "run.json")
-    state = _state_of(run, last.get("at"), now)
+    state = _state_of(run, last.get("at"), now, last.get("event"))
     sketch = "unreadable" if state == "unreadable" else Path(first.get("sketch", "") or run.get("sketch", "") or "?").stem
     return {"id": directory.name, "sketch": sketch, "state": state}
