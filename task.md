@@ -28,10 +28,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 2: Compute one stage on its own (UND-102 part 1, 4 pts)
 *Phase goal: a fragment harness, proven by moving one household file down.*
-- [ ] **Task 2.1:** Tests first, then `src/sketch/fragment.py` (`read_stage` with `stubs`), the `compute` closure in `run_sketch` shared with it (no copy), and `tests/python` helpers; move `test_household_payments.py` to it (rules at the fragment level, one whole-sketch run kept for the happy path). **L3** (refactor of the run's core; the proof the approach works). (*Owner: Neo | Trace: UND-102 AC1-3, ARCH UND-102 | Verification: the moved tests and `bobp make test ARGS="test_sketch_run*.py"`, `bobp make lint`*)
-- [ ] **Task 2.2:** UAT: break each payment rule in a scratch copy (allocation order, the card's dates, the 5% flag, the open balance) and see its moved test fail; time the file before and after. **L2**. (*Owner: Trin | Trace: UND-102 AC3 | Verification: UAT verdict, the broken rules and times in `agents/CHAT.md`*)
-- [ ] **Task 2.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 2): ...`*)
-- [ ] **Task 2.4:** Code review. **L2**. (*Owner: Morpheus | Trace: STORY_ARCH_SPRINT27 UND-102 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 2.1:** Tests first, then `src/sketch/fragment.py` (`read_stage` with `stubs`), the `compute` closure in `run_sketch` shared with it (no copy), and `tests/python` helpers; move `test_household_payments.py` to it (rules at the fragment level, one whole-sketch run kept for the happy path). **L3** (refactor of the run's core; the proof the approach works). (*Owner: Neo | Trace: UND-102 AC1-3, ARCH UND-102 | Verification: the moved tests and `bobp make test ARGS="test_sketch_run*.py"`, `bobp make lint`*)
+- [x] **Task 2.2:** UAT: break each payment rule in a scratch copy (allocation order, the card's dates, the 5% flag, the open balance) and see its moved test fail; time the file before and after. **L2**. (*Owner: Trin | Trace: UND-102 AC3 | Verification: UAT verdict, the broken rules and times in `agents/CHAT.md`*)
+- [x] **Task 2.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 2): ...`*)
+- [x] **Task 2.4:** Code review. **L2**. (*Owner: Morpheus | Trace: STORY_ARCH_SPRINT27 UND-102 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 3: The rest of the household rules (UND-102 part 2, 4 pts)
 *Phase goal: at most five whole-sketch household runs; the household tests take 15 s or less.*

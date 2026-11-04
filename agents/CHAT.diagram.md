@@ -1236,8 +1236,38 @@ sequenceDiagram
     Note right of Morpheus: "*lead review phase-1:<br/>passed. Library cache<br/>(functools), one place,<br/>shared read only inside<br/>the loader. Estimate<br/>corrected: UND-101 is<br/>abou…"
 ```
 
-## Phase 1 so far
+## Phase 1 close-out
 
 - **Neo**: Phase 1 impl complete (UND-101): lru\_cache on the row-independent read of a sketch (key: path, mtime, size), read\_template returns a copy,…
 - **Trin**: UAT phase 1 passed (UND-101 AC2-3): same fixtures through main and this branch: every sink file and summary.json have identical hashes (hou…
 - **Morpheus**: \*lead review phase-1: passed. Library cache (functools), one place, shared read only inside the loader. Estimate corrected: UND-101 is abou…
+
+## Phase 2 starts
+
+Phase 2: compute one stage on its own (UND-102 part 1)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Trin
+    participant Switch
+    participant Morpheus
+    participant Neo
+    Note over Mouse,Neo: 📅 2026-11-03
+    Mouse->>All: "phase 2"
+    Note right of Mouse: "Phase 2: compute one<br/>stage on its own<br/>(UND-102 part 1)"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 2 passed<br/>(UND-102 AC1-3,<br/>payments): five payment<br/>rules broken in the real<br/>sketch, one at a time,<br/>each caught by a moved<br/>test and…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 2):<br/>No blocking findings.<br/>fragment.py is test<br/>support: it reads only<br/>the files the sketch<br/>names (as a run does),<br/>write…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-2:<br/>passed. The harness<br/>reuses the run's own<br/>stage computer instead<br/>of copying it, stubs are<br/>the only seam (public<br/>Source…"
+```
+
+## Phase 2 so far
+
+- **Trin**: UAT phase 2 passed (UND-102 AC1-3, payments): five payment rules broken in the real sketch, one at a time, each caught by a moved test and…
+- **Morpheus**: \*lead review phase-2: passed. The harness reuses the run's own stage computer instead of copying it, stubs are the only seam (public Source…

@@ -53,6 +53,13 @@ class LedgerTests(unittest.TestCase):
     def test_it_runs(self):
         self.assertEqual((self.code, self.stderr), (0, ""))
 
+    def test_the_payments_file_and_the_open_balance_are_written_by_the_whole_run(self):
+        # the payment rules themselves are tested on their own stages (test_household_payments); this is the wiring
+        payments = lines(self.folder / "payments.jsonl")
+        self.assertEqual([(p["amount"], p["charges"], p["settled"]) for p in payments], [(500.0, 3, 125.0)])
+        self.assertEqual(self.summary["open_balance"], {"scope": "all", "count": 1, "amount": 4.5})
+        self.assertIn("settled_by", next(r for r in self.records if r["payee"] == "Store"))
+
     def test_a_charge_in_both_exports_is_one_record_and_the_period_leaves_out_the_old_row(self):
         self.assertEqual(len(self.records), 12)  # the oracle's count: 13 Monarch rows less 1 before the period, 7 Amex merged in
         self.assertEqual(sum(r["match"] == "paired" for r in self.records), 7)

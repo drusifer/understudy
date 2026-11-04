@@ -8,7 +8,7 @@ failed run publishes nothing. Failed runs keep earlier stage files and `run.json
 
 import json
 import uuid
-from collections.abc import Callable, Mapping
+from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from pathlib import Path
@@ -192,6 +192,23 @@ def _stages(
     return stages
 
 
+def stage_computer(  # noqa: PLR0913 - what a stage source's stage runs against: the library, the record, the run's state
+    library: Mapping[str, StageFn], record: EventedRecord, results: dict, directory: Path, summary: dict, sources: Sources,
+) -> Callable[[Sketch, str], Awaitable[list[dict]]]:
+    """The function a run gives its `Sources` to compute a stage source (`kind: stage`): the source's `do` and `with`, as
+    a state would have them. A run and the fragment harness (`fragment.py`) both use it."""
+    async def compute(owner: Sketch, name: str) -> list[dict]:
+        config = owner.sources[name].config
+        state = {key: config[key] for key in ("do", "with", "each", "reduce") if key in config}
+        state.setdefault("with", {})
+        context = StageContext(owner, name, state, results, None, directory, summary, sources, record.emit)
+        if "each" in state:
+            return await _run_each(context, library, record)
+        return await _stage_function(state, library)(context, **state["with"])
+
+    return compute
+
+
 async def run_sketch(  # noqa: PLR0913 - what a run takes: the sketch, where, its stages, how to announce, capture, pause
     sketch: Sketch, out: Path, library: Mapping[str, StageFn], announce: Callable[[str], None] = print,
     capture: Capture | None = None, pause: bool = False, on_start: Callable[[Path], None] | None = None,
@@ -223,17 +240,7 @@ async def run_sketch(  # noqa: PLR0913 - what a run takes: the sketch, where, it
     def make_context(name: str, state: dict) -> StageContext:
         return StageContext(sketch, name, state, results, last["value"], directory, summary, sources, record.emit)
 
-    async def compute(owner: Sketch, name: str) -> list[dict]:
-        """Run a stage source's stage (`kind: stage`): the source's `do` and `with`, as a state would have them."""
-        config = owner.sources[name].config
-        state = {key: config[key] for key in ("do", "with", "each", "reduce") if key in config}
-        state.setdefault("with", {})
-        context = StageContext(owner, name, state, results, None, directory, summary, sources, record.emit)
-        if "each" in state:
-            return await _run_each(context, library, record)
-        return await _stage_function(state, library)(context, **state["with"])
-
-    sources.compute = compute
+    sources.compute = stage_computer(library, record, results, directory, summary, sources)
     stages = _stages(sketch, library, make_context, results, record)
     machine = build_machine(sketch)
     inner = {name: _remember(stage, last) for name, stage in stages.items()}

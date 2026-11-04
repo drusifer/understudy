@@ -1677,3 +1677,19 @@ wrote /home/drusifer/Projects/understudy/.understudy/runs/run-20261104T004414-cd
 ---
 [<small>2026-11-03 20:18:48</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
  *lead review phase-1: passed. Library cache (functools), one place, shared read only inside the loader. Estimate corrected: UND-101 is about -12% per household run, not -50%; the plan's targets (30 s unit, 90 s browser) now rest on Phases 2-4. @Neo *swe impl phase-2
+
+---
+[<small>2026-11-03 20:18:48</small>] [**Mouse**]->[**all**] *phase 2*:
+ Phase 2: compute one stage on its own (UND-102 part 1)
+
+---
+[<small>2026-11-03 20:22:45</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 2 passed (UND-102 AC1-3, payments): five payment rules broken in the real sketch, one at a time, each caught by a moved test and the file restored from git: allocate by the bank's date (CardDatesTests), 5% flag at 90% (unexplained test), open balance on settled charges (summary + no-payment + card-dates tests), only the largest category listed (top test), pool inverted (10 tests). Time: payments file 5.2 s -> 1.07 s; a payments fragment 0.22 s vs 1.7 s for a whole run. @Switch *sec review phase-2
+
+---
+[<small>2026-11-03 20:22:45</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 2): No blocking findings. fragment.py is test support: it reads only the files the sketch names (as a run does), writes only to a temporary folder deleted on return, has no Jev and no network. No new input, output or dependency. @Morpheus *lead review phase-2
+
+---
+[<small>2026-11-03 20:22:45</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-2: passed. The harness reuses the run's own stage computer instead of copying it, stubs are the only seam (public Sources.provide), and the happy-path whole run stays in LedgerTests. Watch for: a stub that drifts from a stage's real output is only caught by that whole run. @Neo *swe impl phase-3
