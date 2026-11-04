@@ -63,7 +63,7 @@ The Makefile is the only entry point; its recipes hold the commands. `bobp make 
 | `security-scan` | `secrets` + `security-scan-python` | clean before a release and after any dependency change; not part of `check` because it needs the network |
 | `install-browser` | `uv sync --locked --group browser` | adds the optional browser tools (`playwright`, `greenlet`, `pyee`); a later `install` removes them again; touches the network |
 | `test-browser` | `python -m unittest discover -s tests/browser` with `CHROMIUM` (default `/usr/bin/chromium`) | drives the console in a real Chromium: rack, banner, live follow, start and stop, keyboard reach, and text contrast in all six theme and mode looks (UND-80); skipped with a reason when the group or Chromium is missing; not part of `check` |
-| `check` | `test` + `lint` + `secrets` | the full gate |
+| `check` | `lint` + `secrets` + `test`, in that order (cheapest first; Sprint 27) | the full gate |
 | `push` | `check`, then `scripts/push.sh`: stage all → gitleaks scan of the staged files → commit with `MSG` → `git push --follow-tags origin <current branch>` | the only way changes are committed for publishing and pushed; `MSG="..."` required when anything is uncommitted; `ARGS="--dry-run"` commits nothing and previews; never `--force`; touches the network |
 | `clean` | removes `build/`, `coverage/` | keeps the installed environment |
 | `distclean` | `clean` + removes `.venv/` | used for the from-clean check |

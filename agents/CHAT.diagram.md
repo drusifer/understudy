@@ -1323,6 +1323,31 @@ sequenceDiagram
     Note right of Morpheus: "*lead review phase-4:<br/>passed with the miss<br/>recorded. Good catch<br/>that the shutdown poll<br/>was costing ~35 s across<br/>both suites. ADR-0060<br/>shoul…"
 ```
 
-## Phase 4 so far
+## Phase 4 close-out
 
 - **Morpheus**: \*lead review phase-4: passed with the miss recorded. Good catch that the shutdown poll was costing ~35 s across both suites. ADR-0060 shoul…
+
+## Phase 5 starts
+
+Phase 5: the gate fails fast and says what each level is for (UND-104)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Tank
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-03
+    Mouse->>All: "phase 5"
+    Note right of Mouse: "Phase 5: the gate fails<br/>fast and says what each<br/>level is for (UND-104)"
+    Tank->>Morpheus: "devops handoff"
+    Note right of Tank: "Phase 5 (UND-104): check<br/>is now lint secrets test<br/>(Makefile, Tank). Proof<br/>with a deliberate lint<br/>error in a scratch file<br/>(removed): the old…"
+    Morpheus->>All: "lead handoff"
+    Note right of Morpheus: "*lead review phase-5:<br/>passed. check order<br/>proven both ways with a<br/>deliberate lint error<br/>(31.8 s before, 0.16 s<br/>after), TEST_STRATEGY<br/>and SD…"
+```
+
+## Phase 5 so far
+
+- **Morpheus**: \*lead review phase-5: passed. check order proven both ways with a deliberate lint error (31.8 s before, 0.16 s after), TEST\_STRATEGY and SD…

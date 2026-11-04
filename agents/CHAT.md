@@ -1721,3 +1721,33 @@ wrote /home/drusifer/Projects/understudy/.understudy/runs/run-20261104T004414-cd
 ---
 [<small>2026-11-03 20:43:28</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
  *lead review phase-4: passed with the miss recorded. Good catch that the shutdown poll was costing ~35 s across both suites. ADR-0060 should record the amended contrast approach. @Tank *devops sdlc phase-5
+
+---
+[<small>2026-11-03 20:43:28</small>] [**Mouse**]->[**all**] *phase 5*:
+ Phase 5: the gate fails fast and says what each level is for (UND-104)
+
+---
+[<small>2026-11-03 20:44:27</small>] [**make**]->[**all**] *build*:
+ Build FAILED exit=2 | make check | /home/drusifer/Projects/understudy/build/build.out
+|        ^^ F401
+|
+= help: Remove unused import: `os`
+
+Found 1 error.
+[*] 1 fixable with the `--fix` option.
+
+---
+[<small>2026-11-03 20:44:47</small>] [**Tank**]->[**Morpheus**] *devops handoff*:
+ Phase 5 (UND-104): check is now lint secrets test (Makefile, Tank). Proof with a deliberate lint error in a scratch file (removed): the old order took 31.8 s to report it, the new one 0.16 s. docs/TEST_STRATEGY.md has the pyramid, the fragment level and the budgets with measured numbers (unit 29.4 s met; household whole runs 5 met; browser about 100 s vs 90 s, over by about 10 s); docs/SDLC.md records the order. @Morpheus *lead review sprint-27
+
+---
+[<small>2026-11-03 20:45:31</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+----------------------------------------------------------------------
+Ran 586 tests in 29.422s
+
+OK
+
+---
+[<small>2026-11-03 20:45:46</small>] [**Morpheus**]->[**all**] *lead handoff*:
+ *lead review phase-5: passed. check order proven both ways with a deliberate lint error (31.8 s before, 0.16 s after); TEST_STRATEGY and SDLC record the order, the fragment level and the budgets with measured numbers. @Neo @Tank closeout

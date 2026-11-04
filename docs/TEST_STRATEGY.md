@@ -23,12 +23,24 @@ understudy makes decisions about the owner's money and time, so its first qualit
 
 | Level | Purpose and risk covered | Where it runs / command | When it is appropriate |
 |---|---|---|---|
-| Unit | Rules, conditions, blend, dates, stage functions, console routing and gauges: fast isolated cases and edges | `bobp make test-py ARGS="test_<area>*.py"` (24 files, 233 tests, about 13 s) | Every change; pick the narrowest file pattern first |
-| Integration | A whole sketch end to end on invented fixtures with a Jev double: coffee, evening, seating, household (naming, fold), CLI exit codes, the console server over real sockets | `bobp make test-py` (same suite: `test_sketch_run`, `test_sketch_coffee`, `test_sketch_evening`, `test_household*`, `test_dashboard`) | When a boundary changes: stages, sources, run folder, CLI |
+| Unit | Rules, conditions, blend, dates, stage functions, console routing and gauges: fast isolated cases and edges | `bobp make test-py ARGS="test_<area>*.py"` (586 tests, about 29 s for the whole suite) | Every change; pick the narrowest file pattern first |
+| Fragment (integration) | One rule of a sketch on written rows: a stage and the stages it reads, a child sketch with a Jev double, a check state of a machine. No machine, sinks, run folder or real Jev | `tests/python/household_fragment.py` (`fragment`, `categorize`, `run_state`) over `src/sketch/fragment.py`; in the same suite | A household or sketch rule changes. This is where a rule is tested; not in a whole run |
+| Integration | A whole run on invented fixtures with a Jev double: coffee, evening, seating, the household happy path, CLI exit codes, the console server over real sockets | `bobp make test-py` (`test_sketch_run`, `test_sketch_coffee`, `test_sketch_evening`, `LedgerTests` in `test_household.py`, `test_dashboard`, `test_launcher`) | When a boundary changes: sources, run folder, CLI, publishing |
 | Replay acceptance | Byte-identical output from a captured real Jev read | `bobp make run ARGS="run tests/fixtures/coffee/coffee_week.yaml --replay=tests/fixtures/coffee/replay"` | After changes to capture, blend or sinks |
-| End-to-end / UAT | The owner's real journey: the household run on real exports (live, once), the console in a real browser (rack, live follow, failed run, themes, 390 px), the CLI's wrong-input messages | written in `docs/sprints/UAT_PLAN_SPRINT<N>.md`; browser steps by hand until UND-80 writes them down | Sprint close; before the owner sees a change |
+| End-to-end (browser) | What only the page's JavaScript and what is really drawn show: contrast on textured themes, keyboard focus, the replay timer, fit at 390 px | `bobp make test-browser` (39 tests, about 100 s, real Chromium; not part of `check`) | After a change in `src/dashboard/` page files |
+| UAT | The owner's real journey: the household run on real exports (live, once), the CLI's wrong-input messages | written in `docs/sprints/UAT_PLAN_SPRINT<N>.md` | Sprint close; before the owner sees a change |
 
-Browser automation is not part of the suite (ADR-0048). A thin Python-driven browser check is proposed in Sprint 22 UND-80 and needs Tank's approval before any tool is added.
+**The pyramid and its budgets (owner decision 17, Sprint 27).** End-to-end tests must be rare and fast, and cover only what a unit or fragment test cannot. A rule is tested on its own stage; a whole run is for what only a whole run shows (the happy path whose outputs many tests read, an empty period that must still write its file, a refusal that must come before the first request to Jev). Budgets, measured with `python -m unittest discover -s tests/python --durations 20`:
+
+| What | Budget | Measured 2026-11-03 |
+|---|---|---|
+| Python unit suite | 30 s | 29.4 s (it was 94.6 s) |
+| Whole-sketch household runs | 5 | 5 (it was about 53) |
+| Browser suite | 90 s, no flake | about 100 s on two runs, no flake (it was 154.9 s with one flake): over budget by about 10 s |
+
+Every whole-sketch test and every browser test says in its docstring what only it can show. A rule moved down a level is checked by breaking the rule in a scratch copy and watching the moved test fail. The cost of a test is measured, not guessed: the `--durations` list and, for the browser suite, the time of each look.
+
+The browser suite uses Playwright and the system Chromium (ADR-0048 and the SDLC): it is not part of `check` because it takes about 100 s. If it is ever made a release gate it must first fit in seconds.
 
 ---
 
@@ -43,7 +55,7 @@ Authoring and review roles are defined in `agents/trin/SKILL.md`, `agents/neo/SK
 | Tests | `bobp make test` (runs `test-py`) | exit 0, `OK`, no skipped test | every handoff to Trin; before commit; sprint close |
 | Lint | `bobp make lint` (ruff over `src` and `tests/python`) | `All checks passed!` | every handoff to Trin; sprint close |
 | Secrets | `bobp make secrets` (gitleaks over history and tracked changes) | `no leaks found` | every commit and push; sprint close |
-| Full gate | `bobp make check` (tests, lint, secrets) | all three pass | before `bobp make push`; sprint close |
+| Full gate | `bobp make check` (lint, secrets, tests: cheapest first, so a failure shows in seconds; a lint error stops it in 0.16 s, it used to wait 31.8 s for the tests) | all three pass | before `bobp make push`; sprint close |
 | Dependency audit | `bobp make security-scan` (gitleaks and pip-audit over `uv.lock`) | `No known vulnerabilities found` and no leaks; needs the network, so it is not part of `check` | a release; any dependency change |
 
 ## 5. Test Environment & Fixture Management
