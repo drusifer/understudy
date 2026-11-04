@@ -46,10 +46,18 @@ def _read(path: Path, variables: dict[str, str], lenient: bool) -> tuple[dict, f
     `lenient` fills any variable not given with an empty value, to read the shape of a sketch whose values are not
     known yet (the child of an `each`).
     """
+    return _parse(path, _text(path), variables, lenient)
+
+
+def _text(path: Path) -> str:
     try:
-        text = path.read_text(encoding="utf-8")
+        return path.read_text(encoding="utf-8")
     except OSError as error:
         raise SketchError([f"{path}: cannot be read: {error.strerror or error}"]) from error
+
+
+def _parse(path: Path, text: str, variables: dict[str, str], lenient: bool) -> tuple[dict, frozenset[str]]:
+    """What `_read` makes of the file's `text`: render the template, then read the YAML."""
     try:
         used = frozenset(meta.find_undeclared_variables(TEMPLATES.parse(text)))
         given = {**{name: "" for name in used}, **variables} if lenient else variables
@@ -70,19 +78,16 @@ def _read(path: Path, variables: dict[str, str], lenient: bool) -> tuple[dict, f
 
 
 @lru_cache(maxsize=256)
-def _template(path: str, modified: int, size: int) -> tuple[dict, frozenset[str]]:  # noqa: ARG001 - the key is the file's version
-    return _read(Path(path), {}, True)
+def _template(path: str, text: str) -> tuple[dict, frozenset[str]]:
+    return _parse(Path(path), text, {}, True)
 
 
 def _shared_template(path: Path) -> tuple[dict, frozenset[str]]:
-    """What `read_template` reads, once per version of the file: the path with the file's modification time and size is
-    the cache key, so an edited file is read again. The document is shared, so callers here only read it. A file that
-    cannot be read or parsed is not cached; `_read` says why each time."""
-    try:
-        found = path.stat()
-    except OSError:
-        return _read(path, {}, True)
-    return _template(str(path.resolve()), found.st_mtime_ns, found.st_size)
+    """What `read_template` reads, once per version of the file: the file is read each time (a few microseconds) and its
+    text is the cache key, so an edited file is always read again, whatever its modification time says. The document is
+    shared, so callers here only read it. A file that cannot be read or parsed is not cached; the error says why each
+    time."""
+    return _template(str(path), _text(path))
 
 
 def read_template(path: Path) -> tuple[dict, frozenset[str]]:

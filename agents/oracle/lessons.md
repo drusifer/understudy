@@ -777,3 +777,22 @@ Before a test is moved down, break the rule it guards in a scratch change, see t
 ### Evidence and Scope
 - **References:** `UAT_PLAN_SPRINT27.md` (UAT-27-2, UAT-27-3)
 - **Applies when:** replacing an end-to-end test with a smaller one.
+
+---
+
+## [2026-11-04] A cache keyed on a file's modification time can serve stale content; key it on the content
+
+> **Tags:** #cache #testing #Neo
+
+### Context
+Sprint 27 cached the row-independent read of a sketch by (path, modification time, size). The first push after the merge failed the gate: a test rewrote a file in the same clock tick with an edit of the same length (`mood` to `tone`), and the old content came back.
+
+### Observation and Cause
+Two writes in one timestamp tick share a modification time, and a same-length edit shares the size. My own "edited file is read again" test passed earlier only because the writes happened to land in different ticks.
+
+### Rule
+Key a cache of a file on what it holds (the text, read each time: microseconds), not on its timestamp. Write the test that forces the collision (same length, modification time set back) before trusting the key, and run the gate before a merge, not only the focused suites.
+
+### Evidence and Scope
+- **References:** `tests/python/test_loader_cache.py`, `src/sketch/loader.py` (`_shared_template`), `STORY_ARCH_SPRINT27.md` (amendments)
+- **Applies when:** caching anything derived from a file.

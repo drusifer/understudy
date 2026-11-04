@@ -1370,3 +1370,14 @@ sequenceDiagram
 ## Sprint close-out
 
 - **Cypher**: \*pm launch sprint-27. Sprint complete: 4 stories (UND-101..104), 5 phases, gate 96-101 s -&gt; 36 s, unit suite 94.6 -&gt; 29.4 s, browser 154.9…
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Neo
+    participant Trin
+    Note over Neo,Trin: 📅 2026-11-04
+    Neo->>Trin: "swe fix"
+    Note right of Neo: "Gate caught a real<br/>defect before the push:<br/>the loader cache keyed<br/>on (mtime, size) served<br/>stale content when a<br/>same-length edit shared<br/>a cl…"
+```

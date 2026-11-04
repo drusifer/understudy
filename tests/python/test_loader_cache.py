@@ -1,5 +1,6 @@
 """UND-101: the part of a sketch's load that does not depend on a row's values is read once per file version."""
 
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -28,15 +29,15 @@ class CacheCase(unittest.TestCase):
         self.addCleanup(loader._template.cache_clear)
 
     def reads_without_values(self):
-        """Wrap `_read` and count the calls that do not depend on a row: no values given, read leniently."""
+        """Wrap `_parse` and count the calls that do not depend on a row: no values given, read leniently."""
         calls = []
-        real = loader._read
+        real = loader._parse
 
-        def spy(path, variables, lenient):
+        def spy(path, text, variables, lenient):
             calls.append((variables, lenient))
-            return real(path, variables, lenient)
+            return real(path, text, variables, lenient)
 
-        return calls, patch.object(loader, "_read", spy)
+        return calls, patch.object(loader, "_parse", spy)
 
 
 class CountTests(CacheCase):
@@ -69,14 +70,15 @@ class ChangeTests(CacheCase):
         self.path.write_text(CHILD.replace("mood:", "tone:"), encoding="utf-8")
         self.assertEqual(list(read_template(self.path)[0]["inputs"]), ["tone"])
 
-    def test_a_same_length_edit_is_seen_when_the_modification_time_moves(self):
+    def test_a_same_length_edit_is_seen_even_when_the_modification_time_is_the_same(self):
+        # two writes in the same clock tick share a modification time; only the content tells them apart
+        before = self.path.stat()
         read_template(self.path)
         text = CHILD.replace("fun, serious", "fan, serious")  # same length
         self.assertEqual(len(text), len(CHILD))
         self.path.write_text(text, encoding="utf-8")
-        later = self.path.stat().st_mtime_ns + 1_000_000
-        import os
-        os.utime(self.path, ns=(later, later))
+        os.utime(self.path, ns=(before.st_atime_ns, before.st_mtime_ns))  # as if it had not moved
+        self.assertEqual(self.path.stat().st_mtime_ns, before.st_mtime_ns)
         self.assertIn("fan", read_template(self.path)[0]["inputs"]["mood"]["options"])
 
     def test_a_file_that_is_not_valid_is_refused_every_time_and_loads_once_fixed(self):

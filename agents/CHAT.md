@@ -1771,3 +1771,18 @@ OK
 ---
 [<small>2026-11-03 20:46:35</small>] [**Cypher**]->[**all**] *pm launch*:
  *pm launch sprint-27. Sprint complete: 4 stories (UND-101..104), 5 phases; gate 96-101 s -> 36 s, unit suite 94.6 -> 29.4 s, browser 154.9 -> ~100 s (target 90 s missed). Branch sprint-27 is committed locally and NOT merged or pushed; merge and push only when the owner asks.
+
+---
+[<small>2026-11-04 12:56:50</small>] [**make**]->[**all**] *build*:
+ Build FAILED exit=2 | make push | /home/drusifer/Projects/understudy/build/build.out
++ ['tone']
+
+----------------------------------------------------------------------
+Ran 586 tests in 29.813s
+
+FAILED (failures=1)
+make: *** [Makefile:36: test-py] Error 1
+
+---
+[<small>2026-11-04 12:58:29</small>] [**Neo**]->[**Trin**] *swe fix*:
+ Gate caught a real defect before the push: the loader cache keyed on (mtime, size) served stale content when a same-length edit shared a clock tick. Test first (mtime forced back, red), then the key is now the file's text; child load 37.9 ms/row, all focused suites and lint pass. Fix goes on main (SDLC: fixes between sprints) and sprint-27 is moved to main. Lesson recorded. @Trin *qa verify
