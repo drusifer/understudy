@@ -1513,3 +1513,23 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-11-03 19:08:32</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
  *lead review phase-1: passed. The gate is a hook on the generic loop (run_machine before=), the control file is one small module, the console side stays out of the runner. Debt: nested stages are not held (by design); a poll every 0.2 s. @Neo *swe impl phase-2
+
+---
+[<small>2026-11-03 19:08:32</small>] [**Mouse**]->[**all**] *phase 2*:
+ Phase 2: drive it from the console and the command line (UND-83 part 2)
+
+---
+[<small>2026-11-03 19:21:32</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+7:21PM INF 1 commits scanned.
+7:21PM INF scanned ~15425 bytes (15.43 KB) in 255ms
+7:21PM INF no leaks found
+
+---
+[<small>2026-11-03 19:21:48</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 2 impl complete (UND-83 part 2): hold.py + POST /api/pause|step|resume (secret, same-origin, run id pattern, resolved under the runs root, only runs the console started or watches), state paused in the console, PAUSE/STEP/RESUME buttons, run --watch [--pause] [--port] bound to 127.0.0.1, watch.secret separate from the dashboard's. 527 tests, lint, secrets green; browser 24/24. @Trin *qa uat phase-2
+
+---
+[<small>2026-11-03 19:21:48</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-2: passed. The runner knows only the file; the console only writes it; run --watch is a thin wrapper (Watch) over the same server. Debt: the page says 'pausing' only in a message, not in the status; hold waits poll every 0.2 s. @Neo *swe impl phase-3

@@ -3,9 +3,10 @@
 // shows the answer. It shares page.js's helpers ($, make, state, getJson, choose, loadRuns).
 'use strict';
 
-const controls = { enabled: false, authorized: false, sketches: [], watching: null };
+const controls = { enabled: false, holdable: false, authorized: false, sketches: [], watching: null };
 const SECRET_KEY = 'understudy.secret';
 const GATE_LOCKED = 'locked: you can watch, but not start, replay or stop';
+const GATE_LOCKED_HOLD = 'locked: you can watch, but not pause, step or resume';
 
 function say(text, kind = '') {
   const box = $('start-message');
@@ -34,10 +35,39 @@ function drawButtons() {
   const playable = controls.authorized && sketch?.ok;
   $('play').disabled = !playable;
   $('play').title = controls.authorized ? (sketch?.ok ? 'Run this sketch' : 'this file cannot be read as a sketch') : 'needs the access secret';
-  const running = ['running', 'stalled'].includes(state.chosenState);
+  const running = ['running', 'stalled', 'paused'].includes(state.chosenState);
   $('stop').disabled = !(controls.authorized && running);
   $('stop').title = controls.authorized ? (running ? 'Stop the run on screen' : 'the run on screen is not going') : 'needs the access secret';
-  $('gate-note').textContent = controls.authorized ? 'unlocked for this tab: Jev level names are shown too' : GATE_LOCKED;
+  drawHoldButtons();
+  $('gate-note').textContent = controls.authorized ? 'unlocked for this tab: Jev level names are shown too'
+    : (controls.enabled ? GATE_LOCKED : GATE_LOCKED_HOLD);
+}
+
+// Pause holds a run that is going before its next stage; Step and Resume work on a run that is held.
+function drawHoldButtons() {
+  const goes = state.chosenState === 'running';
+  const held = state.chosenState === 'paused';
+  const reason = (ok, why) => (controls.authorized ? (ok ? why : 'the run on screen is not in a state that allows this') : 'needs the access secret');
+  $('pause').disabled = !(controls.authorized && goes);
+  $('pause').title = reason(goes, 'Hold the run before its next stage (the stage in flight finishes first)');
+  $('step').disabled = !(controls.authorized && held);
+  $('step').title = reason(held, 'Let one stage run, then hold again');
+  $('resume').disabled = !(controls.authorized && held);
+  $('resume').title = reason(held, 'Run on without holding');
+}
+
+const HOLD_SAID = {
+  pause: 'pausing: the stage now running finishes first, then the run holds',
+  step: 'one stage will run, then the run holds again',
+  resume: 'running on',
+};
+
+async function hold(action) {
+  if (!state.chosen) return;
+  const { status, body } = await post(`api/${action}`, { run: state.chosen });
+  say(status === 200 ? HOLD_SAID[action] : body.problem ?? `could not ${action} (${status})`, status === 200 ? 'ok' : 'problem');
+  const run = await getJson(`api/runs/${state.chosen}`);
+  if (run) drawStatus(run);
 }
 
 // A number as the sketch will read it: no more places than its step has, and no trailing zeros (0.30 is 0.3, 1.00 is 1).
@@ -163,9 +193,16 @@ async function loadControls() {
   const session = await getJson('api/session');
   if (!session) return;
   controls.enabled = session.controls;
+  controls.holdable = Boolean(session.holdable);
   controls.authorized = session.authorized;
-  $('controls').hidden = !controls.enabled;
-  if (!controls.enabled) return;
+  $('controls').hidden = !(controls.enabled || controls.holdable);
+  for (const each of document.querySelectorAll('[data-launcher]')) each.hidden = !controls.enabled;
+  for (const each of document.querySelectorAll('[data-hold]')) each.hidden = !controls.holdable;
+  if (!controls.enabled) {
+    $('controls').querySelector('summary').textContent = 'HOLD THIS RUN';
+    $('gate-note').textContent = GATE_LOCKED_HOLD;
+    return;
+  }
   controls.sketches = (await getJson('api/sketches')) ?? [];
   const replays = (await getJson('api/replays')) ?? [];
   $('replay-pick').replaceChildren(make('option', { value: '' }, 'no - run live'), ...replays.map((id) => make('option', { value: id }, id)));
@@ -225,7 +262,7 @@ async function stop() {
 // The chosen run changed or finished: Stop follows it, and a run this panel started says how it ended.
 function afterStatus(run) {
   drawButtons();
-  if (controls.watching === run.id && !['running'].includes(run.state)) {
+  if (controls.watching === run.id && !['running', 'paused'].includes(run.state)) {
     say(`run ended: ${run.ended || run.state}`, run.state === 'failed' ? 'problem' : 'ok');
     controls.watching = null;
   }
@@ -236,4 +273,5 @@ $('unlock').addEventListener('click', unlock);
 $('secret-box').addEventListener('keydown', (event) => { if (event.key === 'Enter') unlock(); });
 $('play').addEventListener('click', play);
 $('stop').addEventListener('click', stop);
+for (const action of ['pause', 'step', 'resume']) $(action).addEventListener('click', () => hold(action));
 loadControls();

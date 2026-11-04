@@ -28,10 +28,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 2: Drive it from the console and the command line (UND-83 part 2, 4 pts)
 *Phase goal: pause, step, resume in the console; `run --watch [--pause]`; a held run reads as paused.*
-- [ ] **Task 2.1:** Tests first, then `Launcher.control`, `POST /api/pause`, `/api/step`, `/api/resume`, state `paused` in `view.py`, buttons with keyboard names in the page, `run --watch [--pause]` on 127.0.0.1 and the `--pause needs --watch` refusal; docs. **L3** (new control channel; process and thread). (*Owner: Neo | Trace: UND-83 AC1, AC2, AC4, AC6, ADR-0058 | Verification: `bobp make test`, `bobp make lint`, `bobp make test-browser`*)
-- [ ] **Task 2.2:** UAT in the console and from the terminal: hold, `paused before <stage>` shown, step, resume, stop; a foreign run refused; no Jev request while held (counted). **L2**. (*Owner: Trin | Trace: UND-83 AC1-6 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
-- [ ] **Task 2.3:** Security review (full): the POSTs, the run id, the control file path, the in-process server's binding. **L3**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 2): ...`*)
-- [ ] **Task 2.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT26 sections 3-6 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 2.1:** Tests first, then `Launcher.control`, `POST /api/pause`, `/api/step`, `/api/resume`, state `paused` in `view.py`, buttons with keyboard names in the page, `run --watch [--pause]` on 127.0.0.1 and the `--pause needs --watch` refusal; docs. **L3** (new control channel; process and thread). (*Owner: Neo | Trace: UND-83 AC1, AC2, AC4, AC6, ADR-0058 | Verification: `bobp make test`, `bobp make lint`, `bobp make test-browser`*)
+- [x] **Task 2.2:** UAT in the console and from the terminal: hold, `paused before <stage>` shown, step, resume, stop; a foreign run refused; no Jev request while held (counted). **L2**. (*Owner: Trin | Trace: UND-83 AC1-6 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
+- [x] **Task 2.3:** Security review (full): the POSTs, the run id, the control file path, the in-process server's binding. **L3**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 2): ...`*)
+- [x] **Task 2.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT26 sections 3-6 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 3: The run as it was (UND-84 part 1, 3 pts)
 *Phase goal: `replay(dir, at)` in Python and its API.*

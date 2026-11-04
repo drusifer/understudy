@@ -1036,8 +1036,35 @@ sequenceDiagram
     Note right of Morpheus: "*lead review phase-1:<br/>passed. The gate is a<br/>hook on the generic loop<br/>(run_machine before=),<br/>the control file is one<br/>small module, the conso…"
 ```
 
-## Phase 1 so far
+## Phase 1 close-out
 
 - **Neo**: Phase 1 impl complete (UND-83 part 1): control.py (control.json, fail-open to run, atomic write, Hold gate), gate before each top-level sta…
 - **Trin**: UAT phase 1 passed (UND-83 AC3-5): real household sketch started held and stepped from outside: 16 steps, 16 paused and 16 resumed events,…
 - **Morpheus**: \*lead review phase-1: passed. The gate is a hook on the generic loop (run\_machine before=), the control file is one small module, the conso…
+
+## Phase 2 starts
+
+Phase 2: drive it from the console and the command line (UND-83 part 2)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-03
+    Mouse->>All: "phase 2"
+    Note right of Mouse: "Phase 2: drive it from<br/>the console and the<br/>command line (UND-83<br/>part 2)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 2 impl complete<br/>(UND-83 part 2): hold.py<br/>+ POST<br/>/api/pause|step|resume<br/>(secret, same-origin,<br/>run id pattern, resolved<br/>under the runs…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-2:<br/>passed. The runner knows<br/>only the file, the<br/>console only writes it,<br/>run --watch is a thin<br/>wrapper (Watch) over the<br/>sa…"
+```
+
+## Phase 2 so far
+
+- **Neo**: Phase 2 impl complete (UND-83 part 2): hold.py + POST /api/pause|step|resume (secret, same-origin, run id pattern, resolved under the runs…
+- **Morpheus**: \*lead review phase-2: passed. The runner knows only the file, the console only writes it, run --watch is a thin wrapper (Watch) over the sa…

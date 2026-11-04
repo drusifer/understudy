@@ -386,8 +386,9 @@ class HttpTest(LauncherCase):
         self.assertEqual(self.call("/api/nothing", {"a": 1}, headers)[0], 404)
 
     def test_the_session_route_says_whether_there_are_controls_and_whether_this_caller_may_use_them(self):
-        self.assertEqual(self.call("/api/session")[1], {"controls": True, "authorized": False})
-        self.assertEqual(self.call("/api/session", None, {"X-Understudy-Secret": SECRET})[1], {"controls": True, "authorized": True})
+        self.assertEqual(self.call("/api/session")[1], {"controls": True, "holdable": False, "authorized": False})
+        self.assertEqual(self.call("/api/session", None, {"X-Understudy-Secret": SECRET})[1],
+                         {"controls": True, "holdable": False, "authorized": True})
 
 
 class AnnounceTest(unittest.TestCase):
@@ -462,3 +463,21 @@ class EndToEndTest(LauncherCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class HoldsTest(LauncherCase):
+    def test_a_launcher_holds_only_the_runs_it_started_and_still_has_going(self):
+        self.write("plain.yaml", PLAIN)
+        run = self.runs / "run-20261101T100000-eeeeeeee"
+        run.mkdir()
+
+        def sleeper(argv, **options):
+            return _Child([sys.executable, "-c", "import time; time.sleep(60)"], **options)
+
+        launcher = self.launcher(spawn=sleeper, check=lambda argv: [], find_run=lambda sketch, before: run.name)
+        self.assertFalse(launcher.holds(run.name))
+        launcher.start("plain.yaml", {"file": "data/in.csv"})
+        self.assertTrue(launcher.holds(run.name))
+        self.assertFalse(launcher.holds("run-20261101T100000-ffffffff"))
+        launcher.stop(run.name)
+        self.assertFalse(launcher.holds(run.name))

@@ -163,8 +163,9 @@ class BrowserCase(unittest.TestCase):
         self.runs.mkdir()
         self.servers: list = []
 
-    def start(self, launcher: Launcher | None = None, secret: str | None = None) -> str:
-        server = serve(self.runs, port=0, cache=self.root / "cache", project=self.root, launcher=launcher, secret=secret)
+    def start(self, launcher: Launcher | None = None, secret: str | None = None, controllable=None) -> str:
+        server = serve(self.runs, port=0, cache=self.root / "cache", project=self.root, launcher=launcher, secret=secret,
+                       controllable=controllable)
         threading.Thread(target=server.serve_forever, daemon=True).start()
         self.addCleanup(server.server_close)
         self.addCleanup(server.shutdown)
@@ -347,6 +348,44 @@ class StartAndStopTest(BrowserCase):
         page.reload()
         self.assertFalse(any(SECRET in each for each in urls))  # the secret is never in an address
         self.assertFalse(page.evaluate("JSON.stringify(localStorage)").count(SECRET))
+
+
+class HoldButtonsTest(BrowserCase):
+    def held_run(self):
+        return write_run(self.runs, "run-20261101T150000-0000000e", [
+            {"event": "run_started", "at": stamp(-1), "sketch": "p.yaml", "mode": "live", **STORY},
+            {"event": "paused", "at": stamp(-1), "stage": "a"}], {"status": "running", "stages": {}})
+
+    def test_a_held_run_reads_paused_and_the_hold_buttons_work_once_unlocked_and_only_where_they_apply(self):
+        run = self.held_run()
+        page = self.page()
+        page.goto(self.start(secret=SECRET, controllable=lambda each: each == run.name))
+        page.wait_for_function("document.getElementById('status-text').textContent === 'PAUSED'")
+        self.assertIn("paused before a", page.locator("#ended").inner_text())
+        page.locator("#controls > summary").click()
+        self.assertEqual(page.locator("#controls > summary").inner_text(), "HOLD THIS RUN")
+        self.assertFalse(page.locator("#sketch-pick").is_visible())  # a console that starts nothing offers no sketch
+        for name in ("PAUSE", "STEP", "RESUME"):
+            self.assertTrue(page.get_by_role("button", name=name, exact=True).is_disabled(), name)  # locked
+        self.assertIn("needs the access secret", page.locator("#step").get_attribute("title"))
+        page.fill("#secret-box", SECRET)
+        page.click("#unlock")
+        page.wait_for_function("!document.getElementById('step').disabled")
+        self.assertTrue(page.locator("#pause").is_disabled())  # it is already held
+        self.assertFalse(page.locator("#resume").is_disabled())
+        page.click("#step")
+        page.wait_for_function("document.getElementById('start-message').textContent.includes('one stage')")
+        self.assertEqual(json.loads((run / "control.json").read_text(encoding="utf-8")), {"mode": "hold", "steps": 1})
+        page.click("#resume")
+        page.wait_for_function("document.getElementById('start-message').textContent.includes('running on')")
+        self.assertEqual(json.loads((run / "control.json").read_text(encoding="utf-8")), {"mode": "run", "steps": 1})
+
+    def test_a_console_that_cannot_hold_runs_shows_no_hold_buttons(self):
+        self.held_run()
+        page = self.page()
+        page.goto(self.start(secret=SECRET))
+        page.wait_for_function("document.getElementById('status-text').textContent === 'PAUSED'")
+        self.assertTrue(page.locator("#controls").is_hidden())
 
 
 TYPED = """name: typed

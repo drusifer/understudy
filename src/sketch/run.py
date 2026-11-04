@@ -194,10 +194,10 @@ def _stages(
 
 async def run_sketch(  # noqa: PLR0913 - what a run takes: the sketch, where, its stages, how to announce, capture, pause
     sketch: Sketch, out: Path, library: Mapping[str, StageFn], announce: Callable[[str], None] = print,
-    capture: Capture | None = None, pause: bool = False,
+    capture: Capture | None = None, pause: bool = False, on_start: Callable[[Path], None] | None = None,
 ) -> RunResult:
     """Run the sketch's machine. Raises whatever a stage raises, after recording the failure. With `pause` the run
-    starts held before its first stage (see `control.py`)."""
+    starts held before its first stage (see `control.py`); `on_start` is told the run's folder as soon as it exists."""
     capture = capture or Capture.live(CaptureStore())
     out = Path(out).resolve()
     check_writable(out)
@@ -205,6 +205,8 @@ async def run_sketch(  # noqa: PLR0913 - what a run takes: the sketch, where, it
     directory.mkdir(parents=True)
     if pause:
         write_control(directory, "hold", 0)
+    if on_start:
+        on_start(directory)
     files = [f for sink in sketch.sinks.values() for f in (sink.file, f"{sink.file}.part")]
     facts = {"with": dict(sketch.variables)}
     if capture.replay_dir:

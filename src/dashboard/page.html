@@ -57,15 +57,18 @@
       <button type="button" id="unlock" class="find-button">UNLOCK</button>
       <span id="gate-note" class="about">locked: you can watch, but not start, replay or stop</span>
     </div>
-    <label for="sketch-pick">Sketch</label>
-    <select id="sketch-pick" class="find-field"></select>
-    <div id="sketch-about" class="about"></div>
-    <div id="fields" class="start-fields"></div>
-    <label for="replay-pick">Replay from</label>
-    <select id="replay-pick" class="find-field"><option value="">no - run live</option></select>
+    <label for="sketch-pick" data-launcher>Sketch</label>
+    <select id="sketch-pick" class="find-field" data-launcher></select>
+    <div id="sketch-about" class="about" data-launcher></div>
+    <div id="fields" class="start-fields" data-launcher></div>
+    <label for="replay-pick" data-launcher>Replay from</label>
+    <select id="replay-pick" class="find-field" data-launcher><option value="">no - run live</option></select>
     <div class="start-buttons">
-      <button type="button" id="play" class="find-button" disabled>PLAY</button>
-      <button type="button" id="stop" class="find-button" disabled>STOP THIS RUN</button>
+      <button type="button" id="play" class="find-button" data-launcher disabled>PLAY</button>
+      <button type="button" id="stop" class="find-button" data-launcher disabled>STOP THIS RUN</button>
+      <button type="button" id="pause" class="find-button" data-hold disabled>PAUSE</button>
+      <button type="button" id="step" class="find-button" data-hold disabled>STEP</button>
+      <button type="button" id="resume" class="find-button" data-hold disabled>RESUME</button>
     </div>
     <div id="start-message" class="start-message" role="status" aria-live="polite"></div>
   </div>

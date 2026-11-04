@@ -107,8 +107,8 @@ function gauge(each) {
   return node;
 }
 
-const WORDS = { running: 'RUNNING', done: 'DONE', failed: 'FAILED', stopped: 'STOPPED', stalled: 'STALLED', unreadable: 'NO DETAILS' };
-const LAMPS = { running: 'on-air', done: 'done', failed: 'failed', stopped: 'standby', stalled: 'stalled', unreadable: 'dark' };
+const WORDS = { running: 'RUNNING', paused: 'PAUSED', done: 'DONE', failed: 'FAILED', stopped: 'STOPPED', stalled: 'STALLED', unreadable: 'NO DETAILS' };
+const LAMPS = { running: 'on-air', paused: 'standby', done: 'done', failed: 'failed', stopped: 'standby', stalled: 'stalled', unreadable: 'dark' };
 
 // The banner above the printer: why a run failed (it jumps to that line), or that a run looks dead.
 function drawBanner(run) {
@@ -342,7 +342,7 @@ async function choose(id) {
   if (!run) return;
   draw(run);
   loadJev(id);
-  if (run.state !== 'running') return;
+  if (!['running', 'paused'].includes(run.state)) return;
   const source = new EventSource(`events/${id}`);
   state.follow = source;
   let skip = run.count;
@@ -367,7 +367,7 @@ function stamp(id) {
   return month ? `${month}-${day} ${hour}:${minute}` : id;
 }
 
-const BADGES = { running: 'RUNNING', failed: 'FAILED', stalled: 'STALLED', stopped: 'STOPPED' };
+const BADGES = { running: 'RUNNING', paused: 'PAUSED', failed: 'FAILED', stalled: 'STALLED', stopped: 'STOPPED' };
 
 // The rack: runs grouped by sketch (the runs arrive newest first, so each group and each tab inside it is newest first),
 // each tab carrying a badge in words for a run that is going, failed, stalled or stopped.
@@ -393,7 +393,7 @@ async function loadRuns() {
   state.runs = runs;
   rack();
   if (!state.chosen && state.runs.length > 0) choose(state.runs[0].id);
-  else if (state.chosen && ['running', 'stalled'].includes(state.chosenState)) {
+  else if (state.chosen && ['running', 'paused', 'stalled'].includes(state.chosenState)) {
     const run = await getJson(`api/runs/${state.chosen}`);
     if (run) drawStatus(run);
   }

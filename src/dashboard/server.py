@@ -19,12 +19,14 @@ import os
 import re
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
+from src.dashboard.hold import ACTIONS, GONE, apply_hold
 from src.dashboard.reads import jev_reads
 from src.dashboard.runs import Launcher, Refused
 from src.dashboard.view import describe, list_runs, printed, read_events
@@ -59,6 +61,7 @@ class Console:
     project: Path = ROOT
     launcher: Launcher | None = None
     secret: str | None = None
+    controllable: Callable[[str], bool] | None = None  # whether this console may hold, step and resume a run (by its id)
 
     def holds(self, presented: str | None) -> bool:
         """Whether the secret presented is the console's (compared in constant time); false when there is none."""
@@ -174,11 +177,14 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         answers.get(kind, self._missing)(value)
 
     def _session(self, _value) -> None:
-        self._json({"controls": self.console.launcher is not None, "authorized": self._holds_secret()})
+        self._json({"controls": self.console.launcher is not None, "holdable": self.console.controllable is not None,
+                    "authorized": self._holds_secret()})
 
     def do_POST(self) -> None:  # noqa: N802 - the name http.server calls
-        action = {"/api/start": self._start, "/api/stop": self._stop}.get(self.path.split("?", 1)[0])
-        if action is None or self.console.launcher is None:
+        path = self.path.split("?", 1)[0]
+        holding = path.startswith("/api/") and path.removeprefix("/api/") in ACTIONS
+        action = self._hold if holding else {"/api/start": self._start, "/api/stop": self._stop}.get(path)
+        if action is None or (self.console.controllable is None if holding else self.console.launcher is None):
             return self._missing()
         refusal = self._refusal()
         if refusal:
@@ -228,6 +234,15 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             raise Refused(400, "stop needs the id of a run")
         return self.console.launcher.stop(body["run"])
 
+    def _hold(self, body: dict) -> dict:
+        """Pause, step or resume (the last word of the path) a run this console is allowed to control."""
+        run = body.get("run")
+        if not isinstance(run, str):
+            raise Refused(400, "this needs the id of a run")
+        if not self.console.controllable(run):
+            raise Refused(404, GONE)
+        return apply_hold(self.console.root, run, self.path.split("?", 1)[0].removeprefix("/api/"))
+
     def _static(self, name: str) -> None:
         self._send(HTTPStatus.OK, (HERE / name).read_bytes(), STATIC_TYPES[Path(name).suffix])
 
@@ -255,10 +270,10 @@ def make_handler(console: Console, poll_seconds: float = 0.5, max_streams: int =
 
 def serve(  # noqa: PLR0913 - the places a console reads from, each overridable for tests
     root: Path, port: int = 4180, host: str = "0.0.0.0", max_streams: int = MAX_STREAMS, cache: Path = CACHE, project: Path = ROOT,
-    launcher: Launcher | None = None, secret: str | None = None,
+    launcher: Launcher | None = None, secret: str | None = None, controllable: Callable[[str], bool] | None = None,
 ) -> ThreadingHTTPServer:
-    """A server for the runs under `root`; the caller starts and stops it."""
-    console = Console(Path(root), Path(cache), Path(project), launcher, secret)
+    """A server for the runs under `root`; the caller starts and stops it. `controllable` says which runs it may hold."""
+    console = Console(Path(root), Path(cache), Path(project), launcher, secret, controllable)
     server = ThreadingHTTPServer((host, port), make_handler(console, max_streams=max_streams))
     server.daemon_threads = True
     return server
@@ -284,7 +299,7 @@ def announce(stdout, root: Path, port: int, secret: str | None, secret_file: Pat
 
 
 def serve_forever(root: Path, port: int, stdout, launcher: Launcher | None = None, secret: str | None = None) -> None:
-    server = serve(root, port, launcher=launcher, secret=secret)
+    server = serve(root, port, launcher=launcher, secret=secret, controllable=launcher.holds if launcher else None)
     announce(stdout, root, server.server_address[1], secret if launcher else None, SECRET_FILE)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()

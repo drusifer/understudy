@@ -117,7 +117,7 @@ The reference is [SKETCHES.md](SKETCHES.md).
 ## 8. Command reference
 
 ```text
-understudy run <sketch.yaml> [--with name=value]... [--source name.path=file]... [--out folder] [--replay[=run-id|folder]]
+understudy run <sketch.yaml> [--with name=value]... [--source name.path=file]... [--out folder] [--replay[=run-id|folder]] [--watch [--pause] [--port N]]
 understudy check <sketch.yaml> [--with name=value]... [--source name.path=file]...
 understudy dashboard [runs-folder] [--port 4180] [--sketches examples]
 understudy runs [runs-folder]
@@ -130,6 +130,8 @@ A run records the `--with` values it was given in its `run.json`, and the consol
 `understudy runs` lists the runs in a folder, newest first, with how each ended. A finished `understudy run` prints its run id and how to watch it.
 
 ### The console
+
+**Hold and step a run.** `understudy run <sketch> --watch` also opens a console for that one run, on this machine only (`http://127.0.0.1:<port>`, a free port unless you give `--port`), and prints its address and where its access secret was saved (`.understudy/watch.secret`, a different file from the dashboard's so the two never lock each other out); `--pause` starts the run held before its first stage (it needs `--watch`, and without it the command stops with `understudy: --pause needs --watch`). In the console (unlock with the access secret) PAUSE holds a running run before its next stage, STEP lets exactly one stage run and holds again, RESUME runs on, and STOP ends it. A stage that is already running, Jev requests included, finishes first; nothing starts, and Jev is not asked, while the run is held. A held run reads PAUSED (never stalled), however long it waits, and says `paused before <stage>`. The console started by `understudy dashboard` can do the same for the runs it started. The hold is a small file, `control.json`, in the run's folder; the run's events gain `paused` and `resumed` lines. After a watched run ends the console stays up until Ctrl-C, so you can read how it ended.
 
 `understudy dashboard` serves the console on port 4180 of every network interface (`http://<this machine>:4180/`), over the runs under `.understudy/runs` (or the folder you give). There is no login for watching, so use it on a network you trust. A busy port, or a folder that is not a folder, is one plain line and exit 2.
 
