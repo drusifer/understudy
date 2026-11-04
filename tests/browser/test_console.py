@@ -3,9 +3,22 @@
 It needs the optional `browser` group (`bobp make install-browser`) and a Chromium (`/usr/bin/chromium`, or CHROMIUM=path);
 without them every test is skipped with that reason. It is not part of `bobp make check`, which stays offline and fast.
 Everything runs against invented run folders on a server started in this process: nothing private, nothing live.
+
+The test pyramid (owner decision 17): a test is here only if a unit or integration test cannot show it, because it needs the
+page's JavaScript or what is really drawn. What each class shows that nothing lower can:
+
+* ContrastTest, ReplayBarTest and DecisionPanelTest (one look each): the colors a text is really drawn on, with the
+  themes' textures and gradients behind it.
+* KeyboardTest, TypedControlsTest (keyboard and limits): focus order and a visible focus mark; arrow keys on the controls.
+* StatechartTest, SpendingListTest, TypedControlsTest (phone): the drawing, its overlaps and its fit at 390 px wide.
+* RackAndBannerTest, LiveFollowTest, StartAndStopTest, HoldButtonsTest: the page's own scripts: what it draws for a state,
+  that it follows a run that is going, that its buttons send what they should.
+* ReplayBarTest, DecisionPanelTest: the replay's timer and the cursor, and a decision's panel and jump, drawn by the page.
+Server answers and run files are tested without a browser, in tests/python.
 """
 
 import json
+import multiprocessing
 import os
 import struct
 import sys
@@ -13,6 +26,7 @@ import tempfile
 import threading
 import unittest
 import zlib
+from concurrent.futures import ProcessPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -27,6 +41,7 @@ except ImportError:  # the optional group is not installed
 CHROMIUM = os.environ.get("CHROMIUM", "/usr/bin/chromium")
 SECRET = "browser-test-secret"
 LOOKS = [(theme, mode) for theme in ("steampunk", "professional", "starship") for mode in ("light", "dark")]
+LOOK_WORKERS = 3  # browser processes measuring looks at once (the machine has four cores; the server and the test use one)
 PLAIN = "name: plain\ndescription: a sketch to start\nsources:\n  data: {{ file }}\nmachine: { initial: only, states: { only: { final: true } } }\n"
 
 # What each piece of text is checked for: the selectors worth reading on every screen (WCAG AA: 4.5:1, 3:1 for large text).
@@ -41,7 +56,7 @@ READABLE = [
 ]
 
 # While one element is measured its text is invisible and nothing animates, so a screenshot shows only the backdrop.
-HIDE_TEXT = "[data-contrast-target], [data-contrast-target] * { color: transparent !important; text-shadow: none !important; transition: none !important; animation: none !important; }\n[data-contrast-target] i, [data-contrast-target] button, [data-contrast-target] input { visibility: hidden !important; }"
+HIDE_TEXT = "*, *::before, *::after { animation: none !important; transition: none !important; }\n[data-contrast-target], [data-contrast-target] * { color: transparent !important; text-shadow: none !important; transition: none !important; animation: none !important; }\n[data-contrast-target] i, [data-contrast-target] button, [data-contrast-target] input { visibility: hidden !important; }"
 
 FIRST_VISIBLE_JS ="""(selector) => {
   for (const el of document.querySelectorAll(selector)) {
@@ -272,6 +287,7 @@ class RackAndBannerTest(BrowserCase):
         self.failed_and_done_runs()
         base = self.start()
         page = self.page()
+        page.add_init_script("window.understudyPollMs = 300;")  # the page asks again every 5 s; do not wait for that
         page.goto(base)
         page.wait_for_selector(".sketch-tab")
         port = int(base.rsplit(":", 1)[1])
@@ -628,8 +644,43 @@ class KeyboardTest(BrowserCase):
         self.assertEqual(unfocused, [], "controls that show no focus indicator")
 
 
+def contrast_problems(base: str, theme: str, mode: str) -> list[str]:
+    """Open the console at `base` in one look, in a browser of its own, and list every text that is not readable there.
+
+    A function of its own, importable by name, so the six looks can be measured in separate processes at the same time:
+    the time is spent in Chromium taking a picture of each text (about 0.2 s each), and a picture cannot be taken faster."""
+    problems = []
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(executable_path=CHROMIUM, args=["--no-sandbox"])
+        page = browser.new_context(viewport={"width": 1300, "height": 900}, bypass_csp=True).new_page()
+        page.goto(f"{base}/?theme={theme}&mode={mode}")
+        page.add_style_tag(content=HIDE_TEXT)
+        page.wait_for_selector(".sketch-tab")
+        page.locator(".sketch-tab").nth(1).click()
+        page.wait_for_selector(".banner")
+        page.locator("#controls > summary").click()
+        page.select_option("#sketch-pick", "typed.yaml")  # its dial, fader, stepper and switch are read in every look
+        page.fill("#find-text", "zzz-nothing")
+        for selector in READABLE:
+            found = page.evaluate(FIRST_VISIBLE_JS, selector)
+            if found is None:
+                continue
+            target = page.locator("[data-contrast-target]").first
+            pixels = decode_png(target.screenshot())  # the text is invisible here (see HIDE_TEXT), so this is only what is behind it
+            page.evaluate("document.querySelector('[data-contrast-target]').removeAttribute('data-contrast-target')")
+            large = found["size"] >= 24 or (found["size"] >= 18.66 and found["weight"] >= 700)
+            needed = 3.0 if large else 4.5
+            worst = min((contrast(found["color"], background) for background in backdrops(pixels)), default=21.0)
+            if worst < needed:
+                problems.append(f"{theme}/{mode} {selector} ({found['text']!r}): {worst:.2f} < {needed}")
+        browser.close()
+    return problems
+
+
 class ContrastTest(BrowserCase):
     def test_text_is_readable_in_every_theme_and_mode(self):
+        """Only a browser shows what a text is really drawn on (the themes' textures and gradients), so this measures
+        the real pixels, in all six looks, each in its own browser process at the same time."""
         self.failed_and_done_runs()
         sketches = self.root / "sketches"
         sketches.mkdir()
@@ -637,29 +688,9 @@ class ContrastTest(BrowserCase):
         (sketches / "typed.yaml").write_text(TYPED, encoding="utf-8")
         launcher = Launcher(sketches, self.runs, project=self.root, cache=self.root / "cache")
         base = self.start(launcher, SECRET)
-        problems = []
-        for theme, mode in LOOKS:
-            page = self.page()
-            page.goto(f"{base}/?theme={theme}&mode={mode}")
-            page.add_style_tag(content=HIDE_TEXT)
-            page.wait_for_selector(".sketch-tab")
-            page.locator(".sketch-tab").nth(1).click()
-            page.wait_for_selector(".banner")
-            page.locator("#controls > summary").click()
-            page.select_option("#sketch-pick", "typed.yaml")  # its dial, fader, stepper and switch are read in every look
-            page.fill("#find-text", "zzz-nothing")
-            for selector in READABLE:
-                found = page.evaluate(FIRST_VISIBLE_JS, selector)
-                if found is None:
-                    continue
-                target = page.locator("[data-contrast-target]").first
-                pixels = decode_png(target.screenshot())  # the text is invisible here (see HIDE_TEXT), so this is only what is behind it
-                page.evaluate("document.querySelector('[data-contrast-target]').removeAttribute('data-contrast-target')")
-                large = found["size"] >= 24 or (found["size"] >= 18.66 and found["weight"] >= 700)
-                needed = 3.0 if large else 4.5
-                worst = min((contrast(found["color"], background) for background in backdrops(pixels)), default=21.0)
-                if worst < needed:
-                    problems.append(f"{theme}/{mode} {selector} ({found['text']!r}): {worst:.2f} < {needed}")
+        with ProcessPoolExecutor(max_workers=LOOK_WORKERS, mp_context=multiprocessing.get_context("spawn")) as pool:
+            results = list(pool.map(contrast_problems, [base] * len(LOOKS), [theme for theme, _ in LOOKS], [mode for _, mode in LOOKS]))
+        problems = [problem for each in results for problem in each]
         self.assertEqual(problems, [], "\n" + "\n".join(problems))
 
 
@@ -782,6 +813,7 @@ class ReplayBarTest(BrowserCase):
         self.finished()
         base = self.start()
         problems = []
+        # one look, not six: the bar reuses classes (.find-button, .readout, .start-message) that ContrastTest measures in all six
 
         def measure(page, label, selectors):
             for selector in selectors:
@@ -795,7 +827,7 @@ class ReplayBarTest(BrowserCase):
                 if worst < 4.5:
                     problems.append(f"{label} {selector}: {worst:.2f}")
 
-        for theme, mode in LOOKS:
+        for theme, mode in LOOKS[1:2]:  # steampunk, dark: where the one flake and the worst margins were
             page = self.page(390, 800)
             page.goto(f"{base}/?theme={theme}&mode={mode}")
             page.add_style_tag(content=HIDE_TEXT)
@@ -897,7 +929,8 @@ class DecisionPanelTest(BrowserCase):
         self.deciding([a_decision(3, "teens", "hot", HOT), a_decision(4, "adults", "large", FORBIDDEN)])
         base = self.start()
         problems = []
-        for theme, mode in LOOKS:
+        # one look, not six: the panel reuses classes (.jev > summary, .jev-level, .find-button) that ContrastTest measures in all six
+        for theme, mode in LOOKS[1:2]:  # steampunk, dark
             page = self.page()
             page.goto(f"{base}/?theme={theme}&mode={mode}")
             page.add_style_tag(content=HIDE_TEXT)

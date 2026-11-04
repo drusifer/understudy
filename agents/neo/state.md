@@ -86,3 +86,20 @@ Status: Complete. Nothing in progress.
 ### Next Steps
 1. Ask the owner whether to merge `sprint-26` into `main` and push (via `bobp make push`).
 2. Sprint 27 candidate: the test-pyramid refactor (`docs/sprints/RETRO_SPRINT26.md` backlog), then the YAML editor, Venmo and Zelle, pins for own-account merchants.
+
+---
+## Checkpoint 2026-11-03 (end of Sprint 27)
+
+### Context
+- Sprint 27 (the test pyramid, owner decisions 17 and 18) is complete and committed on `sprint-27` (cut from `main` e2a7b6d). Not merged or pushed; the owner decides. `main` and `sprint-26` are pushed.
+- Results (measured): `bobp make check` 96-101 s -> 36.3 s (exit 0); unit suite 94.6 s/554 tests -> 29.4 s/586; household tests 73 in ~57 s -> 80 in 11.4 s, whole-sketch runs ~53 -> 5; browser 154.9 s (one flake) -> ~100 s twice, 39/39, no flake (target 90 s MISSED by ~10 s, two runs not five).
+- Built: `src/sketch/fragment.py` (`Fragment`, `read_stage`), `stage_computer` shared with `run_sketch`, `Sources.provide`, `tests/python/household_fragment.py` (`fragment`, `categorize`, `decided`, `placed_all`, `run_state`), `Server` with a 20 ms stop poll, a cache of the row-independent sketch read, `check: lint secrets test`, `docs/TEST_STRATEGY.md` budgets, ADR-0060.
+- Lessons: time the suite and look for repeated values; prove a moved test by breaking its rule. Owner rules: Edit/Write only (I slipped with empty heredocs and an unrelated `ruff --fix` run; reverted), do not re-run the gate when told, measure before claiming.
+
+### Current Task
+Status: Complete. Nothing in progress.
+
+### Next Steps
+1. Ask the owner whether to merge `sprint-27` into `main` and push (`bobp make push`; the gate now takes ~36 s).
+2. Owner to decide: accept the browser suite at ~100 s or merge page tests to reach 90 s.
+3. Backlog in `docs/sprints/RETRO_SPRINT27.md`.

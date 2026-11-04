@@ -14,7 +14,9 @@ import unittest
 import urllib.error
 import urllib.request
 from pathlib import Path
+from unittest.mock import patch
 
+from src.dashboard import server as server_module
 from src.dashboard.runs import Launcher, Refused, _Child
 from src.dashboard.server import SECRET_FILE, announce, serve
 from src.dashboard.view import describe
@@ -310,11 +312,17 @@ class RealStopTest(LauncherCase):
         self.assertEqual(describe(run)["state"], "stopped")
 
 
+PAUSE = 0.2  # the pause a wrong secret costs, shortened for these tests (the console's own is a second)
+
+
 class HttpTest(LauncherCase):
     """The routes: reads stay open; every POST needs the secret, a same-origin request, and a small JSON body."""
 
     def setUp(self):
         super().setUp()
+        patcher = patch.object(server_module, "WRONG_SECRET_PAUSE", PAUSE)
+        patcher.start()
+        self.addCleanup(patcher.stop)
         self.write("plain.yaml", PLAIN)
         self.started: list[tuple[str, dict]] = []
         launcher = self.launcher(spawn=lambda *a, **k: self.fail("not here"), check=lambda argv: [])
@@ -342,7 +350,7 @@ class HttpTest(LauncherCase):
             sock = socket.create_connection(("127.0.0.1", self.server.server_address[1]), timeout=5)
             sock.sendall(b"POST /api/start HTTP/1.1\r\nHost: x\r\nContent-Length: 2\r\n\r\n{}")  # no secret: answered after a pause
             sock.close()
-            time.sleep(1.6)
+            time.sleep(PAUSE + 0.4)  # long enough for the answer, after its pause, to find the hung-up client
         self.assertNotIn("Traceback", noise.getvalue())
 
     def test_the_sketch_list_is_open_to_read(self):
@@ -353,7 +361,7 @@ class HttpTest(LauncherCase):
         began = time.monotonic()
         self.assertEqual(self.call("/api/start", {"sketch": "plain.yaml", "with": {}})[0], 401)
         self.assertEqual(self.call("/api/start", {"sketch": "plain.yaml", "with": {}}, {"X-Understudy-Secret": "wrong"})[0], 401)
-        self.assertGreaterEqual(time.monotonic() - began, 1.0)  # a failed guess costs a pause
+        self.assertGreaterEqual(time.monotonic() - began, 2 * PAUSE)  # each failed guess costs a pause
         self.assertEqual(self.started, [])
 
     def test_the_right_secret_starts_the_sketch_with_the_values_given(self):

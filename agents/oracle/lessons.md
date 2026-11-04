@@ -739,3 +739,41 @@ Give any asynchronous view a ticket: every new request or stop bumps it, and a r
 ### Evidence and Scope
 - **References:** `src/dashboard/replay.js` (`replay.ticket`), `tests/browser/test_console.py` (`ReplayBarTest`)
 - **Applies when:** a page asks for frames, polls, or plays something back.
+
+---
+
+## [2026-11-03] A slow suite is rarely slow where you think: measure it, then read the slowest list for a pattern
+
+> **Tags:** #testing #performance #Neo #Trin
+
+### Context
+The gate took 96 s. The first guess was the number of whole-sketch tests, and a profile said half of each run was the YAML loader.
+
+### Observation and Cause
+The profiler inflated the pure-Python loader: the real saving from caching it was 12% a run, not 50%. The slowest-tests list showed the real cause by its pattern: about forty tests of exactly 0.5 s, each waiting for `serve_forever` to notice a stop request. Fixing the poll interval saved about 20 s of the unit suite and 15 s of the browser suite, more than the loader work.
+
+### Rule
+Time the suite with `--durations`, look for values that repeat (0.5 s, 1.0 s), and fix those first; check a profile's claim with a plain timing before building on it.
+
+### Evidence and Scope
+- **References:** `UAT_PLAN_SPRINT27.md` (UAT-27-1), ADR-0060
+- **Applies when:** a test run is slow, or a profile points at a library.
+
+---
+
+## [2026-11-03] Moving a test down a level is proved by breaking the rule it guards
+
+> **Tags:** #testing #pyramid #Neo #Trin
+
+### Context
+Fifty-three whole-sketch household runs became tests of single stages with written rows.
+
+### Observation and Cause
+A moved test can pass for the wrong reason (a stand-in that matches whatever the code does). Breaking the real rule in the sketch file, one rule per group, and watching a moved test fail showed each still guarded its rule; two of the new payments tests also covered things the old ones never checked.
+
+### Rule
+Before a test is moved down, break the rule it guards in a scratch change, see the moved test fail, and restore the file from git. A moved test that cannot fail stays whole.
+
+### Evidence and Scope
+- **References:** `UAT_PLAN_SPRINT27.md` (UAT-27-2, UAT-27-3)
+- **Applies when:** replacing an end-to-end test with a smaller one.

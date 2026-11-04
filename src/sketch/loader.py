@@ -4,6 +4,8 @@ ruamel.yaml reads YAML 1.2, so `70:30` stays text; PyYAML would turn it into the
 """
 
 import json
+from copy import deepcopy
+from functools import lru_cache
 from pathlib import Path
 
 from jinja2 import Environment, StrictUndefined, TemplateSyntaxError, UndefinedError, meta
@@ -67,10 +69,28 @@ def _read(path: Path, variables: dict[str, str], lenient: bool) -> tuple[dict, f
     return document, used
 
 
+@lru_cache(maxsize=256)
+def _template(path: str, modified: int, size: int) -> tuple[dict, frozenset[str]]:  # noqa: ARG001 - the key is the file's version
+    return _read(Path(path), {}, True)
+
+
+def _shared_template(path: Path) -> tuple[dict, frozenset[str]]:
+    """What `read_template` reads, once per version of the file: the path with the file's modification time and size is
+    the cache key, so an edited file is read again. The document is shared, so callers here only read it. A file that
+    cannot be read or parsed is not cached; `_read` says why each time."""
+    try:
+        found = path.stat()
+    except OSError:
+        return _read(path, {}, True)
+    return _template(str(path.resolve()), found.st_mtime_ns, found.st_size)
+
+
 def read_template(path: Path) -> tuple[dict, frozenset[str]]:
     """A sketch file as written, with every `--with` name given an empty value: its document and the names it takes.
-    Nothing is checked beyond YAML and Jinja syntax, so a sketch that needs its values can still be listed."""
-    return _read(Path(path), {}, True)
+    Nothing is checked beyond YAML and Jinja syntax, so a sketch that needs its values can still be listed. The document
+    is a copy the caller may change."""
+    document, used = _shared_template(Path(path))
+    return deepcopy(document), used
 
 
 def _shape(path: Path, document: dict) -> None:
@@ -141,7 +161,7 @@ def _declared_inputs(path: Path, given: dict[str, str]) -> dict[str, dict]:
     """The sketch's `inputs:` (read before its values are known, as the console lists it), refused when a declaration is
     wrong or a value given for one is outside its limits. A file that cannot be read at all is left to `load`."""
     try:
-        document, _ = _read(path, {}, True)
+        document, _ = _shared_template(path)
     except SketchError:
         return {}
     declared = document.get("inputs")
@@ -152,7 +172,7 @@ def _declared_inputs(path: Path, given: dict[str, str]) -> dict[str, dict]:
               and (problem := value_problem(name, declared[name], text))]
     if found:
         raise SketchError(found)
-    return declared
+    return deepcopy(declared)  # the sketch keeps these; the shared document must not change under another caller
 
 
 def load(

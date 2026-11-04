@@ -1,45 +1,30 @@
 """UND-98: the crosswalk puts the tool's category beside the export's for every merchant, flagged where they differ about
-money moving."""
+money moving.
 
-import io
-import json
-import tempfile
+These test the household's `crosswalk` stage with Jev's placements written in (`decided`); no whole run is needed.
+"""
+
 import unittest
-from pathlib import Path
 
-from household_jev import choose, first_choice
-from jev_double import JevDouble
-from test_household import LEDGER, ORACLE, lines, no_pins
-
-from src.sketch.cli import main
-from src.sketch.sources.capture import CaptureStore
-
-
-def run_crosswalk(monarch_text: str, jev=first_choice):
-    with tempfile.TemporaryDirectory() as temporary:
-        directory = Path(temporary)
-        (directory / "monarch.csv").write_text(monarch_text, encoding="utf-8")
-        code = main(
-            ["run", str(LEDGER), "--out", str(directory / "out"), "--with", f"monarch={directory / 'monarch.csv'}",
-             "--with", f"amex={ORACLE / 'amex.csv'}", "--with", "amex_account=Platinum", "--with", "since=2026-01-01",
-             *no_pins(directory)],
-            make_jev=lambda: JevDouble(choose_fn=jev), store=CaptureStore(directory / "cache"),
-            stdout=io.StringIO(), stderr=io.StringIO())
-        (folder,) = (directory / "out").iterdir()
-        return code, lines(folder / "crosswalk.jsonl"), json.loads((folder / "summary.json").read_text(encoding="utf-8"))
-
+from household_fragment import ORACLE, decided, fragment, placed_all, without_lines
 
 ORIGINAL = (ORACLE / "monarch.csv").read_text(encoding="utf-8")
+
+
+def crosswalk(monarch: str | None = None):
+    """The crosswalk lines, by payee, and the summary the stage noted. The fixture's export gets the child sketch's real
+    answers; a changed export gets written placements (which category a merchant is in does not matter to these tests)."""
+    placements = decided() if monarch is None else placed_all(monarch)
+    rows, summary = fragment("crosswalk", monarch=monarch, decided=placements)
+    return rows, {row["payee"]: row for row in rows}, summary
 
 
 class CrosswalkTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.code, cls.rows, cls.summary = run_crosswalk(ORIGINAL, jev=choose)
-        cls.by = {row["payee"]: row for row in cls.rows}
+        cls.rows, cls.by, cls.summary = crosswalk()
 
     def test_every_merchant_has_a_line_with_its_records_its_money_and_both_categories(self):
-        self.assertEqual(self.code, 0)
         for row in self.rows:
             self.assertEqual(set(row), {"payee", "count", "amount", "tool_category", "export_category",
                                         "differs_on_money_moving"})
@@ -71,24 +56,22 @@ class CrosswalkTests(unittest.TestCase):
 
 class UnpairedPaymentTests(unittest.TestCase):
     def test_a_card_payment_received_with_no_bank_side_says_it_is_a_card_payment(self):
-        alone = "\n".join(line for line in ORIGINAL.splitlines() if not line.endswith(",m9")) + "\n"
-        _, rows, _ = run_crosswalk(alone)
-        by = {row["payee"]: row for row in rows}
+        alone = without_lines(ORIGINAL, ",m9")
+        self.assertNotEqual(alone, ORIGINAL)
+        _, by, _ = crosswalk(alone)
         self.assertEqual(by["Payment Thank You"]["tool_category"], "Transfer (card payment received)")
 
 
 class FlagTests(unittest.TestCase):
     def test_a_merchant_the_label_rule_calls_a_transfer_and_the_tool_does_not_is_flagged(self):
         extra = '2026-03-09,Savings Move,"Transfer",Checking (...2222),SAVINGS MOVE,,-50.00,,Me,,m16\n'
-        _, rows, summary = run_crosswalk(ORIGINAL + extra)
-        by = {row["payee"]: row for row in rows}
+        _, by, summary = crosswalk(ORIGINAL + extra)
         self.assertTrue(by["Savings Move"]["differs_on_money_moving"])  # the export says Transfer, the tool says purchase
         self.assertGreaterEqual(summary["crosswalk_flagged"]["True"], 1)
 
     def test_a_merchant_the_tool_calls_a_transfer_and_the_label_rule_does_not_is_flagged(self):
         changed = ORIGINAL.replace('Payment Thank You,"Credit Card Payment"', 'Payment Thank You,"Income: Paychecks"')
-        _, rows, _ = run_crosswalk(changed)
-        by = {row["payee"]: row for row in rows}
+        _, by, _ = crosswalk(changed)
         self.assertTrue(by["Payment Thank You"]["differs_on_money_moving"])  # linked, so a transfer, whatever the label says
         self.assertFalse(by["Amex Payment"]["differs_on_money_moving"])
 

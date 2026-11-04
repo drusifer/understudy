@@ -1,45 +1,27 @@
-"""UND-99: each card payment is tied to the charges it settled, and the report says what they were for."""
+"""UND-99: each card payment is tied to the charges it settled, and the report says what they were for.
 
-import io
-import json
-import tempfile
+These are tests of the household's rules, so they compute the sketch's own stages from the fixture exports (`fragment`), with
+Jev's placements written in; no whole run is needed. The sinks and the summary file of a whole run are checked once, in
+`test_household.LedgerTests`.
+"""
+
 import unittest
-from pathlib import Path
 
-from household_jev import choose
-from jev_double import JevDouble
-from test_household import LEDGER, ORACLE, lines, no_pins
+from household_fragment import ORACLE, fragment, placed, without_lines
 
-from src.sketch.cli import main
-from src.sketch.sources.capture import CaptureStore
-
-
-def run_household(monarch_text: str | None = None, amex_text: str | None = None):
-    with tempfile.TemporaryDirectory() as temporary:
-        directory = Path(temporary)
-        monarch, amex = directory / "monarch.csv", directory / "amex.csv"
-        monarch.write_text(monarch_text or (ORACLE / "monarch.csv").read_text(encoding="utf-8"), encoding="utf-8")
-        amex.write_text(amex_text or (ORACLE / "amex.csv").read_text(encoding="utf-8"), encoding="utf-8")
-        code = main(
-            ["run", str(LEDGER), "--out", str(directory / "out"), "--with", f"monarch={monarch}", "--with", f"amex={amex}",
-             "--with", "amex_account=Platinum", "--with", "since=2026-01-01", *no_pins(directory)],
-            make_jev=lambda: JevDouble(choose_fn=choose), store=CaptureStore(directory / "cache"),
-            stdout=io.StringIO(), stderr=io.StringIO())
-        (folder,) = (directory / "out").iterdir()
-        return (code, lines(folder / "records.jsonl"), lines(folder / "payments.jsonl"),
-                json.loads((folder / "summary.json").read_text(encoding="utf-8")))
+CATEGORIES = placed({"store": "Retail outlets: Bakeries", "dunkin'": "Retail outlets: Bakeries"})  # the shoe shop is for review
+MONARCH = (ORACLE / "monarch.csv").read_text(encoding="utf-8")
 
 
 class PaymentTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.code, cls.records, cls.payments, cls.summary = run_household()
+        cls.payments, _ = fragment("payments", categories=CATEGORIES)
+        cls.records, _ = fragment("final_records", categories=CATEGORIES)
+        _, cls.summary = fragment("open_balance_noted", categories=CATEGORIES)
         cls.by_payee = {}
         for record in cls.records:
             cls.by_payee.setdefault(record["payee"], []).append(record)
-
-    def test_it_runs(self):
-        self.assertEqual(self.code, 0)
 
     def test_the_card_payment_has_a_line_with_what_it_settled_and_what_is_left(self):
         (payment,) = self.payments
@@ -51,14 +33,31 @@ class PaymentTests(unittest.TestCase):
     def test_a_payment_with_much_left_over_says_it_is_partly_unexplained(self):
         self.assertTrue(self.payments[0]["unexplained"])  # 375 of 500 has no earlier charge to explain it
 
+    def test_a_payment_that_explains_nearly_all_of_itself_is_not_flagged(self):
+        small = MONARCH.replace("500.00,,Me,,m8", "126.00,,Me,,m8").replace("-500.00,,Me,,m9", "-126.00,,Me,,m9")
+        amex = (ORACLE / "amex.csv").read_text(encoding="utf-8").replace("-500.00", "-126.00")
+        payments, _ = fragment("payments", monarch=small, amex=amex, categories=CATEGORIES)
+        self.assertEqual((payments[0]["settled"], payments[0]["remainder"], payments[0]["unexplained"]), (125.0, 1.0, False))
+
     def test_the_largest_categories_of_the_settled_charges_carry_their_amounts_and_shares(self):
         top = self.payments[0]["top"]
         self.assertEqual([entry["amount"] for entry in top], sorted((e["amount"] for e in top), reverse=True))
         self.assertEqual(sum(entry["amount"] for entry in top), 125.0)
         self.assertAlmostEqual(sum(entry["share"] for entry in top), 1.0, places=3)
-        store = self.by_payee["Store"][0]["category_level"]
-        self.assertEqual(next(e for e in top if e["category"] == store)["amount"], 95.0)
+        self.assertEqual(next(e for e in top if e["category"] == "Retail outlets: Bakeries")["amount"], 95.0)
         self.assertIn("unplaced", {entry["category"] for entry in top})  # the shoe shop is for review
+
+    def test_at_most_five_categories_are_listed_for_a_payment(self):
+        names = [f"shop {n}" for n in range(7)]
+        monarch = MONARCH + "".join(
+            f"2026-02-{10 + n},{name.title()},\"Cat\",Platinum Card (...1111),{name.upper()},,-{n + 1}.00,,Me,,x{n}\n"
+            for n, name in enumerate(names))
+        amex = (ORACLE / "amex.csv").read_text(encoding="utf-8") + "".join(
+            f"02/{10 + n}/2026,{name.upper()},A PERSON,-11111,{n + 1}.00,,{name.upper()},z{n},Cat\n" for n, name in enumerate(names))
+        levels = {name: f"Group: Name {n}" for n, name in enumerate(names)}
+        categories = placed({**levels, "store": "Retail outlets: Bakeries"})
+        payments, _ = fragment("payments", monarch=monarch, amex=amex, categories=categories)
+        self.assertLessEqual(len(payments[0]["top"]), 5)
 
     def test_each_charge_says_which_payment_settled_it_or_that_it_is_still_open(self):
         payment_id = self.payments[0]["payment_id"]
@@ -83,12 +82,12 @@ class PaymentTests(unittest.TestCase):
 
 class NoPaymentTests(unittest.TestCase):
     def test_a_card_with_no_payments_leaves_every_charge_open_and_writes_no_payment_lines(self):
-        amex = "\n".join(line for line in (ORACLE / "amex.csv").read_text(encoding="utf-8").splitlines()
-                         if "PAYMENT RECEIVED" not in line) + "\n"
-        monarch = "\n".join(line for line in (ORACLE / "monarch.csv").read_text(encoding="utf-8").splitlines()
-                            if not line.endswith((",m8", ",m9"))) + "\n"
-        code, records, payments, summary = run_household(monarch, amex)
-        self.assertEqual((code, payments), (0, []))
+        amex = without_lines((ORACLE / "amex.csv").read_text(encoding="utf-8"), containing=("PAYMENT RECEIVED",))
+        monarch = without_lines(MONARCH, ",m8", ",m9")
+        payments, _ = fragment("payments", monarch=monarch, amex=amex, categories=CATEGORIES)
+        records, _ = fragment("final_records", monarch=monarch, amex=amex, categories=CATEGORIES)
+        _, summary = fragment("open_balance_noted", monarch=monarch, amex=amex, categories=CATEGORIES)
+        self.assertEqual(payments, [])
         charges = [r for r in records if "settled_by" in r and r["cost"] < 0]
         self.assertTrue(charges)
         self.assertTrue(all(r["settled_by"] is None for r in charges))
@@ -98,12 +97,17 @@ class NoPaymentTests(unittest.TestCase):
 class CardDatesTests(unittest.TestCase):
     def test_charges_are_ordered_and_cut_off_by_the_cards_own_dates_not_the_banks(self):
         # the bank posted the 03-05 Dunkin' charge on 03-02, the payment's day; the card dated it 03-05, after the payment
-        original = (ORACLE / "monarch.csv").read_text(encoding="utf-8")
-        monarch = original.replace("2026-03-05,Dunkin',\"Food & Dining: Coffee & Cafes\",Platinum Card (...1111),DUNKIN',,-4.50",
-                                   "2026-03-02,Dunkin',\"Food & Dining: Coffee & Cafes\",Platinum Card (...1111),DUNKIN',,-4.50")
-        self.assertNotEqual(monarch, original)
-        _, records, payments, summary = run_household(monarch)
+        monarch = MONARCH.replace("2026-03-05,Dunkin',\"Food & Dining: Coffee & Cafes\",Platinum Card (...1111),DUNKIN',,-4.50",
+                                  "2026-03-02,Dunkin',\"Food & Dining: Coffee & Cafes\",Platinum Card (...1111),DUNKIN',,-4.50")
+        self.assertNotEqual(monarch, MONARCH)
+        payments, _ = fragment("payments", monarch=monarch, categories=CATEGORIES)
+        records, _ = fragment("final_records", monarch=monarch, categories=CATEGORIES)
+        _, summary = fragment("open_balance_noted", monarch=monarch, categories=CATEGORIES)
         self.assertEqual(payments[0]["charges"], 3)
         dunkin = next(r for r in records if r["payee"] == "Dunkin'" and "settled_by" in r)
         self.assertIsNone(dunkin["settled_by"])
         self.assertEqual(summary["open_balance"]["count"], 1)
+
+
+if __name__ == "__main__":
+    unittest.main()

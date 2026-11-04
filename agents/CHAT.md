@@ -1633,3 +1633,141 @@ wrote /home/drusifer/Projects/understudy/.understudy/runs/run-20261104T004414-cd
 ---
 [<small>2026-11-03 19:45:25</small>] [**Cypher**]->[**all**] *pm launch*:
  *pm launch sprint-26. Sprint complete: 3 stories (UND-83..85), 5 phases, 545 unit + 39 browser tests. Branch sprint-26 is committed locally and NOT merged or pushed; merge and push only when the owner asks.
+
+---
+[<small>2026-11-03 20:11:10</small>] [**Mouse**]->[**all**] *sm plan*:
+ Sprint 27 planning (Tier 2, tech debt): the test pyramid (owner decision 17). Branch sprint-27 cut from main. A one-off per-test timing run is in progress to rank the tests; stories and plan follow from the numbers. @Cypher @Morpheus *plan sprint-27
+
+---
+[<small>2026-11-03 20:16:25</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Sprint 27 stories and architecture in one document (Tier 2): docs/sprints/STORY_ARCH_SPRINT27.md. Built from measurements: unit 94.6 s (about 53 whole-household runs at ~2 s, half of each spent re-reading child sketches), browser 154.9 s (contrast tests 65 s, one flaky). Stories: UND-101 cache the child read, UND-102 household rules tested below the whole sketch, UND-103 browser suite trimmed, UND-104 gate cheap-first and strategy doc. Targets: unit <= 30 s, browser <= 90 s. @Smith *user review sprint-27
+
+---
+[<small>2026-11-03 20:16:54</small>] [**Smith**]->[**Switch**] *user approve*:
+ rubric STORIES: OUT=A TEST=S VALUE=S SIZE=A. rubric ARCH: BOUND=A FLOW=A FAIL=A USER=S DECS=A FEAS=A. *user approve (gates 1+2 combined). Notes: UND-102 AC3 (break the rule, watch the moved test fail) is what keeps coverage; the 30 s and 90 s targets are the sprint's measurable result and are reported even if missed. @Switch *sec threat sprint-27
+
+---
+[<small>2026-11-03 20:16:54</small>] [**Switch**]->[**Mouse**] *sec handoff*:
+ security gate (design): No blocking findings. No new input, output, dependency or permission: a cache of a file read keyed by path and mtime, a test-support module, test changes, and a Makefile order. Quick pass, nothing skipped. @Mouse *sm plan sprint-27
+
+---
+[<small>2026-11-03 20:16:54</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint planned: 5 phases (cache the child read 3, fragment harness 4, move the rest of the household 4, browser trim 5, gate order and strategy 2) plus closeout; task.md written. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-11-03 20:16:54</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A LEVEL=A. Sprint plan approved. Phase 1 ready. @Neo *swe impl phase-1
+
+---
+[<small>2026-11-03 20:16:54</small>] [**Mouse**]->[**all**] *phase 1*:
+ Phase 1: child sketches load faster (UND-101)
+
+---
+[<small>2026-11-03 20:18:47</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 1 impl complete (UND-101): lru_cache on the row-independent read of a sketch (key: path, mtime, size), read_template returns a copy, load keeps its own copy of the inputs. 10 new tests (read once for four rows, edited file re-read, invalid file never cached, caller cannot corrupt it, cold equals warm). Focused tests and lint pass; no full gate run. @Trin *qa uat phase-1
+
+---
+[<small>2026-11-03 20:18:47</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 1 passed (UND-101 AC2-3): same fixtures through main and this branch: every sink file and summary.json have identical hashes (household 11 files, coffee 2). Child load per row 71.5 ms -> 38.6 ms (-46%). Whole household run 1.92 s -> 1.68 s (-12%): smaller than the profile suggested (the profiler inflated the loader); about 13 s of the 95 s unit suite and ~43 s of a real 7-minute run. The big saving must come from Phases 2-3. @Switch *sec review phase-1
+
+---
+[<small>2026-11-03 20:18:47</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 1): No blocking findings. The cache key is the resolved path, mtime and size of a file the caller already names; a bad file is never cached; callers get copies; no new input, output or dependency. @Morpheus *lead review phase-1
+
+---
+[<small>2026-11-03 20:18:48</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-1: passed. Library cache (functools), one place, shared read only inside the loader. Estimate corrected: UND-101 is about -12% per household run, not -50%; the plan's targets (30 s unit, 90 s browser) now rest on Phases 2-4. @Neo *swe impl phase-2
+
+---
+[<small>2026-11-03 20:18:48</small>] [**Mouse**]->[**all**] *phase 2*:
+ Phase 2: compute one stage on its own (UND-102 part 1)
+
+---
+[<small>2026-11-03 20:22:45</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 2 passed (UND-102 AC1-3, payments): five payment rules broken in the real sketch, one at a time, each caught by a moved test and the file restored from git: allocate by the bank's date (CardDatesTests), 5% flag at 90% (unexplained test), open balance on settled charges (summary + no-payment + card-dates tests), only the largest category listed (top test), pool inverted (10 tests). Time: payments file 5.2 s -> 1.07 s; a payments fragment 0.22 s vs 1.7 s for a whole run. @Switch *sec review phase-2
+
+---
+[<small>2026-11-03 20:22:45</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 2): No blocking findings. fragment.py is test support: it reads only the files the sketch names (as a run does), writes only to a temporary folder deleted on return, has no Jev and no network. No new input, output or dependency. @Morpheus *lead review phase-2
+
+---
+[<small>2026-11-03 20:22:45</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-2: passed. The harness reuses the run's own stage computer instead of copying it, stubs are the only seam (public Sources.provide), and the happy-path whole run stays in LedgerTests. Watch for: a stub that drifts from a stage's real output is only caught by that whole run. @Neo *swe impl phase-3
+
+---
+[<small>2026-11-03 20:22:46</small>] [**Mouse**]->[**all**] *phase 3*:
+ Phase 3: the rest of the household rules (UND-102 part 2)
+
+---
+[<small>2026-11-03 20:32:07</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 3): No blocking findings. Test and test-support code only; run_state/fragment read the sketch's own files and write to a temporary folder. No change to what the product reads or writes. @Morpheus *lead review phase-3
+
+---
+[<small>2026-11-03 20:32:07</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-3: passed. Each remaining whole run says why (happy path, empty period, three early refusals); stubs are the only seam. One concern for the retro: placed_all and the Jev double stand in for the child's output shape, so a change to that shape is caught only by the happy-path run. @Neo *swe impl phase-4
+
+---
+[<small>2026-11-03 20:32:13</small>] [**Mouse**]->[**all**] *phase 4*:
+ Phase 4: the browser suite shows only what a browser can (UND-103)
+
+---
+[<small>2026-11-03 20:43:28</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 4: browser suite 154.9 s (one flake: steampunk/dark .stage-lamp) -> 101.3 s and 99.5 s on two consecutive full runs, 39 of 39 OK both, no flake. TARGET MISSED: the plan said 90 s; ~100 s. The rest is ~2 s per test for 37 tests (a page per test); only merging tests would cut it and each merge loses isolation. Unit suite 29.4 s (target 30 met). Only two runs, not the five in AC4. @Switch *sec review phase-4
+
+---
+[<small>2026-11-03 20:43:28</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 4): No blocking findings. Product change: Server.serve_forever polls every 20 ms instead of 500 ms (no new input or exposure); page.js reads an optional window.understudyPollMs (a value a page script could already change). Tests spawn browser processes that only open the local test server. @Morpheus *lead review phase-4
+
+---
+[<small>2026-11-03 20:43:28</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
+ *lead review phase-4: passed with the miss recorded. Good catch that the shutdown poll was costing ~35 s across both suites. ADR-0060 should record the amended contrast approach. @Tank *devops sdlc phase-5
+
+---
+[<small>2026-11-03 20:43:28</small>] [**Mouse**]->[**all**] *phase 5*:
+ Phase 5: the gate fails fast and says what each level is for (UND-104)
+
+---
+[<small>2026-11-03 20:44:27</small>] [**make**]->[**all**] *build*:
+ Build FAILED exit=2 | make check | /home/drusifer/Projects/understudy/build/build.out
+|        ^^ F401
+|
+= help: Remove unused import: `os`
+
+Found 1 error.
+[*] 1 fixable with the `--fix` option.
+
+---
+[<small>2026-11-03 20:44:47</small>] [**Tank**]->[**Morpheus**] *devops handoff*:
+ Phase 5 (UND-104): check is now lint secrets test (Makefile, Tank). Proof with a deliberate lint error in a scratch file (removed): the old order took 31.8 s to report it, the new one 0.16 s. docs/TEST_STRATEGY.md has the pyramid, the fragment level and the budgets with measured numbers (unit 29.4 s met; household whole runs 5 met; browser about 100 s vs 90 s, over by about 10 s); docs/SDLC.md records the order. @Morpheus *lead review sprint-27
+
+---
+[<small>2026-11-03 20:45:31</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+----------------------------------------------------------------------
+Ran 586 tests in 29.422s
+
+OK
+
+---
+[<small>2026-11-03 20:45:46</small>] [**Morpheus**]->[**all**] *lead handoff*:
+ *lead review phase-5: passed. check order proven both ways with a deliberate lint error (31.8 s before, 0.16 s after); TEST_STRATEGY and SDLC record the order, the fragment level and the budgets with measured numbers. @Neo @Tank closeout
+
+---
+[<small>2026-11-03 20:46:34</small>] [**Tank**]->[**Oracle**] *devops handoff*:
+ SDLC check passed (Sprint 27): pyproject.toml, uv.lock, .python-version unchanged since main; Makefile changed only in the order of check (lint secrets test); one full bobp make check on the sprint-27 tree: exit 0, 586 tests 29.4 s, whole gate 36.3 s (was 96-101 s); browser 39/39 ~100 s twice, no flake; Last verified updated. @Oracle *ora groom
+
+---
+[<small>2026-11-03 20:46:34</small>] [**Oracle**]->[**Smith**] *ora handoff*:
+ Docs groomed: ADR-0060 (rules tested on their own stages; amends the contrast plan), 2 lessons, CHANGELOG (Sprint 26 now merged), TEST_STRATEGY and SDLC, UAT plan, RETRO_SPRINT27, STORY_ARCH amendments. CHAT archive left for the owner. @Smith *user test sprint-27
+
+---
+[<small>2026-11-03 20:46:34</small>] [**Smith**]->[**all**] *user approve*:
+ rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A. User testing passed on the household fixtures and the console: same outputs, same behavior, the gate answers in 36 s. Stated misses for the owner: browser suite ~100 s vs the 90 s target (two runs, not five); the UND-101 saving was 12% a run, not the 50% first claimed. Two plan claims were wrong at Gate 1 and are corrected in the amendments. @all *sprint retro
+
+---
+[<small>2026-11-03 20:46:35</small>] [**Mouse**]->[**Cypher**] *retro*:
+ Sprint 27 retro posted in docs/sprints/RETRO_SPRINT27.md. Backlog: browser to 90 s (merge page tests or accept ~100 s: owner decides), a test that the stand-ins still match the child's real output, one-time import costs. @Cypher *pm launch sprint-27
+
+---
+[<small>2026-11-03 20:46:35</small>] [**Cypher**]->[**all**] *pm launch*:
+ *pm launch sprint-27. Sprint complete: 4 stories (UND-101..104), 5 phases; gate 96-101 s -> 36 s, unit suite 94.6 -> 29.4 s, browser 154.9 -> ~100 s (target 90 s missed). Branch sprint-27 is committed locally and NOT merged or pushed; merge and push only when the owner asks.

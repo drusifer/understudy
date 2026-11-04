@@ -335,3 +335,17 @@ class SecurityHeadersTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ShutdownTest(unittest.TestCase):
+    def test_a_server_stops_at_once_not_after_the_half_second_a_default_poll_would_wait(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        server = serve(Path(directory.name), port=0)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        time.sleep(0.05)  # the loop is running
+        began = time.monotonic()
+        server.shutdown()
+        server.server_close()
+        self.assertLess(time.monotonic() - began, 0.2)

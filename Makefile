@@ -61,7 +61,7 @@ security-scan: secrets security-scan-python ## Secrets and dependency scans (net
 hooks: ## Install the gitleaks pre-commit hook (.githooks/)
 	git config core.hooksPath .githooks
 
-check: test lint secrets ## Full gate: test + lint + secrets
+check: lint secrets test ## Full gate: lint + secrets + test, cheapest first, so a failure shows in seconds
 
 export MSG
 push: check ## Commit everything (MSG="...") and push the current branch + its tags, after the full gate; never forced; ARGS="--dry-run" previews

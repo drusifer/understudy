@@ -1,9 +1,14 @@
+"""The household sketch: one whole run read by many tests (`LedgerTests`), the rules of its stages on their own stages
+(`fragment`), and the few things only a whole run shows (an empty period, a missing column that must stop it before Jev).
+"""
+
 import io
 import json
 import tempfile
 import unittest
 from pathlib import Path
 
+from household_fragment import decided, fragment, placed_all
 from household_jev import choose, first_choice
 from jev_double import JevDouble
 
@@ -26,6 +31,8 @@ def lines(path: Path) -> list[dict]:
 
 
 class LedgerTests(unittest.TestCase):
+    """The household run once on the fixture exports with the scripted Jev: the happy path, whose outputs many tests read."""
+
     @classmethod
     def setUpClass(cls):
         cls.temporary = tempfile.TemporaryDirectory()
@@ -52,6 +59,13 @@ class LedgerTests(unittest.TestCase):
 
     def test_it_runs(self):
         self.assertEqual((self.code, self.stderr), (0, ""))
+
+    def test_the_payments_file_and_the_open_balance_are_written_by_the_whole_run(self):
+        # the payment rules themselves are tested on their own stages (test_household_payments); this is the wiring
+        payments = lines(self.folder / "payments.jsonl")
+        self.assertEqual([(p["amount"], p["charges"], p["settled"]) for p in payments], [(500.0, 3, 125.0)])
+        self.assertEqual(self.summary["open_balance"], {"scope": "all", "count": 1, "amount": 4.5})
+        self.assertIn("settled_by", next(r for r in self.records if r["payee"] == "Store"))
 
     def test_a_charge_in_both_exports_is_one_record_and_the_period_leaves_out_the_old_row(self):
         self.assertEqual(len(self.records), 12)  # the oracle's count: 13 Monarch rows less 1 before the period, 7 Amex merged in
@@ -135,14 +149,9 @@ class LedgerTests(unittest.TestCase):
         self.assertEqual({r["category_status"] for r in legs}, {"none"})
 
 
-def run_with_monarch(monarch_text: str, since: str = "2026-01-01"):
-    """Run the household on a changed copy of the fixture's Monarch export; returns its records and summary."""
-    code, folder_lines = run_folder(monarch_text, since)
-    return code, folder_lines["records"], folder_lines["summary"]
-
-
 def run_folder(monarch_text: str, since: str = "2026-01-01", pinned: str | None = None, jev=first_choice) -> tuple[int, dict]:
-    """Run the household as `run_with_monarch` does and read back its records, summary and spending lines."""
+    """Run the household whole on a changed copy of the fixture's Monarch export and read back its records, summary and
+    spending lines. Used by the few tests that need a whole run."""
     with tempfile.TemporaryDirectory() as temporary:
         directory = Path(temporary)
         (directory / "monarch.csv").write_text(monarch_text, encoding="utf-8")
@@ -162,53 +171,50 @@ def run_folder(monarch_text: str, since: str = "2026-01-01", pinned: str | None 
 class TransferBasisTests(unittest.TestCase):
     ORIGINAL = (ORACLE / "monarch.csv").read_text(encoding="utf-8")
 
-    def kinds(self, records, *payees):
-        return {payee: next(r["kind"] for r in records if r["payee"] == payee) for payee in payees}
+    def kinds(self, monarch, *payees, pins=None):
+        """The kind of each payee's first record, and the summary, for the export given; every merchant is placed in some
+        category unless a pin says otherwise (which category does not matter here)."""
+        extra = {"placements": []} if pins else {"decided": placed_all(monarch, transfers=())}  # none in Household: Transfer
+        records, summary = fragment("finished", monarch=monarch, pins=pins, **extra)
+        return {payee: next(r["kind"] for r in records if r["payee"] == payee) for payee in payees}, summary
 
     def test_a_label_that_says_transfer_or_card_payment_makes_nothing_a_transfer(self):
         extra = (
             '2026-03-06,Bank Transfer,"Transportation: Transfers",Checking (...2222),BANK TRANSFER,,-300.00,,Me,,m13\n'
             '2026-03-07,Citibank Online,"Food & Dining: Credit Card Payment",Checking (...2222),CITI,,-80.00,,Me,,m14\n'
             '2026-03-09,Savings Move,"Transfer",Checking (...2222),SAVINGS MOVE,,-50.00,,Me,,m16\n')
-        code, records, _ = run_with_monarch(self.ORIGINAL + extra)
-        self.assertEqual(code, 0)
-        self.assertEqual(self.kinds(records, "Bank Transfer", "Savings Move"),
-                         {"Bank Transfer": "purchase", "Savings Move": "purchase"})  # Jev's first choice is not Household: Transfer
+        kinds, _ = self.kinds(self.ORIGINAL + extra, "Bank Transfer", "Savings Move")
+        self.assertEqual(kinds, {"Bank Transfer": "purchase", "Savings Move": "purchase"})  # not in Household: Transfer
 
     def test_a_payment_whose_category_says_something_misleading_still_links_and_neither_half_counts_as_income(self):
         # the card's payment received is labeled as income, as an earlier categorization did; the link comes from the text
         changed = self.ORIGINAL.replace('Payment Thank You,"Credit Card Payment"', 'Payment Thank You,"Income: Paychecks"')
         self.assertNotEqual(changed, self.ORIGINAL)
-        code, records, summary = run_with_monarch(changed)
-        self.assertEqual(code, 0)
-        self.assertEqual(self.kinds(records, "Payment Thank You", "Amex Payment"),
-                         {"Payment Thank You": "transfer", "Amex Payment": "transfer"})
+        kinds, summary = self.kinds(changed, "Payment Thank You", "Amex Payment")
+        self.assertEqual(kinds, {"Payment Thank You": "transfer", "Amex Payment": "transfer"})
         self.assertEqual(summary["transfer_basis"], {"link": 2, "none": 10})
 
     def test_a_card_payment_received_is_a_transfer_even_when_the_bank_side_is_not_in_the_data(self):
         # the Monarch export starts after the payment left the bank: the card's own text still says it is a payment
         alone = "\n".join(line for line in self.ORIGINAL.splitlines() if not line.endswith(",m9")) + "\n"
         self.assertNotEqual(alone, self.ORIGINAL)
-        code, records, summary = run_with_monarch(alone)
-        self.assertEqual(code, 0)
-        self.assertEqual(self.kinds(records, "Payment Thank You"), {"Payment Thank You": "transfer"})
+        kinds, summary = self.kinds(alone, "Payment Thank You")
+        self.assertEqual(kinds, {"Payment Thank You": "transfer"})
         self.assertEqual(summary["transfer_basis"].get("payment"), 1)
 
     def test_a_merchant_the_owner_pins_to_household_transfer_makes_its_records_transfers(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            pins = Path(temporary) / "pins.jsonl"
-            pins.write_text(json.dumps({"payee": "Venmo", "category": "Household: Transfer"}) + "\n", encoding="utf-8")
-            code, found = run_folder(self.ORIGINAL, pinned=str(pins))
-        self.assertEqual(code, 0)
-        self.assertEqual(self.kinds(found["records"], "Venmo"), {"Venmo": "transfer"})
+        kinds, _ = self.kinds(self.ORIGINAL, "Venmo", pins=[{"payee": "Venmo", "category": "Household: Transfer"}])
+        self.assertEqual(kinds, {"Venmo": "transfer"})
 
 
 class SpendingTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        code, found = run_folder((ORACLE / "monarch.csv").read_text(encoding="utf-8"), jev=choose)
-        assert code == 0
-        cls.records, cls.summary, cls.spending = found["records"], found["summary"], found["spending"]
+        placements = decided()
+        cls.records, _ = fragment("finished", decided=placements)
+        cls.spending, cls.summary = fragment("spend_list", decided=placements)
+        _, totals = fragment("spend_total", decided=placements)
+        cls.summary = totals
 
     def expected(self):
         """What the list should say, worked out from the records alone: money out of purchases and refunds by category."""
@@ -241,34 +247,24 @@ class SpendingTests(unittest.TestCase):
         self.assertEqual(self.summary["spending_total"]["count"], sum(line["count"] for line in self.spending))
 
     def test_a_run_with_no_spending_writes_an_empty_file(self):
+        # a whole run: that the file is written, and empty, is what only the publishing of a run shows
         code, found = run_folder((ORACLE / "monarch.csv").read_text(encoding="utf-8"), since="2027-01-01")
         self.assertEqual((code, found["spending_text"]), (0, ""))
 
 
 class NothingForReviewTests(unittest.TestCase):
-    def test_when_jev_is_sure_of_every_merchant_the_review_file_is_written_and_empty(self):
-        def reading(state, instructions, options):
-            if "refund" in state:
-                original = next(label for label in options if "2026-02-15" in label)
-                return Chosen(original, 0.95, {label: 0.95 if label == original else 0.05 for label in options})
+    def test_when_jev_is_sure_of_every_merchant_the_review_list_is_empty(self):
+        def sure(state, instructions, options):
             top = next(iter(options))
             return Chosen(top, 0.95, {name: 0.95 if name == top else 0.05 for name in options})
 
-        with tempfile.TemporaryDirectory() as temporary:
-            directory = Path(temporary)
-            code = main(
-                ["run", str(LEDGER), "--out", str(directory / "out"), "--with", f"monarch={ORACLE / 'monarch.csv'}",
-                 "--with", f"amex={ORACLE / 'amex.csv'}", "--with", "amex_account=Platinum", "--with", "since=2026-01-01",
-                 *no_pins(directory)],
-                make_jev=lambda: JevDouble(choose_fn=reading), store=CaptureStore(directory / "cache"),
-                stdout=io.StringIO(), stderr=io.StringIO())
-            (folder,) = (directory / "out").iterdir()
-            self.assertEqual(code, 0)
-            self.assertEqual((folder / "review.jsonl").read_text(encoding="utf-8"), "")
+        review, _ = fragment("review_list", decided=decided(jev=sure))
+        self.assertEqual(review, [])
 
 
 class MissingCategoryTests(unittest.TestCase):
     def test_a_monarch_file_without_a_category_column_stops_before_any_request_to_jev(self):
+        # a whole (early-stopping) run: that the check comes before the first request is what only a run shows
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
             lines_in = (ORACLE / "monarch.csv").read_text(encoding="utf-8").splitlines()
@@ -295,8 +291,6 @@ class MissingCategoryTests(unittest.TestCase):
         self.assertNotEqual(code, 0)
         self.assertIn("has no Category column", stderr.getvalue())
         self.assertEqual(asked, [])
-
-
 
 
 class PathValueTests(unittest.TestCase):

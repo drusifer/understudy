@@ -1182,3 +1182,191 @@ sequenceDiagram
 ## Sprint close-out
 
 - **Cypher**: \*pm launch sprint-26. Sprint complete: 3 stories (UND-83..85), 5 phases, 545 unit + 39 browser tests. Branch sprint-26 is committed locally…
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Cypher
+    participant Smith
+    participant Switch
+    participant Morpheus
+    participant Neo
+    Note over Mouse,Neo: 📅 2026-11-03
+    Mouse->>All: "sm plan"
+    Note right of Mouse: "Sprint 27 planning (Tier<br/>2, tech debt): the test<br/>pyramid (owner decision<br/>17). Branch sprint-27<br/>cut from main. A one-off<br/>per-test timing run…"
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Sprint 27 stories and<br/>architecture in one<br/>document (Tier 2): docs/<br/>sprints/STORY_ARCH_SPRIN<br/>T27.md. Built from<br/>measurements: unit 94.6<br/>s (abo…"
+    Smith->>Switch: "user approve"
+    Note right of Smith: "rubric STORIES: OUT=A<br/>TEST=S VALUE=S SIZE=A.<br/>rubric ARCH: BOUND=A<br/>FLOW=A FAIL=A USER=S<br/>DECS=A FEAS=A. *user<br/>approve (gates 1+2<br/>combined). N…"
+    Switch->>Mouse: "sec handoff"
+    Note right of Switch: "security gate (design):<br/>No blocking findings. No<br/>new input, output,<br/>dependency or<br/>permission: a cache of a<br/>file read keyed by path<br/>and mtim…"
+    Mouse->>Morpheus: "sm handoff"
+    Note right of Mouse: "Sprint planned: 5 phases<br/>(cache the child read 3,<br/>fragment harness 4, move<br/>the rest of the<br/>household 4, browser<br/>trim 5, gate order and<br/>stra…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "rubric PLAN: SIZE=A<br/>GATE=A VERIF=A ALIGN=A<br/>OWNER=A LEVEL=A. Sprint<br/>plan approved. Phase 1<br/>ready. @Neo *swe impl<br/>phase-1"
+```
+
+## Phase 1 starts
+
+Phase 1: child sketches load faster (UND-101)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-03
+    Mouse->>All: "phase 1"
+    Note right of Mouse: "Phase 1: child sketches<br/>load faster (UND-101)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 1 impl complete<br/>(UND-101): lru_cache on<br/>the row-independent read<br/>of a sketch (key: path,<br/>mtime, size),<br/>read_template returns a<br/>copy,…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 1 passed<br/>(UND-101 AC2-3): same<br/>fixtures through main<br/>and this branch: every<br/>sink file and<br/>summary.json have<br/>identical hashes (hou…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 1):<br/>No blocking findings.<br/>The cache key is the<br/>resolved path, mtime and<br/>size of a file the<br/>caller already names, a<br/>bad…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-1:<br/>passed. Library cache<br/>(functools), one place,<br/>shared read only inside<br/>the loader. Estimate<br/>corrected: UND-101 is<br/>abou…"
+```
+
+## Phase 1 close-out
+
+- **Neo**: Phase 1 impl complete (UND-101): lru\_cache on the row-independent read of a sketch (key: path, mtime, size), read\_template returns a copy,…
+- **Trin**: UAT phase 1 passed (UND-101 AC2-3): same fixtures through main and this branch: every sink file and summary.json have identical hashes (hou…
+- **Morpheus**: \*lead review phase-1: passed. Library cache (functools), one place, shared read only inside the loader. Estimate corrected: UND-101 is abou…
+
+## Phase 2 starts
+
+Phase 2: compute one stage on its own (UND-102 part 1)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Trin
+    participant Switch
+    participant Morpheus
+    participant Neo
+    Note over Mouse,Neo: 📅 2026-11-03
+    Mouse->>All: "phase 2"
+    Note right of Mouse: "Phase 2: compute one<br/>stage on its own<br/>(UND-102 part 1)"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 2 passed<br/>(UND-102 AC1-3,<br/>payments): five payment<br/>rules broken in the real<br/>sketch, one at a time,<br/>each caught by a moved<br/>test and…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 2):<br/>No blocking findings.<br/>fragment.py is test<br/>support: it reads only<br/>the files the sketch<br/>names (as a run does),<br/>write…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-2:<br/>passed. The harness<br/>reuses the run's own<br/>stage computer instead<br/>of copying it, stubs are<br/>the only seam (public<br/>Source…"
+```
+
+## Phase 2 close-out
+
+- **Trin**: UAT phase 2 passed (UND-102 AC1-3, payments): five payment rules broken in the real sketch, one at a time, each caught by a moved test and…
+- **Morpheus**: \*lead review phase-2: passed. The harness reuses the run's own stage computer instead of copying it, stubs are the only seam (public Source…
+
+## Phase 3 starts
+
+Phase 3: the rest of the household rules (UND-102 part 2)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Switch
+    participant Morpheus
+    participant Neo
+    Note over Mouse,Neo: 📅 2026-11-03
+    Mouse->>All: "phase 3"
+    Note right of Mouse: "Phase 3: the rest of the<br/>household rules (UND-102<br/>part 2)"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 3):<br/>No blocking findings.<br/>Test and test-support<br/>code only,<br/>run_state/fragment read<br/>the sketch's own files<br/>and write to…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-3:<br/>passed. Each remaining<br/>whole run says why<br/>(happy path, empty<br/>period, three early<br/>refusals), stubs are the<br/>only seam.…"
+```
+
+## Phase 3 close-out
+
+- **Morpheus**: \*lead review phase-3: passed. Each remaining whole run says why (happy path, empty period, three early refusals), stubs are the only seam.…
+
+## Phase 4 starts
+
+Phase 4: the browser suite shows only what a browser can (UND-103)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Trin
+    participant Switch
+    participant Morpheus
+    participant Tank
+    Note over Mouse,Tank: 📅 2026-11-03
+    Mouse->>All: "phase 4"
+    Note right of Mouse: "Phase 4: the browser<br/>suite shows only what a<br/>browser can (UND-103)"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 4: browser<br/>suite 154.9 s (one<br/>flake: steampunk/dark<br/>.stage-lamp) -> 101.3 s<br/>and 99.5 s on two<br/>consecutive full runs,<br/>39 of 39 OK…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 4):<br/>No blocking findings.<br/>Product change:<br/>Server.serve_forever<br/>polls every 20 ms<br/>instead of 500 ms (no<br/>new input or ex…"
+    Morpheus->>Tank: "lead handoff"
+    Note right of Morpheus: "*lead review phase-4:<br/>passed with the miss<br/>recorded. Good catch<br/>that the shutdown poll<br/>was costing ~35 s across<br/>both suites. ADR-0060<br/>shoul…"
+```
+
+## Phase 4 close-out
+
+- **Morpheus**: \*lead review phase-4: passed with the miss recorded. Good catch that the shutdown poll was costing ~35 s across both suites. ADR-0060 shoul…
+
+## Phase 5 starts
+
+Phase 5: the gate fails fast and says what each level is for (UND-104)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Tank
+    participant Morpheus
+    participant Oracle
+    participant Smith
+    participant Cypher
+    Note over Mouse,Cypher: 📅 2026-11-03
+    Mouse->>All: "phase 5"
+    Note right of Mouse: "Phase 5: the gate fails<br/>fast and says what each<br/>level is for (UND-104)"
+    Tank->>Morpheus: "devops handoff"
+    Note right of Tank: "Phase 5 (UND-104): check<br/>is now lint secrets test<br/>(Makefile, Tank). Proof<br/>with a deliberate lint<br/>error in a scratch file<br/>(removed): the old…"
+    Morpheus->>All: "lead handoff"
+    Note right of Morpheus: "*lead review phase-5:<br/>passed. check order<br/>proven both ways with a<br/>deliberate lint error<br/>(31.8 s before, 0.16 s<br/>after), TEST_STRATEGY<br/>and SD…"
+    Tank->>Oracle: "devops handoff"
+    Note right of Tank: "SDLC check passed<br/>(Sprint 27):<br/>pyproject.toml, uv.lock,<br/>.python-version<br/>unchanged since main,<br/>Makefile changed only in<br/>the order of check (…"
+    Oracle->>Smith: "ora handoff"
+    Note right of Oracle: "Docs groomed: ADR-0060<br/>(rules tested on their<br/>own stages, amends the<br/>contrast plan), 2<br/>lessons, CHANGELOG<br/>(Sprint 26 now merged),<br/>TEST_STRA…"
+    Smith->>All: "user approve"
+    Note right of Smith: "rubric UAT: COVER=A<br/>STEPS=A FAIL=A DATA=A<br/>EVID=A. User testing<br/>passed on the household<br/>fixtures and the<br/>console: same outputs,<br/>same behavio…"
+    Mouse->>Cypher: "retro"
+    Note right of Mouse: "Sprint 27 retro posted<br/>in docs/sprints/RETRO_SP<br/>RINT27.md. Backlog:<br/>browser to 90 s (merge<br/>page tests or accept<br/>~100 s: owner decides),<br/>a te…"
+    Cypher->>All: "pm launch"
+    Note right of Cypher: "*pm launch sprint-27.<br/>Sprint complete: 4<br/>stories (UND-101..104),<br/>5 phases, gate 96-101 s<br/>-> 36 s, unit suite 94.6<br/>-> 29.4 s, browser<br/>154.9…"
+```
+
+## Phase 5 close-out
+
+- **Morpheus**: \*lead review phase-5: passed. check order proven both ways with a deliberate lint error (31.8 s before, 0.16 s after), TEST\_STRATEGY and SD…
+- **Tank**: SDLC check passed (Sprint 27): pyproject.toml, uv.lock, .python-version unchanged since main, Makefile changed only in the order of check (…
+- **Smith**: rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A. User testing passed on the household fixtures and the console: same outputs, same behavio…
+
+## Sprint close-out
+
+- **Cypher**: \*pm launch sprint-27. Sprint complete: 4 stories (UND-101..104), 5 phases, gate 96-101 s -&gt; 36 s, unit suite 94.6 -&gt; 29.4 s, browser 154.9…

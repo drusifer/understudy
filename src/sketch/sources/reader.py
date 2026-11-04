@@ -74,6 +74,13 @@ class Sources:
     def jev_requests(self) -> int:
         return self.jev.requests if self.jev else 0
 
+    def provide(self, sketch: Sketch, name: str, rows: list[dict]) -> None:
+        """Stand in for source `name` of `sketch`: reading it gives `rows`, whatever kind of source it is (a test of one
+        stage uses this to skip a file, or the stages and Jev reads behind it)."""
+        if name not in sketch.sources:
+            raise KeyError(f"{sketch.name} has no source {name!r}")
+        self._read[capture_key(sketch, name)] = list(rows)
+
     async def read(self, sketch: Sketch, name: str) -> list[dict]:
         key = capture_key(sketch, name)
         if key not in self._read:
