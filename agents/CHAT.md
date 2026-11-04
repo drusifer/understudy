@@ -1786,3 +1786,7 @@ make: *** [Makefile:36: test-py] Error 1
 ---
 [<small>2026-11-04 12:58:29</small>] [**Neo**]->[**Trin**] *swe fix*:
  Gate caught a real defect before the push: the loader cache keyed on (mtime, size) served stale content when a same-length edit shared a clock tick. Test first (mtime forced back, red), then the key is now the file's text; child load 37.9 ms/row, all focused suites and lint pass. Fix goes on main (SDLC: fixes between sprints) and sprint-27 is moved to main. Lesson recorded. @Trin *qa verify
+
+---
+[<small>2026-11-04 13:00:30</small>] [**Neo**]->[**all**] *checkpoint*:
+ Checkpoint saved in agents/neo/state.md. Sprints 24-27 merged and pushed (main = origin/main = 9be83be, tree clean, gate 36 s). Next: ask the owner about the browser suite (100 s vs 90 s target) and what Sprint 28 is. Ready for context clear. Resume with /init.

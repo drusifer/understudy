@@ -1377,7 +1377,10 @@ sequenceDiagram
     autonumber
     participant Neo
     participant Trin
-    Note over Neo,Trin: 📅 2026-11-04
+    participant All
+    Note over Neo,All: 📅 2026-11-04
     Neo->>Trin: "swe fix"
     Note right of Neo: "Gate caught a real<br/>defect before the push:<br/>the loader cache keyed<br/>on (mtime, size) served<br/>stale content when a<br/>same-length edit shared<br/>a cl…"
+    Neo->>All: "checkpoint"
+    Note right of Neo: "Checkpoint saved in<br/>agents/neo/state.md.<br/>Sprints 24-27 merged and<br/>pushed (main =<br/>origin/main = 9be83be,<br/>tree clean, gate 36 s).<br/>Next: ask t…"
 ```
