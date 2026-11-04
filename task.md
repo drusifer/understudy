@@ -35,10 +35,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 3: The run as it was (UND-84 part 1, 3 pts)
 *Phase goal: `replay(dir, at)` in Python and its API.*
-- [ ] **Task 3.1:** Tests first, then `src/dashboard/replay.py` (state, stages, gauges, printed lines, lit state, hold and ending after event N), `GET /api/runs/<id>/replay[?at=N]`, a refused unreadable log; docs. **L2**. (*Owner: Neo | Trace: UND-84 AC1, AC3, AC4, ADR-0059 | Verification: `bobp make test`, `bobp make lint`*)
-- [ ] **Task 3.2:** UAT on real run folders (the household full run and an evening run): event 0, a middle event, the last event; the last equals the live view; a log with a bad line is refused. **L2**. (*Owner: Trin | Trace: UND-84 AC1, AC3, AC4 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
-- [ ] **Task 3.3:** Security quick pass: the log is read-only data; the run id check. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 3): ...`*)
-- [ ] **Task 3.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT26 section 4, ADR-0059 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 3.1:** Tests first, then `src/dashboard/replay.py` (state, stages, gauges, printed lines, lit state, hold and ending after event N), `GET /api/runs/<id>/replay[?at=N]`, a refused unreadable log; docs. **L2**. (*Owner: Neo | Trace: UND-84 AC1, AC3, AC4, ADR-0059 | Verification: `bobp make test`, `bobp make lint`*)
+- [x] **Task 3.2:** UAT on real run folders (the household full run and an evening run): event 0, a middle event, the last event; the last equals the live view; a log with a bad line is refused. **L2**. (*Owner: Trin | Trace: UND-84 AC1, AC3, AC4 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
+- [x] **Task 3.3:** Security quick pass: the log is read-only data; the run id check. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 3): ...`*)
+- [x] **Task 3.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT26 section 4, ADR-0059 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 4: Play it back (UND-84 part 2, 2 pts)
 *Phase goal: the replay bar in the page.*

@@ -1533,3 +1533,31 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-11-03 19:21:48</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
  *lead review phase-2: passed. The runner knows only the file; the console only writes it; run --watch is a thin wrapper (Watch) over the same server. Debt: the page says 'pausing' only in a message, not in the status; hold waits poll every 0.2 s. @Neo *swe impl phase-3
+
+---
+[<small>2026-11-03 19:21:49</small>] [**Mouse**]->[**all**] *phase 3*:
+ Phase 3: the run as it was (UND-84 part 1)
+
+---
+[<small>2026-11-03 19:25:35</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+7:25PM INF no leaks found
+7:25PM INF 1 commits scanned.
+7:25PM INF scanned ~2710 bytes (2.71 KB) in 244ms
+7:25PM INF no leaks found
+
+---
+[<small>2026-11-03 19:25:49</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 3 impl complete (UND-84 part 1): replay.py (replay(dir, at) from the events alone with the live view's own functions), GET /api/runs/<id>/replay[?at=N], strict log reading (422 naming the line). 18 new tests; make check 545 green. @Trin *qa uat phase-3
+
+---
+[<small>2026-11-03 19:25:49</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 3 passed (UND-84 AC1,3,4): real runs coffee_week (14 events) and household (5,027 events): last event equals the live view in state, ending, diagram, stages, gauges and lines; event 1, middle and last are right; a corrupt line is refused with 'events.jsonl line 4 is not readable'; a step on the 5,027-event log takes 0.03 s. @Switch *sec review phase-3
+
+---
+[<small>2026-11-03 19:25:50</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 3): No blocking findings. Read-only: the run id is matched by the route pattern and must be a folder under the runs root; at is digits only (max 9) and range-checked; the log is parsed as JSON only; nothing is written, no Jev, no shell. @Morpheus *lead review phase-3
+
+---
+[<small>2026-11-03 19:25:50</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-3: passed. One module, no second implementation of the view. Debt noted: each step resends all printed lines (fine to ~100k events); the Jev count shows '-' mid-run because the log has no per-event total. @Neo *swe impl phase-4

@@ -1064,7 +1064,40 @@ sequenceDiagram
     Note right of Morpheus: "*lead review phase-2:<br/>passed. The runner knows<br/>only the file, the<br/>console only writes it,<br/>run --watch is a thin<br/>wrapper (Watch) over the<br/>sa…"
 ```
 
-## Phase 2 so far
+## Phase 2 close-out
 
 - **Neo**: Phase 2 impl complete (UND-83 part 2): hold.py + POST /api/pause|step|resume (secret, same-origin, run id pattern, resolved under the runs…
 - **Morpheus**: \*lead review phase-2: passed. The runner knows only the file, the console only writes it, run --watch is a thin wrapper (Watch) over the sa…
+
+## Phase 3 starts
+
+Phase 3: the run as it was (UND-84 part 1)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-03
+    Mouse->>All: "phase 3"
+    Note right of Mouse: "Phase 3: the run as it<br/>was (UND-84 part 1)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 3 impl complete<br/>(UND-84 part 1):<br/>replay.py (replay(dir,<br/>at) from the events<br/>alone with the live<br/>view's own functions),<br/>GET /api/runs/…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 3 passed<br/>(UND-84 AC1,3,4): real<br/>runs coffee_week (14<br/>events) and household<br/>(5,027 events): last<br/>event equals the live<br/>view in sta…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 3):<br/>No blocking findings.<br/>Read-only: the run id is<br/>matched by the route<br/>pattern and must be a<br/>folder under the runs<br/>ro…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-3:<br/>passed. One module, no<br/>second implementation of<br/>the view. Debt noted:<br/>each step resends all<br/>printed lines (fine to<br/>~1…"
+```
+
+## Phase 3 so far
+
+- **Neo**: Phase 3 impl complete (UND-84 part 1): replay.py (replay(dir, at) from the events alone with the live view's own functions), GET /api/runs/…
+- **Trin**: UAT phase 3 passed (UND-84 AC1,3,4): real runs coffee\_week (14 events) and household (5,027 events): last event equals the live view in sta…
+- **Morpheus**: \*lead review phase-3: passed. One module, no second implementation of the view. Debt noted: each step resends all printed lines (fine to ~1…
