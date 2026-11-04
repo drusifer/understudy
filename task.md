@@ -21,10 +21,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 1: Child sketches load faster (UND-101, 3 pts)
 *Phase goal: the row-independent read of a child sketch is done once per file version.*
-- [ ] **Task 1.1:** Tests first (the same child loaded many times is read once; an edited file is read again; the loaded sketch is equal to an uncached one; a caller cannot corrupt the cache), then `functools.lru_cache` on the lenient declared-inputs read keyed by path and `st_mtime_ns`. Measure per-row load before and after on the household child. **L2**. (*Owner: Neo | Trace: UND-101 AC1-3 | Verification: `bobp make test ARGS="test_sketch_template*.py"` and the loader tests, `bobp make lint`*)
-- [ ] **Task 1.2:** UAT: a household run on the fixtures gives byte-identical outputs before and after (compare the run folders); the micro-measurement of the per-row load. **L1**. (*Owner: Trin | Trace: UND-101 AC2-3 | Verification: UAT verdict and numbers in `agents/CHAT.md`*)
-- [ ] **Task 1.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 1): ...`*)
-- [ ] **Task 1.4:** Code review. **L1**. (*Owner: Morpheus | Trace: STORY_ARCH_SPRINT27 UND-101 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 1.1:** Tests first (the same child loaded many times is read once; an edited file is read again; the loaded sketch is equal to an uncached one; a caller cannot corrupt the cache), then `functools.lru_cache` on the lenient declared-inputs read keyed by path and `st_mtime_ns`. Measure per-row load before and after on the household child. **L2**. (*Owner: Neo | Trace: UND-101 AC1-3 | Verification: `bobp make test ARGS="test_sketch_template*.py"` and the loader tests, `bobp make lint`*)
+- [x] **Task 1.2:** UAT: a household run on the fixtures gives byte-identical outputs before and after (compare the run folders); the micro-measurement of the per-row load. **L1**. (*Owner: Trin | Trace: UND-101 AC2-3 | Verification: UAT verdict and numbers in `agents/CHAT.md`*)
+- [x] **Task 1.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 1): ...`*)
+- [x] **Task 1.4:** Code review. **L1**. (*Owner: Morpheus | Trace: STORY_ARCH_SPRINT27 UND-101 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 2: Compute one stage on its own (UND-102 part 1, 4 pts)
 *Phase goal: a fragment harness, proven by moving one household file down.*

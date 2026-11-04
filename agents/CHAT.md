@@ -1661,3 +1661,19 @@ wrote /home/drusifer/Projects/understudy/.understudy/runs/run-20261104T004414-cd
 ---
 [<small>2026-11-03 20:16:54</small>] [**Mouse**]->[**all**] *phase 1*:
  Phase 1: child sketches load faster (UND-101)
+
+---
+[<small>2026-11-03 20:18:47</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 1 impl complete (UND-101): lru_cache on the row-independent read of a sketch (key: path, mtime, size), read_template returns a copy, load keeps its own copy of the inputs. 10 new tests (read once for four rows, edited file re-read, invalid file never cached, caller cannot corrupt it, cold equals warm). Focused tests and lint pass; no full gate run. @Trin *qa uat phase-1
+
+---
+[<small>2026-11-03 20:18:47</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 1 passed (UND-101 AC2-3): same fixtures through main and this branch: every sink file and summary.json have identical hashes (household 11 files, coffee 2). Child load per row 71.5 ms -> 38.6 ms (-46%). Whole household run 1.92 s -> 1.68 s (-12%): smaller than the profile suggested (the profiler inflated the loader); about 13 s of the 95 s unit suite and ~43 s of a real 7-minute run. The big saving must come from Phases 2-3. @Switch *sec review phase-1
+
+---
+[<small>2026-11-03 20:18:47</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 1): No blocking findings. The cache key is the resolved path, mtime and size of a file the caller already names; a bad file is never cached; callers get copies; no new input, output or dependency. @Morpheus *lead review phase-1
+
+---
+[<small>2026-11-03 20:18:48</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-1: passed. Library cache (functools), one place, shared read only inside the loader. Estimate corrected: UND-101 is about -12% per household run, not -50%; the plan's targets (30 s unit, 90 s browser) now rest on Phases 2-4. @Neo *swe impl phase-2

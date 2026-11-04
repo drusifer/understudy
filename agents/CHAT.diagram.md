@@ -1219,7 +1219,25 @@ sequenceDiagram
     autonumber
     participant Mouse
     participant All
-    Note over Mouse,All: 📅 2026-11-03
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-03
     Mouse->>All: "phase 1"
     Note right of Mouse: "Phase 1: child sketches<br/>load faster (UND-101)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 1 impl complete<br/>(UND-101): lru_cache on<br/>the row-independent read<br/>of a sketch (key: path,<br/>mtime, size),<br/>read_template returns a<br/>copy,…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 1 passed<br/>(UND-101 AC2-3): same<br/>fixtures through main<br/>and this branch: every<br/>sink file and<br/>summary.json have<br/>identical hashes (hou…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 1):<br/>No blocking findings.<br/>The cache key is the<br/>resolved path, mtime and<br/>size of a file the<br/>caller already names, a<br/>bad…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-1:<br/>passed. Library cache<br/>(functools), one place,<br/>shared read only inside<br/>the loader. Estimate<br/>corrected: UND-101 is<br/>abou…"
 ```
+
+## Phase 1 so far
+
+- **Neo**: Phase 1 impl complete (UND-101): lru\_cache on the row-independent read of a sketch (key: path, mtime, size), read\_template returns a copy,…
+- **Trin**: UAT phase 1 passed (UND-101 AC2-3): same fixtures through main and this branch: every sink file and summary.json have identical hashes (hou…
+- **Morpheus**: \*lead review phase-1: passed. Library cache (functools), one place, shared read only inside the loader. Estimate corrected: UND-101 is abou…
