@@ -6,7 +6,8 @@ import unittest
 from pathlib import Path
 
 import src.sketch.stages  # noqa: F401 - importing it registers the stages
-from src.sketch.fragment import read_stage
+from src.jev import Chosen, JevError
+from src.sketch.fragment import Fragment, read_stage
 from src.sketch.loader import load
 
 SKETCH = """\
@@ -40,6 +41,19 @@ def run(coroutine):
     return asyncio.run(coroutine)
 
 
+JEV_SKETCH = """\
+name: j
+sources:
+  pick:
+    kind: jev
+    question: choice
+    instructions: Choose one.
+    criteria: { a: first, b: second }
+    state: {}
+machine: { initial: x, states: { x: { final: true } } }
+"""
+
+
 class FragmentCase(unittest.TestCase):
     def setUp(self):
         directory = tempfile.TemporaryDirectory()
@@ -47,6 +61,9 @@ class FragmentCase(unittest.TestCase):
         self.dir = Path(directory.name)
         (self.dir / "sketch.yaml").write_text(SKETCH, encoding="utf-8")
         self.sketch = load(self.dir / "sketch.yaml")
+
+    def write_jev_sketch(self):
+        (self.dir / "jev.yaml").write_text(JEV_SKETCH, encoding="utf-8")
 
 
 class ReadStageTests(FragmentCase):
@@ -79,6 +96,55 @@ class ReadStageTests(FragmentCase):
     def test_a_stub_for_a_source_that_is_not_in_the_sketch_is_refused_by_name(self):
         with self.assertRaises(KeyError):
             run(read_stage(self.sketch, "adults", stubs={"people": PEOPLE, "ghosts": []}))
+
+    def test_what_a_source_announces_is_handed_to_the_test(self):
+        said: list[str] = []
+        sketch = load(self.dir / "sketch.yaml", variables={})
+        (self.dir / "optional.yaml").write_text(
+            "name: o\nsources:\n  extra:\n    kind: file\n    path: nothing.jsonl\n    optional: pinned\n"
+            "machine: { initial: x, states: { x: { final: true } } }\n", encoding="utf-8")
+        optional = load(self.dir / "optional.yaml", variables={})
+        self.assertEqual(run(read_stage(optional, "extra", announce=said.append)), [])
+        self.assertTrue(said and "so none are used" in said[0])
+        self.assertTrue(sketch)
+
+    def test_a_jev_source_is_answered_by_the_jev_given(self):
+        self.write_jev_sketch()
+        asked = []
+
+        class Jev:
+            async def choose(self, *, state, instructions, options):
+                asked.append(list(options))
+                return Chosen("b", 0.9, {"a": 0.1, "b": 0.9})
+
+        rows = run(read_stage(load(self.dir / "jev.yaml"), "pick", jev=Jev()))
+        self.assertEqual(asked, [["a", "b"]])
+        self.assertEqual({row["level"]: row["probability"] for row in rows}, {"a": 0.1, "b": 0.9})
+
+    def test_several_reads_in_one_session_share_what_was_computed_and_ask_jev_once(self):
+        self.write_jev_sketch()
+        asked = []
+
+        class Jev:
+            async def choose(self, *, state, instructions, options):
+                asked.append(1)
+                return Chosen("a", 0.8, {"a": 0.8, "b": 0.2})
+
+        async def twice():
+            with Fragment(load(self.dir / "jev.yaml"), jev=Jev()) as fragment:
+                return await fragment.read("pick"), await fragment.read("pick")
+
+        first, second = run(twice())
+        self.assertEqual((len(asked), first), (1, second))
+
+    def test_a_session_that_reads_a_name_the_sketch_lacks_says_so(self):
+        with Fragment(self.sketch) as fragment, self.assertRaises(KeyError):
+            run(fragment.read("nobody"))
+
+    def test_a_jev_source_with_no_jev_says_so_and_asks_nothing(self):
+        self.write_jev_sketch()
+        with self.assertRaises(JevError):
+            run(read_stage(load(self.dir / "jev.yaml"), "pick"))
 
     def test_nothing_is_written_beside_the_sketch(self):
         run(read_stage(self.sketch, "named", stubs={"people": PEOPLE}))

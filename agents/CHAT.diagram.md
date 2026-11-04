@@ -1267,7 +1267,33 @@ sequenceDiagram
     Note right of Morpheus: "*lead review phase-2:<br/>passed. The harness<br/>reuses the run's own<br/>stage computer instead<br/>of copying it, stubs are<br/>the only seam (public<br/>Source…"
 ```
 
-## Phase 2 so far
+## Phase 2 close-out
 
 - **Trin**: UAT phase 2 passed (UND-102 AC1-3, payments): five payment rules broken in the real sketch, one at a time, each caught by a moved test and…
 - **Morpheus**: \*lead review phase-2: passed. The harness reuses the run's own stage computer instead of copying it, stubs are the only seam (public Source…
+
+## Phase 3 starts
+
+Phase 3: the rest of the household rules (UND-102 part 2)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Switch
+    participant Morpheus
+    participant Neo
+    Note over Mouse,Neo: 📅 2026-11-03
+    Mouse->>All: "phase 3"
+    Note right of Mouse: "Phase 3: the rest of the<br/>household rules (UND-102<br/>part 2)"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 3):<br/>No blocking findings.<br/>Test and test-support<br/>code only,<br/>run_state/fragment read<br/>the sketch's own files<br/>and write to…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-3:<br/>passed. Each remaining<br/>whole run says why<br/>(happy path, empty<br/>period, three early<br/>refusals), stubs are the<br/>only seam.…"
+```
+
+## Phase 3 so far
+
+- **Morpheus**: \*lead review phase-3: passed. Each remaining whole run says why (happy path, empty period, three early refusals), stubs are the only seam.…

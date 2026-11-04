@@ -35,10 +35,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 3: The rest of the household rules (UND-102 part 2, 4 pts)
 *Phase goal: at most five whole-sketch household runs; the household tests take 15 s or less.*
-- [ ] **Task 3.1:** Move the remaining household tests (`test_household.py`, `_categorize`, `_crosswalk`, `_pins`, `_taxonomy`) to the fragment level in groups, keeping a whole-sketch run only where it shows something only a whole run can (happy path with shared outputs, a refusal before Jev, an empty period, a replay, the console's real start); each group is checked by breaking its rule. **L3**. (*Owner: Neo | Trace: UND-102 AC2-4 | Verification: `bobp make test ARGS="test_household*.py"`, `bobp make lint`*)
-- [ ] **Task 3.2:** UAT: the list of tests moved with the rule each guards and the break-it result; the count of whole-sketch runs and the household suite time against the budget. **L2**. (*Owner: Trin | Trace: UND-102 AC2-4 | Verification: UAT verdict and table in `agents/CHAT.md`*)
-- [ ] **Task 3.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 3): ...`*)
-- [ ] **Task 3.4:** Code review. **L2**. (*Owner: Morpheus | Trace: STORY_ARCH_SPRINT27 UND-102 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 3.1:** Move the remaining household tests (`test_household.py`, `_categorize`, `_crosswalk`, `_pins`, `_taxonomy`) to the fragment level in groups, keeping a whole-sketch run only where it shows something only a whole run can (happy path with shared outputs, a refusal before Jev, an empty period, a replay, the console's real start); each group is checked by breaking its rule. **L3**. (*Owner: Neo | Trace: UND-102 AC2-4 | Verification: `bobp make test ARGS="test_household*.py"`, `bobp make lint`*)
+- [x] **Task 3.2:** UAT: the list of tests moved with the rule each guards and the break-it result; the count of whole-sketch runs and the household suite time against the budget. **L2**. (*Owner: Trin | Trace: UND-102 AC2-4 | Verification: UAT verdict and table in `agents/CHAT.md`*)
+- [x] **Task 3.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 3): ...`*)
+- [x] **Task 3.4:** Code review. **L2**. (*Owner: Morpheus | Trace: STORY_ARCH_SPRINT27 UND-102 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 4: The browser suite shows only what a browser can (UND-103, 5 pts)
 *Phase goal: contrast from the declared color pairs in Python; the browser keeps two looks; no flake; 90 s or less.*
