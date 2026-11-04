@@ -1294,6 +1294,35 @@ sequenceDiagram
     Note right of Morpheus: "*lead review phase-3:<br/>passed. Each remaining<br/>whole run says why<br/>(happy path, empty<br/>period, three early<br/>refusals), stubs are the<br/>only seam.…"
 ```
 
-## Phase 3 so far
+## Phase 3 close-out
 
 - **Morpheus**: \*lead review phase-3: passed. Each remaining whole run says why (happy path, empty period, three early refusals), stubs are the only seam.…
+
+## Phase 4 starts
+
+Phase 4: the browser suite shows only what a browser can (UND-103)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Trin
+    participant Switch
+    participant Morpheus
+    participant Tank
+    Note over Mouse,Tank: 📅 2026-11-03
+    Mouse->>All: "phase 4"
+    Note right of Mouse: "Phase 4: the browser<br/>suite shows only what a<br/>browser can (UND-103)"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 4: browser<br/>suite 154.9 s (one<br/>flake: steampunk/dark<br/>.stage-lamp) -> 101.3 s<br/>and 99.5 s on two<br/>consecutive full runs,<br/>39 of 39 OK…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 4):<br/>No blocking findings.<br/>Product change:<br/>Server.serve_forever<br/>polls every 20 ms<br/>instead of 500 ms (no<br/>new input or ex…"
+    Morpheus->>Tank: "lead handoff"
+    Note right of Morpheus: "*lead review phase-4:<br/>passed with the miss<br/>recorded. Good catch<br/>that the shutdown poll<br/>was costing ~35 s across<br/>both suites. ADR-0060<br/>shoul…"
+```
+
+## Phase 4 so far
+
+- **Morpheus**: \*lead review phase-4: passed with the miss recorded. Good catch that the shutdown poll was costing ~35 s across both suites. ADR-0060 shoul…

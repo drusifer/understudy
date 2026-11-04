@@ -42,10 +42,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 4: The browser suite shows only what a browser can (UND-103, 5 pts)
 *Phase goal: contrast from the declared color pairs in Python; the browser keeps two looks; no flake; 90 s or less.*
-- [ ] **Task 4.1:** Tests first (`tests/python/test_theme_contrast.py`: every declared text and background pair of the three themes, light and dark, meets WCAG AA; a deliberately bad pair is caught), then cut `ContrastTest`, `DecisionPanelTest`, `ReplayBarTest` and the other "readable in every look" tests to one light and one dark look, measure the stage lamp with animation and transition off, and write in each remaining browser test's docstring the thing only a browser shows. **L3**. (*Owner: Neo | Trace: UND-103 AC1-3 | Verification: `bobp make test ARGS="test_theme_contrast.py"`, `bobp make test-browser`, `bobp make lint`*)
-- [ ] **Task 4.2:** UAT: the browser suite run five times: time and failures each; the old flake case (`steampunk/dark .stage-lamp`) passes every time; a bad declared pair is caught in Python. **L2**. (*Owner: Trin | Trace: UND-103 AC2, AC4 | Verification: UAT verdict and the five times in `agents/CHAT.md`*)
-- [ ] **Task 4.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 4): ...`*)
-- [ ] **Task 4.4:** Code review. **L2**. (*Owner: Morpheus | Trace: STORY_ARCH_SPRINT27 UND-103 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 4.1:** Tests first (`tests/python/test_theme_contrast.py`: every declared text and background pair of the three themes, light and dark, meets WCAG AA; a deliberately bad pair is caught), then cut `ContrastTest`, `DecisionPanelTest`, `ReplayBarTest` and the other "readable in every look" tests to one light and one dark look, measure the stage lamp with animation and transition off, and write in each remaining browser test's docstring the thing only a browser shows. **L3**. (*Owner: Neo | Trace: UND-103 AC1-3 | Verification: `bobp make test ARGS="test_theme_contrast.py"`, `bobp make test-browser`, `bobp make lint`*)
+- [x] **Task 4.2:** UAT: the browser suite run five times: time and failures each; the old flake case (`steampunk/dark .stage-lamp`) passes every time; a bad declared pair is caught in Python. **L2**. (*Owner: Trin | Trace: UND-103 AC2, AC4 | Verification: UAT verdict and the five times in `agents/CHAT.md`*)
+- [x] **Task 4.3:** Security quick pass. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 4): ...`*)
+- [x] **Task 4.4:** Code review. **L2**. (*Owner: Morpheus | Trace: STORY_ARCH_SPRINT27 UND-103 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 5: The gate fails fast and says what each level is for (UND-104, 2 pts)
 *Phase goal: cheap checks first; the strategy and the measured times recorded.*

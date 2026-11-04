@@ -53,6 +53,16 @@ SECURITY_HEADERS = {  # SEC-003
 }
 
 
+SHUTDOWN_POLL = 0.02  # seconds between looks for a stop request; the standard library's half second makes every stop wait
+
+
+class Server(ThreadingHTTPServer):
+    """The console's server. It looks for a request to stop every 20 ms, not every 500 ms, so `shutdown` returns at once."""
+
+    def serve_forever(self, poll_interval: float = SHUTDOWN_POLL) -> None:
+        super().serve_forever(poll_interval)
+
+
 @dataclass(frozen=True)
 class Console:
     """What a console serves and where it reads: the runs folder, the Jev captures, the project, and (when it can start
@@ -295,10 +305,10 @@ def make_handler(console: Console, poll_seconds: float = 0.5, max_streams: int =
 def serve(  # noqa: PLR0913 - the places a console reads from, each overridable for tests
     root: Path, port: int = 4180, host: str = "0.0.0.0", max_streams: int = MAX_STREAMS, cache: Path = CACHE, project: Path = ROOT,
     launcher: Launcher | None = None, secret: str | None = None, controllable: Callable[[str], bool] | None = None,
-) -> ThreadingHTTPServer:
+) -> Server:
     """A server for the runs under `root`; the caller starts and stops it. `controllable` says which runs it may hold."""
     console = Console(Path(root), Path(cache), Path(project), launcher, secret, controllable)
-    server = ThreadingHTTPServer((host, port), make_handler(console, max_streams=max_streams))
+    server = Server((host, port), make_handler(console, max_streams=max_streams))
     server.daemon_threads = True
     return server
 

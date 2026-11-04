@@ -414,4 +414,4 @@ for (const button of document.querySelectorAll('.mode-choice')) button.addEventL
 device.addEventListener('change', look);
 look();
 loadRuns();
-setInterval(loadRuns, 5000);
+setInterval(loadRuns, window.understudyPollMs ?? 5000); // a test may set understudyPollMs to wait less

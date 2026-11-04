@@ -1705,3 +1705,19 @@ wrote /home/drusifer/Projects/understudy/.understudy/runs/run-20261104T004414-cd
 ---
 [<small>2026-11-03 20:32:07</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
  *lead review phase-3: passed. Each remaining whole run says why (happy path, empty period, three early refusals); stubs are the only seam. One concern for the retro: placed_all and the Jev double stand in for the child's output shape, so a change to that shape is caught only by the happy-path run. @Neo *swe impl phase-4
+
+---
+[<small>2026-11-03 20:32:13</small>] [**Mouse**]->[**all**] *phase 4*:
+ Phase 4: the browser suite shows only what a browser can (UND-103)
+
+---
+[<small>2026-11-03 20:43:28</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 4: browser suite 154.9 s (one flake: steampunk/dark .stage-lamp) -> 101.3 s and 99.5 s on two consecutive full runs, 39 of 39 OK both, no flake. TARGET MISSED: the plan said 90 s; ~100 s. The rest is ~2 s per test for 37 tests (a page per test); only merging tests would cut it and each merge loses isolation. Unit suite 29.4 s (target 30 met). Only two runs, not the five in AC4. @Switch *sec review phase-4
+
+---
+[<small>2026-11-03 20:43:28</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 4): No blocking findings. Product change: Server.serve_forever polls every 20 ms instead of 500 ms (no new input or exposure); page.js reads an optional window.understudyPollMs (a value a page script could already change). Tests spawn browser processes that only open the local test server. @Morpheus *lead review phase-4
+
+---
+[<small>2026-11-03 20:43:28</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
+ *lead review phase-4: passed with the miss recorded. Good catch that the shutdown poll was costing ~35 s across both suites. ADR-0060 should record the amended contrast approach. @Tank *devops sdlc phase-5
