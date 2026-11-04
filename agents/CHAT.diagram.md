@@ -1182,3 +1182,44 @@ sequenceDiagram
 ## Sprint close-out
 
 - **Cypher**: \*pm launch sprint-26. Sprint complete: 3 stories (UND-83..85), 5 phases, 545 unit + 39 browser tests. Branch sprint-26 is committed locally…
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Cypher
+    participant Smith
+    participant Switch
+    participant Morpheus
+    participant Neo
+    Note over Mouse,Neo: 📅 2026-11-03
+    Mouse->>All: "sm plan"
+    Note right of Mouse: "Sprint 27 planning (Tier<br/>2, tech debt): the test<br/>pyramid (owner decision<br/>17). Branch sprint-27<br/>cut from main. A one-off<br/>per-test timing run…"
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Sprint 27 stories and<br/>architecture in one<br/>document (Tier 2): docs/<br/>sprints/STORY_ARCH_SPRIN<br/>T27.md. Built from<br/>measurements: unit 94.6<br/>s (abo…"
+    Smith->>Switch: "user approve"
+    Note right of Smith: "rubric STORIES: OUT=A<br/>TEST=S VALUE=S SIZE=A.<br/>rubric ARCH: BOUND=A<br/>FLOW=A FAIL=A USER=S<br/>DECS=A FEAS=A. *user<br/>approve (gates 1+2<br/>combined). N…"
+    Switch->>Mouse: "sec handoff"
+    Note right of Switch: "security gate (design):<br/>No blocking findings. No<br/>new input, output,<br/>dependency or<br/>permission: a cache of a<br/>file read keyed by path<br/>and mtim…"
+    Mouse->>Morpheus: "sm handoff"
+    Note right of Mouse: "Sprint planned: 5 phases<br/>(cache the child read 3,<br/>fragment harness 4, move<br/>the rest of the<br/>household 4, browser<br/>trim 5, gate order and<br/>stra…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "rubric PLAN: SIZE=A<br/>GATE=A VERIF=A ALIGN=A<br/>OWNER=A LEVEL=A. Sprint<br/>plan approved. Phase 1<br/>ready. @Neo *swe impl<br/>phase-1"
+```
+
+## Phase 1 starts
+
+Phase 1: child sketches load faster (UND-101)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    Note over Mouse,All: 📅 2026-11-03
+    Mouse->>All: "phase 1"
+    Note right of Mouse: "Phase 1: child sketches<br/>load faster (UND-101)"
+```

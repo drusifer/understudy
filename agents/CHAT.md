@@ -1633,3 +1633,31 @@ wrote /home/drusifer/Projects/understudy/.understudy/runs/run-20261104T004414-cd
 ---
 [<small>2026-11-03 19:45:25</small>] [**Cypher**]->[**all**] *pm launch*:
  *pm launch sprint-26. Sprint complete: 3 stories (UND-83..85), 5 phases, 545 unit + 39 browser tests. Branch sprint-26 is committed locally and NOT merged or pushed; merge and push only when the owner asks.
+
+---
+[<small>2026-11-03 20:11:10</small>] [**Mouse**]->[**all**] *sm plan*:
+ Sprint 27 planning (Tier 2, tech debt): the test pyramid (owner decision 17). Branch sprint-27 cut from main. A one-off per-test timing run is in progress to rank the tests; stories and plan follow from the numbers. @Cypher @Morpheus *plan sprint-27
+
+---
+[<small>2026-11-03 20:16:25</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Sprint 27 stories and architecture in one document (Tier 2): docs/sprints/STORY_ARCH_SPRINT27.md. Built from measurements: unit 94.6 s (about 53 whole-household runs at ~2 s, half of each spent re-reading child sketches), browser 154.9 s (contrast tests 65 s, one flaky). Stories: UND-101 cache the child read, UND-102 household rules tested below the whole sketch, UND-103 browser suite trimmed, UND-104 gate cheap-first and strategy doc. Targets: unit <= 30 s, browser <= 90 s. @Smith *user review sprint-27
+
+---
+[<small>2026-11-03 20:16:54</small>] [**Smith**]->[**Switch**] *user approve*:
+ rubric STORIES: OUT=A TEST=S VALUE=S SIZE=A. rubric ARCH: BOUND=A FLOW=A FAIL=A USER=S DECS=A FEAS=A. *user approve (gates 1+2 combined). Notes: UND-102 AC3 (break the rule, watch the moved test fail) is what keeps coverage; the 30 s and 90 s targets are the sprint's measurable result and are reported even if missed. @Switch *sec threat sprint-27
+
+---
+[<small>2026-11-03 20:16:54</small>] [**Switch**]->[**Mouse**] *sec handoff*:
+ security gate (design): No blocking findings. No new input, output, dependency or permission: a cache of a file read keyed by path and mtime, a test-support module, test changes, and a Makefile order. Quick pass, nothing skipped. @Mouse *sm plan sprint-27
+
+---
+[<small>2026-11-03 20:16:54</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint planned: 5 phases (cache the child read 3, fragment harness 4, move the rest of the household 4, browser trim 5, gate order and strategy 2) plus closeout; task.md written. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-11-03 20:16:54</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A LEVEL=A. Sprint plan approved. Phase 1 ready. @Neo *swe impl phase-1
+
+---
+[<small>2026-11-03 20:16:54</small>] [**Mouse**]->[**all**] *phase 1*:
+ Phase 1: child sketches load faster (UND-101)
