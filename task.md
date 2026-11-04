@@ -21,10 +21,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 1: The runner can be held (UND-83 part 1, 4 pts)
 *Phase goal: a control file and the runner's gate; `paused` and `resumed` events.*
-- [ ] **Task 1.1:** Tests first, then `src/sketch/control.py` (`read_control` fail-open to run, `write_control` atomic, the gate with hold and step by `allow`), the gate called before each top-level stage in `run.py`, `paused` and `resumed` events; a held run makes no Jev request and no stage start; STOP and Ctrl-C end a held run. **L3** (concurrency with the runner; failure cases). (*Owner: Neo | Trace: UND-83 AC3-5, ADR-0058 | Verification: `bobp make test`, `bobp make lint`*)
-- [ ] **Task 1.2:** UAT with a real sketch and a fake clock: hold before stage 3, step twice, resume; a bad control file runs on; an old log reads as before. **L2**. (*Owner: Trin | Trace: UND-83 AC3-5 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
-- [ ] **Task 1.3:** Security quick pass: the control file as a new input to the runner. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 1): ...`*)
-- [ ] **Task 1.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT26 sections 3-5, ADR-0058 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 1.1:** Tests first, then `src/sketch/control.py` (`read_control` fail-open to run, `write_control` atomic, the gate with hold and step by `allow`), the gate called before each top-level stage in `run.py`, `paused` and `resumed` events; a held run makes no Jev request and no stage start; STOP and Ctrl-C end a held run. **L3** (concurrency with the runner; failure cases). (*Owner: Neo | Trace: UND-83 AC3-5, ADR-0058 | Verification: `bobp make test`, `bobp make lint`*)
+- [x] **Task 1.2:** UAT with a real sketch and a fake clock: hold before stage 3, step twice, resume; a bad control file runs on; an old log reads as before. **L2**. (*Owner: Trin | Trace: UND-83 AC3-5 | Verification: UAT verdict and evidence in `agents/CHAT.md`*)
+- [x] **Task 1.3:** Security quick pass: the control file as a new input to the runner. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 1): ...`*)
+- [x] **Task 1.4:** Code review. **L2**. (*Owner: Morpheus | Trace: ARCH_SPRINT26 sections 3-5, ADR-0058 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 2: Drive it from the console and the command line (UND-83 part 2, 4 pts)
 *Phase goal: pause, step, resume in the console; `run --watch [--pause]`; a held run reads as paused.*

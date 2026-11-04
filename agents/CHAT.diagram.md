@@ -1019,7 +1019,25 @@ sequenceDiagram
     autonumber
     participant Mouse
     participant All
-    Note over Mouse,All: 📅 2026-11-03
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-03
     Mouse->>All: "phase 1"
     Note right of Mouse: "Phase 1: the runner can<br/>be held (UND-83 part 1)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 1 impl complete<br/>(UND-83 part 1):<br/>control.py<br/>(control.json, fail-open<br/>to run, atomic write,<br/>Hold gate), gate before<br/>each top-level sta…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 1 passed<br/>(UND-83 AC3-5): real<br/>household sketch started<br/>held and stepped from<br/>outside: 16 steps, 16<br/>paused and 16 resumed<br/>events,…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 1):<br/>No blocking findings.<br/>control.json is read<br/>from the run's own<br/>folder, capped at 1 KiB,<br/>parsed as JSON only,<br/>valida…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-1:<br/>passed. The gate is a<br/>hook on the generic loop<br/>(run_machine before=),<br/>the control file is one<br/>small module, the conso…"
 ```
+
+## Phase 1 so far
+
+- **Neo**: Phase 1 impl complete (UND-83 part 1): control.py (control.json, fail-open to run, atomic write, Hold gate), gate before each top-level sta…
+- **Trin**: UAT phase 1 passed (UND-83 AC3-5): real household sketch started held and stepped from outside: 16 steps, 16 paused and 16 resumed events,…
+- **Morpheus**: \*lead review phase-1: passed. The gate is a hook on the generic loop (run\_machine before=), the control file is one small module, the conso…

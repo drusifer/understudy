@@ -1489,3 +1489,27 @@ bed2296..3317797  main -> main
 ---
 [<small>2026-11-03 18:57:24</small>] [**Mouse**]->[**all**] *phase 1*:
  Phase 1: the runner can be held (UND-83 part 1)
+
+---
+[<small>2026-11-03 19:02:24</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+gitleaks git --no-banner --redact --pre-commit .
+7:02PM INF 1 commits scanned.
+7:02PM INF scanned ~2201 bytes (2.20 KB) in 240ms
+7:02PM INF no leaks found
+
+---
+[<small>2026-11-03 19:08:32</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 1 impl complete (UND-83 part 1): control.py (control.json, fail-open to run, atomic write, Hold gate), gate before each top-level stage via run_machine(before=), paused/resumed events, run_sketch(pause=True). 10 new tests; make check 501 green. @Trin *qa uat phase-1
+
+---
+[<small>2026-11-03 19:08:32</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 1 passed (UND-83 AC3-5): real household sketch started held and stepped from outside: 16 steps, 16 paused and 16 resumed events, one top-level stage per step, finished complete; paused is logged before stage_started (nothing starts while held); a bad control file runs on; an ordinary run has no paused events. @Switch *sec review phase-1
+
+---
+[<small>2026-11-03 19:08:32</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 1): No blocking findings. control.json is read from the run's own folder, capped at 1 KiB, parsed as JSON only, validated, and any failure means run; it is written atomically and (Phase 2) only by the authenticated console. No shell, no path from the file. @Morpheus *lead review phase-1
+
+---
+[<small>2026-11-03 19:08:32</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-1: passed. The gate is a hook on the generic loop (run_machine before=), the control file is one small module, the console side stays out of the runner. Debt: nested stages are not held (by design); a poll every 0.2 s. @Neo *swe impl phase-2

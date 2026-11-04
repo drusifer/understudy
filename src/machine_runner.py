@@ -50,20 +50,23 @@ def current_state(machine) -> str:
     return next(iter(machine.configuration)).id
 
 
-async def run_machine(
+async def run_machine(  # noqa: PLR0913 - the loop's inputs, each optional but the first three
     machine, stages: Mapping[str, Callable[[], Awaitable]], record: RunRecord, publish: Callable[[], None] | None = None,
-    outcomes: Mapping[str, str] | None = None,
+    outcomes: Mapping[str, str] | None = None, before: Callable[[str], Awaitable] | None = None,
 ) -> None:
     """Walk `machine` from its initial state to a final one, running the stage each state names.
 
     `publish` runs once the machine has ended and before the run is recorded as complete; if it fails, so does the run.
     `outcomes` names what a final state means (`outcome:` in the sketch); the run records the one it ended in.
+    `before` is awaited with the state's name before its stage starts (a run held between stages waits there).
     """
     record.entered(current_state(machine), "start")
     while not machine.is_terminated:
         name = current_state(machine)
         if name not in stages:
             raise LookupError(f"the machine enters state {name!r} but no stage is defined for it")
+        if before:
+            await before(name)
         record.started(name)
         try:
             result = await stages[name]()

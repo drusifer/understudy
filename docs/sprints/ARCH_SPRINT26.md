@@ -40,8 +40,8 @@ No new dependency, language or make target.
 
 ## 4. Runtime Interaction & Critical Flows
 
-1. **Hold:** the owner presses PAUSE → `POST /api/pause {run}` → console checks the secret and that it may control the run → writes `control.json` `{"mode": "hold", "allow": 0}`. Before the next top-level stage the runner reads it, emits `paused {stage}` once, and waits (0.2 s polls) until the mode is `run` or `allow` exceeds the stages it has let through. A stage in flight finishes first.
-2. **Step:** `POST /api/step` raises `allow` by one; the runner lets exactly that many stages through, emitting `resumed` on release and `paused` again before the next. Step from a run started with `--pause` therefore makes exactly one move.
+1. **Hold:** the owner presses PAUSE → `POST /api/pause {run}` → console checks the secret and that it may control the run → writes `control.json` `{"mode": "hold", "steps": <unchanged>}`. Before the next top-level stage the runner reads it, emits `paused {stage}` once, and waits (0.2 s polls) until the mode is `run` or `steps` exceeds the steps it has used. A stage in flight finishes first.
+2. **Step:** `POST /api/step` raises `steps` by one (the count only ever grows, so a resume then a pause never replays old steps); the runner lets exactly that many stages through, emitting `resumed` on release and `paused` again before the next. Step from a run started with `--pause` therefore makes exactly one move.
 3. **Resume:** mode `run`.
 4. **Start held:** `run --pause` writes `control.json` hold before the first stage, so there is no race with the first stage.
 5. **Replay:** the page asks `/api/runs/<id>/replay` for the count, then `?at=N`; Python reads the events (capped as today), cuts at N and derives everything with the same functions as the live view (`stage_tree`, `gauges_of`, `printed`, the chart's lit state). Play is a timer in the page that asks for N+1.
@@ -49,7 +49,7 @@ No new dependency, language or make target.
 
 ## 5. Interface & Contract Specifications
 
-* **`control.json`** (in the run folder): `{"mode": "run" | "hold", "allow": <int ≥ 0>}`. Absent, unreadable, over 1 KiB or malformed means `run` (a bad file never wedges a run). Written by the console only, atomically.
+* **`control.json`** (in the run folder): `{"mode": "run" | "hold", "steps": <int ≥ 0>}`. Absent, unreadable, over 1 KiB or malformed means `run` (a bad file never wedges a run). Written by the console only, atomically.
 * **New events:** `paused` `{stage}` (the stage about to run), `resumed` `{stage}`. A log without them reads as before.
 * **POST** `/api/pause`, `/api/step`, `/api/resume`: body `{"run": "<id>"}` (matches `run-[0-9A-Za-z-]+`); 200 `{"run": id, "mode": ...}`; 404 `that run was not started by this console, or it has finished`; 401/403 as start and stop.
 * **GET** `/api/runs/<id>/replay` → `{events: M, ...}`; `?at=N` (0 ≤ N ≤ M) → `{at, of, state, stages, gauges, printed, lit, hold, ended}`; an unreadable log → 422 with one line.
