@@ -10,6 +10,58 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+# ADR-0059: A replay is computed in Python from the events up to N, with the live view's own functions
+
+*   **Status**: Accepted
+*   **Deciders**: Morpheus
+*   **Date**: 2026-11-03
+*   **Related**: `docs/sprints/ARCH_SPRINT26.md`, UND-84, UND-85, ADR-0054
+
+## 1. Context and Problem Statement
+
+The owner wants to play a finished run's story back. The page already draws a live run from `describe`; a replay must never disagree with it.
+
+## 2. Considered Options
+
+| Option | Costs / risks | Reason |
+|---|---|---|
+| Replay in the page's JavaScript | A second implementation of the view | Rejected |
+| Store a snapshot per event | Duplicates the log; grows with every run | Rejected |
+| `replay(dir, at)` in Python: cut the events at N and apply the same functions (stage tree, gauges, printed lines, lit state) | Re-derives the view per step (0.03 s on 5,027 events); resends all lines so far | Selected |
+
+## 3. Decision Outcome
+
+* **Chosen Option:** `GET /api/runs/<id>/replay[?at=N]` and `/decisions`; the page draws the frame with its own drawing and times PLAY. The last event equals the live view (tested on real runs). A log with an unreadable line is refused, naming it.
+* **Consequences:** fine to about 100,000 events; past that, send only new lines. The Jev count shows `-` until the last event because the log has no running total.
+
+---
+
+# ADR-0058: A run is held between top-level stages through a control file the console writes and the runner reads
+
+*   **Status**: Accepted
+*   **Deciders**: Morpheus, Switch (design and Phase 2 reviews)
+*   **Date**: 2026-11-03
+*   **Related**: `docs/sprints/ARCH_SPRINT26.md`, UND-83
+
+## 1. Context and Problem Statement
+
+The console must hold, step and resume a run it does not share a process with, without Jev being asked meanwhile.
+
+## 2. Considered Options
+
+| Option | Costs / risks | Reason |
+|---|---|---|
+| A socket or signal to the runner | More surface; lost on restart; hard to test | Rejected |
+| Hold inside a stage | Would stop a Jev request half done | Rejected |
+| `control.json` in the run folder `{mode, steps}`, read before each top-level stage | A stage in flight finishes first | Selected |
+
+## 3. Decision Outcome
+
+* **Chosen Option:** the runner's gate waits while `mode` is `hold` and lets one stage through per step (`steps` only grows, so old steps are never replayed); a missing, oversized or malformed file means `run`. The console writes it atomically, only for a run it started or the one `run --watch` serves, behind the secret, a same-origin request and an 8 KiB body cap. `run --watch` binds 127.0.0.1 and keeps its secret in `.understudy/watch.secret`, apart from the dashboard's.
+* **Consequences:** a long stage delays a pause until it ends; a held run reads PAUSED, never stalled; holding is by top-level stage only.
+
+---
+
 # ADR-0057: A card payment settles the card's charges oldest first, never past its amount
 
 *   **Status**: Accepted

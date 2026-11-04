@@ -1147,7 +1147,10 @@ sequenceDiagram
     participant Switch
     participant Morpheus
     participant Tank
-    Note over Mouse,Tank: 📅 2026-11-03
+    participant Oracle
+    participant Smith
+    participant Cypher
+    Note over Mouse,Cypher: 📅 2026-11-03
     Mouse->>All: "phase 5"
     Note right of Mouse: "Phase 5: see the<br/>decision (UND-85)"
     Neo->>Trin: "swe handoff"
@@ -1158,10 +1161,24 @@ sequenceDiagram
     Note right of Switch: "security gate (phase 5):<br/>No blocking findings.<br/>Log-derived text (stage,<br/>row, dimension, pick,<br/>option names,<br/>removed_by) is set with<br/>textCon…"
     Morpheus->>Tank: "lead handoff"
     Note right of Morpheus: "*lead review phase-5:<br/>passed. All phases<br/>reviewed. Debt for the<br/>retro: the console's<br/>end-to-end tests are<br/>growing faster than they<br/>should (…"
+    Tank->>Oracle: "devops handoff"
+    Note right of Tank: "SDLC check passed<br/>(Sprint 26):<br/>pyproject.toml, uv.lock,<br/>.python-version and<br/>Makefile unchanged since<br/>main, unit tests (545)<br/>and lint passed…"
+    Oracle->>Smith: "ora handoff"
+    Note right of Oracle: "Docs groomed: ADR-0058<br/>and ADR-0059, 2 lessons,<br/>CHANGELOG (Sprint 25 now<br/>merged), USER_GUIDE,<br/>ARCH/stories notes, UAT<br/>plan results, RETRO_S…"
+    Smith->>All: "user approve"
+    Note right of Smith: "rubric UAT: COVER=A<br/>STEPS=A FAIL=A DATA=A<br/>EVID=A. User testing<br/>passed (UAT-26-1..5).<br/>Rough edges for the<br/>owner: a pause waits for<br/>a long st…"
+    Mouse->>Cypher: "retro"
+    Note right of Mouse: "Sprint 26 retro posted<br/>in docs/sprints/RETRO_SP<br/>RINT26.md. Backlog: test<br/>pyramid (decision 17) as<br/>Sprint 27, per-decider<br/>weights, 'pausing'…"
+    Cypher->>All: "pm launch"
+    Note right of Cypher: "*pm launch sprint-26.<br/>Sprint complete: 3<br/>stories (UND-83..85), 5<br/>phases, 545 unit + 39<br/>browser tests. Branch<br/>sprint-26 is committed<br/>locally…"
 ```
 
-## Phase 5 so far
+## Phase 5 close-out
 
-- **Neo**: Phase 5 impl complete (UND-85): decisions() + GET /api/runs/&lt;id&gt;/decisions, decision lines printed readably (printed() now carries the even…
-- **Trin**: UAT phase 5 passed (UND-85 AC1-4): real coffee run (replay mode): 11 decisions, each at the event the list gives and shown there in a repla…
 - **Morpheus**: \*lead review phase-5: passed. All phases reviewed. Debt for the retro: the console's end-to-end tests are growing faster than they should (…
+- **Tank**: SDLC check passed (Sprint 26): pyproject.toml, uv.lock, .python-version and Makefile unchanged since main, unit tests (545) and lint passed…
+- **Smith**: rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A. User testing passed (UAT-26-1..5). Rough edges for the owner: a pause waits for a long st…
+
+## Sprint close-out
+
+- **Cypher**: \*pm launch sprint-26. Sprint complete: 3 stories (UND-83..85), 5 phases, 545 unit + 39 browser tests. Branch sprint-26 is committed locally…

@@ -58,8 +58,8 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ## Stage 3: Sprint Closeout
 
-- [ ] **Task C.1:** SDLC conformance check. (*Owner: Tank | Trace: N/A — closeout | Verification: `bobp make check`, and `docs/SDLC.md` "Last verified" updated*)
-- [ ] **Task C.2:** Document grooming, ADR-0058 and ADR-0059, lessons. (*Owner: Oracle | Trace: N/A — closeout | Verification: ADRs in `docs/DECISIONS.md`; groom noted in `agents/CHAT.md`*)
-- [ ] **Task C.3:** End-to-end user testing in the console against `docs/sprints/UAT_PLAN_SPRINT26.md`, and lesson review. (*Owner: Smith | Trace: UND-83..85 | Verification: Smith acceptance verdict and evidence in `agents/CHAT.md`*)
-- [ ] **Task C.4:** Sprint retrospective and backlog grooming. (*Owner: Mouse | Trace: N/A — closeout | Verification: retros in `docs/sprints/RETRO_SPRINT26.md`, posted in `agents/CHAT.md`*)
-- [ ] **Task C.5:** Sprint launch and release announcement; merge `sprint-26` into `main` and push only when the owner asks. (*Owner: Cypher | Trace: N/A — release decision | Verification: launch recorded in `agents/CHAT.md`*)
+- [x] **Task C.1:** SDLC conformance check. (*Owner: Tank | Trace: N/A — closeout | Verification: `bobp make check`, and `docs/SDLC.md` "Last verified" updated*)
+- [x] **Task C.2:** Document grooming, ADR-0058 and ADR-0059, lessons. (*Owner: Oracle | Trace: N/A — closeout | Verification: ADRs in `docs/DECISIONS.md`; groom noted in `agents/CHAT.md`*)
+- [x] **Task C.3:** End-to-end user testing in the console against `docs/sprints/UAT_PLAN_SPRINT26.md`, and lesson review. (*Owner: Smith | Trace: UND-83..85 | Verification: Smith acceptance verdict and evidence in `agents/CHAT.md`*)
+- [x] **Task C.4:** Sprint retrospective and backlog grooming. (*Owner: Mouse | Trace: N/A — closeout | Verification: retros in `docs/sprints/RETRO_SPRINT26.md`, posted in `agents/CHAT.md`*)
+- [x] **Task C.5:** Sprint launch and release announcement; merge `sprint-26` into `main` and push only when the owner asks. (*Owner: Cypher | Trace: N/A — release decision | Verification: launch recorded in `agents/CHAT.md`*)
