@@ -42,10 +42,10 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 4: Play it back (UND-84 part 2, 2 pts)
 *Phase goal: the replay bar in the page.*
-- [ ] **Task 4.1:** Tests first (browser), then REPLAY on a finished run: play, pause, step, step back, scrubber, "event N of M", keyboard names, themes. **L2**. (*Owner: Neo | Trace: UND-84 AC1, AC2, AC5 | Verification: `bobp make test-browser`, `bobp make lint`*)
-- [ ] **Task 4.2:** UAT in a real browser in all three themes, light and dark: readable, reachable by keyboard, the diagram follows the cursor. **L2**. (*Owner: Trin | Trace: UND-84 AC1-5 | Verification: UAT verdict and screenshot noted in `agents/CHAT.md`*)
-- [ ] **Task 4.3:** Security quick pass: page text set as text. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 4): ...`*)
-- [ ] **Task 4.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT26 section 3 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 4.1:** Tests first (browser), then REPLAY on a finished run: play, pause, step, step back, scrubber, "event N of M", keyboard names, themes. **L2**. (*Owner: Neo | Trace: UND-84 AC1, AC2, AC5 | Verification: `bobp make test-browser`, `bobp make lint`*)
+- [x] **Task 4.2:** UAT in a real browser in all three themes, light and dark: readable, reachable by keyboard, the diagram follows the cursor. **L2**. (*Owner: Trin | Trace: UND-84 AC1-5 | Verification: UAT verdict and screenshot noted in `agents/CHAT.md`*)
+- [x] **Task 4.3:** Security quick pass: page text set as text. **L1**. (*Owner: Switch | Trace: design gate | Verification: `security gate (phase 4): ...`*)
+- [x] **Task 4.4:** Code review. **L1**. (*Owner: Morpheus | Trace: ARCH_SPRINT26 section 3 | Verification: result in `agents/CHAT.md`*)
 
 ### Phase 5: See the decision (UND-85, 5 pts)
 *Phase goal: list a run's decisions, open one, jump to it in a replay.*

@@ -1561,3 +1561,29 @@ gitleaks git --no-banner --redact --pre-commit .
 ---
 [<small>2026-11-03 19:25:50</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
  *lead review phase-3: passed. One module, no second implementation of the view. Debt noted: each step resends all printed lines (fine to ~100k events); the Jev count shows '-' mid-run because the log has no per-event total. @Neo *swe impl phase-4
+
+---
+[<small>2026-11-03 19:25:50</small>] [**Mouse**]->[**all**] *phase 4*:
+ Phase 4: play it back (UND-84 part 2)
+
+---
+[<small>2026-11-03 19:32:24</small>] [**make**]->[**all**] *build*:
+ Build FAILED exit=2 | make test-browser | /home/drusifer/Projects/understudy/build/build.out
+
+----------------------------------------------------------------------
+Ran 32 tests in 128.505s
+
+FAILED (failures=1)
+make: *** [Makefile:32: test-browser] Error 1
+
+---
+[<small>2026-11-03 19:33:35</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 4 impl complete (UND-84 part 2): replay bar (REPLAY, STEP BACK, PLAY/PAUSE, STEP, scrubber, 'event N of M', LIVE), replay.js drawing the server's frames with the page's own drawing; a pause discards any frame already asked for (race found by a browser test). 8 new browser tests incl. keyboard and readability in 3 themes x light/dark and phone fit; make check 545 green. @Trin *qa uat phase-4
+
+---
+[<small>2026-11-03 19:33:35</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 4): No blocking findings. replay.js sets all log-derived text with textContent / the page's existing text-only drawing; no innerHTML on log data; requests are GETs of the fixed replay path with a numeric at; no secret used. @Morpheus *lead review phase-4
+
+---
+[<small>2026-11-03 19:33:35</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-4: passed. The page reuses drawStatus and renderPaper (no second drawing), state.chosenState is saved and restored so the live controls are untouched by a replay, and a ticket guards stale frames. Debt: each step re-renders all lines so far. @Neo *swe impl phase-5

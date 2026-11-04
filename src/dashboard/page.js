@@ -245,6 +245,7 @@ function drawStatus(run) {
   drawChart(run);
   state.chosenState = run.state;
   if (typeof afterStatus === 'function') afterStatus(run); // controls.js: the controls follow the chosen run
+  if (typeof afterReplayStatus === 'function') afterReplayStatus(run); // replay.js: REPLAY follows the chosen run
 }
 
 // The stages the stage filter offers: each top-level stage and each group of nested stages.
@@ -335,6 +336,7 @@ function setOffline(offline) {
 }
 
 async function choose(id) {
+  if (typeof endReplay === 'function') endReplay(false); // replay.js: choosing a run closes a replay
   state.follow?.close();
   state.chosen = id;
   rack();

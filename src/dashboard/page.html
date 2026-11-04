@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="theme-starship.css">
 <script src="page.js" defer></script>
 <script src="controls.js" defer></script>
+<script src="replay.js" defer></script>
 </head>
 <body>
 <div class="room">
@@ -74,6 +75,18 @@
   </div>
 </details>
 
+<section id="replay" class="start-panel replay-bar" aria-label="Replay" hidden>
+  <div class="replay-row">
+    <button type="button" id="replay-back" class="find-button" disabled>STEP BACK</button>
+    <button type="button" id="replay-play" class="find-button" disabled>PLAY</button>
+    <button type="button" id="replay-step" class="find-button" disabled>STEP</button>
+    <input type="range" id="replay-scrub" class="slide" min="0" max="0" value="0" step="1" disabled aria-label="Event position in the replay">
+    <span id="replay-at" class="readout" role="status" aria-live="polite">event 0 of 0</span>
+    <button type="button" id="replay-live" class="find-button">LIVE</button>
+  </div>
+  <div id="replay-message" class="start-message" role="status" aria-live="polite"></div>
+</section>
+
 <div id="offline" class="offline" role="status" hidden>DISCONNECTED - retrying. What you see may be out of date.</div>
 <div id="banner-slot" role="status"></div>
 
@@ -87,6 +100,7 @@
       <button type="button" id="jump-start" class="find-button">START</button>
       <button type="button" id="jump-failure" class="find-button" disabled title="no failure in this run">FIRST FAILURE</button>
       <button type="button" id="jump-end" class="find-button">END</button>
+      <button type="button" id="replay-open" class="find-button" disabled title="choose a finished run to replay">REPLAY</button>
     </div>
     <div class="roller" aria-hidden="true"></div>
     <div class="glass">

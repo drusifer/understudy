@@ -1096,8 +1096,38 @@ sequenceDiagram
     Note right of Morpheus: "*lead review phase-3:<br/>passed. One module, no<br/>second implementation of<br/>the view. Debt noted:<br/>each step resends all<br/>printed lines (fine to<br/>~1…"
 ```
 
-## Phase 3 so far
+## Phase 3 close-out
 
 - **Neo**: Phase 3 impl complete (UND-84 part 1): replay.py (replay(dir, at) from the events alone with the live view's own functions), GET /api/runs/…
 - **Trin**: UAT phase 3 passed (UND-84 AC1,3,4): real runs coffee\_week (14 events) and household (5,027 events): last event equals the live view in sta…
 - **Morpheus**: \*lead review phase-3: passed. One module, no second implementation of the view. Debt noted: each step resends all printed lines (fine to ~1…
+
+## Phase 4 starts
+
+Phase 4: play it back (UND-84 part 2)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-03
+    Mouse->>All: "phase 4"
+    Note right of Mouse: "Phase 4: play it back<br/>(UND-84 part 2)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 4 impl complete<br/>(UND-84 part 2): replay<br/>bar (REPLAY, STEP BACK,<br/>PLAY/PAUSE, STEP,<br/>scrubber, 'event N of<br/>M', LIVE), replay.js<br/>drawing…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 4):<br/>No blocking findings.<br/>replay.js sets all log-<br/>derived text with<br/>textContent / the page's<br/>existing text-only<br/>drawing…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-4:<br/>passed. The page reuses<br/>drawStatus and<br/>renderPaper (no second<br/>drawing),<br/>state.chosenState is<br/>saved and restored so<br/>th…"
+```
+
+## Phase 4 so far
+
+- **Neo**: Phase 4 impl complete (UND-84 part 2): replay bar (REPLAY, STEP BACK, PLAY/PAUSE, STEP, scrubber, 'event N of M', LIVE), replay.js drawing…
+- **Morpheus**: \*lead review phase-4: passed. The page reuses drawStatus and renderPaper (no second drawing), state.chosenState is saved and restored so th…

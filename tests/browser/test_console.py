@@ -663,5 +663,153 @@ class ContrastTest(BrowserCase):
         self.assertEqual(problems, [], "\n" + "\n".join(problems))
 
 
+class ReplayBarTest(BrowserCase):
+    NAME = "run-20261101T170000-00000001"
+    EVENTS = 9  # run_started, three state_entered, two stages (two events each), run_finished
+
+    def finished(self, name=None):
+        started = {"event": "run_started", "at": stamp(0), "sketch": "x/chart.yaml", "mode": "live", **STORY}
+        return write_run(self.runs, name or self.NAME, [
+            started, entered(1, "a", "start"), {"event": "stage_started", "at": stamp(2), "stage": "a"},
+            {"event": "stage_completed", "at": stamp(3), "stage": "a"}, entered(4, "b", "ok"),
+            {"event": "stage_started", "at": stamp(5), "stage": "b"}, {"event": "stage_completed", "at": stamp(6), "stage": "b"},
+            entered(7, "c", "ok"), {"event": "run_finished", "at": stamp(8), "outcome": "complete"}],
+            {"status": "complete", "stages": {"a": "complete", "b": "complete"}, "mode": "live", "outcome": "complete"})
+
+    def open(self, width=1300, height=900):
+        page = self.page(width, height)
+        page.add_init_script("window.understudyReplayMs = 40;")
+        page.goto(self.start())
+        page.wait_for_selector(".sketch-tab")
+        page.wait_for_function("document.getElementById('status-text').textContent === 'DONE'")
+        return page
+
+    def text(self, page, selector):
+        return page.locator(selector).inner_text()
+
+    def test_replay_steps_forward_and_back_and_the_page_follows_the_cursor(self):
+        self.finished()
+        page = self.open()
+        self.assertTrue(page.locator("#replay").is_hidden())
+        page.click("#replay-open")
+        page.wait_for_function(f"document.getElementById('replay-at').textContent === 'event 0 of {self.EVENTS}'")
+        self.assertEqual(page.locator("#paper .line").count(), 0)
+        for _ in range(4):
+            page.click("#replay-step")
+        page.wait_for_function(f"document.getElementById('replay-at').textContent === 'event 4 of {self.EVENTS}'")
+        self.assertEqual(page.locator("#paper .line").count(), 4)
+        self.assertEqual(page.get_by_role("img", name="a, current state", exact=True).count(), 1)
+        self.assertEqual(self.text(page, "#status-text"), "REPLAY")
+        page.click("#replay-back")
+        page.wait_for_function(f"document.getElementById('replay-at').textContent === 'event 3 of {self.EVENTS}'")
+        self.assertEqual(page.locator("#paper .line").count(), 3)
+
+    def test_the_scrubber_jumps_to_any_event_and_the_last_one_shows_how_the_run_ended(self):
+        self.finished()
+        page = self.open()
+        page.click("#replay-open")
+        page.wait_for_function("!document.getElementById('replay-scrub').disabled")
+        page.locator("#replay-scrub").fill(str(self.EVENTS))
+        page.wait_for_function(f"document.getElementById('replay-at').textContent === 'event {self.EVENTS} of {self.EVENTS}'")
+        self.assertIn("done after 2 stages", self.text(page, "#ended"))
+        self.assertEqual(page.get_by_role("img", name="c, final state, current state", exact=False).count(), 1)
+        page.locator("#replay-scrub").fill("0")
+        page.wait_for_function(f"document.getElementById('replay-at').textContent === 'event 0 of {self.EVENTS}'")
+        self.assertEqual(page.locator("#paper .line").count(), 0)
+
+    def test_the_scrubber_has_a_name_a_value_and_works_from_the_keyboard(self):
+        self.finished()
+        page = self.open()
+        page.click("#replay-open")
+        page.wait_for_function("!document.getElementById('replay-scrub').disabled")
+        scrub = page.locator("#replay-scrub")
+        self.assertEqual(scrub.get_attribute("aria-label"), "Event position in the replay")
+        scrub.focus()
+        page.keyboard.press("ArrowRight")
+        page.keyboard.press("ArrowRight")
+        page.wait_for_function(f"document.getElementById('replay-at').textContent === 'event 2 of {self.EVENTS}'")
+        self.assertEqual(scrub.get_attribute("aria-valuetext"), f"event 2 of {self.EVENTS}")
+        for name in ("STEP BACK", "PLAY", "STEP", "LIVE"):
+            self.assertEqual(page.get_by_role("button", name=name, exact=True).count(), 1, name)
+
+    def test_play_runs_to_the_end_by_itself_and_pause_holds_it(self):
+        self.finished()
+        page = self.open()
+        page.click("#replay-open")
+        page.wait_for_function("!document.getElementById('replay-scrub').disabled")
+        page.click("#replay-play")
+        page.wait_for_function("document.getElementById('replay-play').textContent === 'PAUSE'")
+        page.wait_for_function(f"document.getElementById('replay-at').textContent === 'event {self.EVENTS} of {self.EVENTS}'")
+        page.wait_for_function("document.getElementById('replay-play').textContent === 'PLAY'")  # it stops at the end
+        page.locator("#replay-scrub").fill("1")
+        page.click("#replay-play")
+        page.click("#replay-play")  # paused at once
+        held = self.text(page, "#replay-at")
+        page.wait_for_timeout(300)
+        self.assertEqual(self.text(page, "#replay-at"), held)
+
+    def test_live_ends_the_replay_and_shows_the_run_as_it_is(self):
+        self.finished()
+        page = self.open()
+        page.click("#replay-open")
+        page.wait_for_function("!document.getElementById('replay-scrub').disabled")
+        page.click("#replay-step")
+        page.click("#replay-live")
+        page.wait_for_function("document.getElementById('status-text').textContent === 'DONE'")
+        self.assertTrue(page.locator("#replay").is_hidden())
+        self.assertEqual(page.locator("#paper .line").count(), self.EVENTS)
+
+    def test_a_log_that_cannot_be_read_is_refused_in_one_line_and_the_bar_stays_closed(self):
+        folder = self.finished()
+        lines = (folder / "events.jsonl").read_text(encoding="utf-8").splitlines()
+        lines[1] = "{oops"
+        (folder / "events.jsonl").write_text("\n".join(lines) + "\n", encoding="utf-8")
+        page = self.open()
+        page.click("#replay-open")
+        page.wait_for_function("document.getElementById('replay-message').textContent.includes('line 2 is not readable')")
+        self.assertTrue(page.locator("#replay").is_hidden() or page.locator("#replay-scrub").is_disabled())
+
+    def test_a_run_that_is_still_going_cannot_be_replayed(self):
+        write_run(self.runs, self.NAME, [{"event": "run_started", "at": stamp(-1), "sketch": "p.yaml", "mode": "live"}],
+                  {"status": "running", "stages": {}})
+        page = self.page()
+        page.goto(self.start())
+        page.wait_for_function("document.getElementById('status-text').textContent === 'RUNNING'")
+        self.assertTrue(page.locator("#replay-open").is_disabled())
+        self.assertIn("still going", page.locator("#replay-open").get_attribute("title"))
+
+    def test_the_bar_is_readable_in_every_theme_and_mode_and_fits_a_phone(self):
+        self.finished()
+        base = self.start()
+        problems = []
+
+        def measure(page, label, selectors):
+            for selector in selectors:
+                found = page.evaluate(FIRST_VISIBLE_JS, selector)
+                if found is None:
+                    continue
+                target = page.locator("[data-contrast-target]").first
+                pixels = decode_png(target.screenshot())
+                page.evaluate("document.querySelector('[data-contrast-target]').removeAttribute('data-contrast-target')")
+                worst = min((contrast(found["color"], background) for background in backdrops(pixels)), default=21.0)
+                if worst < 4.5:
+                    problems.append(f"{label} {selector}: {worst:.2f}")
+
+        for theme, mode in LOOKS:
+            page = self.page(390, 800)
+            page.goto(f"{base}/?theme={theme}&mode={mode}")
+            page.add_style_tag(content=HIDE_TEXT)
+            page.wait_for_function("document.getElementById('status-text').textContent === 'DONE'")
+            measure(page, f"{theme}/{mode}", ["#replay-open"])  # enabled now; a disabled control is exempt
+            page.click("#replay-open")
+            page.wait_for_function("!document.getElementById('replay-scrub').disabled")
+            page.click("#replay-step")
+            page.wait_for_function("document.getElementById('replay-at').textContent.startsWith('event 1 ')")
+            box = page.locator("#replay").bounding_box()
+            self.assertTrue(box and box["x"] >= 0 and box["x"] + box["width"] <= 390, f"{theme}/{mode} bar fits")
+            measure(page, f"{theme}/{mode}", ["#replay-at", "#replay-step", "#replay-live", "#replay-message"])
+        self.assertEqual(problems, [], "\n" + "\n".join(problems))
+
+
 if __name__ == "__main__":
     unittest.main()
