@@ -1,6 +1,16 @@
 # Changelog
 
-## Sprint 26 — see and drive the machine (2026-11-03, branch `sprint-26`, not yet merged)
+## Sprint 27 — the test pyramid (2026-11-03, branch `sprint-27`, not yet merged)
+
+- **A faster gate:** `bobp make check` now takes 36 s (was 96 to 101 s) and runs lint and the secrets scan before the tests, so a lint error stops it in 0.16 s. The Python unit suite is 29.4 s for 586 tests (was 94.6 s for 554).
+- **Rules are tested on their own stages:** `src/sketch/fragment.py` (`Fragment`, `read_stage`) computes any source of a sketch from written rows, with stand-ins for the stages and Jev reads behind it; the household tests use it. Household tests: 73 tests in about 57 s became 80 in 11.4 s, and the whole-sketch runs fell from about 53 to five. Each moved group was proved by breaking its rule.
+- **Console server stops at once:** it looks for a stop request every 20 ms, not every 500 ms (`run --watch` closes promptly too; about 35 s less across the test suites).
+- **Child sketches load once per file version:** the row-independent read is cached (path, modification time, size); per-row load 71.5 to 38.6 ms, outputs identical, about 43 s less on a real household run.
+- **Browser suite:** 154.9 s to about 100 s, 39 tests, no flake (contrast stays on real pixels because the themes draw on textures; the six looks run in parallel; animation is off page-wide). The 90 s target was missed by about 10 s.
+- **Docs:** ADR-0060, `STORY_ARCH_SPRINT27.md`, `UAT_PLAN_SPRINT27.md`, `RETRO_SPRINT27.md`, `docs/TEST_STRATEGY.md` with the pyramid and its budgets, two lessons, owner decisions 17 and 18.
+- **No product behavior changed** except `Server.serve_forever`'s poll and the optional `window.understudyPollMs`.
+
+## Sprint 26 — see and drive the machine (2026-11-03, merged into `main`)
 
 - **Hold, step and resume a run:** PAUSE, STEP and RESUME in the console hold a running run before its next stage (a stage already running, Jev included, finishes first), let exactly one stage through, or run on. A held run reads PAUSED with "paused before `<stage>`", never stalled. `understudy run <sketch> --watch [--pause] [--port N]` opens a console for that run on this machine only (secret in `.understudy/watch.secret`) and can start it held. The run folder gains `control.json`; the log gains `paused` and `resumed` lines.
 - **Replay a finished run's story:** REPLAY above the log opens a bar with STEP BACK, PLAY, STEP, a scrubber and "event N of M"; the stages, gauges, diagram and printed lines show the run as it was after event N. It reads `events.jsonl` alone; a log with an unreadable line is refused, naming it. `GET /api/runs/<id>/replay[?at=N]`.

@@ -39,4 +39,12 @@ One timing run on 2026-11-03 (`unittest --durations`), plus a profile of one hou
 * The YAML editor, Venmo and Zelle, household cleanup, per-decider weights in the decision log.
 * Running tests in parallel (it would hide the cost instead of removing it; revisit only if the budgets are not met).
 
-Smith Gate 1+2 (combined): pending.
+## Amendments made while building (measured, with the owner told in chat)
+
+* **UND-101:** the saving is smaller than the profile suggested (the profiler inflated the loader): per-row child load 71.5 to 38.6 ms (-46%), a whole household run 1.92 to 1.68 s (-12%). Outputs byte-identical.
+* **UND-102 AC2:** "at most five whole-sketch household runs" is met exactly: the happy path (`LedgerTests`), an empty period, and three early-stopping refusals (a bad pin, a bad additions file, a Monarch file without a Category column). The one duplicate dropped is "the same pins place the same merchants" (byte-identical replay is tested in `test_sketch_coffee`). Household tests: 73 tests in about 57 s became 80 tests in 11.4 s.
+* **UND-103 AC1:** contrast cannot be computed from the declared colors in Python: steampunk and starship draw text on textured gradients. It stays a real-pixel check in the browser, made cheaper: the six looks run in parallel browser processes (47.5 to 29.5 s); the replay bar and decision panel are measured in one look each because they reuse classes the main test measures in all six; animation and transition are off page-wide (the flake); a page poll override removes a 10 s wait (10.4 to 2.4 s). **AC4 missed:** the browser suite is about 100 s on two runs (target 90 s), no flake; only two runs were made, not five.
+* **Found, not planned:** `serve_forever` polled every 500 ms, so each test that started a server waited half a second to stop it. `Server.serve_forever` now polls every 20 ms (also faster `run --watch` close): about 20 s of the unit suite and 15 s of the browser suite. Two security tests that wait on the deliberate one-second wrong-secret pause use a shortened pause.
+* **UND-104 AC3:** Python unit suite 94.6 s to 29.4 s (target 30 s met); the whole gate (`bobp make check`) 96 to 101 s to 36.3 s.
+
+Smith Gate 1+2 (combined): approved before the build.

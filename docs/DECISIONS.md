@@ -10,6 +10,33 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+# ADR-0060: Rules are tested on their own stages; a whole run is for what only a whole run shows
+
+*   **Status**: Accepted
+*   **Deciders**: owner (decision 17: the test pyramid), Morpheus
+*   **Date**: 2026-11-03
+*   **Related**: `docs/sprints/STORY_ARCH_SPRINT27.md`, UND-101 to UND-104, `docs/TEST_STRATEGY.md`
+
+## 1. Context and Problem Statement
+
+The gate took 96 to 101 s and grew every sprint. A measured run (`unittest --durations`) showed about 53 whole-household-sketch runs at about 2 s each, one browser test of 47.5 s that flaked, and a half-second wait to stop every test server.
+
+## 2. Considered Options
+
+| Option | Costs / risks | Reason |
+|---|---|---|
+| Run tests in parallel | Hides the cost; the same work on more cores | Rejected (revisit only if the budgets are not met) |
+| Only reorder the gate (lint first) | Saves nothing when the tests pass | Done as well, but not the fix |
+| Test each rule on its own stage; keep a few whole runs | A stand-in can drift from a stage's real output | Selected |
+| Compute contrast from the declared colors in Python | The themes draw text on textured gradients, so the answer would be wrong | Rejected |
+
+## 3. Decision Outcome
+
+* **Chosen Option:** `src/sketch/fragment.py` (`Fragment`, `read_stage`) computes any source of a sketch from written rows, with stubs for the stages and Jev reads behind it; `run_state` runs a machine state (a check) on its own; the run's `compute` is one shared function (`stage_computer`). Whole-sketch household runs: five, each with a reason. A moved test is proved by breaking its rule. Budgets are in `docs/TEST_STRATEGY.md`.
+* **Consequences:** the unit suite is 29.4 s (was 94.6 s) and the gate 36.3 s (was 96 to 101 s). A stand-in (`placed_all`, the Jev double) can drift from the child sketch's real output; only the happy-path run and the child's own tests catch that. The browser suite keeps real-pixel contrast (about 100 s, over its 90 s budget by about 10 s).
+
+---
+
 # ADR-0059: A replay is computed in Python from the events up to N, with the live view's own functions
 
 *   **Status**: Accepted

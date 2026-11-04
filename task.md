@@ -49,15 +49,15 @@ Complexity levels follow `agents/templates/_template_task.md`. Each phase is one
 
 ### Phase 5: The gate fails fast and says what each level is for (UND-104, 2 pts)
 *Phase goal: cheap checks first; the strategy and the measured times recorded.*
-- [ ] **Task 5.1:** `check: lint secrets test` in the Makefile (Tank), `docs/TEST_STRATEGY.md` with the pyramid, its budgets and the rule "each end-to-end test says why it cannot be lower", `docs/SDLC.md` with the order and measured times. One timing run of both suites with the baseline's command. **L1**. (*Owner: Tank | Trace: UND-104 AC1-3 | Verification: a deliberate lint error fails `bobp make check` in seconds (then removed); the timing run's totals against the targets*)
-- [ ] **Task 5.2:** Code review of the whole sprint against the targets. **L1**. (*Owner: Morpheus | Trace: STORY_ARCH_SPRINT27 | Verification: result in `agents/CHAT.md`*)
+- [x] **Task 5.1:** `check: lint secrets test` in the Makefile (Tank), `docs/TEST_STRATEGY.md` with the pyramid, its budgets and the rule "each end-to-end test says why it cannot be lower", `docs/SDLC.md` with the order and measured times. One timing run of both suites with the baseline's command. **L1**. (*Owner: Tank | Trace: UND-104 AC1-3 | Verification: a deliberate lint error fails `bobp make check` in seconds (then removed); the timing run's totals against the targets*)
+- [x] **Task 5.2:** Code review of the whole sprint against the targets. **L1**. (*Owner: Morpheus | Trace: STORY_ARCH_SPRINT27 | Verification: result in `agents/CHAT.md`*)
 
 ---
 
 ## Stage 3: Sprint Closeout
 
-- [ ] **Task C.1:** SDLC conformance check. (*Owner: Tank | Trace: N/A — closeout | Verification: `bobp make check` once, and `docs/SDLC.md` "Last verified" updated*)
-- [ ] **Task C.2:** Document grooming, ADR-0060 (the fragment harness and the pyramid budgets), lessons. (*Owner: Oracle | Trace: N/A — closeout | Verification: ADR in `docs/DECISIONS.md`; groom noted in `agents/CHAT.md`*)
-- [ ] **Task C.3:** End-to-end user testing: the household on the fixtures and the console still behave as before; the time targets met or the miss reported. (*Owner: Smith | Trace: UND-101..104 | Verification: Smith acceptance verdict and evidence in `agents/CHAT.md`*)
-- [ ] **Task C.4:** Sprint retrospective and backlog grooming. (*Owner: Mouse | Trace: N/A — closeout | Verification: retros in `docs/sprints/RETRO_SPRINT27.md`, posted in `agents/CHAT.md`*)
-- [ ] **Task C.5:** Sprint launch; merge `sprint-27` into `main` and push only when the owner asks. (*Owner: Cypher | Trace: N/A — release decision | Verification: launch recorded in `agents/CHAT.md`*)
+- [x] **Task C.1:** SDLC conformance check. (*Owner: Tank | Trace: N/A — closeout | Verification: `bobp make check` once, and `docs/SDLC.md` "Last verified" updated*)
+- [x] **Task C.2:** Document grooming, ADR-0060 (the fragment harness and the pyramid budgets), lessons. (*Owner: Oracle | Trace: N/A — closeout | Verification: ADR in `docs/DECISIONS.md`; groom noted in `agents/CHAT.md`*)
+- [x] **Task C.3:** End-to-end user testing: the household on the fixtures and the console still behave as before; the time targets met or the miss reported. (*Owner: Smith | Trace: UND-101..104 | Verification: Smith acceptance verdict and evidence in `agents/CHAT.md`*)
+- [x] **Task C.4:** Sprint retrospective and backlog grooming. (*Owner: Mouse | Trace: N/A — closeout | Verification: retros in `docs/sprints/RETRO_SPRINT27.md`, posted in `agents/CHAT.md`*)
+- [x] **Task C.5:** Sprint launch; merge `sprint-27` into `main` and push only when the owner asks. (*Owner: Cypher | Trace: N/A — release decision | Verification: launch recorded in `agents/CHAT.md`*)

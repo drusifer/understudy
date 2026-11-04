@@ -1339,15 +1339,34 @@ sequenceDiagram
     participant All
     participant Tank
     participant Morpheus
-    Note over Mouse,Morpheus: 📅 2026-11-03
+    participant Oracle
+    participant Smith
+    participant Cypher
+    Note over Mouse,Cypher: 📅 2026-11-03
     Mouse->>All: "phase 5"
     Note right of Mouse: "Phase 5: the gate fails<br/>fast and says what each<br/>level is for (UND-104)"
     Tank->>Morpheus: "devops handoff"
     Note right of Tank: "Phase 5 (UND-104): check<br/>is now lint secrets test<br/>(Makefile, Tank). Proof<br/>with a deliberate lint<br/>error in a scratch file<br/>(removed): the old…"
     Morpheus->>All: "lead handoff"
     Note right of Morpheus: "*lead review phase-5:<br/>passed. check order<br/>proven both ways with a<br/>deliberate lint error<br/>(31.8 s before, 0.16 s<br/>after), TEST_STRATEGY<br/>and SD…"
+    Tank->>Oracle: "devops handoff"
+    Note right of Tank: "SDLC check passed<br/>(Sprint 27):<br/>pyproject.toml, uv.lock,<br/>.python-version<br/>unchanged since main,<br/>Makefile changed only in<br/>the order of check (…"
+    Oracle->>Smith: "ora handoff"
+    Note right of Oracle: "Docs groomed: ADR-0060<br/>(rules tested on their<br/>own stages, amends the<br/>contrast plan), 2<br/>lessons, CHANGELOG<br/>(Sprint 26 now merged),<br/>TEST_STRA…"
+    Smith->>All: "user approve"
+    Note right of Smith: "rubric UAT: COVER=A<br/>STEPS=A FAIL=A DATA=A<br/>EVID=A. User testing<br/>passed on the household<br/>fixtures and the<br/>console: same outputs,<br/>same behavio…"
+    Mouse->>Cypher: "retro"
+    Note right of Mouse: "Sprint 27 retro posted<br/>in docs/sprints/RETRO_SP<br/>RINT27.md. Backlog:<br/>browser to 90 s (merge<br/>page tests or accept<br/>~100 s: owner decides),<br/>a te…"
+    Cypher->>All: "pm launch"
+    Note right of Cypher: "*pm launch sprint-27.<br/>Sprint complete: 4<br/>stories (UND-101..104),<br/>5 phases, gate 96-101 s<br/>-> 36 s, unit suite 94.6<br/>-> 29.4 s, browser<br/>154.9…"
 ```
 
-## Phase 5 so far
+## Phase 5 close-out
 
 - **Morpheus**: \*lead review phase-5: passed. check order proven both ways with a deliberate lint error (31.8 s before, 0.16 s after), TEST\_STRATEGY and SD…
+- **Tank**: SDLC check passed (Sprint 27): pyproject.toml, uv.lock, .python-version unchanged since main, Makefile changed only in the order of check (…
+- **Smith**: rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A. User testing passed on the household fixtures and the console: same outputs, same behavio…
+
+## Sprint close-out
+
+- **Cypher**: \*pm launch sprint-27. Sprint complete: 4 stories (UND-101..104), 5 phases, gate 96-101 s -&gt; 36 s, unit suite 94.6 -&gt; 29.4 s, browser 154.9…
