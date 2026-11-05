@@ -10,6 +10,34 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+# ADR-0061: A sketch is a play: a stage that is its interface, and a scene of beats
+
+*   **Status**: Accepted
+*   **Deciders**: owner (decisions 19 to 42, shaped in conversation 2026-11-04 and 05), Morpheus
+*   **Date**: 2026-11-05
+*   **Related**: `docs/sprints/STORY_ARCH_SPRINT28.md`, UND-105 to UND-110, `docs/PLAYS.md`, `docs/DOMAIN.md`; supersedes the file shape of ADR-0040, ADR-0043 and ADR-0053
+
+## 1. Context and Problem Statement
+
+A sketch had sources, sinks, inputs and a machine of states, and two ways to compute rows (a `kind: stage` source and a state) that did the same thing. The owner wanted the understudy metaphor carried into the domain model, to make it easier to understand, without adding redundant concepts, and wanted plays reusable inside other plays.
+
+## 2. Considered Options
+
+| Option | Costs / risks | Reason |
+|---|---|---|
+| Rename only (sketch to play, machine to scene, states to beats) | Keeps two ways to compute rows | Rejected: "a distinction without a difference" (owner) |
+| Move every computed source into the scene with `to:` | About 140 hand-ordered beats in household; inserting one edits a neighbor | Rejected |
+| One kind of step, a beat; `to:` only where order or a choice matters, otherwise performed when read | The engine needs one translation point | Selected |
+| A play and a scene as two file types | A second concept with the same shape | Rejected: one file type; a play calls a play |
+| Return a called play's written files to the caller as files | Disk I/O in a loop; files are part of the set | Rejected (owner) |
+
+## 3. Decision Outcome
+
+* **Chosen Option:** a play has a **stage**, its whole interface (props, files read, files written with `access: write`), and a **scene** of **beats**. A beat with `to:`/`transitions:`/`final` is in the flow; a beat without them is performed when another beat first reads it, once. Jev is a beat. `from:` names an action's main input; `do: { write: x }` and `do: { play: x.yaml }` replace sinks and sketch calls. Running a play means providing its stage: from the command line (`--with` gives props and file paths) or from a call (`with:` binds props and the called play's files; what it writes is the beat's result; under `each` each written row carries the row it was played for). The loader's `engine_view` is the one place that turns the play into the engine's sources, sinks and machine, so run, capture and replay did not change. No back-compat: an old sketch is refused as unknown keys; old runs show as unreadable.
+* **Consequences:** household's outputs stayed byte-identical (fixtures and a real replay) through every phase. Removed: `outputs:`, `{input, output}` pairs, `map.unpair`, `--source`. The engine's internal names and the console's JSON keys still use the old words behind the translation (debt in `docs/ARCH.md`).
+
+---
+
 # ADR-0060: Rules are tested on their own stages; a whole run is for what only a whole run shows
 
 *   **Status**: Accepted
