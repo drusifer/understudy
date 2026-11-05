@@ -1,21 +1,18 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://understudy.local/schema/play.schema.json",
-  "title": "A decision sketch",
-  "description": "The shape of a sketch file. Names, references, conditions and weights are checked further by understudy check.",
+  "title": "A play",
+  "description": "The shape of a play file: a stage (its props and the files it reads and writes) and a scene of beats. Names, references, conditions and weights are checked further by understudy check.",
   "type": "object",
-  "required": ["name", "machine"],
+  "required": ["name", "scene"],
   "additionalProperties": false,
   "properties": {
     "name": { "type": "string", "minLength": 1 },
     "description": { "type": "string" },
-    "sources": {
+    "stage": {
+      "description": "The play's interface: every prop it takes and every file it reads or writes.",
       "type": "object",
-      "additionalProperties": { "$ref": "#/$defs/source" }
-    },
-    "sinks": {
-      "type": "object",
-      "additionalProperties": { "$ref": "#/$defs/sink" }
+      "additionalProperties": { "$ref": "#/$defs/piece" }
     },
     "outcomes": {
       "type": "object",
@@ -32,41 +29,55 @@
       }
     },
     "data": { "type": "object" },
-    "inputs": {
-      "description": "Typed values the sketch takes: each a choice, range, count or switch with a default; checked by understudy check.",
-      "type": "object",
-      "additionalProperties": { "type": "object", "required": ["kind"] }
-    },
-    "machine": { "$ref": "#/$defs/machine" }
+    "scene": { "$ref": "#/$defs/scene" }
   },
   "$defs": {
-    "stageRef": {
-      "description": "Which stage a state runs (or a stage source computes): a type as the key, its one field as the value.",
+    "piece": {
+      "description": "A prop (a typed value: choice, range, count or switch) or a file the play reads (the default) or writes.",
+      "type": "object",
+      "required": ["kind"],
+      "if": { "properties": { "kind": { "const": "file" } } },
+      "then": {
+        "required": ["kind", "path"],
+        "additionalProperties": false,
+        "properties": {
+          "kind": { "const": "file" },
+          "path": { "type": "string", "minLength": 1 },
+          "optional": { "type": "string", "minLength": 1 },
+          "access": { "enum": ["read", "write"] }
+        }
+      },
+      "else": {
+        "properties": { "kind": { "enum": ["choice", "range", "count", "switch"] } }
+      }
+    },
+    "doRef": {
+      "description": "What a beat does: a type as the key, which one as the value.",
       "type": "object",
       "minProperties": 1,
       "maxProperties": 1,
       "additionalProperties": false,
       "properties": {
-        "map": { "$ref": "#/$defs/actionStage" },
-        "reduce": { "$ref": "#/$defs/actionStage" },
-        "sink": {
-          "type": "object", "required": ["name"], "additionalProperties": false,
-          "properties": { "name": { "type": "string", "minLength": 1 } }
-        },
-        "sketch": {
-          "type": "object", "required": ["file"], "additionalProperties": false,
-          "properties": { "file": { "type": "string", "minLength": 1 } }
+        "map": { "$ref": "#/$defs/action" },
+        "reduce": { "$ref": "#/$defs/action" },
+        "write": { "type": "string", "minLength": 1 },
+        "play": { "type": "string", "pattern": "^[^/]+\\.yaml$" },
+        "jev": {
+          "type": "object",
+          "required": ["question"],
+          "additionalProperties": false,
+          "properties": { "question": { "const": "choice" } }
         }
       }
     },
-    "actionStage": {
+    "action": {
       "type": "object",
       "required": ["action"],
       "additionalProperties": false,
       "properties": { "action": { "type": "string", "minLength": 1 } }
     },
     "candidates": {
-      "description": "Options that exist only in data: the values of `key` in the rows of a source (or a stage's result).",
+      "description": "Options that exist only in data: the values of `key` in the rows of a piece (or a beat's result).",
       "type": "object",
       "required": ["from", "key"],
       "additionalProperties": false,
@@ -75,72 +86,30 @@
         "key": { "type": "string", "minLength": 1 }
       }
     },
-    "source": {
-      "oneOf": [
-        { "type": "string", "minLength": 1 },
-        {
+    "jevWith": {
+      "description": "The `with:` of a Jev beat: what Jev is told, what it chooses from, and what it is shown.",
+      "type": "object",
+      "required": ["instructions", "state"],
+      "oneOf": [{ "required": ["criteria"] }, { "required": ["options"] }],
+      "additionalProperties": false,
+      "properties": {
+        "instructions": { "type": "string", "minLength": 1 },
+        "options": { "$ref": "#/$defs/candidates" },
+        "criteria": {
           "type": "object",
-          "required": ["kind", "path"],
-          "additionalProperties": false,
-          "properties": {
-            "kind": { "const": "file" },
-            "path": { "type": "string", "minLength": 1 },
-            "optional": { "type": "string", "minLength": 1 }
-          }
+          "minProperties": 2,
+          "additionalProperties": { "type": "string", "minLength": 1 }
         },
-        {
+        "state": {
           "type": "object",
-          "required": ["kind", "do"],
-          "additionalProperties": false,
-          "properties": {
-            "kind": { "const": "stage" },
-            "do": { "$ref": "#/$defs/stageRef" },
-            "each": { "type": "string", "minLength": 1 },
-            "reduce": { "$ref": "#/$defs/state/properties/reduce" },
-            "with": { "type": "object" }
-          }
-        },
-        {
-          "type": "object",
-          "required": ["kind", "question", "instructions", "state"],
-          "oneOf": [{ "required": ["criteria"] }, { "required": ["options"] }],
-          "additionalProperties": false,
-          "properties": {
-            "kind": { "const": "jev" },
-            "question": { "const": "choice" },
-            "instructions": { "type": "string", "minLength": 1 },
-            "options": { "$ref": "#/$defs/candidates" },
-            "criteria": {
-              "type": "object",
-              "minProperties": 2,
-              "additionalProperties": { "type": "string", "minLength": 1 }
-            },
-            "state": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "object",
-                "required": ["from"],
-                "additionalProperties": false,
-                "properties": { "from": { "type": "string", "minLength": 1 } }
-              }
-            }
+          "additionalProperties": {
+            "type": "object",
+            "required": ["from"],
+            "additionalProperties": false,
+            "properties": { "from": { "type": "string", "minLength": 1 } }
           }
         }
-      ]
-    },
-    "sink": {
-      "oneOf": [
-        { "type": "string", "minLength": 1 },
-        {
-          "type": "object",
-          "required": ["kind", "path"],
-          "additionalProperties": false,
-          "properties": {
-            "kind": { "const": "file" },
-            "path": { "type": "string", "minLength": 1 }
-          }
-        }
-      ]
+      }
     },
     "weight": {
       "oneOf": [
@@ -185,11 +154,12 @@
         "to": { "type": "string", "minLength": 1 }
       }
     },
-    "state": {
+    "beat": {
+      "description": "One step: do an action with props. With `to:` or `transitions:` (or `final`) it is in the scene's flow; without, it is performed when another beat first reads it.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "do": { "$ref": "#/$defs/stageRef" },
+        "do": { "$ref": "#/$defs/doRef" },
         "each": { "type": "string", "minLength": 1 },
         "reduce": {
           "description": "With `each`: fold the iterations. Each iteration's rows are merged into a running list that the next iteration receives as the variable `into`.",
@@ -202,15 +172,23 @@
           }
         },
         "with": { "type": "object" },
-        "then": { "type": "string", "minLength": 1 },
+        "to": { "type": "string", "minLength": 1 },
         "transitions": { "type": "array", "items": { "$ref": "#/$defs/transition" }, "minItems": 1 },
         "final": { "type": "boolean" },
         "outcome": { "type": "string" },
         "outputs": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
       },
-      "if": { "required": ["do"], "properties": { "do": { "required": ["reduce"], "properties": { "reduce": {
-        "required": ["action"], "properties": { "action": { "const": "blend" } } } } } } },
-      "then": { "required": ["with"], "properties": { "with": { "$ref": "#/$defs/blendWith" } } }
+      "allOf": [
+        {
+          "if": { "required": ["do"], "properties": { "do": { "required": ["reduce"], "properties": { "reduce": {
+            "required": ["action"], "properties": { "action": { "const": "blend" } } } } } } },
+          "then": { "required": ["with"], "properties": { "with": { "$ref": "#/$defs/blendWith" } } }
+        },
+        {
+          "if": { "required": ["do"], "properties": { "do": { "required": ["jev"] } } },
+          "then": { "required": ["with"], "properties": { "with": { "$ref": "#/$defs/jevWith" } } }
+        }
+      ]
     },
     "blendWith": {
       "description": "The `with:` of `reduce: { action: blend }`: the weighted entries to combine, and the rules around them.",
@@ -224,16 +202,16 @@
         "shortlist": { "type": "integer", "minimum": 1 }
       }
     },
-    "machine": {
+    "scene": {
       "type": "object",
-      "required": ["initial", "states"],
+      "required": ["initial", "beats"],
       "additionalProperties": false,
       "properties": {
         "initial": { "type": "string", "minLength": 1 },
-        "states": {
+        "beats": {
           "type": "object",
           "minProperties": 1,
-          "additionalProperties": { "$ref": "#/$defs/state" }
+          "additionalProperties": { "$ref": "#/$defs/beat" }
         }
       }
     }

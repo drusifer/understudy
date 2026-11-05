@@ -7,154 +7,131 @@ description: >
   right answer is often 0.45 to 0.67); when both choices count the merchant is placed, otherwise it goes to review. Give it the merchant's `payee`, `count`, `amounts`,
   `statements` and `descriptions`, and the path of the `additions` file.
 
-sources:
-  facts:
-    kind: stage
-    do: { map: { action: rows } }
-    with:
-      rows:
-        - { merchant: {{ payee | tojson }}, also_seen_as: {{ (statements + descriptions) | tojson }}, payments: {{ count | tojson }}, example_amounts: {{ amounts | tojson }} }
-  additions_file:
-    kind: file
-    path: "{{ additions }}"
-  iso:
-    kind: stage
-    do: { map: { action: mcc } }
-  list:                                 # the clean list: {group, name}
-    kind: stage
-    do: { map: { action: concat } }
-    with: { sources: [ iso, additions_file ] }
-  groups:                               # each group with all its names, so Jev can tell what the group covers
-    kind: stage
-    do: { map: { action: group } }
-    with: { source: list, by: group, collect: { names: name }, take: 100 }
-  group_names:
-    kind: stage
-    do: { map: { action: keep } }
-    with: { source: groups, fields: [ group, names ] }
-  none:
-    kind: stage
-    do: { map: { action: rows } }
-    with: { rows: [ { group: none_of_these } ] }
-  group_choices:
-    kind: stage
-    do: { map: { action: concat } }
-    with: { sources: [ groups, none ] }
-  group_reading:
-    kind: jev
-    question: choice
-    instructions: >
-      Which group of merchant categories does `merchant` belong to? `groups` shows each group with every name in it.
-      Choose the group whose names best describe what is bought from, or paid to, `merchant`. Choose none_of_these when
-      no group fits. The group Household is for the owner's own household money: rent, mortgage, tuition, income, loan
-      repayments, and money moved between the owner's own accounts, including savings, brokerage and investment
-      accounts and the owner's family; choose it when `merchant` is one of those.
-    options: { from: group_choices, key: group }
-    state:
-      merchant: { from: facts }
-      groups: { from: group_names }
-  group_best:
-    kind: stage
-    do: { reduce: { action: top_two } }
-    with: { source: group_reading, label: level, value: probability }
-  group_fit:                            # a real group was chosen, not none_of_these
-    kind: stage
-    do: { map: { action: where } }
-    with: { source: group_best, keep: { level: { ne: none_of_these } } }
-  in_group:                             # the names in the chosen group
-    kind: stage
-    do: { map: { action: matching } }
-    with: { source: list, among: group_best, on: group, among_on: level }
-  name_reading:
-    kind: jev
-    question: choice
-    instructions: >
-      Within the group `group`, which name best describes what is bought from, or paid to, `merchant`? In Household,
-      Transfer means money moved between the owner's own accounts (not a payment to a shop or a person).
-    options: { from: in_group, key: name }
-    state:
-      merchant: { from: facts }
-      group: { from: group_best }
-  name_best:
-    kind: stage
-    do: { reduce: { action: top_two } }
-    with: { source: name_reading, label: level, value: probability }
-  group_led:                            # how far the group answer is ahead of twice the runner-up (0 or more: clearly ahead)
-    kind: stage
-    do: { map: { action: weigh } }
-    with: { source: group_best, by: { probability: 1, runner_up_probability: -2 }, into: lead }
-  name_led:
-    kind: stage
-    do: { map: { action: weigh } }
-    with: { source: name_best, by: { probability: 1, runner_up_probability: -2 }, into: lead }
-  group_one:
-    kind: stage
-    do: { map: { action: set } }
-    with: { source: group_led, fields: { one: 1 } }
-  name_one:
-    kind: stage
-    do: { map: { action: set } }
-    with: { source: name_led, fields: { one: 1 } }
-  both:                                 # the name's answer with the group's beside it (group_level, group_probability, ...)
-    kind: stage
-    do: { map: { action: join } }
-    with: { source: name_one, other: group_one, on: one, prefix: group_ }
-  least:                                # as sure as the less sure of the two choices
-    kind: stage
-    do: { map: { action: smallest } }
-    with: { source: both, fields: [ probability, group_probability ], into: least_sure }
-  judged:
-    kind: stage
-    do: { map: { action: classify } }
-    with:
-      source: least
-      into: status
-      cases:
-        - if:                           # each choice is above 0.7, or at least 0.4 and twice as sure as the runner-up
-            and:
-              - or:
-                  - { group_probability: { gt: 0.7 } }
-                  - { and: [ { group_probability: { ge: 0.4 } }, { group_lead: { ge: 0 } } ] }
-              - or:
-                  - { probability: { gt: 0.7 } }
-                  - { and: [ { probability: { ge: 0.4 } }, { lead: { ge: 0 } } ] }
-          then: placed
-      otherwise: review
-  named:                                # "Group: Name", with the least sure probability
-    kind: stage
-    do: { map: { action: format } }
-    with: { source: judged, template: "{group_level}: {level}", into: level }
-  chosen:
-    kind: stage
-    do: { map: { action: keep } }
-    with: { source: named, fields: [ level, least_sure, status, runner_up, runner_up_probability ] }
-  answer:
-    kind: stage
-    do: { map: { action: coalesce } }
-    with: { source: chosen, fields: { probability: [ least_sure ] } }
-  no_fit_row:                           # no group fits: for review, with the group answer as the guess
-    kind: stage
-    do: { map: { action: classify } }
-    with: { source: group_best, into: status, cases: [], otherwise: review }
+stage:
+  additions_file: { kind: file, path: "{{ additions }}" }
 
-machine:
+scene:
   initial: ask_group
-  states:
+  beats:
     ask_group:
       do: { reduce: { action: any } }
-      with: { source: group_fit }
+      with: { from: group_fit }
       transitions:
         - if: { any: { eq: true } }
           to: fit
         - to: no_fit
     fit:
       do: { map: { action: where } }
-      with: { source: answer, keep: { level: { ne: "" } } }
-      then: done
+      with: { from: answer, keep: { level: { ne: "" } } }
+      to: done
     no_fit:
       do: { map: { action: where } }
-      with: { source: no_fit_row, keep: { level: { ne: "" } } }
-      then: done
+      with: { from: no_fit_row, keep: { level: { ne: "" } } }
+      to: done
     done:
       final: true
       outputs: [status]
+
+    facts:
+      do: { map: { action: rows } }
+      with:
+        rows:
+          - { merchant: {{ payee | tojson }}, also_seen_as: {{ (statements + descriptions) | tojson }}, payments: {{ count | tojson }}, example_amounts: {{ amounts | tojson }} }
+    iso:
+      do: { map: { action: mcc } }
+    list:                               # the clean list: {group, name}
+      do: { map: { action: concat } }
+      with: { from: [ iso, additions_file ] }
+    groups:                             # each group with all its names, so Jev can tell what the group covers
+      do: { map: { action: group } }
+      with: { from: list, by: group, collect: { names: name }, take: 100 }
+    group_names:
+      do: { map: { action: keep } }
+      with: { from: groups, fields: [ group, names ] }
+    none:
+      do: { map: { action: rows } }
+      with: { rows: [ { group: none_of_these } ] }
+    group_choices:
+      do: { map: { action: concat } }
+      with: { from: [ groups, none ] }
+    group_reading:
+      do: { jev: { question: choice } }
+      with:
+        instructions: >
+          Which group of merchant categories does `merchant` belong to? `groups` shows each group with every name in it.
+          Choose the group whose names best describe what is bought from, or paid to, `merchant`. Choose none_of_these when
+          no group fits. The group Household is for the owner's own household money: rent, mortgage, tuition, income, loan
+          repayments, and money moved between the owner's own accounts, including savings, brokerage and investment
+          accounts and the owner's family; choose it when `merchant` is one of those.
+        options: { from: group_choices, key: group }
+        state:
+          merchant: { from: facts }
+          groups: { from: group_names }
+    group_best:
+      do: { reduce: { action: top_two } }
+      with: { from: group_reading, label: level, value: probability }
+    group_fit:                          # a real group was chosen, not none_of_these
+      do: { map: { action: where } }
+      with: { from: group_best, keep: { level: { ne: none_of_these } } }
+    in_group:                           # the names in the chosen group
+      do: { map: { action: matching } }
+      with: { from: list, among: group_best, on: group, among_on: level }
+    name_reading:
+      do: { jev: { question: choice } }
+      with:
+        instructions: >
+          Within the group `group`, which name best describes what is bought from, or paid to, `merchant`? In Household,
+          Transfer means money moved between the owner's own accounts (not a payment to a shop or a person).
+        options: { from: in_group, key: name }
+        state:
+          merchant: { from: facts }
+          group: { from: group_best }
+    name_best:
+      do: { reduce: { action: top_two } }
+      with: { from: name_reading, label: level, value: probability }
+    group_led:                          # how far the group answer is ahead of twice the runner-up (0 or more: clearly ahead)
+      do: { map: { action: weigh } }
+      with: { from: group_best, by: { probability: 1, runner_up_probability: -2 }, into: lead }
+    name_led:
+      do: { map: { action: weigh } }
+      with: { from: name_best, by: { probability: 1, runner_up_probability: -2 }, into: lead }
+    group_one:
+      do: { map: { action: set } }
+      with: { from: group_led, fields: { one: 1 } }
+    name_one:
+      do: { map: { action: set } }
+      with: { from: name_led, fields: { one: 1 } }
+    both:                               # the name's answer with the group's beside it (group_level, group_probability, ...)
+      do: { map: { action: join } }
+      with: { from: name_one, other: group_one, on: one, prefix: group_ }
+    least:                              # as sure as the less sure of the two choices
+      do: { map: { action: smallest } }
+      with: { from: both, fields: [ probability, group_probability ], into: least_sure }
+    judged:
+      do: { map: { action: classify } }
+      with:
+        from: least
+        into: status
+        cases:
+          - if:                         # each choice is above 0.7, or at least 0.4 and twice as sure as the runner-up
+              and:
+                - or:
+                    - { group_probability: { gt: 0.7 } }
+                    - { and: [ { group_probability: { ge: 0.4 } }, { group_lead: { ge: 0 } } ] }
+                - or:
+                    - { probability: { gt: 0.7 } }
+                    - { and: [ { probability: { ge: 0.4 } }, { lead: { ge: 0 } } ] }
+            then: placed
+        otherwise: review
+    named:                              # "Group: Name", with the least sure probability
+      do: { map: { action: format } }
+      with: { from: judged, template: "{group_level}: {level}", into: level }
+    chosen:
+      do: { map: { action: keep } }
+      with: { from: named, fields: [ level, least_sure, status, runner_up, runner_up_probability ] }
+    answer:
+      do: { map: { action: coalesce } }
+      with: { from: chosen, fields: { probability: [ least_sure ] } }
+    no_fit_row:                         # no group fits: for review, with the group answer as the guess
+      do: { map: { action: classify } }
+      with: { from: group_best, into: status, cases: [], otherwise: review }

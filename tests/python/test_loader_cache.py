@@ -12,9 +12,9 @@ from src.play.loader import PlayError, load, read_template
 
 CHILD = """name: child
 description: reads {{ thing }}
-inputs:
+stage:
   mood: { kind: choice, label: Mood, options: [fun, serious], default: fun }
-machine: { initial: only, states: { only: { final: true } } }
+scene: { initial: only, beats: { only: { final: true } } }
 """
 
 
@@ -66,9 +66,9 @@ class CountTests(CacheCase):
 
 class ChangeTests(CacheCase):
     def test_a_file_edited_between_loads_is_read_again(self):
-        self.assertEqual(list(read_template(self.path)[0]["inputs"]), ["mood"])
+        self.assertEqual(list(read_template(self.path)[0]["stage"]), ["mood"])
         self.path.write_text(CHILD.replace("mood:", "tone:"), encoding="utf-8")
-        self.assertEqual(list(read_template(self.path)[0]["inputs"]), ["tone"])
+        self.assertEqual(list(read_template(self.path)[0]["stage"]), ["tone"])
 
     def test_a_same_length_edit_is_seen_even_when_the_modification_time_is_the_same(self):
         # two writes in the same clock tick share a modification time; only the content tells them apart
@@ -79,7 +79,7 @@ class ChangeTests(CacheCase):
         self.path.write_text(text, encoding="utf-8")
         os.utime(self.path, ns=(before.st_atime_ns, before.st_mtime_ns))  # as if it had not moved
         self.assertEqual(self.path.stat().st_mtime_ns, before.st_mtime_ns)
-        self.assertIn("fan", read_template(self.path)[0]["inputs"]["mood"]["options"])
+        self.assertIn("fan", read_template(self.path)[0]["stage"]["mood"]["options"])
 
     def test_a_file_that_is_not_valid_is_refused_every_time_and_loads_once_fixed(self):
         self.path.write_text("name: [unclosed\n", encoding="utf-8")
@@ -98,10 +98,10 @@ class ChangeTests(CacheCase):
 class SafetyTests(CacheCase):
     def test_a_caller_that_changes_what_it_was_given_does_not_change_the_next_answer(self):
         document, _ = read_template(self.path)
-        document["inputs"]["mood"]["options"].append("ruined")
+        document["stage"]["mood"]["options"].append("ruined")
         document["name"] = "changed"
         again, _ = read_template(self.path)
-        self.assertEqual((again["name"], again["inputs"]["mood"]["options"]), ("child", ["fun", "serious"]))
+        self.assertEqual((again["name"], again["stage"]["mood"]["options"]), ("child", ["fun", "serious"]))
 
     def test_a_loaded_sketchs_inputs_are_its_own_and_changing_them_changes_no_later_load(self):
         first = load(self.path, variables={"thing": "x"})

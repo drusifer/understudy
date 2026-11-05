@@ -3,25 +3,8 @@ description: >
   How much a horror lover would enjoy one film, from its audience reviews: Jev reads the reviews against a rubric,
   and your number for each level turns its reading into one score from 0.0 to 1.0. Give it the film's `title`.
 
-sources:
-  all_reviews: reviews.jsonl            # { title, text }
-  reviews:                              # just this film's reviews
-    kind: stage
-    do: { map: { action: where } }
-    with: { source: all_reviews, keep: { title: { eq: "{{ title }}" } } }
-  audience:                             # Jev reads them and answers with a probability per level
-    kind: jev
-    question: choice
-    instructions: >
-      Judging by these audience reviews, how much would a horror lover in the mood for something
-      {{ mood | default('fun') }} enjoy this film?
-    criteria:
-      bored: Bored, or walked out.
-      mixed: Mixed, a few good moments.
-      solid: Solid fun, would recommend.
-      loved: Loved it, the best of the year.
-    state:
-      reviews: { from: reviews }
+stage:
+  all_reviews: { kind: file, path: reviews.jsonl }    # { title, text }
 
 data:
   audience_value:                       # your number for each level; Jev never sees these
@@ -30,13 +13,29 @@ data:
     solid: 0.7
     loved: 1.0
 
-machine:
+scene:
   initial: score
-  states:
+  beats:
+    reviews:                            # just this film's reviews
+      do: { map: { action: where } }
+      with: { from: all_reviews, keep: { title: { eq: "{{ title }}" } } }
+    audience:                           # Jev reads them and answers with a probability per level
+      do: { jev: { question: choice } }
+      with:
+        instructions: >
+          Judging by these audience reviews, how much would a horror lover in the mood for something
+          {{ mood | default('fun') }} enjoy this film?
+        criteria:
+          bored: Bored, or walked out.
+          mixed: Mixed, a few good moments.
+          solid: Solid fun, would recommend.
+          loved: Loved it, the best of the year.
+        state:
+          reviews: { from: reviews }
     score:
       do: { map: { action: expect } }
       with: { probabilities: audience, values: audience_value, into: audience }
-      then: done
+      to: done
     done:
       final: true
       outputs: [audience]

@@ -4,9 +4,9 @@ description: >
   above 90), liked by its audience, seats together in row E, F or D, as central as they come. Jev reads each film's
   reviews, then chooses among the best five showings in the mood given. When nothing suits, it walks away.
 
-  Values you can set: --with mood=romantic  tickets=3  evenings=off  tomato=0.3  audience=0.7  row=0.7  center=1.0
+  Props you can set: --with mood=romantic  tickets=3  evenings=off  tomato=0.3  audience=0.7  row=0.7  center=1.0
 
-inputs:                                 # what the owner may set before a run, and what each is when left alone
+stage:                                  # the props the owner may set before a run (each with its value when left alone), and the files
   mood: { kind: choice, label: Mood, options: [fun, serious, dramatic, romantic], default: fun }
   tickets: { kind: count, label: Party size, min: 1, max: 10, default: 2 }
   evenings: { kind: switch, label: Evenings only, default: "on" }
@@ -14,91 +14,78 @@ inputs:                                 # what the owner may set before a run, a
   audience: { kind: range, label: Weight of the audience, min: 0, max: 1, step: 0.05, default: 0.7 }
   row: { kind: range, label: Weight of the row, min: 0, max: 1, step: 0.05, default: 0.7 }
   center: { kind: range, label: Weight of the middle of the row, min: 0, max: 1, step: 0.05, default: 1.0 }
+  showings: { kind: file, path: showings.jsonl }      # { showing, title, starts, genre, tomato }
+  films: { kind: file, path: films.jsonl }            # { title }
+  booking: { kind: file, path: booking.jsonl, access: write }
 
-sources:
-  showings: showings.jsonl              # { showing, title, starts, genre, tomato }
-  films: films.jsonl                    # { title }
-  scored:                               # each film, scored by its reviews
-    kind: stage
-    do: { sketch: { file: review_score } }
-    each: films
-    with: { mood: "{{ mood }}" }
-  audience:                             # flat rows { title, audience }
-    kind: stage
-    do: { map: { action: unpair } }
-    with: { source: scored }
-  qualifying:                           # the owner's gates
-    kind: stage
-    do: { map: { action: where } }
-    with:
-      source: showings
-      keep:
-        and:
-          - starts: { ge: "{{ '17:00' if evenings == 'on' else '00:00' }}" }
-          - or:
-              - { genre: { eq: horror }, tomato: { ge: 70 } }
-              - { tomato: { gt: 90 } }
-  joined:
-    kind: stage
-    do: { map: { action: join } }
-    with: { source: qualifying, other: audience, on: title }
-  weighed:                              # what the owner likes more, by how much it matters
-    kind: stage
-    do: { map: { action: weigh } }
-    with:
-      source: joined
-      by: { tomato: {{ (tomato | float) / 100 }}, audience: {{ audience }} }
-      into: score
-  shortlist:
-    kind: stage
-    do: { reduce: { action: max } }
-    with: { source: weighed, field: score, take: 5 }
-  pick:                                 # Jev chooses among the five, in the mood
-    kind: jev
-    question: choice
-    instructions: >
-      You are choosing a showing for a party of {{ tickets }}, in the mood for something
-      {{ mood }}. Every option here already suits the owner; choose the one you would enjoy most.
-    options: { from: shortlist, key: showing }
-    state: {}
-  best:
-    kind: stage
-    do: { reduce: { action: max } }
-    with: { source: pick, field: probability }
-  chosen:
-    kind: stage
-    do: { map: { action: join } }
-    with: { source: best, other: shortlist, on: level, other_on: showing }
-  booked:                               # seating, for the showing chosen
-    kind: stage
-    do: { sketch: { file: seating } }
-    each: chosen
-    with:
-      tickets: {{ tickets }}
-      row: {{ row }}
-      center: {{ center }}
-      take: 1
-  holds:
-    kind: stage
-    do: { map: { action: unpair } }
-    with: { source: booked }
-
-sinks:
-  booking: booking.jsonl
-
-machine:
+scene:
   initial: anything_qualifies
-  states:
+  beats:
+    scored:                             # each film, scored by its reviews
+      do: { play: review_score.yaml }
+      each: films
+      with: { mood: "{{ mood }}" }
+    audience_scores:                    # flat rows { title, audience }
+      do: { map: { action: unpair } }
+      with: { from: scored }
+    qualifying:                         # the owner's gates
+      do: { map: { action: where } }
+      with:
+        from: showings
+        keep:
+          and:
+            - starts: { ge: "{{ '17:00' if evenings == 'on' else '00:00' }}" }
+            - or:
+                - { genre: { eq: horror }, tomato: { ge: 70 } }
+                - { tomato: { gt: 90 } }
+    joined:
+      do: { map: { action: join } }
+      with: { from: qualifying, other: audience_scores, on: title }
+    weighed:                            # what the owner likes more, by how much it matters
+      do: { map: { action: weigh } }
+      with:
+        from: joined
+        by: { tomato: {{ (tomato | float) / 100 }}, audience: {{ audience }} }
+        into: score
+    shortlist:
+      do: { reduce: { action: max } }
+      with: { from: weighed, field: score, take: 5 }
+    pick:                               # Jev chooses among the five, in the mood
+      do: { jev: { question: choice } }
+      with:
+        instructions: >
+          You are choosing a showing for a party of {{ tickets }}, in the mood for something
+          {{ mood }}. Every option here already suits the owner; choose the one you would enjoy most.
+        options: { from: shortlist, key: showing }
+        state: {}
+    best:
+      do: { reduce: { action: max } }
+      with: { from: pick, field: probability }
+    chosen:
+      do: { map: { action: join } }
+      with: { from: best, other: shortlist, on: level, other_on: showing }
+    booked:                             # seating, for the showing chosen
+      do: { play: seating.yaml }
+      each: chosen
+      with:
+        tickets: {{ tickets }}
+        row: {{ row }}
+        center: {{ center }}
+        take: 1
+    holds:
+      do: { map: { action: unpair } }
+      with: { from: booked }
+
     anything_qualifies:
       do: { reduce: { action: any } }
-      with: { source: qualifying }
+      with: { from: qualifying }
       transitions:
         - if: { any: { eq: false } }
           to: walk_away
         - to: seats_free
     seats_free:
       do: { reduce: { action: any } }
-      with: { source: holds }
+      with: { from: holds }
       transitions:
         - if: { any: { eq: false } }
           to: walk_away
@@ -107,9 +94,9 @@ machine:
       final: true
       outcome: walked_away
     book:
-      do: { sink: { name: booking } }
-      with: { source: holds }
-      then: done
+      do: { write: booking }
+      with: { from: holds }
+      to: done
     done:
       final: true
       outcome: booked

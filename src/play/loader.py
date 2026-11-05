@@ -1,6 +1,9 @@
-"""Read a sketch file: YAML 1.2, checked against the JSON Schema, built into a `Play`.
+"""Read a play file: YAML 1.2, checked against the JSON Schema, built into a `Play`.
 
 ruamel.yaml reads YAML 1.2, so `70:30` stays text; PyYAML would turn it into the number 4230.
+
+A play is written as a stage (props, and files read or written) and a scene of beats. The engine runs it as sources,
+sinks and a machine: `engine_view` is the one place that turns the first into the second (ADR in Sprint 28).
 """
 
 import json
@@ -73,7 +76,7 @@ def _parse(path: Path, text: str, variables: dict[str, str], lenient: bool) -> t
     except YAMLError as error:
         raise PlayError([f"{path}: is not valid YAML: {str(error).splitlines()[0]}"]) from error
     if not isinstance(document, dict):
-        raise PlayError([f"{path}: (top): a sketch is a mapping with a name and a machine"])
+        raise PlayError([f"{path}: (top): a play is a mapping with a name and a scene"])
     return document, used
 
 
@@ -104,8 +107,84 @@ def _shape(path: Path, document: dict) -> None:
         raise PlayError([f"{path}: {dotted(e.absolute_path)}: {e.message}" for e in errors])
 
 
+def props_of(document: dict) -> dict[str, dict]:
+    """The props a play's stage declares (a typed value each: choice, range, count or switch), by name: every stage
+    entry that is not a file, so a wrong kind is reported as a wrong prop."""
+    stage = document.get("stage")
+    if not isinstance(stage, dict):
+        return {}
+    return {name: piece for name, piece in stage.items() if not (isinstance(piece, dict) and piece.get("kind") == "file")}
+
+
+def is_flow(beat: dict) -> bool:
+    """A beat in the scene's flow: it says where to go next, or it ends the scene. Any other beat is performed when
+    another beat first reads it."""
+    return "to" in beat or "transitions" in beat or bool(beat.get("final"))
+
+
+def engine_view(path: Path, document: dict) -> dict:
+    """The play as the engine runs it: the stage's read files and the beats performed when read are its sources, the
+    files it writes are its sinks, and the flow beats are its machine's states (`to:` is the machine's next state)."""
+    sources, sinks, states = {}, {}, {}
+    for name, piece in (document.get("stage") or {}).items():
+        if piece.get("kind") != "file":
+            continue
+        if piece.get("access") == "write":
+            sinks[name] = piece["path"]
+        else:
+            sources[name] = {key: value for key, value in piece.items() if key != "access"}
+    stage = document.get("stage") or {}
+    wrong = [f"{path}: scene.beats.{name}: {name!r} is also on the stage; a name means one thing in a play"
+             for name in document["scene"]["beats"] if name in stage]
+    for name, beat in document["scene"]["beats"].items():
+        if not is_flow(beat):
+            sources[name] = _engine_source(beat)
+        elif "jev" in beat.get("do", {}):
+            wrong.append(f"{path}: scene.beats.{name}: a Jev beat is performed when another beat reads it, so it has no "
+                         "`to:` or `transitions:`")
+        else:
+            states[name] = _engine_state(beat)
+    if wrong:
+        raise PlayError(wrong)
+    return {"sources": sources, "sinks": sinks, "machine": {"initial": document["scene"]["initial"], "states": states}}
+
+
+def _engine_state(beat: dict) -> dict:
+    state = {key: value for key, value in beat.items() if key not in ("to", "do", "with")}
+    if "to" in beat:
+        state["then"] = beat["to"]
+    if "do" in beat:
+        state["do"] = _engine_do(beat["do"])
+    if "with" in beat:
+        state["with"] = _engine_with(beat["with"])
+    return state
+
+
+def _engine_source(beat: dict) -> dict:
+    if "jev" in beat.get("do", {}):
+        return {"kind": "jev", **beat["do"]["jev"], **beat.get("with", {})}
+    return {"kind": "stage", **_engine_state(beat)}
+
+
+def _engine_do(do: dict) -> dict:
+    ((kind, value),) = do.items()
+    if kind == "write":
+        return {"sink": {"name": value}}
+    if kind == "play":
+        return {"sketch": {"file": value.removesuffix(".yaml")}}
+    return dict(do)
+
+
+def _engine_with(given: dict) -> dict:
+    """`from:` names the piece an action works on: one name (the engine's `source`) or a list (`sources`)."""
+    if "from" not in given:
+        return dict(given)
+    rest = {key: value for key, value in given.items() if key != "from"}
+    return {("sources" if isinstance(given["from"], list) else "source"): given["from"], **rest}
+
+
 def _source(name: str, value, base: Path, overrides: dict[str, str]) -> Source:
-    config = {"kind": "file", "path": value} if isinstance(value, str) else dict(value)
+    config = dict(value)
     if name in overrides:
         config = {"kind": "file", "path": overrides[name]}
     if config["kind"] == "file":
@@ -169,9 +248,7 @@ def _declared_inputs(path: Path, given: dict[str, str]) -> dict[str, dict]:
         document, _ = _shared_template(path)
     except PlayError:
         return {}
-    declared = document.get("inputs")
-    if not isinstance(declared, dict):
-        return {}
+    declared = props_of(document)
     found = [f"{path}: {problem}" for name, spec in declared.items() for problem in problems(name, spec)]
     found += [f"{path}: {problem}" for name, text in given.items() if name in declared
               and (problem := value_problem(name, declared[name], text))]
@@ -195,20 +272,21 @@ def load(
     effective = {**{name: default_text(spec) for name, spec in declared.items()}, **variables}
     document, uses = _read(path, effective, lenient)
     _shape(path, document)
-    unknown = sorted(set(overrides) - set(document.get("sources", {})))
+    engine = engine_view(path, document)
+    unknown = sorted(set(overrides) - {n for n, s in engine["sources"].items() if s.get("kind") == "file"})
     if unknown:
-        raise PlayError([f"{path}: --source names {', '.join(unknown)}, which the sketch does not declare"])
+        raise PlayError([f"{path}: --source names {', '.join(unknown)}, which is not a file on the play's stage"])
     base = path.resolve().parent
     return Play(
         path=path,
         name=document["name"],
         description=document.get("description", "").strip(),
-        sources={n: _source(n, v, base, overrides) for n, v in document.get("sources", {}).items()},
-        sinks={n: Sink(n, v if isinstance(v, str) else v["path"]) for n, v in document.get("sinks", {}).items()},
+        sources={n: _source(n, v, base, overrides) for n, v in engine["sources"].items()},
+        sinks={n: Sink(n, v) for n, v in engine["sinks"].items()},
         outcomes={n: tuple(v) for n, v in document.get("outcomes", {}).items() if isinstance(v, list)},
         candidates={n: Candidates(v["from"], v["key"]) for n, v in document.get("outcomes", {}).items() if isinstance(v, dict)},
         data=document.get("data", {}),
-        machine=document["machine"],
+        machine=engine["machine"],
         inputs=declared,
         variables=variables,
         uses=uses,

@@ -3,48 +3,43 @@ description: >
   Seats side by side for a party, in the rows the owner likes, as central as they come. Give it the showing, the
   number of tickets, and how much the row and the center matter (0.0 to 1.0).
 
-sources:
-  seats: seats.jsonl                    # { showing, row, number, free }: every seat of every showing
-  runs:                                 # blocks of adjacent free seats, as long as the party
-    kind: stage
-    do: { map: { action: adjacent_runs } }
-    with:
-      source: seats
-      group: row
-      order: number
-      length: {{ tickets | default(2) }}
-      match: { showing: "{{ showing | default('19:30') }}", free: true }
-  by_row:                               # each block scored for its row: E, then F, then D
-    kind: stage
-    do: { map: { action: prefer_order } }
-    with: { rows: runs, field: row, order: [E, F, D], into: row_score }
-  by_center:                            # and for how central it sits in its row
-    kind: stage
-    do: { map: { action: prefer_middle } }
-    with:
-      rows: by_row
-      extent: seats
-      group: row
-      order: number
-      into: center_score
-      match: { showing: "{{ showing | default('19:30') }}" }
-  scored:                               # the owner's weights decide which matters more
-    kind: stage
-    do: { map: { action: weigh } }
-    with:
-      source: by_center
-      by: { row_score: {{ row | default(0.7) }}, center_score: {{ center | default(1.0) }} }
-      into: score
+stage:
+  seats: { kind: file, path: seats.jsonl }            # { showing, row, number, free }: every seat of every showing
+  hold: { kind: file, path: hold.jsonl, access: write }
 
-sinks:
-  hold: hold.jsonl
-
-machine:
+scene:
   initial: found
-  states:
+  beats:
+    runs:                               # blocks of adjacent free seats, as long as the party
+      do: { map: { action: adjacent_runs } }
+      with:
+        from: seats
+        group: row
+        order: number
+        length: {{ tickets | default(2) }}
+        match: { showing: "{{ showing | default('19:30') }}", free: true }
+    by_row:                             # each block scored for its row: E, then F, then D
+      do: { map: { action: prefer_order } }
+      with: { rows: runs, field: row, order: [E, F, D], into: row_score }
+    by_center:                          # and for how central it sits in its row
+      do: { map: { action: prefer_middle } }
+      with:
+        rows: by_row
+        extent: seats
+        group: row
+        order: number
+        into: center_score
+        match: { showing: "{{ showing | default('19:30') }}" }
+    scored:                             # the owner's weights decide which matters more
+      do: { map: { action: weigh } }
+      with:
+        from: by_center
+        by: { row_score: {{ row | default(0.7) }}, center_score: {{ center | default(1.0) }} }
+        into: score
+
     found:                              # is there any block at all?
       do: { reduce: { action: any } }
-      with: { source: scored }
+      with: { from: scored }
       transitions:
         - if: { any: { eq: false } }
           to: nothing_fits
@@ -54,11 +49,11 @@ machine:
       outcome: none
     best:
       do: { reduce: { action: max } }
-      with: { source: scored, field: score, take: {{ take | default(5) }} }
-      then: write
+      with: { from: scored, field: score, take: {{ take | default(5) }} }
+      to: write
     write:
-      do: { sink: { name: hold } }
-      then: done
+      do: { write: hold }
+      to: done
     done:
       final: true
       outputs: [hold]

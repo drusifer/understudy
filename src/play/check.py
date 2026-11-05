@@ -1,8 +1,11 @@
-"""Check a loaded sketch as a whole before anything runs (UND-61).
+"""Check a loaded play as a whole before anything runs (UND-61).
 
 Every mistake is one line: file, the path inside it, what is wrong and, where there is one, the nearest good value.
+The checks walk the engine's view of the play (`engine_view` in the loader); `_Checker.outward` turns each path back
+into where the play file writes it.
 """
 
+import re
 from difflib import get_close_matches
 from pathlib import Path
 
@@ -15,6 +18,20 @@ from src.play.vocabulary import COMBINATORS, ON_EMPTY, STAGE_TYPES, stage_of
 
 SHARE_TOLERANCE = 0.001
 OPTION_OPERATORS = ("eq", "ne", "in", "not_in")
+WORDS = {"source": "from", "sources": "from"}  # the engine's name for a `with:` key -> the play's
+JEV_FIELDS = ("question", "instructions", "options", "criteria", "state")
+PATHS = (  # the engine's path -> the play's, applied in order
+    (r"^machine\.initial", "scene.initial"),
+    (r"^machine\.states", "scene.beats"),
+    (r"\.then$", ".to"),
+    (r"\.with\.sources?\b", ".with.from"),
+    (r"\.do\.sink\.name$", ".do.write"),
+    (r"\.do\.sketch\.file$", ".do.play"),
+)
+
+
+def outward_key(key: str) -> str:
+    return WORDS.get(key, key)
 
 
 def calls_sketch(state: dict) -> bool:
@@ -34,7 +51,23 @@ class _Checker:
         self.known = set(sketch.outcomes) | set(sketch.candidates)  # every outcome, declared or read from rows
 
     def problem(self, path: str, message: str) -> None:
-        self.found.append(f"{self.sketch.path}: {path}: {message}")
+        self.found.append(f"{self.sketch.path}: {self.outward(path)}: {message}")
+
+    def outward(self, path: str) -> str:
+        """Where the play file writes the thing at the engine's `path`: a source is a stage file or a beat."""
+        found = re.match(r"^sources\.([^.\[]+)(.*)$", path)
+        if found:
+            name, rest = found.groups()
+            source = self.sketch.sources.get(name)
+            if source is not None and source.kind == "file":
+                path = f"stage.{name}{rest}"
+            elif source is not None and source.kind == "jev" and rest.lstrip(".").startswith(JEV_FIELDS):
+                path = f"scene.beats.{name}.with{rest}"
+            else:
+                path = f"scene.beats.{name}{rest}"
+        for pattern, replacement in PATHS:
+            path = re.sub(pattern, replacement, path)
+        return path
 
     def run(self) -> list[str]:
         self.sources()
@@ -63,14 +96,15 @@ class _Checker:
                 for key, ref in source.config["state"].items():
                     if ref["from"] not in self.sketch.sources or ref["from"] == name:
                         self.problem(f"sources.{name}.state.{key}.from",
-                                     f"{ref['from']!r} is not another source{_nearest(ref['from'], self.sketch.sources)}")
+                                     f"{ref['from']!r} is not another piece{_nearest(ref['from'], self.sketch.sources)}")
 
     def stage_source(self, name: str, config: dict) -> None:
-        """A source computed by a stage: only a library stage (`map` or `reduce`), and it must not read itself."""
+        """A beat performed when read: only a library action (`map` or `reduce`), and it must not read itself."""
         at = f"sources.{name}"
         kind = next(iter(config["do"]))
         if kind == "sink" or (kind == "sketch" and "each" not in config):
-            self.problem(f"{at}.do", "a source is computed by a `map` or `reduce` stage, or by a sketch repeated with `each`")
+            self.problem(f"{at}.do", "a beat without `to:` is a `map` or `reduce` action, a Jev question, or a play "
+                                     "repeated with `each`; give it `to:` to put it in the scene's flow")
             return
         if "each" in config:
             self.each(at, config)
@@ -84,19 +118,19 @@ class _Checker:
             reads = [*(current.get("with") or {}).values(), current.get("each")]
             for param in (value for value in reads if isinstance(value, str)):
                 if param == name:
-                    self.problem(f"{at}.with", f"source {name!r} reads itself, directly or through another source")
+                    self.problem(f"{at}.with", f"beat {name!r} reads itself, directly or through another beat")
                     return
                 if param in self.sketch.sources and param not in seen and self.sketch.sources[param].kind == "stage":
                     seen.add(param)
                     stack.append((param, self.sketch.sources[param].config))
 
     def candidate_sources(self) -> None:
-        """An outcome read from rows names a source or a state whose result holds them."""
+        """An outcome read from rows names a piece or a beat whose result holds them."""
         for dimension, candidates in self.sketch.candidates.items():
             if candidates.source not in self.sketch.sources and candidates.source not in self.states:
                 known = [*self.sketch.sources, *self.states]
                 self.problem(f"outcomes.{dimension}.from",
-                             f"{candidates.source!r} is neither a source nor a state{_nearest(candidates.source, known)}")
+                             f"{candidates.source!r} is not a piece or a beat{_nearest(candidates.source, known)}")
 
     def segments(self) -> None:
         segments = self.sketch.data.get("segments")
@@ -113,23 +147,35 @@ class _Checker:
     def machine(self) -> None:
         if self.sketch.machine["initial"] not in self.states:
             initial = self.sketch.machine["initial"]
-            self.problem("machine.initial", f"state {initial!r} does not exist{_nearest(initial, self.states)}")
+            self.problem("machine.initial", f"beat {initial!r} is not in the scene's flow{_nearest(initial, self.states)}")
         for name, state in self.states.items():
             self.state(name, state)
         self.reaches_a_final_state()
+        self.one_writer()
+
+    def one_writer(self) -> None:
+        """Each written file is written by one beat."""
+        writers: dict[str, str] = {}
+        for name, state in self.states.items():
+            called = stage_of(state)
+            if called and called[0] == "sink":
+                if called[1] in writers:
+                    self.problem(f"machine.states.{name}.do.sink.name",
+                                 f"{called[1]!r} is already written by beat {writers[called[1]]!r}; a file has one writer")
+                writers.setdefault(called[1], name)
 
     def state(self, name: str, state: dict) -> None:
         at = f"machine.states.{name}"
         if state.get("final"):
             self.final_state(at, state)
             return
-        if ("then" in state) == ("transitions" in state):
-            self.problem(at, "a state that is not final needs exactly one of `then` or `transitions`")
+        if "then" in state and "transitions" in state:
+            self.problem(at, "a beat has `to:` or `transitions:`, not both")
         if "do" not in state:
-            self.problem(at, "a state that is not final needs `do` (the stage it runs)")
+            self.problem(at, "a beat that is not final needs `do` (the action it performs)")
         for target_path, target in self.targets(at, state):
             if target not in self.states:
-                self.problem(target_path, f"state {target!r} does not exist{_nearest(target, self.states)}")
+                self.problem(target_path, f"beat {target!r} is not in the scene's flow{_nearest(target, self.states)}")
         for index, transition in enumerate(state.get("transitions", [])):
             if "if" in transition:
                 self.condition(transition["if"], f"{at}.transitions[{index}].if")
@@ -142,7 +188,7 @@ class _Checker:
 
     def final_state(self, at: str, state: dict) -> None:
         if "then" in state or "transitions" in state or "do" in state:
-            self.problem(at, "a final state does nothing and goes nowhere")
+            self.problem(at, "a final beat does nothing and goes nowhere")
         for dimension in state.get("outputs", []):
             if dimension not in self.known and not self.is_subsketch_file():
                 self.problem(f"{at}.outputs", f"{dimension!r} is not a declared outcome")
@@ -159,7 +205,7 @@ class _Checker:
     def reaches_a_final_state(self) -> None:
         finals = {n for n, s in self.states.items() if s.get("final")}
         if not finals:
-            self.problem("machine.states", "no state is final, so the machine never ends")
+            self.problem("machine.states", "no beat is final, so the scene never ends")
             return
         onward = {n: [t for _, t in self.targets("", s) if t in self.states] for n, s in self.states.items()}
         live = set(finals)
@@ -172,36 +218,48 @@ class _Checker:
                     grew = True
         for name in self.states:
             if name not in live:
-                self.problem(f"machine.states.{name}", "no path from here reaches a final state")
+                self.problem(f"machine.states.{name}", "no path from here reaches a final beat")
 
     # stages ----------------------------------------------------------------
 
     def each(self, at: str, state: dict) -> None:
-        """`each: <source>` repeats a sketch for every row of a source."""
-        if state["each"] not in self.sketch.sources:
-            self.problem(f"{at}.each", f"{state['each']!r} is not a source{_nearest(state['each'], self.sketch.sources)}")
+        """`each: <piece>` repeats a play for every row of a piece."""
+        self.readable(f"{at}.each", state["each"])
         if not calls_sketch(state):
-            self.problem(at, "`each` repeats a sketch, so `do` must be `sketch: { file: ... }`")
+            self.problem(at, "`each` repeats a play, so `do` must be `play: <file>.yaml`")
 
     def reduce(self, at: str, state: dict) -> None:
         """`reduce` folds the iterations of an `each`; on its own it has nothing to fold."""
         if "each" not in state:
-            self.problem(f"{at}.reduce", "`reduce` folds the iterations of an `each`, and this state has none")
+            self.problem(f"{at}.reduce", "`reduce` folds the iterations of an `each`, and this beat has none")
+
+    def readable(self, at: str, name) -> None:
+        """A name a beat reads: a file the stage reads, or a beat performed when read. Not a written file, and not a
+        beat in the scene's flow (it may not have been performed when the read happens)."""
+        if name in self.sketch.sources:
+            return
+        if name in self.sketch.sinks:
+            self.problem(at, f"{name!r} is a file the play writes (`access: write`); no beat reads it")
+        elif name in self.states:
+            self.problem(at, f"{name!r} is a beat in the scene's flow; a beat reads stage files and beats without `to:`")
+        else:
+            self.problem(at, f"{name!r} is not a piece{_nearest(name, self.sketch.sources)}")
 
     def stage(self, at: str, state: dict) -> None:
         kind, target = stage_of(state)
         name = f"{kind}.{target}"
         if kind == "sink":
             if target not in self.sketch.sinks:
-                self.problem(f"{at}.do.sink.name", f"sink {target!r} is not declared{_nearest(target, self.sketch.sinks)}")
+                self.problem(f"{at}.do.sink.name", f"{target!r} is not a file the stage writes (`access: write`)"
+                                                   f"{_nearest(target, self.sketch.sinks)}")
             named = (state.get("with") or {}).get("source")
-            if named is not None and named not in self.sketch.sources:
-                self.problem(f"{at}.with.source", f"{named!r} is not a source{_nearest(named, self.sketch.sources)}")
+            if named is not None:
+                self.readable(f"{at}.with.source", named)
         elif kind == "sketch":
             self.subsketch(f"{at}.do.sketch.file", target, call_values(state), "each" in state)
         elif name not in STAGES:
             self.problem(f"{at}.do.{kind}.{STAGE_TYPES[kind]}",
-                         f"unknown stage {name!r}{_nearest(name, STAGES)}")
+                         f"unknown action {name!r}{_nearest(name, STAGES)}")
         else:
             self.stage_with(at, name, state.get("with", {}))
             if name == "reduce.blend":
@@ -210,17 +268,18 @@ class _Checker:
     def stage_with(self, at: str, name: str, given: dict) -> None:
         """The `with:` keys must be the parameters the stage's function declares (see `registry`)."""
         wanted = STAGES[name].params
+        shown = [outward_key(key) for key in wanted]
         for key in sorted(key for key, param in wanted.items() if param.required and key not in given):
-            self.problem(f"{at}.with", f"{name} needs {key!r}")
+            self.problem(f"{at}.with", f"{name} needs {outward_key(key)!r}")
         for key, value in given.items():
             if key not in wanted:
-                self.problem(f"{at}.with.{key}", f"{name} has no {key!r}{_nearest(key, wanted)}")
+                self.problem(f"{at}.with.{outward_key(key)}", f"{name} has no {outward_key(key)!r}{_nearest(key, shown)}")
             else:
                 self.param(f"{at}.with.{key}", wanted[key].kind, value)
 
     def param(self, at: str, kind: type, value) -> None:
-        if kind is Source and value not in self.sketch.sources:
-            self.problem(at, f"{value!r} is not a source{_nearest(value, self.sketch.sources)}")
+        if kind is Source:
+            self.readable(at, value)
         elif kind is Data and value not in self.sketch.data:
             self.problem(at, f"{value!r} is not under data{_nearest(value, self.sketch.data)}")
         elif kind in (str, int, float) and (isinstance(value, bool) or not isinstance(value, kind)):
@@ -229,21 +288,22 @@ class _Checker:
     def subsketch(self, at: str, file: str, given: dict, each: bool) -> None:
         path = (self.sketch.path.parent / f"{file}.yaml").resolve()
         if path in self.seen:
-            self.problem(at, f"sketch {file!r} calls itself")
+            self.problem(at, f"play {file}.yaml calls itself")
             return
         try:
             child = load(path, variables=given, lenient=each)
         except PlayError as error:
-            self.found.extend(error.problems if path.is_file() else [f"{self.sketch.path}: {at}: no sketch file {path.name}"])
+            self.found.extend(error.problems if path.is_file() else
+                              [f"{self.sketch.path}: {self.outward(at)}: no play file {path.name}"])
             return
         self.found.extend(_Checker(child, (*self.seen, path)).run())
         declared = next((s.get("outputs") for s in child.machine["states"].values() if s.get("final") and s.get("outputs")), None)
         if declared is None:
-            self.problem(at, f"sketch {file!r} declares no outputs, so its weights cannot be blended")
+            self.problem(at, f"play {file}.yaml declares no outputs, so its weights cannot be blended")
             return
         for dimension in declared:
             if dimension not in self.known and not each:  # a loop's outputs are paired with rows, not blended
-                self.problem(at, f"sketch {file!r} outputs {dimension!r}, which is not a declared outcome here")
+                self.problem(at, f"play {file}.yaml outputs {dimension!r}, which is not a declared outcome here")
 
     # deciders ----------------------------------------------------------------
 
@@ -257,7 +317,7 @@ class _Checker:
             if "decide" in entry:
                 self.tree(entry["decide"], f"{here}.decide")
             elif entry["from"] not in self.states or not calls_sketch(self.states[entry["from"]]):
-                self.problem(f"{here}.from", f"{entry['from']!r} is not a state that calls a sketch"
+                self.problem(f"{here}.from", f"{entry['from']!r} is not a beat that performs a play"
                                              f"{_nearest(entry['from'], self.states)}")
             if "weight" in entry:
                 self.weight(entry["weight"], f"{here}.weight")

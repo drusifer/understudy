@@ -27,22 +27,22 @@ SECRET = "s3cret-for-tests"
 PLAIN = """name: plain
 description: >
   Reads a file and says hello.
-sources:
-  data: {{ file }}
-machine:
+stage:
+  data: { kind: file, path: "{{ file }}" }
+scene:
   initial: only
-  states:
+  beats:
     only: { final: true }
 """
 PARENT = """name: parent
 description: calls a child
-machine:
+scene:
   initial: ask
-  states:
-    ask: { do: { sketch: { file: child } }, then: done }
+  beats:
+    ask: { do: { play: child.yaml }, to: done }
     done: { final: true }
 """
-CHILD = "name: child\ndescription: only called, never run on its own\nmachine: { initial: x, states: { x: { final: true } } }\n"
+CHILD = "name: child\ndescription: only called, never run on its own\nscene: { initial: x, beats: { x: { final: true } } }\n"
 
 
 class LauncherCase(unittest.TestCase):

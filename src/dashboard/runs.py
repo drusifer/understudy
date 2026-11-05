@@ -22,9 +22,8 @@ from src.dashboard.view import RUN_ID, read_json
 from src.paths import ROOT
 from src.play.inputs import problems as input_problems
 from src.play.inputs import value_problem
-from src.play.loader import PlayError, read_template
+from src.play.loader import PlayError, props_of, read_template
 from src.play.sources.capture import CACHE
-from src.play.vocabulary import stage_of
 
 MAX_CHILDREN = 4
 SETTLE_SECONDS = 1.5  # a run that dies within this long is reported as a failed start, with the reason it printed
@@ -76,17 +75,14 @@ def _run_check(argv: list[str], project: Path) -> list[str]:
 
 
 def _called_files(path: Path, document: dict) -> set[Path]:
-    """The sketch files this one calls, from its states and its stage sources."""
-    configs = [*document.get("machine", {}).get("states", {}).values(),
-               *(each for each in document.get("sources", {}).values() if isinstance(each, dict) and each.get("kind") == "stage")]
+    """The play files this one calls (`do: { play: <file>.yaml }`), from its beats."""
+    scene = document.get("scene")
+    beats = scene.get("beats") if isinstance(scene, dict) else None
     called = set()
-    for config in configs:
-        try:
-            found = stage_of(config) if isinstance(config, dict) else None
-        except (KeyError, TypeError, ValueError):
-            continue
-        if found and found[0] == "sketch":
-            called.add((path.parent / f"{found[1]}.yaml").resolve())
+    for beat in (beats.values() if isinstance(beats, dict) else []):
+        do = beat.get("do") if isinstance(beat, dict) else None
+        if isinstance(do, dict) and isinstance(do.get("play"), str):
+            called.add((path.parent / do["play"]).resolve())
     return called
 
 
@@ -122,16 +118,16 @@ class Launcher:
                 scanned.append({"path": path, "file": relative, "name": path.stem, "description": "", "with": [], "inputs": [],
                                 "ok": False, "problem": error.problems[0].removeprefix(f"{path}: "), "called": set()})
                 continue
-            declared = document.get("inputs") if isinstance(document.get("inputs"), dict) else {}
+            declared = props_of(document)
             wrong = [problem for name, spec in declared.items() for problem in input_problems(name, spec)]
-            valid = isinstance(document.get("machine"), dict) and "name" in document and not wrong
+            valid = isinstance(document.get("scene"), dict) and "name" in document and not wrong
             scanned.append({"path": path, "file": relative, "name": str(document.get("name", path.stem)),
                             "description": " ".join(str(document.get("description", "")).split()),
                             "with": sorted(uses - set(declared)),
                             "inputs": [] if wrong else [{**spec, "name": name, "label": spec.get("label", name)}
                                                         for name, spec in declared.items()],
                             "ok": valid,
-                            "problem": wrong[0] if wrong else "" if valid else "not a sketch: it needs a name and a machine",
+                            "problem": wrong[0] if wrong else "" if valid else "not a play: it needs a name and a scene",
                             "called": _called_files(path, document) if valid else set()})
         children = set().union(*(each["called"] for each in scanned)) if scanned else set()
         return [{key: value for key, value in each.items() if key not in {"path", "called"}}

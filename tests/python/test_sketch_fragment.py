@@ -12,26 +12,22 @@ from src.play.loader import load
 
 SKETCH = """\
 name: fragments
-sources:
-  people: people.jsonl
-  adults:
-    kind: stage
-    do: { map: { action: where } }
-    with: { source: people, keep: { age: { ge: 18 } } }
-  named:
-    kind: stage
-    do: { map: { action: format } }
-    with: { source: adults, template: "{name} ({age})", into: label }
-  counted:
-    kind: stage
-    do: { reduce: { action: tally } }
-    with: { source: people, by: team, into: per_team }
-sinks:
-  out: out.jsonl
-machine:
+stage:
+  people: { kind: file, path: people.jsonl }
+  out: { kind: file, path: out.jsonl, access: write }
+scene:
   initial: only
-  states:
-    only: { do: { sink: { name: out } }, with: { source: named }, then: done }
+  beats:
+    adults:
+      do: { map: { action: where } }
+      with: { from: people, keep: { age: { ge: 18 } } }
+    named:
+      do: { map: { action: format } }
+      with: { from: adults, template: "{name} ({age})", into: label }
+    counted:
+      do: { reduce: { action: tally } }
+      with: { from: people, by: team, into: per_team }
+    only: { do: { write: out }, with: { from: named }, to: done }
     done: { final: true }
 """
 PEOPLE = [{"name": "Ann", "age": 30, "team": "a"}, {"name": "Bo", "age": 12, "team": "a"}, {"name": "Cy", "age": 18, "team": "b"}]
@@ -43,14 +39,16 @@ def run(coroutine):
 
 JEV_SKETCH = """\
 name: j
-sources:
-  pick:
-    kind: jev
-    question: choice
-    instructions: Choose one.
-    criteria: { a: first, b: second }
-    state: {}
-machine: { initial: x, states: { x: { final: true } } }
+scene:
+  initial: x
+  beats:
+    pick:
+      do: { jev: { question: choice } }
+      with:
+        instructions: Choose one.
+        criteria: { a: first, b: second }
+        state: {}
+    x: { final: true }
 """
 
 
@@ -101,8 +99,8 @@ class ReadStageTests(FragmentCase):
         said: list[str] = []
         sketch = load(self.dir / "sketch.yaml", variables={})
         (self.dir / "optional.yaml").write_text(
-            "name: o\nsources:\n  extra:\n    kind: file\n    path: nothing.jsonl\n    optional: pinned\n"
-            "machine: { initial: x, states: { x: { final: true } } }\n", encoding="utf-8")
+            "name: o\nstage:\n  extra:\n    kind: file\n    path: nothing.jsonl\n    optional: pinned\n"
+            "scene: { initial: x, beats: { x: { final: true } } }\n", encoding="utf-8")
         optional = load(self.dir / "optional.yaml", variables={})
         self.assertEqual(run(read_stage(optional, "extra", announce=said.append)), [])
         self.assertTrue(said and "so none are used" in said[0])

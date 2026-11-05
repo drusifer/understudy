@@ -1,4 +1,4 @@
-"""Typed inputs: what a sketch declares under `inputs:` and what a value for one may be (ADR-0053).
+"""Props: the typed values a play declares on its stage, and what a value for one may be (ADR-0053).
 
     mood:     { kind: choice, options: [fun, serious], default: fun }
     weight:   { kind: range, min: 0, max: 1, step: 0.1, default: 0.3 }
@@ -24,7 +24,7 @@ _STEP_TOLERANCE = 1e-6  # a value is on a step when it is this close to a whole 
 
 def problems(name: str, spec) -> list[str]:
     """What is wrong with one declaration, as sentences that name the input (empty when it is right)."""
-    at = f"input {name!r}: "
+    at = f"prop {name!r}: "
     if not isinstance(spec, dict) or spec.get("kind") not in KINDS:
         kind = spec.get("kind") if isinstance(spec, dict) else spec
         return [f"{at}unknown kind {kind!r}; the kinds are {', '.join(KINDS)}"]
@@ -41,7 +41,7 @@ def default_text(spec: dict) -> str:
 def value_problem(name: str, spec: dict, text: str) -> str | None:
     """None when `text` is a value the input allows, else a sentence naming the input and the limit."""
     problem = _VALUE[spec["kind"]](spec, str(text))
-    return f"input {name!r}: {problem}" if problem else None
+    return f"prop {name!r}: {problem}" if problem else None
 
 
 def _text(value) -> str:

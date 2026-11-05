@@ -11,11 +11,11 @@ from src.play.sources.reader import Capture, Sources
 
 SKETCH = """\
 name: optional
-sources:
+stage:
   pins: { kind: file, path: "{{ pinned | default('.understudy/pinned.jsonl') }}", optional: pinned }
-machine:
+scene:
   initial: done
-  states:
+  beats:
     done: { final: true }
 """
 

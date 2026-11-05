@@ -109,8 +109,8 @@ class MachineTests(RunCase):
         self.assertEqual(sorted(p.name for p in folder.iterdir()), ["events.jsonl", "run.json"])
 
     def test_a_failure_after_the_sink_removes_the_partial_output(self):
-        after = "then: after\n    after:\n      do: { map: { action: boom } }\n      then: done\n    done:"
-        path = self.sketch([("then: done\n    done:", after)])
+        after = "to: after\n    after:\n      do: { map: { action: boom } }\n      to: done\n    done:"
+        path = self.sketch([("to: done\n    done:", after)])
         with self.assertRaisesRegex(RuntimeError, "boom"):
             self.run_it(library(), path)
         self.assertEqual(sorted(p.name for p in self.only_run_folder().iterdir()), ["events.jsonl", "run.json"])
@@ -154,7 +154,7 @@ class CliTests(RunCase):
         self.assertEqual((code, err, out[-1]), (0, [], "outcome: all_done"))
 
     def test_a_wrong_sketch_is_exit_2_with_a_last_line_saying_what_to_fix(self):
-        path = self.sketch([("do: { sink: { name: report } }", "do: { sink: { name: reportt } }")])
+        path = self.sketch([("do: { write: report }", "do: { write: reportt }")])
         code, out, err = self.go("run", str(path), "--out", str(self.out))
         self.assertEqual(code, 2)
         self.assertEqual(out, [])
@@ -162,14 +162,14 @@ class CliTests(RunCase):
         self.assertFalse(self.out.exists())
 
     def test_a_missing_input_file_is_exit_2_and_nothing_is_created(self):
-        path = self.sketch([("sinks:", "sources:\n  numbers: missing.jsonl\n\nsinks:")])
+        path = self.sketch([("stage:\n", "stage:\n  numbers: { kind: file, path: missing.jsonl }\n")])
         code, _, err = self.go("run", str(path), "--out", str(self.out))
         self.assertEqual(code, 2)
-        self.assertIn("sources.numbers", err[-1])
+        self.assertIn("stage.numbers", err[-1])
         self.assertFalse(self.out.exists())
 
     def test_source_replaces_one_file_for_the_run(self):
-        path = self.sketch([("sinks:", "sources:\n  numbers: missing.jsonl\n\nsinks:")])
+        path = self.sketch([("stage:\n", "stage:\n  numbers: { kind: file, path: missing.jsonl }\n")])
         real = self.dir / "real.jsonl"
         real.write_text('{"n": 1}\n', encoding="utf-8")
         code, _, err = self.go("run", str(path), "--source", f"numbers.path={real}", "--out", str(self.out))
