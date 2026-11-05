@@ -6,16 +6,16 @@ from unittest.mock import patch
 
 from jev_double import JevDouble
 
-import src.sketch.stages  # noqa: F401 - importing it registers the stages
+import src.play.stages  # noqa: F401 - importing it registers the stages
 from src.jev import Chosen
-from src.sketch.blend import shortlist
-from src.sketch.check import check, load_checked
-from src.sketch.loader import load
-from src.sketch.registry import STAGES, Stage
-from src.sketch.registry import library as registered
-from src.sketch.run import run_sketch
-from src.sketch.sources.capture import CaptureStore
-from src.sketch.sources.reader import Capture
+from src.play.blend import shortlist
+from src.play.check import check, load_checked
+from src.play.loader import load
+from src.play.registry import STAGES, Stage
+from src.play.registry import library as registered
+from src.play.run import run_sketch
+from src.play.sources.capture import CaptureStore
+from src.play.sources.reader import Capture
 
 SKETCH = """\
 name: pick

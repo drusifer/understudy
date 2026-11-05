@@ -1,4 +1,4 @@
-"""Read a sketch file: YAML 1.2, checked against the JSON Schema, built into a `Sketch`.
+"""Read a sketch file: YAML 1.2, checked against the JSON Schema, built into a `Play`.
 
 ruamel.yaml reads YAML 1.2, so `70:30` stays text; PyYAML would turn it into the number 4230.
 """
@@ -14,14 +14,14 @@ from ruamel.yaml import YAML
 from ruamel.yaml.error import YAMLError
 
 from src.paths import ROOT
-from src.sketch.inputs import default_text, problems, value_problem
-from src.sketch.model import Candidates, Sink, Sketch, Source
-from src.sketch.vocabulary import stage_of
+from src.play.inputs import default_text, problems, value_problem
+from src.play.model import Candidates, Play, Sink, Source
+from src.play.vocabulary import stage_of
 
-SCHEMA = json.loads((ROOT / "schema" / "decision_sketch.schema.json").read_text(encoding="utf-8"))
+SCHEMA = json.loads((ROOT / "schema" / "play.schema.json").read_text(encoding="utf-8"))
 
 
-class SketchError(Exception):
+class PlayError(Exception):
     """The sketch cannot be used; `problems` holds one line per mistake, each naming the file and the path."""
 
     def __init__(self, problems: list[str]):
@@ -53,7 +53,7 @@ def _text(path: Path) -> str:
     try:
         return path.read_text(encoding="utf-8")
     except OSError as error:
-        raise SketchError([f"{path}: cannot be read: {error.strerror or error}"]) from error
+        raise PlayError([f"{path}: cannot be read: {error.strerror or error}"]) from error
 
 
 def _parse(path: Path, text: str, variables: dict[str, str], lenient: bool) -> tuple[dict, frozenset[str]]:
@@ -63,17 +63,17 @@ def _parse(path: Path, text: str, variables: dict[str, str], lenient: bool) -> t
         given = {**{name: "" for name in used}, **variables} if lenient else variables
         rendered = TEMPLATES.from_string(text).render(given)
     except TemplateSyntaxError as error:
-        raise SketchError([f"{path}: line {error.lineno}: {error.message}"]) from error
+        raise PlayError([f"{path}: line {error.lineno}: {error.message}"]) from error
     except UndefinedError as error:
         name = str(error).split("'")[1] if "'" in str(error) else "a variable"
         hint = f"pass --with {name}=<value>, or write {{{{ {name} | default(…) }}}}"
-        raise SketchError([f"{path}: needs a value for {name!r}: {hint}"]) from error
+        raise PlayError([f"{path}: needs a value for {name!r}: {hint}"]) from error
     try:
         document = YAML(typ="safe").load(rendered)
     except YAMLError as error:
-        raise SketchError([f"{path}: is not valid YAML: {str(error).splitlines()[0]}"]) from error
+        raise PlayError([f"{path}: is not valid YAML: {str(error).splitlines()[0]}"]) from error
     if not isinstance(document, dict):
-        raise SketchError([f"{path}: (top): a sketch is a mapping with a name and a machine"])
+        raise PlayError([f"{path}: (top): a sketch is a mapping with a name and a machine"])
     return document, used
 
 
@@ -101,7 +101,7 @@ def read_template(path: Path) -> tuple[dict, frozenset[str]]:
 def _shape(path: Path, document: dict) -> None:
     errors = sorted(Draft202012Validator(SCHEMA).iter_errors(document), key=lambda e: list(e.absolute_path))
     if errors:
-        raise SketchError([f"{path}: {dotted(e.absolute_path)}: {e.message}" for e in errors])
+        raise PlayError([f"{path}: {dotted(e.absolute_path)}: {e.message}" for e in errors])
 
 
 def _source(name: str, value, base: Path, overrides: dict[str, str]) -> Source:
@@ -116,7 +116,7 @@ def _source(name: str, value, base: Path, overrides: dict[str, str]) -> Source:
     return Source(name, config["kind"], config)
 
 
-def children(sketch: Sketch) -> dict[str, Sketch]:
+def children(sketch: Play) -> dict[str, Play]:
     """The sketches this one calls (`do: sketch.<file>`), by the name of the state that calls each, loaded from
     beside it with that call's `with`; a missing file is left to `check`. One sketch may be called many times."""
     found = {}
@@ -129,7 +129,7 @@ def children(sketch: Sketch) -> dict[str, Sketch]:
     return found
 
 
-def source_children(sketch: Sketch) -> list[Sketch]:
+def source_children(sketch: Play) -> list[Play]:
     """The sketches this one calls from a stage source (`kind: stage` with `do: { sketch: ... }`), loaded as `children` are."""
     found = []
     for source in sketch.sources.values():
@@ -145,12 +145,12 @@ def call_values(state: dict) -> dict:
     return {**state.get("with", {}), **({state["reduce"]["into"]: []} if "reduce" in state else {})}
 
 
-def child_path(sketch: Sketch, file: str) -> Path:
+def child_path(sketch: Play, file: str) -> Path:
     """The file a `do: { sketch: { file: ... } }` names, beside the sketch that calls it."""
     return sketch.path.parent / f"{file}.yaml"
 
 
-def unused_variables(sketch: Sketch, how: str = "--with") -> list[tuple[Sketch, str, list[str]]]:
+def unused_variables(sketch: Play, how: str = "--with") -> list[tuple[Play, str, list[str]]]:
     """Per file of the sketch and the sketches it calls: the names given to it (`--with` or a call's `with`)
     that the file does not use, as (sketch, how it was given, names)."""
     found = []
@@ -167,7 +167,7 @@ def _declared_inputs(path: Path, given: dict[str, str]) -> dict[str, dict]:
     wrong or a value given for one is outside its limits. A file that cannot be read at all is left to `load`."""
     try:
         document, _ = _shared_template(path)
-    except SketchError:
+    except PlayError:
         return {}
     declared = document.get("inputs")
     if not isinstance(declared, dict):
@@ -176,13 +176,13 @@ def _declared_inputs(path: Path, given: dict[str, str]) -> dict[str, dict]:
     found += [f"{path}: {problem}" for name, text in given.items() if name in declared
               and (problem := value_problem(name, declared[name], text))]
     if found:
-        raise SketchError(found)
+        raise PlayError(found)
     return deepcopy(declared)  # the sketch keeps these; the shared document must not change under another caller
 
 
 def load(
     path: Path, overrides: dict[str, str] | None = None, variables: dict[str, str] | None = None, *, lenient: bool = False,
-) -> Sketch:
+) -> Play:
     """The sketch at `path`. `overrides` replaces a source with a file for this run only.
 
     The file is a Jinja2 template: `variables` (`--with` on the command line, `with` on a call) fill it in before
@@ -197,9 +197,9 @@ def load(
     _shape(path, document)
     unknown = sorted(set(overrides) - set(document.get("sources", {})))
     if unknown:
-        raise SketchError([f"{path}: --source names {', '.join(unknown)}, which the sketch does not declare"])
+        raise PlayError([f"{path}: --source names {', '.join(unknown)}, which the sketch does not declare"])
     base = path.resolve().parent
-    return Sketch(
+    return Play(
         path=path,
         name=document["name"],
         description=document.get("description", "").strip(),

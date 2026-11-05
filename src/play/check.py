@@ -6,12 +6,12 @@ Every mistake is one line: file, the path inside it, what is wrong and, where th
 from difflib import get_close_matches
 from pathlib import Path
 
-import src.sketch.stages  # noqa: F401 - importing it registers the stages
-from src.sketch import conditions
-from src.sketch.loader import SketchError, call_values, load, unused_variables
-from src.sketch.model import Sketch
-from src.sketch.registry import STAGES, Data, Source
-from src.sketch.vocabulary import COMBINATORS, ON_EMPTY, STAGE_TYPES, stage_of
+import src.play.stages  # noqa: F401 - importing it registers the stages
+from src.play import conditions
+from src.play.loader import PlayError, call_values, load, unused_variables
+from src.play.model import Play
+from src.play.registry import STAGES, Data, Source
+from src.play.vocabulary import COMBINATORS, ON_EMPTY, STAGE_TYPES, stage_of
 
 SHARE_TOLERANCE = 0.001
 OPTION_OPERATORS = ("eq", "ne", "in", "not_in")
@@ -28,7 +28,7 @@ def _nearest(word, choices) -> str:
 
 
 class _Checker:
-    def __init__(self, sketch: Sketch, seen: tuple[Path, ...]):
+    def __init__(self, sketch: Play, seen: tuple[Path, ...]):
         self.sketch, self.seen, self.found = sketch, seen, []
         self.states = sketch.machine["states"]
         self.known = set(sketch.outcomes) | set(sketch.candidates)  # every outcome, declared or read from rows
@@ -233,7 +233,7 @@ class _Checker:
             return
         try:
             child = load(path, variables=given, lenient=each)
-        except SketchError as error:
+        except PlayError as error:
             self.found.extend(error.problems if path.is_file() else [f"{self.sketch.path}: {at}: no sketch file {path.name}"])
             return
         self.found.extend(_Checker(child, (*self.seen, path)).run())
@@ -334,7 +334,7 @@ class _Checker:
             self.problem(path, message)
 
 
-def check(sketch: Sketch) -> list[str]:
+def check(sketch: Play) -> list[str]:
     """Every problem with the sketch, one line each; an empty list means it is ready to run."""
     found = _Checker(sketch, (sketch.path.resolve(),)).run()
     for unread, how, names in unused_variables(sketch):
@@ -344,10 +344,10 @@ def check(sketch: Sketch) -> list[str]:
     return found
 
 
-def load_checked(path: Path, overrides: dict[str, str] | None = None, variables: dict[str, str] | None = None) -> Sketch:
-    """Load and check; raise `SketchError` listing every problem."""
+def load_checked(path: Path, overrides: dict[str, str] | None = None, variables: dict[str, str] | None = None) -> Play:
+    """Load and check; raise `PlayError` listing every problem."""
     sketch = load(path, overrides, variables)
     problems = check(sketch)
     if problems:
-        raise SketchError(problems)
+        raise PlayError(problems)
     return sketch

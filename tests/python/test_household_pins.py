@@ -17,11 +17,11 @@ from household_jev import choose
 from jev_double import JevDouble
 from test_household import LEDGER
 
-from src.sketch.check import load_checked
-from src.sketch.cli import main
-from src.sketch.fragment import read_stage
-from src.sketch.loader import SketchError
-from src.sketch.sources.capture import CaptureStore
+from src.play.check import load_checked
+from src.play.cli import main
+from src.play.fragment import read_stage
+from src.play.loader import PlayError
+from src.play.sources.capture import CaptureStore
 
 CLOTHING = "Clothing outlets: Family clothing shops"  # a category in the clean list (ISO 18245)
 TAXONOMY = [{"category": CLOTHING}, {"category": "Household: Rent"}]
@@ -106,7 +106,7 @@ class BadPinTests(PinCase):
         missing = self.dir / "nowhere.jsonl"
         values = {"monarch": str(ORACLE / "monarch.csv"), "amex": str(ORACLE / "amex.csv"), "amex_account": "Platinum",
                   "since": "2026-01-01", "pinned": str(missing)}
-        with self.assertRaises(SketchError) as refused:
+        with self.assertRaises(PlayError) as refused:
             load_checked(LEDGER, {}, values)
         self.assertIn(str(missing), str(refused.exception.problems))
 

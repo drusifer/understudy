@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 from src.paths import ROOT
-from src.sketch.cli import main
+from src.play.cli import main
 
 SEATING = ROOT / "examples" / "evening" / "seating.yaml"
 SEATS = ROOT / "tests" / "fixtures" / "evening" / "seats.jsonl"        # this test's own seat map, laid out to be asserted on

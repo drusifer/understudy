@@ -8,10 +8,10 @@ from pathlib import Path
 from unittest.mock import patch
 
 from src.paths import ROOT
-from src.sketch.check import load_checked
-from src.sketch.cli import main
-from src.sketch.registry import STAGES, Stage
-from src.sketch.run import run_sketch
+from src.play.check import load_checked
+from src.play.cli import main
+from src.play.registry import STAGES, Stage
+from src.play.run import run_sketch
 
 BRANCH = ROOT / "tests" / "fixtures" / "machine_branch.yaml"
 TEST_STAGES = {name: Stage(name, None, {}) for name in ("map.count", "map.mark", "map.boom")}

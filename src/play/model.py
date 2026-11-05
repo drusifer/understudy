@@ -31,7 +31,7 @@ class Candidates:
 
 
 @dataclass(frozen=True)
-class Sketch:
+class Play:
     """One sketch file, read and shaped; `machine` and `data` stay as written until a stage uses them."""
 
     path: Path

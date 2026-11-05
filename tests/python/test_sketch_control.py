@@ -9,10 +9,10 @@ from unittest.mock import patch
 
 from test_sketch_run import RunCase, library
 
-from src.sketch import control
-from src.sketch.check import load_checked
-from src.sketch.control import Hold, read_control, write_control
-from src.sketch.run import run_sketch
+from src.play import control
+from src.play.check import load_checked
+from src.play.control import Hold, read_control, write_control
+from src.play.run import run_sketch
 
 
 class ControlFileTests(unittest.TestCase):

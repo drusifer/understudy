@@ -10,7 +10,7 @@ from pathlib import Path
 
 from src.dashboard.view import list_runs
 from src.paths import ROOT
-from src.sketch.cli import main
+from src.play.cli import main
 
 PLAIN = "name: plain\ndescription: x\nmachine: { initial: only, states: { only: { final: true } } }\n"
 COFFEE = ROOT / "tests" / "fixtures" / "coffee"

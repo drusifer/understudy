@@ -2,4 +2,4 @@
 # The `understudy` command: runs the Python package in this project's .venv (run `bobp make install` first).
 root=$(cd "$(dirname "$0")/.." && pwd)
 [ -x "$root/.venv/bin/python" ] || { echo "understudy: no .venv - run 'bobp make install' first" >&2; exit 2; }
-PYTHONPATH="$root${PYTHONPATH:+:$PYTHONPATH}" exec "$root/.venv/bin/python" -m src.sketch.cli "$@"
+PYTHONPATH="$root${PYTHONPATH:+:$PYTHONPATH}" exec "$root/.venv/bin/python" -m src.play.cli "$@"

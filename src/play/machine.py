@@ -9,8 +9,8 @@ import json
 
 from statemachine.io import load
 
-from src.sketch.conditions import holds
-from src.sketch.model import Sketch
+from src.play.conditions import holds
+from src.play.model import Play
 
 
 def _seen(result):
@@ -28,7 +28,7 @@ def _guard(condition: dict):
     return guard
 
 
-def _state(sketch: Sketch, name: str, state: dict, guards: dict) -> dict:
+def _state(sketch: Play, name: str, state: dict, guards: dict) -> dict:
     entry: dict = {}
     if name == sketch.machine["initial"]:
         entry["initial"] = True
@@ -46,7 +46,7 @@ def _state(sketch: Sketch, name: str, state: dict, guards: dict) -> dict:
     return entry
 
 
-def build_machine(sketch: Sketch):
+def build_machine(sketch: Play):
     """A started machine for one run; `machine.model.result` holds the last stage's result for the guards."""
     guards: dict = {}
     states = {name: _state(sketch, name, state, guards) for name, state in sketch.machine["states"].items()}

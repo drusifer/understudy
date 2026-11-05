@@ -32,7 +32,7 @@ from src.dashboard.replay import decisions, replay
 from src.dashboard.runs import Launcher, Refused
 from src.dashboard.view import describe, list_runs, printed, read_events
 from src.paths import ROOT
-from src.sketch.sources.capture import CACHE
+from src.play.sources.capture import CACHE
 
 HERE = Path(__file__).parent
 STATIC_TYPES = {".html": "text/html", ".css": "text/css", ".js": "text/javascript", ".woff2": "font/woff2"}

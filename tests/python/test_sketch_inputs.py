@@ -7,9 +7,9 @@ from pathlib import Path
 
 from src.dashboard.runs import Launcher, Refused
 from src.paths import ROOT
-from src.sketch.cli import main
-from src.sketch.inputs import default_text, problems, value_problem
-from src.sketch.loader import SketchError, load
+from src.play.cli import main
+from src.play.inputs import default_text, problems, value_problem
+from src.play.loader import PlayError, load
 
 HEAD = "name: typed\ndescription: Mood {{ mood }}, weight {{ weight }}, tickets {{ tickets }}, evenings {{ evenings }}.\n"
 BODY = "machine: { initial: only, states: { only: { final: true } } }\n"
@@ -90,19 +90,19 @@ class LoadTests(unittest.TestCase):
         self.assertEqual(sketch.description, "Mood serious, weight 0.3, tickets 4, evenings on.")
 
     def test_a_value_outside_its_limits_is_refused_naming_the_input_and_the_limits(self):
-        with self.assertRaises(SketchError) as stopped:
+        with self.assertRaises(PlayError) as stopped:
             load(self.sketch(HEAD + INPUTS + BODY), variables={"tickets": "40"})
         self.assertIn("input 'tickets': 40 is outside 1 to 10", stopped.exception.problems[0])
 
     def test_a_wrong_declaration_is_refused_naming_the_input(self):
         wrong = INPUTS.replace("default: fun", "default: silly")
-        with self.assertRaises(SketchError) as stopped:
+        with self.assertRaises(PlayError) as stopped:
             load(self.sketch(HEAD + wrong + BODY))
         self.assertIn("input 'mood': default 'silly' is not one of fun, serious", stopped.exception.problems[0])
 
     def test_an_unknown_kind_is_refused_naming_the_input(self):
         wrong = INPUTS.replace("kind: switch", "kind: dial")
-        with self.assertRaises(SketchError) as stopped:
+        with self.assertRaises(PlayError) as stopped:
             load(self.sketch(HEAD + wrong + BODY))
         self.assertIn("input 'evenings'", stopped.exception.problems[0])
 

@@ -9,8 +9,8 @@ from pathlib import Path
 from src.dashboard.chart import guard_text, layout, overlay
 from src.dashboard.view import describe
 from src.paths import ROOT
-from src.sketch.loader import load
-from src.sketch.run import _story_of
+from src.play.loader import load
+from src.play.run import _story_of
 
 HALF = 0.5
 GUARDED = 2  # a move tuple with a guard has three parts

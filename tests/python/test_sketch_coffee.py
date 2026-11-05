@@ -7,15 +7,15 @@ from pathlib import Path
 
 from jev_double import JevDouble
 
-import src.sketch.stages  # noqa: F401 - importing it registers the stages
+import src.play.stages  # noqa: F401 - importing it registers the stages
 from src.jev import Chosen
 from src.paths import ROOT
-from src.sketch.check import check
-from src.sketch.cli import main
-from src.sketch.loader import load
-from src.sketch.registry import STAGES, Data, Param, Source
-from src.sketch.sources.capture import CaptureStore
-from src.sketch.sources.file import read_jsonl
+from src.play.check import check
+from src.play.cli import main
+from src.play.loader import load
+from src.play.registry import STAGES, Data, Param, Source
+from src.play.sources.capture import CaptureStore
+from src.play.sources.file import read_jsonl
 
 FIXTURES = ROOT / "tests" / "fixtures" / "coffee"
 LEVELS = ("much_colder", "colder", "same", "warmer", "much_warmer")

@@ -10,7 +10,7 @@ from pathlib import Path
 
 from src.dashboard.reads import REVIEW_THRESHOLD, jev_reads
 from src.dashboard.server import serve
-from src.sketch.sources.capture import CaptureStore
+from src.play.sources.capture import CaptureStore
 
 RUN = "run-20261101T100000-aaaaaaaa"
 

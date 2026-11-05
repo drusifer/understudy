@@ -7,10 +7,10 @@ reads as `context.last` and what guards test. Counting and converting are DuckDB
 import math
 from difflib import get_close_matches
 
-from src.sketch import stages_pair, stages_rows  # noqa: F401 - importing them registers their stages
-from src.sketch.decide import decide_input
-from src.sketch.registry import Data, Source, stage
-from src.sketch.sql import query
+from src.play import stages_pair, stages_rows  # noqa: F401 - importing them registers their stages
+from src.play.decide import decide_input
+from src.play.registry import Data, Source, stage
+from src.play.sql import query
 
 RECIPE_FIELDS = ("ingredient", "amount", "unit")
 SPLIT_SQL = """

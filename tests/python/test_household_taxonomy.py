@@ -15,10 +15,10 @@ from test_household import LEDGER
 from test_household_pins import PinCase
 
 from src.paths import ROOT
-from src.sketch.check import load_checked
-from src.sketch.fragment import read_stage
-from src.sketch.loader import SketchError
-from src.sketch.mcc import load_mcc
+from src.play.check import load_checked
+from src.play.fragment import read_stage
+from src.play.loader import PlayError
+from src.play.mcc import load_mcc
 
 SHIPPED = ROOT / "examples" / "household" / "additions.jsonl"
 FAMILY = "Clothing outlets: Family clothing shops"  # an ISO category
@@ -65,12 +65,12 @@ class OwnersFileTests(PinCase):
 
     def test_a_path_that_does_not_exist_is_refused_naming_it_before_the_run_starts(self):
         missing = self.dir / "nowhere.jsonl"
-        with self.assertRaises(SketchError) as refused:
+        with self.assertRaises(PlayError) as refused:
             self.sketch_with(str(missing))
         self.assertIn(str(missing), str(refused.exception.problems))
 
     def test_a_relative_path_that_does_not_exist_is_named_as_typed_and_as_looked_for(self):
-        with self.assertRaises(SketchError) as refused:
+        with self.assertRaises(PlayError) as refused:
             self.sketch_with("data/nowhere.jsonl")
         self.assertIn("file data/nowhere.jsonl does not exist (looked for ", str(refused.exception.problems))
 

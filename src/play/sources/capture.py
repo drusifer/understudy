@@ -16,7 +16,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from src.paths import ROOT
-from src.sketch.sources.file import read_jsonl
+from src.play.sources.file import read_jsonl
 
 CACHE = ROOT / ".understudy" / "cache"
 KEEP = 5

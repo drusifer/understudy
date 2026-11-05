@@ -5,10 +5,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-import src.sketch.stages  # noqa: F401 - importing it registers the stages
+import src.play.stages  # noqa: F401 - importing it registers the stages
 from src.jev import Chosen, JevError
-from src.sketch.fragment import Fragment, read_stage
-from src.sketch.loader import load
+from src.play.fragment import Fragment, read_stage
+from src.play.loader import load
 
 SKETCH = """\
 name: fragments

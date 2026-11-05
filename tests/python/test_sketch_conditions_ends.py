@@ -1,7 +1,7 @@
 import unittest
 
-from src.sketch.conditions import holds
-from src.sketch.vocabulary import OPERATORS
+from src.play.conditions import holds
+from src.play.vocabulary import OPERATORS
 
 
 class EndsTests(unittest.TestCase):

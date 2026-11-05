@@ -6,13 +6,13 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import src.sketch.stages  # noqa: F401 - importing it registers the stages
-from src.sketch.check import check, load_checked
-from src.sketch.cli import main
-from src.sketch.loader import SketchError, load
-from src.sketch.registry import STAGES, Stage
-from src.sketch.registry import library as registered
-from src.sketch.run import run_sketch
+import src.play.stages  # noqa: F401 - importing it registers the stages
+from src.play.check import check, load_checked
+from src.play.cli import main
+from src.play.loader import PlayError, load
+from src.play.registry import STAGES, Stage
+from src.play.registry import library as registered
+from src.play.run import run_sketch
 
 PARENT = """\
 name: parent
@@ -86,12 +86,12 @@ class RenderTests(TemplateCase):
 
     def test_a_variable_with_no_default_and_no_value_is_named(self):
         path = self.write(PARENT.replace("tickets | default(2)", "tickets"))
-        with self.assertRaisesRegex(SketchError, "needs a value for 'tickets': pass --with tickets=<value>"):
+        with self.assertRaisesRegex(PlayError, "needs a value for 'tickets': pass --with tickets=<value>"):
             load(path)
 
     def test_a_template_syntax_error_names_the_line(self):
         path = self.write(PARENT.replace("{{ tickets | default(2) }}", "{{ tickets"))
-        with self.assertRaisesRegex(SketchError, "parent.yaml: line \\d+"):
+        with self.assertRaisesRegex(PlayError, "parent.yaml: line \\d+"):
             load(path)
 
     def test_plain_yaml_with_no_template_is_unchanged(self):

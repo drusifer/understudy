@@ -4,10 +4,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.sketch.check import check
-from src.sketch.loader import load
-from src.sketch.sources.capture import CaptureStore
-from src.sketch.sources.reader import Capture, Sources
+from src.play.check import check
+from src.play.loader import load
+from src.play.sources.capture import CaptureStore
+from src.play.sources.reader import Capture, Sources
 
 SKETCH = """\
 name: optional

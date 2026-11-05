@@ -15,21 +15,21 @@ from pathlib import Path
 
 from src.machine_runner import RunRecord, run_machine
 from src.paths import ROOT, check_writable
-from src.sketch.control import Hold, write_control
-from src.sketch.loader import child_path, children, load
-from src.sketch.machine import build_machine
-from src.sketch.model import Sketch
-from src.sketch.registry import StageFn
-from src.sketch.sources.capture import CaptureStore
-from src.sketch.sources.reader import Capture, Sources
-from src.sketch.vocabulary import NOTHING, stage_of
+from src.play.control import Hold, write_control
+from src.play.loader import child_path, children, load
+from src.play.machine import build_machine
+from src.play.model import Play
+from src.play.registry import StageFn
+from src.play.sources.capture import CaptureStore
+from src.play.sources.reader import Capture, Sources
+from src.play.vocabulary import NOTHING, stage_of
 
 
 @dataclass
 class StageContext:
     """What a stage gets: the sketch, its own state as written, what earlier stages returned, the run folder."""
 
-    sketch: Sketch
+    sketch: Play
     name: str
     state: dict
     results: dict
@@ -142,7 +142,7 @@ async def _run_each(context: StageContext, library: Mapping[str, StageFn], recor
     return running if folding else paired
 
 
-async def _run_child(context: StageContext, library: Mapping[str, StageFn], record: EventedRecord, child: Sketch | None = None):
+async def _run_child(context: StageContext, library: Mapping[str, StageFn], record: EventedRecord, child: Play | None = None):
     """Run the sketch this state calls (`do: { sketch: { file: ... } }`) in the same run folder, with the same sources.
 
     Its result is what its last stage returned, or no rows when it ended in a final state with `outcome: none`: a
@@ -164,7 +164,7 @@ async def _run_child(context: StageContext, library: Mapping[str, StageFn], reco
 
 
 def _stages(
-    sketch: Sketch, library: Mapping[str, StageFn], make_context: Callable[[str, dict], StageContext], results: dict,
+    sketch: Play, library: Mapping[str, StageFn], make_context: Callable[[str, dict], StageContext], results: dict,
     record: EventedRecord,
 ):
     stages = {}
@@ -194,10 +194,10 @@ def _stages(
 
 def stage_computer(  # noqa: PLR0913 - what a stage source's stage runs against: the library, the record, the run's state
     library: Mapping[str, StageFn], record: EventedRecord, results: dict, directory: Path, summary: dict, sources: Sources,
-) -> Callable[[Sketch, str], Awaitable[list[dict]]]:
+) -> Callable[[Play, str], Awaitable[list[dict]]]:
     """The function a run gives its `Sources` to compute a stage source (`kind: stage`): the source's `do` and `with`, as
     a state would have them. A run and the fragment harness (`fragment.py`) both use it."""
-    async def compute(owner: Sketch, name: str) -> list[dict]:
+    async def compute(owner: Play, name: str) -> list[dict]:
         config = owner.sources[name].config
         state = {key: config[key] for key in ("do", "with", "each", "reduce") if key in config}
         state.setdefault("with", {})
@@ -210,7 +210,7 @@ def stage_computer(  # noqa: PLR0913 - what a stage source's stage runs against:
 
 
 async def run_sketch(  # noqa: PLR0913 - what a run takes: the sketch, where, its stages, how to announce, capture, pause
-    sketch: Sketch, out: Path, library: Mapping[str, StageFn], announce: Callable[[str], None] = print,
+    sketch: Play, out: Path, library: Mapping[str, StageFn], announce: Callable[[str], None] = print,
     capture: Capture | None = None, pause: bool = False, on_start: Callable[[Path], None] | None = None,
 ) -> RunResult:
     """Run the sketch's machine. Raises whatever a stage raises, after recording the failure. With `pause` the run
@@ -258,7 +258,7 @@ async def run_sketch(  # noqa: PLR0913 - what a run takes: the sketch, where, it
     return RunResult(directory, published, summary, record.manifest.get("outcome"))
 
 
-def _story_of(sketch: Sketch) -> dict:
+def _story_of(sketch: Play) -> dict:
     """The machine as the first line of the event stream tells it: its states, and the moves between them."""
     states = sketch.machine["states"]
     moves = []
@@ -292,7 +292,7 @@ def _remember(stage, last: dict):
     return remembered
 
 
-def _publish(directory: Path, sketch: Sketch, summary: dict) -> dict[str, Path]:
+def _publish(directory: Path, sketch: Play, summary: dict) -> dict[str, Path]:
     (directory / "summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     published = {}
     for name, sink in sketch.sinks.items():

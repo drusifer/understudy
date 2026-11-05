@@ -6,9 +6,9 @@ the bank's export and in the card's). Both know nothing about banks: any two lis
 
 from collections import defaultdict
 
-from src.sketch.conditions import holds
-from src.sketch.dates import business_days_between, to_cents, to_date
-from src.sketch.registry import Source, stage
+from src.play.conditions import holds
+from src.play.dates import business_days_between, to_cents, to_date
+from src.play.registry import Source, stage
 
 
 @stage("map.convert")

@@ -8,8 +8,8 @@ from jev_double import JevDouble
 
 from src.jev import Chosen
 from src.paths import ROOT
-from src.sketch.cli import main
-from src.sketch.sources.capture import CaptureStore
+from src.play.cli import main
+from src.play.sources.capture import CaptureStore
 
 EVENING = ROOT / "examples" / "evening" / "evening.yaml"
 MAX_SHORTLIST = 5

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://understudy.local/schema/decision_sketch.schema.json",
+  "$id": "https://understudy.local/schema/play.schema.json",
   "title": "A decision sketch",
   "description": "The shape of a sketch file. Names, references, conditions and weights are checked further by understudy check.",
   "type": "object",

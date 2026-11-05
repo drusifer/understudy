@@ -5,7 +5,7 @@ from test_sketch_coffee import CoffeeCase, double
 
 from src.dashboard.view import describe
 from src.jev import JevError
-from src.sketch.decide import decide_input
+from src.play.decide import decide_input
 
 
 def events_of(folder):

@@ -9,8 +9,8 @@ A tree is `if` / `then` / `else` over conditions; a leaf is `drink`, a list of w
 A weight is a number, or the same `if` / `then` / `else` (no expression language, ADR-0044).
 """
 
-from src.sketch.blend import Distribution, Opinion, Policy, blend, check_sums, forbid, shortlist
-from src.sketch.conditions import holds
+from src.play.blend import Distribution, Opinion, Policy, blend, check_sums, forbid, shortlist
+from src.play.conditions import holds
 
 
 def leaf_rows(tree: dict, row: dict) -> list[dict]:

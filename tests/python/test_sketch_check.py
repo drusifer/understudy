@@ -4,9 +4,9 @@ import unittest
 from pathlib import Path
 
 from src.paths import ROOT
-from src.sketch import conditions
-from src.sketch.check import check, load_checked
-from src.sketch.loader import SketchError, load
+from src.play import conditions
+from src.play.check import check, load_checked
+from src.play.loader import PlayError, load
 
 FIXTURES = ROOT / "tests" / "fixtures" / "coffee"
 
@@ -111,7 +111,7 @@ class ShapeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "bad.yaml"
             path.write_text("name: bad\n", encoding="utf-8")
-            with self.assertRaises(SketchError) as caught:
+            with self.assertRaises(PlayError) as caught:
                 load(path)
             self.assertIn(f"{path}: (top): 'machine' is a required property", str(caught.exception))
 
@@ -119,7 +119,7 @@ class ShapeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "bad.yaml"
             path.write_text("name: [unclosed\n", encoding="utf-8")
-            with self.assertRaises(SketchError) as caught:
+            with self.assertRaises(PlayError) as caught:
                 load(path)
             self.assertIn("is not valid YAML", str(caught.exception))
 
@@ -132,7 +132,7 @@ class ShapeTests(unittest.TestCase):
         self.assertEqual(load(FIXTURES / "coffee_week.yaml").sources["sales"].path.name, "last_week_sales.jsonl")
 
     def test_an_override_for_an_undeclared_source_is_refused(self):
-        with self.assertRaises(SketchError) as caught:
+        with self.assertRaises(PlayError) as caught:
             load(FIXTURES / "coffee_week.yaml", {"salez": "x.jsonl"})
         self.assertIn("--source names salez", str(caught.exception))
 

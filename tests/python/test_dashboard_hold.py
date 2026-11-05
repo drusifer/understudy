@@ -15,7 +15,7 @@ from src.dashboard.hold import apply_hold
 from src.dashboard.runs import Refused
 from src.dashboard.server import serve
 from src.dashboard.view import describe, list_runs
-from src.sketch.control import read_control, write_control
+from src.play.control import read_control, write_control
 
 RUN = "run-20261103T100000-aaaaaaaa"
 SECRET = "s3cret-for-tests"

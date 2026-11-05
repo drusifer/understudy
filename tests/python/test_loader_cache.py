@@ -7,8 +7,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 from src.paths import ROOT
-from src.sketch import loader
-from src.sketch.loader import SketchError, load, read_template
+from src.play import loader
+from src.play.loader import PlayError, load, read_template
 
 CHILD = """name: child
 description: reads {{ thing }}
@@ -84,13 +84,13 @@ class ChangeTests(CacheCase):
     def test_a_file_that_is_not_valid_is_refused_every_time_and_loads_once_fixed(self):
         self.path.write_text("name: [unclosed\n", encoding="utf-8")
         for _ in range(2):
-            with self.assertRaises(SketchError):
+            with self.assertRaises(PlayError):
                 load(self.path, variables={"thing": "x"})
         self.path.write_text(CHILD, encoding="utf-8")
         self.assertEqual(load(self.path, variables={"thing": "x"}).name, "child")
 
     def test_a_file_that_is_not_there_is_refused_as_before(self):
-        with self.assertRaises(SketchError) as refused:
+        with self.assertRaises(PlayError) as refused:
             load(self.dir / "nothing.yaml")
         self.assertIn("cannot be read", refused.exception.problems[0])
 

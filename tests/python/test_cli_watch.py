@@ -16,7 +16,7 @@ from test_sketch_run import RunCase, library
 
 from src.dashboard import server as dashboard_server
 from src.dashboard import watch as watch_module
-from src.sketch.cli import main
+from src.play.cli import main
 
 ADDRESS = re.compile(r"http://127\.0\.0\.1:(\d+)")
 WAIT = 20  # seconds a test waits for the run to reach a state

@@ -8,9 +8,9 @@ its rows from a named source, which may itself be computed by a stage.
 
 import re
 
-from src.sketch.conditions import holds
-from src.sketch.mcc import load_mcc
-from src.sketch.registry import Data, Source, stage
+from src.play.conditions import holds
+from src.play.mcc import load_mcc
+from src.play.registry import Data, Source, stage
 
 
 def _matching(rows: list[dict], match: dict | None) -> list[dict]:

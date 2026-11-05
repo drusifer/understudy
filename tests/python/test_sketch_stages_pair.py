@@ -2,7 +2,7 @@ import asyncio
 import unittest
 from types import SimpleNamespace
 
-from src.sketch.stages_pair import convert, link, mutual_nearest, pair
+from src.play.stages_pair import convert, link, mutual_nearest, pair
 
 
 def context(**sources):

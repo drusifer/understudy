@@ -20,17 +20,17 @@ from pathlib import Path
 
 from src.dashboard.view import RUN_ID, read_json
 from src.paths import ROOT
-from src.sketch.inputs import problems as input_problems
-from src.sketch.inputs import value_problem
-from src.sketch.loader import SketchError, read_template
-from src.sketch.sources.capture import CACHE
-from src.sketch.vocabulary import stage_of
+from src.play.inputs import problems as input_problems
+from src.play.inputs import value_problem
+from src.play.loader import PlayError, read_template
+from src.play.sources.capture import CACHE
+from src.play.vocabulary import stage_of
 
 MAX_CHILDREN = 4
 SETTLE_SECONDS = 1.5  # a run that dies within this long is reported as a failed start, with the reason it printed
 FIND_RUN_SECONDS = 2.0  # how long to look for the folder a new run makes
 STOP_SECONDS = 3.0  # SIGTERM, then this long, then SIGKILL
-COMMAND = (sys.executable, "-m", "src.sketch.cli")
+COMMAND = (sys.executable, "-m", "src.play.cli")
 TAIL_LINES = 20
 
 
@@ -118,7 +118,7 @@ class Launcher:
             relative = path.relative_to(self.sketches).as_posix()
             try:
                 document, uses = read_template(path)
-            except SketchError as error:
+            except PlayError as error:
                 scanned.append({"path": path, "file": relative, "name": path.stem, "description": "", "with": [], "inputs": [],
                                 "ok": False, "problem": error.problems[0].removeprefix(f"{path}: "), "called": set()})
                 continue

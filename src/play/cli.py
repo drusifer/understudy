@@ -14,20 +14,20 @@ import threading
 from collections.abc import Mapping
 from pathlib import Path
 
-import src.sketch.stages  # noqa: F401 - importing it registers the stages
+import src.play.stages  # noqa: F401 - importing it registers the stages
 from src.dashboard.runs import Launcher, Refused
 from src.dashboard.server import serve_forever
 from src.dashboard.view import list_runs
 from src.dashboard.watch import Watch
 from src.jev import JevError, TypeSafeJev
 from src.paths import OutputPathError
-from src.sketch.check import load_checked
-from src.sketch.loader import SketchError
-from src.sketch.registry import StageFn
-from src.sketch.registry import library as registered
-from src.sketch.run import run_sketch
-from src.sketch.sources.capture import CaptureStore, ReplayError
-from src.sketch.sources.reader import Capture, needs_jev
+from src.play.check import load_checked
+from src.play.loader import PlayError
+from src.play.registry import StageFn
+from src.play.registry import library as registered
+from src.play.run import run_sketch
+from src.play.sources.capture import CaptureStore, ReplayError
+from src.play.sources.reader import Capture, needs_jev
 
 DEFAULT_OUT = Path(".understudy/runs")  # git-ignored and private, beside the captures; `make clean` leaves it alone
 
@@ -38,7 +38,7 @@ def _overrides(pairs: list[str]) -> dict[str, str]:
         name, _, path = pair.partition("=")
         name = name.removesuffix(".path")
         if not name or not path:
-            raise SketchError([f"--source needs <name>.path=<file>, not {pair!r}"])
+            raise PlayError([f"--source needs <name>.path=<file>, not {pair!r}"])
         overrides[name] = path
     return overrides
 
@@ -48,7 +48,7 @@ def _values(pairs: list[str]) -> dict[str, str]:
     for pair in pairs:
         name, separator, value = pair.partition("=")
         if not name or not separator:
-            raise SketchError([f"--with needs <name>=<value>, not {pair!r}"])
+            raise PlayError([f"--with needs <name>=<value>, not {pair!r}"])
         values[name] = str(Path(value).resolve()) if value and not Path(value).is_absolute() and Path(value).is_file() else value
     return values
 
@@ -156,7 +156,7 @@ def main(  # noqa: PLR0911, PLR0913 - the command line's injection points
 
     try:
         sketch = load_checked(args.sketch, _overrides(args.source), _values(args.values))
-    except SketchError as error:
+    except PlayError as error:
         for problem in error.problems[:-1]:
             stderr.write(f"understudy: {problem}\n")
         return fail(error.problems[-1], 2)

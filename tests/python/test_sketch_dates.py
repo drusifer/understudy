@@ -1,7 +1,7 @@
 import unittest
 from datetime import date
 
-from src.sketch.dates import business_days_between, to_cents, to_date
+from src.play.dates import business_days_between, to_cents, to_date
 
 
 class DateTests(unittest.TestCase):

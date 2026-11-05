@@ -11,8 +11,8 @@ import io
 from functools import cache
 
 from src.paths import ROOT
-from src.sketch.check import load_checked
-from src.sketch.fragment import Fragment, read_stage
+from src.play.check import load_checked
+from src.play.fragment import Fragment, read_stage
 
 LEDGER = ROOT / "examples" / "household" / "household.yaml"
 ORACLE = ROOT / "tests" / "fixtures" / "household"
@@ -117,8 +117,8 @@ def run_state(name: str, **stubs):
     tested here; a whole early-stopping run does that."""
     from types import SimpleNamespace
 
-    from src.sketch.registry import library as registered
-    from src.sketch.vocabulary import stage_of
+    from src.play.registry import library as registered
+    from src.play.vocabulary import stage_of
 
     state = household().machine["states"][name]
     kind, target = stage_of(state)

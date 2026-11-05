@@ -11,12 +11,12 @@ import tempfile
 from collections.abc import Callable, Mapping
 from pathlib import Path
 
-from src.sketch.model import Sketch
-from src.sketch.registry import StageFn
-from src.sketch.registry import library as registered
-from src.sketch.run import EventedRecord, stage_computer
-from src.sketch.sources.capture import CaptureStore
-from src.sketch.sources.reader import Capture, Sources
+from src.play.model import Play
+from src.play.registry import StageFn
+from src.play.registry import library as registered
+from src.play.run import EventedRecord, stage_computer
+from src.play.sources.capture import CaptureStore
+from src.play.sources.reader import Capture, Sources
 
 
 def _silent(line: str) -> None:
@@ -33,7 +33,7 @@ class Fragment:
     tests); with none, it is an error, so stub it."""
 
     def __init__(  # noqa: PLR0913 - what a fragment takes: the sketch and the few things a test stands in for
-        self, sketch: Sketch, *, stubs: Mapping[str, list[dict]] | None = None, summary: dict | None = None,
+        self, sketch: Play, *, stubs: Mapping[str, list[dict]] | None = None, summary: dict | None = None,
         library: Mapping[str, StageFn] | None = None, jev=None, announce: Callable[[str], None] = _silent,
     ):
         self.sketch = sketch
@@ -64,7 +64,7 @@ class Fragment:
         return await self.sources.read(self.sketch, name)
 
 
-async def read_stage(sketch: Sketch, name: str, **options) -> list[dict]:
+async def read_stage(sketch: Play, name: str, **options) -> list[dict]:
     """The rows of source `name` of `sketch` in a session of its own; `options` are `Fragment`'s."""
     with Fragment(sketch, **options) as session:
         return await session.read(name)
