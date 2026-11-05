@@ -83,9 +83,9 @@ class CoffeeRunTests(CoffeeCase):
     def test_the_whole_run_writes_the_ingredients_and_counts(self):
         code, lines, err = self.go(jev=double())
         self.assertEqual((code, err), (0, []))
-        self.assertEqual([line for line in lines if line.startswith("stage")], [
-            "stage weather", "stage weather_change.judge", "stage weather_change.give", "stage split_trade",
-            "stage match_orders", "stage to_ingredients", "stage write"])
+        self.assertEqual([line for line in lines if line.startswith("beat")], [
+            "beat weather", "beat weather_change.judge", "beat weather_change.give", "beat split_trade",
+            "beat match_orders", "beat to_ingredients", "beat write"])
         self.assertEqual(read_jsonl(self.folder(lines) / "ingredients.jsonl"),
                          [{"amount": 32000, "ingredient": "coffee_beans", "unit": "g"}])
         summary = self.summary(lines)
@@ -161,7 +161,7 @@ class CoffeeFailureTests(CoffeeCase):
                                                                        "warmer:      { hot: 0.45, ice: 0.55 }"), encoding="utf-8")
         code, _, err = self.go(jev=double())
         self.assertEqual(code, 1)
-        self.assertIn("stage match_orders", err[-1])
+        self.assertIn("beat match_orders", err[-1])
         self.assertIn("temp='ice'", err[-1])
         self.assertIn("did you mean 'iced'", err[-1])
         self.assertEqual(list(self.out.glob("*/ingredients.jsonl")), [])

@@ -286,11 +286,11 @@ class _Drawing:
 
 
 def overlay(story: dict, events: list[dict], run_state: str, ended: str) -> dict:
-    """The layout of a run's machine plus what the run says: the state it is in (lit), the move it just made, and how it ended."""
-    entered = [each["state"] for each in events if each.get("event") == "state_entered"]
-    start = story.get("initial") or next((each["state"] for each in events
-                                           if each.get("event") == "state_entered" and each.get("caused_by") == "start"), None)
-    chart = layout(story["states"], story["transitions"], start)
+    """The layout of a run's scene plus what the run says: the beat it is on (lit), the move it just made, and how it ended."""
+    entered = [each["beat"] for each in events if each.get("event") == "beat_entered"]
+    start = story.get("initial") or next((each["beat"] for each in events
+                                           if each.get("event") == "beat_entered" and each.get("caused_by") == "start"), None)
+    chart = layout(story["beats"], story["transitions"], start)
     current = entered[-1] if entered else None
     last = {"from": entered[-2], "to": entered[-1]} if len(entered) >= MOVE else None
     for node in chart["nodes"]:

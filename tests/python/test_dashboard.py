@@ -15,10 +15,10 @@ from src.dashboard.server import follow, serve
 from src.dashboard.view import describe, gauges_of, list_runs, printed, read_events
 
 EVENTS = [
-    {"event": "run_started", "at": "2026-10-31T01:00:00+00:00", "sketch": "examples/x/coffee.yaml", "mode": "live"},
-    {"event": "stage_started", "at": "2026-10-31T01:00:01+00:00", "stage": "read"},
-    {"event": "stage_completed", "at": "2026-10-31T01:00:11+00:00", "stage": "read"},
-    {"event": "stage_failed", "at": "2026-10-31T01:00:12+00:00", "stage": "write", "reason": "boom"},
+    {"event": "run_started", "at": "2026-10-31T01:00:00+00:00", "play": "examples/x/coffee.yaml", "mode": "live"},
+    {"event": "beat_started", "at": "2026-10-31T01:00:01+00:00", "beat":"read"},
+    {"event": "beat_completed", "at": "2026-10-31T01:00:11+00:00", "beat":"read"},
+    {"event": "beat_failed", "at": "2026-10-31T01:00:12+00:00", "beat":"write", "reason": "boom"},
     {"event": "run_finished", "at": "2026-10-31T01:00:30+00:00", "outcome": "complete"},
 ]
 
@@ -29,7 +29,7 @@ def make_run(root: Path, name: str = "run-20261031T010000-aa11bb22", events=EVEN
     (directory / "events.jsonl").write_text("".join(json.dumps(each) + "\n" for each in events), encoding="utf-8")
     status = "complete" if finished else "running"
     stages = {"read": "complete", "write": "failed"}
-    (directory / "run.json").write_text(json.dumps({"status": status, "stages": stages, "mode": "live"}))
+    (directory / "run.json").write_text(json.dumps({"status": status, "beats":stages, "mode": "live"}))
     (directory / "summary.json").write_text(json.dumps({"jev_requests": 250}))
     return directory
 
@@ -39,7 +39,7 @@ class PrintedTest(unittest.TestCase):
         self.assertEqual(printed(EVENTS[0])["text"], "01:00:00  === UNDERSTUDY RUN LOG ===  examples/x/coffee.yaml  (live)")
         self.assertEqual(printed(EVENTS[1])["text"], "01:00:01    start  read")
         self.assertEqual(printed(EVENTS[3]), {"text": "01:00:12    FAILED write: boom", "tone": "held", "stage": "write",
-                                              "event": "stage_failed"})
+                                              "event": "beat_failed"})
         self.assertEqual(printed(EVENTS[0])["stage"], "")
 
     def test_a_run_lists_the_indices_of_its_failed_lines_for_the_jump_to_first_failure(self):
@@ -58,7 +58,7 @@ class DescribeTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             run = describe(make_run(Path(folder)))
         gauges = {each["name"]: each for each in run["gauges"]}
-        self.assertEqual((gauges["STAGES"]["text"], gauges["STAGES"]["level"]), ("1/2", 0.5))
+        self.assertEqual((gauges["BEATS"]["text"], gauges["BEATS"]["level"]), ("1/2", 0.5))
         self.assertEqual(gauges["FAILED"]["text"], "1")
         self.assertEqual(gauges["FAILED"]["level"], 0.5)
         self.assertEqual((gauges["JEV"]["text"], gauges["JEV"]["level"]), ("250", None))  # no needle: no known full scale
@@ -152,34 +152,34 @@ class RunStateTest(unittest.TestCase):
 
     def test_a_finished_run_is_done_and_says_so_in_one_line_with_what_it_produced(self):
         manifest = {"status": "complete", "mode": "live", "outcome": "all_done", "with": {"mood": "calm"},
-                    "stages": {"read": "complete", "write": "complete"}, "outputs": {"report.jsonl": 3}}
+                    "beats":{"read": "complete", "write": "complete"}, "outputs": {"report.jsonl": 3}}
         run = describe(make_manifest(self.root, "run-20261101T100000-aaaaaaaa", manifest, summary={"stale": False}))
         self.assertEqual(run["state"], "done")
-        self.assertEqual(run["ended"], "done after 2 stages, outcome all_done")
+        self.assertEqual(run["ended"], "done after 2 beats, outcome all_done")
         self.assertEqual(run["summary"]["with"], {"mood": "calm"})
         self.assertEqual(run["summary"]["outputs"], {"report.jsonl": 3})
         self.assertEqual((run["summary"]["mode"], run["summary"]["stale"], run["summary"]["seconds"]), ("live", False, 30))
         self.assertIsNone(run["failure"])
 
     def test_a_failed_run_names_the_stage_the_reason_and_the_printed_line(self):
-        manifest = {"status": "failed", "failed_stage": "write", "error": "boom", "stages": {"read": "complete"}}
+        manifest = {"status": "failed", "failed_beat": "write", "error": "boom", "beats":{"read": "complete"}}
         run = describe(make_manifest(self.root, "run-20261101T100000-bbbbbbbb", manifest))
         self.assertEqual(run["state"], "failed")
         self.assertEqual(run["failure"], {"stage": "write", "reason": "boom", "line": 3})
         self.assertEqual(run["ended"], "failed at write: boom")
 
     def test_a_stopped_run_reads_as_stopped(self):
-        run = describe(make_manifest(self.root, "run-20261101T100000-cccccccc", {"status": "stopped", "stages": {}}, EVENTS[:2]))
+        run = describe(make_manifest(self.root, "run-20261101T100000-cccccccc", {"status": "stopped", "beats":{}}, EVENTS[:2]))
         self.assertEqual(run["state"], "stopped")
 
     def test_a_run_still_going_is_running_until_ten_minutes_of_silence_then_stalled(self):
-        directory = make_manifest(self.root, "run-20261101T100000-dddddddd", {"status": "running", "stages": {}}, EVENTS[:2])
+        directory = make_manifest(self.root, "run-20261101T100000-dddddddd", {"status": "running", "beats":{}}, EVENTS[:2])
         last = datetime.fromisoformat(EVENTS[1]["at"])
         self.assertEqual(describe(directory, now=last + timedelta(minutes=5))["state"], "running")
         self.assertEqual(describe(directory, now=last + timedelta(minutes=11))["state"], "stalled")
 
     def test_a_stalled_run_says_how_long_in_a_sensible_unit(self):
-        directory = make_manifest(self.root, "run-20261101T100000-ffffffff", {"status": "running", "stages": {}}, EVENTS[:2])
+        directory = make_manifest(self.root, "run-20261101T100000-ffffffff", {"status": "running", "beats":{}}, EVENTS[:2])
         last = datetime.fromisoformat(EVENTS[1]["at"])
         self.assertIn("for 30 minutes", describe(directory, now=last + timedelta(minutes=30))["ended"])
         self.assertIn("for 5 hours", describe(directory, now=last + timedelta(hours=5))["ended"])
@@ -199,10 +199,10 @@ class RunStateTest(unittest.TestCase):
 
 def stage_events(*steps: tuple[str, str]) -> list[dict]:
     """Events for (kind, stage) pairs, one second apart: kind is start, done or fail."""
-    kinds = {"start": "stage_started", "done": "stage_completed", "fail": "stage_failed"}
-    started = {"event": "run_started", "at": "2026-11-01T10:00:00+00:00", "sketch": "examples/h/household.yaml", "mode": "live"}
+    kinds = {"start": "beat_started", "done": "beat_completed", "fail": "beat_failed"}
+    started = {"event": "run_started", "at": "2026-11-01T10:00:00+00:00", "play": "examples/h/household.yaml", "mode": "live"}
     return [started] + [
-        {"event": kinds[kind], "at": f"2026-11-01T10:00:{index + 1:02d}+00:00", "stage": stage}
+        {"event": kinds[kind], "at": f"2026-11-01T10:00:{index + 1:02d}+00:00", "beat": stage}
         for index, (kind, stage) in enumerate(steps)
     ]
 
@@ -213,7 +213,7 @@ class StageGroupsTest(unittest.TestCase):
     def tube(self, *steps):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
-            make_manifest(root, "run-20261101T100000-aaaaaaaa", {"status": "running", "stages": {}}, stage_events(*steps))
+            make_manifest(root, "run-20261101T100000-aaaaaaaa", {"status": "running", "beats":{}}, stage_events(*steps))
             return describe(root / "run-20261101T100000-aaaaaaaa", now=datetime.fromisoformat("2026-11-01T10:01:00+00:00"))["tube"]
 
     def test_iterations_of_a_child_sketch_form_one_group_with_the_stages_inside(self):
@@ -248,8 +248,8 @@ class StageGroupsTest(unittest.TestCase):
     def test_the_rack_entry_carries_the_state_and_the_sketch(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
-            make_manifest(root, "run-20261101T100000-bbbbbbbb", {"status": "failed", "failed_stage": "x", "error": "e"}, EVENTS)
-            make_manifest(root, "run-20261101T110000-cccccccc", {"status": "complete", "stages": {}}, EVENTS)
+            make_manifest(root, "run-20261101T100000-bbbbbbbb", {"status": "failed", "failed_beat": "x", "error": "e"}, EVENTS)
+            make_manifest(root, "run-20261101T110000-cccccccc", {"status": "complete", "beats":{}}, EVENTS)
             entries = {each["id"]: each for each in list_runs(root, now=datetime.fromisoformat("2026-10-31T01:01:00+00:00"))}
         self.assertEqual(entries["run-20261101T100000-bbbbbbbb"]["state"], "failed")
         self.assertEqual(entries["run-20261101T110000-cccccccc"],
@@ -273,7 +273,7 @@ class StreamLimitTest(unittest.TestCase):
         stream = follow(self.directory, poll_seconds=0.01, idle_seconds=0.3)
         next(stream)
         with (self.directory / "events.jsonl").open("a") as events:
-            events.write(json.dumps({"event": "stage_started", "at": "2026-11-01T12:00:03+00:00", "stage": "more"}) + "\n")
+            events.write(json.dumps({"event": "beat_started", "at": "2026-11-01T12:00:03+00:00", "beat":"more"}) + "\n")
         chunks = [next(stream) for _ in range(3)]
         self.assertTrue(any(b"more" in each for each in chunks))
         stream.close()

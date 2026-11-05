@@ -92,7 +92,7 @@ class WatchTests(WatchCase):
         run = self.until(lambda: self.runs(base) and self.runs(base)[0]["state"] == "paused", base)[0]["id"]
         self.assertEqual(self.post(base, "step", run, headers)["steps"], 1)
         self.until(lambda: self.events(run).count("paused") == HELD_AGAIN, base)
-        self.assertEqual(self.events(run).count("stage_started"), 1)  # exactly one move
+        self.assertEqual(self.events(run).count("beat_started"), 1)  # exactly one move
         self.assertEqual(self.post(base, "resume", run, headers)["mode"], "run")
         thread.join(WAIT)
         self.assertEqual(result["code"], 0)

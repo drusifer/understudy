@@ -74,6 +74,13 @@ def _run_check(argv: list[str], project: Path) -> list[str]:
     return [] if done.returncode == 0 else [line for line in done.stderr.splitlines() if line.strip()] or ["the check failed"]
 
 
+def _files_read(document: dict) -> set[str]:
+    """The stage files a play reads: each can be given a path when it is started (`--with <name>=<file>`)."""
+    stage = document.get("stage")
+    return {name for name, piece in (stage.items() if isinstance(stage, dict) else [])
+            if isinstance(piece, dict) and piece.get("kind") == "file" and piece.get("access", "read") == "read"}
+
+
 def _called_files(path: Path, document: dict) -> set[Path]:
     """The play files this one calls (`do: { play: <file>.yaml }`), from its beats."""
     scene = document.get("scene")
@@ -123,7 +130,7 @@ class Launcher:
             valid = isinstance(document.get("scene"), dict) and "name" in document and not wrong
             scanned.append({"path": path, "file": relative, "name": str(document.get("name", path.stem)),
                             "description": " ".join(str(document.get("description", "")).split()),
-                            "with": sorted(uses - set(declared)),
+                            "with": sorted((uses - set(declared)) | _files_read(document)),
                             "inputs": [] if wrong else [{**spec, "name": name, "label": spec.get("label", name)}
                                                         for name, spec in declared.items()],
                             "ok": valid,
@@ -254,7 +261,7 @@ class Launcher:
         manifest = self.runs / run_id / "run.json"
         data = read_json(manifest)  # empty when the run was killed before its first stage finished: it never wrote one
         if data.get("status", "running") == "running":
-            data = {"stages": {}, **data, "status": "stopped"}
+            data = {"beats": {}, **data, "status": "stopped"}
             temporary = manifest.with_suffix(".tmp")
             temporary.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
             temporary.replace(manifest)

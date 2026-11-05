@@ -47,7 +47,7 @@ def read_log(directory: Path) -> list[dict]:
     return events
 
 
-DECISION_FIELDS = ("stage", "row", "dimension", "pick", "probability", "options")
+DECISION_FIELDS = ("beat", "row", "dimension", "pick", "probability", "options")
 
 
 def _option(each) -> dict | None:
@@ -72,7 +72,7 @@ def decisions(directory: Path) -> list[dict]:
         missing = [name for name in DECISION_FIELDS if name not in event]
         if len(options) < len(raw) and "options" not in missing:
             missing.append("options")  # only some of them could be shown
-        found.append({"index": index, "stage": event.get("stage"), "row": event.get("row"), "dimension": event.get("dimension"),
+        found.append({"index": index, "stage": event.get("beat"), "row": event.get("row"), "dimension": event.get("dimension"),
                       "pick": event.get("pick"), "probability": event.get("probability"), "options": options, "missing": missing})
     return found
 
@@ -82,7 +82,7 @@ def _state_at(prefix: list[dict], run: dict, at: int, total: int) -> str:
     kinds = [each.get("event") for each in prefix]
     if "run_finished" in kinds:
         return "done"
-    if kinds and kinds[-1] == "stage_failed":
+    if kinds and kinds[-1] == "beat_failed":
         return "failed"
     if at == total:
         final = RUN_STATES.get(run.get("status", "running"), "running")
@@ -102,7 +102,7 @@ def replay(directory: Path, at: int | None = None) -> dict:
     run, summary = read_json(directory / "run.json"), read_json(directory / "summary.json")
     started = next((each for each in prefix if each.get("event") == "run_started"), {})
     state = _state_at(prefix, run, at, len(events))
-    held = {"stage": prefix[-1].get("stage", "?")} if state == "paused" else None
+    held = {"stage": prefix[-1].get("beat", "?")} if state == "paused" else None
     failure = _failure_of(run, prefix) if state == "failed" else None
     last_at = prefix[-1].get("at") if prefix else None
     ended = f"paused before {held['stage']}" if held else _ended(state, run, failure, last_at, datetime.now(UTC))
@@ -114,6 +114,6 @@ def replay(directory: Path, at: int | None = None) -> dict:
                 gauge["text"], gauge["about"] = UNKNOWN, "known when the run ends"
     return {
         "id": directory.name, "at": at, "of": len(events), "state": state, "ended": ended, "hold": held, "failure": failure,
-        "chart": overlay(started, prefix, state, ended) if "states" in started else None,
+        "chart": overlay(started, prefix, state, ended) if "beats" in started else None,
         "tube": tube, "gauges": gauges, "lines": [printed(each) for each in prefix], "seconds": round(_seconds(prefix)),
     }

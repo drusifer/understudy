@@ -38,7 +38,7 @@ test-py: ## Run Python unit tests (ARGS="test_sketch*.py" runs only the files ma
 run: ## Run the understudy command: ARGS="run coffee_week.yaml" | "check coffee_week.yaml" | "dashboard" | "run examples/household/household.yaml --with monarch=... --with amex=... --with amex_account=..."
 	@$(LOAD_ENV) bin/understudy $(ARGS)
 
-dashboard: ## Serve the operations console over .understudy/runs on 0.0.0.0:4180 (ARGS="--port 4180 --sketches examples")
+dashboard: ## Serve the operations console over .understudy/runs on 0.0.0.0:4180 (ARGS="--port 4180 --plays examples")
 	@bin/understudy dashboard $(ARGS)
 
 lint: ## ruff over the Python

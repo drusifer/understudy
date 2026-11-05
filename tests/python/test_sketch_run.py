@@ -65,21 +65,21 @@ class RunCase(unittest.TestCase):
 class MachineTests(RunCase):
     def test_a_guard_is_taken_only_when_its_condition_holds(self):
         quiet, lines = self.run_it(library(count=100))
-        self.assertEqual(lines, ["stage count", "stage quiet", "stage write"])
+        self.assertEqual(lines, ["beat count", "beat quiet", "beat write"])
         self.assertEqual(json.loads(quiet.outputs["report"].read_text(encoding="utf-8")), {"took": "quiet"})
         busy, lines = self.run_it(library(count=900))
-        self.assertEqual(lines, ["stage count", "stage busy", "stage write"])
+        self.assertEqual(lines, ["beat count", "beat busy", "beat write"])
         self.assertEqual(json.loads(busy.outputs["report"].read_text(encoding="utf-8")), {"took": "busy"})
 
     def test_the_run_folder_records_each_stage_and_the_events(self):
         result, _ = self.run_it(library())
         manifest = json.loads((result.directory / "run.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["status"], "complete")
-        self.assertEqual(manifest["stages"], {"count": "complete", "quiet": "complete", "write": "complete"})
+        self.assertEqual(manifest["beats"], {"count": "complete", "quiet": "complete", "write": "complete"})
         events = [json.loads(line)["event"] for line in (result.directory / "events.jsonl").read_text(encoding="utf-8").splitlines()]
         self.assertEqual(events[0], "run_started")
         self.assertEqual(events[-1], "run_finished")
-        self.assertEqual(events.count("stage_started"), 3)
+        self.assertEqual(events.count("beat_started"), 3)
         summary = json.loads((result.directory / "summary.json").read_text(encoding="utf-8"))
         self.assertEqual(summary["mode"], "live")
 
@@ -93,10 +93,10 @@ class MachineTests(RunCase):
     def test_the_run_started_event_names_the_sketch_relative_to_the_project_not_as_typed(self):
         result, _ = self.run_it(library(), BRANCH)
         first = json.loads((result.directory / "events.jsonl").read_text(encoding="utf-8").splitlines()[0])
-        self.assertEqual(first["sketch"], "tests/fixtures/machine_branch.yaml")
+        self.assertEqual(first["play"], "tests/fixtures/machine_branch.yaml")
         outside, _ = self.run_it(library())
         first = json.loads((outside.directory / "events.jsonl").read_text(encoding="utf-8").splitlines()[0])
-        self.assertEqual(first["sketch"], "sketch.yaml")
+        self.assertEqual(first["play"], "sketch.yaml")
 
     def test_a_failed_stage_publishes_nothing_and_says_where_it_stopped(self):
         with self.assertRaisesRegex(RuntimeError, "boom"):
@@ -104,8 +104,8 @@ class MachineTests(RunCase):
         folder = self.only_run_folder()
         manifest = json.loads((folder / "run.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["status"], "failed")
-        self.assertEqual(manifest["failed_stage"], "quiet")
-        self.assertEqual(manifest["stages"], {"count": "complete"})
+        self.assertEqual(manifest["failed_beat"], "quiet")
+        self.assertEqual(manifest["beats"], {"count": "complete"})
         self.assertEqual(sorted(p.name for p in folder.iterdir()), ["events.jsonl", "run.json"])
 
     def test_a_failure_after_the_sink_removes_the_partial_output(self):
@@ -144,7 +144,7 @@ class CliTests(RunCase):
     def test_run_prints_a_line_per_stage_and_names_the_output(self):
         code, out, err = self.go("run", str(self.sketch()), "--out", str(self.out))
         self.assertEqual(code, 0)
-        self.assertEqual(out[:3], ["stage count", "stage quiet", "stage write"])
+        self.assertEqual(out[:3], ["beat count", "beat quiet", "beat write"])
         self.assertTrue(out[-1].startswith("wrote ") and out[-1].endswith("report.jsonl"))
         self.assertEqual(err, [])
 
@@ -179,7 +179,7 @@ class CliTests(RunCase):
     def test_a_failed_stage_is_exit_1_with_one_line_and_no_traceback(self):
         code, out, err = self.go("run", str(self.sketch()), "--out", str(self.out), lib=library(fail_in="quiet"))
         self.assertEqual((code, err), (1, ["understudy: boom"]))
-        self.assertEqual(out, ["stage count", "stage quiet"])
+        self.assertEqual(out, ["beat count", "beat quiet"])
 
     def test_output_in_a_tracked_folder_is_refused_before_starting(self):
         code, out, err = self.go("run", str(self.sketch()), "--out", str(ROOT / "src"))

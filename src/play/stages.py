@@ -59,11 +59,11 @@ def _validate(rows: list[dict], decider: str, outcomes: dict, stage: str) -> Non
         for dimension, option in ((d, o) for d, o in row.items() if d != "weight"):
             if dimension not in outcomes:
                 near = get_close_matches(dimension, list(outcomes), n=1)
-                raise ValueError(f"stage {stage}: {decider!r} returned {dimension!r}, not a declared outcome"
+                raise ValueError(f"beat {stage}: {decider!r} returned {dimension!r}, not a declared outcome"
                                  + (f" (did you mean {near[0]!r}?)" if near else ""))
             if option not in outcomes[dimension]:
                 near = get_close_matches(str(option), list(outcomes[dimension]), n=1)
-                raise ValueError(f"stage {stage}: {decider!r} returned {dimension}={option!r}, not a declared option"
+                raise ValueError(f"beat {stage}: {decider!r} returned {dimension}={option!r}, not a declared option"
                                  + (f" (did you mean {near[0]!r}?)" if near else ""))
 
 
@@ -96,7 +96,7 @@ async def blend(
         distribution = decide_input(state, row, deciders, allowed=outcomes, story=story)
         for decision in story:
             if context.emit:
-                context.emit("decision", stage=context.name, row=row.get("segment", "the input row"), **decision)
+                context.emit("decision", beat=context.name, row=row.get("segment", "the input row"), **decision)
         # options read from rows are known only now, so what the blend produced is checked against them
         _validate([{d: o} for d, options in distribution.items() for o in options], "the blend", outcomes, context.name)
         weighted += [{**row, "dimension": d, "option": o, "weight": w}

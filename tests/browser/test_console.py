@@ -42,7 +42,8 @@ CHROMIUM = os.environ.get("CHROMIUM", "/usr/bin/chromium")
 SECRET = "browser-test-secret"
 LOOKS = [(theme, mode) for theme in ("steampunk", "professional", "starship") for mode in ("light", "dark")]
 LOOK_WORKERS = 3  # browser processes measuring looks at once (the machine has four cores; the server and the test use one)
-PLAIN = "name: plain\ndescription: a sketch to start\nsources:\n  data: {{ file }}\nmachine: { initial: only, states: { only: { final: true } } }\n"
+PLAIN = ("name: plain\ndescription: a play to start\nstage:\n  data: { kind: file, path: \"{{ file }}\" }\n"
+         "scene: { initial: only, beats: { only: { final: true } } }\n")
 
 # What each piece of text is checked for: the selectors worth reading on every screen (WCAG AA: 4.5:1, 3:1 for large text).
 READABLE = [
@@ -195,17 +196,17 @@ class BrowserCase(unittest.TestCase):
 
     def failed_and_done_runs(self):
         failed = write_run(self.runs, "run-20261101T120000-0000000a", [
-            {"event": "run_started", "at": stamp(0), "sketch": "examples/household/household.yaml", "mode": "live", **STORY},
+            {"event": "run_started", "at": stamp(0), "play": "examples/household/household.yaml", "mode": "live", **STORY},
             entered(1, "a", "start"), entered(1, "b", "ok"),  # a diagram for the readability check to measure
-            {"event": "stage_started", "at": stamp(1), "stage": "read"},
-            {"event": "stage_failed", "at": stamp(2), "stage": "read", "reason": "Jev needs a TypeSafe key"}],
-            {"status": "failed", "failed_stage": "read", "error": "Jev needs a TypeSafe key", "stages": {}, "mode": "live"})
+            {"event": "beat_started", "at": stamp(1), "beat": "read"},
+            {"event": "beat_failed", "at": stamp(2), "beat": "read", "reason": "Jev needs a TypeSafe key"}],
+            {"status": "failed", "failed_beat": "read", "error": "Jev needs a TypeSafe key", "beats":{}, "mode": "live"})
         spending(failed, 12)  # a long list on the run the readability check looks at
         write_run(self.runs, "run-20261101T120100-0000000b", [
-            {"event": "run_started", "at": stamp(0), "sketch": "examples/evening/evening.yaml", "mode": "replay"},
-            {"event": "stage_started", "at": stamp(1), "stage": "pick"}, {"event": "stage_completed", "at": stamp(2), "stage": "pick"},
+            {"event": "run_started", "at": stamp(0), "play": "examples/evening/evening.yaml", "mode": "replay"},
+            {"event": "beat_started", "at": stamp(1), "beat": "pick"}, {"event": "beat_completed", "at": stamp(2), "beat": "pick"},
             {"event": "run_finished", "at": stamp(3), "outcome": "booked"}],
-            {"status": "complete", "stages": {"pick": "complete"}, "mode": "replay", "outcome": "booked", "outputs": {"booking.jsonl": 1}},
+            {"status": "complete", "beats":{"pick": "complete"}, "mode": "replay", "outcome": "booked", "outputs": {"booking.jsonl": 1}},
             {"stale": False})
 
 
@@ -217,8 +218,8 @@ class SpendingListTest(BrowserCase):
 
     def test_the_ten_largest_categories_are_listed_with_amount_and_share_and_the_rest_are_counted(self):
         run = write_run(self.runs, "run-20261101T130000-0000000c", [
-            {"event": "run_started", "at": stamp(0), "sketch": "examples/household/household.yaml", "mode": "live"},
-            {"event": "run_finished", "at": stamp(1), "outcome": "complete"}], {"status": "complete", "stages": {}, "mode": "live"})
+            {"event": "run_started", "at": stamp(0), "play": "examples/household/household.yaml", "mode": "live"},
+            {"event": "run_finished", "at": stamp(1), "outcome": "complete"}], {"status": "complete", "beats":{}, "mode": "live"})
         spending(run, 13)
         page = self.page()
         self.open_run(page, "run-20261101T130000-0000000c")
@@ -232,8 +233,8 @@ class SpendingListTest(BrowserCase):
 
     def test_a_run_without_the_file_shows_no_list_and_no_heading(self):
         write_run(self.runs, "run-20261101T130100-0000000d", [
-            {"event": "run_started", "at": stamp(0), "sketch": "x/plain.yaml", "mode": "live"},
-            {"event": "run_finished", "at": stamp(1), "outcome": "complete"}], {"status": "complete", "stages": {}, "mode": "live"})
+            {"event": "run_started", "at": stamp(0), "play": "x/plain.yaml", "mode": "live"},
+            {"event": "run_finished", "at": stamp(1), "outcome": "complete"}], {"status": "complete", "beats":{}, "mode": "live"})
         page = self.page()
         self.open_run(page, "run-20261101T130100-0000000d")
         page.wait_for_function("document.getElementById('status-text').textContent === 'DONE'")
@@ -243,8 +244,8 @@ class SpendingListTest(BrowserCase):
 
     def test_a_spending_file_the_console_cannot_read_is_named_and_the_page_still_works(self):
         run = write_run(self.runs, "run-20261101T130200-0000000e", [
-            {"event": "run_started", "at": stamp(0), "sketch": "x/household.yaml", "mode": "live"},
-            {"event": "run_finished", "at": stamp(1), "outcome": "complete"}], {"status": "complete", "stages": {}, "mode": "live"})
+            {"event": "run_started", "at": stamp(0), "play": "x/household.yaml", "mode": "live"},
+            {"event": "run_finished", "at": stamp(1), "outcome": "complete"}], {"status": "complete", "beats":{}, "mode": "live"})
         (run / "spending.jsonl").write_text('{"category": "Rent", "amount": 5, "share": 1}\nnot json\n', encoding="utf-8")
         page = self.page()
         self.open_run(page, "run-20261101T130200-0000000e")
@@ -254,8 +255,8 @@ class SpendingListTest(BrowserCase):
 
     def test_the_list_fits_a_phone_without_sideways_scrolling(self):
         run = write_run(self.runs, "run-20261101T130300-0000000f", [
-            {"event": "run_started", "at": stamp(0), "sketch": "x/household.yaml", "mode": "live"},
-            {"event": "run_finished", "at": stamp(1), "outcome": "complete"}], {"status": "complete", "stages": {}, "mode": "live"})
+            {"event": "run_started", "at": stamp(0), "play": "x/household.yaml", "mode": "live"},
+            {"event": "run_finished", "at": stamp(1), "outcome": "complete"}], {"status": "complete", "beats":{}, "mode": "live"})
         spending(run, 12)
         page = self.page(width=390, height=800)
         self.open_run(page, "run-20261101T130300-0000000f")
@@ -304,7 +305,7 @@ class RackAndBannerTest(BrowserCase):
 class LiveFollowTest(BrowserCase):
     def test_lines_appended_to_a_running_run_appear_without_a_reload_and_the_run_ends_cleanly(self):
         directory = write_run(self.runs, "run-20261101T130000-0000000c", [
-            {"event": "run_started", "at": stamp(-1), "sketch": "x/live.yaml", "mode": "live"}], {"status": "running", "stages": {}})
+            {"event": "run_started", "at": stamp(-1), "play": "x/live.yaml", "mode": "live"}], {"status": "running", "beats":{}})
         page = self.page()
         page.goto(self.start())
         page.wait_for_selector(".sketch-tab")
@@ -312,12 +313,12 @@ class LiveFollowTest(BrowserCase):
         page.wait_for_function("document.getElementById('status-text').textContent === 'RUNNING'")
         before = page.locator("#paper .line").count()
         with (directory / "events.jsonl").open("a") as events:
-            events.write(json.dumps({"event": "stage_started", "at": stamp(-1), "stage": "build"}) + "\n")
+            events.write(json.dumps({"event": "beat_started", "at": stamp(-1), "beat": "build"}) + "\n")
         page.wait_for_function(f"document.querySelectorAll('#paper .line').length > {before}", timeout=10000)
         with (directory / "events.jsonl").open("a") as events:
-            events.write(json.dumps({"event": "stage_completed", "at": stamp(-1), "stage": "build"}) + "\n")
+            events.write(json.dumps({"event": "beat_completed", "at": stamp(-1), "beat": "build"}) + "\n")
             events.write(json.dumps({"event": "run_finished", "at": stamp(-1), "outcome": "complete"}) + "\n")
-        (directory / "run.json").write_text(json.dumps({"status": "complete", "stages": {"build": "complete"}}))
+        (directory / "run.json").write_text(json.dumps({"status": "complete", "beats":{"build": "complete"}}))
         page.wait_for_function("document.getElementById('status-text').textContent === 'DONE'", timeout=15000)
         self.assertEqual(page.locator(".stage-lamp.complete").count(), 1)
 
@@ -328,8 +329,8 @@ class StartAndStopTest(BrowserCase):
         sketches.mkdir()
         (sketches / "plain.yaml").write_text(PLAIN, encoding="utf-8")
         (self.root / "in.csv").write_text("a\n", encoding="utf-8")
-        run = write_run(self.runs, "run-20261101T140000-0000000d", [{"event": "run_started", "at": stamp(-1), "sketch": "p.yaml", "mode": "live"}],
-                        {"status": "running", "stages": {}})
+        run = write_run(self.runs, "run-20261101T140000-0000000d", [{"event": "run_started", "at": stamp(-1), "play": "p.yaml", "mode": "live"}],
+                        {"status": "running", "beats":{}})
 
         def sleeper(argv, **options):
             return _Child([sys.executable, "-c", "import time; time.sleep(60)"], **options)
@@ -369,8 +370,8 @@ class StartAndStopTest(BrowserCase):
 class HoldButtonsTest(BrowserCase):
     def held_run(self):
         return write_run(self.runs, "run-20261101T150000-0000000e", [
-            {"event": "run_started", "at": stamp(-1), "sketch": "p.yaml", "mode": "live", **STORY},
-            {"event": "paused", "at": stamp(-1), "stage": "a"}], {"status": "running", "stages": {}})
+            {"event": "run_started", "at": stamp(-1), "play": "p.yaml", "mode": "live", **STORY},
+            {"event": "paused", "at": stamp(-1), "beat": "a"}], {"status": "running", "beats":{}})
 
     def test_a_held_run_reads_paused_and_the_hold_buttons_work_once_unlocked_and_only_where_they_apply(self):
         run = self.held_run()
@@ -390,7 +391,7 @@ class HoldButtonsTest(BrowserCase):
         self.assertTrue(page.locator("#pause").is_disabled())  # it is already held
         self.assertFalse(page.locator("#resume").is_disabled())
         page.click("#step")
-        page.wait_for_function("document.getElementById('start-message').textContent.includes('one stage')")
+        page.wait_for_function("document.getElementById('start-message').textContent.includes('one beat')")
         self.assertEqual(json.loads((run / "control.json").read_text(encoding="utf-8")), {"mode": "hold", "steps": 1})
         page.click("#resume")
         page.wait_for_function("document.getElementById('start-message').textContent.includes('running on')")
@@ -405,14 +406,14 @@ class HoldButtonsTest(BrowserCase):
 
 
 TYPED = """name: typed
-description: A sketch with typed inputs and one plain value ({{ note | default('none') }}).
-inputs:
+description: A play with typed props and one plain value ({{ note | default('none') }}).
+stage:
   mood: { kind: choice, label: Mood, options: [fun, serious, dramatic], default: fun }
   weight: { kind: range, label: Weight, min: 0, max: 1, step: 0.05, default: 0.3 }
   tickets: { kind: count, label: Party size, min: 1, max: 3, default: 2 }
   evenings: { kind: switch, label: Evenings only, default: "on" }
 data: { mood: "{{ mood }}", weight: {{ weight }}, tickets: {{ tickets }}, evenings: "{{ evenings }}" }
-machine: { initial: only, states: { only: { final: true } } }
+scene: { initial: only, beats: { only: { final: true } } }
 """
 
 
@@ -421,8 +422,8 @@ class TypedControlsTest(BrowserCase):
         sketches = self.root / "sketches"
         sketches.mkdir()
         (sketches / "typed.yaml").write_text(TYPED, encoding="utf-8")
-        run = write_run(self.runs, "run-20261101T150000-0000000e", [{"event": "run_started", "at": stamp(-1), "sketch": "typed.yaml",
-                                                                    "mode": "live"}], {"status": "running", "stages": {}})
+        run = write_run(self.runs, "run-20261101T150000-0000000e", [{"event": "run_started", "at": stamp(-1), "play": "typed.yaml",
+                                                                    "mode": "live"}], {"status": "running", "beats":{}})
         self.started: list[list[str]] = []
 
         def spawn(argv, **options):
@@ -515,17 +516,17 @@ class TypedControlsTest(BrowserCase):
             self.assertTrue(box and box["x"] >= 0 and box["x"] + box["width"] <= 390, selector)
 
 
-STORY = {"initial": "a", "states": [{"name": "a", "final": False}, {"name": "b", "final": False}, {"name": "c", "final": True}],
+STORY = {"initial": "a", "beats":[{"name": "a", "final": False}, {"name": "b", "final": False}, {"name": "c", "final": True}],
          "transitions": [{"from": "a", "to": "b", "event": "ok"}, {"from": "b", "to": "c", "event": "ok", "when": {"ready": {"eq": True}}}]}
 
 
 def entered(second: int, state_name: str, cause: str) -> dict:
-    return {"event": "state_entered", "at": stamp(second), "state": state_name, "caused_by": cause}
+    return {"event": "beat_entered", "at": stamp(second), "beat": state_name, "caused_by": cause}
 
 
 class StatechartTest(BrowserCase):
     def run_with_story(self, name, events, manifest, story=None):
-        started = {"event": "run_started", "at": stamp(0), "sketch": "x/chart.yaml", "mode": "live", **(STORY if story is None else story)}
+        started = {"event": "run_started", "at": stamp(0), "play": "x/chart.yaml", "mode": "live", **(STORY if story is None else story)}
         return write_run(self.runs, name, [started, *events], manifest)
 
     def open(self, name, width=1300, height=900):
@@ -537,7 +538,7 @@ class StatechartTest(BrowserCase):
 
     def test_each_state_is_a_box_with_a_name_finals_are_double_bordered_and_only_guarded_moves_have_labels(self):
         name = "run-20261101T160000-00000001"
-        self.run_with_story(name, [entered(1, "a", "start"), entered(2, "b", "ok")], {"status": "running", "stages": {}})
+        self.run_with_story(name, [entered(1, "a", "start"), entered(2, "b", "ok")], {"status": "running", "beats":{}})
         page = self.open(name)
         page.wait_for_selector(".state")
         self.assertEqual(page.locator(".state").count(), 3)
@@ -546,12 +547,12 @@ class StatechartTest(BrowserCase):
         self.assertEqual(page.locator(".edge-label-text").count(), 1)
         self.assertEqual(page.locator(".edge-label-text").text_content(), "ready = true")
         self.assertEqual(page.get_by_role("img", name="a", exact=True).count(), 1)
-        self.assertEqual(page.get_by_role("img", name="b, current state", exact=True).count(), 1)
-        self.assertEqual(page.get_by_role("img", name="c, final state", exact=True).count(), 1)
+        self.assertEqual(page.get_by_role("img", name="b, current beat", exact=True).count(), 1)
+        self.assertEqual(page.get_by_role("img", name="c, final beat", exact=True).count(), 1)
 
     def test_the_state_the_run_is_in_is_lit_and_the_move_just_taken_is_marked(self):
         name = "run-20261101T160100-00000002"
-        self.run_with_story(name, [entered(-1, "a", "start")], {"status": "running", "stages": {}})
+        self.run_with_story(name, [entered(-1, "a", "start")], {"status": "running", "beats":{}})
         page = self.open(name)
         page.wait_for_selector(".state.current")
         self.assertEqual(page.locator(".state.current").get_attribute("data-state"), "a")
@@ -559,7 +560,7 @@ class StatechartTest(BrowserCase):
 
     def test_the_light_moves_to_the_next_state_within_a_second_of_the_change(self):
         name = "run-20261101T160200-00000003"
-        run = self.run_with_story(name, [entered(-1, "a", "start")], {"status": "running", "stages": {}})
+        run = self.run_with_story(name, [entered(-1, "a", "start")], {"status": "running", "beats":{}})
         page = self.open(name)
         page.wait_for_selector(".state.current[data-state='a']")
         with (run / "events.jsonl").open("a", encoding="utf-8") as events:
@@ -572,7 +573,7 @@ class StatechartTest(BrowserCase):
         name = "run-20261101T160300-00000004"
         self.run_with_story(name, [entered(1, "a", "start"), entered(2, "b", "ok"), entered(3, "c", "ok"),
                                    {"event": "run_finished", "at": stamp(4), "outcome": "complete"}],
-                            {"status": "complete", "stages": {}, "outcome": "complete"})
+                            {"status": "complete", "beats":{}, "outcome": "complete"})
         page = self.open(name)
         page.wait_for_selector(".state.current[data-state='c']")
         page.wait_for_function("document.getElementById('status-text').textContent === 'DONE'")
@@ -580,9 +581,9 @@ class StatechartTest(BrowserCase):
 
     def test_a_run_whose_log_has_no_story_says_so_and_draws_nothing(self):
         name = "run-20261101T160400-00000005"
-        write_run(self.runs, name, [{"event": "run_started", "at": stamp(0), "sketch": "x/old.yaml", "mode": "live"},
+        write_run(self.runs, name, [{"event": "run_started", "at": stamp(0), "play": "x/old.yaml", "mode": "live"},
                                     {"event": "run_finished", "at": stamp(1), "outcome": "complete"}],
-                  {"status": "complete", "stages": {}})
+                  {"status": "complete", "beats":{}})
         page = self.open(name)
         page.wait_for_function("document.getElementById('status-text').textContent === 'DONE'")
         self.assertIn("no story", page.locator("#chart-note").inner_text())
@@ -591,9 +592,9 @@ class StatechartTest(BrowserCase):
     def test_names_and_guards_with_markup_are_drawn_as_text_and_run_nothing(self):
         name = "run-20261101T160500-00000006"
         hostile = "<img src=x onerror=window.pwned=1>"
-        story = {"initial": hostile, "states": [{"name": hostile, "final": False}, {"name": "b", "final": True}],
+        story = {"initial": hostile, "beats":[{"name": hostile, "final": False}, {"name": "b", "final": True}],
                  "transitions": [{"from": hostile, "to": "b", "event": "ok", "when": {"<b>x</b>": {"eq": 1}}}]}
-        self.run_with_story(name, [entered(1, hostile, "start")], {"status": "running", "stages": {}}, story=story)
+        self.run_with_story(name, [entered(1, hostile, "start")], {"status": "running", "beats":{}}, story=story)
         page = self.open(name)
         page.wait_for_selector(".state")
         self.assertEqual(page.evaluate("window.pwned"), None)
@@ -603,7 +604,7 @@ class StatechartTest(BrowserCase):
 
     def test_the_diagram_fits_a_phone_without_sideways_scrolling_of_the_page(self):
         name = "run-20261101T160600-00000007"
-        self.run_with_story(name, [entered(1, "a", "start")], {"status": "running", "stages": {}})
+        self.run_with_story(name, [entered(1, "a", "start")], {"status": "running", "beats":{}})
         page = self.open(name, width=390, height=900)
         page.wait_for_selector(".state")
         self.assertTrue(page.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth"))
@@ -699,13 +700,13 @@ class ReplayBarTest(BrowserCase):
     EVENTS = 9  # run_started, three state_entered, two stages (two events each), run_finished
 
     def finished(self, name=None):
-        started = {"event": "run_started", "at": stamp(0), "sketch": "x/chart.yaml", "mode": "live", **STORY}
+        started = {"event": "run_started", "at": stamp(0), "play": "x/chart.yaml", "mode": "live", **STORY}
         return write_run(self.runs, name or self.NAME, [
-            started, entered(1, "a", "start"), {"event": "stage_started", "at": stamp(2), "stage": "a"},
-            {"event": "stage_completed", "at": stamp(3), "stage": "a"}, entered(4, "b", "ok"),
-            {"event": "stage_started", "at": stamp(5), "stage": "b"}, {"event": "stage_completed", "at": stamp(6), "stage": "b"},
+            started, entered(1, "a", "start"), {"event": "beat_started", "at": stamp(2), "beat": "a"},
+            {"event": "beat_completed", "at": stamp(3), "beat": "a"}, entered(4, "b", "ok"),
+            {"event": "beat_started", "at": stamp(5), "beat": "b"}, {"event": "beat_completed", "at": stamp(6), "beat": "b"},
             entered(7, "c", "ok"), {"event": "run_finished", "at": stamp(8), "outcome": "complete"}],
-            {"status": "complete", "stages": {"a": "complete", "b": "complete"}, "mode": "live", "outcome": "complete"})
+            {"status": "complete", "beats":{"a": "complete", "b": "complete"}, "mode": "live", "outcome": "complete"})
 
     def open(self, width=1300, height=900):
         page = self.page(width, height)
@@ -729,7 +730,7 @@ class ReplayBarTest(BrowserCase):
             page.click("#replay-step")
         page.wait_for_function(f"document.getElementById('replay-at').textContent === 'event 4 of {self.EVENTS}'")
         self.assertEqual(page.locator("#paper .line").count(), 4)
-        self.assertEqual(page.get_by_role("img", name="a, current state", exact=True).count(), 1)
+        self.assertEqual(page.get_by_role("img", name="a, current beat", exact=True).count(), 1)
         self.assertEqual(self.text(page, "#status-text"), "REPLAY")
         page.click("#replay-back")
         page.wait_for_function(f"document.getElementById('replay-at').textContent === 'event 3 of {self.EVENTS}'")
@@ -742,8 +743,8 @@ class ReplayBarTest(BrowserCase):
         page.wait_for_function("!document.getElementById('replay-scrub').disabled")
         page.locator("#replay-scrub").fill(str(self.EVENTS))
         page.wait_for_function(f"document.getElementById('replay-at').textContent === 'event {self.EVENTS} of {self.EVENTS}'")
-        self.assertIn("done after 2 stages", self.text(page, "#ended"))
-        self.assertEqual(page.get_by_role("img", name="c, final state, current state", exact=False).count(), 1)
+        self.assertIn("done after 2 beats", self.text(page, "#ended"))
+        self.assertEqual(page.get_by_role("img", name="c, final beat, current beat", exact=False).count(), 1)
         page.locator("#replay-scrub").fill("0")
         page.wait_for_function(f"document.getElementById('replay-at').textContent === 'event 0 of {self.EVENTS}'")
         self.assertEqual(page.locator("#paper .line").count(), 0)
@@ -801,8 +802,8 @@ class ReplayBarTest(BrowserCase):
         self.assertTrue(page.locator("#replay").is_hidden() or page.locator("#replay-scrub").is_disabled())
 
     def test_a_run_that_is_still_going_cannot_be_replayed(self):
-        write_run(self.runs, self.NAME, [{"event": "run_started", "at": stamp(-1), "sketch": "p.yaml", "mode": "live"}],
-                  {"status": "running", "stages": {}})
+        write_run(self.runs, self.NAME, [{"event": "run_started", "at": stamp(-1), "play": "p.yaml", "mode": "live"}],
+                  {"status": "running", "beats":{}})
         page = self.page()
         page.goto(self.start())
         page.wait_for_function("document.getElementById('status-text').textContent === 'RUNNING'")
@@ -844,7 +845,7 @@ class ReplayBarTest(BrowserCase):
 
 
 def a_decision(second, row, pick, options):
-    return {"event": "decision", "at": stamp(second), "stage": "match", "row": row, "dimension": "temp", "pick": pick,
+    return {"event": "decision", "at": stamp(second), "beat": "match", "row": row, "dimension": "temp", "pick": pick,
             "probability": 0.7, "options": options}
 
 
@@ -857,11 +858,11 @@ class DecisionPanelTest(BrowserCase):
     NAME = "run-20261101T180000-00000001"
 
     def deciding(self, decisions, name=None):
-        started = {"event": "run_started", "at": stamp(0), "sketch": "x/chart.yaml", "mode": "live", **STORY}
-        events = [started, entered(1, "a", "start"), {"event": "stage_started", "at": stamp(2), "stage": "match"}, *decisions,
-                  {"event": "stage_completed", "at": stamp(8), "stage": "match"}, {"event": "run_finished", "at": stamp(9), "outcome": "complete"}]
+        started = {"event": "run_started", "at": stamp(0), "play": "x/chart.yaml", "mode": "live", **STORY}
+        events = [started, entered(1, "a", "start"), {"event": "beat_started", "at": stamp(2), "beat": "match"}, *decisions,
+                  {"event": "beat_completed", "at": stamp(8), "beat": "match"}, {"event": "run_finished", "at": stamp(9), "outcome": "complete"}]
         return write_run(self.runs, name or self.NAME, events,
-                         {"status": "complete", "stages": {"match": "complete"}, "mode": "live", "outcome": "complete"})
+                         {"status": "complete", "beats":{"match": "complete"}, "mode": "live", "outcome": "complete"})
 
     def open(self):
         page = self.page()
@@ -891,7 +892,7 @@ class DecisionPanelTest(BrowserCase):
         self.assertIn("made no decisions", page.locator("#decisions-list").inner_text())
 
     def test_a_decision_with_a_missing_field_shows_what_it_has_and_names_what_is_missing(self):
-        self.deciding([{"event": "decision", "at": stamp(3), "stage": "match", "dimension": "temp"}])
+        self.deciding([{"event": "decision", "at": stamp(3), "beat": "match", "dimension": "temp"}])
         page = self.open()
         page.wait_for_function("document.getElementById('decisions-summary').textContent === 'DECISIONS · 1'")
         page.locator("#decisions-summary").click()

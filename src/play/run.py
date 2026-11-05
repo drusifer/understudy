@@ -61,19 +61,19 @@ class EventedRecord(RunRecord):
             events.write(json.dumps(line) + "\n")
 
     def entered(self, state: str, caused_by: str) -> None:
-        self.emit("state_entered", state=state, caused_by=caused_by)
+        self.emit("beat_entered", beat=state, caused_by=caused_by)
 
     def started(self, name: str) -> None:
         super().started(name)
-        self.emit("stage_started", stage=name)
+        self.emit("beat_started", beat=name)
 
     def completed(self, name: str) -> None:
         super().completed(name)
-        self.emit("stage_completed", stage=name)
+        self.emit("beat_completed", beat=name)
 
     def failed(self, name: str, error: Exception) -> None:
         super().failed(name, error)
-        self.emit("stage_failed", stage=name, reason=str(error))
+        self.emit("beat_failed", beat=name, reason=str(error))
 
     def finished(self, outcome: str | None = None) -> None:
         super().finished(outcome)
@@ -112,10 +112,10 @@ class NestedRecord:
         self.parent.started(f"{self.prefix}.{name}")
 
     def completed(self, name: str) -> None:
-        self.parent.emit("stage_completed", stage=f"{self.prefix}.{name}")
+        self.parent.emit("beat_completed", beat=f"{self.prefix}.{name}")
 
     def failed(self, name: str, error: Exception) -> None:
-        self.parent.emit("stage_failed", stage=f"{self.prefix}.{name}", reason=str(error))
+        self.parent.emit("beat_failed", beat=f"{self.prefix}.{name}", reason=str(error))
 
     def finished(self, outcome: str | None = None) -> None:
         """The parent's run is not over because a subsketch ended; the subsketch's outcome is kept for its caller."""
@@ -242,8 +242,8 @@ async def run_sketch(  # noqa: PLR0913 - what a run takes: the sketch, where, it
     facts = {"with": dict(sketch.variables)}
     if capture.replay_dir:
         facts["replay_of"] = _shown_path(capture.replay_dir)
-    record = EventedRecord(directory, announce, cleanup=[*files, "summary.json"], mode=capture.mode, sketch=sketch.name, **facts)
-    record.emit("run_started", sketch=_shown_path(sketch.path), mode=capture.mode, **_story_of(sketch))
+    record = EventedRecord(directory, announce, cleanup=[*files, "summary.json"], mode=capture.mode, play=sketch.name, **facts)
+    record.emit("run_started", play=_shown_path(sketch.path), mode=capture.mode, **_story_of(sketch))
     if capture.replay_dir:
         announce(f"replay: reading captures from {capture.replay_dir}, no live calls")
     sources = Sources(capture, directory.name, announce)
@@ -283,7 +283,7 @@ def _story_of(sketch: Play) -> dict:
             {"from": name, "to": transition["to"], "event": "ok", **({"when": transition["if"]} if "if" in transition else {})}
             for transition in state.get("transitions", []))
     return {"initial": sketch.machine["initial"],
-            "states": [{"name": name, "final": bool(state.get("final"))} for name, state in states.items()],
+            "beats": [{"name": name, "final": bool(state.get("final"))} for name, state in states.items()],
             "transitions": moves}
 
 

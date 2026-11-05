@@ -31,7 +31,7 @@ class ReadsCase(unittest.TestCase):
     def make_run(self, name: str = RUN, **manifest) -> Path:
         directory = self.runs / name
         directory.mkdir(parents=True)
-        (directory / "run.json").write_text(json.dumps({"status": "complete", "mode": "live", "stages": {}, **manifest}))
+        (directory / "run.json").write_text(json.dumps({"status": "complete", "mode": "live", "beats": {}, **manifest}))
         (directory / "summary.json").write_text(json.dumps({"jev_requests": manifest.pop("requests", 0)}))
         return directory
 

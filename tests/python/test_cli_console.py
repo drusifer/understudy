@@ -36,21 +36,21 @@ class DashboardFailureTest(unittest.TestCase):
             taken.listen()
             port = taken.getsockname()[1]
             code, out, err = run_cli("dashboard", str(self.root / "runs"), "--port", str(port),
-                                     "--sketches", str(self.root / "sketches"))
+                                     "--plays", str(self.root / "sketches"))
         self.assertEqual(code, 2)
         self.assertEqual(err.strip().splitlines(), [f"understudy: port {port} is already in use; choose another with --port"])
         self.assertNotIn("Traceback", err + out)
 
     def test_a_runs_path_that_is_a_file_is_refused_in_one_line(self):
         (self.root / "runs").write_text("not a folder")
-        code, _, err = run_cli("dashboard", str(self.root / "runs"), "--sketches", str(self.root / "sketches"))
+        code, _, err = run_cli("dashboard", str(self.root / "runs"), "--plays", str(self.root / "sketches"))
         self.assertEqual(code, 2)
         self.assertEqual(err.strip(), f"understudy: {self.root / 'runs'} is not a folder of runs")
 
     def test_a_sketches_path_that_is_not_a_folder_or_is_empty_is_refused_in_one_line(self):
         (self.root / "empty").mkdir()
         for sketches, words in ((self.root / "nope", "is not a folder"), (self.root / "empty", "no sketches found")):
-            code, _, err = run_cli("dashboard", str(self.root / "runs"), "--sketches", str(sketches))
+            code, _, err = run_cli("dashboard", str(self.root / "runs"), "--plays", str(sketches))
             self.assertEqual(code, 2)
             self.assertEqual(len(err.strip().splitlines()), 1)
             self.assertIn(words, err)
@@ -70,7 +70,7 @@ class HelpTest(unittest.TestCase):
         self.assertIn("understudy dashboard", text)
 
     def test_each_command_has_its_own_help_with_its_options_described(self):
-        for command, option in (("run", "--replay"), ("check", "--with"), ("dashboard", "--sketches"), ("runs", "folder")):
+        for command, option in (("run", "--replay"), ("check", "--with"), ("dashboard", "--plays"), ("runs", "folder")):
             out = io.StringIO()
             with contextlib.redirect_stdout(out), self.assertRaises(SystemExit):
                 main([command, "--help"])
@@ -93,9 +93,9 @@ class RunsCommandTest(unittest.TestCase):
             root = Path(folder)
             for name, status in (("run-20261030T000000-aaaaaaaa", "complete"), ("run-20261031T000000-bbbbbbbb", "failed")):
                 (root / name).mkdir()
-                (root / name / "run.json").write_text(json.dumps({"status": status, "sketch": "coffee_week"}))
+                (root / name / "run.json").write_text(json.dumps({"status": status, "play": "coffee_week"}))
                 (root / name / "events.jsonl").write_text(json.dumps({"event": "run_started", "at": "2026-10-31T00:00:00+00:00",
-                                                                       "sketch": "examples/coffee_week.yaml"}) + "\n")
+                                                                       "play": "examples/coffee_week.yaml"}) + "\n")
             code, out, _ = run_cli("runs", folder)
             self.assertEqual(code, 0)
             lines = out.strip().splitlines()

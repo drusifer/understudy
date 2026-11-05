@@ -164,7 +164,7 @@ function arrowMarker(id, className) {
 function stateGroup(node) {
   const name = svgEl('text', { class: 'state-name', x: node.x + node.w / 2, y: node.y + node.h / 2 + 5, 'text-anchor': 'middle' });
   name.textContent = node.id;
-  const label = `${node.id}${node.final ? ', final state' : ''}${node.current ? ', current state' : ''}`;
+  const label = `${node.id}${node.final ? ', final beat' : ''}${node.current ? ', current beat' : ''}`;
   const box = svgEl('rect', { class: 'state-box', x: node.x, y: node.y, width: node.w, height: node.h, rx: 6 });
   const ring = node.final ? [svgEl('rect', { class: 'final-ring', x: node.x + 4, y: node.y + 4, width: node.w - 8, height: node.h - 8, rx: 4 })] : [];
   const group = svgEl('g', { class: `state${node.final ? ' final' : ''}${node.current ? ' current' : ''}${node.initial ? ' initial' : ''}`,

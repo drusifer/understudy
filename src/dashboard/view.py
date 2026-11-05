@@ -18,8 +18,8 @@ DAY = 86400
 AGE_UNITS = (("minutes", 60, 2 * 3600), ("hours", 3600, 2 * DAY))  # unit, seconds per unit, age at which the next unit starts
 STALL_SECONDS = 600  # a running run with no new event for this long reads as stalled
 RUN_STATES = {"complete": "done", "failed": "failed", "stopped": "stopped"}
-STAGE_STATES = {"stage_started": "running", "stage_completed": "complete", "stage_failed": "failed"}
-TONES = {"stage_failed": "held", "run_finished": "bold", "run_started": "bold"}
+STAGE_STATES = {"beat_started": "running", "beat_completed": "complete", "beat_failed": "failed"}
+TONES = {"beat_failed": "held", "run_finished": "bold", "run_started": "bold"}
 TAIL_BYTES = 8192  # how much of the end of `events.jsonl` is read to find the last event
 
 
@@ -69,15 +69,15 @@ def printed(event: dict) -> dict:
     kind = event.get("event", "")
     clock = event.get("at", "")[11:19]
     detail = {
-        "run_started": lambda: f"=== UNDERSTUDY RUN LOG ===  {event.get('sketch', '')}  ({event.get('mode', '')})",
-        "stage_started": lambda: f"  start  {event.get('stage', '')}",
-        "stage_completed": lambda: f"  done   {event.get('stage', '')}",
-        "stage_failed": lambda: f"  FAILED {event.get('stage', '')}: {event.get('reason', '')}",
+        "run_started": lambda: f"=== UNDERSTUDY RUN LOG ===  {event.get('play', '')}  ({event.get('mode', '')})",
+        "beat_started": lambda: f"  start  {event.get('beat', '')}",
+        "beat_completed": lambda: f"  done   {event.get('beat', '')}",
+        "beat_failed": lambda: f"  FAILED {event.get('beat', '')}: {event.get('reason', '')}",
         "run_finished": lambda: f"=== {str(event.get('outcome', '')).upper()} ===",
-        "decision": lambda: (f"  decision {event.get('stage', '')}: {event.get('row', '?')} {event.get('dimension', '?')}"
+        "decision": lambda: (f"  decision {event.get('beat', '')}: {event.get('row', '?')} {event.get('dimension', '?')}"
                              f" = {event.get('pick', '?')} ({event.get('probability', '?')})"),
     }.get(kind, lambda: f"  {kind}")()
-    return {"text": f"{clock}  {detail}" if clock else detail, "tone": TONES.get(kind, ""), "stage": event.get("stage", ""),
+    return {"text": f"{clock}  {detail}" if clock else detail, "tone": TONES.get(kind, ""), "stage": event.get("beat", ""),
             "event": kind}
 
 
@@ -128,7 +128,7 @@ def stage_tree(events: list[dict]) -> list[dict]:
     top: dict[str, dict] = {}
     current: dict | None = None
     for event in events:
-        state, stage = STAGE_STATES.get(event.get("event", "")), event.get("stage")
+        state, stage = STAGE_STATES.get(event.get("event", "")), event.get("beat")
         if not state or not stage:
             continue
         if "." not in stage:
@@ -149,19 +149,19 @@ def gauges_of(summary: dict, events: list[dict], tube: list[dict] | None = None)
     failed = sum(1 for each in tube if each["state"] == "failed")
     requests = int(summary.get("jev_requests", 0))
     return [
-        {"name": "STAGES", "level": done / seen if seen else 0, "text": f"{done}/{seen}",
-         "about": "top-level stages complete, of those started"},
+        {"name": "BEATS", "level": done / seen if seen else 0, "text": f"{done}/{seen}",
+         "about": "beats of the scene's flow complete, of those started"},
         {"name": "FAILED", "level": failed / seen if seen else 0, "text": str(failed),
-         "about": "top-level stages that failed, of those started"},
+         "about": "beats of the scene's flow that failed, of those started"},
         {"name": "JEV", "level": None, "text": str(requests), "about": "Jev requests this run made"},
         {"name": "ELAPSED", "level": None, "text": f"{_seconds(events):.0f}s", "about": "first event to last"},
     ]
 
 
-def _state_of(run: dict, last_at: str | None, now: datetime, last_event: str | None = None) -> str:
-    """running, paused (held before a stage, however long ago), done, failed, stopped, stalled (a running run silent
-    for ten minutes) or unreadable (nothing to read)."""
-    if not run and not last_at:
+def _state_of(run: dict, last_at: str | None, now: datetime, last_event: str | None = None, first: dict | None = None) -> str:
+    """running, paused (held before a beat, however long ago), done, failed, stopped, stalled (a running run silent
+    for ten minutes) or unreadable (nothing to read, or a log that does not start by naming its play)."""
+    if (not run and not last_at) or (first and first.get("event") == "run_started" and "play" not in first):
         return "unreadable"
     state = RUN_STATES.get(run.get("status", "running"), "running")
     if state == "running" and last_event == "paused":
@@ -175,8 +175,8 @@ def _failure_of(run: dict, events: list[dict]) -> dict | None:
     """The stage and reason a failed run stopped on, and the index of its printed line."""
     if run.get("status") != "failed":
         return None
-    line = next((index for index in range(len(events) - 1, -1, -1) if events[index].get("event") == "stage_failed"), None)
-    return {"stage": run.get("failed_stage", "?"), "reason": run.get("error", ""), "line": line}
+    line = next((index for index in range(len(events) - 1, -1, -1) if events[index].get("event") == "beat_failed"), None)
+    return {"stage": run.get("failed_beat", "?"), "reason": run.get("error", ""), "line": line}
 
 
 def _ago(seconds: float) -> str:
@@ -190,9 +190,9 @@ def _ago(seconds: float) -> str:
 def _ended(state: str, run: dict, failure: dict | None, last_at: str | None, now: datetime) -> str:
     """One line saying how the run ended (empty while it is still going)."""
     if state == "done":
-        done = sum(1 for each in run.get("stages", {}).values() if each == "complete")
+        done = sum(1 for each in run.get("beats", {}).values() if each == "complete")
         outcome = f", outcome {run['outcome']}" if run.get("outcome") else ""
-        return f"done after {done} stages{outcome}"
+        return f"done after {done} beats{outcome}"
     if state == "failed" and failure:
         return f"failed at {failure['stage']}: {failure['reason']}"
     if state == "stopped":
@@ -208,15 +208,15 @@ def describe(directory: Path, now: datetime | None = None) -> dict:
     run, summary, events = read_json(directory / "run.json"), read_json(directory / "summary.json"), read_events(directory)
     started = next((each for each in events if each.get("event") == "run_started"), {})
     last_at = events[-1].get("at") if events else None
-    state = _state_of(run, last_at, now, events[-1].get("event") if events else None)
-    held = {"stage": events[-1].get("stage", "?")} if state == "paused" else None
+    state = _state_of(run, last_at, now, events[-1].get("event") if events else None, events[0] if events else {})
+    held = {"stage": events[-1].get("beat", "?")} if state == "paused" else None
     failure = _failure_of(run, events)
     tube = stage_tree(events)
     mode = run.get("mode", started.get("mode", ""))
     ended = f"paused before {held['stage']}" if held else _ended(state, run, failure, last_at, now)
     return {
         "id": directory.name,
-        "sketch": Path(started.get("sketch", run.get("sketch", "?"))).stem,
+        "sketch": Path(started.get("play", run.get("play", "?"))).stem,
         "state": state,
         "ended": ended,
         "hold": held,
@@ -226,13 +226,13 @@ def describe(directory: Path, now: datetime | None = None) -> dict:
             "seconds": round(_seconds(events)), "with": run.get("with", {}), "outputs": run.get("outputs", {}),
         },
         "mode": mode,
-        "story": "states" in started,  # a log written before the first line told the machine has no story
-        "chart": overlay(started, events, state, ended) if "states" in started else None,
+        "story": "beats" in started,
+        "chart": overlay(started, events, state, ended) if "beats" in started else None,
         "spending": read_spending(directory),
         "tube": tube,
         "gauges": gauges_of(summary, events, tube),
         "lines": [printed(each) for each in events],
-        "failures": [index for index, each in enumerate(events) if each.get("event") == "stage_failed"],
+        "failures": [index for index, each in enumerate(events) if each.get("event") == "beat_failed"],
         "count": len(events),
     }
 
@@ -250,6 +250,6 @@ def _rack_entry(directory: Path, now: datetime) -> dict:
     """One tab of the rack: the run's id, the sketch it ran (or `unreadable`) and its state."""
     first, last = _edge_events(directory)
     run = read_json(directory / "run.json")
-    state = _state_of(run, last.get("at"), now, last.get("event"))
-    sketch = "unreadable" if state == "unreadable" else Path(first.get("sketch", "") or run.get("sketch", "") or "?").stem
+    state = _state_of(run, last.get("at"), now, last.get("event"), first)
+    sketch = "unreadable" if state == "unreadable" else Path(first.get("play", "") or run.get("play", "") or "?").stem
     return {"id": directory.name, "sketch": sketch, "state": state}
