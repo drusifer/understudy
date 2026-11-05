@@ -12,24 +12,24 @@ stage:
   placement: { kind: file, path: placement.jsonl, access: write }   # what it gives back: the merchant's category and status
 
 scene:
-  initial: ask_group
+  initial: group_judge
   beats:
-    ask_group:
+    group_judge:                        # did Jev find a real group?
       do: { reduce: { action: any } }
       with: { from: group_fit }
       transitions:
         - if: { any: { eq: true } }
-          to: fit
-        - to: no_fit
-    fit:
+          to: placer
+        - to: review_sender
+    placer:                             # a group fits: Jev's placement
       do: { map: { action: where } }
       with: { from: answer, keep: { level: { ne: "" } } }
-      to: give
-    no_fit:
+      to: placement_writer
+    review_sender:                      # no group fits: the merchant goes to review
       do: { map: { action: where } }
       with: { from: no_fit_row, keep: { level: { ne: "" } } }
-      to: give
-    give:
+      to: placement_writer
+    placement_writer:
       do: { write: placement }
       to: done
     done:

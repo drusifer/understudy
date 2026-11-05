@@ -93,13 +93,13 @@ class BadPinTests(PinCase):
     def test_the_check_names_the_line_and_the_value_of_a_category_that_is_not_in_the_list(self):
         pins = [{"payee": "Store", "category": CLOTHING}, {"payee": "Shoe Shop", "category": "Fun"}]
         with self.assertRaises(ValueError) as refused:
-            run_state("check_pin_categories", pinned=pins, taxonomy=TAXONOMY)
+            run_state("pin_category_checker", pinned=pins, taxonomy=TAXONOMY)
         self.assertIn("line 2", str(refused.exception))
         self.assertIn("'Fun'", str(refused.exception))
 
     def test_a_line_without_a_merchant_is_named_by_the_check(self):
         with self.assertRaises(ValueError) as refused:
-            run_state("check_pins", pinned=[{"payee": "", "category": CLOTHING}])
+            run_state("pin_checker", pinned=[{"payee": "", "category": CLOTHING}])
         self.assertIn("line 1 has no payee", str(refused.exception))
 
     def test_a_pin_file_named_with_a_path_that_does_not_exist_is_refused_naming_it_before_the_run_starts(self):

@@ -77,15 +77,15 @@ class OwnersFileTests(PinCase):
     def test_a_line_without_a_group_or_a_name_is_named_by_the_check(self):
         for row, field in (({"group": "Pets", "name": ""}, "name"), ({"name": "Vet bills"}, "group")):
             with self.assertRaises(ValueError) as refused:
-                run_state("check_additions", additions=[{"group": "Pets", "name": "Fish"}, row])
+                run_state("addition_checker", additions=[{"group": "Pets", "name": "Fish"}, row])
             self.assertIn(f"line 2 has no {field}", str(refused.exception))
 
     def test_a_name_that_repeats_an_iso_name_or_an_earlier_addition_is_named_by_the_check(self):
         with self.assertRaises(ValueError) as refused:
-            run_state("check_additions_unique", additions=[{"group": "Household", "name": "Family clothing shops"}])
+            run_state("addition_clash_checker", additions=[{"group": "Household", "name": "Family clothing shops"}])
         self.assertIn("line 1 repeats 'Family clothing shops' (also in", str(refused.exception))
         with self.assertRaises(ValueError) as refused:
-            run_state("check_additions_unique", additions=[{"group": "Household", "name": "Pets"},
+            run_state("addition_clash_checker", additions=[{"group": "Household", "name": "Pets"},
                                                                 {"group": "Other", "name": "pets "}])
         self.assertIn("line 2 repeats 'pets ' (first on line 1)", str(refused.exception))
 
@@ -101,11 +101,11 @@ class OwnersFileTests(PinCase):
 class PinsAgainstTheListTests(unittest.TestCase):
     def test_a_pin_names_a_category_in_the_clean_list_an_iso_one_or_an_addition(self):
         for category in (FAMILY, "Household: Rent"):
-            run_state("check_pin_categories", pinned=[{"payee": "Shoe Shop", "category": category}])  # does not raise
+            run_state("pin_category_checker", pinned=[{"payee": "Shoe Shop", "category": category}])  # does not raise
 
     def test_a_category_that_is_only_in_the_export_is_refused_naming_the_line_and_the_category(self):
         with self.assertRaises(ValueError) as refused:
-            run_state("check_pin_categories", pinned=[{"payee": "Shoe Shop", "category": "Shopping & Retail: Clothing"}])
+            run_state("pin_category_checker", pinned=[{"payee": "Shoe Shop", "category": "Shopping & Retail: Clothing"}])
         self.assertIn("line 1", str(refused.exception))
         self.assertIn("'Shopping & Retail: Clothing'", str(refused.exception))
 

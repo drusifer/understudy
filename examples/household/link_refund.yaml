@@ -8,13 +8,13 @@ stage:
   original: { kind: file, path: original.jsonl, access: write }   # what it gives back: the charge chosen (`level`)
 
 scene:
-  initial: pick
+  initial: original_picker
   beats:
-    pick:
+    original_picker:                    # the charge Jev gave the highest probability
       do: { reduce: { action: max } }
       with: { from: reading, field: probability }
-      to: give
-    give:
+      to: original_writer
+    original_writer:
       do: { write: original }
       to: done
     done:

@@ -15,7 +15,7 @@ data:
     loved: 1.0
 
 scene:
-  initial: judge
+  initial: score_judge
   beats:
     reviews:                            # just this film's reviews
       do: { map: { action: where } }
@@ -33,11 +33,11 @@ scene:
           loved: Loved it, the best of the year.
         state:
           reviews: { from: reviews }
-    judge:
+    score_judge:
       do: { map: { action: expect } }
       with: { probabilities: audience, values: audience_value, into: audience }
-      to: give
-    give:
+      to: score_writer
+    score_writer:
       do: { write: score }
       to: done
     done:

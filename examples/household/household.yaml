@@ -28,70 +28,70 @@ stage:
   payments_file: { kind: file, path: payments.jsonl, access: write }
 
 scene:
-  initial: check_additions
+  initial: addition_checker
   beats:
     # the scene's flow: the checks that stop a bad run before Jev is asked, then the writes
-    check_additions:                    # a bad additions file or pin stops the run before anything is asked of Jev
+    addition_checker:                    # a bad additions file or pin stops the run before anything is asked of Jev
       do: { map: { action: complete } }
       with: { from: additions, fields: [ group, name ] }
-      to: check_additions_unique
-    check_additions_unique:
+      to: addition_clash_checker
+    addition_clash_checker:
       do: { map: { action: unique } }
       with: { from: additions, field: name, among: iso }
-      to: check_pins
-    check_pins:
+      to: pin_checker
+    pin_checker:
       do: { map: { action: complete } }
       with: { from: pinned, fields: [ payee, category ] }
-      to: check_pin_categories
-    check_pin_categories:
+      to: pin_category_checker
+    pin_category_checker:
       do: { map: { action: known } }
       with: { from: pinned, field: category, among: taxonomy, among_field: category }
-      to: write_taxonomy
-    write_taxonomy:
+      to: taxonomy_writer
+    taxonomy_writer:
       do: { write: taxonomy_file }
       with: { from: taxonomy }
-      to: write_records
-    write_records:
+      to: record_writer
+    record_writer:
       do: { write: records_file }
       with: { from: final_records }
-      to: write_payments
-    write_payments:
+      to: payment_writer
+    payment_writer:
       do: { write: payments_file }
       with: { from: payments }
-      to: write_legs
-    write_legs:
+      to: leg_writer
+    leg_writer:
       do: { write: legs_file }
       with: { from: legs }
-      to: write_kinds
-    write_kinds:
+      to: kind_writer
+    kind_writer:
       do: { write: kinds_file }
       with: { from: kinds }
-      to: write_statuses
-    write_statuses:
+      to: status_writer
+    status_writer:
       do: { write: statuses_file }
       with: { from: statuses }
-      to: write_totals
-    write_totals:
+      to: total_writer
+    total_writer:
       do: { write: totals_file }
       with: { from: totals }
-      to: write_review
-    write_review:
+      to: review_writer
+    review_writer:
       do: { write: review_file }
       with: { from: review_list }
-      to: write_crosswalk
-    write_crosswalk:
+      to: crosswalk_writer
+    crosswalk_writer:
       do: { write: crosswalk_file }
       with: { from: crosswalk }
-      to: write_spending
-    write_spending:
+      to: spending_writer
+    spending_writer:
       do: { write: spending_file }
       with: { from: spend_list }
-      to: note_spending
-    note_spending:                      # reading the total puts it in summary.json
+      to: spending_reporter
+    spending_reporter:                      # reading the total puts it in summary.json
       do: { reduce: { action: any } }
       with: { from: spend_total }
-      to: note_open
-    note_open:
+      to: open_balance_reporter
+    open_balance_reporter:
       do: { reduce: { action: any } }
       with: { from: open_balance_noted }
       to: done

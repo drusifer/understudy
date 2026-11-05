@@ -19,7 +19,7 @@ stage:                                  # the props the owner may set before a r
   booking: { kind: file, path: booking.jsonl, access: write }
 
 scene:
-  initial: anything_qualifies
+  initial: showing_checker
   beats:
     scored:                             # each film, scored by its reviews: rows { title, audience }
       do: { play: review_score.yaml }
@@ -70,24 +70,24 @@ scene:
         center: {{ center }}
         take: 1
 
-    anything_qualifies:
+    showing_checker:
       do: { reduce: { action: any } }
       with: { from: qualifying }
       transitions:
         - if: { any: { eq: false } }
           to: walk_away
-        - to: seats_free
-    seats_free:
+        - to: seat_checker
+    seat_checker:
       do: { reduce: { action: any } }
       with: { from: booked }
       transitions:
         - if: { any: { eq: false } }
           to: walk_away
-        - to: book
+        - to: booker
     walk_away:
       final: true
       outcome: walked_away
-    book:
+    booker:
       do: { write: booking }
       with: { from: booked }
       to: done

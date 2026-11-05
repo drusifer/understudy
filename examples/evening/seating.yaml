@@ -8,7 +8,7 @@ stage:
   hold: { kind: file, path: hold.jsonl, access: write }
 
 scene:
-  initial: found
+  initial: block_finder
   beats:
     runs:                               # blocks of adjacent free seats, as long as the party
       do: { map: { action: adjacent_runs } }
@@ -37,21 +37,21 @@ scene:
         by: { row_score: {{ row | default(0.7) }}, center_score: {{ center | default(1.0) }} }
         into: score
 
-    found:                              # is there any block at all?
+    block_finder:                       # is there any block at all?
       do: { reduce: { action: any } }
       with: { from: scored }
       transitions:
         - if: { any: { eq: false } }
           to: nothing_fits
-        - to: best
+        - to: block_picker
     nothing_fits:
       final: true
       outcome: none
-    best:
+    block_picker:
       do: { reduce: { action: max } }
       with: { from: scored, field: score, take: {{ take | default(5) }} }
-      to: write
-    write:
+      to: hold_writer
+    hold_writer:
       do: { write: hold }
       to: done
     done:
