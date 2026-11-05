@@ -1,7 +1,7 @@
 # Agent State
 
 Keep this working-memory file current. Preserve exactly these three top-level sections; see the
-State Management Protocol in `agents/skills/bob-protocol/SKILL.md` for entry and exit steps.
+State Management Protocol in `.claude/skills/bob-protocol/SKILL.md` for entry and exit steps.
 
 ## Context
 - **Recent decisions:** {decision and reason, or None}

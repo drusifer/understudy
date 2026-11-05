@@ -1,6 +1,6 @@
 <!--
 Architecture Decision Record (ADR) template. Based on the Markdown Architectural Decision Records (MADR) standard.
-Owned by Oracle (recording) and Morpheus (deciding) — see agents/oracle/SKILL.md and agents/morpheus/SKILL.md.
+Owned by Oracle (recording) and Morpheus (deciding) — see .claude/skills/oracle/SKILL.md and .claude/skills/morpheus/SKILL.md.
 Instantiated in `docs/DECISIONS.md` or `docs/decisions/ADR-{NNNN}-{title}.md`.
 Remove this note and the check block when creating a real artifact; checks belong to templates.
 Oracle reviews this at groom (or Smith at Gate 2) using the DECISION rubric.

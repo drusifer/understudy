@@ -1,5 +1,5 @@
 <!--
-Sprint stories template. Owned by Cypher — see agents/cypher/SKILL.md and the sprint skill.
+Sprint stories template. Owned by Cypher — see .claude/skills/cypher/SKILL.md and the sprint skill.
 Copy to docs/sprints/USER_STORIES_SPRINT<N>.md and replace every {placeholder}.
 {KEY} is the project's short story-ID key (for example STORY-FING-31 in a project called Fingerling).
 Remove this note and the check block when creating a real artifact; checks belong to templates.

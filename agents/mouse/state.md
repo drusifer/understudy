@@ -33,3 +33,16 @@
 ---
 ## Sprint 22 close 2026-11-01
 Sprint 22 closed: 7 phases + closeout. Backlog in docs/BACKLOG.md. Next: plan Sprint 23 from OLD_VERSION_PARITY.md when the owner says.
+
+---
+## Sprint 28 planned 2026-11-04
+### Context
+- Sprint 28 is "plays": the new model the owner shaped in conversation (decisions 19 to 41 in `docs/sprints/OWNER_DECISIONS_SPRINT22.md`), plus the docs update. Diagrams and stepping move to Sprint 29. No back-compat (decision 41).
+- Plan `docs/sprints/STORY_ARCH_SPRINT28.md` (UND-105..110, about 21 points): Smith approved after one revision, Switch design quick pass, Morpheus approved `task.md` (PLAN all A).
+- Slip: I ticked the task.md status line with `sed` and appended decisions 19 to 41 with shell `printf >>`. The owner rule is Edit/Write only; use Edit for every later change.
+### Current Task
+Status: planning complete; execution not started.
+### Next Steps
+1. Trin Task 1.1: save the `main` baseline (fixtures with the Jev double; replay of the newest sample run, or ask the owner before a live sample run) to `build/baseline-sprint28/`.
+2. Neo Phase 1 Task 1.2: package rename `src/sketch` to `src/play`.
+3. No open owner questions. 2026-11-05: decision 42 (the stage is the play's interface: props, pieces read, pieces written; running a play = providing its stage; `outputs:`, pairs and `unpair` go) revised UND-107 and Phase 4 (now L3); Smith, Switch and Morpheus re-approved.

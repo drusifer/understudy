@@ -1,5 +1,5 @@
 <!--
-Product Requirements Document template. Owned by Cypher (Product Manager) — see agents/cypher/SKILL.md.
+Product Requirements Document template. Owned by Cypher (Product Manager) — see .claude/skills/cypher/SKILL.md.
 Instantiated as `docs/PRD.md`. It says what the product is for, who it serves and what it must do; it does
 not say how (architecture, ADRs) or when (the sprint task board).
 Remove this note and the check block when creating a real artifact; checks belong to templates.

@@ -1,6 +1,6 @@
 <!--
-Persona skill template. Owned by Bob — see `agents/bob/SKILL.md`.
-Copy this scaffold into `agents/<name>/SKILL.md`, replace placeholders, and remove this note
+Persona skill template. Owned by Bob — see `.claude/skills/bob/SKILL.md`.
+Copy this scaffold into `.claude/skills/<name>/SKILL.md`, replace placeholders, and remove this note
 and the rubric block before saving the generated persona skill.
 -->
 ---
@@ -45,10 +45,10 @@ real quotations or copy a real person's signature phrasing.
 [Invocation phrases not already clear from the command interface]
 
 ## Requires (optional)
-[Direct prerequisite shared skills; link to their canonical instructions with paths that resolve relative to this `SKILL.md` file. For a persona at `agents/<name>/SKILL.md`, use `../skills/<skill>/SKILL.md` to link to `agents/skills/<skill>/SKILL.md`.]
+[Direct prerequisite shared skills; link to their canonical instructions with paths that resolve relative to this `SKILL.md` file. For a persona at `.claude/skills/<name>/SKILL.md`, use `../<skill>/SKILL.md` to link to `.claude/skills/<skill>/SKILL.md`.]
 
 ## State Management Protocol (CRITICAL)
-See [Bob Protocol](../skills/bob-protocol/SKILL.md).
+See [Bob Protocol](../bob-protocol/SKILL.md).
 
 **<Persona> Tweaks:**
 - **State File**: `agents/<name>/state.md` (Context, Current Task, Next Steps sections).

@@ -1790,3 +1790,252 @@ make: *** [Makefile:36: test-py] Error 1
 ---
 [<small>2026-11-04 13:00:30</small>] [**Neo**]->[**all**] *checkpoint*:
  Checkpoint saved in agents/neo/state.md. Sprints 24-27 merged and pushed (main = origin/main = 9be83be, tree clean, gate 36 s). Next: ask the owner about the browser suite (100 s vs 90 s target) and what Sprint 28 is. Ready for context clear. Resume with /init.
+
+---
+[<small>2026-11-04 19:41:16</small>] [**Neo**]->[**all**] *resume*:
+ Resuming from Neo checkpoint: Sprints 24-27 merged and pushed, main clean. Waiting on owner for the browser-suite decision and Sprint 28 scope.
+
+---
+[<small>2026-11-04 19:42:35</small>] [**User**]->[**all**] *request*:
+ /bob-protocol init
+
+---
+[<small>2026-11-04 19:42:39</small>] [**Neo**]->[**all**] *resume*:
+ Resuming from Neo checkpoint: Sprints 24-27 merged and pushed, main clean (9be83be). Waiting on owner: browser-suite decision (100 s vs 90 s) and Sprint 28 scope.
+
+---
+[<small>2026-11-04 19:45:56</small>] [**User**]->[**all**] *request*:
+ /sprint go 28 start plan
+
+---
+[<small>2026-11-04 19:49:10</small>] [**Mouse**]->[**User**] *sm status*:
+ Sprint 28 started: branch sprint-28, SDLC present. Owner theme: show the diagrams and step through the sketch, plus renames to discuss first (decision 19). Stories wait for the renames. @User
+
+---
+[<small>2026-11-04 21:00:39</small>] [**Cypher**]->[**User**] *pm assess*:
+ Naming round with the owner done (decisions 19-33): sketch->play, sources->stage (files only), machine->scene, states->beats (built sources are beats; a beat without to: runs when read), then->to, Jev is a beat, do: {play: x.yaml}, run stays run. Next: owner picks Sprint 28 scope. @Cypher
+
+---
+[<small>2026-11-04 21:35:18</small>] [**Cypher**]->[**User**] *pm assess*:
+ Naming round closed (decisions 19-38): play, stage of files (access read/write; no sinks section), scene of beats (built sources are beats; to: only where order matters), Jev beat, do: {write: x}, do: {play: x.yaml}, from: for the main input, calls pass pieces and props alike. Next: owner picks Sprint 28 scope.
+
+---
+[<small>2026-11-04 21:36:26</small>] [**Cypher**]->[**all**] *pm plan sprint*:
+ Owner: Sprint 28 = the new play model + docs update (decisions 39-40); diagrams and stepping go to Sprint 29. Drafting docs/sprints/STORY_ARCH_SPRINT28.md (Tier 2).
+
+---
+[<small>2026-11-04 21:37:20</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Stories and architecture ready for review (Tier 2, combined): docs/sprints/STORY_ARCH_SPRINT28.md, UND-105..110, about 21 points. @Smith *user review sprint-28
+
+---
+[<small>2026-11-04 21:38:03</small>] [**Smith**]->[**Cypher**] *user reject*:
+ *user reject rubric STORIES: OUT=A TEST=A FAIL=A SCOPE=W SIZE=A DESIGN=A. REASON: UND-108 AC2 proves identical outputs by replaying the sample, but the Assumptions say old runs are not replayed. Capture keys are play.beat (reader.py capture_key), so old captures DO replay if Jev beats keep their names. FIX: Jev beats keep their data names; old captures replay; only old event logs are a format question. @Cypher revise
+
+---
+[<small>2026-11-04 21:38:50</small>] [**Smith**]->[**Switch**] *user approve*:
+ *user approve. rubric STORIES: OUT=A TEST=A FAIL=A SCOPE=A SIZE=A DESIGN=A; rubric ARCH: BOUND=A FLOW=A FAIL=A USER=S DECS=A FEAS=A. Revised: Jev beats keep their names so the identical-output proof works; old runs get no code (decision 41); old keys refused as unknown keys. @Switch *sec threat sprint-28
+
+---
+[<small>2026-11-04 21:38:50</small>] [**Switch**]->[**Mouse**] *sec handoff*:
+ security gate (design): No blocking findings. Quick pass: no new input, output, dependency or permission; UND-107 narrows what a called play can read; the write-once rule is kept by UND-105 AC3 (no beat reads an access: write file). @Mouse *sm plan sprint
+
+---
+[<small>2026-11-04 21:39:33</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint 28 planned in task.md: 7 phases (baseline+package rename, file shape, Jev beat, calls, role names, console, docs) + closeout. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-11-04 21:39:33</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A LEVEL=A. Approved. Note: Task 2.1 is the one large task (L3: loader, check, schema and every play move together, since the suite cannot pass half-migrated); Neo checkpoints mid-task if context passes 60%. Baseline (1.1) must exist before 1.2. @Trin *qa baseline task 1.1, then @Neo *swe impl phase-1
+
+---
+[<small>2026-11-05 10:54:06</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Plan revised for decision 42 (the stage is the play's interface; running a play = providing its stage; outputs:, pairs and unpair go): UND-107 rewritten (5 pts), table, architecture and task.md Phase 4. @Smith *user review sprint-28
+
+---
+[<small>2026-11-05 10:54:06</small>] [**Smith**]->[**Switch**] *user approve*:
+ *user approve. rubric STORIES: OUT=A TEST=A FAIL=A SCOPE=A SIZE=A DESIGN=A; rubric ARCH: BOUND=S FLOW=A FAIL=A USER=S DECS=A FEAS=A. One stage lists everything a play takes and gives, so a reader learns a play's contract in one place; UND-107 AC4 says what the owner sees when a call is wrong. @Switch *sec threat sprint-28
+
+---
+[<small>2026-11-05 10:54:06</small>] [**Switch**]->[**Mouse**] *sec handoff*:
+ security gate (design): No blocking findings. Quick pass: called plays lose disk writes and any view of the caller's pieces (narrower); read paths still come only from the command line or a play's default; write-once kept (UND-105 AC3); written rows held in memory per call, bounded by the caller's rows. @Mouse *sm plan sprint
+
+---
+[<small>2026-11-05 10:54:07</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ task.md revised: Phase 4 is now the stage as interface (UND-107, L3), Phase 2 moves inputs onto the stage. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-11-05 10:54:07</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A LEVEL=A. Approved. Two L3 tasks now (2.1 file shape, 4.1 stage as interface); each ends with the byte-identical check against the baseline. @Trin *qa baseline task 1.1, then @Neo *swe impl phase-1
+
+---
+[<small>2026-11-05 15:28:28</small>] [**User**]->[**all**] *request*:
+ /sprint until complete
+
+---
+[<small>2026-11-05 15:28:28</small>] [**Mouse**]->[**all**] *phase 1*:
+ Phase 1: save the main baseline, then rename the package to src/play (no behavior change)
+
+---
+[<small>2026-11-05 15:31:59</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make run | /home/drusifer/Projects/understudy/build/build.out
+wrote /home/drusifer/Projects/understudy/build/baseline-sprint28/full/run-20261105T202843-fa7ebea8/payments.jsonl
+
+---
+[<small>2026-11-05 15:32:33</small>] [**Trin**]->[**Neo**] *qa handoff*:
+ Task 1.1 baseline saved in build/baseline-sprint28/: full/ (replay of live run-20261103T215207, the real Monarch+Amex files, 3m18s, exit 0) and fixtures/ (Jev double; two runs byte-identical). Compare tool ignores events.jsonl, run.json, run.duckdb. @Neo *swe impl phase-1
+
+---
+[<small>2026-11-05 15:35:53</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make lint | /home/drusifer/Projects/understudy/build/build.out
+=== make lint @ 2026-11-05 15:35:53 ===
+.venv/bin/ruff check src tests
+All checks passed!
+
+---
+[<small>2026-11-05 15:36:11</small>] [**Neo**]->[**Switch**] *swe handoff*:
+ Phase 1 impl: git mv src/sketch -> src/play, schema -> schema/play.schema.json, Sketch -> Play, SketchError -> PlayError, bin/understudy -> src.play.cli; all imports via Edit. Lint clean; 586 tests OK 30.2 s; fixture run byte-identical to baseline. @Trin @Switch
+
+---
+[<small>2026-11-05 15:36:11</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 1): No blocking findings. Quick pass: rename only (git mv + import paths); no logic, input, output or dependency change; gitleaks runs in the gate.
+
+---
+[<small>2026-11-05 15:36:11</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-1: passed. Pure rename, history kept by git mv; nothing else moved. Test file names (test_sketch_*) stay until Phase 5 touches them. Commit Phase 1, then @Neo *swe impl phase-2
+
+---
+[<small>2026-11-05 15:36:25</small>] [**Mouse**]->[**all**] *phase 2*:
+ Phase 2: the play file shape (UND-105, UND-106 AC1,3,4)
+
+---
+[<small>2026-11-05 15:51:04</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make run | /home/drusifer/Projects/understudy/build/build.out
+wrote /home/drusifer/Projects/understudy/build/sprint28-phase2/run-20261105T204751-d44d3fcf/payments.jsonl
+
+---
+[<small>2026-11-05 15:51:23</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 2 impl (+ Phase 3 folded in: the rewritten files need Jev beats): schema/play.schema.json; loader.engine_view turns stage+scene into the engine's sources/sinks/machine (run and replay unchanged); props on the stage; check speaks play words + write rules + name clash + Jev-in-flow refusals; 10 plays and 11 test files rewritten. Gate 593 OK 29.9 s. @Trin *qa uat phase-2
+
+---
+[<small>2026-11-05 15:51:23</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 2 passed. Fixtures (Jev double) and the real Monarch+Amex replay of run-20261103T215207: all 11 outputs byte-identical to the baseline (Jev captures replay: keys unchanged). Old main household.yaml refused: 'scene' required; 'machine','sinks','sources' unexpected. Refusals covered by tests: old keys, write to a read file, read of a written file, flow-beat read, two writers, stage/scene clash, Jev beat with to:. @Switch *sec review phase-2
+
+---
+[<small>2026-11-05 15:51:23</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 2): No blocking findings. Checked: no new input path (file paths still from the play or --with as before); write-once kept and now enforced in check (no beat reads an access: write file); schema stays additionalProperties:false; gitleaks clean in the gate. @Morpheus *lead review phase-2
+
+---
+[<small>2026-11-05 15:51:23</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-2: passed. engine_view is the one translation point, as the architecture said; check maps paths back with outward(). Debt to note for the retro: the engine's internal names (sources, sinks, machine, then, source) remain behind the translation. Phase 3 is done inside Phase 2 (Jev beats). Commit, then @Neo *swe impl phase-4
+
+---
+[<small>2026-11-05 16:04:15</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make run | /home/drusifer/Projects/understudy/build/build.out
+wrote /home/drusifer/Projects/understudy/build/sprint28-phase4/run-20261105T210101-d5547add/payments.jsonl
+
+---
+[<small>2026-11-05 16:04:35</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 4 impl: the stage is the interface. --with <file>=<path> (no --source); optional: true; a call's with: binds props and the called play's files to caller pieces; a called play writes in memory and its rows are the beat's result; under each, rows carry the row played for; outputs:, pairs and map.unpair removed. Gate 601 OK 30.5 s. @Trin *qa uat phase-4
+
+---
+[<small>2026-11-05 16:04:35</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 4 passed. UND-107 AC1-4 in tests/python/test_play_calls.py (binding, no disk writes in a loop, --with path, unbound file, binding a written file, writes-nothing, unpassed caller piece). Real replay build/sprint28-phase4: 11 outputs byte-identical; no placement.jsonl/original.jsonl in the run folder. Household CLI unchanged. @Switch *sec review phase-4
+
+---
+[<small>2026-11-05 16:04:35</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 4): No blocking findings. Narrower: called plays write nothing to disk and read only what a call binds (binding must name a real caller piece; written files refused). --with paths are resolved as before (_values); written rows held in memory per call, bounded by the caller's rows. @Morpheus *lead review phase-4
+
+---
+[<small>2026-11-05 16:04:35</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-4: passed with two recorded amendments (write pieces are the call beat's result; each carries its row). Both reduce names and kept household byte-identical. bound_pieces lives in the loader beside engine_view. Commit, then @Neo *swe impl phase-5
+
+---
+[<small>2026-11-05 16:04:48</small>] [**Mouse**]->[**all**] *phase 5*:
+ Phase 5: the examples read as plays (flow beats named as roles, UND-108)
+
+---
+[<small>2026-11-05 16:09:51</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make run | /home/drusifer/Projects/understudy/build/build.out
+wrote /home/drusifer/Projects/understudy/build/sprint28-phase5/run-20261105T210639-d0087f9f/payments.jsonl
+
+---
+[<small>2026-11-05 16:10:02</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 5 impl: flow beats named as roles in household (addition_checker, pin_checker, record_writer, spending_reporter...), categorize_merchant (group_judge, placer, review_sender, placement_writer), link_refund (original_picker/_writer), evening (showing_checker, seat_checker, booker), seating (block_finder/_picker, hold_writer), review_score (score_judge/_writer). Jev and read-when-needed beats unchanged. Gate 601 OK 30.7 s. @Trin
+
+---
+[<small>2026-11-05 16:10:02</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 5 passed: fixtures and real replay (build/sprint28-phase5) byte-identical to the baseline, all 11 outputs. Unit suite 30.7 s (AC3: 29-33 s). @Switch
+
+---
+[<small>2026-11-05 16:10:03</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 5): No blocking findings. Quick pass: names only in YAML and tests; no code path changed.
+
+---
+[<small>2026-11-05 16:10:03</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ *lead review phase-5: passed. Coffee fixture names left as they are (a test fixture, not an example; UND-108 lists the examples). Commit, then @Neo *swe impl phase-6
+
+---
+[<small>2026-11-05 16:10:12</small>] [**Mouse**]->[**all**] *phase 6*:
+ Phase 6: the console and the run record say play and beat (UND-109)
+
+---
+[<small>2026-11-05 16:22:03</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make run | /home/drusifer/Projects/understudy/build/build.out
+watch it: understudy dashboard build/uat28/runs
+wrote /home/drusifer/Projects/understudy/build/uat28/runs/run-20261105T212202-a1bc8e3e/ingredients.jsonl
+
+---
+[<small>2026-11-05 16:22:14</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 6 impl: events say play (run_started.play, beats) and beat_started/completed/failed/entered (field beat); run.json beats/failed_beat; CLI prints 'beat x'; console labels Play, all beats, BEAT TUBE, BEATS gauge, 'final beat'; dashboard --plays; start form lists the files a play reads. A log that does not name its play is unreadable (decision 41). Server-to-page JSON keys (sketch, stage) kept: debt. Gate 601 OK; browser 39/39 after one expectation fix (108 s). @Trin
+
+---
+[<small>2026-11-05 16:22:15</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 6 passed: a coffee replay logs play + beats; CLI 'beat weather'...; describe: 'done after 5 beats', gauges BEATS/FAILED/JEV/ELAPSED, story drawn; .understudy/runs old runs list as unreadable. @Switch
+
+---
+[<small>2026-11-05 16:22:15</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 6): No blocking findings. Quick pass: renamed fields and labels; no new input or route; the unreadable rule only narrows what is drawn.
+
+---
+[<small>2026-11-05 16:22:15</small>] [**Morpheus**]->[**Oracle**] *lead handoff*:
+ *lead review phase-6: passed. Debt recorded for the retro: the page API keeps 'sketch'/'stage' keys and the engine keeps internal names behind engine_view. Commit, then @Oracle @Neo phase-7 docs
+
+---
+[<small>2026-11-05 16:22:22</small>] [**Mouse**]->[**all**] *phase 7*:
+ Phase 7: the docs teach the play (UND-110)
+
+---
+[<small>2026-11-05 16:27:49</small>] [**Oracle**]->[**Smith**] *ora handoff*:
+ Phase 7 docs: git mv SKETCHES.md -> PLAYS.md, rewritten with the framing and the play words; DOMAIN.md glossary (play, stage, prop, piece, scene, beat, character, action, run) and anti-pattern table reversed; README, USER_GUIDE, ARCH, PRD, TEST_STRATEGY in the new words; ADR-0061 in DECISIONS.md. SDLC.md (src/sketch paths) left for Tank's sdlc-check. @Smith *user review docs
+
+---
+[<small>2026-11-05 16:27:49</small>] [**Smith**]->[**Tank**] *user approve*:
+ *user approve docs (UND-110). PLAYS.md opens with the framing and a words table; DOMAIN has the glossary; search of README/USER_GUIDE/ARCH/PRD/TEST_STRATEGY finds 'sketch' only as history or as the named debt (console API keys). rubric DECISION ADR-0061: CONTEXT=A OPTIONS=S OUTCOME=A CONSEQ=A. @Tank *devops sdlc-check
+
+---
+[<small>2026-11-05 16:28:48</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+----------------------------------------------------------------------
+Ran 601 tests in 30.428s
+
+OK
+
+---
+[<small>2026-11-05 16:28:48</small>] [**Tank**]->[**Oracle**] *devops handoff*:
+ SDLC check passed (Sprint 28): no manifest change since main; package src/play, schema/play.schema.json and bin/understudy recorded in docs/SDLC.md; Makefile only the dashboard help text; bobp make check exit 0 (601 tests); browser 39/39 ~108 s. Last verified updated. @Oracle *ora groom
+
+---
+[<small>2026-11-05 16:29:46</small>] [**Oracle**]->[**Smith**] *ora handoff*:
+ Docs groomed: CHANGELOG Sprint 28, 2 lessons (one translation point + byte-identical baseline; Edit drops trailing spaces), UAT_PLAN_SPRINT28, RETRO_SPRINT28, ADR-0061. rubric LESSON x2: CTX=A CAUSE=A RULE=A EVID=A. CHAT archive left for the owner, as in Sprint 27. @Smith *user test sprint-28
+
+---
+[<small>2026-11-05 16:29:46</small>] [**Smith**]->[**all**] *user approve*:
+ *user approve sprint-28. rubric UAT: COVER=A STEPS=A FAIL=A DATA=S EVID=A. UAT-28-1..8 pass; real data byte-identical through every phase; household CLI unchanged; old runs read unreadable as decided. Rough edges for the owner: console API keys still say sketch/stage; test file names still test_sketch_*. @all *sprint retro
+
+---
+[<small>2026-11-05 16:29:46</small>] [**Mouse**]->[**Cypher**] *retro*:
+ Sprint 28 retro posted in docs/sprints/RETRO_SPRINT28.md. Backlog: Sprint 29 scene diagram + stepping (decision 39); rename engine internals and console API keys; rename test_sketch_* files; stand-in shape test. @Cypher *pm launch sprint-28
+
+---
+[<small>2026-11-05 16:29:46</small>] [**Cypher**]->[**all**] *pm launch*:
+ *pm launch sprint-28. Sprint complete: 6 stories (UND-105..110), 7 phases; a sketch is a play (stage, scene, beats, Jev beat, calls that bind a stage); household byte-identical on real data; 601 tests 30.4 s; browser 39/39. Branch sprint-28 committed locally, NOT merged or pushed: merge and push only when the owner asks.

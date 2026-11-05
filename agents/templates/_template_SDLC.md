@@ -1,5 +1,5 @@
 <!--
-SDLC template (base). Owned by Tank — see agents/skills/build-env/SKILL.md.
+SDLC template (base). Owned by Tank — see .claude/skills/build-env/SKILL.md.
 Copy to docs/SDLC.md and replace every {placeholder}. Describe what is true in this repo
 today, as commands a reader can run. Where a section does not apply, write "None" and why;
 do not delete the heading. For a single-language project start from

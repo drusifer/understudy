@@ -1,5 +1,5 @@
 <!--
-Sprint task board template. Owned by Mouse — see agents/mouse/SKILL.md and the sprint skill.
+Sprint task board template. Owned by Mouse — see .claude/skills/mouse/SKILL.md and the sprint skill.
 Instantiated as root `task.md` (the single source of truth for sprint execution).
 Remove this note and the check block when creating a real artifact; checks belong to templates.
 Morpheus reviews this at Step 3a using the PLAN rubric.

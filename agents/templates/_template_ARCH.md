@@ -1,5 +1,5 @@
 <!--
-Architecture document template. Owned by Morpheus — see agents/morpheus/SKILL.md and the sprint skill.
+Architecture document template. Owned by Morpheus — see .claude/skills/morpheus/SKILL.md and the sprint skill.
 Can be instantiated as `docs/ARCH.md` (standing project architecture) or appended to the sprint
 stories document during Sprint Planning Step 2.
 Remove this note and the check block when creating a real artifact; checks belong to templates.

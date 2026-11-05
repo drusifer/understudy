@@ -2,7 +2,7 @@
 
 This is a language-specific insert for sections 1–4 and 10 of `_template_SDLC.md`, not a separate
 SDLC document. Copy the relevant facts into the shared SDLC template and remove this insert. For
-new Python projects, use Tank's `uv` conventions in `agents/skills/build-env/SKILL.md`; preserve an
+new Python projects, use Tank's `uv` conventions in `.claude/skills/build-env/SKILL.md`; preserve an
 existing project's package-manager and dependency layout unless migration is explicitly planned.
 
 ## Toolchain and setup facts

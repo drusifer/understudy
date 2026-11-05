@@ -1378,9 +1378,238 @@ sequenceDiagram
     participant Neo
     participant Trin
     participant All
-    Note over Neo,All: 📅 2026-11-04
+    participant User
+    participant Mouse
+    participant Cypher
+    participant Smith
+    participant Switch
+    participant Morpheus
+    Note over Neo,Morpheus: 📅 2026-11-04
     Neo->>Trin: "swe fix"
     Note right of Neo: "Gate caught a real<br/>defect before the push:<br/>the loader cache keyed<br/>on (mtime, size) served<br/>stale content when a<br/>same-length edit shared<br/>a cl…"
     Neo->>All: "checkpoint"
     Note right of Neo: "Checkpoint saved in<br/>agents/neo/state.md.<br/>Sprints 24-27 merged and<br/>pushed (main =<br/>origin/main = 9be83be,<br/>tree clean, gate 36 s).<br/>Next: ask t…"
+    Neo->>All: "resume"
+    Note right of Neo: "Resuming from Neo<br/>checkpoint: Sprints<br/>24-27 merged and pushed,<br/>main clean. Waiting on<br/>owner for the browser-<br/>suite decision and<br/>Sprint 28 sc…"
+    User->>All: "request"
+    Note right of User: "/bob-protocol init"
+    Neo->>All: "resume"
+    Note right of Neo: "Resuming from Neo<br/>checkpoint: Sprints<br/>24-27 merged and pushed,<br/>main clean (9be83be).<br/>Waiting on owner:<br/>browser-suite decision<br/>(100 s vs 90…"
+    User->>All: "request"
+    Note right of User: "/sprint go 28 start plan"
+    Mouse->>User: "sm status"
+    Note right of Mouse: "Sprint 28 started:<br/>branch sprint-28, SDLC<br/>present. Owner theme:<br/>show the diagrams and<br/>step through the sketch,<br/>plus renames to discuss<br/>firs…"
+    Cypher->>User: "pm assess"
+    Note right of Cypher: "Naming round with the<br/>owner done (decisions<br/>19-33): sketch->play,<br/>sources->stage (files<br/>only), machine->scene,<br/>states->beats (built<br/>sources…"
+    Cypher->>User: "pm assess"
+    Note right of Cypher: "Naming round closed<br/>(decisions 19-38): play,<br/>stage of files (access<br/>read/write, no sinks<br/>section), scene of beats<br/>(built sources are<br/>beats,…"
+    Cypher->>All: "pm plan sprint"
+    Note right of Cypher: "Owner: Sprint 28 = the<br/>new play model + docs<br/>update (decisions<br/>39-40), diagrams and<br/>stepping go to Sprint<br/>29. Drafting<br/>docs/sprints/STORY_A…"
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Stories and architecture<br/>ready for review (Tier<br/>2, combined): docs/sprin<br/>ts/STORY_ARCH_SPRINT28.m<br/>d, UND-105..110, about<br/>21 points. @Smith *u…"
+    Smith->>Cypher: "user reject"
+    Note right of Smith: "*user reject rubric<br/>STORIES: OUT=A TEST=A<br/>FAIL=A SCOPE=W SIZE=A<br/>DESIGN=A. REASON:<br/>UND-108 AC2 proves<br/>identical outputs by<br/>replaying the sam…"
+    Smith->>Switch: "user approve"
+    Note right of Smith: "*user approve. rubric<br/>STORIES: OUT=A TEST=A<br/>FAIL=A SCOPE=A SIZE=A<br/>DESIGN=A, rubric ARCH:<br/>BOUND=A FLOW=A FAIL=A<br/>USER=S DECS=A FEAS=A.<br/>Revise…"
+    Switch->>Mouse: "sec handoff"
+    Note right of Switch: "security gate (design):<br/>No blocking findings.<br/>Quick pass: no new<br/>input, output,<br/>dependency or<br/>permission, UND-107<br/>narrows what a called<br/>pla…"
+    Mouse->>Morpheus: "sm handoff"
+    Note right of Mouse: "Sprint 28 planned in<br/>task.md: 7 phases<br/>(baseline+package<br/>rename, file shape, Jev<br/>beat, calls, role names,<br/>console, docs) +<br/>closeout. @Morph…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "rubric PLAN: SIZE=A<br/>GATE=A VERIF=A ALIGN=A<br/>OWNER=A LEVEL=A.<br/>Approved. Note: Task 2.1<br/>is the one large task<br/>(L3: loader, check,<br/>schema and e…"
+    Note over Neo,Morpheus: 📅 2026-11-05
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Plan revised for<br/>decision 42 (the stage<br/>is the play's interface,<br/>running a play =<br/>providing its stage,<br/>outputs:, pairs and<br/>unpair go): UND-…"
+    Smith->>Switch: "user approve"
+    Note right of Smith: "*user approve. rubric<br/>STORIES: OUT=A TEST=A<br/>FAIL=A SCOPE=A SIZE=A<br/>DESIGN=A, rubric ARCH:<br/>BOUND=S FLOW=A FAIL=A<br/>USER=S DECS=A FEAS=A.<br/>One st…"
+    Switch->>Mouse: "sec handoff"
+    Note right of Switch: "security gate (design):<br/>No blocking findings.<br/>Quick pass: called plays<br/>lose disk writes and any<br/>view of the caller's<br/>pieces (narrower), rea…"
+    Mouse->>Morpheus: "sm handoff"
+    Note right of Mouse: "task.md revised: Phase 4<br/>is now the stage as<br/>interface (UND-107, L3),<br/>Phase 2 moves inputs<br/>onto the stage.<br/>@Morpheus *lead review<br/>sprint pl…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "rubric PLAN: SIZE=A<br/>GATE=A VERIF=A ALIGN=A<br/>OWNER=A LEVEL=A.<br/>Approved. Two L3 tasks<br/>now (2.1 file shape, 4.1<br/>stage as interface),<br/>each ends…"
+    User->>All: "request"
+    Note right of User: "/sprint until complete"
 ```
+
+## Phase 1 starts
+
+Phase 1: save the main baseline, then rename the package to src/play (no behavior change)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Trin
+    participant Neo
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-05
+    Mouse->>All: "phase 1"
+    Note right of Mouse: "Phase 1: save the main<br/>baseline, then rename<br/>the package to src/play<br/>(no behavior change)"
+    Trin->>Neo: "qa handoff"
+    Note right of Trin: "Task 1.1 baseline saved<br/>in build/baseline-<br/>sprint28/: full/ (replay<br/>of live<br/>run-20261103T215207, the<br/>real Monarch+Amex files,<br/>3m18s, exit 0)…"
+    Neo->>Switch: "swe handoff"
+    Note right of Neo: "Phase 1 impl: git mv<br/>src/sketch -> src/play,<br/>schema -><br/>schema/play.schema.json,<br/>Sketch -> Play,<br/>SketchError -><br/>PlayError,<br/>bin/understudy ->…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 1):<br/>No blocking findings.<br/>Quick pass: rename only<br/>(git mv + import paths),<br/>no logic, input, output<br/>or dependency chang…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-1:<br/>passed. Pure rename,<br/>history kept by git mv,<br/>nothing else moved. Test<br/>file names<br/>(test_sketch_*) stay<br/>until Phase 5 t…"
+```
+
+## Phase 1 close-out
+
+- **Switch**: security gate (phase 1): No blocking findings. Quick pass: rename only (git mv + import paths), no logic, input, output or dependency chang…
+- **Morpheus**: \*lead review phase-1: passed. Pure rename, history kept by git mv, nothing else moved. Test file names (test\_sketch\_\*) stay until Phase 5 t…
+
+## Phase 2 starts
+
+Phase 2: the play file shape (UND-105, UND-106 AC1,3,4)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-05
+    Mouse->>All: "phase 2"
+    Note right of Mouse: "Phase 2: the play file<br/>shape (UND-105, UND-106<br/>AC1,3,4)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 2 impl (+ Phase 3<br/>folded in: the rewritten<br/>files need Jev beats):<br/>schema/play.schema.json,<br/>loader.engine_view turns<br/>stage+scene into…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 2 passed.<br/>Fixtures (Jev double)<br/>and the real<br/>Monarch+Amex replay of<br/>run-20261103T215207: all<br/>11 outputs byte-<br/>identical to the bas…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 2):<br/>No blocking findings.<br/>Checked: no new input<br/>path (file paths still<br/>from the play or --with<br/>as before), write-once…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-2:<br/>passed. engine_view is<br/>the one translation<br/>point, as the<br/>architecture said, check<br/>maps paths back with<br/>outward(). Deb…"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 4 impl: the stage<br/>is the interface. --with<br/><file>=<path> (no<br/>--source), optional:<br/>true, a call's with:<br/>binds props and the<br/>called pla…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 4 passed.<br/>UND-107 AC1-4 in tests/p<br/>ython/test_play_calls.py<br/>(binding, no disk writes<br/>in a loop, --with path,<br/>unbound file, binding…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 4):<br/>No blocking findings.<br/>Narrower: called plays<br/>write nothing to disk<br/>and read only what a<br/>call binds (binding must<br/>n…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-4:<br/>passed with two recorded<br/>amendments (write pieces<br/>are the call beat's<br/>result, each carries its<br/>row). Both reduce name…"
+```
+
+## Phase 2 close-out
+
+- **Morpheus**: \*lead review phase-2: passed. engine\_view is the one translation point, as the architecture said, check maps paths back with outward(). Deb…
+- **Trin**: UAT phase 4 passed. UND-107 AC1-4 in tests/python/test\_play\_calls.py (binding, no disk writes in a loop, --with path, unbound file, binding…
+- **Morpheus**: \*lead review phase-4: passed with two recorded amendments (write pieces are the call beat's result, each carries its row). Both reduce name…
+
+## Phase 5 starts
+
+Phase 5: the examples read as plays (flow beats named as roles, UND-108)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-05
+    Mouse->>All: "phase 5"
+    Note right of Mouse: "Phase 5: the examples<br/>read as plays (flow<br/>beats named as roles,<br/>UND-108)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 5 impl: flow beats<br/>named as roles in<br/>household<br/>(addition_checker,<br/>pin_checker,<br/>record_writer,<br/>spending_reporter...),<br/>categorize_merch…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 5 passed:<br/>fixtures and real replay<br/>(build/sprint28-phase5)<br/>byte-identical to the<br/>baseline, all 11<br/>outputs. Unit suite 30.7<br/>s (AC3…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 5):<br/>No blocking findings.<br/>Quick pass: names only<br/>in YAML and tests, no<br/>code path changed."
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "*lead review phase-5:<br/>passed. Coffee fixture<br/>names left as they are<br/>(a test fixture, not an<br/>example, UND-108 lists<br/>the examples). Commit,<br/>t…"
+```
+
+## Phase 5 close-out
+
+- **Trin**: UAT phase 5 passed: fixtures and real replay (build/sprint28-phase5) byte-identical to the baseline, all 11 outputs. Unit suite 30.7 s (AC3…
+- **Switch**: security gate (phase 5): No blocking findings. Quick pass: names only in YAML and tests, no code path changed.
+- **Morpheus**: \*lead review phase-5: passed. Coffee fixture names left as they are (a test fixture, not an example, UND-108 lists the examples). Commit, t…
+
+## Phase 6 starts
+
+Phase 6: the console and the run record say play and beat (UND-109)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    participant Oracle
+    Note over Mouse,Oracle: 📅 2026-11-05
+    Mouse->>All: "phase 6"
+    Note right of Mouse: "Phase 6: the console and<br/>the run record say play<br/>and beat (UND-109)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 6 impl: events say<br/>play (run_started.play,<br/>beats) and beat_started/<br/>completed/failed/entered<br/>(field beat), run.json<br/>beats/failed_beat,…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 6 passed: a<br/>coffee replay logs play<br/>+ beats, CLI 'beat<br/>weather'..., describe:<br/>'done after 5 beats',<br/>gauges<br/>BEATS/FAILED/JEV/ELAPS…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 6):<br/>No blocking findings.<br/>Quick pass: renamed<br/>fields and labels, no<br/>new input or route, the<br/>unreadable rule only<br/>narro…"
+    Morpheus->>Oracle: "lead handoff"
+    Note right of Morpheus: "*lead review phase-6:<br/>passed. Debt recorded<br/>for the retro: the page<br/>API keeps<br/>'sketch'/'stage' keys<br/>and the engine keeps<br/>internal names beh…"
+```
+
+## Phase 6 close-out
+
+- **Trin**: UAT phase 6 passed: a coffee replay logs play + beats, CLI 'beat weather'..., describe: 'done after 5 beats', gauges BEATS/FAILED/JEV/ELAPS…
+- **Switch**: security gate (phase 6): No blocking findings. Quick pass: renamed fields and labels, no new input or route, the unreadable rule only narro…
+- **Morpheus**: \*lead review phase-6: passed. Debt recorded for the retro: the page API keeps 'sketch'/'stage' keys and the engine keeps internal names beh…
+
+## Phase 7 starts
+
+Phase 7: the docs teach the play (UND-110)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Oracle
+    participant Smith
+    participant Tank
+    participant Cypher
+    Note over Mouse,Cypher: 📅 2026-11-05
+    Mouse->>All: "phase 7"
+    Note right of Mouse: "Phase 7: the docs teach<br/>the play (UND-110)"
+    Oracle->>Smith: "ora handoff"
+    Note right of Oracle: "Phase 7 docs: git mv<br/>SKETCHES.md -> PLAYS.md,<br/>rewritten with the<br/>framing and the play<br/>words, DOMAIN.md<br/>glossary (play, stage,<br/>prop, piece,…"
+    Smith->>Tank: "user approve"
+    Note right of Smith: "*user approve docs<br/>(UND-110). PLAYS.md<br/>opens with the framing<br/>and a words table,<br/>DOMAIN has the glossary,<br/>search of<br/>README/USER_GUIDE/ARCH/…"
+    Tank->>Oracle: "devops handoff"
+    Note right of Tank: "SDLC check passed<br/>(Sprint 28): no manifest<br/>change since main,<br/>package src/play,<br/>schema/play.schema.json<br/>and bin/understudy<br/>recorded in docs…"
+    Oracle->>Smith: "ora handoff"
+    Note right of Oracle: "Docs groomed: CHANGELOG<br/>Sprint 28, 2 lessons<br/>(one translation point +<br/>byte-identical baseline,<br/>Edit drops trailing<br/>spaces),<br/>UAT_PLAN_SPRINT…"
+    Smith->>All: "user approve"
+    Note right of Smith: "*user approve sprint-28.<br/>rubric UAT: COVER=A<br/>STEPS=A FAIL=A DATA=S<br/>EVID=A. UAT-28-1..8<br/>pass, real data byte-<br/>identical through every<br/>phase,…"
+    Mouse->>Cypher: "retro"
+    Note right of Mouse: "Sprint 28 retro posted<br/>in docs/sprints/RETRO_SP<br/>RINT28.md. Backlog:<br/>Sprint 29 scene diagram<br/>+ stepping (decision<br/>39), rename engine<br/>internal…"
+    Cypher->>All: "pm launch"
+    Note right of Cypher: "*pm launch sprint-28.<br/>Sprint complete: 6<br/>stories (UND-105..110),<br/>7 phases, a sketch is a<br/>play (stage, scene,<br/>beats, Jev beat, calls<br/>that bi…"
+```
+
+## Phase 7 close-out
+
+- **Tank**: SDLC check passed (Sprint 28): no manifest change since main, package src/play, schema/play.schema.json and bin/understudy recorded in docs…
+- **Smith**: \*user approve sprint-28. rubric UAT: COVER=A STEPS=A FAIL=A DATA=S EVID=A. UAT-28-1..8 pass, real data byte-identical through every phase,…
+
+## Sprint close-out
+
+- **Cypher**: \*pm launch sprint-28. Sprint complete: 6 stories (UND-105..110), 7 phases, a sketch is a play (stage, scene, beats, Jev beat, calls that bi…

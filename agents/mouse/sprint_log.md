@@ -36,3 +36,6 @@ Phases: 1 card payments are transfers (UND-93) | 2 spending.jsonl (UND-94) | 3 c
 
 ## Sprint 25 — the tool fixes the categories, payments know what they paid for (branch sprint-25, from sprint-24, started 2026-11-03)
 Phases: 1 clean list (UND-96) | 2 Jev categorizes every merchant (UND-97) | 3 kinds from links and categories + crosswalk (UND-98) | 4 allocation stages (UND-99a) | 5 payments.jsonl (UND-99b) | 6 spending from the tool's categories (UND-100) | close. Board: task.md.
+
+## Sprint 28 — plays (branch sprint-28, from main 9be83be, started 2026-11-04)
+Phases: 1 baseline + package rename | 2 play file shape (UND-105, 106) | 3 Jev is a beat (UND-106 AC2) | 4 calls pass pieces and props (UND-107) | 5 role names, identical outputs (UND-108) | 6 console and events (UND-109) | 7 docs (UND-110) | close. Board: task.md. Plan: docs/sprints/STORY_ARCH_SPRINT28.md.

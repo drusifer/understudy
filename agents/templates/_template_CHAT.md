@@ -11,7 +11,7 @@ bobp chat "<message>" --persona <Persona> --cmd <command> [--to <Persona>]
 
 Keep messages concise (under 256 characters). Put longer reports in a Markdown file and post its
 path. Successful posts regenerate `agents/CHAT.diagram.md`; use `bobp chat-diagram` after manual
-archive or log maintenance. See `agents/skills/chat/SKILL.md` for message and handoff conventions.
+archive or log maintenance. See `.claude/skills/chat/SKILL.md` for message and handoff conventions.
 
 <!-- RUBRIC-START -->
 ## Check — CHAT

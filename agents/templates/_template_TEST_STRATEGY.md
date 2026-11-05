@@ -1,6 +1,6 @@
 <!--
 High-level Quality & UAT Strategy template.
-Owned by Trin (QA Guardian / Lead SDET) — see agents/trin/SKILL.md.
+Owned by Trin (QA Guardian / Lead SDET) — see .claude/skills/trin/SKILL.md.
 Instantiated as `docs/TEST_STRATEGY.md` (or `docs/UAT_STRATEGY.md`).
 Remove this note and the check block when creating a real artifact; checks belong to templates.
 Morpheus and Smith review this using the STRATEGY rubric.

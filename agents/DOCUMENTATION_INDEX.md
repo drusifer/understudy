@@ -42,7 +42,7 @@ Type `*help` for complete command reference with examples.
 
 ---
 
-## Skills & Workflow Loops (`agents/skills/`)
+## Skills & Workflow Loops (`.claude/skills/`)
 
 Bob Protocol organizes autonomous workflows into hierarchical loops and supporting capabilities:
 
