@@ -86,8 +86,7 @@ class Sources:
         if key not in self._read:
             source = sketch.sources[name]
             if source.kind == "file":
-                chosen_by = source.config.get("optional")
-                if chosen_by and chosen_by not in sketch.variables and not source.path.is_file():
+                if source.config.get("optional") and name not in sketch.variables and not source.path.is_file():
                     self.announce(f"no {name}: {source.path} does not exist, so none are used")
                     self._read[key] = []
                 else:

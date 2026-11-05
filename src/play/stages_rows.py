@@ -47,12 +47,6 @@ async def expect(context, probabilities: Source, values: Data, into: str) -> lis
     return [{into: sum(row["probability"] * numbers[row["level"]] for row in readings) / total}]
 
 
-@stage("map.unpair")
-async def unpair(context, source: Source) -> list[dict]:
-    """Flat rows from an `each` result: for every `{input, output}` pair, the input row plus each row it output."""
-    return [{**pair["input"], **output} for pair in await context.read(source) for output in pair["output"]]
-
-
 @stage("map.adjacent_runs")
 async def adjacent_runs(  # noqa: PLR0913 - the stage's with: keys
     context, source: Source, group: str, order: str, length: int, match: dict | None = None,

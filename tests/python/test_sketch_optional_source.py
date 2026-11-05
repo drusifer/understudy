@@ -12,7 +12,7 @@ from src.play.sources.reader import Capture, Sources
 SKETCH = """\
 name: optional
 stage:
-  pins: { kind: file, path: "{{ pinned | default('.understudy/pinned.jsonl') }}", optional: pinned }
+  pinned: { kind: file, path: .understudy/pinned.jsonl, optional: true }
 scene:
   initial: done
   beats:
@@ -35,14 +35,14 @@ class OptionalFileSourceTests(unittest.TestCase):
     def read(self, sketch):
         said = []
         sources = Sources(Capture.live(CaptureStore(self.dir / "cache")), "run", said.append)
-        return asyncio.run(sources.read(sketch, "pins")), said
+        return asyncio.run(sources.read(sketch, "pinned")), said
 
     def test_when_the_value_is_not_given_and_the_default_file_is_missing_the_source_is_empty_and_says_so(self):
         sketch = load(self.path)
         self.assertEqual(check(sketch), [])
         rows, said = self.read(sketch)
         self.assertEqual(rows, [])
-        self.assertEqual(said, [f"no pins: {self.dir / '.understudy' / 'pinned.jsonl'} does not exist, so none are used"])
+        self.assertEqual(said, [f"no pinned: {self.dir / '.understudy' / 'pinned.jsonl'} does not exist, so none are used"])
 
     def test_when_the_default_file_exists_it_is_read(self):
         (self.dir / ".understudy" / "pinned.jsonl").write_text('{"payee": "Amazon"}\n', encoding="utf-8")

@@ -2,7 +2,10 @@ name: link_refund
 description: >
   Which of several earlier charges did a refund most likely reverse? Jev chooses among the charges, each named by its
   date and amount; the one it gives the highest probability is the original. Give it the refund's `record_id`,
-  `payees`, `days`, `costs` and the `options` (one name per charge).
+  `payees`, `days`, `costs` and the `options` (one name per charge) as props; it writes the `original` chosen.
+
+stage:
+  original: { kind: file, path: original.jsonl, access: write }   # what it gives back: the charge chosen (`level`)
 
 scene:
   initial: pick
@@ -10,10 +13,12 @@ scene:
     pick:
       do: { reduce: { action: max } }
       with: { from: reading, field: probability }
+      to: give
+    give:
+      do: { write: original }
       to: done
     done:
       final: true
-      outputs: [level]
 
     facts:
       do: { map: { action: rows } }

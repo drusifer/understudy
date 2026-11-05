@@ -32,17 +32,6 @@ from src.play.sources.reader import Capture, needs_jev
 DEFAULT_OUT = Path(".understudy/runs")  # git-ignored and private, beside the captures; `make clean` leaves it alone
 
 
-def _overrides(pairs: list[str]) -> dict[str, str]:
-    overrides = {}
-    for pair in pairs:
-        name, _, path = pair.partition("=")
-        name = name.removesuffix(".path")
-        if not name or not path:
-            raise PlayError([f"--source needs <name>.path=<file>, not {pair!r}"])
-        overrides[name] = path
-    return overrides
-
-
 def _values(pairs: list[str]) -> dict[str, str]:
     values = {}
     for pair in pairs:
@@ -74,10 +63,8 @@ def _parser() -> argparse.ArgumentParser:
     for name, summary in descriptions.items():
         command = commands.add_parser(name, help=summary, description=summary)
         command.add_argument("sketch", type=Path, help="the sketch file (YAML)")
-        command.add_argument("--source", action="append", default=[], metavar="NAME.path=FILE",
-                             help="read this file for the file source NAME, for this run only")
         command.add_argument("--with", action="append", default=[], metavar="NAME=VALUE", dest="values",
-                             help="give the sketch a value it uses (a file name, a date, a weight); repeat for each")
+                             help="give the play a prop (a date, a weight) or a stage file its path; repeat for each")
     dashboard = commands.add_parser("dashboard", help="serve the console: watch runs, and start, replay and stop them",
                                     description="Serve the console on this machine's port (every network interface). It watches "
                                     "the runs under RUNS and, for someone with the access secret, starts sketches from --sketches.")
@@ -155,7 +142,7 @@ def main(  # noqa: PLR0911, PLR0913 - the command line's injection points
         return fail("--pause needs --watch", 2)
 
     try:
-        sketch = load_checked(args.sketch, _overrides(args.source), _values(args.values))
+        sketch = load_checked(args.sketch, {}, _values(args.values))
     except PlayError as error:
         for problem in error.problems[:-1]:
             stderr.write(f"understudy: {problem}\n")

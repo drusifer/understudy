@@ -42,9 +42,9 @@ def fragment(name: str, *, monarch: str | None = None, amex: str | None = None, 
              pins: list[dict] | None = None, **more_stubs) -> tuple[list[dict], dict]:
     """The rows of source `name` and the summary it noted, from the fixture exports unless others are given."""
     stubs = {
-        "monarch_csv": csv_rows(monarch if monarch is not None else (ORACLE / "monarch.csv").read_text(encoding="utf-8")),
-        "amex_csv": csv_rows(amex if amex is not None else (ORACLE / "amex.csv").read_text(encoding="utf-8")),
-        "pins_file": pins or [],
+        "monarch": csv_rows(monarch if monarch is not None else (ORACLE / "monarch.csv").read_text(encoding="utf-8")),
+        "amex": csv_rows(amex if amex is not None else (ORACLE / "amex.csv").read_text(encoding="utf-8")),
+        "pinned": pins or [],
         "refund_readings": [],  # no refund is linked by Jev here: a refund that needs a choice stays a credit
         **more_stubs,
     }

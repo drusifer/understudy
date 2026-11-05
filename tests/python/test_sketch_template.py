@@ -36,15 +36,19 @@ CHILD = """\
 name: child
 data:
   seats: {{ seats | default(1) }}
+stage:
+  seen: { kind: file, path: seen.jsonl, access: write }
 scene:
   initial: look
   beats:
     look:
       do: { map: { action: look } }
+      to: give
+    give:
+      do: { write: seen }
       to: done
     done:
       final: true
-      outputs: [a]
 """
 
 
@@ -154,15 +158,19 @@ EACH_CHILD = """\
 name: child
 data:
   title: "{{ title }}"
+stage:
+  scored: { kind: file, path: scored.jsonl, access: write }
 scene:
   initial: look
   beats:
     look:
       do: { map: { action: look } }
+      to: give
+    give:
+      do: { write: scored }
       to: done
     done:
       final: true
-      outputs: [audience]
 """
 
 
@@ -183,15 +191,15 @@ class EachTests(TemplateCase):
         lines = result.outputs["pairs"].read_text(encoding="utf-8").splitlines()
         return seen, [json.loads(line) for line in lines]
 
-    def test_a_sketch_runs_once_per_row_and_the_result_pairs_each_row_with_its_output(self):
-        seen, pairs = self.run_each(self.write_each())
+    def test_a_play_runs_once_per_row_and_each_row_it_writes_carries_the_row_it_was_played_for(self):
+        seen, rows = self.run_each(self.write_each())
         self.assertEqual(seen, ["It Follows", "Hereditary"])
-        self.assertEqual(pairs, [
-            {"input": {"title": "It Follows"}, "output": [{"audience": "loved", "weight": 1}]},
-            {"input": {"title": "Hereditary"}, "output": [{"audience": "loved", "weight": 1}]},
+        self.assertEqual(rows, [
+            {"title": "It Follows", "audience": "loved", "weight": 1},
+            {"title": "Hereditary", "audience": "loved", "weight": 1},
         ])
 
-    def test_each_can_compute_a_source_that_another_stage_flattens(self):
+    def test_a_beat_without_to_can_play_once_per_row_and_be_read_by_name(self):
         parent = """\
 name: parent
 stage:
@@ -203,9 +211,6 @@ scene:
     scored:
       do: { play: child.yaml }
       each: films
-    flat:
-      do: { map: { action: unpair } }
-      with: { from: scored }
     write:
       do: { map: { action: read_flat } }
       to: save
@@ -217,7 +222,7 @@ scene:
 """
 
         async def read_flat(context):
-            return await context.read("flat")
+            return await context.read("scored")
 
         async def look(context):
             return [{"audience": context.sketch.data["title"].upper()}]

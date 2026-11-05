@@ -142,3 +142,14 @@ Words used in the docs: a **piece** is anything a beat reads by name (a stage fi
 ## Open Questions
 
 None. Answered: old runs get no back-compat (decision 41); props are declared on the stage, so there is no `inputs:` or `props:` section (decision 42).
+
+## Amendments made while building
+
+* **Phase 3 folded into Phase 2:** the rewritten files had nowhere else to put their Jev questions, so Jev beats came with the file shape. Capture keys were unchanged, and the real replay proved it.
+* **One namespace:** a name means one thing in a play; a stage entry and a beat cannot share it (`check` refuses). Evening's beat `audience` became `audience_scores` (then went away in Phase 4); household's written files were named `<name>_file`.
+* **A stage entry that is not a file is a prop**, so a wrong kind is reported as `prop 'x': unknown kind ...` (messages say prop, not input).
+* **Write pieces are the call beat's result (UND-107 AC3, simplified):** the call does not bind a written file to a separately named caller piece (`with: { placement: placed }`); the beat that calls the play already names its result. A called play may write any number of files; their rows together are the beat's result. Fewer names, same behavior.
+* **Under `each`, every written row carries the row it was played for** (the engine merges the row's fields in, as `unpair` did). This keeps household byte-identical without the called plays echoing their caller's fields, and replaces `{input, output}` pairs, `map.unpair` (removed) and `outputs:` (removed; `map.join_weights` takes `into:`).
+* **Paths:** `--source NAME.path=FILE` is gone; `--with <file piece>=<path>` gives a stage file its path, so household's command line is unchanged (`--with monarch=... amex=... pinned=... additions=...`). `optional:` is now `true`/`false` (missing is fine unless `--with` named the file).
+* **The "leak" in UND-107 AC4 did not exist:** each called play already read only its own stage (pieces are keyed by play). The check that a call binds only real caller pieces is new.
+* **Measured:** Phase 2 and Phase 4 both gave all 11 household outputs byte-identical to the `main` baseline on the fixtures and on a replay of the real Monarch and Amex files (3 min 18 s). Unit suite 601 tests, 30.5 s.

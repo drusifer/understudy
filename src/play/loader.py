@@ -183,16 +183,21 @@ def _engine_with(given: dict) -> dict:
     return {("sources" if isinstance(given["from"], list) else "source"): given["from"], **rest}
 
 
-def _source(name: str, value, base: Path, overrides: dict[str, str]) -> Source:
+def _source(name: str, value, base: Path, given: dict[str, str]) -> Source:
+    """A piece the engine reads. A stage file's path is the one given for it (`--with <name>=<file>`, read from where
+    you run), else its `path:` default (beside the play; from where you run when `optional`), else none yet: a call
+    binds it, or `check` asks for it."""
     config = dict(value)
-    if name in overrides:
-        config = {"kind": "file", "path": overrides[name]}
-    if config["kind"] == "file":
-        given = Path(config["path"])
-        if config.get("optional"):  # read from where you run, like the `--with` value that chooses it
-            return Source(name, "file", config, given.absolute())
-        return Source(name, "file", config, given if given.is_absolute() else base / given)
-    return Source(name, config["kind"], config)
+    if config["kind"] != "file":
+        return Source(name, config["kind"], config)
+    if name in given:
+        return Source(name, "file", config, Path(given[name]).absolute())
+    if "path" not in config:
+        return Source(name, "file", config, None)
+    path = Path(config["path"])
+    if config.get("optional"):
+        return Source(name, "file", config, path.absolute())
+    return Source(name, "file", config, path if path.is_absolute() else base / path)
 
 
 def children(sketch: Play) -> dict[str, Play]:
@@ -218,6 +223,14 @@ def source_children(sketch: Play) -> list[Play]:
     return found
 
 
+def bound_pieces(caller: Play, child: Play, given: dict) -> dict[str, str]:
+    """The called play's stage files that a call binds to the caller's pieces (`with: { additions: additions }`): the
+    name on the called play's stage, and the caller's piece that fills it."""
+    return {name: value for name, value in given.items()
+            if name in child.sources and child.sources[name].kind == "file" and isinstance(value, str)
+            and (value in caller.sources or value in caller.sinks or value in caller.machine["states"])}
+
+
 def call_values(state: dict) -> dict:
     """The values a state's call gives its sketch: its `with`, and the name a folding `each` passes its running list
     under (empty until the run), so a child that does not use the name is caught by the unused-name check."""
@@ -233,7 +246,8 @@ def unused_variables(sketch: Play, how: str = "--with") -> list[tuple[Play, str,
     """Per file of the sketch and the sketches it calls: the names given to it (`--with` or a call's `with`)
     that the file does not use, as (sketch, how it was given, names)."""
     found = []
-    unused = sorted(set(sketch.variables) - sketch.uses)
+    files = {name for name, source in sketch.sources.items() if source.kind == "file"}
+    unused = sorted(set(sketch.variables) - sketch.uses - files)
     if unused:
         found.append((sketch, how, unused))
     for child in children(sketch).values():
@@ -260,10 +274,11 @@ def _declared_inputs(path: Path, given: dict[str, str]) -> dict[str, dict]:
 def load(
     path: Path, overrides: dict[str, str] | None = None, variables: dict[str, str] | None = None, *, lenient: bool = False,
 ) -> Play:
-    """The sketch at `path`. `overrides` replaces a source with a file for this run only.
+    """The play at `path`. `overrides` gives a stage file its path for this load only (tests use it; the command line
+    gives the same with `--with <file piece>=<path>`).
 
     The file is a Jinja2 template: `variables` (`--with` on the command line, `with` on a call) fill it in before
-    it is read as YAML.
+    it is read as YAML. A variable named like a stage file gives that file's path instead.
     """
     path = Path(path)
     overrides = overrides or {}
@@ -273,15 +288,17 @@ def load(
     document, uses = _read(path, effective, lenient)
     _shape(path, document)
     engine = engine_view(path, document)
-    unknown = sorted(set(overrides) - {n for n, s in engine["sources"].items() if s.get("kind") == "file"})
+    files = {n for n, s in engine["sources"].items() if s.get("kind") == "file"}
+    unknown = sorted(set(overrides) - files)
     if unknown:
-        raise PlayError([f"{path}: --source names {', '.join(unknown)}, which is not a file on the play's stage"])
+        raise PlayError([f"{path}: {', '.join(unknown)} is not a file on the play's stage"])
+    given = {**{n: str(v) for n, v in variables.items() if n in files and isinstance(v, str | Path)}, **overrides}
     base = path.resolve().parent
     return Play(
         path=path,
         name=document["name"],
         description=document.get("description", "").strip(),
-        sources={n: _source(n, v, base, overrides) for n, v in engine["sources"].items()},
+        sources={n: _source(n, v, base, given) for n, v in engine["sources"].items()},
         sinks={n: Sink(n, v) for n, v in engine["sinks"].items()},
         outcomes={n: tuple(v) for n, v in document.get("outcomes", {}).items() if isinstance(v, list)},
         candidates={n: Candidates(v["from"], v["key"]) for n, v in document.get("outcomes", {}).items() if isinstance(v, dict)},

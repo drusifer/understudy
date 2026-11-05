@@ -28,6 +28,8 @@ scene:
 """
 CHILD = """\
 name: step
+stage:
+  step: { kind: file, path: step.jsonl, access: write }
 scene:
   initial: add
   beats:
@@ -35,10 +37,12 @@ scene:
       do: { map: { action: rows } }
       with:
         rows: [ { word: {{ word | tojson }}, earlier: {{ seen | map(attribute='word') | list | tojson }} } ]
+      to: give
+    give:
+      do: { write: step }
       to: done
     done:
       final: true
-      outputs: [word]
 """
 
 

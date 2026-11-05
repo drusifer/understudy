@@ -99,7 +99,7 @@ class ReadStageTests(FragmentCase):
         said: list[str] = []
         sketch = load(self.dir / "sketch.yaml", variables={})
         (self.dir / "optional.yaml").write_text(
-            "name: o\nstage:\n  extra:\n    kind: file\n    path: nothing.jsonl\n    optional: pinned\n"
+            "name: o\nstage:\n  extra:\n    kind: file\n    path: nothing.jsonl\n    optional: true\n"
             "scene: { initial: x, beats: { x: { final: true } } }\n", encoding="utf-8")
         optional = load(self.dir / "optional.yaml", variables={})
         self.assertEqual(run(read_stage(optional, "extra", announce=said.append)), [])

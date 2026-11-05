@@ -38,12 +38,12 @@
       "required": ["kind"],
       "if": { "properties": { "kind": { "const": "file" } } },
       "then": {
-        "required": ["kind", "path"],
+        "required": ["kind"],
         "additionalProperties": false,
         "properties": {
           "kind": { "const": "file" },
-          "path": { "type": "string", "minLength": 1 },
-          "optional": { "type": "string", "minLength": 1 },
+          "path": { "description": "The file read or written when the play is run from the command line and no --with gives one.", "type": "string", "minLength": 1 },
+          "optional": { "description": "A file read that may be missing (then it has no rows), unless --with gave its path.", "type": "boolean" },
           "access": { "enum": ["read", "write"] }
         }
       },
@@ -175,8 +175,7 @@
         "to": { "type": "string", "minLength": 1 },
         "transitions": { "type": "array", "items": { "$ref": "#/$defs/transition" }, "minItems": 1 },
         "final": { "type": "boolean" },
-        "outcome": { "type": "string" },
-        "outputs": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+        "outcome": { "type": "string" }
       },
       "allOf": [
         {

@@ -41,26 +41,16 @@ async def split_by_share(context, source: Source, field: str, segments: Data) ->
 
 
 @stage("map.join_weights")
-async def join_weights(context, probabilities: Source, weights: Data) -> list[dict]:
-    """A Jev reading (a probability per level) joined with the owner's weights per level: weighted rows."""
+async def join_weights(context, probabilities: Source, weights: Data, into: str) -> list[dict]:
+    """A Jev reading (a probability per level) joined with the owner's weights per level: weighted rows, each naming its
+    option under `into` (the outcome the weights are for)."""
     probabilities = await context.read(probabilities)
     levels = context.sketch.data[weights]
-    dimensions = _returned_dimensions(context)
     per_level = [{"level": level, "option": option, "weight": weight}
                  for level, options in levels.items() for option, weight in options.items()]
     mixed = query(context.directory, JOIN_SQL, {"probs": probabilities, "weights": per_level})
     context.summary[f"{context.sketch.name}_weights"] = {row["option"]: round(row["weight"], 6) for row in mixed}
-    return [{dimensions[0]: row["option"], "weight": row["weight"]} for row in mixed]
-
-
-def _returned_dimensions(context) -> list[str]:
-    for state in context.sketch.machine["states"].values():
-        if state.get("final") and state.get("outputs"):
-            dimensions = state["outputs"]
-            if len(dimensions) != 1:
-                raise ValueError(f"map.join_weights answers one dimension; the sketch outputs {dimensions}")
-            return dimensions
-    raise ValueError("map.join_weights is for a sketch that declares its outputs")
+    return [{into: row["option"], "weight": row["weight"]} for row in mixed]
 
 
 def _validate(rows: list[dict], decider: str, outcomes: dict, stage: str) -> None:

@@ -11,7 +11,7 @@ from pathlib import Path
 
 import src.play.stages  # noqa: F401 - importing it registers the stages
 from src.play import conditions
-from src.play.loader import PlayError, call_values, load, unused_variables
+from src.play.loader import PlayError, bound_pieces, call_values, load, unused_variables
 from src.play.model import Play
 from src.play.registry import STAGES, Data, Source
 from src.play.vocabulary import COMBINATORS, ON_EMPTY, STAGE_TYPES, stage_of
@@ -45,8 +45,9 @@ def _nearest(word, choices) -> str:
 
 
 class _Checker:
-    def __init__(self, sketch: Play, seen: tuple[Path, ...]):
+    def __init__(self, sketch: Play, seen: tuple[Path, ...], bound: frozenset[str] = frozenset()):
         self.sketch, self.seen, self.found = sketch, seen, []
+        self.bound = bound  # stage files a caller binds to its own pieces: they are not read from disk
         self.states = sketch.machine["states"]
         self.known = set(sketch.outcomes) | set(sketch.candidates)  # every outcome, declared or read from rows
 
@@ -78,15 +79,18 @@ class _Checker:
 
     # sources and data ----------------------------------------------------
 
-    def may_be_missing(self, source) -> bool:
-        """An optional file source may be missing unless the value that chooses it (`optional: <name>`) was given."""
-        chosen_by = source.config.get("optional")
-        return bool(chosen_by) and chosen_by not in self.sketch.variables
+    def may_be_missing(self, name: str, source) -> bool:
+        """An optional stage file may be missing unless a path was given for it (`--with <name>=<file>`)."""
+        return bool(source.config.get("optional")) and name not in self.sketch.variables
 
     def sources(self) -> None:
         for name, source in self.sketch.sources.items():
-            if source.kind == "file" and not (source.path and source.path.is_file()) and not self.may_be_missing(source):
-                typed = source.config.get("path", "") if isinstance(source.config, dict) else ""
+            if name in self.bound:
+                continue
+            if source.kind == "file" and source.path is None:
+                self.problem(f"sources.{name}", f"no file given: pass --with {name}=<file>, or a call binds it")
+            elif source.kind == "file" and not source.path.is_file() and not self.may_be_missing(name, source):
+                typed = str(self.sketch.variables.get(name, source.config.get("path", "")))
                 said = f"file {typed} does not exist (looked for {source.path})" if typed and typed != str(source.path) \
                     else f"file {source.path} does not exist"
                 self.problem(f"sources.{name}", said)
@@ -189,12 +193,6 @@ class _Checker:
     def final_state(self, at: str, state: dict) -> None:
         if "then" in state or "transitions" in state or "do" in state:
             self.problem(at, "a final beat does nothing and goes nowhere")
-        for dimension in state.get("outputs", []):
-            if dimension not in self.known and not self.is_subsketch_file():
-                self.problem(f"{at}.outputs", f"{dimension!r} is not a declared outcome")
-
-    def is_subsketch_file(self) -> bool:
-        return not self.known
 
     def targets(self, at: str, state: dict):
         if "then" in state:
@@ -296,14 +294,13 @@ class _Checker:
             self.found.extend(error.problems if path.is_file() else
                               [f"{self.sketch.path}: {self.outward(at)}: no play file {path.name}"])
             return
-        self.found.extend(_Checker(child, (*self.seen, path)).run())
-        declared = next((s.get("outputs") for s in child.machine["states"].values() if s.get("final") and s.get("outputs")), None)
-        if declared is None:
-            self.problem(at, f"play {file}.yaml declares no outputs, so its weights cannot be blended")
-            return
-        for dimension in declared:
-            if dimension not in self.known and not each:  # a loop's outputs are paired with rows, not blended
-                self.problem(at, f"play {file}.yaml outputs {dimension!r}, which is not a declared outcome here")
+        bound = frozenset(bound_pieces(self.sketch, child, given))
+        for name in sorted(bound):
+            self.readable(f"{at.removesuffix('.do.sketch.file')}.with.{name}", given[name])
+        self.found.extend(_Checker(child, (*self.seen, path), bound).run())
+        writes = [state for state in child.machine["states"].values() if (stage_of(state) or ("",))[0] == "sink"]
+        if not writes:
+            self.problem(at, f"play {file}.yaml writes no file, so it gives its caller nothing")
 
     # deciders ----------------------------------------------------------------
 

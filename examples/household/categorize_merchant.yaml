@@ -5,10 +5,11 @@ description: >
   only chooses; it never writes a category, and it never sees the export's own categories. A choice counts when it is
   above 0.7, or at least 0.4 and at least twice as sure as the runner-up (a long list spreads the probability, so a
   right answer is often 0.45 to 0.67); when both choices count the merchant is placed, otherwise it goes to review. Give it the merchant's `payee`, `count`, `amounts`,
-  `statements` and `descriptions`, and the path of the `additions` file.
+  `statements` and `descriptions` as props, and the `additions` file; it writes the merchant's `placement`.
 
 stage:
-  additions_file: { kind: file, path: "{{ additions }}" }
+  additions: { kind: file }             # the owner's own categories: {group, name}; a caller binds it, or --with additions=<file>
+  placement: { kind: file, path: placement.jsonl, access: write }   # what it gives back: the merchant's category and status
 
 scene:
   initial: ask_group
@@ -23,14 +24,16 @@ scene:
     fit:
       do: { map: { action: where } }
       with: { from: answer, keep: { level: { ne: "" } } }
-      to: done
+      to: give
     no_fit:
       do: { map: { action: where } }
       with: { from: no_fit_row, keep: { level: { ne: "" } } }
+      to: give
+    give:
+      do: { write: placement }
       to: done
     done:
       final: true
-      outputs: [status]
 
     facts:
       do: { map: { action: rows } }
@@ -41,7 +44,7 @@ scene:
       do: { map: { action: mcc } }
     list:                               # the clean list: {group, name}
       do: { map: { action: concat } }
-      with: { from: [ iso, additions_file ] }
+      with: { from: [ iso, additions ] }
     groups:                             # each group with all its names, so Jev can tell what the group covers
       do: { map: { action: group } }
       with: { from: list, by: group, collect: { names: name }, take: 100 }

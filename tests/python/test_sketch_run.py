@@ -168,11 +168,11 @@ class CliTests(RunCase):
         self.assertIn("stage.numbers", err[-1])
         self.assertFalse(self.out.exists())
 
-    def test_source_replaces_one_file_for_the_run(self):
+    def test_with_gives_a_stage_file_its_path_for_one_run(self):
         path = self.sketch([("stage:\n", "stage:\n  numbers: { kind: file, path: missing.jsonl }\n")])
         real = self.dir / "real.jsonl"
         real.write_text('{"n": 1}\n', encoding="utf-8")
-        code, _, err = self.go("run", str(path), "--source", f"numbers.path={real}", "--out", str(self.out))
+        code, _, err = self.go("run", str(path), "--with", f"numbers={real}", "--out", str(self.out))
         self.assertEqual((code, err), (0, []))
         self.assertIn("missing.jsonl", path.read_text(encoding="utf-8"))
 

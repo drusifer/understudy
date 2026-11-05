@@ -7,15 +7,15 @@ description: >
   since=<yyyy-mm-dd>
 
 stage:
-  monarch_csv: { kind: file, path: "{{ monarch }}" }
-  amex_csv: { kind: file, path: "{{ amex }}" }
-  pins_file:                            # the owner's own category for a merchant: {payee, category}; none if the default file is absent
+  monarch: { kind: file }               # the Monarch export: --with monarch=<csv>
+  amex: { kind: file }                  # the Amex export: --with amex=<csv>
+  pinned:                               # the owner's own category for a merchant: {payee, category}; none if the default file is absent
     kind: file
-    path: "{{ pinned | default('.understudy/pinned.jsonl') }}"
-    optional: pinned
-  additions_file:                       # the owner's own categories where ISO has no good match: {group, name}
+    path: .understudy/pinned.jsonl
+    optional: true
+  additions:                            # the owner's own categories where ISO has no good match: {group, name}
     kind: file
-    path: "{{ additions | default('additions.jsonl') }}"
+    path: additions.jsonl
   records_file: { kind: file, path: records.jsonl, access: write }
   legs_file: { kind: file, path: legs.jsonl, access: write }
   kinds_file: { kind: file, path: kinds.jsonl, access: write }
@@ -33,19 +33,19 @@ scene:
     # the scene's flow: the checks that stop a bad run before Jev is asked, then the writes
     check_additions:                    # a bad additions file or pin stops the run before anything is asked of Jev
       do: { map: { action: complete } }
-      with: { from: additions_file, fields: [ group, name ] }
+      with: { from: additions, fields: [ group, name ] }
       to: check_additions_unique
     check_additions_unique:
       do: { map: { action: unique } }
-      with: { from: additions_file, field: name, among: iso }
+      with: { from: additions, field: name, among: iso }
       to: check_pins
     check_pins:
       do: { map: { action: complete } }
-      with: { from: pins_file, fields: [ payee, category ] }
+      with: { from: pinned, fields: [ payee, category ] }
       to: check_pin_categories
     check_pin_categories:
       do: { map: { action: known } }
-      with: { from: pins_file, field: category, among: taxonomy, among_field: category }
+      with: { from: pinned, field: category, among: taxonomy, among_field: category }
       to: write_taxonomy
     write_taxonomy:
       do: { write: taxonomy_file }
@@ -101,7 +101,7 @@ scene:
     # performed when read
     pins:                               # what each pinned merchant is called, however it is spelled
       do: { map: { action: normalize } }
-      with: { from: pins_file, field: payee, into: key }
+      with: { from: pinned, field: payee, into: key }
     iso:                                # the ISO 18245 merchant categories in use: {group, name}
       do: { map: { action: mcc } }
     iso_marked:
@@ -109,7 +109,7 @@ scene:
       with: { from: iso, fields: { origin: iso } }
     additions_marked:
       do: { map: { action: set } }
-      with: { from: additions_file, fields: { origin: owner } }
+      with: { from: additions, fields: { origin: owner } }
     taxonomy_all:
       do: { map: { action: concat } }
       with: { from: [ iso_marked, additions_marked ] }
@@ -118,13 +118,13 @@ scene:
       with: { from: taxonomy_all, template: "{group}: {name}", into: category }
     monarch_checked:                    # the export's own categories decide what is a transfer, so it must have them
       do: { map: { action: require } }
-      with: { from: monarch_csv, columns: [ Category ] }
+      with: { from: monarch, columns: [ Category ] }
     monarch_clean:                      # dates and amounts read from the text
       do: { map: { action: convert } }
       with: { from: monarch_checked, dates: { Date: date }, amounts: { Amount: amount } }
     amex_clean:                         # a card export lists charges as positive amounts
       do: { map: { action: convert } }
-      with: { from: amex_csv, dates: { Date: date }, amounts: { Amount: amount }, negate: true }
+      with: { from: amex, dates: { Date: date }, amounts: { Amount: amount }, negate: true }
     monarch_numbered:
       do: { map: { action: number } }
       with: { from: monarch_clean, into: id, prefix: m }
@@ -273,15 +273,12 @@ scene:
     refund_groups:
       do: { map: { action: group } }
       with: { from: labelled, by: record_id, collect: { options: label, days: day, costs: cost, payees: payee } }
-    refund_readings:                    # Jev, once per refund with several candidates
+    refund_readings:                    # Jev, once per refund with several candidates: each refund's group with the charge chosen
       do: { play: link_refund.yaml }
       each: refund_groups
-    refund_choices:
-      do: { map: { action: unpair } }
-      with: { from: refund_readings }
     chosen_original:
       do: { map: { action: join } }
-      with: { from: refund_choices, other: labelled, on: level, other_on: label }
+      with: { from: refund_readings, other: labelled, on: level, other_on: label }
     by_jev:
       do: { map: { action: classify } }
       with: { from: chosen_original, into: link_status, cases: [], otherwise: chosen }
@@ -326,16 +323,13 @@ scene:
     pinned_placed:                      # placed in the owner's category, and marked as pinned
       do: { map: { action: set } }
       with: { from: pinned_level, fields: { status: placed, probability: 1.0, source: pin } }
-    placements:                         # Jev, once per merchant: a group and a name from the clean list, or neither
+    placements:                         # Jev, once per merchant: each merchant with a group and a name from the clean list, or neither
       do: { play: categorize_merchant.yaml }
       each: unpinned
-      with: { additions: "{{ additions | default('additions.jsonl') }}" }
-    placed:
-      do: { map: { action: unpair } }
-      with: { from: placements }
+      with: { additions: additions }
     jev_placed:                         # marked as Jev's, as a pin is marked as the owner's
       do: { map: { action: set } }
-      with: { from: placed, fields: { source: jev } }
+      with: { from: placements, fields: { source: jev } }
     decided:
       do: { map: { action: concat } }
       with: { from: [ pinned_placed, jev_placed ] }

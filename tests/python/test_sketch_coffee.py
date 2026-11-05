@@ -62,7 +62,7 @@ class RegistryTests(unittest.TestCase):
             "map.split_by_share", "map.join_weights", "map.recipes", "reduce.blend",
             "map.adjacent_runs", "map.prefer_order", "map.prefer_middle",
             "map.weigh", "reduce.max", "reduce.min", "reduce.any",
-            "map.where", "map.join", "map.unpair", "map.expect",
+            "map.where", "map.join", "map.expect",
             "map.convert", "map.pair", "map.link", "map.group", "map.rows", "map.classify",
             "map.number", "map.coalesce",
             "map.replace", "map.normalize", "map.format", "map.earlier", "map.concat", "map.matching",
@@ -84,8 +84,8 @@ class CoffeeRunTests(CoffeeCase):
         code, lines, err = self.go(jev=double())
         self.assertEqual((code, err), (0, []))
         self.assertEqual([line for line in lines if line.startswith("stage")], [
-            "stage weather", "stage weather_change.judge", "stage split_trade", "stage match_orders", "stage to_ingredients",
-            "stage write"])
+            "stage weather", "stage weather_change.judge", "stage weather_change.give", "stage split_trade",
+            "stage match_orders", "stage to_ingredients", "stage write"])
         self.assertEqual(read_jsonl(self.folder(lines) / "ingredients.jsonl"),
                          [{"amount": 32000, "ingredient": "coffee_beans", "unit": "g"}])
         summary = self.summary(lines)

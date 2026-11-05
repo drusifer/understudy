@@ -56,4 +56,3 @@ scene:
       to: done
     done:
       final: true
-      outputs: [hold]

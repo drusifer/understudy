@@ -11,7 +11,6 @@ from src.play.stages_rows import (
     prefer_order,
     reduce_max,
     reduce_min,
-    unpair,
     weigh,
     where,
 )
@@ -86,15 +85,6 @@ class ExpectTests(unittest.TestCase):
                                               {"level": "loved", "probability": 0.6}]).read, sketch=sketch)
         (row,) = run(expect, ctx, "p", "values", "audience")
         self.assertAlmostEqual(row["audience"], 0.1 * 0.0 + 0.3 * 0.5 + 0.6 * 1.0)
-
-
-class UnpairTests(unittest.TestCase):
-    def test_each_pair_becomes_the_input_row_plus_what_it_output(self):
-        pairs = [{"input": {"title": "A"}, "output": [{"audience": 0.9}]},
-                 {"input": {"title": "B"}, "output": [{"audience": 0.1}]},
-                 {"input": {"title": "C"}, "output": []}]
-        self.assertEqual(run(unpair, context(pairs=pairs), "pairs"),
-                         [{"title": "A", "audience": 0.9}, {"title": "B", "audience": 0.1}])
 
 
 class AdjacentRunsTests(unittest.TestCase):

@@ -16,7 +16,7 @@ from pathlib import Path
 from src.machine_runner import RunRecord, run_machine
 from src.paths import ROOT, check_writable
 from src.play.control import Hold, write_control
-from src.play.loader import child_path, children, load
+from src.play.loader import bound_pieces, child_path, children, load
 from src.play.machine import build_machine
 from src.play.model import Play
 from src.play.registry import StageFn
@@ -80,9 +80,13 @@ class EventedRecord(RunRecord):
         self.emit("run_finished", outcome=outcome or "complete")
 
 
-def _write_part(directory: Path, file: str, rows) -> None:
+def _check_rows(rows) -> None:
     if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
-        raise TypeError(f"a sink writes the rows of the stage before it, not {type(rows).__name__}")
+        raise TypeError(f"a write writes rows, not {type(rows).__name__}")
+
+
+def _write_part(directory: Path, file: str, rows) -> None:
+    _check_rows(rows)
     lines = "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows)
     (directory / f"{file}.part").write_text(lines, encoding="utf-8")
 
@@ -119,54 +123,60 @@ class NestedRecord:
 
 
 async def _run_each(context: StageContext, library: Mapping[str, StageFn], record: EventedRecord) -> list[dict]:
-    """Run the sketch this stage calls once per row of the source named by `each`.
+    """Perform the play this beat calls once per row of the piece named by `each`.
 
-    The row's fields are the child's variables, beside the call's `with`. The result pairs every row with what its
-    run output: `[ { input: <row>, output: <what the child returned> }, ... ]`. A row's Jev answers are captured under
-    the child's name and the row's position, so each film (say) is asked and replayed on its own.
+    The row's fields are the play's props, beside the call's `with`. The result is every row the play wrote, each
+    carrying the fields of the row it was played for (a merchant's key, say). A row's Jev answers are captured under the
+    play's name and the row's position, so each film (say) is asked and replayed on its own.
 
     With `reduce: { action: concat, into: <name> }` the iterations run in order as a fold instead: the rows each one
-    outputs are appended to a running list, which the next one receives as the variable `<name>` (empty to begin
-    with), and the result is that list.
+    writes are appended to a running list, which the next one receives as the prop `<name>` (empty to begin with), and
+    the result is that list.
     """
     state = context.state
     path = child_path(context.sketch, stage_of(state)[1])
     folding = state.get("reduce")
-    paired, running = [], []
+    carried, running = [], []
     for index, row in enumerate(await context.read(state["each"])):
         values = {**state.get("with", {}), **row, **({folding["into"]: list(running)} if folding else {})}
         child = replace(load(path, variables=values), name=f"{context.name}.{path.stem}[{index}]")
         output = await _run_child(context, library, record, child)
         running += output
-        paired.append({"input": row, "output": output})
-    return running if folding else paired
+        carried += [{**row, **written} for written in output]
+    return running if folding else carried
 
 
 async def _run_child(context: StageContext, library: Mapping[str, StageFn], record: EventedRecord, child: Play | None = None):
-    """Run the sketch this state calls (`do: { sketch: { file: ... } }`) in the same run folder, with the same sources.
+    """Perform the play this beat calls (`do: { play: <file>.yaml }`) inside this run.
 
-    Its result is what its last stage returned, or no rows when it ended in a final state with `outcome: none`: a
-    subsketch that finds nothing gives its caller nothing.
+    The call's `with:` binds the play's stage: a prop gets a value, and a stage file named there gets the rows of the
+    caller's piece it names. The play touches no disk: its result is the rows it wrote, or no rows when it ended in a
+    final beat with `outcome: none` (a play that finds nothing gives its caller nothing).
     """
     child = child or children(context.sketch)[context.name]
+    for name, piece in bound_pieces(context.sketch, child, context.state.get("with", {})).items():
+        context.sources.provide(child, name, await context.read(piece))
     results: dict = {}
     last = {"value": None}
+    written: dict[str, list[dict]] = {}
 
     def make_context(name: str, state: dict) -> StageContext:
         return StageContext(child, name, state, results, last["value"], context.directory, context.summary, context.sources,
                             context.emit)
 
-    stages = {name: _remember(stage, last) for name, stage in _stages(child, library, make_context, results, record).items()}
+    stages = _stages(child, library, make_context, results, record, written)
+    stages = {name: _remember(stage, last) for name, stage in stages.items()}
     nested = NestedRecord(record, child.name)
     outcomes = {name: state["outcome"] for name, state in child.machine["states"].items() if state.get("outcome")}
     await run_machine(build_machine(child), stages, nested, outcomes=outcomes)
-    return [] if nested.outcome == NOTHING else last["value"]
+    return [] if nested.outcome == NOTHING else [row for rows in written.values() for row in rows]
 
 
-def _stages(
+def _stages(  # noqa: PLR0913 - a beat needs the play, the library, its context, the results, the record, where writes go
     sketch: Play, library: Mapping[str, StageFn], make_context: Callable[[str, dict], StageContext], results: dict,
-    record: EventedRecord,
+    record: EventedRecord, written: dict[str, list[dict]] | None = None,
 ):
+    """The flow beats as the machine calls them. `written` collects what a called play writes instead of the disk."""
     stages = {}
     for name, state in sketch.machine["states"].items():
         if state.get("final"):
@@ -178,7 +188,11 @@ def _stages(
             if kind == "sink":
                 named = state.get("with", {}).get("source")
                 rows = await context.read(named) if named else context.last
-                _write_part(context.directory, sketch.sinks[target].file, rows)
+                if written is None:
+                    _write_part(context.directory, sketch.sinks[target].file, rows)
+                else:
+                    _check_rows(rows)
+                    written.setdefault(target, []).extend(rows)
                 return rows
             if kind == "sketch":
                 run = _run_each if "each" in state else _run_child

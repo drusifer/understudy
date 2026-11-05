@@ -9,7 +9,7 @@ from src.play.cli import main
 
 SEATING = ROOT / "examples" / "evening" / "seating.yaml"
 SEATS = ROOT / "tests" / "fixtures" / "evening" / "seats.jsonl"        # this test's own seat map, laid out to be asserted on
-SEATS_FLAG = ["--source", f"seats.path={SEATS}"]
+SEATS_FLAG = ["--with", f"seats={SEATS}"]
 
 
 class SeatingCase(unittest.TestCase):

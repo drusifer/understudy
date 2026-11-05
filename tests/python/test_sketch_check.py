@@ -107,9 +107,10 @@ class CheckTests(unittest.TestCase):
         problems = self.workspace().edit("from: weather", "from: write").problems()
         self.assert_problem(problems, "entries[1].from", "not a beat that performs a play")
 
-    def test_a_subsketch_that_returns_an_undeclared_outcome_is_refused(self):
-        problems = self.workspace().edit("  temp: [hot, iced]\n", "").problems()
-        self.assert_problem(problems, "outputs 'temp'", "not a declared outcome")
+    def test_a_called_play_that_writes_nothing_is_refused(self):
+        give = "      to: give\n    give:\n      do: { write: temp_weights }\n      to: done\n"
+        problems = self.workspace().edit(give, "      to: done\n", "weather_change.yaml").problems()
+        self.assert_problem(problems, "scene.beats.weather.do.play", "play weather_change.yaml writes no file")
 
     def test_a_forbid_that_drops_an_unknown_option_is_refused(self):
         problems = self.workspace().edit("caffeine: { ne: none }", "caffeine: { ne: nonee }").problems()
@@ -187,7 +188,7 @@ class ShapeTests(unittest.TestCase):
     def test_an_override_for_an_undeclared_source_is_refused(self):
         with self.assertRaises(PlayError) as caught:
             load(FIXTURES / "coffee_week.yaml", {"salez": "x.jsonl"})
-        self.assertIn("--source names salez, which is not a file on the play's stage", str(caught.exception))
+        self.assertIn("salez is not a file on the play's stage", str(caught.exception))
 
 
 class SliceTests(unittest.TestCase):
