@@ -1,5 +1,15 @@
 # Changelog
 
+## Sprint 28 — plays (2026-11-05, branch `sprint-28`, not yet merged)
+
+- **A sketch is a play.** A play has a **stage**, its whole interface (props, files read, files written with `access: write`), and a **scene** of **beats**. A beat with `to:`/`transitions:` is in the flow; a beat without them is performed when another beat first reads it. Jev is a beat (`do: { jev: ... }`). `from:` names an action's main input; `do: { write: x }` and `do: { play: x.yaml }` replace sinks and sketch calls. Reference: `docs/PLAYS.md`; ADR-0061.
+- **Calling a play:** a call's `with:` binds the called play's props and files to the caller's pieces; the called play touches no disk, and what it writes is the call beat's result (under `each`, each written row carries the row it was played for). `outputs:`, `{input, output}` pairs and `map.unpair` are gone.
+- **Paths:** `--with <file>=<path>` gives a stage file its path; `--source` is gone; `optional: true`. The household command line is unchanged (`--with monarch=... amex=... pinned=... additions=...`).
+- **The run record and the console say play and beat:** events `run_started.play`, `beat_started`/`completed`/`failed`/`entered`; `run.json` `beats`, `failed_beat`; CLI lines `beat <name>`; console labels Play, all beats, BEAT TUBE, the BEATS gauge; `understudy dashboard --plays`. A log from before plays shows as unreadable (no back-compat).
+- **Code:** the package is `src/play` (class `Play`, `PlayError`); the schema is `schema/play.schema.json`; the examples' flow beats are named as roles (`addition_checker`, `record_writer`, `group_judge`).
+- **Proved:** the household outputs stayed byte-identical to `main` on the fixtures and on a replay of a real run after every phase. Unit suite 601 tests in about 30.5 s; browser 39/39 in about 108 s.
+- **Not changed (debt):** the engine's internal names behind the loader's translation, and the console API's `sketch`/`stage` JSON keys.
+
 ## Sprint 27 — the test pyramid (2026-11-03, branch `sprint-27`, not yet merged)
 
 - **A faster gate:** `bobp make check` now takes 36 s (was 96 to 101 s) and runs lint and the secrets scan before the tests, so a lint error stops it in 0.16 s. The Python unit suite is 29.4 s for 586 tests (was 94.6 s for 554).
