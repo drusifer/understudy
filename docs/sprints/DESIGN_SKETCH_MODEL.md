@@ -1,6 +1,6 @@
 # Design: the sketch model for the Python port
 
-* **Status**: AGREED with the owner in conversation, 2026-10-29, and BUILT in Sprint 19. This is the record of how the model was shaped; where the examples below differ in detail (sink file names, `with:` keys, recipe rows), `docs/SKETCHES.md` and `tests/fixtures/coffee/` are the truth. Basis of the Python port epic (`EPIC_PYTHON_PORT.md`) and of the coffee proof of concept.
+* **Status**: AGREED with the owner in conversation, 2026-10-29, and BUILT in Sprint 19. This is the record of how the model was shaped; where the examples below differ in detail (sink file names, `with:` keys, recipe rows), `docs/PLAYS.md` (the guide that replaced `docs/SKETCHES.md`) and `tests/fixtures/coffee/` are the truth. Since Sprint 28 a sketch is a **play** (`STORY_ARCH_SPRINT28.md`, ADR-0061); the words below are the sketch's. Basis of the Python port epic (`EPIC_PYTHON_PORT.md`) and of the coffee proof of concept.
 * **Rules**: no back-compat, YAGNY, DRY, no new language (SQL on DuckDB; `python-statemachine` YAML), Jev chooses and never writes.
 
 ## 1. What changed in our thinking

@@ -252,3 +252,19 @@ Everything above this heading about the old player (watch page, dashboard, proce
 - `evening`'s description repeats "Values you can set: --with ..." now that the console shows its inputs. (Cypher)
 - Sprint 25: step, pause, resume and `run --watch`; replay of a finished run from its log; decision detail; the YAML editor. (Cypher)
 - The browser check takes about 104 seconds, so it is not a release gate (owner rule: only if it takes seconds). (Trin)
+
+## From the sprint 25 to 27 retros (2026-11-03)
+- Details are in `docs/sprints/RETRO_SPRINT25.md`, `RETRO_SPRINT26.md` and `RETRO_SPRINT27.md`. Done: allocation of payments to charges and spending from the tool's categories (25), pause, step, replay and decision detail in the console (26), the test pyramid: gate 96 s to 36 s (27).
+- Browser suite to 90 s: merge page tests that share a page, or accept about 108 s. (Trin, owner decides)
+- Pins for the own-account merchants (Ridgewood Savings Bank and others) and the $20,000 "Deposit"; work down `review.jsonl`. (Owner)
+- Venmo and Zelle histories, matched to their bank debits with the `link` stage's business-day logic. (Cypher, Neo)
+- Make the Monarch `Category` optional; write `open_balance` 0 when there is none. (Neo)
+
+## From the sprint 28 retro (2026-11-05)
+- Done in Sprint 28: a sketch is a play (stage, scene, beats, Jev beat, calls that bind a stage); outputs byte-identical on real data. `docs/sprints/RETRO_SPRINT28.md`, ADR-0061, `docs/PLAYS.md`.
+- **Sprint 29 (owner, decision 39): show the scene diagram and step through a play**, built on beats and scenes. (Cypher)
+- Rename the engine's internals to the play words and remove `engine_view`'s translation (`Play.sources`/`sinks`/`machine`, a state's `then`, the action parameter `source` to `from`); rename the console API's `sketch`/`stage` JSON keys. (Neo, Morpheus)
+- Rename the `test_sketch_*.py` files to `test_play_*.py` and the coffee fixture's flow beats to roles. (Neo)
+- A test that the household's stand-ins still match what `categorize_merchant` really writes. (Trin)
+- A play editor in the console (was the YAML editor, UND-86). (Cypher)
+- Act on the expiries: SEC-002 by 2026-12-01; SEC-005 by 2027-01-30. (Switch, owner)
