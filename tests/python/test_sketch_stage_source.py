@@ -5,34 +5,32 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import src.sketch.stages  # noqa: F401 - importing it registers the stages
-from src.sketch.check import check, load_checked
-from src.sketch.loader import load
-from src.sketch.registry import STAGES, Stage
-from src.sketch.registry import library as registered
-from src.sketch.run import run_sketch
-from src.sketch.sources.capture import CaptureStore
-from src.sketch.sources.reader import Capture
+import src.play.stages  # noqa: F401 - importing it registers the stages
+from src.play.check import check, load_checked
+from src.play.loader import load
+from src.play.registry import STAGES, Stage
+from src.play.registry import library as registered
+from src.play.run import run_sketch
+from src.play.sources.capture import CaptureStore
+from src.play.sources.reader import Capture
 
 SKETCH = """\
 name: seats
-sources:
-  seats: seats.jsonl
-  runs:
-    kind: stage
-    do: { map: { action: adjacent_runs } }
-    with: { source: seats, group: row, order: number, length: {{ length | default(2) }}, match: { free: true } }
-sinks:
-  out: out.jsonl
-machine:
+stage:
+  seats: { kind: file, path: seats.jsonl }
+  out: { kind: file, path: out.jsonl, access: write }
+scene:
   initial: look
-  states:
+  beats:
+    runs:
+      do: { map: { action: adjacent_runs } }
+      with: { from: seats, group: row, order: number, length: {{ length | default(2) }}, match: { free: true } }
     look:
       do: { map: { action: read_runs } }
-      then: write
+      to: write
     write:
-      do: { sink: { name: out } }
-      then: done
+      do: { write: out }
+      to: done
     done:
       final: true
 """
@@ -92,25 +90,26 @@ class StageSourceTests(StageSourceCase):
         runs = self.run_it(self.write())
         self.assertTrue(all(r["last"] - r["first"] == 1 for r in runs))
 
-    def test_a_stage_source_that_reads_itself_is_refused(self):
-        text = SKETCH.replace("with: { source: seats,", "with: { source: runs,")
+    def test_a_beat_that_reads_itself_is_refused(self):
+        text = SKETCH.replace("with: { from: seats,", "with: { from: runs,")
         problems = check(load(self.write(text)))
-        self.assertTrue(any("source 'runs' reads itself" in p for p in problems), problems)
+        self.assertTrue(any("scene.beats.runs.with: beat 'runs' reads itself" in p for p in problems), problems)
 
     def test_an_unknown_action_is_refused_with_the_nearest(self):
         text = SKETCH.replace("action: adjacent_runs", "action: adjacent_run")
         problems = check(load(self.write(text)))
-        self.assertTrue(any("unknown stage 'map.adjacent_run' (did you mean 'map.adjacent_runs'?)" in p for p in problems), problems)
+        self.assertTrue(any("unknown action 'map.adjacent_run' (did you mean 'map.adjacent_runs'?)" in p for p in problems), problems)
 
-    def test_a_source_param_naming_an_unknown_source_is_refused(self):
-        text = SKETCH.replace("source: seats,", "source: seatz,")
+    def test_a_from_naming_an_unknown_piece_is_refused(self):
+        text = SKETCH.replace("from: seats,", "from: seatz,")
         problems = check(load(self.write(text)))
-        self.assertTrue(any("'seatz' is not a source (did you mean 'seats'?)" in p for p in problems), problems)
+        self.assertTrue(any("scene.beats.runs.with.from: 'seatz' is not a piece (did you mean 'seats'?)" in p for p in problems),
+                        problems)
 
-    def test_a_sink_or_sketch_cannot_compute_a_source(self):
-        text = SKETCH.replace("do: { map: { action: adjacent_runs } }", "do: { sink: { name: out } }")
+    def test_a_write_without_to_is_refused(self):
+        text = SKETCH.replace("do: { map: { action: adjacent_runs } }", "do: { write: out }")
         problems = check(load(self.write(text)))
-        self.assertTrue(any("a source is computed by a `map` or `reduce` stage" in p for p in problems), problems)
+        self.assertTrue(any("a beat without `to:` is a `map` or `reduce` action" in p for p in problems), problems)
 
 
 if __name__ == "__main__":

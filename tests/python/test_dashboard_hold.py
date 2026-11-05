@@ -15,13 +15,13 @@ from src.dashboard.hold import apply_hold
 from src.dashboard.runs import Refused
 from src.dashboard.server import serve
 from src.dashboard.view import describe, list_runs
-from src.sketch.control import read_control, write_control
+from src.play.control import read_control, write_control
 
 RUN = "run-20261103T100000-aaaaaaaa"
 SECRET = "s3cret-for-tests"
 NOW = datetime(2026, 11, 3, 10, 30, tzinfo=UTC)
-STARTED = {"event": "run_started", "sketch": "x/plain.yaml", "mode": "live",
-           "states": [{"name": "a", "final": False}, {"name": "done", "final": True}],
+STARTED = {"event": "run_started", "play": "x/plain.yaml", "mode": "live",
+           "beats": [{"name": "a", "final": False}, {"name": "done", "final": True}],
            "transitions": [{"from": "a", "to": "done", "event": "ok"}], "initial": "a"}
 
 
@@ -31,7 +31,7 @@ def write_run(root: Path, events: list[dict], run_id: str = RUN, status: str = "
     stamp = (NOW - timedelta(seconds=len(events))).isoformat()
     lines = [{"at": (datetime.fromisoformat(stamp) + timedelta(seconds=n)).isoformat(), **event} for n, event in enumerate(events)]
     (folder / "events.jsonl").write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
-    (folder / "run.json").write_text(json.dumps({"status": status, "stages": {}, "sketch": "plain"}), encoding="utf-8")
+    (folder / "run.json").write_text(json.dumps({"status": status, "beats": {}, "play": "plain"}), encoding="utf-8")
     return folder
 
 
@@ -42,28 +42,28 @@ class HeldViewTests(unittest.TestCase):
         self.root = Path(directory.name)
 
     def test_a_run_whose_last_event_is_a_pause_reads_paused_before_the_stage(self):
-        folder = write_run(self.root, [STARTED, {"event": "state_entered", "state": "a", "caused_by": "start"},
-                                       {"event": "paused", "stage": "a"}])
+        folder = write_run(self.root, [STARTED, {"event": "beat_entered", "beat": "a", "caused_by": "start"},
+                                       {"event": "paused", "beat": "a"}])
         shown = describe(folder, NOW)
         self.assertEqual((shown["state"], shown["ended"]), ("paused", "paused before a"))
         self.assertEqual(shown["hold"], {"stage": "a"})
 
     def test_a_resumed_run_reads_running_again_and_has_no_hold(self):
-        folder = write_run(self.root, [STARTED, {"event": "paused", "stage": "a"}, {"event": "resumed", "stage": "a"},
-                                       {"event": "stage_started", "stage": "a"}])
+        folder = write_run(self.root, [STARTED, {"event": "paused", "beat": "a"}, {"event": "resumed", "beat": "a"},
+                                       {"event": "beat_started", "beat": "a"}])
         shown = describe(folder, NOW)
         self.assertEqual((shown["state"], shown["hold"]), ("running", None))
 
     def test_a_run_held_for_hours_is_paused_not_stalled(self):
-        folder = write_run(self.root, [STARTED, {"event": "paused", "stage": "a"}])
+        folder = write_run(self.root, [STARTED, {"event": "paused", "beat": "a"}])
         self.assertEqual(describe(folder, NOW + timedelta(hours=5))["state"], "paused")
 
     def test_the_rack_tab_of_a_held_run_says_paused(self):
-        write_run(self.root, [STARTED, {"event": "paused", "stage": "a"}])
+        write_run(self.root, [STARTED, {"event": "paused", "beat": "a"}])
         self.assertEqual([each["state"] for each in list_runs(self.root, NOW)], ["paused"])
 
     def test_a_finished_run_is_never_paused_even_if_its_last_pause_is_old(self):
-        folder = write_run(self.root, [STARTED, {"event": "paused", "stage": "a"}, {"event": "resumed", "stage": "a"},
+        folder = write_run(self.root, [STARTED, {"event": "paused", "beat": "a"}, {"event": "resumed", "beat": "a"},
                                        {"event": "run_finished", "outcome": "complete"}], status="complete")
         self.assertEqual(describe(folder, NOW)["state"], "done")
 

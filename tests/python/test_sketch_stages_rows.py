@@ -2,8 +2,8 @@ import asyncio
 import unittest
 from types import SimpleNamespace
 
-from src.sketch.registry import STAGES
-from src.sketch.stages_rows import (
+from src.play.registry import STAGES
+from src.play.stages_rows import (
     adjacent_runs,
     expect,
     join,
@@ -11,7 +11,6 @@ from src.sketch.stages_rows import (
     prefer_order,
     reduce_max,
     reduce_min,
-    unpair,
     weigh,
     where,
 )
@@ -86,15 +85,6 @@ class ExpectTests(unittest.TestCase):
                                               {"level": "loved", "probability": 0.6}]).read, sketch=sketch)
         (row,) = run(expect, ctx, "p", "values", "audience")
         self.assertAlmostEqual(row["audience"], 0.1 * 0.0 + 0.3 * 0.5 + 0.6 * 1.0)
-
-
-class UnpairTests(unittest.TestCase):
-    def test_each_pair_becomes_the_input_row_plus_what_it_output(self):
-        pairs = [{"input": {"title": "A"}, "output": [{"audience": 0.9}]},
-                 {"input": {"title": "B"}, "output": [{"audience": 0.1}]},
-                 {"input": {"title": "C"}, "output": []}]
-        self.assertEqual(run(unpair, context(pairs=pairs), "pairs"),
-                         [{"title": "A", "audience": 0.9}, {"title": "B", "audience": 0.1}])
 
 
 class AdjacentRunsTests(unittest.TestCase):
@@ -183,7 +173,7 @@ if __name__ == "__main__":
 
 class GroupTests(unittest.TestCase):
     def test_rows_group_by_a_normalized_value_and_collect_a_few_examples(self):
-        from src.sketch.stages_rows import group
+        from src.play.stages_rows import group
         rows = [{"merchant": "Dunkin'", "amount": -4.5, "text": "DUNKIN #1"}, {"merchant": " dunkin'  ", "amount": -6.7, "text": ""},
                 {"merchant": "Store", "amount": -50.0, "text": "STORE"}]
         found = run(group, context(rows=rows), source="rows", by="merchant", collect={"amounts": "amount", "texts": "text"}, take=1)
@@ -197,20 +187,20 @@ class ClassifyTests(unittest.TestCase):
              {"if": {"probability": {"lt": 0.3}}, "then": "spending"})
 
     def test_the_first_case_that_holds_names_the_row_and_otherwise_covers_the_rest(self):
-        from src.sketch.stages_rows import classify
+        from src.play.stages_rows import classify
         rows = [{"probability": p} for p in (0.9, 0.05, 0.5)]
         found = run(classify, context(rows=rows), source="rows", into="decision", cases=self.CASES, otherwise="review")
         self.assertEqual([r["decision"] for r in found], ["external_transfer", "spending", "review"])
 
     def test_rows_are_numbered_from_one_after_a_prefix(self):
-        from src.sketch.stages_rows import number
+        from src.play.stages_rows import number
         found = run(number, context(rows=[{"a": 1}, {"a": 2}]), source="rows", into="id", prefix="m")
         self.assertEqual([r["id"] for r in found], ["m1", "m2"])
 
 
 class CoalesceTests(unittest.TestCase):
     def test_a_field_takes_the_first_candidate_that_has_a_value(self):
-        from src.sketch.stages_rows import coalesce
+        from src.play.stages_rows import coalesce
         rows = [{"Merchant": "Store", "other_Description": "STORE #1"}, {"other_Description": "ATM"}, {"Merchant": ""}]
         found = run(coalesce, context(rows=rows), source="rows", fields={"merchant": ["Merchant", "other_Description"]})
         self.assertEqual([r["merchant"] for r in found], ["Store", "ATM", None])
@@ -218,25 +208,25 @@ class CoalesceTests(unittest.TestCase):
 
 class CleaningTests(unittest.TestCase):
     def test_replace_removes_the_account_number_and_normalize_makes_a_key(self):
-        from src.sketch.stages_rows import normalize, replace
+        from src.play.stages_rows import normalize, replace
         rows = [{"Account": "Platinum Card (...1111)", "m": "  Dunkin'   DONUTS "}]
         cleaned = run(replace, context(r=rows), source="r", field="Account", pattern=r"\s*\(\.\.\.\d+\)", into="name")
         self.assertEqual(cleaned[0]["name"], "Platinum Card")
         self.assertEqual(run(normalize, context(r=rows), source="r", field="m", into="key")[0]["key"], "dunkin' donuts")
 
     def test_format_fills_a_template_from_the_row(self):
-        from src.sketch.stages_rows import format_text
+        from src.play.stages_rows import format_text
         rows = context(r=[{"day": "2026-02-15", "cost": 45.0}])
         found = run(format_text, rows, source="r", template="charged_{day}_{cost}", into="label")
         self.assertEqual(found[0]["label"], "charged_2026-02-15_45.0")
 
     def test_join_can_keep_the_rows_with_no_match(self):
-        from src.sketch.stages_rows import join
+        from src.play.stages_rows import join
         found = run(join, context(a=[{"k": 1}, {"k": 2}], b=[{"k": 1, "v": "x"}]), source="a", other="b", on="k", keep_unmatched=True)
         self.assertEqual(found, [{"k": 1, "v": "x"}, {"k": 2}])
 
     def test_earlier_lists_the_charges_a_refund_could_reverse_most_recent_first(self):
-        from src.sketch.stages_rows import earlier
+        from src.play.stages_rows import earlier
         charges = [{"id": "c1", "m": "s", "d": "2026-02-01", "a": -50.0}, {"id": "c2", "m": "s", "d": "2026-02-15", "a": -45.0},
                    {"id": "c3", "m": "s", "d": "2026-02-20", "a": -10.0}, {"id": "c4", "m": "x", "d": "2026-02-01", "a": -50.0}]
         refunds = [{"id": "r1", "m": "s", "d": "2026-03-12", "a": 45.0}, {"id": "r2", "m": "z", "d": "2026-03-12", "a": 5.0}]
@@ -247,7 +237,7 @@ class CleaningTests(unittest.TestCase):
 
 class UnionTests(unittest.TestCase):
     def test_concat_joins_sources_and_matching_keeps_rows_found_in_another(self):
-        from src.sketch.stages_rows import concat, matching
+        from src.play.stages_rows import concat, matching
         names = [{"g": "x", "n": 1}, {"g": "y", "n": 2}, {"g": "x", "n": 3}]
         ctx = context(a=[{"k": 1}], b=[{"k": 2}], names=names, pick=[{"level": "x"}])
         self.assertEqual(run(concat, ctx, sources=["a", "b"]), [{"k": 1}, {"k": 2}])
@@ -257,7 +247,7 @@ class UnionTests(unittest.TestCase):
 
 class AttachTests(unittest.TestCase):
     def test_every_row_gets_the_whole_list_and_mcc_lists_group_and_name(self):
-        from src.sketch.stages_rows import attach, mcc
+        from src.play.stages_rows import attach, mcc
         found = run(attach, context(m=[{"k": 1}, {"k": 2}], c=[{"c": "a"}, {"c": "b"}]), source="m", other="c", field="c", into="all")
         self.assertEqual([r["all"] for r in found], [["a", "b"], ["a", "b"]])
         names = run(mcc, context())

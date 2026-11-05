@@ -4,42 +4,45 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.sketch.cli import main
-from src.sketch.sources.capture import CaptureStore
+from src.play.cli import main
+from src.play.sources.capture import CaptureStore
 
 PARENT = """\
 name: fold
-sources:
-  words: words.jsonl
-sinks:
-  out: out.jsonl
-machine:
+stage:
+  words: { kind: file, path: words.jsonl }
+  out: { kind: file, path: out.jsonl, access: write }
+scene:
   initial: walk
-  states:
+  beats:
     walk:
-      do: { sketch: { file: step } }
+      do: { play: step.yaml }
       each: words
       reduce: { action: concat, into: seen }
-      then: write
+      to: write
     write:
-      do: { sink: { name: out } }
-      then: done
+      do: { write: out }
+      to: done
     done:
       final: true
 """
 CHILD = """\
 name: step
-machine:
+stage:
+  step: { kind: file, path: step.jsonl, access: write }
+scene:
   initial: add
-  states:
+  beats:
     add:
       do: { map: { action: rows } }
       with:
         rows: [ { word: {{ word | tojson }}, earlier: {{ seen | map(attribute='word') | list | tojson }} } ]
-      then: done
+      to: give
+    give:
+      do: { write: step }
+      to: done
     done:
       final: true
-      outputs: [word]
 """
 
 
@@ -78,7 +81,7 @@ class FoldCase(unittest.TestCase):
 
     def test_reduce_without_each_is_refused(self):
         (self.dir / "fold.yaml").write_text(PARENT.replace("      each: words\n", ""), encoding="utf-8")
-        (self.dir / "step.yaml").write_text(CHILD.replace(CHILD[CHILD.index("        rows:"):CHILD.index("      then")],
+        (self.dir / "step.yaml").write_text(CHILD.replace(CHILD[CHILD.index("        rows:"):CHILD.index("      to:")],
                                                           "        rows: []\n"), encoding="utf-8")
         code, _, err = self.go("check")
         self.assertEqual(code, 2)

@@ -14,11 +14,11 @@ from statemachine.exceptions import TransitionNotAllowed
 
 
 class RunRecord:
-    """What a run says about itself: stage lines on the console and `run.json` in its folder."""
+    """What a run says about itself: a line per beat on the console and `run.json` in its folder."""
 
     def __init__(self, directory: Path, announce: Callable[[str], None] = print, cleanup: Iterable[str] = (), **facts):
         self.directory, self.announce, self.cleanup = directory, announce, tuple(cleanup)
-        self.manifest: dict = {"status": "running", "stages": {}, **facts}
+        self.manifest: dict = {"status": "running", "beats": {}, **facts}
 
     def save(self) -> None:
         (self.directory / "run.json").write_text(json.dumps(self.manifest, indent=2) + "\n", encoding="utf-8")
@@ -27,16 +27,16 @@ class RunRecord:
         """The machine is now in `state`, having been `caused_by` `start`, `ok` or `fail`; the base record keeps no story."""
 
     def started(self, name: str) -> None:
-        self.announce(f"stage {name}")
+        self.announce(f"beat {name}")
 
     def completed(self, name: str) -> None:
-        self.manifest["stages"][name] = "complete"
+        self.manifest["beats"][name] = "complete"
         self.save()
 
     def failed(self, name: str, error: Exception) -> None:
         for output in self.cleanup:
             (self.directory / output).unlink(missing_ok=True)
-        self.manifest.update(status="failed", failed_stage=name, error=str(error))
+        self.manifest.update(status="failed", failed_beat=name, error=str(error))
         self.save()
 
     def finished(self, outcome: str | None = None) -> None:

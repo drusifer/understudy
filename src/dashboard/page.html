@@ -59,7 +59,7 @@
       <button type="button" id="unlock" class="find-button">UNLOCK</button>
       <span id="gate-note" class="about">locked: you can watch, but not start, replay or stop</span>
     </div>
-    <label for="sketch-pick" data-launcher>Sketch</label>
+    <label for="sketch-pick" data-launcher>Play</label>
     <select id="sketch-pick" class="find-field" data-launcher></select>
     <div id="sketch-about" class="about" data-launcher></div>
     <div id="fields" class="start-fields" data-launcher></div>
@@ -96,7 +96,7 @@
     <div class="printer-head"><span>RUN LOG · PRINTER</span><span id="printer-state">IDLE</span></div>
     <div class="finder" role="search" aria-label="Find a line in the log">
       <input id="find-text" type="search" class="find-field" placeholder="find text" aria-label="Show only lines containing this text" autocomplete="off">
-      <select id="find-stage" class="find-field" aria-label="Show only one stage"><option value="">all stages</option></select>
+      <select id="find-stage" class="find-field" aria-label="Show only one beat"><option value="">all beats</option></select>
       <label class="find-check"><input id="find-failures" type="checkbox"> failures only</label>
       <button type="button" id="jump-start" class="find-button">START</button>
       <button type="button" id="jump-failure" class="find-button" disabled title="no failure in this run">FIRST FAILURE</button>
@@ -112,8 +112,8 @@
     <div class="roller take-up" aria-hidden="true"></div>
   </section>
 
-  <section class="tube-panel" aria-label="Stage tube">
-    <div class="panel-head"><span>STAGE TUBE</span><span id="tube-caption" class="about">no run chosen</span></div>
+  <section class="tube-panel" aria-label="Beat tube">
+    <div class="panel-head"><span>BEAT TUBE</span><span id="tube-caption" class="about">no run chosen</span></div>
     <div id="ended" class="ended about"></div>
     <div id="tube" class="tube stages"></div>
     <div id="gauges" class="gauges" role="group" aria-label="Gauges"></div>

@@ -12,7 +12,7 @@ import unittest
 from household_fragment import ORACLE, categorize, decided, fragment, merchants_of
 from household_jev import PLAN
 
-from src.sketch.mcc import load_mcc
+from src.play.mcc import load_mcc
 
 ISO = load_mcc()
 HOUSEHOLD = ("Rent", "Mortgage", "Tuition", "Income", "Transfer", "Loan repayment")

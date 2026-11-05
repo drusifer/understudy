@@ -6,29 +6,29 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import src.sketch.stages  # noqa: F401 - importing it registers the stages
-from src.sketch.check import check, load_checked
-from src.sketch.cli import main
-from src.sketch.loader import SketchError, load
-from src.sketch.registry import STAGES, Stage
-from src.sketch.registry import library as registered
-from src.sketch.run import run_sketch
+import src.play.stages  # noqa: F401 - importing it registers the stages
+from src.play.check import check, load_checked
+from src.play.cli import main
+from src.play.loader import PlayError, load
+from src.play.registry import STAGES, Stage
+from src.play.registry import library as registered
+from src.play.run import run_sketch
 
 PARENT = """\
 name: parent
 outcomes:
   a: [x]
-machine:
+scene:
   initial: first
-  states:
+  beats:
     first:
-      do: { sketch: { file: child } }
+      do: { play: child.yaml }
       with: { seats: {{ tickets | default(2) }} }
-      then: second
+      to: second
     second:
-      do: { sketch: { file: child } }
+      do: { play: child.yaml }
       with: { seats: 9 }
-      then: done
+      to: done
     done:
       final: true
 """
@@ -36,15 +36,19 @@ CHILD = """\
 name: child
 data:
   seats: {{ seats | default(1) }}
-machine:
+stage:
+  seen: { kind: file, path: seen.jsonl, access: write }
+scene:
   initial: look
-  states:
+  beats:
     look:
       do: { map: { action: look } }
-      then: done
+      to: give
+    give:
+      do: { write: seen }
+      to: done
     done:
       final: true
-      outputs: [a]
 """
 
 
@@ -86,12 +90,12 @@ class RenderTests(TemplateCase):
 
     def test_a_variable_with_no_default_and_no_value_is_named(self):
         path = self.write(PARENT.replace("tickets | default(2)", "tickets"))
-        with self.assertRaisesRegex(SketchError, "needs a value for 'tickets': pass --with tickets=<value>"):
+        with self.assertRaisesRegex(PlayError, "needs a value for 'tickets': pass --with tickets=<value>"):
             load(path)
 
     def test_a_template_syntax_error_names_the_line(self):
         path = self.write(PARENT.replace("{{ tickets | default(2) }}", "{{ tickets"))
-        with self.assertRaisesRegex(SketchError, "parent.yaml: line \\d+"):
+        with self.assertRaisesRegex(PlayError, "parent.yaml: line \\d+"):
             load(path)
 
     def test_plain_yaml_with_no_template_is_unchanged(self):
@@ -134,20 +138,19 @@ class NameTests(TemplateCase):
 
 EACH_PARENT = """\
 name: parent
-sources:
-  films: films.jsonl
-sinks:
-  pairs: pairs.jsonl
-machine:
+stage:
+  films: { kind: file, path: films.jsonl }
+  pairs: { kind: file, path: pairs.jsonl, access: write }
+scene:
   initial: score
-  states:
+  beats:
     score:
-      do: { sketch: { file: child } }
+      do: { play: child.yaml }
       each: films
-      then: write
+      to: write
     write:
-      do: { sink: { name: pairs } }
-      then: done
+      do: { write: pairs }
+      to: done
     done:
       final: true
 """
@@ -155,15 +158,19 @@ EACH_CHILD = """\
 name: child
 data:
   title: "{{ title }}"
-machine:
+stage:
+  scored: { kind: file, path: scored.jsonl, access: write }
+scene:
   initial: look
-  states:
+  beats:
     look:
       do: { map: { action: look } }
-      then: done
+      to: give
+    give:
+      do: { write: scored }
+      to: done
     done:
       final: true
-      outputs: [audience]
 """
 
 
@@ -184,44 +191,38 @@ class EachTests(TemplateCase):
         lines = result.outputs["pairs"].read_text(encoding="utf-8").splitlines()
         return seen, [json.loads(line) for line in lines]
 
-    def test_a_sketch_runs_once_per_row_and_the_result_pairs_each_row_with_its_output(self):
-        seen, pairs = self.run_each(self.write_each())
+    def test_a_play_runs_once_per_row_and_each_row_it_writes_carries_the_row_it_was_played_for(self):
+        seen, rows = self.run_each(self.write_each())
         self.assertEqual(seen, ["It Follows", "Hereditary"])
-        self.assertEqual(pairs, [
-            {"input": {"title": "It Follows"}, "output": [{"audience": "loved", "weight": 1}]},
-            {"input": {"title": "Hereditary"}, "output": [{"audience": "loved", "weight": 1}]},
+        self.assertEqual(rows, [
+            {"title": "It Follows", "audience": "loved", "weight": 1},
+            {"title": "Hereditary", "audience": "loved", "weight": 1},
         ])
 
-    def test_each_can_compute_a_source_that_another_stage_flattens(self):
+    def test_a_beat_without_to_can_play_once_per_row_and_be_read_by_name(self):
         parent = """\
 name: parent
-sources:
-  films: films.jsonl
-  scored:
-    kind: stage
-    do: { sketch: { file: child } }
-    each: films
-  flat:
-    kind: stage
-    do: { map: { action: unpair } }
-    with: { source: scored }
-sinks:
-  rows: rows.jsonl
-machine:
+stage:
+  films: { kind: file, path: films.jsonl }
+  rows: { kind: file, path: rows.jsonl, access: write }
+scene:
   initial: write
-  states:
+  beats:
+    scored:
+      do: { play: child.yaml }
+      each: films
     write:
       do: { map: { action: read_flat } }
-      then: save
+      to: save
     save:
-      do: { sink: { name: rows } }
-      then: done
+      do: { write: rows }
+      to: done
     done:
       final: true
 """
 
         async def read_flat(context):
-            return await context.read("flat")
+            return await context.read("scored")
 
         async def look(context):
             return [{"audience": context.sketch.data["title"].upper()}]
@@ -235,14 +236,15 @@ machine:
         self.assertEqual([json.loads(line) for line in lines],
                          [{"audience": "IT FOLLOWS", "title": "It Follows"}, {"audience": "HEREDITARY", "title": "Hereditary"}])
 
-    def test_each_must_name_a_source(self):
+    def test_each_must_name_a_piece(self):
         path = self.write_each(EACH_PARENT.replace("each: films", "each: filsm"))
-        self.assertTrue(any("'filsm' is not a source (did you mean 'films'?)" in p for p in check(load(path))))
+        self.assertTrue(any("scene.beats.score.each: 'filsm' is not a piece (did you mean 'films'?)" in p
+                            for p in check(load(path))))
 
-    def test_each_repeats_only_a_sketch(self):
-        stage = "do: { map: { action: look } }"
-        path = self.write_each(EACH_PARENT.replace("do: { sketch: { file: child } }\n      each", f"{stage}\n      each"))
-        self.assertTrue(any("`each` repeats a sketch" in p for p in check(load(path))))
+    def test_each_repeats_only_a_play(self):
+        action = "do: { map: { action: look } }"
+        path = self.write_each(EACH_PARENT.replace("do: { play: child.yaml }\n      each", f"{action}\n      each"))
+        self.assertTrue(any("`each` repeats a play" in p for p in check(load(path))))
 
 
 if __name__ == "__main__":

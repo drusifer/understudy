@@ -1,9 +1,9 @@
 import itertools
 import unittest
 
-from src.sketch.blend import EmptyResultError, Opinion, Policy, blend, forbid, marginals
-from src.sketch.conditions import holds
-from src.sketch.decide import decide_input, leaf_rows, weight_of
+from src.play.blend import EmptyResultError, Opinion, Policy, blend, forbid, marginals
+from src.play.conditions import holds
+from src.play.decide import decide_input, leaf_rows, weight_of
 
 TREE = {
     "if": {"segment": {"eq": "students"}},

@@ -34,7 +34,7 @@ function drawButtons() {
   const sketch = currentSketch();
   const playable = controls.authorized && sketch?.ok;
   $('play').disabled = !playable;
-  $('play').title = controls.authorized ? (sketch?.ok ? 'Run this sketch' : 'this file cannot be read as a sketch') : 'needs the access secret';
+  $('play').title = controls.authorized ? (sketch?.ok ? 'Run this play' : 'this file cannot be read as a play') : 'needs the access secret';
   const running = ['running', 'stalled', 'paused'].includes(state.chosenState);
   $('stop').disabled = !(controls.authorized && running);
   $('stop').title = controls.authorized ? (running ? 'Stop the run on screen' : 'the run on screen is not going') : 'needs the access secret';
@@ -43,22 +43,22 @@ function drawButtons() {
     : (controls.enabled ? GATE_LOCKED : GATE_LOCKED_HOLD);
 }
 
-// Pause holds a run that is going before its next stage; Step and Resume work on a run that is held.
+// Pause holds a run that is going before its next beat; Step and Resume work on a run that is held.
 function drawHoldButtons() {
   const goes = state.chosenState === 'running';
   const held = state.chosenState === 'paused';
   const reason = (ok, why) => (controls.authorized ? (ok ? why : 'the run on screen is not in a state that allows this') : 'needs the access secret');
   $('pause').disabled = !(controls.authorized && goes);
-  $('pause').title = reason(goes, 'Hold the run before its next stage (the stage in flight finishes first)');
+  $('pause').title = reason(goes, 'Hold the run before its next beat (the beat in flight finishes first)');
   $('step').disabled = !(controls.authorized && held);
-  $('step').title = reason(held, 'Let one stage run, then hold again');
+  $('step').title = reason(held, 'Let one beat run, then hold again');
   $('resume').disabled = !(controls.authorized && held);
   $('resume').title = reason(held, 'Run on without holding');
 }
 
 const HOLD_SAID = {
-  pause: 'pausing: the stage now running finishes first, then the run holds',
-  step: 'one stage will run, then the run holds again',
+  pause: 'pausing: the beat now running finishes first, then the run holds',
+  step: 'one beat will run, then the run holds again',
   resume: 'running on',
 };
 
@@ -169,7 +169,7 @@ function typedField(spec) {
 
 function drawFields() {
   const sketch = currentSketch();
-  $('sketch-about').textContent = sketch ? (sketch.ok ? sketch.description : `cannot be read as a sketch: ${sketch.problem}`) : '';
+  $('sketch-about').textContent = sketch ? (sketch.ok ? sketch.description : `cannot be read as a play: ${sketch.problem}`) : '';
   $('fields').replaceChildren(
     ...(sketch?.inputs ?? []).map(typedField),
     ...(sketch?.with ?? []).map((name) => make('div', { class: 'start-field' },
@@ -232,7 +232,7 @@ async function play() {
   for (const input of document.querySelectorAll('#fields input[type="text"]')) if (input.value.trim()) values[input.dataset.name] = input.value.trim();
   const replay = $('replay-pick').value;
   $('play').disabled = true;
-  say('checking the sketch and starting it...');
+  say('checking the play and starting it...');
   const { status, body } = await post('api/start', { sketch: $('sketch-pick').value, with: values, ...(replay ? { replay } : {}) });
   drawButtons();
   if (status === 200) {

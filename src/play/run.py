@@ -15,21 +15,21 @@ from pathlib import Path
 
 from src.machine_runner import RunRecord, run_machine
 from src.paths import ROOT, check_writable
-from src.sketch.control import Hold, write_control
-from src.sketch.loader import child_path, children, load
-from src.sketch.machine import build_machine
-from src.sketch.model import Sketch
-from src.sketch.registry import StageFn
-from src.sketch.sources.capture import CaptureStore
-from src.sketch.sources.reader import Capture, Sources
-from src.sketch.vocabulary import NOTHING, stage_of
+from src.play.control import Hold, write_control
+from src.play.loader import bound_pieces, child_path, children, load
+from src.play.machine import build_machine
+from src.play.model import Play
+from src.play.registry import StageFn
+from src.play.sources.capture import CaptureStore
+from src.play.sources.reader import Capture, Sources
+from src.play.vocabulary import NOTHING, stage_of
 
 
 @dataclass
 class StageContext:
     """What a stage gets: the sketch, its own state as written, what earlier stages returned, the run folder."""
 
-    sketch: Sketch
+    sketch: Play
     name: str
     state: dict
     results: dict
@@ -61,28 +61,32 @@ class EventedRecord(RunRecord):
             events.write(json.dumps(line) + "\n")
 
     def entered(self, state: str, caused_by: str) -> None:
-        self.emit("state_entered", state=state, caused_by=caused_by)
+        self.emit("beat_entered", beat=state, caused_by=caused_by)
 
     def started(self, name: str) -> None:
         super().started(name)
-        self.emit("stage_started", stage=name)
+        self.emit("beat_started", beat=name)
 
     def completed(self, name: str) -> None:
         super().completed(name)
-        self.emit("stage_completed", stage=name)
+        self.emit("beat_completed", beat=name)
 
     def failed(self, name: str, error: Exception) -> None:
         super().failed(name, error)
-        self.emit("stage_failed", stage=name, reason=str(error))
+        self.emit("beat_failed", beat=name, reason=str(error))
 
     def finished(self, outcome: str | None = None) -> None:
         super().finished(outcome)
         self.emit("run_finished", outcome=outcome or "complete")
 
 
-def _write_part(directory: Path, file: str, rows) -> None:
+def _check_rows(rows) -> None:
     if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
-        raise TypeError(f"a sink writes the rows of the stage before it, not {type(rows).__name__}")
+        raise TypeError(f"a write writes rows, not {type(rows).__name__}")
+
+
+def _write_part(directory: Path, file: str, rows) -> None:
+    _check_rows(rows)
     lines = "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows)
     (directory / f"{file}.part").write_text(lines, encoding="utf-8")
 
@@ -108,10 +112,10 @@ class NestedRecord:
         self.parent.started(f"{self.prefix}.{name}")
 
     def completed(self, name: str) -> None:
-        self.parent.emit("stage_completed", stage=f"{self.prefix}.{name}")
+        self.parent.emit("beat_completed", beat=f"{self.prefix}.{name}")
 
     def failed(self, name: str, error: Exception) -> None:
-        self.parent.emit("stage_failed", stage=f"{self.prefix}.{name}", reason=str(error))
+        self.parent.emit("beat_failed", beat=f"{self.prefix}.{name}", reason=str(error))
 
     def finished(self, outcome: str | None = None) -> None:
         """The parent's run is not over because a subsketch ended; the subsketch's outcome is kept for its caller."""
@@ -119,54 +123,60 @@ class NestedRecord:
 
 
 async def _run_each(context: StageContext, library: Mapping[str, StageFn], record: EventedRecord) -> list[dict]:
-    """Run the sketch this stage calls once per row of the source named by `each`.
+    """Perform the play this beat calls once per row of the piece named by `each`.
 
-    The row's fields are the child's variables, beside the call's `with`. The result pairs every row with what its
-    run output: `[ { input: <row>, output: <what the child returned> }, ... ]`. A row's Jev answers are captured under
-    the child's name and the row's position, so each film (say) is asked and replayed on its own.
+    The row's fields are the play's props, beside the call's `with`. The result is every row the play wrote, each
+    carrying the fields of the row it was played for (a merchant's key, say). A row's Jev answers are captured under the
+    play's name and the row's position, so each film (say) is asked and replayed on its own.
 
     With `reduce: { action: concat, into: <name> }` the iterations run in order as a fold instead: the rows each one
-    outputs are appended to a running list, which the next one receives as the variable `<name>` (empty to begin
-    with), and the result is that list.
+    writes are appended to a running list, which the next one receives as the prop `<name>` (empty to begin with), and
+    the result is that list.
     """
     state = context.state
     path = child_path(context.sketch, stage_of(state)[1])
     folding = state.get("reduce")
-    paired, running = [], []
+    carried, running = [], []
     for index, row in enumerate(await context.read(state["each"])):
         values = {**state.get("with", {}), **row, **({folding["into"]: list(running)} if folding else {})}
         child = replace(load(path, variables=values), name=f"{context.name}.{path.stem}[{index}]")
         output = await _run_child(context, library, record, child)
         running += output
-        paired.append({"input": row, "output": output})
-    return running if folding else paired
+        carried += [{**row, **written} for written in output]
+    return running if folding else carried
 
 
-async def _run_child(context: StageContext, library: Mapping[str, StageFn], record: EventedRecord, child: Sketch | None = None):
-    """Run the sketch this state calls (`do: { sketch: { file: ... } }`) in the same run folder, with the same sources.
+async def _run_child(context: StageContext, library: Mapping[str, StageFn], record: EventedRecord, child: Play | None = None):
+    """Perform the play this beat calls (`do: { play: <file>.yaml }`) inside this run.
 
-    Its result is what its last stage returned, or no rows when it ended in a final state with `outcome: none`: a
-    subsketch that finds nothing gives its caller nothing.
+    The call's `with:` binds the play's stage: a prop gets a value, and a stage file named there gets the rows of the
+    caller's piece it names. The play touches no disk: its result is the rows it wrote, or no rows when it ended in a
+    final beat with `outcome: none` (a play that finds nothing gives its caller nothing).
     """
     child = child or children(context.sketch)[context.name]
+    for name, piece in bound_pieces(context.sketch, child, context.state.get("with", {})).items():
+        context.sources.provide(child, name, await context.read(piece))
     results: dict = {}
     last = {"value": None}
+    written: dict[str, list[dict]] = {}
 
     def make_context(name: str, state: dict) -> StageContext:
         return StageContext(child, name, state, results, last["value"], context.directory, context.summary, context.sources,
                             context.emit)
 
-    stages = {name: _remember(stage, last) for name, stage in _stages(child, library, make_context, results, record).items()}
+    stages = _stages(child, library, make_context, results, record, written)
+    stages = {name: _remember(stage, last) for name, stage in stages.items()}
     nested = NestedRecord(record, child.name)
     outcomes = {name: state["outcome"] for name, state in child.machine["states"].items() if state.get("outcome")}
     await run_machine(build_machine(child), stages, nested, outcomes=outcomes)
-    return [] if nested.outcome == NOTHING else last["value"]
+    return [] if nested.outcome == NOTHING else [row for rows in written.values() for row in rows]
 
 
-def _stages(
-    sketch: Sketch, library: Mapping[str, StageFn], make_context: Callable[[str, dict], StageContext], results: dict,
-    record: EventedRecord,
+def _stages(  # noqa: PLR0913 - a beat needs the play, the library, its context, the results, the record, where writes go
+    sketch: Play, library: Mapping[str, StageFn], make_context: Callable[[str, dict], StageContext], results: dict,
+    record: EventedRecord, written: dict[str, list[dict]] | None = None,
 ):
+    """The flow beats as the machine calls them. `written` collects what a called play writes instead of the disk."""
     stages = {}
     for name, state in sketch.machine["states"].items():
         if state.get("final"):
@@ -178,7 +188,11 @@ def _stages(
             if kind == "sink":
                 named = state.get("with", {}).get("source")
                 rows = await context.read(named) if named else context.last
-                _write_part(context.directory, sketch.sinks[target].file, rows)
+                if written is None:
+                    _write_part(context.directory, sketch.sinks[target].file, rows)
+                else:
+                    _check_rows(rows)
+                    written.setdefault(target, []).extend(rows)
                 return rows
             if kind == "sketch":
                 run = _run_each if "each" in state else _run_child
@@ -194,10 +208,10 @@ def _stages(
 
 def stage_computer(  # noqa: PLR0913 - what a stage source's stage runs against: the library, the record, the run's state
     library: Mapping[str, StageFn], record: EventedRecord, results: dict, directory: Path, summary: dict, sources: Sources,
-) -> Callable[[Sketch, str], Awaitable[list[dict]]]:
+) -> Callable[[Play, str], Awaitable[list[dict]]]:
     """The function a run gives its `Sources` to compute a stage source (`kind: stage`): the source's `do` and `with`, as
     a state would have them. A run and the fragment harness (`fragment.py`) both use it."""
-    async def compute(owner: Sketch, name: str) -> list[dict]:
+    async def compute(owner: Play, name: str) -> list[dict]:
         config = owner.sources[name].config
         state = {key: config[key] for key in ("do", "with", "each", "reduce") if key in config}
         state.setdefault("with", {})
@@ -210,7 +224,7 @@ def stage_computer(  # noqa: PLR0913 - what a stage source's stage runs against:
 
 
 async def run_sketch(  # noqa: PLR0913 - what a run takes: the sketch, where, its stages, how to announce, capture, pause
-    sketch: Sketch, out: Path, library: Mapping[str, StageFn], announce: Callable[[str], None] = print,
+    sketch: Play, out: Path, library: Mapping[str, StageFn], announce: Callable[[str], None] = print,
     capture: Capture | None = None, pause: bool = False, on_start: Callable[[Path], None] | None = None,
 ) -> RunResult:
     """Run the sketch's machine. Raises whatever a stage raises, after recording the failure. With `pause` the run
@@ -228,8 +242,8 @@ async def run_sketch(  # noqa: PLR0913 - what a run takes: the sketch, where, it
     facts = {"with": dict(sketch.variables)}
     if capture.replay_dir:
         facts["replay_of"] = _shown_path(capture.replay_dir)
-    record = EventedRecord(directory, announce, cleanup=[*files, "summary.json"], mode=capture.mode, sketch=sketch.name, **facts)
-    record.emit("run_started", sketch=_shown_path(sketch.path), mode=capture.mode, **_story_of(sketch))
+    record = EventedRecord(directory, announce, cleanup=[*files, "summary.json"], mode=capture.mode, play=sketch.name, **facts)
+    record.emit("run_started", play=_shown_path(sketch.path), mode=capture.mode, **_story_of(sketch))
     if capture.replay_dir:
         announce(f"replay: reading captures from {capture.replay_dir}, no live calls")
     sources = Sources(capture, directory.name, announce)
@@ -258,7 +272,7 @@ async def run_sketch(  # noqa: PLR0913 - what a run takes: the sketch, where, it
     return RunResult(directory, published, summary, record.manifest.get("outcome"))
 
 
-def _story_of(sketch: Sketch) -> dict:
+def _story_of(sketch: Play) -> dict:
     """The machine as the first line of the event stream tells it: its states, and the moves between them."""
     states = sketch.machine["states"]
     moves = []
@@ -269,7 +283,7 @@ def _story_of(sketch: Sketch) -> dict:
             {"from": name, "to": transition["to"], "event": "ok", **({"when": transition["if"]} if "if" in transition else {})}
             for transition in state.get("transitions", []))
     return {"initial": sketch.machine["initial"],
-            "states": [{"name": name, "final": bool(state.get("final"))} for name, state in states.items()],
+            "beats": [{"name": name, "final": bool(state.get("final"))} for name, state in states.items()],
             "transitions": moves}
 
 
@@ -292,7 +306,7 @@ def _remember(stage, last: dict):
     return remembered
 
 
-def _publish(directory: Path, sketch: Sketch, summary: dict) -> dict[str, Path]:
+def _publish(directory: Path, sketch: Play, summary: dict) -> dict[str, Path]:
     (directory / "summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     published = {}
     for name, sink in sketch.sinks.items():

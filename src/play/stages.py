@@ -7,10 +7,10 @@ reads as `context.last` and what guards test. Counting and converting are DuckDB
 import math
 from difflib import get_close_matches
 
-from src.sketch import stages_pair, stages_rows  # noqa: F401 - importing them registers their stages
-from src.sketch.decide import decide_input
-from src.sketch.registry import Data, Source, stage
-from src.sketch.sql import query
+from src.play import stages_pair, stages_rows  # noqa: F401 - importing them registers their stages
+from src.play.decide import decide_input
+from src.play.registry import Data, Source, stage
+from src.play.sql import query
 
 RECIPE_FIELDS = ("ingredient", "amount", "unit")
 SPLIT_SQL = """
@@ -41,26 +41,16 @@ async def split_by_share(context, source: Source, field: str, segments: Data) ->
 
 
 @stage("map.join_weights")
-async def join_weights(context, probabilities: Source, weights: Data) -> list[dict]:
-    """A Jev reading (a probability per level) joined with the owner's weights per level: weighted rows."""
+async def join_weights(context, probabilities: Source, weights: Data, into: str) -> list[dict]:
+    """A Jev reading (a probability per level) joined with the owner's weights per level: weighted rows, each naming its
+    option under `into` (the outcome the weights are for)."""
     probabilities = await context.read(probabilities)
     levels = context.sketch.data[weights]
-    dimensions = _returned_dimensions(context)
     per_level = [{"level": level, "option": option, "weight": weight}
                  for level, options in levels.items() for option, weight in options.items()]
     mixed = query(context.directory, JOIN_SQL, {"probs": probabilities, "weights": per_level})
     context.summary[f"{context.sketch.name}_weights"] = {row["option"]: round(row["weight"], 6) for row in mixed}
-    return [{dimensions[0]: row["option"], "weight": row["weight"]} for row in mixed]
-
-
-def _returned_dimensions(context) -> list[str]:
-    for state in context.sketch.machine["states"].values():
-        if state.get("final") and state.get("outputs"):
-            dimensions = state["outputs"]
-            if len(dimensions) != 1:
-                raise ValueError(f"map.join_weights answers one dimension; the sketch outputs {dimensions}")
-            return dimensions
-    raise ValueError("map.join_weights is for a sketch that declares its outputs")
+    return [{into: row["option"], "weight": row["weight"]} for row in mixed]
 
 
 def _validate(rows: list[dict], decider: str, outcomes: dict, stage: str) -> None:
@@ -69,11 +59,11 @@ def _validate(rows: list[dict], decider: str, outcomes: dict, stage: str) -> Non
         for dimension, option in ((d, o) for d, o in row.items() if d != "weight"):
             if dimension not in outcomes:
                 near = get_close_matches(dimension, list(outcomes), n=1)
-                raise ValueError(f"stage {stage}: {decider!r} returned {dimension!r}, not a declared outcome"
+                raise ValueError(f"beat {stage}: {decider!r} returned {dimension!r}, not a declared outcome"
                                  + (f" (did you mean {near[0]!r}?)" if near else ""))
             if option not in outcomes[dimension]:
                 near = get_close_matches(str(option), list(outcomes[dimension]), n=1)
-                raise ValueError(f"stage {stage}: {decider!r} returned {dimension}={option!r}, not a declared option"
+                raise ValueError(f"beat {stage}: {decider!r} returned {dimension}={option!r}, not a declared option"
                                  + (f" (did you mean {near[0]!r}?)" if near else ""))
 
 
@@ -106,7 +96,7 @@ async def blend(
         distribution = decide_input(state, row, deciders, allowed=outcomes, story=story)
         for decision in story:
             if context.emit:
-                context.emit("decision", stage=context.name, row=row.get("segment", "the input row"), **decision)
+                context.emit("decision", beat=context.name, row=row.get("segment", "the input row"), **decision)
         # options read from rows are known only now, so what the blend produced is checked against them
         _validate([{d: o} for d, options in distribution.items() for o in options], "the blend", outcomes, context.name)
         weighted += [{**row, "dimension": d, "option": o, "weight": w}

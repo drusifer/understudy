@@ -11,10 +11,10 @@
 
 understudy makes decisions about the owner's money and time, so its first quality promise is that a run is **reproducible** and that nothing a model says becomes a value without passing the owner's list. Tests exist to keep those promises cheap to check on every change.
 
-* **Shift-Left Quality:** a sketch's mistakes are caught by `check` before a run (DOMAIN invariant 1); stories carry acceptance criteria a tester can answer yes or no (STORIES check) before code is written.
+* **Shift-Left Quality:** a play's mistakes are caught by `check` before a run (DOMAIN invariant 1); stories carry acceptance criteria a tester can answer yes or no (STORIES check) before code is written.
 * **Deterministic feedback:** the suite needs no key and no network; Jev is a scripted double (`tests/python/jev_double.py`) or a committed capture replayed with `--replay`. The gate is `bobp make check`.
 * **External dependencies:** the real Jev service is called only in one live UAT run with the owner's go-ahead (Sprint 19 rule), never by `bobp make test`. The double's assumptions (typed probabilities over listed options, asked again once on an off-list answer) are checked against one committed real capture (`tests/fixtures/coffee/replay/`, a real cold-forecast judgement) that replays in the suite.
-* **Simplicity & Maintainability:** tests exercise stages as functions and sketches as files; no mocking framework is used. Test data are invented fixtures (`tests/fixtures/`); the owner's real exports are never committed or printed.
+* **Simplicity & Maintainability:** tests exercise actions as functions and plays as files; no mocking framework is used. Test data are invented fixtures (`tests/fixtures/`); the owner's real exports are never committed or printed.
 * **Look at it, not only its tests:** for anything drawn (the console), UAT includes opening it in a real browser; unit tests cannot see layout or overlap (lesson 2026-10-15).
 
 ---
@@ -24,7 +24,7 @@ understudy makes decisions about the owner's money and time, so its first qualit
 | Level | Purpose and risk covered | Where it runs / command | When it is appropriate |
 |---|---|---|---|
 | Unit | Rules, conditions, blend, dates, stage functions, console routing and gauges: fast isolated cases and edges | `bobp make test-py ARGS="test_<area>*.py"` (586 tests, about 29 s for the whole suite) | Every change; pick the narrowest file pattern first |
-| Fragment (integration) | One rule of a sketch on written rows: a stage and the stages it reads, a child sketch with a Jev double, a check state of a machine. No machine, sinks, run folder or real Jev | `tests/python/household_fragment.py` (`fragment`, `categorize`, `run_state`) over `src/sketch/fragment.py`; in the same suite | A household or sketch rule changes. This is where a rule is tested; not in a whole run |
+| Fragment (integration) | One rule of a play on written rows: a beat and the beats it reads, a called play with a Jev double, a check beat of the flow. No flow, written files, run folder or real Jev | `tests/python/household_fragment.py` (`fragment`, `categorize`, `run_state`) over `src/play/fragment.py`; in the same suite | A household or play rule changes. This is where a rule is tested; not in a whole run |
 | Integration | A whole run on invented fixtures with a Jev double: coffee, evening, seating, the household happy path, CLI exit codes, the console server over real sockets | `bobp make test-py` (`test_sketch_run`, `test_sketch_coffee`, `test_sketch_evening`, `LedgerTests` in `test_household.py`, `test_dashboard`, `test_launcher`) | When a boundary changes: sources, run folder, CLI, publishing |
 | Replay acceptance | Byte-identical output from a captured real Jev read | `bobp make run ARGS="run tests/fixtures/coffee/coffee_week.yaml --replay=tests/fixtures/coffee/replay"` | After changes to capture, blend or sinks |
 | End-to-end (browser) | What only the page's JavaScript and what is really drawn show: contrast on textured themes, keyboard focus, the replay timer, fit at 390 px | `bobp make test-browser` (39 tests, about 100 s, real Chromium; not part of `check`) | After a change in `src/dashboard/` page files |
@@ -35,10 +35,10 @@ understudy makes decisions about the owner's money and time, so its first qualit
 | What | Budget | Measured 2026-11-03 |
 |---|---|---|
 | Python unit suite | 30 s | 29.4 s (it was 94.6 s) |
-| Whole-sketch household runs | 5 | 5 (it was about 53) |
+| Whole-play household runs | 5 | 5 (it was about 53) |
 | Browser suite | 90 s, no flake | about 100 s on two runs, no flake (it was 154.9 s with one flake): over budget by about 10 s |
 
-Every whole-sketch test and every browser test says in its docstring what only it can show. A rule moved down a level is checked by breaking the rule in a scratch copy and watching the moved test fail. The cost of a test is measured, not guessed: the `--durations` list and, for the browser suite, the time of each look.
+Every whole-play test and every browser test says in its docstring what only it can show. A rule moved down a level is checked by breaking the rule in a scratch copy and watching the moved test fail. The cost of a test is measured, not guessed: the `--durations` list and, for the browser suite, the time of each look.
 
 The browser suite uses Playwright and the system Chromium (ADR-0048 and the SDLC): it is not part of `check` because it takes about 100 s. If it is ever made a release gate it must first fit in seconds.
 
@@ -60,7 +60,7 @@ Authoring and review roles are defined in `agents/trin/SKILL.md`, `agents/neo/SK
 
 ## 5. Test Environment & Fixture Management
 
-* **Isolation:** tests build their own run folders and sketches in temporary directories (`tempfile`); no test depends on another's leftovers; the console tests start a server on port 0 and stop it in cleanup.
+* **Isolation:** tests build their own run folders and plays in temporary directories (`tempfile`); no test depends on another's leftovers; the console tests start a server on port 0 and stop it in cleanup.
 * **Scratch & Cleanup:** temporary directories are removed in `setUp`/cleanup; runs write only under a temp `--out` or `build/`, never under `data/`.
 * **Non-Destructive Execution:** tests never read `.env`, never call the network, and never touch the owner's `data/` or `.understudy/` captures; the live Jev run is a manual UAT step with the owner's go-ahead and prints counts only.
 * **Private data:** real exports and live capture files are never committed, pasted or printed; fixtures are invented and small.

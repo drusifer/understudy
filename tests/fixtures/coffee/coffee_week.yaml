@@ -3,11 +3,9 @@ description: >
   From last week's total sales and a rough picture of who the customers are,
   work out what to order for next week.
 
-sources:
-  sales: last_week_sales.jsonl          # {"week": "2026-W43", "drinks": 1600}
-
-sinks:
-  ingredients: ingredients.jsonl        # a file name inside the run folder
+stage:
+  sales: { kind: file, path: last_week_sales.jsonl }          # {"week": "2026-W43", "drinks": 1600}
+  ingredients: { kind: file, path: ingredients.jsonl, access: write }   # a file name inside the run folder
 
 outcomes:
   temp: [hot, iced]
@@ -28,17 +26,17 @@ data:
   packs:                                # round each ingredient up to whole packs
     coffee_beans: 1000
 
-machine:
+scene:
   initial: weather
-  states:
+  beats:
     weather:
-      do: { sketch: { file: weather_change } }
-      then: split_trade
+      do: { play: weather_change.yaml }
+      to: split_trade
 
     split_trade:
       do: { map: { action: split_by_share } }
-      with: { source: sales, field: drinks, segments: segments }
-      then: match_orders
+      with: { from: sales, field: drinks, segments: segments }
+      to: match_orders
 
     match_orders:
       do: { reduce: { action: blend } }
@@ -62,7 +60,7 @@ machine:
                   drink:
                     - { temp: hot,  size: medium, weight: 0.6 }
                     - { temp: iced, size: medium, weight: 0.4 }
-          - from: weather               # the subsketch's weights on temp
+          - from: weather               # the called play's weights on temp
             weight:
               if:
                 segment: { eq: night_workers }   # night shift stays on hot coffee, warm or not
@@ -73,16 +71,16 @@ machine:
               age_max: { le: 17 }
             drop:
               caffeine: { ne: none }
-      then: to_ingredients
+      to: to_ingredients
 
     to_ingredients:
       do: { map: { action: recipes } }
       with: { recipes: recipes, packs: packs }
-      then: write
+      to: write
 
     write:
-      do: { sink: { name: ingredients } }
-      then: done
+      do: { write: ingredients }
+      to: done
 
     done:
       final: true

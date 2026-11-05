@@ -2,39 +2,41 @@ name: link_refund
 description: >
   Which of several earlier charges did a refund most likely reverse? Jev chooses among the charges, each named by its
   date and amount; the one it gives the highest probability is the original. Give it the refund's `record_id`,
-  `payees`, `days`, `costs` and the `options` (one name per charge).
+  `payees`, `days`, `costs` and the `options` (one name per charge) as props; it writes the `original` chosen.
 
-sources:
-  facts:
-    kind: stage
-    do: { map: { action: rows } }
-    with:
-      rows:
-        - { merchant: {{ (payees | first | default('')) | tojson }}, date: {{ (days | first | default('')) | tojson }}, amount: {{ (costs | first | default('')) | tojson }} }
-  charges:
-    kind: stage
-    do: { map: { action: rows } }
-    with:
-      rows:
-{% for label in options %}
-        - { label: {{ label | tojson }} }
-{% endfor %}
-  reading:
-    kind: jev
-    question: choice
-    instructions: >
-      Which of these earlier charges did `refund` most likely reverse? Each option is one charge from the same merchant.
-    options: { from: charges, key: label }
-    state:
-      refund: { from: facts }
+stage:
+  original: { kind: file, path: original.jsonl, access: write }   # what it gives back: the charge chosen (`level`)
 
-machine:
-  initial: pick
-  states:
-    pick:
+scene:
+  initial: original_picker
+  beats:
+    original_picker:                    # the charge Jev gave the highest probability
       do: { reduce: { action: max } }
-      with: { source: reading, field: probability }
-      then: done
+      with: { from: reading, field: probability }
+      to: original_writer
+    original_writer:
+      do: { write: original }
+      to: done
     done:
       final: true
-      outputs: [level]
+
+    facts:
+      do: { map: { action: rows } }
+      with:
+        rows:
+          - { merchant: {{ (payees | first | default('')) | tojson }}, date: {{ (days | first | default('')) | tojson }}, amount: {{ (costs | first | default('')) | tojson }} }
+    charges:
+      do: { map: { action: rows } }
+      with:
+        rows:
+{% for label in options %}
+          - { label: {{ label | tojson }} }
+{% endfor %}
+    reading:
+      do: { jev: { question: choice } }
+      with:
+        instructions: >
+          Which of these earlier charges did `refund` most likely reverse? Each option is one charge from the same merchant.
+        options: { from: charges, key: label }
+        state:
+          refund: { from: facts }

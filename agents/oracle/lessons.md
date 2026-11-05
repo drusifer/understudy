@@ -796,3 +796,37 @@ Key a cache of a file on what it holds (the text, read each time: microseconds),
 ### Evidence and Scope
 - **References:** `tests/python/test_loader_cache.py`, `src/sketch/loader.py` (`_shared_template`), `STORY_ARCH_SPRINT27.md` (amendments)
 - **Applies when:** caching anything derived from a file.
+
+## [2026-11-05] Change a format without touching the engine: one translation point, and a byte-identical baseline saved first
+
+> **Tags:** #refactor #format #Neo #Morpheus
+
+### Context
+Sprint 28 rewrote every play file (sketch to play: stage, scene, beats, `to:`, `from:`, Jev as a beat, calls that bind a stage) across four phases, on a 751-line household play whose outputs feed the owner's money figures.
+
+### Observation and Cause
+The engine (run, capture, replay, `Sources`) never changed: the loader's `engine_view` turns the new document into the old internal structures, and `check` maps each path back to where the file writes it. A baseline saved before the first change (the fixtures with the Jev double, and a replay of a real live run) was compared file by file after every phase; all 11 outputs stayed byte-identical, and Jev captures replayed because Jev beats kept their names (a capture key is play name + beat name).
+
+### Rule
+Before changing a file format, save the outputs of the real inputs and compare byte for byte after each phase. Put the whole translation in one function and keep run and replay untouched; keep the names that key stored data (capture keys) until a later step.
+
+### Evidence and Scope
+- **References:** `src/play/loader.py` (`engine_view`), `src/play/check.py` (`outward`), `build/baseline-sprint28/`, `STORY_ARCH_SPRINT28.md` (amendments), ADR-0061
+- **Applies when:** renaming or reshaping a configuration format whose outputs must not move.
+
+## [2026-11-05] The Edit tool drops trailing spaces from a replacement
+
+> **Tags:** #tooling #Neo
+
+### Context
+In Sprint 28 a `replace_all` of `"stage ` with `"beat ` (trailing space) produced `"beatcount"` in test expectations, and `"stage": ` became `"beat":` with no space.
+
+### Observation and Cause
+The replacement text is trimmed at its end, so a trailing space is lost; JSON and Python dicts did not care, string literals did, and the tests caught it.
+
+### Rule
+Never end an Edit replacement with a space. Include the next character (the word after it, or the closing quote) in both the old and the new text.
+
+### Evidence and Scope
+- **References:** `tests/python/test_sketch_run.py` ("beat count"), Sprint 28 Phase 6
+- **Applies when:** any Edit whose old or new text ends in whitespace.

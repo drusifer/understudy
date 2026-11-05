@@ -16,7 +16,7 @@ from operator import ge, gt, le, lt
 
 import dateparser
 
-from src.sketch.vocabulary import COMBINATORS, OPERATORS
+from src.play.vocabulary import COMBINATORS, OPERATORS
 
 SLICE = re.compile(r"^-?\d+(\.\d+)?:-?\d+(\.\d+)?$")
 NUMERIC = ("lt", "le", "gt", "ge")

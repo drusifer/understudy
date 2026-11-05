@@ -1,6 +1,6 @@
 import unittest
 
-from src.sketch.mcc import MccError, load_mcc
+from src.play.mcc import MccError, load_mcc
 
 
 class MccListTests(unittest.TestCase):

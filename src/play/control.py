@@ -62,8 +62,8 @@ class Hold:
                 self.taken += 1
                 break
             if not announced:
-                self.emit("paused", stage=stage)
+                self.emit("paused", beat=stage)
                 announced = True
             await self.sleep(POLL)
         if announced:
-            self.emit("resumed", stage=stage)
+            self.emit("resumed", beat=stage)

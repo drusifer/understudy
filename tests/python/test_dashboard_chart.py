@@ -9,8 +9,8 @@ from pathlib import Path
 from src.dashboard.chart import guard_text, layout, overlay
 from src.dashboard.view import describe
 from src.paths import ROOT
-from src.sketch.loader import load
-from src.sketch.run import _story_of
+from src.play.loader import load
+from src.play.run import _story_of
 
 HALF = 0.5
 GUARDED = 2  # a move tuple with a guard has three parts
@@ -23,12 +23,12 @@ def guard(rng, n):
 
 def machine(names, moves, final=(), initial=None):
     """A machine as the story line tells it: states in order, and the moves between them (a tuple may carry a guard)."""
-    return {"initial": initial or names[0], "states": [{"name": n, "final": n in final} for n in names],
+    return {"initial": initial or names[0], "beats": [{"name": n, "final": n in final} for n in names],
             "transitions": [{"from": m[0], "to": m[1], "event": "ok", **({"when": m[2]} if len(m) > GUARDED else {})} for m in moves]}
 
 
 def lay(story):
-    return layout(story["states"], story["transitions"], story["initial"])
+    return layout(story["beats"], story["transitions"], story["initial"])
 
 
 def box(each):
@@ -203,7 +203,7 @@ class RealMachineTests(unittest.TestCase):
         for path in ("examples/household/household.yaml", "examples/evening/evening.yaml", "tests/fixtures/coffee/coffee_week.yaml"):
             story = _story_of(load(ROOT / path, variables={"monarch": "m.csv", "amex": "a.csv", "amex_account": "x"}))
             chart = lay(story)
-            self.assertEqual({each["id"] for each in chart["nodes"]}, {state["name"] for state in story["states"]}, path)
+            self.assertEqual({each["id"] for each in chart["nodes"]}, {beat["name"] for beat in story["beats"]}, path)
             assert_clean(self, chart)
 
 
@@ -211,7 +211,7 @@ class OverlayTests(unittest.TestCase):
     STORY = machine(["a", "b", "c"], [("a", "b"), ("b", "c")], final={"c"})
 
     def events(self, *entered):
-        return [{"event": "run_started", **self.STORY}, *({"event": "state_entered", "state": s, "caused_by": c} for s, c in entered)]
+        return [{"event": "run_started", **self.STORY}, *({"event": "beat_entered", "beat":s, "caused_by": c} for s, c in entered)]
 
     def test_the_state_the_run_is_in_is_lit_and_the_move_just_taken_is_marked(self):
         chart = overlay(self.STORY, self.events(("a", "start"), ("b", "ok")), "running", "")
@@ -232,7 +232,7 @@ class OverlayTests(unittest.TestCase):
 
     def test_the_initial_state_comes_from_the_first_move_when_the_story_line_has_none(self):
         story = {key: value for key, value in self.STORY.items() if key != "initial"}
-        chart = overlay(story, [{"event": "state_entered", "state": "b", "caused_by": "start"}], "running", "")
+        chart = overlay(story, [{"event": "beat_entered", "beat":"b", "caused_by": "start"}], "running", "")
         self.assertTrue(next(each for each in chart["nodes"] if each["id"] == "b")["initial"])
 
     def test_a_state_name_with_markup_is_kept_as_plain_text(self):
@@ -256,15 +256,15 @@ class DescribeTests(unittest.TestCase):
 
     def test_a_run_with_a_story_has_a_chart_with_its_lit_state(self):
         story = machine(["a", "b"], [("a", "b")], final={"b"})
-        self.write([{"event": "run_started", "at": "2026-11-01T10:00:00+00:00", "sketch": "x/s.yaml", "mode": "live", **story},
-                    {"event": "state_entered", "at": "2026-11-01T10:00:00+00:00", "state": "a", "caused_by": "start"}],
-                   {"status": "running", "stages": {}})
+        self.write([{"event": "run_started", "at": "2026-11-01T10:00:00+00:00", "play": "x/s.yaml", "mode": "live", **story},
+                    {"event": "beat_entered", "at": "2026-11-01T10:00:00+00:00", "beat": "a", "caused_by": "start"}],
+                   {"status": "running", "beats": {}})
         chart = describe(self.dir)["chart"]
         self.assertEqual({each["id"] for each in chart["nodes"] if each["current"]}, {"a"})
 
     def test_a_run_whose_log_has_no_story_has_no_chart(self):
-        self.write([{"event": "run_started", "at": "2026-11-01T10:00:00+00:00", "sketch": "x/s.yaml", "mode": "live"}],
-                   {"status": "running", "stages": {}})
+        self.write([{"event": "run_started", "at": "2026-11-01T10:00:00+00:00", "play": "x/s.yaml", "mode": "live"}],
+                   {"status": "running", "beats": {}})
         self.assertIsNone(describe(self.dir)["chart"])
 
 

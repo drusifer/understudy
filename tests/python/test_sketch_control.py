@@ -9,10 +9,10 @@ from unittest.mock import patch
 
 from test_sketch_run import RunCase, library
 
-from src.sketch import control
-from src.sketch.check import load_checked
-from src.sketch.control import Hold, read_control, write_control
-from src.sketch.run import run_sketch
+from src.play import control
+from src.play.check import load_checked
+from src.play.control import Hold, read_control, write_control
+from src.play.run import run_sketch
 
 
 class ControlFileTests(unittest.TestCase):
@@ -74,7 +74,7 @@ class HoldTests(unittest.TestCase):
         hold, sleeps = self.hold(lambda n: write_control(self.dir, "run", 0) if n == RELEASED_AT else None)
         self.before(hold, "count")
         self.assertEqual(len(sleeps), RELEASED_AT)
-        self.assertEqual(self.emitted,[("paused", {"stage": "count"}), ("resumed", {"stage": "count"})])
+        self.assertEqual(self.emitted,[("paused", {"beat": "count"}), ("resumed", {"beat": "count"})])
 
     def test_a_step_lets_exactly_one_stage_through_and_the_next_waits(self):
         write_control(self.dir, "hold", 0)
@@ -130,13 +130,13 @@ class HeldRunTests(RunCase):
     def test_started_held_it_makes_no_move_until_stepped_and_then_one_per_step(self):
         async def driver(task):
             folder = await self.wait_for(self.folder, "paused")
-            started = [e for e in events_of(folder) if e["event"] == "stage_started"]
-            self.assertEqual(started, [])  # held before the first stage
+            started = [e for e in events_of(folder) if e["event"] == "beat_started"]
+            self.assertEqual(started, [])  # held before the first beat
             first_pause = next(e for e in events_of(folder) if e["event"] == "paused")
-            self.assertEqual(first_pause["stage"], "count")
+            self.assertEqual(first_pause["beat"], "count")
             write_control(folder, "hold", 1)
             await self.wait_for(self.folder, "paused", 2)
-            started = [e["stage"] for e in events_of(folder) if e["event"] == "stage_started"]
+            started = [e["beat"] for e in events_of(folder) if e["event"] == "beat_started"]
             self.assertEqual(started, ["count"])  # exactly one move
             write_control(folder, "run", 1)  # resume
 

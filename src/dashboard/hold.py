@@ -8,7 +8,7 @@ from pathlib import Path
 
 from src.dashboard.runs import Refused
 from src.dashboard.view import RUN_ID, read_events
-from src.sketch.control import read_control, write_control
+from src.play.control import read_control, write_control
 
 ACTIONS = ("pause", "step", "resume")
 GONE = "that run was not started by this console, or it has finished"

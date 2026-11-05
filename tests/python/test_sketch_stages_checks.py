@@ -2,8 +2,8 @@ import asyncio
 import unittest
 from types import MappingProxyType, SimpleNamespace
 
-from src.sketch.registry import STAGES
-from src.sketch.stages_rows import (
+from src.play.registry import STAGES
+from src.play.stages_rows import (
     allocate,
     complete,
     group,
@@ -203,7 +203,7 @@ class UniqueTests(unittest.TestCase):
 
 class ClassifyScalarTests(unittest.TestCase):
     def test_then_and_otherwise_may_be_numbers_or_booleans_as_well_as_text(self):
-        from src.sketch.stages_rows import classify
+        from src.play.stages_rows import classify
         rows = [{"n": 5}, {"n": 1}]
         found = run(classify, context(rows), source="rows", into="big", cases=[{"if": {"n": {"gt": 3}}, "then": True}],
                     otherwise=False)
@@ -215,7 +215,7 @@ class ClassifyScalarTests(unittest.TestCase):
 
 class WeighMissingTests(unittest.TestCase):
     def test_a_field_a_row_lacks_or_has_as_null_counts_as_zero(self):
-        from src.sketch.stages_rows import weigh
+        from src.play.stages_rows import weigh
         rows = [{"p": 0.6, "q": 0.2}, {"p": 0.6, "q": None}, {"p": 0.6}]
         found = run(weigh, context(rows), source="rows", by={"p": 1, "q": -2}, into="lead")
         self.assertEqual([round(r["lead"], 2) for r in found], [0.2, 0.6, 0.6])

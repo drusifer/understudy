@@ -1,12 +1,12 @@
 name: machine_branch
-description: A machine with a branch, to test that a guarded transition is taken only when its condition holds.
+description: A scene with a branch, to test that a guarded transition is taken only when its condition holds.
 
-sinks:
-  report: report.jsonl
+stage:
+  report: { kind: file, path: report.jsonl, access: write }
 
-machine:
+scene:
   initial: count
-  states:
+  beats:
     count:
       do: { map: { action: count } }
       transitions:
@@ -16,12 +16,12 @@ machine:
         - to: busy
     quiet:
       do: { map: { action: mark } }
-      then: write
+      to: write
     busy:
       do: { map: { action: mark } }
-      then: write
+      to: write
     write:
-      do: { sink: { name: report } }
-      then: done
+      do: { write: report }
+      to: done
     done:
       final: true

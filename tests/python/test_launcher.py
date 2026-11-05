@@ -27,22 +27,22 @@ SECRET = "s3cret-for-tests"
 PLAIN = """name: plain
 description: >
   Reads a file and says hello.
-sources:
-  data: {{ file }}
-machine:
+stage:
+  data: { kind: file, path: "{{ file }}" }
+scene:
   initial: only
-  states:
+  beats:
     only: { final: true }
 """
 PARENT = """name: parent
 description: calls a child
-machine:
+scene:
   initial: ask
-  states:
-    ask: { do: { sketch: { file: child } }, then: done }
+  beats:
+    ask: { do: { play: child.yaml }, to: done }
     done: { final: true }
 """
-CHILD = "name: child\ndescription: only called, never run on its own\nmachine: { initial: x, states: { x: { final: true } } }\n"
+CHILD = "name: child\ndescription: only called, never run on its own\nscene: { initial: x, beats: { x: { final: true } } }\n"
 
 
 class LauncherCase(unittest.TestCase):
@@ -75,12 +75,12 @@ class LauncherCase(unittest.TestCase):
 
 
 class ListTest(LauncherCase):
-    def test_the_list_shows_each_sketch_with_its_description_and_the_names_it_takes(self):
+    def test_the_list_shows_each_play_with_its_description_the_names_it_takes_and_the_files_it_reads(self):
         self.write("plain.yaml", PLAIN)
         (entry,) = self.launcher().list_sketches()
         self.assertEqual((entry["file"], entry["name"], entry["ok"]), ("plain.yaml", "plain", True))
         self.assertEqual(entry["description"], "Reads a file and says hello.")
-        self.assertEqual(entry["with"], ["file"])
+        self.assertEqual(entry["with"], ["data", "file"])  # `data` is the stage file; `file` the name its path uses
 
     def test_a_sketch_that_is_only_called_by_another_is_not_offered(self):
         self.write("parent.yaml", PARENT)
@@ -248,7 +248,7 @@ class StopTest(LauncherCase):
         signals: list[tuple[int, int]] = []
         run = self.runs / "run-20261101T100000-aaaaaaaa"
         run.mkdir()
-        (run / "run.json").write_text(json.dumps({"status": "running", "stages": {}}))
+        (run / "run.json").write_text(json.dumps({"status": "running", "beats": {}}))
 
         class Alive:
             pid, returncode, stderr = 4243, None, None
@@ -282,7 +282,7 @@ class RealStopTest(LauncherCase):
         self.write("plain.yaml", PLAIN)
         run = self.runs / "run-20261101T100000-bbbbbbbb"
         run.mkdir()
-        (run / "run.json").write_text(json.dumps({"status": "running", "stages": {}}))
+        (run / "run.json").write_text(json.dumps({"status": "running", "beats": {}}))
 
         def sleeper(argv, **options):
             return _Child([sys.executable, "-c", "import time; time.sleep(60)"], **options)
@@ -301,7 +301,8 @@ class RealStopTest(LauncherCase):
         self.write("plain.yaml", PLAIN)
         run = self.runs / "run-20261101T100000-cccccccc"
         run.mkdir()  # the run made its folder and its first event, and nothing else
-        (run / "events.jsonl").write_text(json.dumps({"event": "run_started", "at": "2026-11-01T10:00:00+00:00"}) + "\n")
+        (run / "events.jsonl").write_text(json.dumps({"event": "run_started", "at": "2026-11-01T10:00:00+00:00",
+                                                      "play": "plain.yaml"}) + "\n")
 
         def sleeper(argv, **options):
             return _Child([sys.executable, "-c", "import time; time.sleep(60)"], **options)

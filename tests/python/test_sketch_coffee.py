@@ -7,15 +7,15 @@ from pathlib import Path
 
 from jev_double import JevDouble
 
-import src.sketch.stages  # noqa: F401 - importing it registers the stages
+import src.play.stages  # noqa: F401 - importing it registers the stages
 from src.jev import Chosen
 from src.paths import ROOT
-from src.sketch.check import check
-from src.sketch.cli import main
-from src.sketch.loader import load
-from src.sketch.registry import STAGES, Data, Param, Source
-from src.sketch.sources.capture import CaptureStore
-from src.sketch.sources.file import read_jsonl
+from src.play.check import check
+from src.play.cli import main
+from src.play.loader import load
+from src.play.registry import STAGES, Data, Param, Source
+from src.play.sources.capture import CaptureStore
+from src.play.sources.file import read_jsonl
 
 FIXTURES = ROOT / "tests" / "fixtures" / "coffee"
 LEVELS = ("much_colder", "colder", "same", "warmer", "much_warmer")
@@ -62,7 +62,7 @@ class RegistryTests(unittest.TestCase):
             "map.split_by_share", "map.join_weights", "map.recipes", "reduce.blend",
             "map.adjacent_runs", "map.prefer_order", "map.prefer_middle",
             "map.weigh", "reduce.max", "reduce.min", "reduce.any",
-            "map.where", "map.join", "map.unpair", "map.expect",
+            "map.where", "map.join", "map.expect",
             "map.convert", "map.pair", "map.link", "map.group", "map.rows", "map.classify",
             "map.number", "map.coalesce",
             "map.replace", "map.normalize", "map.format", "map.earlier", "map.concat", "map.matching",
@@ -83,9 +83,9 @@ class CoffeeRunTests(CoffeeCase):
     def test_the_whole_run_writes_the_ingredients_and_counts(self):
         code, lines, err = self.go(jev=double())
         self.assertEqual((code, err), (0, []))
-        self.assertEqual([line for line in lines if line.startswith("stage")], [
-            "stage weather", "stage weather_change.judge", "stage split_trade", "stage match_orders", "stage to_ingredients",
-            "stage write"])
+        self.assertEqual([line for line in lines if line.startswith("beat")], [
+            "beat weather", "beat weather_change.judge", "beat weather_change.give", "beat split_trade",
+            "beat match_orders", "beat to_ingredients", "beat write"])
         self.assertEqual(read_jsonl(self.folder(lines) / "ingredients.jsonl"),
                          [{"amount": 32000, "ingredient": "coffee_beans", "unit": "g"}])
         summary = self.summary(lines)
@@ -161,7 +161,7 @@ class CoffeeFailureTests(CoffeeCase):
                                                                        "warmer:      { hot: 0.45, ice: 0.55 }"), encoding="utf-8")
         code, _, err = self.go(jev=double())
         self.assertEqual(code, 1)
-        self.assertIn("stage match_orders", err[-1])
+        self.assertIn("beat match_orders", err[-1])
         self.assertIn("temp='ice'", err[-1])
         self.assertIn("did you mean 'iced'", err[-1])
         self.assertEqual(list(self.out.glob("*/ingredients.jsonl")), [])

@@ -8,8 +8,8 @@ from jev_double import JevDouble
 
 from src.jev import Chosen
 from src.paths import ROOT
-from src.sketch.cli import main
-from src.sketch.sources.capture import CaptureStore
+from src.play.cli import main
+from src.play.sources.capture import CaptureStore
 
 EVENING = ROOT / "examples" / "evening" / "evening.yaml"
 MAX_SHORTLIST = 5
@@ -104,7 +104,7 @@ class WalkAwayTests(EveningCase):
         only_low = self.dir / "low.jsonl"
         only_low.write_text(json.dumps({"showing": "Sharknado 20:00", "title": "Sharknado", "starts": "20:00",
                                         "genre": "horror", "tomato": 40}) + "\n", encoding="utf-8")
-        code, lines, err = self.go("--source", f"showings.path={only_low}")
+        code, lines, err = self.go("--with", f"showings={only_low}")
         self.assertEqual((code, err, lines[-1]), (0, "", "outcome: walked_away"))
         self.assertFalse(any(line.startswith("wrote ") for line in lines))
 
@@ -116,7 +116,7 @@ class WalkAwayTests(EveningCase):
 
 class FailureTests(EveningCase):
     def test_a_missing_showings_file_is_refused_naming_it(self):
-        code, lines, err = self.go("--source", f"showings.path={self.dir / 'nope.jsonl'}")
+        code, lines, err = self.go("--with", f"showings={self.dir / 'nope.jsonl'}")
         self.assertEqual((code, lines), (2, []))
         self.assertIn("nope.jsonl", err)
 

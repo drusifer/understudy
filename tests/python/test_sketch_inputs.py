@@ -7,13 +7,13 @@ from pathlib import Path
 
 from src.dashboard.runs import Launcher, Refused
 from src.paths import ROOT
-from src.sketch.cli import main
-from src.sketch.inputs import default_text, problems, value_problem
-from src.sketch.loader import SketchError, load
+from src.play.cli import main
+from src.play.inputs import default_text, problems, value_problem
+from src.play.loader import PlayError, load
 
 HEAD = "name: typed\ndescription: Mood {{ mood }}, weight {{ weight }}, tickets {{ tickets }}, evenings {{ evenings }}.\n"
-BODY = "machine: { initial: only, states: { only: { final: true } } }\n"
-INPUTS = """inputs:
+BODY = "scene: { initial: only, beats: { only: { final: true } } }\n"
+INPUTS = """stage:
   mood: { kind: choice, options: [fun, serious], default: fun, label: Mood }
   weight: { kind: range, min: 0, max: 1, step: 0.1, default: 0.3 }
   tickets: { kind: count, min: 1, max: 10, default: 2 }
@@ -47,13 +47,13 @@ class RulesTests(unittest.TestCase):
         for what, (spec, message) in wrong.items():
             found = problems("thing", spec)
             self.assertEqual(len(found), 1, what)
-            self.assertEqual(found[0], f"input 'thing': {message}", what)
+            self.assertEqual(found[0], f"prop 'thing': {message}", what)
 
     def test_a_number_must_be_written_as_plain_digits_so_the_run_gets_the_text_it_was_checked_on(self):
         # Switch, phase 4: 1e2, nan, inf, hex and padded values passed a numeric check and reached the sketch as odd text
         for text in ("1e2", "nan", "inf", "0x5", " 5", "5 ", "+5", chr(0x665), "5_0"):  # 0x665 is an Arabic-Indic digit
-            self.assertEqual(value_problem("tickets", TICKETS, text), f"input 'tickets': {text} is not a whole number", text)
-            self.assertEqual(value_problem("weight", WEIGHT, text), f"input 'weight': {text} is not a number", text)
+            self.assertEqual(value_problem("tickets", TICKETS, text), f"prop 'tickets': {text} is not a whole number", text)
+            self.assertEqual(value_problem("weight", WEIGHT, text), f"prop 'weight': {text} is not a number", text)
 
     def test_each_kind_accepts_what_is_inside_its_limits_and_refuses_the_rest(self):
         cases = (
@@ -65,7 +65,7 @@ class RulesTests(unittest.TestCase):
         )
         for spec, text, expected in cases:
             found = value_problem("thing", spec, text)
-            self.assertEqual(found, None if expected is None else f"input 'thing': {expected}", (spec["kind"], text))
+            self.assertEqual(found, None if expected is None else f"prop 'thing': {expected}", (spec["kind"], text))
 
 
 class LoadTests(unittest.TestCase):
@@ -90,28 +90,28 @@ class LoadTests(unittest.TestCase):
         self.assertEqual(sketch.description, "Mood serious, weight 0.3, tickets 4, evenings on.")
 
     def test_a_value_outside_its_limits_is_refused_naming_the_input_and_the_limits(self):
-        with self.assertRaises(SketchError) as stopped:
+        with self.assertRaises(PlayError) as stopped:
             load(self.sketch(HEAD + INPUTS + BODY), variables={"tickets": "40"})
-        self.assertIn("input 'tickets': 40 is outside 1 to 10", stopped.exception.problems[0])
+        self.assertIn("prop 'tickets': 40 is outside 1 to 10", stopped.exception.problems[0])
 
     def test_a_wrong_declaration_is_refused_naming_the_input(self):
         wrong = INPUTS.replace("default: fun", "default: silly")
-        with self.assertRaises(SketchError) as stopped:
+        with self.assertRaises(PlayError) as stopped:
             load(self.sketch(HEAD + wrong + BODY))
-        self.assertIn("input 'mood': default 'silly' is not one of fun, serious", stopped.exception.problems[0])
+        self.assertIn("prop 'mood': default 'silly' is not one of fun, serious", stopped.exception.problems[0])
 
-    def test_an_unknown_kind_is_refused_naming_the_input(self):
+    def test_an_unknown_kind_is_refused_naming_the_prop(self):
         wrong = INPUTS.replace("kind: switch", "kind: dial")
-        with self.assertRaises(SketchError) as stopped:
+        with self.assertRaises(PlayError) as stopped:
             load(self.sketch(HEAD + wrong + BODY))
-        self.assertIn("input 'evenings'", stopped.exception.problems[0])
+        self.assertIn("prop 'evenings': unknown kind 'dial'", stopped.exception.problems[0])
 
     def test_check_on_the_command_line_says_so_in_one_line(self):
         path = self.sketch(HEAD + INPUTS.replace("max: 10", "max: 0") + BODY)
         stdout, stderr = io.StringIO(), io.StringIO()
         code = main(["check", str(path)], stdout=stdout, stderr=stderr)
         self.assertEqual(code, 2)
-        self.assertIn("input 'tickets': max must be above min", stderr.getvalue())
+        self.assertIn("prop 'tickets': max must be above min", stderr.getvalue())
 
     def test_a_value_the_sketch_takes_without_declaring_it_is_still_given_as_text(self):
         text = "name: typed\ndescription: Note {{ note }}.\n" + BODY
@@ -175,13 +175,13 @@ class ConsoleTests(unittest.TestCase):
         (self.sketches / "typed.yaml").write_text(HEAD + INPUTS.replace("default: fun", "default: silly") + BODY, encoding="utf-8")
         (entry,) = self.launcher().list_sketches()
         self.assertFalse(entry["ok"])
-        self.assertIn("input 'mood'", entry["problem"])
+        self.assertIn("prop 'mood'", entry["problem"])
 
     def test_a_posted_value_outside_its_limits_is_refused_before_anything_starts(self):
         launcher = self.launcher()
-        for values, pattern in (({"tickets": "40"}, "input 'tickets': 40 is outside 1 to 10"),
-                                ({"mood": "silly"}, "input 'mood': silly is not one of fun, serious"),
-                                ({"evenings": "yes"}, "input 'evenings': yes is not on or off")):
+        for values, pattern in (({"tickets": "40"}, "prop 'tickets': 40 is outside 1 to 10"),
+                                ({"mood": "silly"}, "prop 'mood': silly is not one of fun, serious"),
+                                ({"evenings": "yes"}, "prop 'evenings': yes is not on or off")):
             with self.assertRaisesRegex(Refused, pattern) as caught:
                 launcher.start("typed.yaml", values)
             self.assertEqual(caught.exception.status, 400)

@@ -14,8 +14,8 @@ from jev_double import JevDouble
 
 from src.jev import Chosen
 from src.paths import ROOT
-from src.sketch.cli import main
-from src.sketch.sources.capture import CaptureStore
+from src.play.cli import main
+from src.play.sources.capture import CaptureStore
 
 LEDGER = ROOT / "examples" / "household" / "household.yaml"
 ORACLE = ROOT / "tests" / "fixtures" / "household"
@@ -295,7 +295,7 @@ class MissingCategoryTests(unittest.TestCase):
 
 class PathValueTests(unittest.TestCase):
     def test_a_with_value_naming_a_file_relative_to_where_you_run_is_made_absolute(self):
-        from src.sketch.cli import _values
+        from src.play.cli import _values
         relative = str(Path(__file__).resolve().relative_to(Path.cwd()))
         self.assertEqual(_values([f"monarch={relative}", "amex_account=Platinum"]),
                          {"monarch": str(Path(__file__).resolve()), "amex_account": "Platinum"})

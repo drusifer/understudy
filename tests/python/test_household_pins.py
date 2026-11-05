@@ -17,11 +17,11 @@ from household_jev import choose
 from jev_double import JevDouble
 from test_household import LEDGER
 
-from src.sketch.check import load_checked
-from src.sketch.cli import main
-from src.sketch.fragment import read_stage
-from src.sketch.loader import SketchError
-from src.sketch.sources.capture import CaptureStore
+from src.play.check import load_checked
+from src.play.cli import main
+from src.play.fragment import read_stage
+from src.play.loader import PlayError
+from src.play.sources.capture import CaptureStore
 
 CLOTHING = "Clothing outlets: Family clothing shops"  # a category in the clean list (ISO 18245)
 TAXONOMY = [{"category": CLOTHING}, {"category": "Household: Rent"}]
@@ -93,20 +93,20 @@ class BadPinTests(PinCase):
     def test_the_check_names_the_line_and_the_value_of_a_category_that_is_not_in_the_list(self):
         pins = [{"payee": "Store", "category": CLOTHING}, {"payee": "Shoe Shop", "category": "Fun"}]
         with self.assertRaises(ValueError) as refused:
-            run_state("check_pin_categories", pins_file=pins, taxonomy=TAXONOMY)
+            run_state("pin_category_checker", pinned=pins, taxonomy=TAXONOMY)
         self.assertIn("line 2", str(refused.exception))
         self.assertIn("'Fun'", str(refused.exception))
 
     def test_a_line_without_a_merchant_is_named_by_the_check(self):
         with self.assertRaises(ValueError) as refused:
-            run_state("check_pins", pins_file=[{"payee": "", "category": CLOTHING}])
+            run_state("pin_checker", pinned=[{"payee": "", "category": CLOTHING}])
         self.assertIn("line 1 has no payee", str(refused.exception))
 
     def test_a_pin_file_named_with_a_path_that_does_not_exist_is_refused_naming_it_before_the_run_starts(self):
         missing = self.dir / "nowhere.jsonl"
         values = {"monarch": str(ORACLE / "monarch.csv"), "amex": str(ORACLE / "amex.csv"), "amex_account": "Platinum",
                   "since": "2026-01-01", "pinned": str(missing)}
-        with self.assertRaises(SketchError) as refused:
+        with self.assertRaises(PlayError) as refused:
             load_checked(LEDGER, {}, values)
         self.assertIn(str(missing), str(refused.exception.problems))
 
@@ -121,11 +121,11 @@ class NoPinFileTests(PinCase):
         try:
             import asyncio
 
-            rows = asyncio.run(read_stage(load_checked(LEDGER, {}, values), "pins_file", announce=said.append))
+            rows = asyncio.run(read_stage(load_checked(LEDGER, {}, values), "pinned", announce=said.append))
         finally:
             os.chdir(previous)
         self.assertEqual(rows, [])
-        self.assertTrue(any("no pins_file:" in line and "so none are used" in line for line in said))
+        self.assertTrue(any("no pinned:" in line and "so none are used" in line for line in said))
 
 
 if __name__ == "__main__":

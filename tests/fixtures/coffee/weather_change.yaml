@@ -1,24 +1,10 @@
 name: weather_change
 description: How much warmer or colder next week will be than last week.
 
-sources:                                # the Almanac's own descriptions, pasted into files each week
-  last_week: last_week_almanac.jsonl    # {"week": "2026-W43", "text": "Mild and breezy, highs near 55."}
-  next_week: next_week_almanac.jsonl    # {"week": "2026-W44", "text": "Fair but cold, with rain clearing midweek and a hint of snow by the weekend."}
-  weather_change:                       # Jev is read like any other source
-    kind: jev
-    question: choice
-    instructions: >
-      Compare the Almanac's description of next week with its description of last week.
-      How much warmer or colder is next week?
-    criteria:                           # the rubric: what each level means; no weights here
-      much_colder: Clearly and markedly colder than last week, for example snow or a hard freeze where last week was mild.
-      colder: Noticeably cooler than last week.
-      same: About the same as last week, or no real change described.
-      warmer: Noticeably milder than last week.
-      much_warmer: Clearly and markedly warmer than last week, for example a warm spell after a cold week.
-    state:                              # the data Jev reads, taken from other sources
-      last_week: { from: last_week }
-      next_week: { from: next_week }
+stage:                                  # the Almanac's own descriptions, pasted into files each week
+  last_week: { kind: file, path: last_week_almanac.jsonl }    # {"week": "2026-W43", "text": "Mild and breezy, highs near 55."}
+  next_week: { kind: file, path: next_week_almanac.jsonl }    # {"week": "2026-W44", "text": "Fair but cold, with rain clearing midweek and a hint of snow by the weekend."}
+  temp_weights: { kind: file, path: temp_weights.jsonl, access: write }   # what it gives back: a weight per temp
 
 data:
   weather_temp:                         # the owner's weights per level; Jev never sees these
@@ -28,13 +14,30 @@ data:
     warmer:      { hot: 0.45, iced: 0.55 }
     much_warmer: { hot: 0.30, iced: 0.70 }
 
-machine:
+scene:
   initial: judge
-  states:
+  beats:
+    weather_change:                     # Jev is a beat like any other, asked when another beat reads it
+      do: { jev: { question: choice } }
+      with:
+        instructions: >
+          Compare the Almanac's description of next week with its description of last week.
+          How much warmer or colder is next week?
+        criteria:                       # the rubric: what each level means; no weights here
+          much_colder: Clearly and markedly colder than last week, for example snow or a hard freeze where last week was mild.
+          colder: Noticeably cooler than last week.
+          same: About the same as last week, or no real change described.
+          warmer: Noticeably milder than last week.
+          much_warmer: Clearly and markedly warmer than last week, for example a warm spell after a cold week.
+        state:                          # the data Jev reads, taken from other pieces
+          last_week: { from: last_week }
+          next_week: { from: next_week }
     judge:
       do: { map: { action: join_weights } }
-      with: { probabilities: weather_change, weights: weather_temp }
-      then: done
+      with: { probabilities: weather_change, weights: weather_temp, into: temp }
+      to: give
+    give:
+      do: { write: temp_weights }
+      to: done
     done:
       final: true
-      outputs: [temp]

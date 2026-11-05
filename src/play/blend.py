@@ -7,7 +7,7 @@ normalised. `forbid` then drops options and renormalises, and always wins over a
 
 from dataclasses import dataclass
 
-from src.sketch.conditions import holds
+from src.play.conditions import holds
 
 Distribution = dict[str, dict[str, float]]  # dimension -> option -> weight; each dimension sums to 1
 TOLERANCE = 1e-9

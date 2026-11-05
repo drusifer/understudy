@@ -6,41 +6,39 @@ from unittest.mock import patch
 
 from jev_double import JevDouble
 
-import src.sketch.stages  # noqa: F401 - importing it registers the stages
+import src.play.stages  # noqa: F401 - importing it registers the stages
 from src.jev import Chosen
-from src.sketch.blend import shortlist
-from src.sketch.check import check, load_checked
-from src.sketch.loader import load
-from src.sketch.registry import STAGES, Stage
-from src.sketch.registry import library as registered
-from src.sketch.run import run_sketch
-from src.sketch.sources.capture import CaptureStore
-from src.sketch.sources.reader import Capture
+from src.play.blend import shortlist
+from src.play.check import check, load_checked
+from src.play.loader import load
+from src.play.registry import STAGES, Stage
+from src.play.registry import library as registered
+from src.play.run import run_sketch
+from src.play.sources.capture import CaptureStore
+from src.play.sources.reader import Capture
 
 SKETCH = """\
 name: pick
-sources:
-  showings: showings.jsonl
-  ranked:                               # the two best showings, computed by a stage
-    kind: stage
-    do: { reduce: { action: max } }
-    with: { source: showings, field: weight, take: 2 }
-  pick:
-    kind: jev
-    question: choice
-    instructions: Choose the showing you would enjoy most.
-    options: { from: ranked, key: title }
-    state: {}
-sinks:
-  chosen: chosen.jsonl
+stage:
+  showings: { kind: file, path: showings.jsonl }
+  chosen: { kind: file, path: chosen.jsonl, access: write }
 outcomes:
   showing: { from: showings, key: title }
-machine:
+scene:
   initial: start
-  states:
+  beats:
+    ranked:                             # the two best showings, performed when read
+      do: { reduce: { action: max } }
+      with: { from: showings, field: weight, take: 2 }
+    pick:
+      do: { jev: { question: choice } }
+      with:
+        instructions: Choose the showing you would enjoy most.
+        options: { from: ranked, key: title }
+        state: {}
     start:
       do: { map: { action: start } }
-      then: rank
+      to: rank
     rank:
       do: { reduce: { action: blend } }
       with:
@@ -51,13 +49,13 @@ machine:
                 - { showing: Brazil, weight: 0.3 }
                 - { showing: Cube, weight: 0.2 }
         shortlist: 2
-      then: choose
+      to: choose
     choose:
       do: { map: { action: choose } }
-      then: write
+      to: write
     write:
-      do: { sink: { name: chosen } }
-      then: done
+      do: { write: chosen }
+      to: done
     done:
       final: true
 """
@@ -106,10 +104,10 @@ class OptionsFromRowsTests(CandidateCase):
         with self.assertRaisesRegex(ValueError, r"showing='Alein', not a declared option \(did you mean 'Alien'\?\)"):
             self.run_it(path)
 
-    def test_a_candidate_outcome_must_name_a_source_or_a_state(self):
+    def test_a_candidate_outcome_must_name_a_piece_or_a_beat(self):
         path = self.write(SKETCH.replace("from: showings, key: title", "from: showinsg, key: title"))
         problems = check(load(path))
-        self.assertTrue(any("'showinsg' is neither a source nor a state (did you mean 'showings'?)" in p for p in problems), problems)
+        self.assertTrue(any("'showinsg' is not a piece or a beat (did you mean 'showings'?)" in p for p in problems), problems)
 
 
 class ShortlistTests(CandidateCase):

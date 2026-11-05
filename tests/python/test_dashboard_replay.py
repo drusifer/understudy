@@ -16,14 +16,14 @@ from src.dashboard.view import describe, printed
 
 RUN = "run-20261103T100000-aaaaaaaa"
 NOW = datetime(2026, 11, 3, 10, 0, 30, tzinfo=UTC)
-STORY = {"event": "run_started", "sketch": "x/plain.yaml", "mode": "live", "initial": "a",
-         "states": [{"name": "a", "final": False}, {"name": "b", "final": False}, {"name": "done", "final": True}],
+STORY = {"event": "run_started", "play": "x/plain.yaml", "mode": "live", "initial": "a",
+         "beats": [{"name": "a", "final": False}, {"name": "b", "final": False}, {"name": "done", "final": True}],
          "transitions": [{"from": "a", "to": "b", "event": "ok"}, {"from": "b", "to": "done", "event": "ok"}]}
 FINISHED = [
-    STORY, {"event": "state_entered", "state": "a", "caused_by": "start"}, {"event": "stage_started", "stage": "a"},
-    {"event": "stage_completed", "stage": "a"}, {"event": "state_entered", "state": "b", "caused_by": "ok"},
-    {"event": "stage_started", "stage": "b"}, {"event": "stage_completed", "stage": "b"},
-    {"event": "state_entered", "state": "done", "caused_by": "ok"}, {"event": "run_finished", "outcome": "complete"},
+    STORY, {"event": "beat_entered", "beat":"a", "caused_by": "start"}, {"event": "beat_started", "beat":"a"},
+    {"event": "beat_completed", "beat":"a"}, {"event": "beat_entered", "beat":"b", "caused_by": "ok"},
+    {"event": "beat_started", "beat":"b"}, {"event": "beat_completed", "beat":"b"},
+    {"event": "beat_entered", "beat":"done", "caused_by": "ok"}, {"event": "run_finished", "outcome": "complete"},
 ]
 
 
@@ -38,7 +38,7 @@ def write(root: Path, events: list[dict], manifest: dict, run_id: str = RUN, sum
     return folder
 
 
-COMPLETE = {"status": "complete", "stages": {"a": "complete", "b": "complete"}, "mode": "live", "outcome": "complete"}
+COMPLETE = {"status": "complete", "beats":{"a": "complete", "b": "complete"}, "mode": "live", "outcome": "complete"}
 
 
 class ReplayCase(unittest.TestCase):
@@ -94,29 +94,29 @@ class CursorTests(ReplayCase):
 
 class EndingTests(ReplayCase):
     def test_a_failed_run_is_running_until_its_failure_and_then_says_why(self):
-        events = [*FINISHED[:3], {"event": "stage_failed", "stage": "a", "reason": "boom"}]
-        folder = write(self.root, events, {"status": "failed", "failed_stage": "a", "error": "boom", "stages": {}})
+        events = [*FINISHED[:3], {"event": "beat_failed", "beat":"a", "reason": "boom"}]
+        folder = write(self.root, events, {"status": "failed", "failed_beat": "a", "error": "boom", "beats":{}})
         self.assertEqual(replay(folder, 3)["state"], "running")
         end = replay(folder, 4)
         self.assertEqual((end["state"], end["ended"]), ("failed", "failed at a: boom"))
         self.assertEqual(end["failure"], describe(folder, NOW)["failure"])
 
     def test_a_stopped_run_ends_stopped(self):
-        folder = write(self.root, FINISHED[:3], {"status": "stopped", "stages": {}})
+        folder = write(self.root, FINISHED[:3], {"status": "stopped", "beats":{}})
         self.assertEqual(replay(folder, 2)["state"], "running")
         self.assertEqual(replay(folder, 3)["state"], "stopped")
 
     def test_a_hold_is_replayed_as_paused_before_the_stage_and_released_by_the_next_event(self):
-        events = [STORY, {"event": "paused", "stage": "a"}, {"event": "resumed", "stage": "a"},
-                  {"event": "stage_started", "stage": "a"}]
-        folder = write(self.root, events, {"status": "running", "stages": {}})
+        events = [STORY, {"event": "paused", "beat":"a"}, {"event": "resumed", "beat":"a"},
+                  {"event": "beat_started", "beat":"a"}]
+        folder = write(self.root, events, {"status": "running", "beats":{}})
         held = replay(folder, 2)
         self.assertEqual((held["state"], held["ended"], held["hold"]), ("paused", "paused before a", {"stage": "a"}))
         self.assertEqual((replay(folder, 3)["state"], replay(folder, 3)["hold"]), ("running", None))
 
     def test_a_log_without_a_story_replays_what_it_has_and_draws_no_diagram(self):
         folder = write(self.root, [{"event": "run_started", "sketch": "old.yaml", "mode": "live"},
-                                   {"event": "stage_started", "stage": "a"}], {"status": "running", "stages": {}})
+                                   {"event": "beat_started", "beat":"a"}], {"status": "running", "beats":{}})
         shown = replay(folder, 2)
         self.assertEqual((shown["chart"], len(shown["lines"])), (None, 2))
 
@@ -188,7 +188,7 @@ class ReplayHttpTests(ReplayCase):
 
 def decision(row="teens", dimension="temp", pick="hot", options=None, **extra):
     options = options or [{"name": "hot", "weight": 0.7, "removed_by": None}, {"name": "iced", "weight": 0.3, "removed_by": None}]
-    return {"event": "decision", "stage": "match", "row": row, "dimension": dimension, "pick": pick, "probability": 0.7,
+    return {"event": "decision", "beat":"match", "row": row, "dimension": dimension, "pick": pick, "probability": 0.7,
             "options": options, **extra}
 
 
@@ -197,7 +197,7 @@ class DecisionsTests(ReplayCase):
         return write(self.root, [STORY, *events, {"event": "run_finished", "outcome": "complete"}], COMPLETE)
 
     def test_each_decision_is_listed_with_its_event_number_stage_row_dimension_pick_and_options(self):
-        folder = self.folder([{"event": "stage_started", "stage": "match"}, decision(),
+        folder = self.folder([{"event": "beat_started", "beat":"match"}, decision(),
                               decision(row="adults", dimension="size", pick="large", options=[
                                   {"name": "small", "weight": 0.0, "removed_by": "forbid rule 2"},
                                   {"name": "large", "weight": 0.7, "removed_by": None},
@@ -213,7 +213,7 @@ class DecisionsTests(ReplayCase):
         self.assertEqual(decisions(write(self.root, FINISHED, COMPLETE)), [])
 
     def test_a_decision_missing_fields_shows_what_it_has_and_names_what_is_missing(self):
-        folder = self.folder([{"event": "decision", "stage": "match", "dimension": "temp"}])
+        folder = self.folder([{"event": "decision", "beat":"match", "dimension": "temp"}])
         (found,) = decisions(folder)
         self.assertEqual((found["dimension"], found["pick"], found["options"]), ("temp", None, []))
         self.assertEqual(found["missing"], ["row", "pick", "probability", "options"])
@@ -237,7 +237,7 @@ class DecisionsTests(ReplayCase):
         self.assertEqual(refused.exception.status, 422)
 
     def test_the_printed_line_of_a_decision_names_the_choice(self):
-        self.assertEqual(printed({"event": "decision", "at": "2026-11-03T10:00:01+00:00", "stage": "match", "row": "teens",
+        self.assertEqual(printed({"event": "decision", "at": "2026-11-03T10:00:01+00:00", "beat": "match", "row": "teens",
                                   "dimension": "temp", "pick": "hot", "probability": 0.7})["text"],
                          "10:00:01    decision match: teens temp = hot (0.7)")
 

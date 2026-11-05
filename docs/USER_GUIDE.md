@@ -1,14 +1,14 @@
 # understudy User Guide
 
-How to install understudy, run a sketch, replay a run offline, write a sketch of your own, and fix what goes wrong. The cleanup of Monarch and Amex exports has its own section at the end of this part.
+How to install understudy, run a play, replay a run offline, write a play of your own, and fix what goes wrong. The cleanup of Monarch and Amex exports has its own section at the end of this part.
 
 TLDR:
     Setup: `bobp make install`; for a run that asks Jev, `export TYPESAFE_API_KEY=...` (or put it in `.env`).
-    Run: `bobp make run ARGS="run tests/fixtures/coffee/coffee_week.yaml"`; check without running: `ARGS="check <sketch>"`.
+    Run: `bobp make run ARGS="run tests/fixtures/coffee/coffee_week.yaml"`; check without running: `ARGS="check <play>"`.
     Offline: add `--replay` to run from the last captured Jev answer, with no key and no network.
     Output: ingredient rows and a counts-only summary under `.understudy/runs/run-<stamp>-<id>/`; exit 0 / 1 / 2.
     Your own: copy `tests/fixtures/coffee/coffee_week.yaml`, change the data and the rules, `check` until it says ok.
-    Reference: docs/SKETCHES.md. Design: docs/sprints/DESIGN_SKETCH_MODEL.md.
+    Reference: docs/PLAYS.md. Design: docs/sprints/STORY_ARCH_SPRINT28.md (plays) and docs/sprints/DESIGN_SKETCH_MODEL.md (the model before).
 
 ## Contents
 
@@ -17,7 +17,7 @@ TLDR:
 3. [Run the coffee example](#3-run-the-coffee-example)
 4. [Read the output](#4-read-the-output)
 5. [Replay a run offline](#5-replay-a-run-offline)
-6. [Write a sketch of your own](#6-write-a-sketch-of-your-own)
+6. [Write a play of your own](#6-write-a-play-of-your-own)
 7. [Troubleshooting](#7-troubleshooting)
 8. [Command reference](#8-command-reference)
 9. [Local transaction cleanup](#9-local-transaction-cleanup)
@@ -28,12 +28,13 @@ TLDR:
 
 | Word | Meaning |
 |---|---|
-| **sketch** | one YAML file in which you write down how you decide something: its sources, sinks, outcomes, data and a machine |
-| **source / sink** | a named input (JSONL file, or Jev) and a named output (a file in the run folder) |
-| **machine** | your pipeline: states that each name a stage and say what comes next |
-| **decision row** | one combination of outcome values with a weight; your `decide` tree, a lookup, a subsketch or a Jev reading can each produce them |
+| **play** | one YAML file in which you write down how you decide something: its stage, outcomes, data and a scene |
+| **stage** | the play's interface: the props it takes and the files it reads and writes (`kind: file`, `access: write` for an output) |
+| **prop** | a value the play takes, declared on the stage with a kind and a default, given with `--with` |
+| **scene / beat** | the play's body: beats that each do one action; a beat with `to:` is in the flow, one without is performed when read |
+| **decision row** | one combination of outcome values with a weight; your `decide` tree, a lookup, a called play or a Jev reading can each produce them |
 | **blend** | the weighted average of the decision rows its entries produce, per dimension; `forbid` rules then drop options and always win |
-| **subsketch** | a sketch another sketch calls (`do: { sketch: { file: ... } }`); it declares the `outputs` it gives back, and the caller passes it values with `with:` |
+| **calling a play** | a beat that performs another play (`do: { play: other.yaml }`); its `with:` binds that play's props and files, and what that play writes is the beat's result |
 | **Jev** | TypeSafe's judgement model. It reads text you supply against a rubric you write and gives a probability per level; it never writes a value |
 | **capture / replay** | a live Jev read is saved; `--replay` reuses it offline |
 
@@ -47,11 +48,11 @@ Needs CPython 3.12.15 (installed for you by `uv`), `uv`, `make` and the `bobp` C
 bobp make install        # the locked Python environment, inside the project
 ```
 
-A live run that asks Jev needs a TypeSafe key in `TYPESAFE_API_KEY` (shell, or `export TYPESAFE_API_KEY=...` in a git-ignored `.env`). Replay, `check` and sketches without a Jev source need none.
+A live run that asks Jev needs a TypeSafe key in `TYPESAFE_API_KEY` (shell, or `export TYPESAFE_API_KEY=...` in a git-ignored `.env`). Replay, `check` and plays without a Jev beat need none.
 
 ## 3. Run the coffee example
 
-`tests/fixtures/coffee/` holds an invented shop: last week's total sales (1,600 drinks), five customer segments, a weather subsketch that has Jev compare two Almanac descriptions, and recipes for coffee beans.
+`tests/fixtures/coffee/` holds an invented shop: last week's total sales (1,600 drinks), five customer segments, a weather play it calls that has Jev compare two Almanac descriptions, and recipes for coffee beans.
 
 ```sh
 bobp make run ARGS="check tests/fixtures/coffee/coffee_week.yaml"     # ok: coffee_week
@@ -59,12 +60,13 @@ bobp make run ARGS="run tests/fixtures/coffee/coffee_week.yaml"       # live: on
 ```
 
 ```text
-stage weather
-stage weather_change.judge
-stage split_trade
-stage match_orders
-stage to_ingredients
-stage write
+beat weather
+beat weather_change.judge
+beat weather_change.give
+beat split_trade
+beat match_orders
+beat to_ingredients
+beat write
 wrote .understudy/runs/run-20261030T041744-28ee3978/ingredients.jsonl
 ```
 
@@ -74,9 +76,9 @@ The run folder, `.understudy/runs/run-<stamp>-<id>/` (git-ignored and private, s
 
 * `ingredients.jsonl`: one row per ingredient, `{"amount": 32000, "ingredient": "coffee_beans", "unit": "g"}`, rounded up to whole packs. Written last; a failed run writes none.
 * `summary.json`: counts only: total drinks, drinks per segment, the shares per segment, the weather weights, `jev_requests`, `mode` (`live` or `replay`) and `stale`.
-* `run.json`: each stage complete or failed, so a failed run says where it stopped. `events.jsonl`: one JSON line per run event.
+* `run.json`: each beat of the flow complete or failed, so a failed run says where it stopped. `events.jsonl`: one JSON line per run event.
 
-Exit codes: 0 done, 1 a stage failed after starting, 2 refused before starting (a wrong sketch, a missing file, no key, nothing to replay). Every failure ends with one line starting `understudy:`.
+Exit codes: 0 done, 1 a beat failed after starting, 2 refused before starting (a wrong play, a missing file, no key, nothing to replay). Every failure ends with one line starting `understudy:`.
 
 ## 5. Replay a run offline
 
@@ -87,66 +89,68 @@ bobp make run ARGS="run tests/fixtures/coffee/coffee_week.yaml --replay"
 bobp make run ARGS="run tests/fixtures/coffee/coffee_week.yaml --replay=tests/fixtures/coffee/replay"   # the committed real answer
 ```
 
-A replay uses one run, the latest that captured every source, so everything comes from the same moment. If you changed the sketch or the rubric since, the run prints one line and records `stale: true`. Two replays of the same capture give byte-identical files.
+A replay uses one run, the latest that captured every Jev beat, so everything comes from the same moment. If you changed the play or the rubric since, the run prints one line and records `stale: true`. Two replays of the same capture give byte-identical files.
 
-## 6. Write a sketch of your own
+## 6. Write a play of your own
 
 1. Copy `tests/fixtures/coffee/coffee_week.yaml` (and `weather_change.yaml` if you want the weather).
-2. Change `sources` to your files (JSONL, one record per line), `outcomes` to the things you decide, and `data` to your facts.
+2. Change the `stage` to your files (`kind: file`; JSONL, one record per line, or CSV) and props, `outcomes` to the things you decide, and `data` to your facts.
 3. Write your `decide` tree: `if` / `then` / `else` over conditions such as `segment: { eq: students }`, with leaves of weighted rows that add up to 1. Add `forbid` rules for what must never happen.
 4. `understudy check` until it says `ok`. It names the file, the path, the mistake and the nearest valid name.
 
-The reference is [SKETCHES.md](SKETCHES.md).
+The reference is [PLAYS.md](PLAYS.md).
 
 ## 7. Troubleshooting
 
 | Message | Exit | What to do |
 |---|---|---|
-| `...: sources.sales: file ... does not exist` | 2 | the path is relative to the sketch file; fix it, or `--source sales.path=<file>` |
-| `...: unknown stage 'map.split_by_shar' (did you mean 'map.split_by_share'?)` | 2 | fix the name at that path |
+| `...: stage.sales: file ... does not exist` | 2 | the path is relative to the play file; fix it, or `--with sales=<file>` |
+| `...: stage.monarch: no file given: pass --with monarch=<file>, or a call binds it` | 2 | give the file with `--with` |
+| `...: unknown action 'map.split_by_shar' (did you mean 'map.split_by_share'?)` | 2 | fix the name at that path |
+| `...: Additional properties are not allowed ('machine', 'sources' were unexpected)` | 2 | a sketch from before plays: rewrite it as a play (see PLAYS.md) |
 | `...: 'larg' is not an option of size (did you mean 'large'?)` | 2 | use an option declared under `outcomes` |
 | `...: data.segments: shares add up to 1.1, not 1` | 2 | make the shares add up to 1 |
 | `...: weights add up to 1.4, not 1` | 2 | a leaf's weights must add up to 1 |
 | `Jev needs a TypeSafe key: set TYPESAFE_API_KEY` | 2 | export the key, or run with `--replay` |
 | `no saved run captured <source>; do a live run first` | 2 | there is nothing to replay yet: run once without `--replay` |
-| `forbid rule 0 left teens with no option for 'caffeine'` | 1 | a rule dropped every option for that segment; relax the rule, or give the stage `on_empty: skip` or `fallback` |
-| `stage match_orders: 'weather' returned temp='ice', not a declared option` | 1 | a source returned an option that `outcomes` does not declare |
+| `forbid rule 0 left teens with no option for 'caffeine'` | 1 | a rule dropped every option for that segment; relax the rule, or give the beat `on_empty: skip` or `fallback` |
+| `beat match_orders: 'weather' returned temp='ice', not a declared option` | 1 | a piece returned an option that `outcomes` does not declare |
 | `cannot write to ...: it is inside the project and not git-ignored` | 2 | use `.understudy/runs` (the default) or another git-ignored path or a path outside the project |
 | `understudy: no .venv - run 'bobp make install' first` | 2 | the Python environment is missing |
 
 ## 8. Command reference
 
 ```text
-understudy run <sketch.yaml> [--with name=value]... [--source name.path=file]... [--out folder] [--replay[=run-id|folder]] [--watch [--pause] [--port N]]
-understudy check <sketch.yaml> [--with name=value]... [--source name.path=file]...
-understudy dashboard [runs-folder] [--port 4180] [--sketches examples]
+understudy run <play.yaml> [--with name=value]... [--out folder] [--replay[=run-id|folder]] [--watch [--pause] [--port N]]
+understudy check <play.yaml> [--with name=value]...
+understudy dashboard [runs-folder] [--port 4180] [--plays examples]
 understudy runs [runs-folder]
 ```
 
 Run them as `bobp make run ARGS="<command> ..."`, or `bin/understudy <command> ...`.
 
-A run records the `--with` values it was given in its `run.json`, and the console shows them to anyone who can open it. Pass file names, dates and weights; never a password or key.
+A run records the `--with` values it was given in its `run.json`, and the console shows them to anyone who can open it. Pass props (dates, weights) and the paths of stage files (`--with monarch=data/monarch.csv`); never a password or key.
 
 `understudy runs` lists the runs in a folder, newest first, with how each ended. A finished `understudy run` prints its run id and how to watch it.
 
 ### The console
 
-**Hold and step a run.** `understudy run <sketch> --watch` also opens a console for that one run, on this machine only (`http://127.0.0.1:<port>`, a free port unless you give `--port`), and prints its address and where its access secret was saved (`.understudy/watch.secret`, a different file from the dashboard's so the two never lock each other out); `--pause` starts the run held before its first stage (it needs `--watch`, and without it the command stops with `understudy: --pause needs --watch`). In the console (unlock with the access secret) PAUSE holds a running run before its next stage, STEP lets exactly one stage run and holds again, RESUME runs on, and STOP ends it. A stage that is already running, Jev requests included, finishes first; nothing starts, and Jev is not asked, while the run is held. A held run reads PAUSED (never stalled), however long it waits, and says `paused before <stage>`. The console started by `understudy dashboard` can do the same for the runs it started. The hold is a small file, `control.json`, in the run's folder; the run's events gain `paused` and `resumed` lines. After a watched run ends the console stays up until Ctrl-C, so you can read how it ended.
+**Hold and step a run.** `understudy run <play> --watch` also opens a console for that one run, on this machine only (`http://127.0.0.1:<port>`, a free port unless you give `--port`), and prints its address and where its access secret was saved (`.understudy/watch.secret`, a different file from the dashboard's so the two never lock each other out); `--pause` starts the run held before its first beat (it needs `--watch`, and without it the command stops with `understudy: --pause needs --watch`). In the console (unlock with the access secret) PAUSE holds a running run before its next beat, STEP lets exactly one beat run and holds again, RESUME runs on, and STOP ends it. A beat that is already running, Jev requests included, finishes first; nothing starts, and Jev is not asked, while the run is held. A held run reads PAUSED (never stalled), however long it waits, and says `paused before <beat>`. The console started by `understudy dashboard` can do the same for the runs it started. The hold is a small file, `control.json`, in the run's folder; the run's events gain `paused` and `resumed` lines. After a watched run ends the console stays up until Ctrl-C, so you can read how it ended.
 
-**Replay a run's story.** Choose a run that has ended (done, failed or stopped) and press REPLAY above the log. A bar opens with STEP BACK, PLAY (it becomes PAUSE), STEP, a scrubber and "event N of M"; the stage list, gauges, diagram and printed lines show the run as it was after event N, and the status reads REPLAY. LIVE closes the bar and shows the run as it is. A replay reads only the run's `events.jsonl`: it makes no Jev request and changes nothing. A log with a line that cannot be read is refused with one line naming it (`events.jsonl line 4 is not readable`), and a run with no events says so. The Jev request count shows `-` until the last event, because the log does not record it event by event. The same data is at `GET /api/runs/<id>/replay` (the number of events) and `?at=N` (the run after N events).
+**Replay a run's story.** Choose a run that has ended (done, failed or stopped) and press REPLAY above the log. A bar opens with STEP BACK, PLAY (it becomes PAUSE), STEP, a scrubber and "event N of M"; the beat tube, gauges, diagram and printed lines show the run as it was after event N, and the status reads REPLAY. LIVE closes the bar and shows the run as it is. A replay reads only the run's `events.jsonl`: it makes no Jev request and changes nothing. A log with a line that cannot be read is refused with one line naming it (`events.jsonl line 4 is not readable`), and a run with no events says so. The Jev request count shows `-` until the last event, because the log does not record it event by event. The same data is at `GET /api/runs/<id>/replay` (the number of events) and `?at=N` (the run after N events).
 
-**See a decision.** A run whose sketch decides (a `reduce.blend` stage) logs one `decision` line per input row and dimension, and the DECISIONS panel under the gauges lists them (`DECISIONS · 3`). Open one to see its stage, row and dimension, every option with its final weight, what removed it (`removed by forbid rule 2`) or held it back (`held back by the shortlist`), and which was picked. Each decision is also printed in the run log (`decision match: teens temp = hot (0.7)`). While a replay is open, SHOW IN REPLAY on a decision, or a click on its line in the log, moves the replay to that event. A run with no decisions says so; a decision whose log line lacks something is shown with what it has and names what is missing. The weights are the blended result: the log does not record each decider's own weight. The same list is at `GET /api/runs/<id>/decisions`.
+**See a decision.** A run whose play decides (a `reduce.blend` beat) logs one `decision` line per input row and dimension, and the DECISIONS panel under the gauges lists them (`DECISIONS · 3`). Open one to see its beat, row and dimension, every option with its final weight, what removed it (`removed by forbid rule 2`) or held it back (`held back by the shortlist`), and which was picked. Each decision is also printed in the run log (`decision match: teens temp = hot (0.7)`). While a replay is open, SHOW IN REPLAY on a decision, or a click on its line in the log, moves the replay to that event. A run with no decisions says so; a decision whose log line lacks something is shown with what it has and names what is missing. The weights are the blended result: the log does not record each decider's own weight. The same list is at `GET /api/runs/<id>/decisions`.
 
 `understudy dashboard` serves the console on port 4180 of every network interface (`http://<this machine>:4180/`), over the runs under `.understudy/runs` (or the folder you give). There is no login for watching, so use it on a network you trust. A busy port, or a folder that is not a folder, is one plain line and exit 2.
 
-* **The rack** lists the runs grouped by sketch, newest first; a run that is going, failed, stalled or stopped carries a badge in words. The header says RUNNING, DONE, FAILED, STOPPED or STALLED.
-* **A failed run** shows a banner with the stage and the reason; press it to see that line in the printer. The summary under the gauges gives the outcome, mode, duration, the `--with` values and each output with its row count.
-* **The printer** shows the run's events (new lines appear while it runs). Filter by text, by stage, or failures only; jump to the start, the first failure or the end.
-* **The stage tube** shows one lamp per top-level stage; the child sketches that ran inside it are groups you can open (`25 of 25 done`). Four gauges read the run's own files; a needle appears only where the run knows the full scale.
+* **The rack** lists the runs grouped by play, newest first; a run that is going, failed, stalled or stopped carries a badge in words, and a run from before plays reads unreadable. The header says RUNNING, DONE, FAILED, STOPPED or STALLED.
+* **A failed run** shows a banner with the beat and the reason; press it to see that line in the printer. The summary under the gauges gives the outcome, mode, duration, the `--with` values and each output with its row count.
+* **The printer** shows the run's events (new lines appear while it runs). Filter by text, by beat, or failures only; jump to the start, the first failure or the end.
+* **The beat tube** shows one lamp per beat of the flow; the plays it called are groups you can open (`25 of 25 done`). Four gauges read the run's own files; a needle appears only where the run knows the full scale.
 * **JEV READS** lists what Jev answered in the run (from the captured answers; the last five runs keep them): each read's levels and probabilities, flagged UNSURE when the top level is below 0.7 or is `none_of_these`. Level names that come from your own data (a refund candidate named by its date and amount) show as "option N" unless you have unlocked the console.
-* **START A RUN** (open the panel at the top): unlock with the access secret, choose a sketch, fill in its values, and press PLAY, live or from a captured run. The console checks the sketch with your values first and tells you what is wrong. STOP THIS RUN ends a run the console started. A sketch that is only called by another is not listed, and a file that cannot be read is listed greyed out with the reason.
-* **Typed controls:** a sketch that declares its `inputs` (see `docs/SKETCHES.md`) shows a control for each, set to its default: a choice is a row of options (arrow keys move, stopping at the ends), a range a slider with its value beside it, a count a number with a button either side, a switch ON or OFF. A control cannot be set outside its limits, and PLAY sends every value (the defaults for the ones you left alone). A name the sketch takes without declaring it stays a plain text box.
-* **The statechart:** under the gauges, the sketch's machine drawn as boxes from the first state downward, a double border for a final state, an arrow for each move (labeled with its guard when it has one, dashed red for a loop back), the state the run is in lit and the move just taken in orange; it follows a live run within a second and keeps the last state lit with how the run ended. A log written before Sprint 23 has no story, and the panel says so. A big machine scrolls inside its box.
+* **START A RUN** (open the panel at the top): unlock with the access secret, choose a play, fill in its props and the paths of the files it reads, and press PLAY, live or from a captured run. The console checks the play with your values first and tells you what is wrong. STOP THIS RUN ends a run the console started. A play that is only called by another is not listed, and a file that cannot be read is listed greyed out with the reason.
+* **Typed controls:** a play that declares props on its stage (see `docs/PLAYS.md`) shows a control for each, set to its default: a choice is a row of options (arrow keys move, stopping at the ends), a range a slider with its value beside it, a count a number with a button either side, a switch ON or OFF. A control cannot be set outside its limits, and PLAY sends every value (the defaults for the ones you left alone). A name the play takes without declaring it stays a plain text box.
+* **The scene chart:** under the gauges, the play's flow drawn as boxes from the first beat downward, a double border for a final beat, an arrow for each move (labeled with its guard when it has one, dashed red for a loop back), the beat the run is on lit and the move just taken in orange; it follows a live run within a second and keeps the last beat lit with how the run ended. A big scene scrolls inside its box.
 * **Where the money went:** a run that wrote `spending.jsonl` lists its ten largest spending categories under the summary, with amount and share, and "and N more".
 * **The access secret** is new at every start of the console and saved in `.understudy/dashboard.secret` (readable by you alone, git-ignored). Read it there (`cat .understudy/dashboard.secret`) and paste it into the panel; it is kept for that tab only. It is never printed, because command output is copied into the team chat. Without it you can watch but not start, replay or stop. It travels over plain HTTP, which you accepted for a home network (until 2027-01-30).
 * **Three themes and light, dark or auto** are remembered by the browser; on a phone the theme controls sit behind LOOK.
@@ -156,8 +160,8 @@ To check the console after a change: `bobp make install-browser`, then `bobp mak
 | Make target (`bobp make <target>`) | Does |
 |---|---|
 | `install` | install dependencies (network) |
-| `run` | `ARGS="run <sketch> [--with name=value]..."` or `"check <sketch>"` |
-| `dashboard` | the console over `.understudy/runs` (`ARGS="--port 4180 --sketches examples"`) |
+| `run` | `ARGS="run <play> [--with name=value]..."` or `"check <play>"` |
+| `dashboard` | the console over `.understudy/runs` (`ARGS="--port 4180 --plays examples"`) |
 | `test` / `lint` / `check` | unit tests / ruff / the full gate with the secret scan |
 | `security-scan` | gitleaks and pip-audit over every dependency group (network); clean before a release |
 | `install-browser` / `test-browser` | the optional browser tools / the console in a real Chromium |
@@ -165,16 +169,17 @@ To check the console after a change: `bobp make install-browser`, then `bobp mak
 
 ## 9. Local transaction cleanup
 
-The household cleanup is an ordinary sketch, `examples/household/household.yaml`, built from the same parts as
-any other: file sources (a file whose name ends in `.csv` is read with its header row as the field names),
-general stages, child sketches that ask Jev, and a fold.
+The household cleanup is an ordinary play, `examples/household/household.yaml`, built from the same parts as
+any other: stage files (a file whose name ends in `.csv` is read with its header row as the field names),
+general actions, two plays it calls that ask Jev (`categorize_merchant`, `link_refund`), and checks and writes in
+its scene's flow.
 
 ```sh
 bobp make run ARGS="run examples/household/household.yaml --with monarch=data/monarch.csv --with amex=data/amex.csv --with amex_account=Platinum --with since=2026-01-01"
 ```
 
-This needs `TYPESAFE_API_KEY` and the locked Python environment (`bobp make install`). A `--with` value that names
-an existing file is read relative to where you run the command.
+This needs `TYPESAFE_API_KEY` and the locked Python environment (`bobp make install`). `monarch` and `amex` are
+files on the play's stage, so `--with` gives their paths, read relative to where you run the command.
 `amex_account` is a part of the card's account name in Monarch (required: only Monarch rows on that account are
 paired with the Amex rows). `since` is the first date of the period (default: no limit); earlier rows are left out
 and undated rows are kept as `invalid`.
@@ -237,5 +242,5 @@ ISO name or an earlier line stops the run before any request to Jev and names th
 Each run creates a new folder under `.understudy/runs/` (or `--out`): `records.jsonl` (one record per transaction with its
 `kind`: purchase, refund, credit, transfer or invalid; its link and its category), `legs.jsonl`,
 `kinds.jsonl` and `statuses.jsonl` (counts), `review.jsonl` (one line per merchant Jev was not sure of, most records first: `payee`, `count`, `amount`, Jev's `top` and `runner_up` categories with their probabilities, and the `reason`, `below_0.7` or `none_of_these`; empty when nothing needs review), `spending.jsonl` (what the money goes on: one line per category, biggest first, with `count`, `amount` spent and `share` of all spending; a record's category is the tool's own (Jev's or your pin), `unplaced` for a merchant still for review, and never the export's `Category`; purchases and refunds only, so a refund lowers its category, and income, credits and transfers are not in it; the total is `spending_total` in `summary.json`), `totals.jsonl` (for each account, the money in, money out and net of its purchases, refunds and credits, transfers left out, then one `all` row; the `all` row is also `net_spending` in `summary.json`), `summary.json` (run facts) and `run.json`. Amounts
-are signed as Monarch writes them: purchases negative, refunds positive. A failed stage publishes no output.
+are signed as Monarch writes them: purchases negative, refunds positive. A failed beat publishes no output.
 Keep household inputs and outputs in ignored `data/` and `build/` folders.

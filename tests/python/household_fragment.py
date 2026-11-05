@@ -11,8 +11,8 @@ import io
 from functools import cache
 
 from src.paths import ROOT
-from src.sketch.check import load_checked
-from src.sketch.fragment import Fragment, read_stage
+from src.play.check import load_checked
+from src.play.fragment import Fragment, read_stage
 
 LEDGER = ROOT / "examples" / "household" / "household.yaml"
 ORACLE = ROOT / "tests" / "fixtures" / "household"
@@ -42,9 +42,9 @@ def fragment(name: str, *, monarch: str | None = None, amex: str | None = None, 
              pins: list[dict] | None = None, **more_stubs) -> tuple[list[dict], dict]:
     """The rows of source `name` and the summary it noted, from the fixture exports unless others are given."""
     stubs = {
-        "monarch_csv": csv_rows(monarch if monarch is not None else (ORACLE / "monarch.csv").read_text(encoding="utf-8")),
-        "amex_csv": csv_rows(amex if amex is not None else (ORACLE / "amex.csv").read_text(encoding="utf-8")),
-        "pins_file": pins or [],
+        "monarch": csv_rows(monarch if monarch is not None else (ORACLE / "monarch.csv").read_text(encoding="utf-8")),
+        "amex": csv_rows(amex if amex is not None else (ORACLE / "amex.csv").read_text(encoding="utf-8")),
+        "pinned": pins or [],
         "refund_readings": [],  # no refund is linked by Jev here: a refund that needs a choice stays a credit
         **more_stubs,
     }
@@ -117,8 +117,8 @@ def run_state(name: str, **stubs):
     tested here; a whole early-stopping run does that."""
     from types import SimpleNamespace
 
-    from src.sketch.registry import library as registered
-    from src.sketch.vocabulary import stage_of
+    from src.play.registry import library as registered
+    from src.play.vocabulary import stage_of
 
     state = household().machine["states"][name]
     kind, target = stage_of(state)

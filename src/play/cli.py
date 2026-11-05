@@ -14,33 +14,22 @@ import threading
 from collections.abc import Mapping
 from pathlib import Path
 
-import src.sketch.stages  # noqa: F401 - importing it registers the stages
+import src.play.stages  # noqa: F401 - importing it registers the stages
 from src.dashboard.runs import Launcher, Refused
 from src.dashboard.server import serve_forever
 from src.dashboard.view import list_runs
 from src.dashboard.watch import Watch
 from src.jev import JevError, TypeSafeJev
 from src.paths import OutputPathError
-from src.sketch.check import load_checked
-from src.sketch.loader import SketchError
-from src.sketch.registry import StageFn
-from src.sketch.registry import library as registered
-from src.sketch.run import run_sketch
-from src.sketch.sources.capture import CaptureStore, ReplayError
-from src.sketch.sources.reader import Capture, needs_jev
+from src.play.check import load_checked
+from src.play.loader import PlayError
+from src.play.registry import StageFn
+from src.play.registry import library as registered
+from src.play.run import run_sketch
+from src.play.sources.capture import CaptureStore, ReplayError
+from src.play.sources.reader import Capture, needs_jev
 
 DEFAULT_OUT = Path(".understudy/runs")  # git-ignored and private, beside the captures; `make clean` leaves it alone
-
-
-def _overrides(pairs: list[str]) -> dict[str, str]:
-    overrides = {}
-    for pair in pairs:
-        name, _, path = pair.partition("=")
-        name = name.removesuffix(".path")
-        if not name or not path:
-            raise SketchError([f"--source needs <name>.path=<file>, not {pair!r}"])
-        overrides[name] = path
-    return overrides
 
 
 def _values(pairs: list[str]) -> dict[str, str]:
@@ -48,7 +37,7 @@ def _values(pairs: list[str]) -> dict[str, str]:
     for pair in pairs:
         name, separator, value = pair.partition("=")
         if not name or not separator:
-            raise SketchError([f"--with needs <name>=<value>, not {pair!r}"])
+            raise PlayError([f"--with needs <name>=<value>, not {pair!r}"])
         values[name] = str(Path(value).resolve()) if value and not Path(value).is_absolute() and Path(value).is_file() else value
     return values
 
@@ -56,37 +45,35 @@ def _values(pairs: list[str]) -> dict[str, str]:
 EXAMPLES = """examples:
   understudy check examples/household/household.yaml --with monarch=in/monarch.csv --with amex=in/amex.csv --with amex_account=Platinum
   understudy run tests/fixtures/coffee/coffee_week.yaml --replay=tests/fixtures/coffee/replay
-  understudy run <sketch> --watch --pause   start held, with a console on this machine to step it (secret file)
-  understudy dashboard                    watch runs under .understudy/runs; start sketches from examples/ (access secret file)
+  understudy run <play> --watch --pause     start held, with a console on this machine to step it (secret file)
+  understudy dashboard                    watch runs under .understudy/runs; start plays from examples/ (access secret file)
   understudy runs                         the runs under .understudy/runs, newest first
 
-A failure is one `understudy: <message>` line; exit 0 is done, 1 a stage failed after the run began, 2 refused before it began."""
+A failure is one `understudy: <message>` line; exit 0 is done, 1 a beat failed after the run began, 2 refused before it began."""
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="understudy", description="Run a sketch of how you decide, and watch what it did.",
+    parser = argparse.ArgumentParser(prog="understudy", description="Perform a play of how you decide, and watch what it did.",
                                      epilog=EXAMPLES, formatter_class=argparse.RawDescriptionHelpFormatter)
     commands = parser.add_subparsers(dest="command", required=True, metavar="command")
     descriptions = {
-        "run": "run a sketch and write its outputs into a folder of runs",
-        "check": "check a sketch and everything it names, and run nothing",
+        "run": "run a play and write its outputs into a folder of runs",
+        "check": "check a play and every play it calls, and run nothing",
     }
     for name, summary in descriptions.items():
         command = commands.add_parser(name, help=summary, description=summary)
-        command.add_argument("sketch", type=Path, help="the sketch file (YAML)")
-        command.add_argument("--source", action="append", default=[], metavar="NAME.path=FILE",
-                             help="read this file for the file source NAME, for this run only")
+        command.add_argument("sketch", type=Path, metavar="play", help="the play file (YAML)")
         command.add_argument("--with", action="append", default=[], metavar="NAME=VALUE", dest="values",
-                             help="give the sketch a value it uses (a file name, a date, a weight); repeat for each")
+                             help="give the play a prop (a date, a weight) or a stage file its path; repeat for each")
     dashboard = commands.add_parser("dashboard", help="serve the console: watch runs, and start, replay and stop them",
                                     description="Serve the console on this machine's port (every network interface). It watches "
-                                    "the runs under RUNS and, for someone with the access secret, starts sketches from --sketches.")
+                                    "the runs under RUNS and, for someone with the access secret, starts plays from --plays.")
     dashboard.add_argument("runs", type=Path, nargs="?", default=DEFAULT_OUT, metavar="RUNS", help="the folder of runs to watch")
     dashboard.add_argument("--port", type=int, default=4180, help="the port to listen on (default 4180)")
-    dashboard.add_argument("--sketches", type=Path, default=Path("examples"), metavar="DIR",
-                           help="the folder of sketches the console may start (default examples)")
+    dashboard.add_argument("--plays", type=Path, default=Path("examples"), metavar="DIR", dest="sketches",
+                           help="the folder of plays the console may start (default examples)")
     listing = commands.add_parser("runs", help="list the runs in a folder, newest first, with how each ended",
-                                  description="List the runs in a folder, newest first, with the sketch and how each ended.")
+                                  description="List the runs in a folder, newest first, with the play and how each ended.")
     listing.add_argument("folder", type=Path, nargs="?", default=DEFAULT_OUT, help="the folder of runs (default .understudy/runs)")
     run = commands.choices["run"]
     run.add_argument("--out", type=Path, default=DEFAULT_OUT, metavar="FOLDER",
@@ -155,8 +142,8 @@ def main(  # noqa: PLR0911, PLR0913 - the command line's injection points
         return fail("--pause needs --watch", 2)
 
     try:
-        sketch = load_checked(args.sketch, _overrides(args.source), _values(args.values))
-    except SketchError as error:
+        sketch = load_checked(args.sketch, {}, _values(args.values))
+    except PlayError as error:
         for problem in error.problems[:-1]:
             stderr.write(f"understudy: {problem}\n")
         return fail(error.problems[-1], 2)

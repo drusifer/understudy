@@ -9,10 +9,10 @@ from jev_double import JevDouble
 
 from src.jev import Chosen, JevError
 from src.paths import ROOT
-from src.sketch.cli import main
-from src.sketch.registry import STAGES, Stage
-from src.sketch.sources.capture import CaptureStore, ReplayError, choose_replay
-from src.sketch.sources.file import read_jsonl
+from src.play.cli import main
+from src.play.registry import STAGES, Stage
+from src.play.sources.capture import CaptureStore, ReplayError, choose_replay
+from src.play.sources.file import read_jsonl
 
 FIXTURE = ROOT / "tests" / "fixtures" / "jev_read.yaml"
 KEY = "jev_read.mood"

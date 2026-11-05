@@ -8,9 +8,9 @@ its rows from a named source, which may itself be computed by a stage.
 
 import re
 
-from src.sketch.conditions import holds
-from src.sketch.mcc import load_mcc
-from src.sketch.registry import Data, Source, stage
+from src.play.conditions import holds
+from src.play.mcc import load_mcc
+from src.play.registry import Data, Source, stage
 
 
 def _matching(rows: list[dict], match: dict | None) -> list[dict]:
@@ -45,12 +45,6 @@ async def expect(context, probabilities: Source, values: Data, into: str) -> lis
     numbers = context.sketch.data[values]
     total = sum(row["probability"] for row in readings) or 1.0
     return [{into: sum(row["probability"] * numbers[row["level"]] for row in readings) / total}]
-
-
-@stage("map.unpair")
-async def unpair(context, source: Source) -> list[dict]:
-    """Flat rows from an `each` result: for every `{input, output}` pair, the input row plus each row it output."""
-    return [{**pair["input"], **output} for pair in await context.read(source) for output in pair["output"]]
 
 
 @stage("map.adjacent_runs")

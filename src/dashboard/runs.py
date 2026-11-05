@@ -20,17 +20,16 @@ from pathlib import Path
 
 from src.dashboard.view import RUN_ID, read_json
 from src.paths import ROOT
-from src.sketch.inputs import problems as input_problems
-from src.sketch.inputs import value_problem
-from src.sketch.loader import SketchError, read_template
-from src.sketch.sources.capture import CACHE
-from src.sketch.vocabulary import stage_of
+from src.play.inputs import problems as input_problems
+from src.play.inputs import value_problem
+from src.play.loader import PlayError, props_of, read_template
+from src.play.sources.capture import CACHE
 
 MAX_CHILDREN = 4
 SETTLE_SECONDS = 1.5  # a run that dies within this long is reported as a failed start, with the reason it printed
 FIND_RUN_SECONDS = 2.0  # how long to look for the folder a new run makes
 STOP_SECONDS = 3.0  # SIGTERM, then this long, then SIGKILL
-COMMAND = (sys.executable, "-m", "src.sketch.cli")
+COMMAND = (sys.executable, "-m", "src.play.cli")
 TAIL_LINES = 20
 
 
@@ -75,18 +74,22 @@ def _run_check(argv: list[str], project: Path) -> list[str]:
     return [] if done.returncode == 0 else [line for line in done.stderr.splitlines() if line.strip()] or ["the check failed"]
 
 
+def _files_read(document: dict) -> set[str]:
+    """The stage files a play reads: each can be given a path when it is started (`--with <name>=<file>`)."""
+    stage = document.get("stage")
+    return {name for name, piece in (stage.items() if isinstance(stage, dict) else [])
+            if isinstance(piece, dict) and piece.get("kind") == "file" and piece.get("access", "read") == "read"}
+
+
 def _called_files(path: Path, document: dict) -> set[Path]:
-    """The sketch files this one calls, from its states and its stage sources."""
-    configs = [*document.get("machine", {}).get("states", {}).values(),
-               *(each for each in document.get("sources", {}).values() if isinstance(each, dict) and each.get("kind") == "stage")]
+    """The play files this one calls (`do: { play: <file>.yaml }`), from its beats."""
+    scene = document.get("scene")
+    beats = scene.get("beats") if isinstance(scene, dict) else None
     called = set()
-    for config in configs:
-        try:
-            found = stage_of(config) if isinstance(config, dict) else None
-        except (KeyError, TypeError, ValueError):
-            continue
-        if found and found[0] == "sketch":
-            called.add((path.parent / f"{found[1]}.yaml").resolve())
+    for beat in (beats.values() if isinstance(beats, dict) else []):
+        do = beat.get("do") if isinstance(beat, dict) else None
+        if isinstance(do, dict) and isinstance(do.get("play"), str):
+            called.add((path.parent / do["play"]).resolve())
     return called
 
 
@@ -118,20 +121,20 @@ class Launcher:
             relative = path.relative_to(self.sketches).as_posix()
             try:
                 document, uses = read_template(path)
-            except SketchError as error:
+            except PlayError as error:
                 scanned.append({"path": path, "file": relative, "name": path.stem, "description": "", "with": [], "inputs": [],
                                 "ok": False, "problem": error.problems[0].removeprefix(f"{path}: "), "called": set()})
                 continue
-            declared = document.get("inputs") if isinstance(document.get("inputs"), dict) else {}
+            declared = props_of(document)
             wrong = [problem for name, spec in declared.items() for problem in input_problems(name, spec)]
-            valid = isinstance(document.get("machine"), dict) and "name" in document and not wrong
+            valid = isinstance(document.get("scene"), dict) and "name" in document and not wrong
             scanned.append({"path": path, "file": relative, "name": str(document.get("name", path.stem)),
                             "description": " ".join(str(document.get("description", "")).split()),
-                            "with": sorted(uses - set(declared)),
+                            "with": sorted((uses - set(declared)) | _files_read(document)),
                             "inputs": [] if wrong else [{**spec, "name": name, "label": spec.get("label", name)}
                                                         for name, spec in declared.items()],
                             "ok": valid,
-                            "problem": wrong[0] if wrong else "" if valid else "not a sketch: it needs a name and a machine",
+                            "problem": wrong[0] if wrong else "" if valid else "not a play: it needs a name and a scene",
                             "called": _called_files(path, document) if valid else set()})
         children = set().union(*(each["called"] for each in scanned)) if scanned else set()
         return [{key: value for key, value in each.items() if key not in {"path", "called"}}
@@ -258,7 +261,7 @@ class Launcher:
         manifest = self.runs / run_id / "run.json"
         data = read_json(manifest)  # empty when the run was killed before its first stage finished: it never wrote one
         if data.get("status", "running") == "running":
-            data = {"stages": {}, **data, "status": "stopped"}
+            data = {"beats": {}, **data, "status": "stopped"}
             temporary = manifest.with_suffix(".tmp")
             temporary.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
             temporary.replace(manifest)

@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.sketch.sources.file import read_csv, read_rows
+from src.play.sources.file import read_csv, read_rows
 
 
 class FileSourceTests(unittest.TestCase):

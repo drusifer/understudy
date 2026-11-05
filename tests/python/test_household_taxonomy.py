@@ -15,10 +15,10 @@ from test_household import LEDGER
 from test_household_pins import PinCase
 
 from src.paths import ROOT
-from src.sketch.check import load_checked
-from src.sketch.fragment import read_stage
-from src.sketch.loader import SketchError
-from src.sketch.mcc import load_mcc
+from src.play.check import load_checked
+from src.play.fragment import read_stage
+from src.play.loader import PlayError
+from src.play.mcc import load_mcc
 
 SHIPPED = ROOT / "examples" / "household" / "additions.jsonl"
 FAMILY = "Clothing outlets: Family clothing shops"  # an ISO category
@@ -65,27 +65,27 @@ class OwnersFileTests(PinCase):
 
     def test_a_path_that_does_not_exist_is_refused_naming_it_before_the_run_starts(self):
         missing = self.dir / "nowhere.jsonl"
-        with self.assertRaises(SketchError) as refused:
+        with self.assertRaises(PlayError) as refused:
             self.sketch_with(str(missing))
         self.assertIn(str(missing), str(refused.exception.problems))
 
     def test_a_relative_path_that_does_not_exist_is_named_as_typed_and_as_looked_for(self):
-        with self.assertRaises(SketchError) as refused:
+        with self.assertRaises(PlayError) as refused:
             self.sketch_with("data/nowhere.jsonl")
         self.assertIn("file data/nowhere.jsonl does not exist (looked for ", str(refused.exception.problems))
 
     def test_a_line_without_a_group_or_a_name_is_named_by_the_check(self):
         for row, field in (({"group": "Pets", "name": ""}, "name"), ({"name": "Vet bills"}, "group")):
             with self.assertRaises(ValueError) as refused:
-                run_state("check_additions", additions_file=[{"group": "Pets", "name": "Fish"}, row])
+                run_state("addition_checker", additions=[{"group": "Pets", "name": "Fish"}, row])
             self.assertIn(f"line 2 has no {field}", str(refused.exception))
 
     def test_a_name_that_repeats_an_iso_name_or_an_earlier_addition_is_named_by_the_check(self):
         with self.assertRaises(ValueError) as refused:
-            run_state("check_additions_unique", additions_file=[{"group": "Household", "name": "Family clothing shops"}])
+            run_state("addition_clash_checker", additions=[{"group": "Household", "name": "Family clothing shops"}])
         self.assertIn("line 1 repeats 'Family clothing shops' (also in", str(refused.exception))
         with self.assertRaises(ValueError) as refused:
-            run_state("check_additions_unique", additions_file=[{"group": "Household", "name": "Pets"},
+            run_state("addition_clash_checker", additions=[{"group": "Household", "name": "Pets"},
                                                                 {"group": "Other", "name": "pets "}])
         self.assertIn("line 2 repeats 'pets ' (first on line 1)", str(refused.exception))
 
@@ -101,11 +101,11 @@ class OwnersFileTests(PinCase):
 class PinsAgainstTheListTests(unittest.TestCase):
     def test_a_pin_names_a_category_in_the_clean_list_an_iso_one_or_an_addition(self):
         for category in (FAMILY, "Household: Rent"):
-            run_state("check_pin_categories", pins_file=[{"payee": "Shoe Shop", "category": category}])  # does not raise
+            run_state("pin_category_checker", pinned=[{"payee": "Shoe Shop", "category": category}])  # does not raise
 
     def test_a_category_that_is_only_in_the_export_is_refused_naming_the_line_and_the_category(self):
         with self.assertRaises(ValueError) as refused:
-            run_state("check_pin_categories", pins_file=[{"payee": "Shoe Shop", "category": "Shopping & Retail: Clothing"}])
+            run_state("pin_category_checker", pinned=[{"payee": "Shoe Shop", "category": "Shopping & Retail: Clothing"}])
         self.assertIn("line 1", str(refused.exception))
         self.assertIn("'Shopping & Retail: Clothing'", str(refused.exception))
 
