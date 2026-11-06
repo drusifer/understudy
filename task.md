@@ -1,72 +1,57 @@
-# Sprint 28 Task Board: Plays
+# Sprint 29 Task Board: See the whole play, and step through it
 
-*   **Goal**: A sketch becomes a play: a stage that is the play's whole interface (props, pieces read, pieces written), a scene of beats (computed sources and states become one thing, and Jev is a beat), `to:`, `from:`, `write`, and running a play means providing its stage, from the command line or from a call. Every example gives byte-identical outputs, and the code, console and docs use the new words.
+*   **Goal**: The console draws the whole play (stage pieces, beats, and who reads what) from the play file, starts a play held (before its first beat or a beat the owner picks on the diagram), and shows what each step read and wrote.
 *   **Tier**: Tier 2 (story and architecture in one document)
-*   **Total Points**: about 23
-*   **Branch**: `sprint-28` (cut from `main` 9be83be)
-*   **Status**: Complete 2026-11-05 (launched); branch `sprint-28` committed, not merged or pushed
-*   **Plan**: `docs/sprints/STORY_ARCH_SPRINT28.md`. Decisions: `OWNER_DECISIONS_SPRINT22.md` 19 to 42.
+*   **Total Points**: about 18
+*   **Branch**: `sprint-29` (cut from `main` 158edd4)
+*   **Status**: In progress (planned 2026-11-05)
+*   **Plan**: `docs/sprints/STORY_ARCH_SPRINT29.md`. Decision: `OWNER_DECISIONS_SPRINT22.md` 43.
 
 ---
 
 ## Stage 0: SDLC Gate (Blocker)
 
-- [x] **Task 0.1:** Verify `docs/SDLC.md` exists and is current. (*Owner: Mouse | Trace: N/A — sprint gate | Verification: `test -f docs/SDLC.md`; present 2026-11-04*)
+- [x] **Task 0.1:** Verify `docs/SDLC.md` exists and is current. (*Owner: Mouse | Trace: N/A — sprint gate | Verification: `test -f docs/SDLC.md`; present 2026-11-05*)
 
 ---
 
 ## Sprint Execution Phases
 
-Complexity levels follow `agents/templates/_template_task.md`. **Run only the tests you changed while building; run the full unit suite once at the end of a phase; the browser suite once in Phase 6 and at closeout.** Edit files with Edit/Write only (owner rule); use `git mv` for renames. No back-compat anywhere (decision 41).
+Complexity levels follow `agents/templates/_template_task.md`. **Run only the tests you changed while building; run the full unit suite once at the end of a phase; the browser suite once in Phase 4 and at closeout.** Edit files with Edit/Write only (owner rule); use `git mv` for renames. No back-compat anywhere. Commit once per reviewed phase: `Phase <N>: <summary>`.
 
-### Phase 1: The baseline and the package rename (no behavior change)
-*Phase goal: a saved `main` baseline to compare against, and the code named for plays.*
-- [x] **Task 1.1:** Save the baseline before any change: a household run on the fixtures with the Jev double, and a replay of a captured run. Done: `fixtures/` (Jev double, repeatable byte for byte) and `full/` (replay of live run-20261103T215207 on the real Monarch and Amex files, 3m18s; the newest run was a coffee fixture, not the sample) in `build/baseline-sprint28/`. **L1**. (*Owner: Trin | Trace: UND-108 AC2 | Verification: the two folders exist and their file list is posted in `agents/CHAT.md`*)
-- [x] **Task 1.2:** `git mv src/sketch src/play`, `Sketch` to `Play` and every import, `schema/decision_sketch.schema.json` to `schema/play.schema.json`. No file-format change yet. **L2**. (*Owner: Neo | Trace: STORY_ARCH_SPRINT28 Architecture, Renames | Verification: `bobp make lint` and `bobp make test`*)
-- [x] **Task 1.3:** Security quick pass, then code review (passed; committed bd2b4dd). **L1**. (*Owner: Switch, then Morpheus | Trace: design gate | Verification: `security gate (phase 1): ...` and the review result in `agents/CHAT.md`*)
+### Phase 1: The plan of a play (UND-111, part 1)
+*Phase goal: a loaded play becomes a graph of pieces and beats with reads, writes and moves, and the server returns its layout.*
+- [ ] **Task 1.1:** Tests first, then `src/play/plan.py`: nodes (read piece, write piece, flow beat, beat performed when read; flags `write`, `flow`, `final`, `waits`) and edges (`move`, `reads`, `writes`) from a loaded `Play`; the reads come from `with.from`, `with.sources`, `write` beats, Jev state and options, and `do: { play }` bindings. Tested on the coffee and household plays. **L3** (many places name a piece; the read rules are the design risk). (*Owner: Neo | Trace: UND-111 AC1, ARCH "One plan" | Verification: `bobp make test ARGS="test_play_plan.py"`*)
+- [ ] **Task 1.2:** Tests first, then `chart.py` lays out the plan's graph (new node kinds, a "reads" edge class, no arrow through a box) and `GET /api/plays/<file>/plan` (listed plays only; 404 otherwise; one-line reason when a play does not load). **L3**. (*Owner: Neo | Trace: UND-111 AC1, AC3, AC4 | Verification: chart and route tests*)
+- [ ] **Task 1.3:** UAT: the plan of the household and coffee plays checked by eye against their YAML (every read and write listed, none invented). **L1**. (*Owner: Trin | Trace: UND-111 AC1, AC4 | Verification: verdict in `agents/CHAT.md`*)
+- [ ] **Task 1.4:** Security review (plan route name check), then code review. **L1**. (*Owner: Switch, then Morpheus | Trace: design gate | Verification: verdict lines in `agents/CHAT.md`*)
 
-### Phase 2: The play file shape (UND-105, UND-106 AC1, 3, 4)
-*Phase goal: plays load and check in the new shape, with every beat in `scene.beats`, and every example and fixture rewritten mechanically to it.*
-- [x] **Task 2.1:** Tests first, then the loader, model, `check` and schema: `stage` of files with `access`, `scene`/`beats`, a beat with `to:`/`transitions:`/`final` as a flow beat and any other beat performed when read, `to:` for `then:`, `from:` for `source:`/`sources:`, `do: { write: x }`, `do: { play: x.yaml }`, the `inputs:` declarations moved onto the stage as props; the refusals in UND-105 AC2 and 3 and UND-106 AC3 and 4. Rewrite every example and test fixture to the new shape, names unchanged. **L3** (loader, check, schema and every play at once; the flow/read split is the one design choice). (*Owner: Neo | Trace: UND-105, UND-106 | Verification: `bobp make test ARGS="test_play_*.py"` while building, then `bobp make check`*)
-- [x] **Task 2.2:** UAT: each refusal on a scratch play; household fixtures byte-identical to `build/baseline-sprint28/` (excluding `events.jsonl`). Done: fixtures and the real-file replay both byte-identical; old `main` household refused. **L2**. (*Owner: Trin | Trace: UND-105 AC1-3, UND-106 AC1, 3, 4 | Verification: verdicts and the file comparison in `agents/CHAT.md`*)
-- [x] **Task 2.3:** Security review, then code review. **L1**. (*Owner: Switch, then Morpheus | Trace: design gate | Verification: `security gate (phase 2): ...` and the review result in `agents/CHAT.md`*)
+### Phase 2: The page draws the whole play (UND-111, part 2)
+*Phase goal: the new picture replaces the old chart, for a chosen play and for a run.*
+- [ ] **Task 2.1:** The page draws the plan in the chart's place (pieces as tags, write pieces differently, beats as boxes, dashed outline for beats performed when read, double border for final), lit from the run's events as today; the old chart drawing and its first-line story use are replaced. A play with no flow says so. **L2**. (*Owner: Neo | Trace: UND-111 AC2, AC3, AC5 | Verification: page tests that can run without a browser; one browser check in Phase 4*)
+- [ ] **Task 2.2:** UAT on the live console: pick household, see the picture; start a coffee run, watch it light up. **L1**. (*Owner: Trin | Trace: UND-111 AC2 | Verification: verdict in `agents/CHAT.md`*)
+- [ ] **Task 2.3:** Security quick pass, then code review. **L1**. (*Owner: Switch, then Morpheus | Trace: design gate | Verification: verdict lines*)
 
-### Phase 3: Jev is a beat (UND-106 AC2) — done inside Phase 2
-*Phase goal: Jev questions are beats, captured and replayed as before. Folded into Phase 2 (2026-11-05): the rewritten files had nowhere else to put their Jev questions. Verified by the Phase 2 replay (capture keys unchanged).*
-- [x] **Task 3.1:** Tests first, then `do: { jev: { question: choice } }` beats in place of `kind: jev` stage entries, reusing `sources/jev.py`; capture keys unchanged (play name and beat name). Rewrite the examples' Jev entries. **L2**. (*Owner: Neo | Trace: UND-106 AC2 | Verification: the Jev and capture tests, then `bobp make check`*)
-- [x] **Task 3.2:** UAT: the sample replay of the baseline captures gives byte-identical outputs (excluding `events.jsonl`). **L1**. (*Owner: Trin | Trace: UND-106 AC2, UND-108 AC2 | Verification: the file comparison in `agents/CHAT.md`*)
-- [x] **Task 3.3:** Security review, then code review. **L1**. (*Owner: Switch, then Morpheus | Trace: design gate | Verification: verdict line and review result in `agents/CHAT.md`*)
+### Phase 3: Start held and hold at a beat (UND-112)
+*Phase goal: a play starts held, or held before a beat picked on the diagram.*
+- [ ] **Task 3.1:** Tests first, then `Hold` with `stop_at` (reaching it switches to `hold` and clears it), `control.json` accepts it, `run_sketch(stop_at=)`, CLI `--stop-at`, and the launcher's hold choice (`hold` / `hold_at` on `POST /api/runs`, checked against the play's flow beats, secret required). **L3** (runner gate, CLI and launcher together). (*Owner: Neo | Trace: UND-112 AC3-5 | Verification: `bobp make test ARGS="test_play_control.py"` and the route tests*)
+- [ ] **Task 3.2:** The page: START HELD, click a flow beat to hold before it (shown on the diagram, cleared by clicking again or by starting), "never reached" when the run ends with the hold unspent. **L2**. (*Owner: Neo | Trace: UND-112 AC1, AC2 | Verification: page tests*)
+- [ ] **Task 3.3:** UAT: start held on coffee and step to the end; hold at a middle beat and see the stop; a bad `hold_at` refused. **L2**. (*Owner: Trin | Trace: UND-112 AC1-3 | Verification: verdicts*)
+- [ ] **Task 3.4:** Security review (the new input), then code review. **L1**. (*Owner: Switch, then Morpheus | Trace: design gate | Verification: verdict lines*)
 
-### Phase 4: The stage is the play's interface (UND-107)
-*Phase goal: running a play means providing its stage; a called play sees only its stage and never touches the disk.*
-- [x] **Task 4.1:** Tests first, then one binding step with two providers: the command line (props from `--with`, read pieces from paths or `path:` defaults, write pieces to run-folder files on success) and a call (`with:` binds props, read pieces and write pieces to the caller's; written rows collected in memory and appended per row under `each`). Delete the fallback to the caller's pieces, `outputs:` and the `{input, output}` pairs; `check` refuses an unbound prop or piece. Update household's two calls (the called plays write their merchant/refund keys; the `unpair` beats go) and evening's (its `blend` reads the bound piece). **L3** (the run, `check` and three plays change together; one trade-off: what the called play must now write). (*Owner: Neo | Trace: UND-107, UND-108 AC1 | Verification: the call and binding tests, then `bobp make check`*)
-- [x] **Task 4.2:** UAT: UND-107 AC1-4 on scratch plays (including a called play in a loop writing nothing to disk); household fixtures and the sample replay still byte-identical to the baseline. **L2**. (*Owner: Trin | Trace: UND-107, UND-108 AC2 | Verification: verdicts and the file comparison in `agents/CHAT.md`*)
-- [x] **Task 4.3:** Security review (this phase changes what a called play can read), then code review (passed; committed 403038a). **L1**. (*Owner: Switch, then Morpheus | Trace: design gate | Verification: verdict line and review result in `agents/CHAT.md`*)
-
-### Phase 5: The examples read as plays (UND-108)
-*Phase goal: flow beats have role names, and the outputs are proven identical.*
-- [x] **Task 5.1:** Rename the flow beats in household, categorize_merchant, link_refund and the evening plays to roles (`addition_checker`, `record_writer`, `group_judge`, ...); Jev beats and read-when-needed beats keep their names. Update the tests that name them. **L2**. (*Owner: Neo | Trace: UND-108 AC1, 3 | Verification: `bobp make check`; unit suite time posted (29 to 33 s)*)
-- [x] **Task 5.2:** UAT: fixtures and sample replay byte-identical to the baseline (excluding `events.jsonl`). **L1**. (*Owner: Trin | Trace: UND-108 AC2 | Verification: the file comparison in `agents/CHAT.md`*)
-- [x] **Task 5.3:** Security quick pass, then code review (passed; committed 1785623). **L1**. (*Owner: Switch, then Morpheus | Trace: design gate | Verification: verdict line and review result in `agents/CHAT.md`*)
-
-### Phase 6: The console and the run record (UND-109)
-*Phase goal: what the owner reads on screen matches the file.*
-- [x] **Task 6.1:** Tests first, then `run_started` names `play`, `beat_started`/`beat_completed`/`beat_failed` replace the `stage_*` events, and the console's labels say play and beat. An old run shows as the existing "unreadable" state, with no code added for it. **L2**. (*Owner: Neo | Trace: UND-109 | Verification: the view and event tests, then `bobp make check` and `bobp make test-browser` once*)
-- [x] **Task 6.2:** UAT: a household run on the console reads play and beat everywhere; an old run shows as unreadable. **L1**. (*Owner: Trin | Trace: UND-109 AC1-3 | Verification: verdicts in `agents/CHAT.md`*)
-- [x] **Task 6.3:** Security quick pass, then code review (passed; committed). **L1**. (*Owner: Switch, then Morpheus | Trace: design gate | Verification: verdict line and review result in `agents/CHAT.md`*)
-
-### Phase 7: The docs teach the play (UND-110)
-*Phase goal: a newcomer learns the play from the docs.*
-- [x] **Task 7.1:** `git mv docs/SKETCHES.md docs/PLAYS.md` and rewrite it with the framing; a glossary in `docs/DOMAIN.md`; `README.md`, `docs/USER_GUIDE.md` and `docs/ARCH.md` in the new words. **L2**. (*Owner: Oracle, with Neo for `PLAYS.md` | Trace: UND-110 AC1-3 | Verification: a search for `sketch`, `sink` and `machine:` in the current docs finds only history, posted in `agents/CHAT.md`*)
-- [x] **Task 7.2:** The ADR for the model (ADR-0061) (one kind of step, the stage of files, why a beat without `to:` waits until it is read). **L1**. (*Owner: Morpheus | Trace: UND-110 AC4 | Verification: the ADR file and the DECISION rubric line*)
-- [x] **Task 7.3:** Review of the docs (approved; committed a2139f3). **L1**. (*Owner: Smith | Trace: UND-110 | Verification: review result in `agents/CHAT.md`*)
+### Phase 4: See what each step read and wrote (UND-113)
+*Phase goal: the log and the step view say what a beat read and wrote, in names and counts.*
+- [ ] **Task 4.1:** Tests first, then the context records what a beat read; `beat_completed` carries `read` and `wrote` (names and row counts); `docs/PLAYS.md` documents them. **L2**. (*Owner: Neo | Trace: UND-113 AC1 | Verification: event tests*)
+- [ ] **Task 4.2:** The step view below the diagram, live and in replay; the plan alone before a run; a log without the fields shows the beat with no error. One browser test for hold, start, stop at the beat, step and the step view. **L2**. (*Owner: Neo | Trace: UND-113 AC2, AC3 | Verification: page tests, `bobp make test-browser` once*)
+- [ ] **Task 4.3:** UAT: household fixtures byte-identical to `build/baseline-sprint28/` (excluding `events.jsonl`); the step view of a household replay. **L2**. (*Owner: Trin | Trace: UND-113 AC1-4 | Verification: file comparison and verdicts*)
+- [ ] **Task 4.4:** Security review (event fields carry no rows), then code review. **L1**. (*Owner: Switch, then Morpheus | Trace: design gate | Verification: verdict lines*)
 
 ---
 
 ## Stage 3: Sprint Closeout
 
-- [x] **Task C.1:** SDLC conformance check (`*devops sdlc-check`): the renamed package and schema are what the Makefile and SDLC name. Done without `distclean` (no manifest change since `main`; a full `bobp make check` exit 0, 601 tests), as in Sprints 23 to 27. (*Owner: Tank | Trace: N/A — closeout | Verification: `bobp make distclean && bobp make install && bobp make check`*)
-- [x] **Task C.2:** Document grooming, lessons, and chat report (CHAT archive left for the owner, as in Sprint 27). (*Owner: Oracle | Trace: N/A — closeout | Verification: `bobp chat-report --moniker SPRINT_28 --summary "..."`*)
-- [x] **Task C.3:** End-to-end user testing and lesson review against `docs/sprints/UAT_PLAN_SPRINT28.md`. (*Owner: Smith | Trace: UND-105..110 | Verification: Smith's verdict in `agents/CHAT.md`*)
-- [x] **Task C.4:** Sprint retrospective and backlog grooming (`docs/sprints/RETRO_SPRINT28.md`). (*Owner: Mouse | Trace: N/A — closeout | Verification: retros posted in `agents/CHAT.md`*)
-- [x] **Task C.5:** Sprint launch (posted 2026-11-05). Merge and push only when the owner asks. (*Owner: Cypher | Trace: N/A — release decision | Verification: launch post in `agents/CHAT.md`*)
+- [ ] **Task C.1:** SDLC conformance check (`*devops sdlc-check`). (*Owner: Tank | Trace: N/A — closeout | Verification: `bobp make check` exit 0*)
+- [ ] **Task C.2:** Document grooming (USER_GUIDE, PLAYS, ARCH, ADR for the plan and hold-at-beat), lessons, chat report. (*Owner: Oracle | Trace: N/A — closeout | Verification: `bobp chat-report --moniker SPRINT_29 --summary "..."`*)
+- [ ] **Task C.3:** End-to-end user testing against `docs/sprints/UAT_PLAN_SPRINT29.md`. (*Owner: Smith | Trace: UND-111..113 | Verification: Smith's verdict*)
+- [ ] **Task C.4:** Retrospective and backlog grooming (`docs/sprints/RETRO_SPRINT29.md`). (*Owner: Mouse | Trace: N/A — closeout | Verification: retros posted*)
+- [ ] **Task C.5:** Sprint launch. Merge and push only when the owner asks. (*Owner: Cypher | Trace: N/A — release decision | Verification: launch post*)

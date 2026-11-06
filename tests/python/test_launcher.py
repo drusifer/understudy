@@ -103,6 +103,20 @@ class ListTest(LauncherCase):
         self.write("more/plain.yaml", PLAIN)
         self.assertEqual([each["file"] for each in self.launcher().list_sketches()], ["more/plain.yaml"])
 
+    def test_the_plan_of_a_listed_play_is_its_pieces_and_beats_laid_out(self):
+        self.write("plain.yaml", PLAIN)
+        found = self.launcher().plan("plain.yaml")
+        self.assertEqual({each["id"] for each in found["nodes"]}, {"data", "only"})
+        self.assertTrue(all("x" in each and "kind" in each for each in found["nodes"]))
+
+    def test_a_play_that_is_not_listed_has_no_plan(self):
+        self.write("parent.yaml", PARENT)
+        self.write("child.yaml", CHILD)
+        for name in ("child.yaml", "../outside.yaml", "missing.yaml"):
+            with self.assertRaises(Refused) as caught:
+                self.launcher().plan(name)
+            self.assertEqual(caught.exception.status, 403, name)
+
     def test_a_folder_with_no_sketches_or_that_is_not_a_folder_is_refused_when_the_launcher_is_made(self):
         with self.assertRaisesRegex(Refused, "no sketches"):
             self.launcher()
@@ -357,6 +371,14 @@ class HttpTest(LauncherCase):
     def test_the_sketch_list_is_open_to_read(self):
         status, body = self.call("/api/sketches")
         self.assertEqual((status, body[0]["file"]), (200, "plain.yaml"))
+
+    def test_the_plan_of_a_listed_play_is_open_to_read_and_an_unlisted_one_is_refused(self):
+        status, body = self.call("/api/plan?play=plain.yaml")
+        self.assertEqual((status, {each["id"] for each in body["nodes"]}), (200, {"data", "only"}))
+        status, body = self.call("/api/plan?play=..%2Fnope.yaml")
+        self.assertEqual(status, 403)
+        self.assertIn("problem", body)
+        self.assertEqual(self.call("/api/plan")[0], 400)
 
     def test_a_post_without_the_secret_or_with_a_wrong_one_is_401_and_starts_nothing(self):
         began = time.monotonic()

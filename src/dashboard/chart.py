@@ -73,16 +73,26 @@ def layout(states: list[dict], transitions: list[dict], initial: str | None = No
     moves = _unique_moves(names, transitions)
     back, order = _classify(names, moves, start)
     rows, row_of = _rows(names, moves, back, order)
-    return _Drawing(names, final, start, moves, back, rows, row_of).draw()
+    extras = {each["name"]: {key: value for key, value in each.items() if key not in ("name", "final")} for each in states}
+    return _Drawing(names, final, start, moves, back, rows, row_of, extras).draw()
+
+
+def plan_layout(found: dict) -> dict:
+    """The plan of a play (`src/play/plan.py`) as boxes and arrows. Pieces and beats are nodes, and the arrows are the
+    moves between beats and what a beat reads or writes; a node keeps what the page draws it by (`kind`, `write`,
+    `flow`, `waits`, `action`) and an arrow keeps its `kind`."""
+    nodes = [{"name": each["id"], **{key: value for key, value in each.items() if key != "id"}} for each in found["nodes"]]
+    return layout(nodes, found["edges"], found.get("initial"))
 
 
 def _unique_moves(names: list[str], transitions: list[dict]) -> list[dict]:
     known, seen, found = set(names), set(), []
     for move in transitions:
-        key = (move["from"], move["to"], json.dumps(move.get("when"), sort_keys=True))
+        kind = move.get("kind", "move")
+        key = (move["from"], move["to"], kind, json.dumps(move.get("when"), sort_keys=True))
         if move["from"] in known and move["to"] in known and key not in seen:
             seen.add(key)
-            found.append({"from": move["from"], "to": move["to"], "when": move.get("when")})
+            found.append({"from": move["from"], "to": move["to"], "when": move.get("when"), "kind": kind})
     return found
 
 
@@ -203,6 +213,7 @@ class _Drawing:
     back: set[int]
     rows: list[list[str]]
     row_of: dict[str, int]
+    extras: dict[str, dict]
 
     def draw(self) -> dict:
         count = len(self.rows)
@@ -254,7 +265,7 @@ class _Drawing:
             left = self.inner_left + (self.inner - span) / 2
             for at, name in enumerate(row):
                 boxes[name] = {"id": name, "x": round(left + at * (self.node_w + HGAP)), "y": top[number], "w": self.node_w,
-                               "h": NODE_H, "initial": name == self.start, "final": name in self.final}
+                               "h": NODE_H, "initial": name == self.start, "final": name in self.final, **self.extras[name]}
         return boxes
 
     def _lane_y(self, gap: int, index: int) -> int:
@@ -275,7 +286,7 @@ class _Drawing:
             last = self._lane_y(above, index)
             points = [(sx, bottom), (sx, first), (lane_x, first), (lane_x, last), (tx, last), (tx, target["y"])]
             run = (sx, lane_x, first)
-        edge = {"from": move["from"], "to": move["to"], "back": index in self.back, "points": _tidy(points)}
+        edge = {"from": move["from"], "to": move["to"], "kind": move["kind"], "back": index in self.back, "points": _tidy(points)}
         if move["when"] is not None:
             label = guard_text(move["when"])
             width = LABEL_CHAR * len(label) + 12

@@ -6,10 +6,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.dashboard.chart import guard_text, layout, overlay
+from src.dashboard.chart import guard_text, layout, overlay, plan_layout
 from src.dashboard.view import describe
 from src.paths import ROOT
-from src.play.loader import load
+from src.play.loader import load, read_template
+from src.play.plan import plan
 from src.play.run import _story_of
 
 HALF = 0.5
@@ -205,6 +206,35 @@ class RealMachineTests(unittest.TestCase):
             chart = lay(story)
             self.assertEqual({each["id"] for each in chart["nodes"]}, {beat["name"] for beat in story["beats"]}, path)
             assert_clean(self, chart)
+
+
+class PlanLayoutTests(unittest.TestCase):
+    """UND-111: the plan's pieces, beats, reads and writes laid out together."""
+
+    def test_the_plans_of_the_examples_are_drawn_cleanly_with_every_node_and_edge(self):
+        for path in ("examples/household/household.yaml", "examples/evening/evening.yaml", "tests/fixtures/coffee/coffee_week.yaml"):
+            found = plan(read_template(ROOT / path)[0])
+            chart = plan_layout(found)
+            self.assertEqual({each["id"] for each in chart["nodes"]}, {each["id"] for each in found["nodes"]}, path)
+            self.assertEqual(len(chart["edges"]), len({(e["from"], e["to"], e["kind"], json.dumps(e.get("when"), sort_keys=True))
+                                                       for e in found["edges"]}), path)
+            assert_clean(self, chart)
+
+    def test_a_node_and_an_edge_keep_what_the_page_draws_them_by(self):
+        found = {"initial": "b", "props": [], "nodes": [
+            {"id": "p", "kind": "piece", "write": False, "flow": False, "final": False, "waits": False, "action": None},
+            {"id": "b", "kind": "beat", "write": False, "flow": True, "final": False, "waits": False, "action": "map.where"},
+            {"id": "w", "kind": "piece", "write": True, "flow": False, "final": False, "waits": False, "action": None}],
+            "edges": [{"from": "p", "to": "b", "kind": "reads"}, {"from": "b", "to": "w", "kind": "writes"}]}
+        chart = plan_layout(found)
+        at = {each["id"]: each for each in chart["nodes"]}
+        self.assertEqual((at["p"]["kind"], at["p"]["write"], at["w"]["write"], at["b"]["action"]), ("piece", False, True, "map.where"))
+        self.assertTrue(at["b"]["initial"])
+        self.assertEqual([(e["from"], e["to"], e["kind"]) for e in chart["edges"]], [("p", "b", "reads"), ("b", "w", "writes")])
+
+    def test_a_play_with_no_beats_has_no_drawing_to_make(self):
+        found = {"initial": None, "props": [], "nodes": [], "edges": []}
+        self.assertEqual(plan_layout(found)["nodes"], [])
 
 
 class OverlayTests(unittest.TestCase):

@@ -92,6 +92,8 @@ def route(console: Console, path: str, *, revealed: bool = False, query: str = "
     }
     if path in fixed:
         return fixed[path]
+    if path == "/api/plan":
+        return _plan_answer(console, query)
     match = RUN_ROUTE.fullmatch(path)
     if match:
         directory = console.root / match["run"]
@@ -114,6 +116,17 @@ def _run_answer(console: Console, directory: Path, match: re.Match, revealed: bo
         except Refused as refused:
             return "refused", (refused.status, refused.message)
     return "json", describe(directory)
+
+
+def _plan_answer(console: Console, query: str) -> tuple[str, object]:
+    """The plan of the play `?play=<file>` names, or why there is none."""
+    names = parse_qs(query).get("play")
+    if not names or console.launcher is None:
+        return "refused", (HTTPStatus.BAD_REQUEST, "name a play: /api/plan?play=<file>")
+    try:
+        return "json", console.launcher.plan(names[0])
+    except Refused as refused:
+        return "refused", (refused.status, refused.message)
 
 
 def _position(query: str) -> int | None:

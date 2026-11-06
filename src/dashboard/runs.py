@@ -18,11 +18,13 @@ from collections import deque
 from collections.abc import Callable
 from pathlib import Path
 
+from src.dashboard.chart import plan_layout
 from src.dashboard.view import RUN_ID, read_json
 from src.paths import ROOT
 from src.play.inputs import problems as input_problems
 from src.play.inputs import value_problem
 from src.play.loader import PlayError, props_of, read_template
+from src.play.plan import plan
 from src.play.sources.capture import CACHE
 
 MAX_CHILDREN = 4
@@ -139,6 +141,12 @@ class Launcher:
         children = set().union(*(each["called"] for each in scanned)) if scanned else set()
         return [{key: value for key, value in each.items() if key not in {"path", "called"}}
                 for each in scanned if each["path"].resolve() not in children]
+
+    def plan(self, name: str) -> dict:
+        """The pieces and beats of the listed play `name`, laid out for the page to draw. Only a play `list_sketches`
+        offers has a plan; any other name is refused, so no path from the client is ever opened."""
+        path, _entry = self._sketch(name)
+        return plan_layout(plan(read_template(path)[0]))
 
     def replays(self) -> list[str]:
         """The captured runs a replay can read, newest first."""
