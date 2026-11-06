@@ -176,6 +176,18 @@ function drawFields() {
       make('label', { for: `field-${name}`, class: 'typed-label' }, name),
       make('input', { id: `field-${name}`, type: 'text', class: 'find-field', 'data-name': name, autocomplete: 'off' }))));
   drawButtons();
+  drawPlan(sketch);
+}
+
+// The picked play's plan: its pieces and beats and who reads what, before any run exists.
+async function drawPlan(sketch) {
+  $('plan').hidden = !sketch?.ok;
+  if (!sketch?.ok) return;
+  const plan = await getJson(`api/plan?play=${encodeURIComponent(sketch.file)}`);
+  if (currentSketch()?.file !== sketch.file) return; // the pick changed while this was on its way
+  drawDiagram($('plan-wrap'), plan?.nodes ? plan : null);
+  $('plan-note').textContent = !plan?.nodes ? (plan?.problem ?? 'no plan could be read for this play')
+    : plan.nodes.length === 0 ? 'this play has no stage pieces and no beats' : `${plan.nodes.length} ${plan.nodes.length === 1 ? 'node' : 'nodes'}: pieces are rounded, beats are boxes, a dashed box waits until it is read`;
 }
 
 function drawSketches() {

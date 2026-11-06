@@ -16,9 +16,10 @@ from pathlib import Path
 from src.machine_runner import RunRecord, run_machine
 from src.paths import ROOT, check_writable
 from src.play.control import Hold, write_control
-from src.play.loader import bound_pieces, child_path, children, load
+from src.play.loader import bound_pieces, child_path, children, load, read_template
 from src.play.machine import build_machine
 from src.play.model import Play
+from src.play.plan import plan
 from src.play.registry import StageFn
 from src.play.sources.capture import CaptureStore
 from src.play.sources.reader import Capture, Sources
@@ -273,18 +274,9 @@ async def run_sketch(  # noqa: PLR0913 - what a run takes: the sketch, where, it
 
 
 def _story_of(sketch: Play) -> dict:
-    """The machine as the first line of the event stream tells it: its states, and the moves between them."""
-    states = sketch.machine["states"]
-    moves = []
-    for name, state in states.items():
-        if state.get("then"):
-            moves.append({"from": name, "to": state["then"], "event": "ok"})
-        moves.extend(
-            {"from": name, "to": transition["to"], "event": "ok", **({"when": transition["if"]} if "if" in transition else {})}
-            for transition in state.get("transitions", []))
-    return {"initial": sketch.machine["initial"],
-            "beats": [{"name": name, "final": bool(state.get("final"))} for name, state in states.items()],
-            "transitions": moves}
+    """The play as the first line of the event stream tells it: its plan (the stage's pieces, the beats, who reads what, and
+    the moves between beats), as the file was when the run began."""
+    return {"plan": plan(read_template(sketch.path)[0])}
 
 
 def _shown_path(path: Path) -> str:

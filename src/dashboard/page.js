@@ -161,19 +161,29 @@ function arrowMarker(id, className) {
     svgEl('path', { d: 'M0 0L10 5L0 10z', class: className }));
 }
 
+// What a node is, in words: a piece of the stage (read or written) or a beat (in the flow, or waiting until it is read).
+function nodeWords(node) {
+  if (node.kind === 'piece') return node.write ? 'file written' : 'file read';
+  return `${node.final ? 'final beat' : node.waits ? 'beat performed when read' : 'beat'}${node.action ? `, ${node.action}` : ''}`;
+}
+
 function stateGroup(node) {
   const name = svgEl('text', { class: 'state-name', x: node.x + node.w / 2, y: node.y + node.h / 2 + 5, 'text-anchor': 'middle' });
   name.textContent = node.id;
-  const label = `${node.id}${node.final ? ', final beat' : ''}${node.current ? ', current beat' : ''}`;
-  const box = svgEl('rect', { class: 'state-box', x: node.x, y: node.y, width: node.w, height: node.h, rx: 6 });
+  const extra = node.kind === 'piece' ? `, ${nodeWords(node)}` : node.waits ? ', performed when read' : '';
+  const label = `${node.id}${node.final ? ', final beat' : ''}${node.current ? ', current beat' : ''}${extra}`;
+  const piece = node.kind === 'piece';
+  const box = svgEl('rect', { class: 'state-box', x: node.x, y: node.y, width: node.w, height: node.h, rx: piece ? node.h / 2 : 6 });
   const ring = node.final ? [svgEl('rect', { class: 'final-ring', x: node.x + 4, y: node.y + 4, width: node.w - 8, height: node.h - 8, rx: 4 })] : [];
-  const group = svgEl('g', { class: `state${node.final ? ' final' : ''}${node.current ? ' current' : ''}${node.initial ? ' initial' : ''}`,
-    role: 'img', 'aria-label': label, 'data-state': node.id }, box, ...ring, name);
+  const classes = ['state', piece ? 'piece' : '', piece && node.write ? 'write' : '', node.waits ? 'waits' : '', node.final ? 'final' : '',
+    node.current ? 'current' : '', node.initial ? 'initial' : ''].filter(Boolean).join(' ');
+  const group = svgEl('g', { class: classes, role: 'img', 'aria-label': label, 'data-state': node.id }, svgEl('title', {}), box, ...ring, name);
+  group.querySelector('title').textContent = nodeWords(node);
   return group;
 }
 
 function edgeGroup(edge) {
-  const line = svgEl('polyline', { class: `edge${edge.back ? ' back' : ''}${edge.taken ? ' taken' : ''}`, points: edge.points.map((point) => point.join(',')).join(' '),
+  const line = svgEl('polyline', { class: `edge ${edge.kind}${edge.back ? ' back' : ''}${edge.taken ? ' taken' : ''}`, points: edge.points.map((point) => point.join(',')).join(' '),
     'marker-end': `url(#${edge.taken ? 'arrow-taken' : 'arrow'})`, 'data-from': edge.from, 'data-to': edge.to });
   if (!edge.label) return [line];
   const box = edge.label_box;
@@ -182,22 +192,26 @@ function edgeGroup(edge) {
   return [line, svgEl('rect', { class: 'edge-label-box', x: box.x, y: box.y, width: box.w, height: box.h, rx: 3 }), text];
 }
 
-// The machine as boxes and arrows from the server's layout (src/dashboard/chart.py); the page only draws it.
+// A play's plan as boxes, tags and arrows from the server's layout (src/dashboard/chart.py); the page only draws it.
+function drawDiagram(wrap, chart) {
+  wrap.hidden = !chart;
+  if (!chart) { wrap.replaceChildren(); return; }
+  wrap.replaceChildren(svgEl('svg', { class: 'chart-svg', width: chart.width, height: chart.height, viewBox: `0 0 ${chart.width} ${chart.height}`, 'aria-hidden': 'false' },
+    svgEl('defs', {}, arrowMarker('arrow', 'arrowhead'), arrowMarker('arrow-taken', 'arrowhead taken')),
+    ...chart.edges.flatMap(edgeGroup), ...chart.nodes.map(stateGroup)));
+}
+
+// The chosen run's diagram, with the beat it is in lit.
 function drawChart(run) {
   const chart = run.chart;
-  const wrap = $('chart-wrap');
-  wrap.hidden = !chart;
+  drawDiagram($('chart-wrap'), chart);
   if (!chart) {
-    wrap.replaceChildren();
-    $('chart-note').textContent = 'this run\'s log has no story, so there is no diagram to draw';
+    $('chart-note').textContent = 'this run\'s log has no plan, so there is no diagram to draw';
     return;
   }
   const current = chart.nodes.find((node) => node.current);
   $('chart-note').textContent = chart.ended ? `ended${current ? ` in ${current.id}` : ''}: ${chart.ended}`
-    : current ? `in state ${current.id}` : 'waiting for the first state';
-  wrap.replaceChildren(svgEl('svg', { class: 'chart-svg', width: chart.width, height: chart.height, viewBox: `0 0 ${chart.width} ${chart.height}`, 'aria-hidden': 'false' },
-    svgEl('defs', {}, arrowMarker('arrow', 'arrowhead'), arrowMarker('arrow-taken', 'arrowhead taken')),
-    ...chart.edges.flatMap(edgeGroup), ...chart.nodes.map(stateGroup)));
+    : current ? `in beat ${current.id}` : 'waiting for the first beat';
 }
 
 const dollars = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });

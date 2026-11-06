@@ -6,12 +6,13 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from story_plan import story_plan
+
 from src.dashboard.chart import guard_text, layout, overlay, plan_layout
 from src.dashboard.view import describe
 from src.paths import ROOT
-from src.play.loader import load, read_template
+from src.play.loader import read_template
 from src.play.plan import plan
-from src.play.run import _story_of
 
 HALF = 0.5
 GUARDED = 2  # a move tuple with a guard has three parts
@@ -199,15 +200,6 @@ class ScaleTests(unittest.TestCase):
         self.assertEqual(json.dumps(lay(story)), json.dumps(lay(story)))
 
 
-class RealMachineTests(unittest.TestCase):
-    def test_the_examples_machines_are_drawn_cleanly(self):
-        for path in ("examples/household/household.yaml", "examples/evening/evening.yaml", "tests/fixtures/coffee/coffee_week.yaml"):
-            story = _story_of(load(ROOT / path, variables={"monarch": "m.csv", "amex": "a.csv", "amex_account": "x"}))
-            chart = lay(story)
-            self.assertEqual({each["id"] for each in chart["nodes"]}, {beat["name"] for beat in story["beats"]}, path)
-            assert_clean(self, chart)
-
-
 class PlanLayoutTests(unittest.TestCase):
     """UND-111: the plan's pieces, beats, reads and writes laid out together."""
 
@@ -238,7 +230,7 @@ class PlanLayoutTests(unittest.TestCase):
 
 
 class OverlayTests(unittest.TestCase):
-    STORY = machine(["a", "b", "c"], [("a", "b"), ("b", "c")], final={"c"})
+    STORY = story_plan(["a", "b", "c"], [("a", "b"), ("b", "c")], final={"c"}, pieces=["p"])
 
     def events(self, *entered):
         return [{"event": "run_started", **self.STORY}, *({"event": "beat_entered", "beat":s, "caused_by": c} for s, c in entered)]
@@ -260,10 +252,11 @@ class OverlayTests(unittest.TestCase):
         self.assertEqual({each["id"] for each in chart["nodes"] if each["current"]}, {"c"})
         self.assertEqual(chart["ended"], "done after 3 stages")
 
-    def test_the_initial_state_comes_from_the_first_move_when_the_story_line_has_none(self):
-        story = {key: value for key, value in self.STORY.items() if key != "initial"}
-        chart = overlay(story, [{"event": "beat_entered", "beat":"b", "caused_by": "start"}], "running", "")
-        self.assertTrue(next(each for each in chart["nodes"] if each["id"] == "b")["initial"])
+    def test_a_piece_is_never_lit_and_a_read_is_never_a_move_taken(self):
+        chart = overlay(self.STORY, self.events(("a", "start"), ("b", "ok")), "running", "")
+        self.assertFalse(next(each for each in chart["nodes"] if each["id"] == "p")["current"])
+        self.assertEqual({each["kind"] for each in chart["edges"] if each["taken"]}, {"move"})
+        self.assertTrue(next(each for each in chart["nodes"] if each["id"] == "a")["initial"])
 
     def test_a_state_name_with_markup_is_kept_as_plain_text(self):
         name, guard = "<script>alert(1)</script>", {"<img src=x onerror=y>": {"eq": 1}}
@@ -285,7 +278,7 @@ class DescribeTests(unittest.TestCase):
         (self.dir / "run.json").write_text(json.dumps(manifest), encoding="utf-8")
 
     def test_a_run_with_a_story_has_a_chart_with_its_lit_state(self):
-        story = machine(["a", "b"], [("a", "b")], final={"b"})
+        story = story_plan(["a", "b"], [("a", "b")], final={"b"})
         self.write([{"event": "run_started", "at": "2026-11-01T10:00:00+00:00", "play": "x/s.yaml", "mode": "live", **story},
                     {"event": "beat_entered", "at": "2026-11-01T10:00:00+00:00", "beat": "a", "caused_by": "start"}],
                    {"status": "running", "beats": {}})

@@ -63,6 +63,11 @@
     <select id="sketch-pick" class="find-field" data-launcher></select>
     <div id="sketch-about" class="about" data-launcher></div>
     <div id="fields" class="start-fields" data-launcher></div>
+    <section id="plan" class="chart" aria-labelledby="plan-title" data-launcher>
+      <h3 id="plan-title" class="chart-title">PLAN OF THIS PLAY</h3>
+      <p id="plan-note" class="chart-note"></p>
+      <div id="plan-wrap" class="chart-wrap" role="group" aria-label="Plan of the picked play" tabindex="0" hidden></div>
+    </section>
     <label for="replay-pick" data-launcher>Replay from</label>
     <select id="replay-pick" class="find-field" data-launcher><option value="">no - run live</option></select>
     <div class="start-buttons">
@@ -118,9 +123,9 @@
     <div id="tube" class="tube stages"></div>
     <div id="gauges" class="gauges" role="group" aria-label="Gauges"></div>
     <section id="chart" class="chart" aria-labelledby="chart-title">
-      <h3 id="chart-title" class="chart-title">STATECHART</h3>
+      <h3 id="chart-title" class="chart-title">PLAY DIAGRAM</h3>
       <p id="chart-note" class="chart-note"></p>
-      <div id="chart-wrap" class="chart-wrap" role="group" aria-label="Statechart diagram" tabindex="0" hidden></div>
+      <div id="chart-wrap" class="chart-wrap" role="group" aria-label="Play diagram" tabindex="0" hidden></div>
     </section>
     <dl id="summary" class="summary" aria-label="Run summary"></dl>
     <section id="spending" class="spending" aria-labelledby="spending-title" hidden>

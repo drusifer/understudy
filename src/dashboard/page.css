@@ -340,6 +340,11 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .chart-svg .arrowhead.taken { fill: #c2410c; }
 .chart-svg .state-box { fill: #fffaf0; stroke: #24170a; stroke-width: 1.5; }
 .chart-svg .final-ring { fill: none; stroke: #24170a; stroke-width: 1.5; }
+.chart-svg .edge.reads { stroke: #4b5b6b; stroke-width: 1; stroke-dasharray: 2 3; }
+.chart-svg .edge.writes { stroke: #2d6a3a; stroke-width: 1.5; }
+.chart-svg .state.piece .state-box { fill: #e6eee0; }
+.chart-svg .state.piece.write .state-box { fill: #f1e2c4; }
+.chart-svg .state.waits .state-box { stroke-dasharray: 5 3; }
 .chart-svg .state.current .state-box { fill: #24180f; stroke: #c2410c; stroke-width: 3; }
 .chart-svg .state-name { color: #24170a; fill: currentColor; font: 15px monospace; }
 .chart-svg .state.current .state-name { color: #ffe9b8; }

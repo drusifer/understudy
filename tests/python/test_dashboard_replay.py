@@ -9,6 +9,8 @@ import urllib.request
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+from story_plan import story_plan
+
 from src.dashboard.replay import decisions, replay
 from src.dashboard.runs import Refused
 from src.dashboard.server import serve
@@ -16,9 +18,8 @@ from src.dashboard.view import describe, printed
 
 RUN = "run-20261103T100000-aaaaaaaa"
 NOW = datetime(2026, 11, 3, 10, 0, 30, tzinfo=UTC)
-STORY = {"event": "run_started", "play": "x/plain.yaml", "mode": "live", "initial": "a",
-         "beats": [{"name": "a", "final": False}, {"name": "b", "final": False}, {"name": "done", "final": True}],
-         "transitions": [{"from": "a", "to": "b", "event": "ok"}, {"from": "b", "to": "done", "event": "ok"}]}
+STORY = {"event": "run_started", "play": "x/plain.yaml", "mode": "live",
+         **story_plan(["a", "b", "done"], [("a", "b"), ("b", "done")], final={"done"})}
 FINISHED = [
     STORY, {"event": "beat_entered", "beat":"a", "caused_by": "start"}, {"event": "beat_started", "beat":"a"},
     {"event": "beat_completed", "beat":"a"}, {"event": "beat_entered", "beat":"b", "caused_by": "ok"},

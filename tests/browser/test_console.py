@@ -457,6 +457,12 @@ class TypedControlsTest(BrowserCase):
         self.assertTrue(page.locator("#field-note").is_visible())  # a name the sketch takes but does not declare stays a text box
         self.assertEqual(page.locator("#field-note").get_attribute("type"), "text")
 
+    def test_the_picked_play_shows_its_plan_before_any_run(self):
+        page = self.open()
+        page.wait_for_selector("#plan-wrap .state")
+        self.assertEqual(page.locator("#plan-wrap .state-name").all_text_contents(), ["only"])
+        self.assertIn("1 node:", page.locator("#plan-note").inner_text())
+
     def test_every_control_works_from_the_keyboard(self):
         page = self.open()
         page.get_by_role("radio", name="fun").focus()
@@ -516,8 +522,17 @@ class TypedControlsTest(BrowserCase):
             self.assertTrue(box and box["x"] >= 0 and box["x"] + box["width"] <= 390, selector)
 
 
-STORY = {"initial": "a", "beats":[{"name": "a", "final": False}, {"name": "b", "final": False}, {"name": "c", "final": True}],
-         "transitions": [{"from": "a", "to": "b", "event": "ok"}, {"from": "b", "to": "c", "event": "ok", "when": {"ready": {"eq": True}}}]}
+def beat(name: str, final: bool = False) -> dict:
+    return {"id": name, "kind": "beat", "write": False, "flow": True, "final": final, "waits": False, "action": None}
+
+
+def plan_of(nodes: list, moves: list, initial: str) -> dict:
+    return {"plan": {"nodes": nodes, "props": [], "initial": initial,
+                     "edges": [{"from": each[0], "to": each[1], "kind": "move", **({"when": each[2]} if len(each) > 2 else {})}
+                               for each in moves]}}
+
+
+STORY = plan_of([beat("a"), beat("b"), beat("c", True)], [("a", "b"), ("b", "c", {"ready": {"eq": True}})], "a")
 
 
 def entered(second: int, state_name: str, cause: str) -> dict:
@@ -579,21 +594,20 @@ class StatechartTest(BrowserCase):
         page.wait_for_function("document.getElementById('status-text').textContent === 'DONE'")
         self.assertIn("done", page.locator("#chart-note").inner_text().lower())
 
-    def test_a_run_whose_log_has_no_story_says_so_and_draws_nothing(self):
+    def test_a_run_whose_log_has_no_plan_says_so_and_draws_nothing(self):
         name = "run-20261101T160400-00000005"
         write_run(self.runs, name, [{"event": "run_started", "at": stamp(0), "play": "x/old.yaml", "mode": "live"},
                                     {"event": "run_finished", "at": stamp(1), "outcome": "complete"}],
                   {"status": "complete", "beats":{}})
         page = self.open(name)
         page.wait_for_function("document.getElementById('status-text').textContent === 'DONE'")
-        self.assertIn("no story", page.locator("#chart-note").inner_text())
+        self.assertIn("no plan", page.locator("#chart-note").inner_text())
         self.assertEqual(page.locator("#chart-wrap svg").count(), 0)
 
     def test_names_and_guards_with_markup_are_drawn_as_text_and_run_nothing(self):
         name = "run-20261101T160500-00000006"
         hostile = "<img src=x onerror=window.pwned=1>"
-        story = {"initial": hostile, "beats":[{"name": hostile, "final": False}, {"name": "b", "final": True}],
-                 "transitions": [{"from": hostile, "to": "b", "event": "ok", "when": {"<b>x</b>": {"eq": 1}}}]}
+        story = plan_of([beat(hostile), beat("b", True)], [(hostile, "b", {"<b>x</b>": {"eq": 1}})], hostile)
         self.run_with_story(name, [entered(1, hostile, "start")], {"status": "running", "beats":{}}, story=story)
         page = self.open(name)
         page.wait_for_selector(".state")

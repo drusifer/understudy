@@ -10,6 +10,8 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch
 
+from story_plan import story_plan
+
 from src.dashboard import server as server_module
 from src.dashboard.hold import apply_hold
 from src.dashboard.runs import Refused
@@ -21,8 +23,7 @@ RUN = "run-20261103T100000-aaaaaaaa"
 SECRET = "s3cret-for-tests"
 NOW = datetime(2026, 11, 3, 10, 30, tzinfo=UTC)
 STARTED = {"event": "run_started", "play": "x/plain.yaml", "mode": "live",
-           "beats": [{"name": "a", "final": False}, {"name": "done", "final": True}],
-           "transitions": [{"from": "a", "to": "done", "event": "ok"}], "initial": "a"}
+           **story_plan(["a", "done"], [("a", "done")], final={"done"})}
 
 
 def write_run(root: Path, events: list[dict], run_id: str = RUN, status: str = "running") -> Path:

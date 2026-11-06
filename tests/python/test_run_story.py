@@ -20,15 +20,17 @@ class RunStoryTests(CoffeeCase):
         self.folder_ = self.folder(lines)
         self.events = events_of(self.folder_)
 
-    def test_the_first_line_lists_the_beats_of_the_flow_and_the_moves_between_them(self):
+    def test_the_first_line_carries_the_plan_of_the_play(self):
         first = self.events[0]
         self.assertEqual(first["event"], "run_started")
-        self.assertEqual([beat["name"] for beat in first["beats"]],
-                         ["weather", "split_trade", "match_orders", "to_ingredients", "write", "done"])
-        self.assertEqual([beat["name"] for beat in first["beats"] if beat["final"]], ["done"])
-        self.assertEqual(first["initial"], "weather")
-        self.assertIn({"from": "weather", "to": "split_trade", "event": "ok"}, first["transitions"])
-        self.assertIn({"from": "write", "to": "done", "event": "ok"}, first["transitions"])
+        found = first["plan"]
+        flow = [each["id"] for each in found["nodes"] if each["kind"] == "beat" and each["flow"]]
+        self.assertEqual(flow, ["weather", "split_trade", "match_orders", "to_ingredients", "write", "done"])
+        self.assertEqual([each["id"] for each in found["nodes"] if each["final"]], ["done"])
+        self.assertEqual(found["initial"], "weather")
+        moves = {(each["from"], each["to"]) for each in found["edges"] if each["kind"] == "move"}
+        self.assertTrue({("weather", "split_trade"), ("write", "done")} <= moves)
+        self.assertTrue(any(each["kind"] == "piece" for each in found["nodes"]))
 
     def test_every_move_to_a_beat_is_a_line_naming_the_beat_and_the_event_behind_it(self):
         moves = [(e["beat"], e["caused_by"]) for e in self.events if e["event"] == "beat_entered"]

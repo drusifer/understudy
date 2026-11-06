@@ -114,6 +114,6 @@ def replay(directory: Path, at: int | None = None) -> dict:
                 gauge["text"], gauge["about"] = UNKNOWN, "known when the run ends"
     return {
         "id": directory.name, "at": at, "of": len(events), "state": state, "ended": ended, "hold": held, "failure": failure,
-        "chart": overlay(started, prefix, state, ended) if "beats" in started else None,
+        "chart": overlay(started, prefix, state, ended) if "plan" in started else None,
         "tube": tube, "gauges": gauges, "lines": [printed(each) for each in prefix], "seconds": round(_seconds(prefix)),
     }
