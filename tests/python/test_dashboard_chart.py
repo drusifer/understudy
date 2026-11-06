@@ -8,7 +8,7 @@ from pathlib import Path
 
 from story_plan import story_plan
 
-from src.dashboard.chart import guard_text, layout, overlay, plan_layout
+from src.dashboard.chart import DETAIL_CHAR, guard_text, layout, overlay, plan_layout
 from src.dashboard.view import describe
 from src.paths import ROOT
 from src.play.loader import read_template
@@ -233,6 +233,16 @@ class PlanLayoutTests(unittest.TestCase):
         self.assertEqual(auto["hidden"], len(everything["nodes"]) - len(auto["nodes"]))
         assert_clean(self, auto)
         assert_clean(self, everything)
+
+    def test_a_box_is_wide_enough_for_the_detail_line_under_its_name(self):
+        action = "reduce.a_rather_long_action_name_for_a_beat"
+        found = {"initial": "a", "props": [], "nodes": [
+            {"id": "a", "kind": "beat", "write": False, "flow": True, "final": False, "waits": False, "action": action, "path": None},
+            {"id": "f", "kind": "piece", "write": False, "flow": False, "final": False, "waits": False, "action": None,
+             "path": "a_long_file_name_for_a_piece_of_the_stage.jsonl"}], "edges": [{"from": "f", "to": "a", "kind": "reads"}]}
+        chart = plan_layout(found, "all")
+        for each in chart["nodes"]:
+            self.assertGreaterEqual(each["w"], DETAIL_CHAR * len(each["action"] or each["path"]) + 24, each["id"])
 
     def test_a_small_play_is_drawn_whole_by_default(self):
         chart = plan_layout(plan(read_template(ROOT / "tests/fixtures/coffee/coffee_week.yaml")[0]))

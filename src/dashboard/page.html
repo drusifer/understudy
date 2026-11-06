@@ -134,6 +134,10 @@
     <section id="chart" class="chart" aria-labelledby="chart-title">
       <h3 id="chart-title" class="chart-title">PLAY DIAGRAM</h3>
       <p id="chart-note" class="chart-note"></p>
+      <p class="legend" id="legend">Round tags are files (a warmer tag is a file the play writes). Boxes are beats, with what each does under its name:
+        a solid box is in the flow, a dashed box waits until another beat reads it, a double border ends the play. Solid arrows
+        are the next beat (a label is the condition for taking it); dotted arrows are what a beat reads; a green arrow is a
+        beat writing its file. A small tag above a box, on the right, is how many rows the beat made once it has run; START marks the first beat.</p>
       <button type="button" id="diagram-view" class="find-button" hidden></button>
       <div id="chart-wrap" class="chart-wrap" role="group" aria-label="Play diagram" tabindex="0" hidden></div>
     </section>

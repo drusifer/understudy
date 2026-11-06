@@ -24,11 +24,11 @@ def plan(document: dict) -> dict:
     beats = document["scene"]["beats"]
     known = set(pieces) | set(beats)
     nodes = [{"id": name, "kind": "piece", "write": entry.get("access") == "write", "flow": False, "final": False,
-              "waits": False, "action": None, "with": None} for name, entry in pieces.items()]
+              "waits": False, "action": None, "with": None, "path": entry.get("path")} for name, entry in pieces.items()]
     edges = []
     for name, beat in beats.items():
         nodes.append({"id": name, "kind": "beat", "write": False, "flow": is_flow(beat), "final": bool(beat.get("final")),
-                      "waits": not is_flow(beat), "action": _action(beat), "with": _with_text(beat)})
+                      "waits": not is_flow(beat), "action": _action(beat), "with": _with_text(beat), "path": None})
         edges.extend({"from": each, "to": name, "kind": "reads"} for each in _reads(beat, known) if each != name)
         edges.extend(_moves(name, beat))
         written = beat.get("do", {}).get("write")

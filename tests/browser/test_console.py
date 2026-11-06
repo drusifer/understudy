@@ -52,7 +52,7 @@ READABLE = [
     ".panel-head span", ".jev > summary", ".offline", ".no-match",
     "#spending-title", ".spend-name", ".spend-amount", ".spend-more",
     ".typed-label", ".pick-option", ".toggle", ".readout", ".count-box", ".step-button",
-    "#chart-title", "#chart-note", ".state-name", ".edge-label-text",
+    "#chart-title", "#chart-note", ".state-name", ".state-detail", ".row-badge", ".start-tag", ".legend", ".edge-label-text",
 ]
 
 # While one element is measured its text is invisible and nothing animates, so a screenshot shows only the backdrop.
@@ -703,6 +703,20 @@ class StatechartTest(BrowserCase):
         page.locator(f".sketch-tab[title^='{name}']").click()
         return page
 
+    def test_a_box_says_what_the_beat_does_a_completed_one_how_many_rows_and_the_first_is_marked_start(self):
+        name = "run-20261101T165500-0000000b"
+        story = plan_of([{**beat("a"), "action": "map.where"}, beat("b", True)], [("a", "b")], "a")
+        story["plan"]["nodes"].append({"id": "f", "kind": "piece", "write": False, "flow": False, "final": False, "waits": False,
+                                       "action": None, "with": None, "path": "sales.jsonl"})
+        done = {"event": "beat_completed", "at": stamp(2), "beat": "a", "read": {}, "wrote": {}, "made": {"rows": 3, "keys": ["x"]}}
+        self.run_with_story(name, [entered(1, "a", "start"), done], {"status": "running", "beats": {}}, story=story)
+        page = self.open(name)
+        page.wait_for_selector(".state-detail")
+        self.assertEqual(sorted(page.locator(".state-detail").all_text_contents()), ["map.where", "sales.jsonl"])
+        self.assertEqual(page.locator(".row-badge").all_text_contents(), ["3 rows"])
+        self.assertEqual(page.locator(".start-tag").all_text_contents(), ["START"])
+        self.assertIn("map.where", page.get_by_role("button", name="a, current beat, map.where, 3 rows").get_attribute("aria-label"))
+
     def test_the_step_view_follows_the_run_and_a_clicked_beat_shows_what_it_read_and_made(self):
         name = "run-20261101T165000-00000009"
         done = {"event": "beat_completed", "at": stamp(2), "beat": "a", "read": {"sales": {"rows": 3, "keys": ["drinks", "week"]}},
@@ -863,7 +877,7 @@ def contrast_problems(base: str, theme: str, mode: str) -> list[str]:
                 continue
             target = page.locator("[data-contrast-target]").first
             pixels = decode_png(target.screenshot())  # the text is invisible here (see HIDE_TEXT), so this is only what is behind it
-            page.evaluate("document.querySelector('[data-contrast-target]').removeAttribute('data-contrast-target')")
+            page.evaluate("document.querySelector('[data-contrast-target]')?.removeAttribute('data-contrast-target')")
             large = found["size"] >= 24 or (found["size"] >= 18.66 and found["weight"] >= 700)
             needed = 3.0 if large else 4.5
             worst = min((contrast(found["color"], background) for background in backdrops(pixels)), default=21.0)
@@ -1018,7 +1032,7 @@ class ReplayBarTest(BrowserCase):
                     continue
                 target = page.locator("[data-contrast-target]").first
                 pixels = decode_png(target.screenshot())
-                page.evaluate("document.querySelector('[data-contrast-target]').removeAttribute('data-contrast-target')")
+                page.evaluate("document.querySelector('[data-contrast-target]')?.removeAttribute('data-contrast-target')")
                 worst = min((contrast(found["color"], background) for background in backdrops(pixels)), default=21.0)
                 if worst < 4.5:
                     problems.append(f"{label} {selector}: {worst:.2f}")
@@ -1139,7 +1153,7 @@ class DecisionPanelTest(BrowserCase):
                     continue
                 target = page.locator("[data-contrast-target]").first
                 pixels = decode_png(target.screenshot())
-                page.evaluate("document.querySelector('[data-contrast-target]').removeAttribute('data-contrast-target')")
+                page.evaluate("document.querySelector('[data-contrast-target]')?.removeAttribute('data-contrast-target')")
                 worst = min((contrast(found["color"], background) for background in backdrops(pixels)), default=21.0)
                 if worst < 4.5:
                     problems.append(f"{theme}/{mode} {selector}: {worst:.2f}")

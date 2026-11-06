@@ -69,6 +69,11 @@ class SmallPlan(unittest.TestCase):
         text = node(long, "a")["with"]
         self.assertTrue(len(text) <= WITH_CHARS and text.endswith("..."))
 
+    def test_a_file_carries_its_path_for_the_diagram_to_say_what_it_is(self):
+        self.assertEqual(node(self.found, "rows")["path"], "rows.jsonl")
+        self.assertEqual(node(self.found, "out")["path"], "out.jsonl")
+        self.assertIsNone(node(self.found, "joined")["path"])
+
     def test_a_move_is_a_to_and_each_transition_with_its_guard(self):
         self.assertEqual(edges(self.found, "move"), {("checker", "gone"), ("checker", "writer"), ("writer", "done")})
         guarded = [each for each in self.found["edges"] if each["kind"] == "move" and each["to"] == "gone"]

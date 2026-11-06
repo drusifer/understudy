@@ -170,10 +170,26 @@ function nodeWords(node) {
 // `options.pick(node)` makes the nodes `options.can(node)` accepts clickable (`options.picked` names the one chosen), for a
 // diagram the person chooses a beat on: `options.mode` is 'hold' (hold the next run before it) or 'show' (show its step).
 function stateGroup(node, options = {}) {
-  const name = svgEl('text', { class: 'state-name', x: node.x + node.w / 2, y: node.y + node.h / 2 + 5, 'text-anchor': 'middle' });
+  const detail = node.action ?? node.path ?? '';
+  const name = svgEl('text', { class: 'state-name', x: node.x + node.w / 2, y: node.y + node.h / 2 + (detail ? -1 : 5), 'text-anchor': 'middle' });
   name.textContent = node.id;
+  const under = detail ? [svgEl('text', { class: 'state-detail', x: node.x + node.w / 2, y: node.y + node.h / 2 + 14, 'text-anchor': 'middle' })] : [];
+  if (detail) under[0].textContent = detail;
+  // what the run did here, once the beat has completed: the rows it made (or wrote), in a small tag on the corner of its box
+  const said = options.steps?.[node.id];
+  const rows = said?.made?.rows ?? Object.values(said?.wrote ?? {})[0]?.rows;
+  if (rows !== undefined) {
+    const tag = svgEl('text', { class: 'row-badge', x: node.x + node.w - 2, y: node.y - 5, 'text-anchor': 'end' });
+    tag.textContent = `${rows} ${rows === 1 ? 'row' : 'rows'}`;
+    under.push(tag);
+  }
+  if (node.initial) {
+    const start = svgEl('text', { class: 'start-tag', x: node.x + 2, y: node.y - 5 });
+    start.textContent = 'START';
+    under.push(start);
+  }
   const extra = node.kind === 'piece' ? `, ${nodeWords(node)}` : node.waits ? ', performed when read' : '';
-  const label = `${node.id}${node.final ? ', final beat' : ''}${node.current ? ', current beat' : ''}${extra}`;
+  const label = `${node.id}${node.final ? ', final beat' : ''}${node.current ? ', current beat' : ''}${extra}${detail ? `, ${detail}` : ''}${rows !== undefined ? `, ${rows} rows` : ''}`;
   const piece = node.kind === 'piece';
   const box = svgEl('rect', { class: 'state-box', x: node.x, y: node.y, width: node.w, height: node.h, rx: piece ? node.h / 2 : 6 });
   const ring = node.final ? [svgEl('rect', { class: 'final-ring', x: node.x + 4, y: node.y + 4, width: node.w - 8, height: node.h - 8, rx: 4 })] : [];
@@ -185,7 +201,7 @@ function stateGroup(node, options = {}) {
     picked ? (holding ? 'hold-here' : 'chosen') : ''].filter(Boolean).join(' ');
   const attributes = pickable ? { role: 'button', tabindex: 0, 'aria-pressed': String(picked),
     'aria-label': holding ? `hold before ${node.id}` : label } : { role: 'img', 'aria-label': label };
-  const group = svgEl('g', { class: classes, ...attributes, 'data-state': node.id }, svgEl('title', {}), box, ...ring, name);
+  const group = svgEl('g', { class: classes, ...attributes, 'data-state': node.id }, svgEl('title', {}), box, ...ring, name, ...under);
   group.querySelector('title').textContent = pickable
     ? `${nodeWords(node)}: click to ${holding ? 'hold the run before this beat' : 'see what this beat read and made'}` : nodeWords(node);
   if (pickable) {
@@ -221,7 +237,7 @@ function drawChart(run) {
   if (state.view === 'plan') return; // the picked play's plan is on screen (controls.js); a run tab or a start brings the run back
   $('chart-title').textContent = `DIAGRAM OF RUN ${stamp(run.id)}`;
   drawViewButton(chart);
-  drawDiagram($('chart-wrap'), chart, { pick: pickStep, picked: state.stepBeat, mode: 'show', can: (node) => node.kind === 'beat' });
+  drawDiagram($('chart-wrap'), chart, { pick: pickStep, picked: state.stepBeat, mode: 'show', can: (node) => node.kind === 'beat', steps: run.steps });
   drawStep(run);
   if (!chart) {
     $('chart-note').textContent = 'this run\'s log has no plan, so there is no diagram to draw';

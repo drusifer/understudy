@@ -353,6 +353,12 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .chart-svg .state.pickable:hover .state-box, .chart-svg .state.pickable:focus-visible .state-box { stroke: #c2410c; stroke-width: 2.5; }
 .chart-svg .state.hold-here .state-box { fill: #ffe9b8; stroke: #8f2d1a; stroke-width: 3.5; }
 .step-text { white-space: pre-wrap; }
+.legend { margin: 0 0 8px; font-size: 14px; line-height: 1.3; color: var(--cream); }
+.chart-svg .state-detail { color: #4a3a28; fill: currentColor; font: 11px monospace; }
+.chart-svg .state.current .state-detail { color: #ffe9b8; }
+.chart-svg .row-badge { color: #1f5f8b; fill: currentColor; font: bold 10px monospace; }
+.chart-svg .state.current .row-badge { color: #ffe9b8; }
+.chart-svg .start-tag { color: #8f2d1a; fill: currentColor; font: bold 10px monospace; letter-spacing: 1px; }
 .chart-svg .state.chosen .state-box { stroke: #1f5f8b; stroke-width: 3.5; }
 .chart-svg .state.current .state-box { fill: #24180f; stroke: #c2410c; stroke-width: 3; }
 .chart-svg .state-name { color: #24170a; fill: currentColor; font: 15px monospace; }

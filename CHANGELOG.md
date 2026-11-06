@@ -3,7 +3,8 @@
 ## Sprint 31 — a big play folded to its flow (2026-11-06, branch `sprint-31`, not yet merged)
 
 - **The diagram of a play of more than 40 nodes shows its flow:** the stage's files and the flow beats, with the waiting beats left out and their reads passed through (household: 152 nodes down to 31). `SHOW ALL <n> NODES` / `SHOW ONLY THE FLOW` switches, for a plan, a run and a replay. `fold` in `src/play/plan.py`; `view=auto|flow|all` on `GET /api/plan`, `/api/runs/<id>` and `/replay`.
-- **Tests:** 637 unit tests in about 31 s; browser 51/51 in about 104 s. No change to the run log.
+- **More in the diagram (owner: "hard to understand what it is doing"):** each box shows its action under its name (and a file its path), the first beat is marked START, a completed beat shows the rows it made in a tag above its box, and a legend explains the shapes and arrows. Boxes widen for the second line.
+- **Tests:** 639 unit tests in about 31 s; browser 52/52 in about 116 s. No change to the run log. The contrast test's cleanup no longer fails when the page redraws a diagram between the picture and the cleanup.
 
 ## Sprint 30 — a console that uses the desktop (2026-11-06, branch `sprint-30`, not yet merged)
 

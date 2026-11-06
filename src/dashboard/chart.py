@@ -15,6 +15,7 @@ from src.play.plan import fold
 NODE_H = 44
 MIN_NODE_W = 150
 CHAR_W = 9  # the page's box font, about this wide per character
+DETAIL_CHAR = 7  # the smaller line under a name (a beat's action, a file's path)
 HGAP = 48
 MIN_GAP = 56  # between two rows; the first and last gap are smaller
 EDGE_GAP = 24
@@ -252,7 +253,9 @@ class _Drawing:
 
     @property
     def node_w(self) -> int:
-        return max([MIN_NODE_W] + [CHAR_W * len(name) + 24 for name in self.names])
+        details = [str(self.extras[name].get("action") or self.extras[name].get("path") or "") for name in self.names]
+        widest = [CHAR_W * len(name) + 24 for name in self.names] + [DETAIL_CHAR * len(text) + 24 for text in details]
+        return max([MIN_NODE_W, *widest])
 
     @property
     def inner(self) -> int:
