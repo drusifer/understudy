@@ -1764,9 +1764,142 @@ sequenceDiagram
     participant All
     participant Mouse
     participant Smith
-    Note over User,Smith: 📅 2026-11-06
+    participant Cypher
+    participant Switch
+    participant Morpheus
+    participant Neo
+    Note over User,Neo: 📅 2026-11-06
     User->>All: "request"
     Note right of User: "*user the console's UX<br/>is bad (owner<br/>screenshot), remove the<br/>access secret entirely,<br/>films/showings boxes<br/>look required, replay<br/>list is bar…"
     Mouse->>Smith: "sm backlog"
     Note right of Mouse: "Console UX issues added<br/>to docs/BACKLOG.md (one<br/>diagram not two, run<br/>rack clutter, cramped<br/>run view, widths and<br/>zoom, big plays, width<br/>test…"
+    Mouse->>All: "sprint 30 start"
+    Note right of Mouse: "Sprint 30 start: console<br/>UX pass (backlog<br/>section). Branch<br/>sprint-30 from main.<br/>Tier 2 story+arch next."
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Sprint 30 story+arch<br/>(Tier 2): docs/sprints/S<br/>TORY_ARCH_SPRINT30.md.<br/>UND-114 one diagram<br/>following the last<br/>choice, UND-115 short<br/>rack, UND-…"
+    Smith->>Switch: "user approve"
+    Note right of Smith: "*user approve sprint-30<br/>(combined gate). rubric<br/>STORIES: OUT=A TEST=A,<br/>ARCH: BOUND=A FLOW=A<br/>FAIL=A USER=A DECS=A<br/>FEAS=A. Note: keep SHOW<br/>PL…"
+    Switch->>Mouse: "sec handoff"
+    Note right of Switch: "security gate (design):<br/>No blocking findings.<br/>Page-only change: no new<br/>route, input or data,<br/>text still via<br/>textContent. @Mouse *sm<br/>plan sp…"
+    Mouse->>Morpheus: "sm handoff"
+    Note right of Mouse: "Sprint planned: 3 phases<br/>+ closeout in task.md.<br/>rubric PLAN: SIZE=A<br/>GATE=A VERIF=A ALIGN=A<br/>OWNER=A LEVEL=A.<br/>@Morpheus *lead review<br/>sprint p…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Sprint plan approved.<br/>Phase 1 ready. @Neo *swe<br/>impl phase-1"
 ```
+
+## Phase 1 starts
+
+Phase 1: one diagram (UND-114)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-06
+    Mouse->>All: "phase 1"
+    Note right of Mouse: "Phase 1: one diagram<br/>(UND-114)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 1 impl complete:<br/>one diagram (state.view<br/>run|plan), SHOW PLAN,<br/>start panel has no<br/>diagram, diagram+step in<br/>their own panel. Browser<br/>4…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 1 passed on<br/>the live console: run<br/>tab shows 'DIAGRAM OF<br/>RUN <stamp>', picking<br/>evening shows 'PLAN OF<br/>evening' in the same<br/>place (…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 1):<br/>No blocking findings<br/>(page only,<br/>textContent). @Morpheus<br/>*lead review phase-1"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 1 review passed.<br/>Committing. @Neo *swe<br/>impl phase-2"
+```
+
+## Phase 1 close-out
+
+- **Neo**: Phase 1 impl complete: one diagram (state.view run|plan), SHOW PLAN, start panel has no diagram, diagram+step in their own panel. Browser 4…
+- **Trin**: UAT phase 1 passed on the live console: run tab shows 'DIAGRAM OF RUN &lt;stamp&gt;', picking evening shows 'PLAN OF evening' in the same place (…
+- **Morpheus**: Phase 1 review passed. Committing. @Neo \*swe impl phase-2
+
+## Phase 2 starts
+
+Phase 2: a short run rack (UND-115)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-06
+    Mouse->>All: "phase 2"
+    Note right of Mouse: "Phase 2: a short run<br/>rack (UND-115)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 2 impl complete:<br/>rack keeps newest 8 per<br/>play + chosen, 'N<br/>older'/'fewer',<br/>unreadable group folded.<br/>2 new browser tests,<br/>suite green,…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 2 passed on<br/>the live console's real<br/>rack: 1 evening tab + a<br/>folded '28 unreadable'<br/>button, one row (was<br/>four). @Switch *sec<br/>revie…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 2):<br/>No blocking findings<br/>(page only). @Morpheus<br/>*lead review phase-2"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 2 review passed.<br/>Committing. @Neo *swe<br/>impl phase-3"
+```
+
+## Phase 2 close-out
+
+- **Neo**: Phase 2 impl complete: rack keeps newest 8 per play + chosen, 'N older'/'fewer', unreadable group folded. 2 new browser tests, suite green,…
+- **Trin**: UAT phase 2 passed on the live console's real rack: 1 evening tab + a folded '28 unreadable' button, one row (was four). @Switch \*sec revie…
+- **Morpheus**: Phase 2 review passed. Committing. @Neo \*swe impl phase-3
+
+## Phase 3 starts
+
+Phase 3: the width (UND-116)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    participant Tank
+    participant Oracle
+    participant Smith
+    participant Cypher
+    Note over Mouse,Cypher: 📅 2026-11-06
+    Mouse->>All: "phase 3"
+    Note right of Mouse: "Phase 3: the width<br/>(UND-116)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 3 impl complete:<br/>grid areas by width,<br/>paper as tall as its<br/>lines, WidthTest at 390/<br/>1280/1600/1920/2560/3840<br/>. check 630 OK, browser<br/>49…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 3 passed:<br/>screenshots at 1920 (3<br/>columns) and 1280 (2,<br/>diagram under both)<br/>read, width tests pass<br/>at 6 widths, no sideways<br/>scroll…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 3):<br/>No blocking findings<br/>(CSS and tests).<br/>@Morpheus *lead review<br/>phase-3"
+    Morpheus->>Tank: "lead handoff"
+    Note right of Morpheus: "Phase 3 review passed.<br/>All phases reviewed.<br/>@Tank *devops sdlc-check"
+    Tank->>Oracle: "devops handoff"
+    Note right of Tank: "SDLC check passed<br/>(Sprint 30): no manifest<br/>or Makefile change,<br/>check 630, browser<br/>49/49. @Oracle *ora<br/>groom"
+    Oracle->>Smith: "ora handoff"
+    Note right of Oracle: "Docs groomed<br/>(USER_GUIDE, CHANGELOG,<br/>UAT_PLAN_SPRINT30,<br/>RETRO_SPRINT30). @Smith<br/>*user test sprint-30"
+    Smith->>All: "user approve"
+    Note right of Smith: "*user approve sprint-30.<br/>rubric UAT: COVER=A<br/>STEPS=A FAIL=A DATA=A<br/>EVID=A. Rough edge: a<br/>big play's diagram is<br/>still tall, 390 px not<br/>yet l…"
+    Mouse->>Cypher: "retro"
+    Note right of Mouse: "Sprint 30 retro in docs/<br/>sprints/RETRO_SPRINT30.m<br/>d. @Cypher *pm launch<br/>sprint-30"
+    Cypher->>All: "pm launch"
+    Note right of Cypher: "*pm launch sprint-30.<br/>Sprint complete: 3<br/>stories (UND-114..116),<br/>3 phases, one diagram, a<br/>one-row rack, three<br/>columns on desktop with<br/>width…"
+```
+
+## Phase 3 close-out
+
+- **Morpheus**: Phase 3 review passed. All phases reviewed. @Tank \*devops sdlc-check
+- **Tank**: SDLC check passed (Sprint 30): no manifest or Makefile change, check 630, browser 49/49. @Oracle \*ora groom
+- **Smith**: \*user approve sprint-30. rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A. Rough edge: a big play's diagram is still tall, 390 px not yet l…
+
+## Sprint close-out
+
+- **Cypher**: \*pm launch sprint-30. Sprint complete: 3 stories (UND-114..116), 3 phases, one diagram, a one-row rack, three columns on desktop with width…

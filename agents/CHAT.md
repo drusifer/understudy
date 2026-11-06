@@ -2247,3 +2247,136 @@ OK
 ---
 [<small>2026-11-06 17:06:42</small>] [**Mouse**]->[**Smith**] *sm backlog*:
  Console UX issues added to docs/BACKLOG.md (one diagram not two; run rack clutter; cramped run view; widths and zoom; big plays; width tests). Start-panel two-column layout done, uncommitted. @Smith *user review console-ux
+
+---
+[<small>2026-11-06 17:08:25</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make push | /home/drusifer/Projects/understudy/build/build.out
+5:08PM INF scanned ~3363 bytes (3.36 KB) in 240ms
+5:08PM INF no leaks found
+To github.com:drusifer/understudy.git
+ac4d518..bb866aa  main -> main
+
+---
+[<small>2026-11-06 17:08:25</small>] [**Mouse**]->[**all**] *sprint 30 start*:
+ Sprint 30 start: console UX pass (backlog section). Branch sprint-30 from main. Tier 2 story+arch next.
+
+---
+[<small>2026-11-06 17:09:06</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Sprint 30 story+arch (Tier 2): docs/sprints/STORY_ARCH_SPRINT30.md. UND-114 one diagram following the last choice; UND-115 short rack; UND-116 desktop columns + width tests. @Smith *user review sprint-30
+
+---
+[<small>2026-11-06 17:09:06</small>] [**Smith**]->[**Switch**] *user approve*:
+ *user approve sprint-30 (combined gate). rubric STORIES: OUT=A TEST=A; ARCH: BOUND=A FLOW=A FAIL=A USER=A DECS=A FEAS=A. Note: keep SHOW PLAN visible without opening the panel's details if easy; verify 50% zoom. @Switch *sec threat sprint-30
+
+---
+[<small>2026-11-06 17:09:06</small>] [**Switch**]->[**Mouse**] *sec handoff*:
+ security gate (design): No blocking findings. Page-only change: no new route, input or data; text still via textContent. @Mouse *sm plan sprint-30
+
+---
+[<small>2026-11-06 17:09:20</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint planned: 3 phases + closeout in task.md. rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A LEVEL=A. @Morpheus *lead review sprint plan
+
+---
+[<small>2026-11-06 17:09:20</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Sprint plan approved. Phase 1 ready. @Neo *swe impl phase-1
+
+---
+[<small>2026-11-06 17:09:20</small>] [**Mouse**]->[**all**] *phase 1*:
+ Phase 1: one diagram (UND-114)
+
+---
+[<small>2026-11-06 17:12:32</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make lint | /home/drusifer/Projects/understudy/build/build.out
+=== make lint @ 2026-11-06 17:12:32 ===
+.venv/bin/ruff check src tests
+All checks passed!
+
+---
+[<small>2026-11-06 17:12:39</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 1 impl complete: one diagram (state.view run|plan), SHOW PLAN, start panel has no diagram, diagram+step in their own panel. Browser 45/45, lint ok. @Trin *qa uat phase-1
+
+---
+[<small>2026-11-06 17:12:40</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 1 passed on the live console: run tab shows 'DIAGRAM OF RUN <stamp>'; picking evening shows 'PLAN OF evening' in the same place (one .chart-svg); a run tab returns the run. @Switch *sec review phase-1
+
+---
+[<small>2026-11-06 17:12:40</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 1): No blocking findings (page only; textContent). @Morpheus *lead review phase-1
+
+---
+[<small>2026-11-06 17:12:40</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 1 review passed. Committing. @Neo *swe impl phase-2
+
+---
+[<small>2026-11-06 17:12:40</small>] [**Mouse**]->[**all**] *phase 2*:
+ Phase 2: a short run rack (UND-115)
+
+---
+[<small>2026-11-06 17:15:37</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make lint | /home/drusifer/Projects/understudy/build/build.out
+=== make lint @ 2026-11-06 17:15:36 ===
+.venv/bin/ruff check src tests
+All checks passed!
+
+---
+[<small>2026-11-06 17:15:48</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 2 impl complete: rack keeps newest 8 per play + chosen, 'N older'/'fewer', unreadable group folded. 2 new browser tests, suite green, lint ok. @Trin *qa uat phase-2
+
+---
+[<small>2026-11-06 17:15:48</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 2 passed on the live console's real rack: 1 evening tab + a folded '28 unreadable' button, one row (was four). @Switch *sec review phase-2
+
+---
+[<small>2026-11-06 17:15:48</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 2): No blocking findings (page only). @Morpheus *lead review phase-2
+
+---
+[<small>2026-11-06 17:15:48</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 2 review passed. Committing. @Neo *swe impl phase-3
+
+---
+[<small>2026-11-06 17:15:48</small>] [**Mouse**]->[**all**] *phase 3*:
+ Phase 3: the width (UND-116)
+
+---
+[<small>2026-11-06 17:21:36</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make lint | /home/drusifer/Projects/understudy/build/build.out
+=== make lint @ 2026-11-06 17:21:36 ===
+.venv/bin/ruff check src tests
+All checks passed!
+
+---
+[<small>2026-11-06 17:22:13</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 3 impl complete: grid areas by width, paper as tall as its lines, WidthTest at 390/1280/1600/1920/2560/3840. check 630 OK; browser 49/49. @Trin *qa uat phase-3
+
+---
+[<small>2026-11-06 17:22:13</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 3 passed: screenshots at 1920 (3 columns) and 1280 (2, diagram under both) read; width tests pass at 6 widths, no sideways scroll. @Switch *sec review phase-3
+
+---
+[<small>2026-11-06 17:22:13</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 3): No blocking findings (CSS and tests). @Morpheus *lead review phase-3
+
+---
+[<small>2026-11-06 17:22:13</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
+ Phase 3 review passed. All phases reviewed. @Tank *devops sdlc-check
+
+---
+[<small>2026-11-06 17:22:13</small>] [**Tank**]->[**Oracle**] *devops handoff*:
+ SDLC check passed (Sprint 30): no manifest or Makefile change; check 630, browser 49/49. @Oracle *ora groom
+
+---
+[<small>2026-11-06 17:22:13</small>] [**Oracle**]->[**Smith**] *ora handoff*:
+ Docs groomed (USER_GUIDE, CHANGELOG, UAT_PLAN_SPRINT30, RETRO_SPRINT30). @Smith *user test sprint-30
+
+---
+[<small>2026-11-06 17:22:13</small>] [**Smith**]->[**all**] *user approve*:
+ *user approve sprint-30. rubric UAT: COVER=A STEPS=A FAIL=A DATA=A EVID=A. Rough edge: a big play's diagram is still tall; 390 px not yet looked at by eye. @all *sprint retro
+
+---
+[<small>2026-11-06 17:22:13</small>] [**Mouse**]->[**Cypher**] *retro*:
+ Sprint 30 retro in docs/sprints/RETRO_SPRINT30.md. @Cypher *pm launch sprint-30
+
+---
+[<small>2026-11-06 17:22:14</small>] [**Cypher**]->[**all**] *pm launch*:
+ *pm launch sprint-30. Sprint complete: 3 stories (UND-114..116), 3 phases; one diagram, a one-row rack, three columns on desktop with width tests. Branch sprint-30 committed locally, NOT merged or pushed.
