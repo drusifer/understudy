@@ -264,6 +264,56 @@ class SpendingListTest(BrowserCase):
                                       " return box.left >= 0 && box.right <= window.innerWidth; })()"))
 
 
+WIDTHS = ((390, "one"), (1280, "two"), (1600, "three"), (1920, "three"), (2560, "three"), (3840, "three"))  # 3840: 1920 zoomed to 50%
+
+
+class WidthTest(BrowserCase):
+    """UND-116: the run view is three columns from 1400 px, two from 1101, one below; the page never scrolls sideways."""
+
+    def open_at(self, width):
+        name = "run-20261101T170000-00000001"
+        started = {"event": "run_started", "at": stamp(0), "play": "x/chart.yaml", "mode": "live", **STORY}
+        write_run(self.runs, name, [started, entered(1, "a", "start"), entered(2, "b", "ok")], {"status": "running", "beats": {}})
+        page = self.page(width, 1000)
+        page.goto(self.start())
+        page.wait_for_selector(".state")
+        return page
+
+    def boxes(self, page):
+        return {key: page.locator(selector).bounding_box() for key, selector in (
+            ("printer", "#printer"), ("readouts", ".tube-panel:not(.diagram-panel)"), ("diagram", ".diagram-panel"))}
+
+    def test_the_columns_follow_the_width_and_the_page_never_scrolls_sideways(self):
+        for width, columns in WIDTHS:
+            page = self.open_at(width) if width == WIDTHS[0][0] else self.reopen(width)
+            self.assertTrue(page.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth"), width)
+            box = self.boxes(page)
+            if columns == "three":
+                self.assertTrue(box["printer"]["x"] < box["readouts"]["x"] < box["diagram"]["x"], width)
+                self.assertLess(abs(box["printer"]["y"] - box["diagram"]["y"]), 40, width)  # one row
+            elif columns == "two":
+                self.assertLess(box["printer"]["x"], box["readouts"]["x"], width)
+                self.assertGreater(box["diagram"]["y"], box["readouts"]["y"] + box["readouts"]["height"] - 1, width)  # under both
+            else:
+                self.assertTrue(box["readouts"]["y"] < box["diagram"]["y"] < box["printer"]["y"], width)  # stacked, readouts first
+
+    def reopen(self, width):
+        page = self.page(width, 1000)
+        page.goto(self.base)
+        page.wait_for_selector(".state")
+        return page
+
+    def start(self, *args, **options):
+        self.base = super().start(*args, **options)
+        return self.base
+
+    def test_the_paper_is_as_tall_as_its_lines_not_a_tall_empty_block(self):
+        page = self.open_at(1600)
+        window = page.locator("#paper-window").bounding_box()
+        lines = page.locator("#paper").bounding_box()
+        self.assertLess(window["height"], lines["height"] + 40)
+
+
 class ShortRackTest(BrowserCase):
     """UND-115: the rack shows a play's newest 8 runs and the chosen one, folds the rest, and folds the unreadable runs."""
 
@@ -775,6 +825,7 @@ def contrast_problems(base: str, theme: str, mode: str) -> list[str]:
         page.wait_for_selector(".banner")
         page.locator("#controls > summary").click()
         page.select_option("#sketch-pick", "typed.yaml")  # its dial, fader, stepper and switch are read in every look
+        page.wait_for_selector("#chart-wrap .state")  # the picked play's plan replaces the diagram; let it settle before measuring
         page.fill("#find-text", "zzz-nothing")
         for selector in READABLE:
             found = page.evaluate(FIRST_VISIBLE_JS, selector)

@@ -458,3 +458,22 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .no-match { background: var(--note-bg, #efe6cf); color: var(--note-ink, #24170a); }
 :root[data-theme="steampunk"][data-mode="dark"] .find-check { color: #e8d9b8; }
 :root[data-theme="steampunk"][data-mode="dark"] .printer-head { color: #b3aea6; }
+
+/* Sprint 30: the run view by width. Wide (1400 px and up): printer | readouts | diagram. Medium (1101 to 1399): printer |
+   readouts, with the diagram under both. Narrow (1100 and below): one column, readouts, diagram, printer. The printer's paper
+   is as tall as its lines, up to the window height; the diagram scrolls inside its box when it is taller than the window. */
+.stage.watch { grid-template-columns: minmax(0, 1fr); align-items: start; min-height: 0; }
+.stage.watch > .printer { grid-area: printer; }
+.stage.watch > .tube-panel:not(.diagram-panel) { grid-area: readouts; }
+.stage.watch > .diagram-panel { grid-area: diagram; }
+.stage.watch { grid-template-areas: "readouts" "diagram" "printer"; }
+.stage.watch .printer .glass { flex: 0 1 auto; min-height: 0; }
+.stage.watch .printer .paper-window { flex: 0 1 auto; height: auto; min-height: 120px; max-height: min(612px, calc(100vh - 230px)); }
+.diagram-panel .chart-wrap { max-height: calc(100vh - 260px); min-height: 200px; }
+@media (min-width: 1101px) {
+  .stage.watch { grid-template-columns: minmax(300px, 1fr) minmax(0, 1.2fr); grid-template-areas: "printer readouts" "diagram diagram"; }
+}
+@media (min-width: 1400px) {
+  .stage.watch { grid-template-columns: minmax(300px, 0.8fr) minmax(0, 1fr) minmax(0, 1.3fr); grid-template-areas: "printer readouts diagram"; }
+  .stage.watch > .diagram-panel { position: sticky; top: 8px; }
+}

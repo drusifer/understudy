@@ -4,7 +4,7 @@
 *   **Tier**: Tier 2 (story and architecture in one document)
 *   **Total Points**: about 12
 *   **Branch**: `sprint-30` (cut from `main` bb866aa)
-*   **Status**: In progress (planned 2026-11-06)
+*   **Status**: Complete 2026-11-06 (launched); branch `sprint-30` committed, not merged or pushed
 *   **Plan**: `docs/sprints/STORY_ARCH_SPRINT30.md`. Backlog: "Console UX pass" in `docs/BACKLOG.md`; decision 44.
 
 ---
@@ -31,16 +31,16 @@ Edit files with Edit/Write only (owner rule: no sed, no scripts). The page is ch
 - [x] **Task 2.3:** Security quick pass, then code review. **L1**. (*Owner: Switch, then Morpheus | Trace: design gate | Verification: verdict lines*)
 
 ### Phase 3: The width (UND-116)
-- [ ] **Task 3.1:** Grid areas by width (three, two, one column); the printer's paper as tall as its lines. **L2**. (*Owner: Neo | Trace: UND-116 AC1-2 | Verification: browser tests*)
-- [ ] **Task 3.2:** Browser tests at 390, 1280, 1600, 1920, 2560 and 1920 at 50 percent zoom: the columns and no sideways scroll. **L2**. (*Owner: Neo, Trin | Trace: UND-116 AC3-4 | Verification: the new tests pass; the whole suite passes*)
-- [ ] **Task 3.3:** Screenshots at each width read by Smith; security quick pass; code review. **L1**. (*Owner: Smith, Switch, Morpheus | Trace: UND-116 | Verification: verdict lines*)
+- [x] **Task 3.1:** Grid areas by width (three, two, one column); the printer's paper as tall as its lines. **L2**. (*Owner: Neo | Trace: UND-116 AC1-2 | Verification: browser tests*)
+- [x] **Task 3.2:** Browser tests at 390, 1280, 1600, 1920, 2560 and 1920 at 50 percent zoom: the columns and no sideways scroll. **L2**. (*Owner: Neo, Trin | Trace: UND-116 AC3-4 | Verification: the new tests pass; the whole suite passes*)
+- [x] **Task 3.3:** Screenshots at each width read by Smith; security quick pass; code review. **L1**. (*Owner: Smith, Switch, Morpheus | Trace: UND-116 | Verification: verdict lines*)
 
 ---
 
 ## Stage 3: Sprint Closeout
 
-- [ ] **Task C.1:** SDLC conformance check (`*devops sdlc-check`). (*Owner: Tank | Verification: `bobp make check` exit 0*)
-- [ ] **Task C.2:** Document grooming (USER_GUIDE, ARCH, changelog, lessons), chat report. (*Owner: Oracle | Verification: docs changed*)
-- [ ] **Task C.3:** End-to-end user testing against `docs/sprints/UAT_PLAN_SPRINT30.md`. (*Owner: Smith*)
-- [ ] **Task C.4:** Retrospective (`docs/sprints/RETRO_SPRINT30.md`). (*Owner: Mouse*)
-- [ ] **Task C.5:** Sprint launch. Merge and push only when the owner asks. (*Owner: Cypher*)
+- [x] **Task C.1:** SDLC conformance check (`*devops sdlc-check`). (*Owner: Tank | Verification: `bobp make check` exit 0*)
+- [x] **Task C.2:** Document grooming (USER_GUIDE, ARCH, changelog, lessons), chat report. (*Owner: Oracle | Verification: docs changed*)
+- [x] **Task C.3:** End-to-end user testing against `docs/sprints/UAT_PLAN_SPRINT30.md`. (*Owner: Smith*)
+- [x] **Task C.4:** Retrospective (`docs/sprints/RETRO_SPRINT30.md`). (*Owner: Mouse*)
+- [x] **Task C.5:** Sprint launch. Merge and push only when the owner asks. (*Owner: Cypher*)

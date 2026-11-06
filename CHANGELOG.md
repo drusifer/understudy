@@ -1,5 +1,13 @@
 # Changelog
 
+## Sprint 30 — a console that uses the desktop (2026-11-06, branch `sprint-30`, not yet merged)
+
+- **No login** (owner decision 44, already on `main`): the access secret, its files and the hiding of Jev level names are gone; each file box says whether it may be left empty; Replay lists only the picked play's captured runs, named; the start panel is two columns on a wide screen.
+- **One diagram, following the last choice:** a run tab shows that run's diagram; picking a play (or SHOW PLAN) shows its plan in the same place, where clicking a flow beat holds the next run before it. The start panel has no diagram of its own.
+- **A short run rack:** each play's newest 8 runs and the chosen one; `N older` / `fewer`; the runs the console cannot read are one folded group.
+- **The run view uses the width:** three columns from 1400 px (printer, readouts, diagram with step view), two from 1101 px, one below; the printer's paper is as tall as its lines. Browser tests at 390, 1280, 1600, 1920, 2560 and 3840 px (1920 at 50 percent zoom) check the columns and that the page never scrolls sideways.
+- **Tests:** 630 unit tests in about 31 s; browser 49/49 in about 109 s. No server or event change.
+
 ## Sprint 29 — see the whole play, and step through it (2026-11-05, branch `sprint-29`, not yet merged)
 
 - **The whole play is drawn:** the console's diagram shows the stage's files (read and written), the beats (a dashed border for a beat that waits until it is read) and who reads what, from one plan built from the play file (`src/play/plan.py`). A run lights it up as before; a replay does too. The same picture shows the picked play before any run (`GET /api/plan?play=<file>`).
