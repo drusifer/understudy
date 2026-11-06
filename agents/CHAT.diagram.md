@@ -1762,7 +1762,11 @@ sequenceDiagram
     autonumber
     participant User
     participant All
-    Note over User,All: 📅 2026-11-06
+    participant Mouse
+    participant Smith
+    Note over User,Smith: 📅 2026-11-06
     User->>All: "request"
     Note right of User: "*user the console's UX<br/>is bad (owner<br/>screenshot), remove the<br/>access secret entirely,<br/>films/showings boxes<br/>look required, replay<br/>list is bar…"
+    Mouse->>Smith: "sm backlog"
+    Note right of Mouse: "Console UX issues added<br/>to docs/BACKLOG.md (one<br/>diagram not two, run<br/>rack clutter, cramped<br/>run view, widths and<br/>zoom, big plays, width<br/>test…"
 ```

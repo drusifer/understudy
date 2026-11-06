@@ -276,3 +276,12 @@ Everything above this heading about the old player (watch page, dashboard, proce
 - `events.jsonl` doubled (594 KB to 1.06 MB for the real household run): trim `made` for beats nobody reads, or compress, if it matters. (Neo)
 - The console API keys `sketch`/`stage`, the `/api/sketches` route and the controls' `sketch-*` names still use the old word; rename with the engine's internals. (Neo, Morpheus)
 - Run a small test of hold-at-beat on the household play itself with the Jev double (only the scratch play and coffee were exercised live). (Trin)
+
+## Console UX pass (owner, 2026-11-06, on seeing the console; Smith to lead, Neo to build; decision 44)
+Done on 2026-11-06: no login; each file box says whether it may be left empty; Replay lists only the picked play's captured runs, named; the START A RUN panel is two columns on a wide screen (controls left, plan right). Still to do, in the owner's order of priority:
+- **One diagram, not two.** The picked play's plan (start panel) and the chosen run's diagram (run view) are the same picture. Keep one, in the run view, that follows the last choice: a run tab shows that run (current beat lit); picking a play in the start panel shows its plan, where clicking a beat sets the hold. The start panel keeps only controls, full width. (Owner asked "why two diagrams?")
+- **The run rack takes four rows** for about 30 runs, mostly "unreadable" ones from before Sprint 28 or 29. Collapse the unreadable group (or hide it), show the newest few, and keep the rest one click away.
+- **The run view is a tall, cramped column:** the printer leaves a large empty block above its lines; the diagram, step view, gauges and summary stack down the right. Use the desktop width (diagram and step view side by side; the printer's height follows its content).
+- **Zoomed out the page was unusable** (owner screenshot at about 25%): check the layout at common desktop widths (1280, 1600, 1920, 2560) and at browser zoom 50 percent, and keep phones working (narrow is fine).
+- **Big plays:** household is 152 nodes; fold or filter it (only the flow, or one beat's neighbors).
+- Add a browser test for each width above, so a layout change cannot undo it.

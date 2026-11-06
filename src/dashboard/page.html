@@ -52,16 +52,12 @@
 
 <details id="controls" class="start-panel" hidden>
   <summary>START A RUN</summary>
+  <div class="start-layout">
   <div class="start-grid">
     <label for="sketch-pick" data-launcher>Play</label>
     <select id="sketch-pick" class="find-field" data-launcher></select>
     <div id="sketch-about" class="about" data-launcher></div>
     <div id="fields" class="start-fields" data-launcher></div>
-    <section id="plan" class="chart" aria-labelledby="plan-title" data-launcher>
-      <h3 id="plan-title" class="chart-title">PLAN OF THIS PLAY</h3>
-      <p id="plan-note" class="chart-note"></p>
-      <div id="plan-wrap" class="chart-wrap" role="group" aria-label="Plan of the picked play" tabindex="0" hidden></div>
-    </section>
     <label for="replay-pick" data-launcher>Replay from</label>
     <select id="replay-pick" class="find-field" data-launcher><option value="">no - run live</option></select>
     <div class="start-buttons">
@@ -73,6 +69,12 @@
       <button type="button" id="resume" class="find-button" data-hold disabled>RESUME</button>
     </div>
     <div id="start-message" class="start-message" role="status" aria-live="polite"></div>
+  </div>
+  <section id="plan" class="chart plan-side" aria-labelledby="plan-title" data-launcher>
+    <h3 id="plan-title" class="chart-title">PLAN OF THIS PLAY</h3>
+    <p id="plan-note" class="chart-note"></p>
+    <div id="plan-wrap" class="chart-wrap" role="group" aria-label="Plan of the picked play" tabindex="0" hidden></div>
+  </section>
   </div>
 </details>
 

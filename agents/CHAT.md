@@ -2236,9 +2236,14 @@ To github.com:drusifer/understudy.git
  *user the console's UX is bad (owner screenshot); remove the access secret entirely; films/showings boxes look required; replay list is bare run ids. Smith + Neo taking it.
 
 ---
-[<small>2026-11-06 12:48:48</small>] [**make**]->[**all**] *build*:
- Build FAILED exit=2 | make dashboard | /home/drusifer/Projects/understudy/build/build.out
+[<small>2026-11-06 15:54:06</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-browser | /home/drusifer/Projects/understudy/build/build.out
+...............
 ----------------------------------------------------------------------
-Ran 630 tests in 30.305s
+Ran 44 tests in 107.536s
 
 OK
+
+---
+[<small>2026-11-06 17:06:42</small>] [**Mouse**]->[**Smith**] *sm backlog*:
+ Console UX issues added to docs/BACKLOG.md (one diagram not two; run rack clutter; cramped run view; widths and zoom; big plays; width tests). Start-panel two-column layout done, uncommitted. @Smith *user review console-ux
