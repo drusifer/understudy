@@ -76,6 +76,15 @@ def _run_check(argv: list[str], project: Path) -> list[str]:
     return [] if done.returncode == 0 else [line for line in done.stderr.splitlines() if line.strip()] or ["the check failed"]
 
 
+def _file_defaults(document: dict) -> dict[str, dict]:
+    """What the page says about each file a play reads: the `default` path it uses when none is given (None when it has
+    none, so one must be given), and whether it is `optional`."""
+    stage = document.get("stage")
+    return {name: {"default": piece.get("path"), "optional": bool(piece.get("optional"))}
+            for name, piece in (stage.items() if isinstance(stage, dict) else [])
+            if isinstance(piece, dict) and piece.get("kind") == "file" and piece.get("access", "read") == "read"}
+
+
 def _files_read(document: dict) -> set[str]:
     """The stage files a play reads: each can be given a path when it is started (`--with <name>=<file>`)."""
     stage = document.get("stage")
@@ -124,8 +133,8 @@ class Launcher:
             try:
                 document, uses = read_template(path)
             except PlayError as error:
-                scanned.append({"path": path, "file": relative, "name": path.stem, "description": "", "with": [], "inputs": [],
-                                "ok": False, "problem": error.problems[0].removeprefix(f"{path}: "), "called": set()})
+                scanned.append({"path": path, "file": relative, "name": path.stem, "description": "", "with": [], "files": {},
+                                "inputs": [], "ok": False, "problem": error.problems[0].removeprefix(f"{path}: "), "called": set()})
                 continue
             declared = props_of(document)
             wrong = [problem for name, spec in declared.items() for problem in input_problems(name, spec)]
@@ -133,6 +142,7 @@ class Launcher:
             scanned.append({"path": path, "file": relative, "name": str(document.get("name", path.stem)),
                             "description": " ".join(str(document.get("description", "")).split()),
                             "with": sorted((uses - set(declared)) | _files_read(document)),
+                            "files": _file_defaults(document),
                             "inputs": [] if wrong else [{**spec, "name": name, "label": spec.get("label", name)}
                                                         for name, spec in declared.items()],
                             "ok": valid,
@@ -148,11 +158,13 @@ class Launcher:
         path, _entry = self._sketch(name)
         return plan_layout(plan(read_template(path)[0]))
 
-    def replays(self) -> list[str]:
-        """The captured runs a replay can read, newest first."""
+    def replays(self) -> list[dict]:
+        """The captured runs a replay can read, newest first, each with the name of the play that made it (`play`; empty when
+        its run folder is gone). A capture is read only by the play that made it, so the page offers a play its own."""
         if not self.cache.is_dir():
             return []
-        return sorted((each.name for each in self.cache.iterdir() if each.is_dir() and RUN_ID.fullmatch(each.name)), reverse=True)
+        ids = sorted((each.name for each in self.cache.iterdir() if each.is_dir() and RUN_ID.fullmatch(each.name)), reverse=True)
+        return [{"id": each, "play": str(read_json(self.runs / each / "run.json").get("play", ""))} for each in ids]
 
     # -- start and stop ---------------------------------------------------------------------------------------
 
@@ -255,7 +267,7 @@ class Launcher:
     def _replay(self, replay: str | None) -> Path | None:
         if replay is None:
             return None
-        if replay not in self.replays():
+        if replay not in {each["id"] for each in self.replays()}:
             raise Refused(400, f"no captured run {replay!r}")
         return self.cache / replay
 

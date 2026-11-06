@@ -31,7 +31,7 @@ Every live Jev read is captured, so a run can be replayed offline: `--replay` ne
 network, and two replays are byte-identical.
 
 > **Status:** the move to Python and this model is done (the [epic](docs/sprints/EPIC_PYTHON_PORT.md)):
-> one runtime, one kind of play. `understudy dashboard` serves a console over your runs: watch them, see inside them and Jev's answers, and (with an access secret) start, replay and stop them.
+> one runtime, one kind of play. `understudy dashboard` serves a console over your runs: watch them, see inside them and Jev's answers, and start, replay and stop them (no login: keep it on a network you trust).
 
 ## Quick start
 
@@ -100,7 +100,7 @@ agents/                the Bob Protocol team (personas, state, chat) - see AGENT
 bobp make test        # unit tests - never calls Jev
 bobp make test-py ARGS="test_play*.py"     # only the files matching a pattern
 bobp make lint        # ruff
-bobp make dashboard   # the console over .understudy/runs, http://<this machine>:4180/ (listens on 0.0.0.0; secret in .understudy/dashboard.secret)
+bobp make dashboard   # the console over .understudy/runs, http://<this machine>:4180/ (listens on 0.0.0.0, no login)
 bobp make security-scan      # gitleaks and pip-audit (network)
 bobp make test-browser       # the console in a real Chromium (after 'bobp make install-browser')
 bobp make check       # test + lint + gitleaks secret scan (the gate)

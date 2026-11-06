@@ -332,10 +332,6 @@ function drawJev() {
     ...each.levels.map(([level, probability]) => make('div', { class: 'jev-level' }, `${level} ${probability.toFixed(2)}`))));
   const notes = [];
   if (!jev.kept) notes.push(make('div', { class: 'about' }, jev.note));
-  if (jev.hidden) {
-    notes.push(make('div', { class: 'about' }, `${jev.hidden} of these reads have level names from your own data, shown as "option N"; `
-      + 'unlock with the access secret (START A RUN panel above) to see the names'));
-  }
   if (jev.missing.length) notes.push(make('div', { class: 'about' }, `missing capture halves: ${jev.missing.join(', ')}`));
   if (jev.kept && !items.length) notes.push(make('div', { class: 'about' }, unsure ? 'no unsure reads' : 'no reads'));
   $('jev-list').replaceChildren(...notes, ...items);
@@ -376,17 +372,9 @@ $('jump-end').addEventListener('click', () => { $('paper-window').scrollTop = $(
 $('jump-failure').addEventListener('click', () => jumpTo(state.failures[0]));
 
 // A fetch that says so when the server cannot be reached, and recovers by itself on the next one that works.
-// The access secret lives in this tab only (sessionStorage), and goes out only in a header, never in an address.
-function secretHeaders() {
-  try {
-    const secret = sessionStorage.getItem('understudy.secret');
-    return secret ? { 'X-Understudy-Secret': secret } : {};
-  } catch { return {}; }
-}
-
 async function getJson(url) {
   try {
-    const value = await (await fetch(url, { headers: secretHeaders() })).json();
+    const value = await (await fetch(url)).json();
     setOffline(false);
     return value;
   } catch {

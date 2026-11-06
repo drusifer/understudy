@@ -3,10 +3,7 @@
 // shows the answer. It shares page.js's helpers ($, make, state, getJson, choose, loadRuns).
 'use strict';
 
-const controls = { enabled: false, holdable: false, authorized: false, sketches: [], watching: null };
-const SECRET_KEY = 'understudy.secret';
-const GATE_LOCKED = 'locked: you can watch, but not start, replay or stop';
-const GATE_LOCKED_HOLD = 'locked: you can watch, but not pause, step or resume';
+const controls = { enabled: false, holdable: false, sketches: [], replays: [], watching: null };
 
 function say(text, kind = '') {
   const box = $('start-message');
@@ -16,7 +13,7 @@ function say(text, kind = '') {
 
 async function post(path, body) {
   try {
-    const response = await fetch(path, { method: 'POST', headers: { ...secretHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     setOffline(false);
     return { status: response.status, body: await response.json() };
   } catch {
@@ -32,30 +29,27 @@ function currentSketch() {
 // Play and Stop say why they are off, so the next step is clear.
 function drawButtons() {
   const sketch = currentSketch();
-  const playable = controls.authorized && sketch?.ok;
+  const playable = Boolean(sketch?.ok);
   $('play').disabled = !playable;
-  $('play').title = controls.authorized ? (sketch?.ok ? 'Run this play' : 'this file cannot be read as a play') : 'needs the access secret';
+  $('play').title = playable ? 'Run this play' : 'this file cannot be read as a play';
   $('play-held').disabled = !playable;
-  $('play-held').title = controls.authorized ? (sketch?.ok ? 'Start this play held before its first beat, then STEP through it'
-    : 'this file cannot be read as a play') : 'needs the access secret';
+  $('play-held').title = playable ? 'Start this play held before its first beat, then STEP through it' : 'this file cannot be read as a play';
   const running = ['running', 'stalled', 'paused'].includes(state.chosenState);
-  $('stop').disabled = !(controls.authorized && running);
-  $('stop').title = controls.authorized ? (running ? 'Stop the run on screen' : 'the run on screen is not going') : 'needs the access secret';
+  $('stop').disabled = !running;
+  $('stop').title = running ? 'Stop the run on screen' : 'the run on screen is not going';
   drawHoldButtons();
-  $('gate-note').textContent = controls.authorized ? 'unlocked for this tab: Jev level names are shown too'
-    : (controls.enabled ? GATE_LOCKED : GATE_LOCKED_HOLD);
 }
 
 // Pause holds a run that is going before its next beat; Step and Resume work on a run that is held.
 function drawHoldButtons() {
   const goes = state.chosenState === 'running';
   const held = state.chosenState === 'paused';
-  const reason = (ok, why) => (controls.authorized ? (ok ? why : 'the run on screen is not in a state that allows this') : 'needs the access secret');
-  $('pause').disabled = !(controls.authorized && goes);
+  const reason = (ok, why) => (ok ? why : 'the run on screen is not in a state that allows this');
+  $('pause').disabled = !goes;
   $('pause').title = reason(goes, 'Hold the run before its next beat (the beat in flight finishes first)');
-  $('step').disabled = !(controls.authorized && held);
+  $('step').disabled = !held;
   $('step').title = reason(held, 'Let one beat run, then hold again');
-  $('resume').disabled = !(controls.authorized && held);
+  $('resume').disabled = !held;
   $('resume').title = reason(held, 'Run on without holding');
 }
 
@@ -170,6 +164,14 @@ function typedField(spec) {
   return make('div', { class: 'start-field' }, label, control);
 }
 
+// What a plain text box is for: a file the play reads says whether it can be left empty (its own default is used) or must be given.
+function fieldHint(sketch, name) {
+  const file = sketch.files?.[name];
+  if (!file) return 'a value for the play';
+  if (file.default) return `optional - leave empty to use ${file.default}`;
+  return file.optional ? 'optional - leave empty to skip it' : 'required - the path of a file';
+}
+
 function drawFields() {
   const sketch = currentSketch();
   $('sketch-about').textContent = sketch ? (sketch.ok ? sketch.description : `cannot be read as a play: ${sketch.problem}`) : '';
@@ -177,7 +179,9 @@ function drawFields() {
     ...(sketch?.inputs ?? []).map(typedField),
     ...(sketch?.with ?? []).map((name) => make('div', { class: 'start-field' },
       make('label', { for: `field-${name}`, class: 'typed-label' }, name),
-      make('input', { id: `field-${name}`, type: 'text', class: 'find-field', 'data-name': name, autocomplete: 'off' }))));
+      make('input', { id: `field-${name}`, type: 'text', class: 'find-field', 'data-name': name, autocomplete: 'off',
+        placeholder: fieldHint(sketch, name) }))));
+  drawReplays();
   drawButtons();
   drawPlan(sketch);
 }
@@ -228,36 +232,24 @@ async function loadControls() {
   if (!session) return;
   controls.enabled = session.controls;
   controls.holdable = Boolean(session.holdable);
-  controls.authorized = session.authorized;
   $('controls').hidden = !(controls.enabled || controls.holdable);
   for (const each of document.querySelectorAll('[data-launcher]')) each.hidden = !controls.enabled;
   for (const each of document.querySelectorAll('[data-hold]')) each.hidden = !controls.holdable;
   if (!controls.enabled) {
     $('controls').querySelector('summary').textContent = 'HOLD THIS RUN';
-    $('gate-note').textContent = GATE_LOCKED_HOLD;
     return;
   }
   controls.sketches = (await getJson('api/sketches')) ?? [];
-  const replays = (await getJson('api/replays')) ?? [];
-  $('replay-pick').replaceChildren(make('option', { value: '' }, 'no - run live'), ...replays.map((id) => make('option', { value: id }, id)));
+  controls.replays = (await getJson('api/replays')) ?? [];
   drawSketches();
 }
 
-async function unlock() {
-  const value = $('secret-box').value.trim();
-  if (!value) return;
-  try { sessionStorage.setItem(SECRET_KEY, value); } catch { /* a tab that cannot keep it has to type it again */ }
-  $('secret-box').value = '';
-  const session = await getJson('api/session');
-  controls.authorized = Boolean(session?.authorized);
-  if (!controls.authorized) {
-    try { sessionStorage.removeItem(SECRET_KEY); } catch { /* nothing kept */ }
-    say('that is not this console\'s access secret (it changes every time the console starts)', 'problem');
-  } else {
-    say('unlocked for this tab', 'ok');
-    if (state.chosen) loadJev(state.chosen);
-  }
-  drawButtons();
+// Replay offers only the captured runs of the picked play (a capture is read by the play that made it), newest first.
+function drawReplays() {
+  const sketch = currentSketch();
+  const mine = controls.replays.filter((each) => each.play === sketch?.name);
+  $('replay-pick').replaceChildren(make('option', { value: '' }, mine.length > 0 ? 'no - run live' : 'no - run live (no captured runs of this play yet)'),
+    ...mine.map((each) => make('option', { value: each.id }, `${each.id} (${each.play})`)));
 }
 
 // `held` starts the play held before its first beat; otherwise a beat picked on the plan holds the run before it.
@@ -308,8 +300,6 @@ function afterStatus(run) {
 }
 
 $('sketch-pick').addEventListener('change', drawFields);
-$('unlock').addEventListener('click', unlock);
-$('secret-box').addEventListener('keydown', (event) => { if (event.key === 'Enter') unlock(); });
 $('play').addEventListener('click', () => play(false));
 $('play-held').addEventListener('click', () => play(true));
 $('stop').addEventListener('click', stop);

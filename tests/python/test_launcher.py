@@ -5,7 +5,6 @@ import io
 import json
 import shutil
 import socket
-import subprocess
 import sys
 import tempfile
 import threading
@@ -14,16 +13,13 @@ import unittest
 import urllib.error
 import urllib.request
 from pathlib import Path
-from unittest.mock import patch
 
-from src.dashboard import server as server_module
 from src.dashboard.runs import Launcher, Refused, _Child
-from src.dashboard.server import SECRET_FILE, announce, serve
+from src.dashboard.server import announce, serve
 from src.dashboard.view import describe
 from src.paths import ROOT
 
 COFFEE = ROOT / "tests" / "fixtures" / "coffee"
-SECRET = "s3cret-for-tests"
 PLAIN = """name: plain
 description: >
   Reads a file and says hello.
@@ -282,7 +278,19 @@ class StartTest(LauncherCase):
         self.launcher_.start("plain.yaml", {"file": "data/in.csv"}, replay="run-20261030T000000-abcdef12")
         argv = self.processes[0].argv
         self.assertIn(f"--replay={self.cache / 'run-20261030T000000-abcdef12'}", argv)
-        self.assertEqual(self.launcher_.replays(), ["run-20261030T000000-abcdef12"])
+        self.assertEqual(self.launcher_.replays(), [{"id": "run-20261030T000000-abcdef12", "play": ""}])  # no run folder: no play name
+
+    def test_a_captured_run_is_offered_with_the_name_of_the_play_that_made_it(self):
+        (self.cache / "run-20261030T000000-abcdef12").mkdir()
+        run = self.runs / "run-20261030T000000-abcdef12"
+        run.mkdir()
+        (run / "run.json").write_text(json.dumps({"status": "complete", "beats": {}, "play": "evening"}), encoding="utf-8")
+        self.assertEqual(self.launcher_.replays(), [{"id": "run-20261030T000000-abcdef12", "play": "evening"}])
+
+    def test_each_file_a_play_reads_says_what_to_do_when_it_is_left_empty(self):
+        entry = next(each for each in self.launcher().list_sketches() if each["file"] == "plain.yaml")
+        # its path is a template value, empty until one is given
+        self.assertEqual(entry["files"], {"data": {"default": "", "optional": False}})
 
     def test_a_process_that_dies_at_once_reports_why_instead_of_starting(self):
         def dies(argv, **options):
@@ -368,24 +376,18 @@ class RealStopTest(LauncherCase):
         self.assertEqual(describe(run)["state"], "stopped")
 
 
-PAUSE = 0.2  # the pause a wrong secret costs, shortened for these tests (the console's own is a second)
-
-
 class HttpTest(LauncherCase):
-    """The routes: reads stay open; every POST needs the secret, a same-origin request, and a small JSON body."""
+    """The routes: reads and starts are open (there is no login); every POST needs a same-origin request and a small JSON body."""
 
     def setUp(self):
         super().setUp()
-        patcher = patch.object(server_module, "WRONG_SECRET_PAUSE", PAUSE)
-        patcher.start()
-        self.addCleanup(patcher.stop)
         self.write("plain.yaml", PLAIN)
         self.started: list[tuple[str, dict]] = []
         launcher = self.launcher(spawn=lambda *a, **k: self.fail("not here"), check=lambda argv: [])
         self.hold_choices: list[tuple] = []
         launcher.start = lambda sketch, values, replay=None, hold=False, hold_at=None: (
             self.started.append((sketch, values)) or self.hold_choices.append((hold, hold_at)) or {"started": True, "run": None})
-        self.server = serve(self.runs, port=0, cache=self.cache, project=self.project, launcher=launcher, secret=SECRET)
+        self.server = serve(self.runs, port=0, cache=self.cache, project=self.project, launcher=launcher)
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
         self.addCleanup(self.server.server_close)
         self.addCleanup(self.server.shutdown)
@@ -406,9 +408,9 @@ class HttpTest(LauncherCase):
         noise = io.StringIO()
         with contextlib.redirect_stderr(noise):
             sock = socket.create_connection(("127.0.0.1", self.server.server_address[1]), timeout=5)
-            sock.sendall(b"POST /api/start HTTP/1.1\r\nHost: x\r\nContent-Length: 2\r\n\r\n{}")  # no secret: answered after a pause
+            sock.sendall(b"POST /api/start HTTP/1.1\r\nHost: x\r\nContent-Length: 2\r\n\r\n{}")  # a start of nothing: refused at once
             sock.close()
-            time.sleep(PAUSE + 0.4)  # long enough for the answer, after its pause, to find the hung-up client
+            time.sleep(0.4)  # long enough for the answer to find the hung-up client
         self.assertNotIn("Traceback", noise.getvalue())
 
     def test_the_sketch_list_is_open_to_read(self):
@@ -423,57 +425,44 @@ class HttpTest(LauncherCase):
         self.assertIn("problem", body)
         self.assertEqual(self.call("/api/plan")[0], 400)
 
-    def test_a_post_without_the_secret_or_with_a_wrong_one_is_401_and_starts_nothing(self):
-        began = time.monotonic()
-        self.assertEqual(self.call("/api/start", {"sketch": "plain.yaml", "with": {}})[0], 401)
-        self.assertEqual(self.call("/api/start", {"sketch": "plain.yaml", "with": {}}, {"X-Understudy-Secret": "wrong"})[0], 401)
-        self.assertGreaterEqual(time.monotonic() - began, 2 * PAUSE)  # each failed guess costs a pause
-        self.assertEqual(self.started, [])
-
     def test_the_hold_choice_in_a_start_request_reaches_the_launcher(self):
-        headers = {"X-Understudy-Secret": SECRET}
-        self.call("/api/start", {"sketch": "plain.yaml", "with": {}, "hold": True}, headers)
-        self.call("/api/start", {"sketch": "plain.yaml", "with": {}, "hold_at": "only"}, headers)
-        self.call("/api/start", {"sketch": "plain.yaml", "with": {}}, headers)
+        self.call("/api/start", {"sketch": "plain.yaml", "with": {}, "hold": True})
+        self.call("/api/start", {"sketch": "plain.yaml", "with": {}, "hold_at": "only"})
+        self.call("/api/start", {"sketch": "plain.yaml", "with": {}})
         self.assertEqual(self.hold_choices, [(True, None), (False, "only"), (False, None)])
 
-    def test_the_right_secret_starts_the_sketch_with_the_values_given(self):
+    def test_a_start_with_no_login_starts_the_sketch_with_the_values_given(self):
         request = {"sketch": "plain.yaml", "with": {"file": "data/in.csv"}}
-        status, body = self.call("/api/start", request, {"X-Understudy-Secret": SECRET})
+        status, body = self.call("/api/start", request)
         self.assertEqual((status, body["started"]), (200, True))
         self.assertEqual(self.started, [("plain.yaml", {"file": "data/in.csv"})])
 
-    def test_a_request_from_another_origin_is_403_even_with_the_secret(self):
-        headers = {"X-Understudy-Secret": SECRET, "Origin": "http://evil.example"}
-        self.assertEqual(self.call("/api/start", {"sketch": "plain.yaml", "with": {}}, headers)[0], 403)
+    def test_a_request_from_another_origin_is_403(self):
+        self.assertEqual(self.call("/api/start", {"sketch": "plain.yaml", "with": {}}, {"Origin": "http://evil.example"})[0], 403)
         self.assertEqual(self.started, [])
 
     def test_a_body_over_eight_kilobytes_is_413_and_bad_json_is_400(self):
-        headers = {"X-Understudy-Secret": SECRET}
-        self.assertEqual(self.call("/api/start", b"x" * 9000, headers)[0], 413)
-        self.assertEqual(self.call("/api/start", b"{not json", headers)[0], 400)
-        self.assertEqual(self.call("/api/start", b"[1, 2]", headers)[0], 400)
+        self.assertEqual(self.call("/api/start", b"x" * 9000)[0], 413)
+        self.assertEqual(self.call("/api/start", b"{not json")[0], 400)
+        self.assertEqual(self.call("/api/start", b"[1, 2]")[0], 400)
 
     def test_a_negative_or_unreadable_content_length_is_400_not_a_wait_for_more_data(self):
         for length in ("-1", "abc", "1.5"):
             with socket.create_connection(("127.0.0.1", self.server.server_address[1]), timeout=5) as sock:
-                sock.sendall((f"POST /api/start HTTP/1.1\r\nHost: x\r\nX-Understudy-Secret: {SECRET}\r\n"
+                sock.sendall((f"POST /api/start HTTP/1.1\r\nHost: x\r\n"
                               f"Content-Length: {length}\r\n\r\n").encode())
                 self.assertIn(b" 400 ", sock.recv(100), length)
 
     def test_methods_other_than_get_and_post_are_refused_and_unknown_posts_are_404(self):
-        headers = {"X-Understudy-Secret": SECRET}
-        self.assertEqual(self.call("/api/start", None, headers, method="DELETE")[0], 501)
-        self.assertEqual(self.call("/api/nothing", {"a": 1}, headers)[0], 404)
+        self.assertEqual(self.call("/api/start", None, method="DELETE")[0], 501)
+        self.assertEqual(self.call("/api/nothing", {"a": 1})[0], 404)
 
-    def test_the_session_route_says_whether_there_are_controls_and_whether_this_caller_may_use_them(self):
-        self.assertEqual(self.call("/api/session")[1], {"controls": True, "holdable": False, "authorized": False})
-        self.assertEqual(self.call("/api/session", None, {"X-Understudy-Secret": SECRET})[1],
-                         {"controls": True, "holdable": False, "authorized": True})
+    def test_the_session_route_says_whether_there_are_controls(self):
+        self.assertEqual(self.call("/api/session")[1], {"controls": True, "holdable": False})
 
 
 class AnnounceTest(unittest.TestCase):
-    """SEC-008: the secret goes to a private file, never to the output, which `bobp make` copies into the team chat."""
+    """The console says where it is, and nothing about a login (there is none)."""
 
     class Output:
         def __init__(self):
@@ -485,38 +474,12 @@ class AnnounceTest(unittest.TestCase):
         def flush(self):
             self.flushed += 1
 
-    def test_the_default_secret_file_is_in_the_git_ignored_cache_folder(self):
-        self.assertEqual(SECRET_FILE, ROOT / ".understudy" / "dashboard.secret")
-        ignored = subprocess.run(["git", "check-ignore", "-q", str(SECRET_FILE)], cwd=ROOT, check=False)
-        self.assertEqual(ignored.returncode, 0)
-
     def test_the_address_is_written_and_flushed_so_a_pipe_or_log_shows_it(self):
         shown = self.Output()
-        with tempfile.TemporaryDirectory() as folder:
-            announce(shown, Path("build/runs"), 4180, "the-secret", Path(folder) / "dashboard.secret")
+        announce(shown, Path("build/runs"), 4180)
         self.assertIn("0.0.0.0:4180", shown.text)
-        self.assertEqual(shown.flushed, 1)
-
-    def test_the_secret_is_saved_for_the_owner_alone_and_never_written_to_the_output(self):
-        shown = self.Output()
-        with tempfile.TemporaryDirectory() as folder:
-            target = Path(folder) / "inner" / "dashboard.secret"
-            announce(shown, Path("build/runs"), 4180, "the-secret", target)
-            self.assertEqual(target.read_text(encoding="utf-8").strip(), "the-secret")
-            self.assertEqual(target.stat().st_mode & 0o777, 0o600)
-            announce(shown, Path("build/runs"), 4180, "second-secret", target)  # a new console replaces it
-            self.assertEqual(target.read_text(encoding="utf-8").strip(), "second-secret")
-        self.assertNotIn("the-secret", shown.text)
-        self.assertNotIn("second-secret", shown.text)
-        self.assertIn("dashboard.secret", shown.text)
-
-    def test_a_console_that_cannot_start_runs_has_no_secret_to_save(self):
-        shown = self.Output()
-        with tempfile.TemporaryDirectory() as folder:
-            target = Path(folder) / "dashboard.secret"
-            announce(shown, Path("build/runs"), 4180, None, target)
-            self.assertFalse(target.exists())
         self.assertNotIn("secret", shown.text)
+        self.assertEqual(shown.flushed, 1)
 
 
 class EndToEndTest(LauncherCase):

@@ -8,7 +8,6 @@ import argparse
 import asyncio
 import contextlib
 import errno
-import secrets
 import sys
 import threading
 from collections.abc import Mapping
@@ -45,8 +44,8 @@ def _values(pairs: list[str]) -> dict[str, str]:
 EXAMPLES = """examples:
   understudy check examples/household/household.yaml --with monarch=in/monarch.csv --with amex=in/amex.csv --with amex_account=Platinum
   understudy run tests/fixtures/coffee/coffee_week.yaml --replay=tests/fixtures/coffee/replay
-  understudy run <play> --watch --pause     start held, with a console on this machine to step it (secret file)
-  understudy dashboard                    watch runs under .understudy/runs; start plays from examples/ (access secret file)
+  understudy run <play> --watch --pause     start held, with a console on this machine to step it
+  understudy dashboard                    watch runs under .understudy/runs; start plays from examples/ (no login)
   understudy runs                         the runs under .understudy/runs, newest first
 
 A failure is one `understudy: <message>` line; exit 0 is done, 1 a beat failed after the run began, 2 refused before it began."""
@@ -67,7 +66,8 @@ def _parser() -> argparse.ArgumentParser:
                              help="give the play a prop (a date, a weight) or a stage file its path; repeat for each")
     dashboard = commands.add_parser("dashboard", help="serve the console: watch runs, and start, replay and stop them",
                                     description="Serve the console on this machine's port (every network interface). It watches "
-                                    "the runs under RUNS and, for someone with the access secret, starts plays from --plays.")
+                                    "the runs under RUNS and starts plays from --plays. There is no login: anyone who can "
+                                    "reach the port can use it.")
     dashboard.add_argument("runs", type=Path, nargs="?", default=DEFAULT_OUT, metavar="RUNS", help="the folder of runs to watch")
     dashboard.add_argument("--port", type=int, default=4180, help="the port to listen on (default 4180)")
     dashboard.add_argument("--plays", type=Path, default=Path("examples"), metavar="DIR", dest="sketches",
@@ -103,7 +103,7 @@ def _dashboard(args, stdout, stderr) -> int:
             raise Refused(400, f"{args.runs} is not a folder of runs")
         args.runs.mkdir(parents=True, exist_ok=True)
         launcher = Launcher(args.sketches, args.runs)
-        serve_forever(args.runs, args.port, stdout, launcher, secrets.token_urlsafe(32))
+        serve_forever(args.runs, args.port, stdout, launcher)
     except Refused as refusal:
         stderr.write(f"understudy: {refusal.message}\n")
         return 2

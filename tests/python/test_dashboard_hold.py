@@ -8,11 +8,9 @@ import urllib.error
 import urllib.request
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from unittest.mock import patch
 
 from story_plan import story_plan
 
-from src.dashboard import server as server_module
 from src.dashboard.hold import apply_hold
 from src.dashboard.runs import Refused
 from src.dashboard.server import serve
@@ -20,7 +18,6 @@ from src.dashboard.view import describe, list_runs
 from src.play.control import read_control, write_control
 
 RUN = "run-20261103T100000-aaaaaaaa"
-SECRET = "s3cret-for-tests"
 NOW = datetime(2026, 11, 3, 10, 30, tzinfo=UTC)
 STARTED = {"event": "run_started", "play": "x/plain.yaml", "mode": "live",
            **story_plan(["a", "done"], [("a", "done")], final={"done"})}
@@ -137,11 +134,8 @@ class HoldHttpTests(unittest.TestCase):
         self.addCleanup(directory.cleanup)
         self.root = Path(directory.name)
         self.folder = write_run(self.root, [STARTED])
-        patcher = patch.object(server_module, "WRONG_SECRET_PAUSE", 0)
-        patcher.start()
-        self.addCleanup(patcher.stop)
         self.allowed = {RUN}
-        self.server = serve(self.root, port=0, secret=SECRET, controllable=lambda run: run in self.allowed)
+        self.server = serve(self.root, port=0, controllable=lambda run: run in self.allowed)
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
         self.addCleanup(self.server.server_close)
         self.addCleanup(self.server.shutdown)
@@ -156,44 +150,39 @@ class HoldHttpTests(unittest.TestCase):
         except urllib.error.HTTPError as error:
             return error.code, json.loads(error.read().decode() or "{}")
 
-    def secret(self):
-        return {"X-Understudy-Secret": SECRET}
-
     def test_the_session_says_a_console_that_can_hold_runs_can(self):
-        self.assertEqual(self.call("/api/session")[1], {"controls": False, "holdable": True, "authorized": False})
+        self.assertEqual(self.call("/api/session")[1], {"controls": False, "holdable": True})
 
     def test_pause_step_and_resume_write_the_control_for_a_run_the_console_may_control(self):
-        self.assertEqual(self.call("/api/pause", {"run": RUN}, self.secret())[1]["mode"], "hold")
+        self.assertEqual(self.call("/api/pause", {"run": RUN})[1]["mode"], "hold")
         self.assertEqual(read_control(self.folder), {"mode": "hold", "steps": 0})
-        self.assertEqual(self.call("/api/step", {"run": RUN}, self.secret())[1]["steps"], 1)
-        self.assertEqual(self.call("/api/resume", {"run": RUN}, self.secret())[1]["mode"], "run")
+        self.assertEqual(self.call("/api/step", {"run": RUN})[1]["steps"], 1)
+        self.assertEqual(self.call("/api/resume", {"run": RUN})[1]["mode"], "run")
 
-    def test_no_secret_or_another_origin_changes_nothing(self):
-        self.assertEqual(self.call("/api/pause", {"run": RUN})[0], 401)
-        self.assertEqual(self.call("/api/pause", {"run": RUN}, {**self.secret(), "Origin": "http://evil.example"})[0], 403)
+    def test_another_origin_changes_nothing(self):
+        self.assertEqual(self.call("/api/pause", {"run": RUN}, {"Origin": "http://evil.example"})[0], 403)
         self.assertFalse((self.folder / "control.json").exists())
 
     def test_a_run_the_console_did_not_start_is_refused_with_a_plain_message(self):
         self.allowed = set()
-        status, body = self.call("/api/pause", {"run": RUN}, self.secret())
+        status, body = self.call("/api/pause", {"run": RUN})
         self.assertEqual((status, body["problem"]), (404, "that run was not started by this console, or it has finished"))
         self.assertFalse((self.folder / "control.json").exists())
 
     def test_a_missing_or_wrong_run_field_is_400(self):
-        self.assertEqual(self.call("/api/pause", {}, self.secret())[0], 400)
-        self.assertEqual(self.call("/api/pause", {"run": 5}, self.secret())[0], 400)
+        self.assertEqual(self.call("/api/pause", {})[0], 400)
+        self.assertEqual(self.call("/api/pause", {"run": 5})[0], 400)
 
 
 class NoHoldConsoleTests(unittest.TestCase):
     def test_a_console_that_cannot_hold_runs_has_no_such_routes(self):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
-        server = serve(Path(directory.name), port=0, secret=SECRET)
+        server = serve(Path(directory.name), port=0)
         threading.Thread(target=server.serve_forever, daemon=True).start()
         self.addCleanup(server.server_close)
         self.addCleanup(server.shutdown)
-        request = urllib.request.Request(f"http://127.0.0.1:{server.server_address[1]}/api/pause", data=b"{}", method="POST",
-                                         headers={"X-Understudy-Secret": SECRET})
+        request = urllib.request.Request(f"http://127.0.0.1:{server.server_address[1]}/api/pause", data=b"{}", method="POST")
         with self.assertRaises(urllib.error.HTTPError) as refused:
             urllib.request.urlopen(request, timeout=10)
         self.assertEqual(refused.exception.code, 404)

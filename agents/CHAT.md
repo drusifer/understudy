@@ -2222,3 +2222,23 @@ All checks passed!
 ---
 [<small>2026-11-05 21:04:26</small>] [**Cypher**]->[**all**] *pm launch*:
  *pm launch sprint-29. Sprint complete: 3 stories (UND-111..113), 4 phases; the console draws the whole play, starts held or held before a beat, and shows what each step read, made and wrote; household byte-identical on real data; 636 tests 31 s; browser 44/44. Branch sprint-29 committed locally, NOT merged or pushed: merge and push only when the owner asks.
+
+---
+[<small>2026-11-06 11:23:22</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make push | /home/drusifer/Projects/understudy/build/build.out
+11:23AM INF scanned ~21616 bytes (21.62 KB) in 251ms
+11:23AM INF no leaks found
+To github.com:drusifer/understudy.git
+5c6206e..9064cf5  main -> main
+
+---
+[<small>2026-11-06 12:40:50</small>] [**User**]->[**all**] *request*:
+ *user the console's UX is bad (owner screenshot); remove the access secret entirely; films/showings boxes look required; replay list is bare run ids. Smith + Neo taking it.
+
+---
+[<small>2026-11-06 12:48:48</small>] [**make**]->[**all**] *build*:
+ Build FAILED exit=2 | make dashboard | /home/drusifer/Projects/understudy/build/build.out
+----------------------------------------------------------------------
+Ran 630 tests in 30.305s
+
+OK

@@ -1,21 +1,20 @@
 """`understudy dashboard`: a console over the runs under a folder (default `.understudy/runs`).
 
-This module is the HTTP side: it routes a request, serves the page files, follows a run's events and, for someone who
-holds the access secret, starts, replays and stops runs through `runs.py`. What the page shows about a run (the printed
-lines, the stages, the gauges, the rack) is decided in `view.py` and `reads.py`, so unittest covers it; the browser
-script only draws what `/api/...` returns and follows `/events/<run>` (server-sent events).
+This module is the HTTP side: it routes a request, serves the page files, follows a run's events and starts, replays and
+stops runs through `runs.py`. There is no login: anyone who can reach the console may use it
+(owner decision 44). What the page shows about a run (the printed lines, the stages, the gauges, the rack) is decided in
+`view.py` and `reads.py`, so unittest covers it; the browser script only draws what `/api/...` returns and follows
+`/events/<run>` (server-sent events).
 
     GET  /                      the page            /api/runs          the runs, newest first
     GET  static files           css, js, fonts      /api/runs/<id>     one run: stages, gauges, printed lines
     GET  /events/<id>           the lines as they are written (server-sent events)
     GET  /api/runs/<id>/jev     the run's Jev reads    /api/sketches, /api/replays, /api/session
-    POST /api/start, /api/stop  start (or replay) and stop a run: the secret, a same-origin request, a small JSON body
+    POST /api/start, /api/stop  start (or replay) and stop a run: a same-origin request, a small JSON body
 """
 
 import contextlib
-import hmac
 import json
-import os
 import re
 import threading
 import time
@@ -43,9 +42,6 @@ MAX_STREAMS = 32  # watchers at once; more get a 503 (SEC-001)
 IDLE_SECONDS = 600  # a stream with no new line for this long ends (SEC-001)
 MAX_BODY = 8192  # bytes of JSON a POST may carry (SEC-006)
 DRAIN_LIMIT = 1 << 20  # an oversized body is read (and thrown away) only up to this many bytes before the answer
-WRONG_SECRET_PAUSE = 1.0  # seconds a request with a missing or wrong secret waits before it is answered (SEC-005)
-SECRET_HEADER = "X-Understudy-Secret"
-SECRET_FILE = ROOT / ".understudy" / "dashboard.secret"  # git-ignored, readable by its owner alone (SEC-008)
 SECURITY_HEADERS = {  # SEC-003
     "X-Content-Type-Options": "nosniff",
     "Content-Security-Policy": "default-src 'self'; frame-ancestors 'none'",
@@ -66,23 +62,18 @@ class Server(ThreadingHTTPServer):
 @dataclass(frozen=True)
 class Console:
     """What a console serves and where it reads: the runs folder, the Jev captures, the project, and (when it can start
-    runs) the launcher and the access secret."""
+    runs) the launcher."""
 
     root: Path
     cache: Path = CACHE
     project: Path = ROOT
     launcher: Launcher | None = None
-    secret: str | None = None
     controllable: Callable[[str], bool] | None = None  # whether this console may hold, step and resume a run (by its id)
 
-    def holds(self, presented: str | None) -> bool:
-        """Whether the secret presented is the console's (compared in constant time); false when there is none."""
-        return bool(self.secret and presented and hmac.compare_digest(presented.encode(), self.secret.encode()))
 
-
-def route(console: Console, path: str, *, revealed: bool = False, query: str = "") -> tuple[str, object]:
+def route(console: Console, path: str, *, query: str = "") -> tuple[str, object]:
     """What a path asks for: ("json", value), ("refused", (status, message)), ("static", file name), ("events", run
-    folder), ("session", None), ("empty", None) or ("missing", None). `revealed` says the caller holds the secret."""
+    folder), ("session", None), ("empty", None) or ("missing", None)."""
     if path in {"/", "/index.html"}:
         path = "/page.html"
     fixed = {
@@ -98,18 +89,18 @@ def route(console: Console, path: str, *, revealed: bool = False, query: str = "
     if match:
         directory = console.root / match["run"]
         if directory.is_dir() and not (match["what"] == "events" and match["more"]):
-            return _run_answer(console, directory, match, revealed, query)
+            return _run_answer(console, directory, match, query)
         return "missing", None
     name = path.removeprefix("/")
     return ("static", name) if STATIC_NAMES.fullmatch(name) else ("missing", None)
 
 
-def _run_answer(console: Console, directory: Path, match: re.Match, revealed: bool, query: str) -> tuple[str, object]:
+def _run_answer(console: Console, directory: Path, match: re.Match, query: str) -> tuple[str, object]:
     """The answer for one run: a stream of its events, its Jev reads, its replay or its description."""
     if match["what"] == "events":
         return "events", directory
     if match["more"] == "/jev":
-        return "json", jev_reads(directory, console.cache, console.project, reveal=revealed)
+        return "json", jev_reads(directory, console.cache, console.project)
     if match["more"] in ("/replay", "/decisions"):
         try:
             return "json", decisions(directory) if match["more"] == "/decisions" else replay(directory, _position(query))
@@ -210,12 +201,9 @@ class ConsoleHandler(BaseHTTPRequestHandler):
     def _missing(self, _value=None) -> None:
         self._send(HTTPStatus.NOT_FOUND, b"not found", "text/plain")
 
-    def _holds_secret(self) -> bool:
-        return self.console.holds(self.headers.get(SECRET_HEADER))
-
     def do_GET(self) -> None:  # noqa: N802 - the name http.server calls
         parts = urlparse(self.path)
-        kind, value = route(self.console, parts.path, revealed=self._holds_secret(), query=parts.query)
+        kind, value = route(self.console, parts.path, query=parts.query)
         answers = {"json": self._json, "static": self._static, "empty": self._empty, "events": self._follow, "session": self._session,
                    "refused": self._refused_get}
         answers.get(kind, self._missing)(value)
@@ -224,8 +212,7 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         self._json({"problem": refusal[1]}, refusal[0])
 
     def _session(self, _value) -> None:
-        self._json({"controls": self.console.launcher is not None, "holdable": self.console.controllable is not None,
-                    "authorized": self._holds_secret()})
+        self._json({"controls": self.console.launcher is not None, "holdable": self.console.controllable is not None})
 
     def do_POST(self) -> None:  # noqa: N802 - the name http.server calls
         path = self.path.split("?", 1)[0]
@@ -242,13 +229,10 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             return self._json({"problem": refused.message}, refused.status)
 
     def _refusal(self) -> tuple[int, str] | None:
-        """Why this POST may not go on (another site, no secret), else None. A wrong secret costs a pause."""
+        """Why this POST may not go on (it came from another site's page), else None."""
         origin = self.headers.get("Origin")
         if origin and urlparse(origin).netloc != self.headers.get("Host"):
             return HTTPStatus.FORBIDDEN, "that request came from another site"
-        if not self._holds_secret():
-            time.sleep(WRONG_SECRET_PAUSE)
-            return HTTPStatus.UNAUTHORIZED, "this needs the access secret printed where the console was started"
         return None
 
     def _body(self) -> dict:
@@ -317,37 +301,24 @@ def make_handler(console: Console, poll_seconds: float = 0.5, max_streams: int =
 
 def serve(  # noqa: PLR0913 - the places a console reads from, each overridable for tests
     root: Path, port: int = 4180, host: str = "0.0.0.0", max_streams: int = MAX_STREAMS, cache: Path = CACHE, project: Path = ROOT,
-    launcher: Launcher | None = None, secret: str | None = None, controllable: Callable[[str], bool] | None = None,
+    launcher: Launcher | None = None, controllable: Callable[[str], bool] | None = None,
 ) -> Server:
     """A server for the runs under `root`; the caller starts and stops it. `controllable` says which runs it may hold."""
-    console = Console(Path(root), Path(cache), Path(project), launcher, secret, controllable)
+    console = Console(Path(root), Path(cache), Path(project), launcher, controllable)
     server = Server((host, port), make_handler(console, max_streams=max_streams))
     server.daemon_threads = True
     return server
 
 
-def save_secret(path: Path, secret: str) -> None:
-    """Write the secret to a file only its owner can read, replacing the last console's."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
-        handle.write(secret + "\n")
-    path.chmod(0o600)
-
-
-def announce(stdout, root: Path, port: int, secret: str | None, secret_file: Path) -> None:
-    """Say where the console is and where its access secret was saved, and flush (a pipe or a log file would hold the
-    lines back). The secret itself is never written to the output: `bobp make` copies output into the team chat (SEC-008)."""
+def announce(stdout, root: Path, port: int) -> None:
+    """Say where the console is, and flush (a pipe or a log file would hold the line back)."""
     stdout.write(f"dashboard: listening on 0.0.0.0:{port}  (runs under {root}; Ctrl-C to stop)\n")
-    if secret:
-        save_secret(secret_file, secret)
-        stdout.write(f"access secret for start, replay and stop: saved in {secret_file} (read it there; it changes at every start)\n")
     stdout.flush()
 
 
-def serve_forever(root: Path, port: int, stdout, launcher: Launcher | None = None, secret: str | None = None) -> None:
-    server = serve(root, port, launcher=launcher, secret=secret, controllable=launcher.holds if launcher else None)
-    announce(stdout, root, server.server_address[1], secret if launcher else None, SECRET_FILE)
+def serve_forever(root: Path, port: int, stdout, launcher: Launcher | None = None) -> None:
+    server = serve(root, port, launcher=launcher, controllable=launcher.holds if launcher else None)
+    announce(stdout, root, server.server_address[1])
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:

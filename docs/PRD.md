@@ -86,7 +86,7 @@ Status: **Delivered** (sprint), **Planned** (sprint), **Open** (not scheduled).
 |---|---|---|---|---|
 | R10 | Jev is a source: a rubric and the data it reads go in; a probability per listed level comes out; an answer outside the list is refused and asked once more. | Must | Delivered S19 | DOMAIN invariant 6 |
 | R11 | Every live Jev read is captured; `--replay` runs offline from the capture and never goes live. | Must | Delivered S19 | PLAYS.md "Capture and replay" |
-| R12 | Low-confidence Jev answers can be listed so the owner can tune them; level names that come from the owner's data are shown only to the holder of the access secret. | Should | Delivered S22 | UND-78; SEC-007 |
+| R12 | Low-confidence Jev answers can be listed so the owner can tune them; level names are shown as captured (S29: no login). | Should | Delivered S22 | UND-78 |
 
 ### 6.4 Running and outputs
 
@@ -110,7 +110,7 @@ Status: **Delivered** (sprint), **Planned** (sprint), **Open** (not scheduled).
 | R18 | A read-only console lists runs, prints their events live, shows stages and four real gauges, in three themes and light, dark or auto. | Must | Delivered S21 | UND-74 |
 | R19 | The console says whether a run is going, done or failed and what it produced, and survives losing its server. | Must | Delivered S22 | UND-76 |
 | R20 | The owner can navigate a large run: nested stages grouped with progress, a filtered printer with jumps, badges on runs, gauges that read only real fractions. | Should | Delivered S22 | UND-77, UND-88 |
-| R21 | The owner can start, replay and stop a run from the console; only someone with the access secret may. | Should | Delivered S22 | UND-79; SEC-005 accepted until 2027-01-30 |
+| R21 | The owner can start, replay and stop a run from the console, with no login (S29, owner decision 44). | Should | Delivered S22 | UND-79 |
 | R22 | The console draws the play's scene, lit with the current beat and last move. | Should | Planned S23 | OLD_VERSION_PARITY, UND-82 |
 | R23 | The owner can pause, step, resume and stop a run, and watch it from `understudy run --watch`. | Should | Planned S23 | UND-83 |
 | R24 | The owner can replay a finished run's story from its log with play, pause, step and step back. | Should | Planned S23 | UND-84 |
@@ -126,7 +126,7 @@ Status: **Delivered** (sprint), **Planned** (sprint), **Open** (not scheduled).
 | Q2 | Privacy | Private output is refused under `data/` and any non-ignored path; real values are not printed. | Delivered S17 | UND-54 AC4; P6 |
 | Q3 | Offline | `check`, `--replay` and `bobp make test` need no key and no network. | Delivered S19 | SDLC section 5 |
 | Q4 | Usability | Every error says what is wrong and how to fix it; every control is reachable by keyboard; text meets a 4.5:1 contrast ratio. | Delivered S22 (checked in a real browser: `bobp make test-browser`) | UND-80 |
-| Q5 | Security | The console, reachable from the whole network, cannot start a process without the access secret. | Delivered S22 | UND-79 AC 8, 11; Switch reviews of 2026-11-01; open: SEC-002 (reads, to 2026-12-01), SEC-005 (secret on plain HTTP, to 2027-01-30) |
+| Q5 | Security | The console, reachable from the whole network, starts only plays from its folder and refuses another site's requests; it has no login (S29). | Delivered S22, changed S29 | UND-79 AC 8, 11; Switch reviews of 2026-11-01; open: SEC-002 (reads, to 2026-12-01), SEC-005 (secret on plain HTTP, to 2027-01-30) |
 | Q6 | Maintainability | One toolchain, one gate (`bobp make check`) that includes tests, lint and the secret scan. | Delivered S21 | SDLC |
 | Q7 | Performance | A real household run of about 5,000 records with about 900 Jev reads completes in under 5 minutes, and the whole test suite in under 30 seconds. | Delivered S20 | real run 2026-10-31: 5,074 records, 932 Jev reads, 126 s; suite 233 tests in 13 s |
 
@@ -148,7 +148,7 @@ Status: **Delivered** (sprint), **Planned** (sprint), **Open** (not scheduled).
 |---|---|---|---|
 | 1 | Do you want typed inputs back (dial, faders, stepper, switches), or are `--with name=value` boxes enough? | Owner | Not wanted; R27 stays Open |
 | 2 | What is an acceptable share of records in category review, and which net-spending figure is right? (G4, G5) | Owner | No target; R17 unscheduled |
-| 3 | The console is reachable by the whole network with no login, and its access secret travels over plain HTTP. | Owner | Accepted on the home network: reads until 2026-12-01 (SEC-002), the secret until 2027-01-30 (SEC-005); then re-decide, or add TLS |
+| 3 | The console is reachable by the whole network with no login, and anyone who reaches it can start and stop runs. | Owner | Accepted on the home network (decision 44, 2026-11-06); re-decide if the machine joins a network that is not trusted |
 | 4 | The browser check needs Chromium and an optional dependency group, so it is outside the offline gate. | Tank, owner | Run `bobp make test-browser` after any change to `src/dashboard/`; the owner may make it a release gate |
 | 5 | Jev is a paid, networked service; a missing key blocks every live run. | Owner | Replay and check work offline; the capture is committed for the coffee example |
 | 6 | Foundation documents: system architecture ([ARCH.md](ARCH.md)), [TEST_STRATEGY.md](TEST_STRATEGY.md) and a security baseline review were written on 2026-11-01. Still missing: UAT plans for sprints 7-15, 20 and 21; an ADR for "Python for all". | Trin, Oracle | Trin writes Sprint 21's UAT plan; Oracle records the ADR |

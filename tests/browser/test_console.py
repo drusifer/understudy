@@ -39,7 +39,6 @@ except ImportError:  # the optional group is not installed
     sync_playwright = None
 
 CHROMIUM = os.environ.get("CHROMIUM", "/usr/bin/chromium")
-SECRET = "browser-test-secret"
 LOOKS = [(theme, mode) for theme in ("steampunk", "professional", "starship") for mode in ("light", "dark")]
 LOOK_WORKERS = 3  # browser processes measuring looks at once (the machine has four cores; the server and the test use one)
 PLAIN = ("name: plain\ndescription: a play to start\nstage:\n  data: { kind: file, path: \"{{ file }}\" }\n"
@@ -179,9 +178,8 @@ class BrowserCase(unittest.TestCase):
         self.runs.mkdir()
         self.servers: list = []
 
-    def start(self, launcher: Launcher | None = None, secret: str | None = None, controllable=None) -> str:
-        server = serve(self.runs, port=0, cache=self.root / "cache", project=self.root, launcher=launcher, secret=secret,
-                       controllable=controllable)
+    def start(self, launcher: Launcher | None = None, controllable=None) -> str:
+        server = serve(self.runs, port=0, cache=self.root / "cache", project=self.root, launcher=launcher, controllable=controllable)
         threading.Thread(target=server.serve_forever, daemon=True).start()
         self.addCleanup(server.server_close)
         self.addCleanup(server.shutdown)
@@ -324,7 +322,7 @@ class LiveFollowTest(BrowserCase):
 
 
 class StartAndStopTest(BrowserCase):
-    def test_unlock_play_and_stop_a_run_from_the_page(self):
+    def test_play_and_stop_a_run_from_the_page_with_no_login(self):
         sketches = self.root / "sketches"
         sketches.mkdir()
         (sketches / "plain.yaml").write_text(PLAIN, encoding="utf-8")
@@ -338,16 +336,9 @@ class StartAndStopTest(BrowserCase):
         launcher = Launcher(sketches, self.runs, project=self.root, cache=self.root / "cache", spawn=sleeper, check=lambda argv: [],
                             find_run=lambda sketch, before: run.name, settle=0)
         page = self.page()
-        page.goto(self.start(launcher, SECRET))
+        page.goto(self.start(launcher))
         page.locator("#controls > summary").click()
-        self.assertTrue(page.locator("#play").is_disabled())
-        self.assertIn("needs the access secret", page.locator("#play").get_attribute("title"))
-        page.fill("#secret-box", "wrong")
-        page.click("#unlock")
-        page.wait_for_function("document.getElementById('start-message').textContent.includes('not this console')")
-        self.assertTrue(page.locator("#play").is_disabled())
-        page.fill("#secret-box", SECRET)
-        page.click("#unlock")
+        self.assertEqual(page.locator("#secret-box").count(), 0)  # there is no login
         page.wait_for_function("!document.getElementById('play').disabled")
         page.fill("#field-file", "in.csv")
         page.click("#play")
@@ -360,11 +351,6 @@ class StartAndStopTest(BrowserCase):
         page.wait_for_function("document.getElementById('status-text').textContent === 'STOPPED'", timeout=15000)
         self.assertTrue(page.locator("#stop").is_disabled())
         self.assertFalse(page.locator("#play").is_disabled())
-        urls = []
-        page.on("request", lambda request: urls.append(request.url))
-        page.reload()
-        self.assertFalse(any(SECRET in each for each in urls))  # the secret is never in an address
-        self.assertFalse(page.evaluate("JSON.stringify(localStorage)").count(SECRET))
 
 
 class HoldButtonsTest(BrowserCase):
@@ -373,20 +359,15 @@ class HoldButtonsTest(BrowserCase):
             {"event": "run_started", "at": stamp(-1), "play": "p.yaml", "mode": "live", **STORY},
             {"event": "paused", "at": stamp(-1), "beat": "a"}], {"status": "running", "beats":{}})
 
-    def test_a_held_run_reads_paused_and_the_hold_buttons_work_once_unlocked_and_only_where_they_apply(self):
+    def test_a_held_run_reads_paused_and_the_hold_buttons_work_only_where_they_apply(self):
         run = self.held_run()
         page = self.page()
-        page.goto(self.start(secret=SECRET, controllable=lambda each: each == run.name))
+        page.goto(self.start(controllable=lambda each: each == run.name))
         page.wait_for_function("document.getElementById('status-text').textContent === 'PAUSED'")
         self.assertIn("paused before a", page.locator("#ended").inner_text())
         page.locator("#controls > summary").click()
         self.assertEqual(page.locator("#controls > summary").inner_text(), "HOLD THIS RUN")
         self.assertFalse(page.locator("#sketch-pick").is_visible())  # a console that starts nothing offers no sketch
-        for name in ("PAUSE", "STEP", "RESUME"):
-            self.assertTrue(page.get_by_role("button", name=name, exact=True).is_disabled(), name)  # locked
-        self.assertIn("needs the access secret", page.locator("#step").get_attribute("title"))
-        page.fill("#secret-box", SECRET)
-        page.click("#unlock")
         page.wait_for_function("!document.getElementById('step').disabled")
         self.assertTrue(page.locator("#pause").is_disabled())  # it is already held
         self.assertFalse(page.locator("#resume").is_disabled())
@@ -400,7 +381,7 @@ class HoldButtonsTest(BrowserCase):
     def test_a_console_that_cannot_hold_runs_shows_no_hold_buttons(self):
         self.held_run()
         page = self.page()
-        page.goto(self.start(secret=SECRET))
+        page.goto(self.start())
         page.wait_for_function("document.getElementById('status-text').textContent === 'PAUSED'")
         self.assertTrue(page.locator("#controls").is_hidden())
 
@@ -445,14 +426,12 @@ class TypedControlsTest(BrowserCase):
         launcher = Launcher(sketches, self.runs, project=self.root, cache=self.root / "cache", spawn=spawn, check=lambda argv: [],
                             find_run=lambda sketch, before: run.name, settle=0)
         page = self.page(width, height)
-        page.goto(self.start(launcher, SECRET))
+        page.goto(self.start(launcher))
         page.locator("#controls > summary").click()
         page.wait_for_selector("#fields [data-input]")
         return page
 
     def unlock(self, page):
-        page.fill("#secret-box", SECRET)
-        page.click("#unlock")
         page.wait_for_function("!document.getElementById('play').disabled")
 
     def test_each_declared_input_has_the_control_of_its_kind_at_its_default_with_a_name_and_a_readable_value(self):
@@ -703,7 +682,7 @@ class KeyboardTest(BrowserCase):
         (sketches / "plain.yaml").write_text(PLAIN, encoding="utf-8")
         launcher = Launcher(sketches, self.runs, project=self.root, cache=self.root / "cache")
         page = self.page()
-        page.goto(self.start(launcher, SECRET))
+        page.goto(self.start(launcher))
         page.wait_for_selector(".sketch-tab")
         page.locator(".sketch-tab").nth(1).click()
         page.wait_for_selector(".banner")
@@ -716,8 +695,8 @@ class KeyboardTest(BrowserCase):
               const label = el.getAttribute('aria-label') || el.innerText?.trim() || (el.labels && el.labels[0]?.innerText) || el.getAttribute('placeholder') || el.title || '';
               return { id: el.id || el.getAttribute('class') || el.tagName, name: label, outline: cs.outlineStyle !== 'none' && parseFloat(cs.outlineWidth) > 0 || cs.boxShadow !== 'none', tag: el.tagName }; }""")
             reached.setdefault(info["id"], info)
-        for needed in ("looks-toggle", "find-text", "find-stage", "find-failures", "jump-start", "jump-failure", "jump-end", "secret-box",
-                       "unlock", "sketch-pick", "replay-pick"):
+        for needed in ("looks-toggle", "find-text", "find-stage", "find-failures", "jump-start", "jump-failure", "jump-end",
+                       "sketch-pick", "replay-pick"):
             if needed == "looks-toggle":
                 continue  # shown only on a phone
             self.assertIn(needed, reached, f"{needed} cannot be reached with Tab; reached {sorted(reached)}")
@@ -771,7 +750,7 @@ class ContrastTest(BrowserCase):
         (sketches / "plain.yaml").write_text(PLAIN, encoding="utf-8")
         (sketches / "typed.yaml").write_text(TYPED, encoding="utf-8")
         launcher = Launcher(sketches, self.runs, project=self.root, cache=self.root / "cache")
-        base = self.start(launcher, SECRET)
+        base = self.start(launcher)
         with ProcessPoolExecutor(max_workers=LOOK_WORKERS, mp_context=multiprocessing.get_context("spawn")) as pool:
             results = list(pool.map(contrast_problems, [base] * len(LOOKS), [theme for theme, _ in LOOKS], [mode for _, mode in LOOKS]))
         problems = [problem for each in results for problem in each]

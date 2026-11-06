@@ -1755,3 +1755,14 @@ sequenceDiagram
 ## Sprint close-out
 
 - **Cypher**: \*pm launch sprint-29. Sprint complete: 3 stories (UND-111..113), 4 phases, the console draws the whole play, starts held or held before a b…
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant User
+    participant All
+    Note over User,All: 📅 2026-11-06
+    User->>All: "request"
+    Note right of User: "*user the console's UX<br/>is bad (owner<br/>screenshot), remove the<br/>access secret entirely,<br/>films/showings boxes<br/>look required, replay<br/>list is bar…"
+```

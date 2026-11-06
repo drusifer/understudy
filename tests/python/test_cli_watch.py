@@ -6,7 +6,6 @@ import re
 import socket
 import threading
 import time
-import unittest
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -14,7 +13,6 @@ from unittest.mock import patch
 
 from test_sketch_run import RunCase, library
 
-from src.dashboard import server as dashboard_server
 from src.dashboard import watch as watch_module
 from src.play.cli import main
 
@@ -26,10 +24,6 @@ HELD_AGAIN = 2  # pauses in the log once the run has made one move and been held
 class WatchCase(RunCase):
     def setUp(self):
         super().setUp()
-        self.secret_file = self.dir / "secret"
-        patcher = patch.object(watch_module, "SECRET_FILE", self.secret_file)
-        patcher.start()
-        self.addCleanup(patcher.stop)
         self.out_text, self.err_text = io.StringIO(), io.StringIO()
 
     def argv(self, *extra):
@@ -69,21 +63,12 @@ class RefusalTests(WatchCase):
         self.assertFalse(self.out.exists())
 
 
-class SecretFileTests(unittest.TestCase):
-    def test_a_watched_run_keeps_its_secret_apart_from_a_running_dashboards(self):
-        # one file for both would overwrite the dashboard's secret and lock its owner out of it
-        self.assertNotEqual(Path(watch_module.SECRET_FILE).name, Path(dashboard_server.SECRET_FILE).name)
-        self.assertEqual(Path(watch_module.SECRET_FILE).parent, Path(dashboard_server.SECRET_FILE).parent)
-
-
 class WatchTests(WatchCase):
-    def test_a_watched_run_prints_where_to_look_and_where_the_secret_is_and_never_the_secret(self):
+    def test_a_watched_run_prints_where_to_look(self):
         self.assertEqual(self.run_main("--watch"), 0)
         text = self.out_text.getvalue()
         self.assertRegex(text, ADDRESS)
-        self.assertIn(str(self.secret_file), text)
-        self.assertNotIn(self.secret_file.read_text(encoding="utf-8").strip(), text)
-        self.assertEqual(oct(self.secret_file.stat().st_mode & 0o777), "0o600")
+        self.assertNotIn("secret", text)
 
     def test_the_console_binds_this_machine_only(self):
         seen = {}
@@ -102,7 +87,7 @@ class WatchTests(WatchCase):
         thread = threading.Thread(target=lambda: result.setdefault("code", self.run_main("--watch", "--pause")))
         thread.start()
         base = self.address()
-        headers = {"X-Understudy-Secret": self.secret_file.read_text(encoding="utf-8").strip(), "Content-Type": "application/json"}
+        headers = {"Content-Type": "application/json"}
         run = self.until(lambda: self.runs(base) and self.runs(base)[0]["state"] == "paused", base)[0]["id"]
         self.assertEqual(self.post(base, "step", run, headers)["steps"], 1)
         self.until(lambda: self.events(run).count("paused") == HELD_AGAIN, base)
@@ -116,7 +101,7 @@ class WatchTests(WatchCase):
         thread = threading.Thread(target=lambda: self.run_main("--watch", "--pause"))
         thread.start()
         base = self.address()
-        headers = {"X-Understudy-Secret": self.secret_file.read_text(encoding="utf-8").strip(), "Content-Type": "application/json"}
+        headers = {"Content-Type": "application/json"}
         run = self.until(lambda: self.runs(base) and self.runs(base)[0]["state"] == "paused", base)[0]["id"]
         other = self.out / "run-20260101T000000-aaaaaaaa"
         other.mkdir()
