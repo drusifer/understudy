@@ -202,6 +202,13 @@ def _ended(state: str, run: dict, failure: dict | None, last_at: str | None, now
     return "no details for this run" if state == "unreadable" else ""
 
 
+def step_details(events: list[dict]) -> dict[str, dict]:
+    """What each completed beat said it read, made and wrote (names, rows and keys; no values), from the log alone. A beat
+    logged before the log said so is there with nothing in it."""
+    return {each["beat"]: {key: each[key] for key in ("read", "made", "wrote") if key in each}
+            for each in events if each.get("event") == "beat_completed" and "beat" in each}
+
+
 def describe(directory: Path, now: datetime | None = None) -> dict:
     """One run as the page draws it."""
     now = now or datetime.now(UTC)
@@ -231,6 +238,7 @@ def describe(directory: Path, now: datetime | None = None) -> dict:
         "mode": mode,
         "story": "plan" in started,
         "chart": overlay(started, events, state, ended) if "plan" in started else None,
+        "steps": step_details(events),
         "spending": read_spending(directory),
         "tube": tube,
         "gauges": gauges_of(summary, events, tube),

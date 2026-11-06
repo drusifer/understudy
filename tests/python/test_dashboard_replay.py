@@ -93,6 +93,33 @@ class CursorTests(ReplayCase):
             self.assertEqual(refused.exception.status, 400, at)
 
 
+SAID = {"read": {"in": {"rows": 3, "keys": ["a", "b"]}}, "wrote": {}, "made": {"rows": 2, "keys": ["c"]}}
+
+
+class StepTests(ReplayCase):
+    """UND-113: what each completed beat read, made and wrote, from the log alone."""
+
+    def events(self):
+        return [STORY, {"event": "beat_entered", "beat": "a", "caused_by": "start"}, {"event": "beat_started", "beat": "a"},
+                {"event": "beat_completed", "beat": "a", **SAID}, {"event": "beat_entered", "beat": "b", "caused_by": "ok"},
+                {"event": "beat_started", "beat": "b"}, {"event": "beat_completed", "beat": "b", "read": {}, "wrote": {}}]
+
+    def test_a_run_lists_what_each_completed_beat_said(self):
+        folder = write(self.root, self.events(), {"status": "running", "beats": {}})
+        self.assertEqual(describe(folder, NOW)["steps"], {"a": SAID, "b": {"read": {}, "wrote": {}}})
+
+    def test_a_replay_shows_only_the_beats_completed_by_that_event(self):
+        folder = write(self.root, self.events(), {"status": "running", "beats": {}})
+        self.assertEqual(replay(folder, 3)["steps"], {})
+        self.assertEqual(replay(folder, 4)["steps"], {"a": SAID})
+        self.assertEqual(replay(folder, 7)["steps"], describe(folder, NOW)["steps"])
+
+    def test_a_beat_logged_before_this_said_nothing_and_is_shown_without_the_lists_and_without_error(self):
+        events = [STORY, {"event": "beat_started", "beat": "a"}, {"event": "beat_completed", "beat": "a"}]
+        folder = write(self.root, events, {"status": "running", "beats": {}})
+        self.assertEqual(describe(folder, NOW)["steps"], {"a": {}})
+
+
 class EndingTests(ReplayCase):
     def test_a_failed_run_is_running_until_its_failure_and_then_says_why(self):
         events = [*FINISHED[:3], {"event": "beat_failed", "beat":"a", "reason": "boom"}]

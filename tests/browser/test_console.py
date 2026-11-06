@@ -592,6 +592,34 @@ class StatechartTest(BrowserCase):
         page.locator(f".sketch-tab[title^='{name}']").click()
         return page
 
+    def test_the_step_view_follows_the_run_and_a_clicked_beat_shows_what_it_read_and_made(self):
+        name = "run-20261101T165000-00000009"
+        done = {"event": "beat_completed", "at": stamp(2), "beat": "a", "read": {"sales": {"rows": 3, "keys": ["drinks", "week"]}},
+                "made": {"rows": 1, "keys": ["total"]}, "wrote": {}}
+        self.run_with_story(name, [entered(1, "a", "start"), done, entered(3, "b", "ok")], {"status": "running", "beats": {}})
+        page = self.open(name)
+        page.wait_for_selector("#step-body dd")
+        self.assertEqual(page.locator("#step-title").inner_text(), "STEP: b")  # follows the beat the run is in
+        page.locator(".state[data-state='a']").click()
+        text = page.locator("#step-body").inner_text()
+        self.assertEqual(page.locator("#step-title").inner_text(), "STEP: a")
+        self.assertIn("completed", text)
+        self.assertIn("sales: 3 rows (keys: drinks, week)", text)
+        self.assertIn("result: 1 row (keys: total)", text)
+        self.assertEqual(page.locator(".state.chosen").get_attribute("data-state"), "a")
+        page.locator(".state[data-state='a']").click()  # again: back to following the run
+        self.assertEqual(page.locator("#step-title").inner_text(), "STEP: b")
+
+    def test_a_beat_logged_without_the_lists_shows_the_step_without_them_and_without_error(self):
+        name = "run-20261101T165100-0000000a"
+        self.run_with_story(name, [entered(1, "a", "start"), {"event": "beat_completed", "at": stamp(2), "beat": "a"}],
+                            {"status": "running", "beats": {}})
+        page = self.open(name)
+        page.wait_for_selector("#step-body dd")
+        page.locator(".state[data-state='a']").click()
+        self.assertIn("completed", page.locator("#step-body").inner_text())
+        self.assertNotIn("sales", page.locator("#step-body").inner_text())
+
     def test_each_state_is_a_box_with_a_name_finals_are_double_bordered_and_only_guarded_moves_have_labels(self):
         name = "run-20261101T160000-00000001"
         self.run_with_story(name, [entered(1, "a", "start"), entered(2, "b", "ok")], {"status": "running", "beats":{}})
@@ -602,9 +630,9 @@ class StatechartTest(BrowserCase):
         self.assertEqual(page.locator(".edge").count(), 2)
         self.assertEqual(page.locator(".edge-label-text").count(), 1)
         self.assertEqual(page.locator(".edge-label-text").text_content(), "ready = true")
-        self.assertEqual(page.get_by_role("img", name="a", exact=True).count(), 1)
-        self.assertEqual(page.get_by_role("img", name="b, current beat", exact=True).count(), 1)
-        self.assertEqual(page.get_by_role("img", name="c, final beat", exact=True).count(), 1)
+        self.assertEqual(page.get_by_role("button", name="a", exact=True).count(), 1)
+        self.assertEqual(page.get_by_role("button", name="b, current beat", exact=True).count(), 1)
+        self.assertEqual(page.get_by_role("button", name="c, final beat", exact=True).count(), 1)
 
     def test_the_state_the_run_is_in_is_lit_and_the_move_just_taken_is_marked(self):
         name = "run-20261101T160100-00000002"
@@ -686,7 +714,7 @@ class KeyboardTest(BrowserCase):
             page.keyboard.press("Tab")
             info = page.evaluate("""() => { const el = document.activeElement; const cs = getComputedStyle(el);
               const label = el.getAttribute('aria-label') || el.innerText?.trim() || (el.labels && el.labels[0]?.innerText) || el.getAttribute('placeholder') || el.title || '';
-              return { id: el.id || el.className || el.tagName, name: label, outline: cs.outlineStyle !== 'none' && parseFloat(cs.outlineWidth) > 0 || cs.boxShadow !== 'none', tag: el.tagName }; }""")
+              return { id: el.id || el.getAttribute('class') || el.tagName, name: label, outline: cs.outlineStyle !== 'none' && parseFloat(cs.outlineWidth) > 0 || cs.boxShadow !== 'none', tag: el.tagName }; }""")
             reached.setdefault(info["id"], info)
         for needed in ("looks-toggle", "find-text", "find-stage", "find-failures", "jump-start", "jump-failure", "jump-end", "secret-box",
                        "unlock", "sketch-pick", "replay-pick"):
@@ -785,7 +813,7 @@ class ReplayBarTest(BrowserCase):
             page.click("#replay-step")
         page.wait_for_function(f"document.getElementById('replay-at').textContent === 'event 4 of {self.EVENTS}'")
         self.assertEqual(page.locator("#paper .line").count(), 4)
-        self.assertEqual(page.get_by_role("img", name="a, current beat", exact=True).count(), 1)
+        self.assertEqual(page.get_by_role("button", name="a, current beat", exact=True).count(), 1)
         self.assertEqual(self.text(page, "#status-text"), "REPLAY")
         page.click("#replay-back")
         page.wait_for_function(f"document.getElementById('replay-at').textContent === 'event 3 of {self.EVENTS}'")
@@ -799,7 +827,7 @@ class ReplayBarTest(BrowserCase):
         page.locator("#replay-scrub").fill(str(self.EVENTS))
         page.wait_for_function(f"document.getElementById('replay-at').textContent === 'event {self.EVENTS} of {self.EVENTS}'")
         self.assertIn("done after 2 beats", self.text(page, "#ended"))
-        self.assertEqual(page.get_by_role("img", name="c, final beat, current beat", exact=False).count(), 1)
+        self.assertEqual(page.get_by_role("button", name="c, final beat, current beat", exact=False).count(), 1)
         page.locator("#replay-scrub").fill("0")
         page.wait_for_function(f"document.getElementById('replay-at').textContent === 'event 0 of {self.EVENTS}'")
         self.assertEqual(page.locator("#paper .line").count(), 0)

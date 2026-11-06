@@ -205,7 +205,7 @@ function pickBeat(node) {
 
 function paintPlan() {
   const plan = controls.plan;
-  drawDiagram($('plan-wrap'), plan, { pick: pickBeat, picked: controls.holdAt });
+  drawDiagram($('plan-wrap'), plan, { pick: pickBeat, picked: controls.holdAt, mode: 'hold', can: (node) => node.kind === 'beat' && node.flow && !node.final });
   $('plan-note').textContent = !plan ? controls.planProblem
     : controls.holdAt ? `the next run will hold before ${controls.holdAt}; click it again to clear`
     : plan.nodes.length === 0 ? 'this play has no stage pieces and no beats'

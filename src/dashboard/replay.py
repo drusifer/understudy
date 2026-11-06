@@ -20,6 +20,7 @@ from src.dashboard.view import (
     printed,
     read_json,
     stage_tree,
+    step_details,
 )
 
 UNREADABLE = 422
@@ -114,6 +115,6 @@ def replay(directory: Path, at: int | None = None) -> dict:
                 gauge["text"], gauge["about"] = UNKNOWN, "known when the run ends"
     return {
         "id": directory.name, "at": at, "of": len(events), "state": state, "ended": ended, "hold": held, "failure": failure,
-        "chart": overlay(started, prefix, state, ended) if "plan" in started else None,
+        "chart": overlay(started, prefix, state, ended) if "plan" in started else None, "steps": step_details(prefix),
         "tube": tube, "gauges": gauges, "lines": [printed(each) for each in prefix], "seconds": round(_seconds(prefix)),
     }

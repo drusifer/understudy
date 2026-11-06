@@ -29,6 +29,9 @@ class RunRecord:
     def started(self, name: str) -> None:
         self.announce(f"beat {name}")
 
+    def detail(self, name: str, **facts) -> None:
+        """What beat `name` read and made, told just before it completes; the base record keeps none of it."""
+
     def completed(self, name: str) -> None:
         self.manifest["beats"][name] = "complete"
         self.save()

@@ -32,6 +32,29 @@ class RunStoryTests(CoffeeCase):
         self.assertTrue({("weather", "split_trade"), ("write", "done")} <= moves)
         self.assertTrue(any(each["kind"] == "piece" for each in found["nodes"]))
 
+    def completed(self):
+        return {e["beat"]: e for e in self.events if e["event"] == "beat_completed"}
+
+    def test_a_completed_beat_says_what_it_read_made_and_wrote_by_name_rows_and_keys(self):
+        done = self.completed()
+        for each in done.values():
+            self.assertIn("read", each)
+            self.assertIn("wrote", each)
+        split = done["split_trade"]
+        self.assertEqual(split["read"], {"sales": {"rows": 1, "keys": ["drinks", "week"]}})
+        self.assertEqual(split["wrote"], {})
+        self.assertGreater(split["made"]["rows"], 1)
+        self.assertIn("segment", split["made"]["keys"])
+        written = done["write"]["wrote"]
+        self.assertEqual(list(written), ["ingredients"])
+        self.assertGreater(written["ingredients"]["rows"], 0)
+        self.assertIn("ingredient", written["ingredients"]["keys"])
+
+    def test_the_log_names_and_counts_but_carries_no_row_values(self):
+        text = json.dumps([each for each in self.events if each["event"] == "beat_completed"])
+        self.assertNotIn("2026-W43", text)  # the week in the sales file
+        self.assertNotIn("1600", text)  # the drinks sold
+
     def test_every_move_to_a_beat_is_a_line_naming_the_beat_and_the_event_behind_it(self):
         moves = [(e["beat"], e["caused_by"]) for e in self.events if e["event"] == "beat_entered"]
         self.assertEqual(moves, [("weather", "start"), ("split_trade", "ok"), ("match_orders", "ok"),

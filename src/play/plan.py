@@ -7,6 +7,8 @@ are not nodes: they are values, listed by name. The names a beat reads come from
 parameters its action declares as `Source`, plus `each`, a Jev beat's options and state, and a called play's bindings.
 """
 
+import json
+
 import src.play.stages  # noqa: F401 - importing it registers the stages
 from src.play.loader import is_flow
 from src.play.registry import STAGES, Source
@@ -22,11 +24,11 @@ def plan(document: dict) -> dict:
     beats = document["scene"]["beats"]
     known = set(pieces) | set(beats)
     nodes = [{"id": name, "kind": "piece", "write": entry.get("access") == "write", "flow": False, "final": False,
-              "waits": False, "action": None} for name, entry in pieces.items()]
+              "waits": False, "action": None, "with": None} for name, entry in pieces.items()]
     edges = []
     for name, beat in beats.items():
         nodes.append({"id": name, "kind": "beat", "write": False, "flow": is_flow(beat), "final": bool(beat.get("final")),
-                      "waits": not is_flow(beat), "action": _action(beat)})
+                      "waits": not is_flow(beat), "action": _action(beat), "with": _with_text(beat)})
         edges.extend({"from": each, "to": name, "kind": "reads"} for each in _reads(beat, known) if each != name)
         edges.extend(_moves(name, beat))
         written = beat.get("do", {}).get("write")
@@ -45,6 +47,18 @@ def _action(beat: dict) -> str | None:
     if kind == "jev":
         return f"jev.{value['question']}"
     return f"{kind}:{value}"
+
+
+WITH_CHARS = 160  # the most of a beat's `with` the plan keeps: enough to tell what it asks, not a copy of the file
+
+
+def _with_text(beat: dict) -> str | None:
+    """A beat's `with:` as one short line of JSON, cut with `...` when it is long (None when it has none)."""
+    given = beat.get("with")
+    if not given:
+        return None
+    text = json.dumps(given, ensure_ascii=False, default=str)
+    return text if len(text) <= WITH_CHARS else text[:WITH_CHARS - 3] + "..."
 
 
 def _moves(name: str, beat: dict) -> list[dict]:

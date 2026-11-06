@@ -41,10 +41,10 @@ Complexity levels follow `agents/templates/_template_task.md`. **Run only the te
 
 ### Phase 4: See what each step read and wrote (UND-113)
 *Phase goal: the log and the step view say what a beat read and wrote, in names and counts.*
-- [ ] **Task 4.1:** Tests first, then the context records what a beat read; `beat_completed` carries `read` and `wrote` (names and row counts); `docs/PLAYS.md` documents them. **L2**. (*Owner: Neo | Trace: UND-113 AC1 | Verification: event tests*)
-- [ ] **Task 4.2:** The step view below the diagram, live and in replay; the plan alone before a run; a log without the fields shows the beat with no error. One browser test for hold, start, stop at the beat, step and the step view. **L2**. (*Owner: Neo | Trace: UND-113 AC2, AC3 | Verification: page tests, `bobp make test-browser` once*)
-- [ ] **Task 4.3:** UAT: household fixtures byte-identical to `build/baseline-sprint28/` (excluding `events.jsonl`); the step view of a household replay. **L2**. (*Owner: Trin | Trace: UND-113 AC1-4 | Verification: file comparison and verdicts*)
-- [ ] **Task 4.4:** Security review (event fields carry no rows), then code review. **L1**. (*Owner: Switch, then Morpheus | Trace: design gate | Verification: verdict lines*)
+- [x] **Task 4.1:** Tests first, then the context records what a beat read; `beat_completed` carries `read` and `wrote` (names and row counts); `docs/PLAYS.md` documents them. **L2**. (*Owner: Neo | Trace: UND-113 AC1 | Verification: event tests*)
+- [x] **Task 4.2:** The step view below the diagram, live and in replay; the plan alone before a run; a log without the fields shows the beat with no error. One browser test for hold, start, stop at the beat, step and the step view. **L2**. (*Owner: Neo | Trace: UND-113 AC2, AC3 | Verification: page tests, `bobp make test-browser` once*)
+- [x] **Task 4.3:** UAT: household fixtures byte-identical to `build/baseline-sprint28/` (excluding `events.jsonl`); the step view of a household replay. **L2**. (*Owner: Trin | Trace: UND-113 AC1-4 | Verification: file comparison and verdicts*)
+- [x] **Task 4.4:** Security review (event fields carry no rows), then code review. **L1**. (*Owner: Switch, then Morpheus | Trace: design gate | Verification: verdict lines*)
 
 ---
 

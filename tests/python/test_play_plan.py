@@ -5,7 +5,7 @@ from typing import ClassVar
 
 from src.paths import ROOT
 from src.play.loader import read_template
-from src.play.plan import plan
+from src.play.plan import WITH_CHARS, plan
 
 HOUSEHOLD = ROOT / "examples" / "household" / "household.yaml"
 EVENING = ROOT / "examples" / "evening" / "evening.yaml"
@@ -59,6 +59,15 @@ class SmallPlan(unittest.TestCase):
         self.assertTrue(node(self.found, "joined")["waits"])
         self.assertFalse(node(self.found, "joined")["flow"])
         self.assertEqual(node(self.found, "joined")["action"], "map.join")
+
+    def test_a_beat_carries_its_with_as_short_text_and_a_piece_has_none(self):
+        self.assertEqual(node(self.found, "joined")["with"], '{"from": "rows", "other": "other", "on": "k"}')
+        self.assertIsNone(node(self.found, "rows")["with"])
+        self.assertIsNone(node(self.found, "done")["with"])
+        big = {"do": {"map": {"action": "rows"}}, "to": "b", "with": {"rows": [{"k": "v" * 400}]}}
+        long = plan({"name": "x", "scene": {"initial": "a", "beats": {"a": big, "b": {"final": True}}}})
+        text = node(long, "a")["with"]
+        self.assertTrue(len(text) <= WITH_CHARS and text.endswith("..."))
 
     def test_a_move_is_a_to_and_each_transition_with_its_guard(self):
         self.assertEqual(edges(self.found, "move"), {("checker", "gone"), ("checker", "writer"), ("writer", "done")})

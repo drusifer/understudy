@@ -167,8 +167,8 @@ function nodeWords(node) {
   return `${node.final ? 'final beat' : node.waits ? 'beat performed when read' : 'beat'}${node.action ? `, ${node.action}` : ''}`;
 }
 
-// `options.pick(node)` makes the beats of the flow clickable (and `options.picked` names the one chosen), for a diagram the
-// person chooses a beat on; a diagram that only shows a run passes nothing.
+// `options.pick(node)` makes the nodes `options.can(node)` accepts clickable (`options.picked` names the one chosen), for a
+// diagram the person chooses a beat on: `options.mode` is 'hold' (hold the next run before it) or 'show' (show its step).
 function stateGroup(node, options = {}) {
   const name = svgEl('text', { class: 'state-name', x: node.x + node.w / 2, y: node.y + node.h / 2 + 5, 'text-anchor': 'middle' });
   name.textContent = node.id;
@@ -177,14 +177,17 @@ function stateGroup(node, options = {}) {
   const piece = node.kind === 'piece';
   const box = svgEl('rect', { class: 'state-box', x: node.x, y: node.y, width: node.w, height: node.h, rx: piece ? node.h / 2 : 6 });
   const ring = node.final ? [svgEl('rect', { class: 'final-ring', x: node.x + 4, y: node.y + 4, width: node.w - 8, height: node.h - 8, rx: 4 })] : [];
-  const pickable = Boolean(options.pick) && node.kind === 'beat' && node.flow && !node.final;
+  const pickable = Boolean(options.pick) && Boolean(options.can?.(node));
   const picked = pickable && options.picked === node.id;
+  const holding = options.mode === 'hold';
   const classes = ['state', piece ? 'piece' : '', piece && node.write ? 'write' : '', node.waits ? 'waits' : '', node.final ? 'final' : '',
-    node.current ? 'current' : '', node.initial ? 'initial' : '', pickable ? 'pickable' : '', picked ? 'hold-here' : ''].filter(Boolean).join(' ');
+    node.current ? 'current' : '', node.initial ? 'initial' : '', pickable ? 'pickable' : '',
+    picked ? (holding ? 'hold-here' : 'chosen') : ''].filter(Boolean).join(' ');
   const attributes = pickable ? { role: 'button', tabindex: 0, 'aria-pressed': String(picked),
-    'aria-label': `hold before ${node.id}` } : { role: 'img', 'aria-label': label };
+    'aria-label': holding ? `hold before ${node.id}` : label } : { role: 'img', 'aria-label': label };
   const group = svgEl('g', { class: classes, ...attributes, 'data-state': node.id }, svgEl('title', {}), box, ...ring, name);
-  group.querySelector('title').textContent = pickable ? `${nodeWords(node)}: click to hold the run before this beat` : nodeWords(node);
+  group.querySelector('title').textContent = pickable
+    ? `${nodeWords(node)}: click to ${holding ? 'hold the run before this beat' : 'see what this beat read and made'}` : nodeWords(node);
   if (pickable) {
     group.addEventListener('click', () => options.pick(node));
     group.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); options.pick(node); } });
@@ -211,10 +214,12 @@ function drawDiagram(wrap, chart, options = {}) {
     ...chart.edges.flatMap(edgeGroup), ...chart.nodes.map((node) => stateGroup(node, options))));
 }
 
-// The chosen run's diagram, with the beat it is in lit.
+// The chosen run's diagram, with the beat it is in lit; a beat clicked on it is the one the step view describes.
 function drawChart(run) {
   const chart = run.chart;
-  drawDiagram($('chart-wrap'), chart);
+  state.shownRun = run;
+  drawDiagram($('chart-wrap'), chart, { pick: pickStep, picked: state.stepBeat, mode: 'show', can: (node) => node.kind === 'beat' });
+  drawStep(run);
   if (!chart) {
     $('chart-note').textContent = 'this run\'s log has no plan, so there is no diagram to draw';
     return;
@@ -222,6 +227,42 @@ function drawChart(run) {
   const current = chart.nodes.find((node) => node.current);
   $('chart-note').textContent = chart.ended ? `ended${current ? ` in ${current.id}` : ''}: ${chart.ended}`
     : current ? `in beat ${current.id}` : 'waiting for the first beat';
+}
+
+function pickStep(node) {
+  state.stepBeat = state.stepBeat === node.id ? null : node.id;
+  drawChart(state.shownRun);
+  $('chart-wrap').querySelector(`[data-state="${CSS.escape(node.id)}"]`)?.focus(); // the diagram was drawn again
+}
+
+// "12 rows (keys: a, b, c)" for one piece a beat read, made or wrote.
+function pieceText(name, said) {
+  const keys = said.keys.length > 0 ? ` (keys: ${said.keys.join(', ')})` : '';
+  return `${name}: ${said.rows} ${said.rows === 1 ? 'row' : 'rows'}${keys}`;
+}
+
+// The step view: one beat of the play, from the plan (its action, its `with`, what it would read) and from the log (what it
+// did read, make and write, once it has completed). It names things and counts rows; the log carries no values.
+function drawStep(run) {
+  const chart = run.chart;
+  const beats = chart ? chart.nodes.filter((node) => node.kind === 'beat') : [];
+  $('step-view').hidden = beats.length === 0;
+  if (beats.length === 0) { $('step-body').replaceChildren(); return; }
+  const beat = beats.find((node) => node.id === state.stepBeat) ?? beats.find((node) => node.current) ?? beats.find((node) => node.initial) ?? beats[0];
+  const said = run.steps?.[beat.id];
+  const reads = chart.edges.filter((edge) => edge.kind === 'reads' && edge.to === beat.id).map((edge) => edge.from);
+  const status = said ? 'completed' : beat.current ? (run.state === 'paused' ? 'held before it runs' : 'running or next') : 'not run yet';
+  const lines = (found) => found && Object.keys(found).length > 0 ? Object.entries(found).map(([name, each]) => pieceText(name, each)).join('\n') : 'nothing';
+  const rows = [
+    ['beat', `${beat.id}${beat.final ? ' (final)' : beat.waits ? ' (performed when read)' : ''} - ${status}`],
+    ['action', beat.action ?? 'none'],
+    ['with', beat.with ?? 'none'],
+    ['reads, by the plan', reads.length > 0 ? reads.join(', ') : 'nothing'],
+  ];
+  if (said) rows.push(['read', lines(said.read)], ['made', said.made ? pieceText('result', said.made) : 'nothing'], ['wrote', lines(said.wrote)]);
+  $('step-title').textContent = `STEP: ${beat.id}`;
+  $('step-note').textContent = state.stepBeat ? 'click the beat again on the diagram to follow the run' : 'follows the run; click a beat on the diagram to look at another';
+  $('step-body').replaceChildren(...rows.flatMap(([name, value]) => [make('dt', {}, name), make('dd', { class: 'step-text' }, value)]));
 }
 
 const dollars = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
@@ -363,6 +404,7 @@ async function choose(id) {
   if (typeof endReplay === 'function') endReplay(false); // replay.js: choosing a run closes a replay
   state.follow?.close();
   state.chosen = id;
+  state.stepBeat = null; // the step view follows the new run until a beat is clicked
   rack();
   const run = await getJson(`api/runs/${id}`);
   if (!run) return;

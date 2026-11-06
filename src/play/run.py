@@ -39,10 +39,22 @@ class StageContext:
     summary: dict = field(default_factory=dict)
     sources: Sources | None = None
     emit: Callable[..., None] | None = None  # records an event in the run's story (`events.jsonl`)
+    reads: dict[str, dict] = field(default_factory=dict)  # what this beat read, by name: rows and keys (`shape`)
 
     async def read(self, name: str) -> list[dict]:
         """The rows of one of this sketch's sources."""
-        return await self.sources.read(self.sketch, name)
+        rows = await self.sources.read(self.sketch, name)
+        self.reads[name] = shape(rows)
+        return rows
+
+
+KEYS_SHOWN = 12  # keys of a piece's first row that the log names
+
+
+def shape(rows) -> dict:
+    """A piece as the log tells it: how many rows and the keys of the first, never a value."""
+    keys = sorted(rows[0])[:KEYS_SHOWN] if isinstance(rows, list) and rows and isinstance(rows[0], dict) else []
+    return {"rows": len(rows) if isinstance(rows, list) else 0, "keys": keys}
 
 
 @dataclass(frozen=True)
@@ -68,9 +80,20 @@ class EventedRecord(RunRecord):
         super().started(name)
         self.emit("beat_started", beat=name)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.told: dict[str, dict] = {}  # what each beat said it read and made, until it completes
+
+    def detail(self, name: str, **facts) -> None:
+        self.told[name] = facts
+
+    def take(self, name: str) -> dict:
+        """What beat `name` said it read, made and wrote (nothing read or written when it said nothing)."""
+        return self.told.pop(name, {"read": {}, "wrote": {}})
+
     def completed(self, name: str) -> None:
         super().completed(name)
-        self.emit("beat_completed", beat=name)
+        self.emit("beat_completed", beat=name, **self.take(name))
 
     def failed(self, name: str, error: Exception) -> None:
         super().failed(name, error)
@@ -112,8 +135,12 @@ class NestedRecord:
     def started(self, name: str) -> None:
         self.parent.started(f"{self.prefix}.{name}")
 
+    def detail(self, name: str, **facts) -> None:
+        self.parent.detail(f"{self.prefix}.{name}", **facts)
+
     def completed(self, name: str) -> None:
-        self.parent.emit("beat_completed", beat=f"{self.prefix}.{name}")
+        beat = f"{self.prefix}.{name}"
+        self.parent.emit("beat_completed", beat=beat, **self.parent.take(beat))
 
     def failed(self, name: str, error: Exception) -> None:
         self.parent.emit("beat_failed", beat=f"{self.prefix}.{name}", reason=str(error))
@@ -194,6 +221,7 @@ def _stages(  # noqa: PLR0913 - a beat needs the play, the library, its context,
                 else:
                     _check_rows(rows)
                     written.setdefault(target, []).extend(rows)
+                record.detail(name, read=context.reads, wrote={target: shape(rows)})
                 return rows
             if kind == "sketch":
                 run = _run_each if "each" in state else _run_child
@@ -201,6 +229,7 @@ def _stages(  # noqa: PLR0913 - a beat needs the play, the library, its context,
             else:
                 result = await _stage_function(state, library)(context, **state.get("with", {}))
             results[name] = result
+            record.detail(name, read=context.reads, wrote={}, **({"made": shape(result)} if isinstance(result, list) else {}))
             return result
 
         stages[name] = stage

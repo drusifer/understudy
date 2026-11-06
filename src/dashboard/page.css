@@ -346,8 +346,11 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .chart-svg .state.piece.write .state-box { fill: #f1e2c4; }
 .chart-svg .state.waits .state-box { stroke-dasharray: 5 3; }
 .chart-svg .state.pickable { cursor: pointer; }
+.chart-svg .state.pickable:focus-visible { outline: 3px solid #c2410c; outline-offset: 2px; }
 .chart-svg .state.pickable:hover .state-box, .chart-svg .state.pickable:focus-visible .state-box { stroke: #c2410c; stroke-width: 2.5; }
 .chart-svg .state.hold-here .state-box { fill: #ffe9b8; stroke: #8f2d1a; stroke-width: 3.5; }
+.step-text { white-space: pre-wrap; }
+.chart-svg .state.chosen .state-box { stroke: #1f5f8b; stroke-width: 3.5; }
 .chart-svg .state.current .state-box { fill: #24180f; stroke: #c2410c; stroke-width: 3; }
 .chart-svg .state-name { color: #24170a; fill: currentColor; font: 15px monospace; }
 .chart-svg .state.current .state-name { color: #ffe9b8; }
