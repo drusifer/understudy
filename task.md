@@ -26,9 +26,9 @@ Edit files with Edit/Write only (owner rule: no sed, no scripts). The page is ch
 - [x] **Task 1.3:** Security quick pass, then code review. **L1**. (*Owner: Switch, then Morpheus | Trace: design gate | Verification: verdict lines*)
 
 ### Phase 2: A short rack (UND-115)
-- [ ] **Task 2.1:** `rack()` keeps the newest 8 per play and the chosen run, `N older` / `fewer` buttons, a folded unreadable group; keyboard use. **L2**. (*Owner: Neo | Trace: UND-115 AC1-3 | Verification: browser tests with 12 seeded runs and unreadable ones*)
-- [ ] **Task 2.2:** UAT on the live console's real rack. **L1**. (*Owner: Trin | Trace: UND-115 | Verification: verdict*)
-- [ ] **Task 2.3:** Security quick pass, then code review. **L1**. (*Owner: Switch, then Morpheus | Trace: design gate | Verification: verdict lines*)
+- [x] **Task 2.1:** `rack()` keeps the newest 8 per play and the chosen run, `N older` / `fewer` buttons, a folded unreadable group; keyboard use. **L2**. (*Owner: Neo | Trace: UND-115 AC1-3 | Verification: browser tests with 12 seeded runs and unreadable ones*)
+- [x] **Task 2.2:** UAT on the live console's real rack. **L1**. (*Owner: Trin | Trace: UND-115 | Verification: verdict*)
+- [x] **Task 2.3:** Security quick pass, then code review. **L1**. (*Owner: Switch, then Morpheus | Trace: design gate | Verification: verdict lines*)
 
 ### Phase 3: The width (UND-116)
 - [ ] **Task 3.1:** Grid areas by width (three, two, one column); the printer's paper as tall as its lines. **L2**. (*Owner: Neo | Trace: UND-116 AC1-2 | Verification: browser tests*)

@@ -57,6 +57,9 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .rack-list { display: flex; flex-wrap: wrap; gap: 8px; }
 .sketch-tab { min-height: 40px; padding: 6px 16px; border-radius: 8px 8px 2px 2px; border: 2px solid var(--brass-deep); border-bottom-width: 4px; background: #24180f; color: #d8c4a0; }
 .sketch-tab[aria-selected="true"] { border-color: #e0b25c; background: linear-gradient(180deg, #d6ae62, #9c7434); color: #24170a; box-shadow: 0 0 12px rgba(224,178,92,.4); }
+.rack-more { min-height: 36px; padding: 4px 12px; border-radius: 8px; border: 2px dashed var(--brass-deep); background: transparent; color: var(--cream); font-family: Cinzel, serif; font-size: 12px; letter-spacing: 1px; cursor: pointer; }
+.rack-more:hover { border-color: #e0b25c; }
+.rack-more:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 .sketch-tab:disabled { opacity: .45; cursor: not-allowed; }
 .sketch-tab .name { font-family: Cinzel, serif; font-weight: 700; font-size: 14px; letter-spacing: 1px; }
 

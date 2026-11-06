@@ -264,6 +264,45 @@ class SpendingListTest(BrowserCase):
                                       " return box.left >= 0 && box.right <= window.innerWidth; })()"))
 
 
+class ShortRackTest(BrowserCase):
+    """UND-115: the rack shows a play's newest 8 runs and the chosen one, folds the rest, and folds the unreadable runs."""
+
+    def seed(self):
+        for number in range(12):  # run-...T1000NN: the higher the number the newer
+            write_run(self.runs, f"run-20261101T1000{number:02d}-000000{number:02x}",
+                      [{"event": "run_started", "at": stamp(-1), "play": "x/evening.yaml", "mode": "live"},
+                       {"event": "run_finished", "at": stamp(0), "outcome": "complete"}], {"status": "complete", "beats": {}})
+        for number in range(3):
+            write_run(self.runs, f"run-20261031T0900{number:02d}-0000010{number}", [], {})
+
+    def test_eight_newest_tabs_and_buttons_for_the_older_and_the_unreadable_ones(self):
+        self.seed()
+        page = self.page()
+        page.goto(self.start())
+        page.wait_for_selector(".sketch-tab")
+        self.assertEqual(page.locator(".sketch-tab").count(), 8)
+        self.assertEqual(page.get_by_role("button", name="4 older").count(), 1)
+        self.assertEqual(page.get_by_role("button", name="3 unreadable").count(), 1)
+        page.get_by_role("button", name="4 older").click()
+        self.assertEqual(page.locator(".sketch-tab").count(), 12)
+        page.get_by_role("button", name="fewer").click()
+        self.assertEqual(page.locator(".sketch-tab").count(), 8)
+        page.get_by_role("button", name="3 unreadable").click()
+        self.assertEqual(page.locator(".sketch-tab").count(), 11)
+
+    def test_the_chosen_run_stays_on_the_rack_when_it_is_one_of_the_folded_ones_and_buttons_work_from_the_keyboard(self):
+        self.seed()
+        page = self.page()
+        page.goto(self.start())
+        page.wait_for_selector(".sketch-tab")
+        page.get_by_role("button", name="4 older").focus()
+        page.keyboard.press("Enter")
+        page.locator(".sketch-tab").nth(11).click()  # the oldest of the twelve
+        page.get_by_role("button", name="fewer").click()
+        self.assertEqual(page.locator(".sketch-tab").count(), 9)  # the newest eight, and the chosen one
+        self.assertEqual(page.locator(".sketch-tab[aria-selected='true']").count(), 1)
+
+
 class RackAndBannerTest(BrowserCase):
     def test_switching_runs_shows_each_ones_state_and_a_failed_run_shows_why_and_jumps_to_the_line(self):
         self.failed_and_done_runs()

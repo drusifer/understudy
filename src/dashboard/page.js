@@ -431,19 +431,39 @@ const BADGES = { running: 'RUNNING', paused: 'PAUSED', failed: 'FAILED', stalled
 
 // The rack: runs grouped by sketch (the runs arrive newest first, so each group and each tab inside it is newest first),
 // each tab carrying a badge in words for a run that is going, failed, stalled or stopped.
+const RACK_KEEP = 8; // runs of one play the rack shows before folding the older ones
+
+function runTab(each) {
+  const label = make('span', { class: 'name' }, stamp(each.id));
+  const tab = make('button', { type: 'button', role: 'tab', class: `sketch-tab ${each.state}`, 'aria-selected': String(each.id === state.chosen), title: `${each.id} · ${each.state}` }, label);
+  if (BADGES[each.state]) tab.append(make('span', { class: 'badge' }, BADGES[each.state]));
+  tab.addEventListener('click', () => choose(each.id));
+  return tab;
+}
+
+// One group of the rack: the play's name, its newest runs (and the chosen one, wherever it is), and a button for the rest.
+// `folded` groups (the runs this console cannot read) show only the chosen run until opened.
+function rackGroup(name, runs, folded) {
+  const key = `rack:${name}`;
+  const open = state.openGroups.has(key);
+  const keep = folded ? 0 : RACK_KEEP;
+  const shown = open ? runs : runs.filter((each, index) => index < keep || each.id === state.chosen);
+  const hidden = runs.length - shown.length;
+  const toggle = (label) => {
+    const button = make('button', { type: 'button', class: 'rack-more', 'aria-expanded': String(open) }, label);
+    button.addEventListener('click', () => { if (open) state.openGroups.delete(key); else state.openGroups.add(key); rack(); });
+    return button;
+  };
+  return [make('span', { class: 'rack-group' }, name), ...shown.map(runTab),
+    ...(hidden > 0 ? [toggle(folded ? `${hidden} unreadable` : `${hidden} older`)] : open && runs.length > keep ? [toggle('fewer')] : [])];
+}
+
 function rack() {
   const groups = new Map();
-  for (const each of state.runs) groups.set(each.sketch, [...groups.get(each.sketch) ?? [], each]);
-  const nodes = [...groups].flatMap(([sketch, runs]) => [
-    make('span', { class: 'rack-group' }, sketch),
-    ...runs.map((each) => {
-      const label = make('span', { class: 'name' }, stamp(each.id));
-      const tab = make('button', { type: 'button', role: 'tab', class: `sketch-tab ${each.state}`, 'aria-selected': String(each.id === state.chosen), title: `${each.id} · ${each.state}` }, label);
-      if (BADGES[each.state]) tab.append(make('span', { class: 'badge' }, BADGES[each.state]));
-      tab.addEventListener('click', () => choose(each.id));
-      return tab;
-    }),
-  ]);
+  for (const each of state.runs.filter((run) => run.state !== 'unreadable')) groups.set(each.sketch, [...groups.get(each.sketch) ?? [], each]);
+  const unreadable = state.runs.filter((run) => run.state === 'unreadable');
+  const nodes = [...[...groups].flatMap(([sketch, runs]) => rackGroup(sketch, runs, false)),
+    ...(unreadable.length > 0 ? rackGroup('unreadable', unreadable, true) : [])];
   $('rack').replaceChildren(...(nodes.length ? nodes : [make('span', { class: 'about' }, 'No runs yet - run a sketch with understudy run.')]));
 }
 
