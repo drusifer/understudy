@@ -64,7 +64,7 @@ async function hold(action) {
   if (!state.chosen) return;
   const { status, body } = await post(`api/${action}`, { run: state.chosen });
   say(status === 200 ? HOLD_SAID[action] : body.problem ?? `could not ${action} (${status})`, status === 200 ? 'ok' : 'problem');
-  const run = await getJson(`api/runs/${state.chosen}`);
+  const run = await getJson(runUrl(state.chosen));
   if (run) drawStatus(run);
 }
 
@@ -194,7 +194,7 @@ async function showPlan() {
   if (!sketch?.ok) return;
   state.view = 'plan';
   state.stepBeat = null;
-  const plan = await getJson(`api/plan?play=${encodeURIComponent(sketch.file)}`);
+  const plan = await getJson(`api/plan?play=${encodeURIComponent(sketch.file)}${state.diagramView ? `&view=${state.diagramView}` : ''}`);
   if (state.view !== 'plan' || currentSketch()?.file !== sketch.file) return; // the choice changed while this was on its way
   if (controls.planFile !== sketch.file) controls.holdAt = null;
   controls.planFile = sketch.file;
@@ -216,6 +216,7 @@ function paintPlan() {
   const sketch = currentSketch();
   drawDiagram($('chart-wrap'), plan, { pick: pickBeat, picked: controls.holdAt, mode: 'hold', can: (node) => node.kind === 'beat' && node.flow && !node.final });
   $('chart-title').textContent = `PLAN OF ${sketch ? sketch.name : 'THIS PLAY'}`;
+  drawViewButton(plan);
   $('chart-note').textContent = !plan ? controls.planProblem
     : controls.holdAt ? `the next run will hold before ${controls.holdAt}; click it again to clear`
     : plan.nodes.length === 0 ? 'this play has no stage pieces and no beats'
@@ -296,7 +297,7 @@ async function stop() {
   if (!state.chosen) return;
   const { status, body } = await post('api/stop', { run: state.chosen });
   say(status === 200 ? `stopped ${state.chosen}` : body.problem ?? `could not stop (${status})`, status === 200 ? 'ok' : 'problem');
-  const run = await getJson(`api/runs/${state.chosen}`);
+  const run = await getJson(runUrl(state.chosen));
   if (run) drawStatus(run);
 }
 
@@ -311,6 +312,7 @@ function afterStatus(run) {
 
 $('sketch-pick').addEventListener('change', () => { drawFields(); showPlan(); });
 $('show-plan').addEventListener('click', showPlan);
+$('diagram-view').addEventListener('click', switchView);
 $('play').addEventListener('click', () => play(false));
 $('play-held').addEventListener('click', () => play(true));
 $('stop').addEventListener('click', stop);

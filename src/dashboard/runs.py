@@ -152,11 +152,11 @@ class Launcher:
         return [{key: value for key, value in each.items() if key not in {"path", "called"}}
                 for each in scanned if each["path"].resolve() not in children]
 
-    def plan(self, name: str) -> dict:
-        """The pieces and beats of the listed play `name`, laid out for the page to draw. Only a play `list_sketches`
-        offers has a plan; any other name is refused, so no path from the client is ever opened."""
+    def plan(self, name: str, view: str = "auto") -> dict:
+        """The pieces and beats of the listed play `name`, laid out for the page to draw (`view`: `auto`, `flow` or `all`).
+        Only a play `list_sketches` offers has a plan; any other name is refused, so no path from the client is ever opened."""
         path, _entry = self._sketch(name)
-        return plan_layout(plan(read_template(path)[0]))
+        return plan_layout(plan(read_template(path)[0]), view)
 
     def replays(self) -> list[dict]:
         """The captured runs a replay can read, newest first, each with the name of the play that made it (`play`; empty when

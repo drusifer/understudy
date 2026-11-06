@@ -424,6 +424,9 @@ class HttpTest(LauncherCase):
         self.assertEqual(status, 403)
         self.assertIn("problem", body)
         self.assertEqual(self.call("/api/plan")[0], 400)
+        status, body = self.call("/api/plan?play=plain.yaml&view=flow")
+        self.assertEqual((status, body["view"]), (200, "flow"))
+        self.assertEqual(self.call("/api/plan?play=plain.yaml&view=everything")[0], 400)
 
     def test_the_hold_choice_in_a_start_request_reaches_the_launcher(self):
         self.call("/api/start", {"sketch": "plain.yaml", "with": {}, "hold": True})

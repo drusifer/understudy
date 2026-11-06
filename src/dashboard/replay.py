@@ -92,8 +92,8 @@ def _state_at(prefix: list[dict], run: dict, at: int, total: int) -> str:
     return "paused" if kinds and kinds[-1] == "paused" else "running"
 
 
-def replay(directory: Path, at: int | None = None) -> dict:
-    """The number of events in the run (no `at`), or the run as it was after the first `at` of them."""
+def replay(directory: Path, at: int | None = None, view: str = "auto") -> dict:
+    """The number of events in the run (no `at`), or the run as it was after the first `at` of them (its diagram in `view`)."""
     events = read_log(directory)
     if at is None:
         return {"id": directory.name, "events": len(events)}
@@ -115,6 +115,6 @@ def replay(directory: Path, at: int | None = None) -> dict:
                 gauge["text"], gauge["about"] = UNKNOWN, "known when the run ends"
     return {
         "id": directory.name, "at": at, "of": len(events), "state": state, "ended": ended, "hold": held, "failure": failure,
-        "chart": overlay(started, prefix, state, ended) if "plan" in started else None, "steps": step_details(prefix),
+        "chart": overlay(started, prefix, state, ended, view) if "plan" in started else None, "steps": step_details(prefix),
         "tube": tube, "gauges": gauges, "lines": [printed(each) for each in prefix], "seconds": round(_seconds(prefix)),
     }

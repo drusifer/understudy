@@ -10,6 +10,8 @@ it is in and the move it just made. The page only draws what this returns; nothi
 import json
 from dataclasses import dataclass
 
+from src.play.plan import fold
+
 NODE_H = 44
 MIN_NODE_W = 150
 CHAR_W = 9  # the page's box font, about this wide per character
@@ -77,12 +79,15 @@ def layout(states: list[dict], transitions: list[dict], initial: str | None = No
     return _Drawing(names, final, start, moves, back, rows, row_of, extras).draw()
 
 
-def plan_layout(found: dict) -> dict:
-    """The plan of a play (`src/play/plan.py`) as boxes and arrows. Pieces and beats are nodes, and the arrows are the
-    moves between beats and what a beat reads or writes; a node keeps what the page draws it by (`kind`, `write`,
-    `flow`, `waits`, `action`) and an arrow keeps its `kind`."""
-    nodes = [{"name": each["id"], **{key: value for key, value in each.items() if key != "id"}} for each in found["nodes"]]
-    return layout(nodes, found["edges"], found.get("initial"))
+def plan_layout(found: dict, view: str = "auto") -> dict:
+    """The plan of a play (`src/play/plan.py`) as boxes and arrows, in the `view` asked (`fold`: the whole plan or its flow).
+    Pieces and beats are nodes, and the arrows are the moves between beats and what a beat reads or writes; a node keeps
+    what the page draws it by (`kind`, `write`, `flow`, `waits`, `action`) and an arrow keeps its `kind`. The drawing says
+    which `view` it is, how many beats the flow view `hidden` and how many nodes the whole plan has (`total`)."""
+    shown = fold(found, view)
+    nodes = [{"name": each["id"], **{key: value for key, value in each.items() if key != "id"}} for each in shown["nodes"]]
+    return {**layout(nodes, shown["edges"], shown.get("initial")),
+            **{key: shown[key] for key in ("view", "hidden", "total")}}
 
 
 def _unique_moves(names: list[str], transitions: list[dict]) -> list[dict]:
@@ -296,10 +301,10 @@ class _Drawing:
         return edge
 
 
-def overlay(story: dict, events: list[dict], run_state: str, ended: str) -> dict:
+def overlay(story: dict, events: list[dict], run_state: str, ended: str, view: str = "auto") -> dict:
     """The layout of a run's scene plus what the run says: the beat it is on (lit), the move it just made, and how it ended."""
     entered = [each["beat"] for each in events if each.get("event") == "beat_entered"]
-    chart = plan_layout(story["plan"])
+    chart = plan_layout(story["plan"], view)
     current = entered[-1] if entered else None
     last = {"from": entered[-2], "to": entered[-1]} if len(entered) >= MOVE else None
     for node in chart["nodes"]:

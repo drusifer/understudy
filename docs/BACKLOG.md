@@ -283,5 +283,5 @@ Done on 2026-11-06: no login; each file box says whether it may be left empty; R
 - **The run rack takes four rows** for about 30 runs, mostly "unreadable" ones from before Sprint 28 or 29. Collapse the unreadable group (or hide it), show the newest few, and keep the rest one click away.
 - **The run view is a tall, cramped column:** the printer leaves a large empty block above its lines; the diagram, step view, gauges and summary stack down the right. Use the desktop width (diagram and step view side by side; the printer's height follows its content).
 - **Zoomed out the page was unusable** (owner screenshot at about 25%): check the layout at common desktop widths (1280, 1600, 1920, 2560) and at browser zoom 50 percent, and keep phones working (narrow is fine).
-- **Big plays:** household is 152 nodes; fold or filter it (only the flow, or one beat's neighbors).
+- **Big plays:** done in Sprint 31 (flow view above 40 nodes, a button for everything). Left: show one beat's neighbors; the fan of read arrows from the files in household's flow view is wide.
 - Add a browser test for each width above, so a layout change cannot undo it.

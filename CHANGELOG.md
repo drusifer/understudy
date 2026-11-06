@@ -1,5 +1,10 @@
 # Changelog
 
+## Sprint 31 — a big play folded to its flow (2026-11-06, branch `sprint-31`, not yet merged)
+
+- **The diagram of a play of more than 40 nodes shows its flow:** the stage's files and the flow beats, with the waiting beats left out and their reads passed through (household: 152 nodes down to 31). `SHOW ALL <n> NODES` / `SHOW ONLY THE FLOW` switches, for a plan, a run and a replay. `fold` in `src/play/plan.py`; `view=auto|flow|all` on `GET /api/plan`, `/api/runs/<id>` and `/replay`.
+- **Tests:** 637 unit tests in about 31 s; browser 51/51 in about 104 s. No change to the run log.
+
 ## Sprint 30 — a console that uses the desktop (2026-11-06, branch `sprint-30`, not yet merged)
 
 - **No login** (owner decision 44, already on `main`): the access secret, its files and the hiding of Jev level names are gone; each file box says whether it may be left empty; Replay lists only the picked play's captured runs, named; the start panel is two columns on a wide screen.

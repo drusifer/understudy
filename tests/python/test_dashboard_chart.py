@@ -206,7 +206,7 @@ class PlanLayoutTests(unittest.TestCase):
     def test_the_plans_of_the_examples_are_drawn_cleanly_with_every_node_and_edge(self):
         for path in ("examples/household/household.yaml", "examples/evening/evening.yaml", "tests/fixtures/coffee/coffee_week.yaml"):
             found = plan(read_template(ROOT / path)[0])
-            chart = plan_layout(found)
+            chart = plan_layout(found, "all")
             self.assertEqual({each["id"] for each in chart["nodes"]}, {each["id"] for each in found["nodes"]}, path)
             self.assertEqual(len(chart["edges"]), len({(e["from"], e["to"], e["kind"], json.dumps(e.get("when"), sort_keys=True))
                                                        for e in found["edges"]}), path)
@@ -223,6 +223,26 @@ class PlanLayoutTests(unittest.TestCase):
         self.assertEqual((at["p"]["kind"], at["p"]["write"], at["w"]["write"], at["b"]["action"]), ("piece", False, True, "map.where"))
         self.assertTrue(at["b"]["initial"])
         self.assertEqual([(e["from"], e["to"], e["kind"]) for e in chart["edges"]], [("p", "b", "reads"), ("b", "w", "writes")])
+
+    def test_a_big_play_is_drawn_as_its_flow_unless_everything_is_asked_for_and_both_are_clean(self):
+        found = plan(read_template(ROOT / "examples/household/household.yaml")[0])
+        auto, everything = plan_layout(found), plan_layout(found, "all")
+        self.assertEqual((auto["view"], everything["view"]), ("flow", "all"))
+        self.assertLess(len(auto["nodes"]), len(everything["nodes"]) // 2)
+        self.assertEqual(auto["total"], len(everything["nodes"]))
+        self.assertEqual(auto["hidden"], len(everything["nodes"]) - len(auto["nodes"]))
+        assert_clean(self, auto)
+        assert_clean(self, everything)
+
+    def test_a_small_play_is_drawn_whole_by_default(self):
+        chart = plan_layout(plan(read_template(ROOT / "tests/fixtures/coffee/coffee_week.yaml")[0]))
+        self.assertEqual(chart["view"], "all")
+
+    def test_a_run_diagram_takes_the_view_too(self):
+        found = plan(read_template(ROOT / "examples/household/household.yaml")[0])
+        story = {"plan": found}
+        flow, everything = overlay(story, [], "running", "", "flow"), overlay(story, [], "running", "", "all")
+        self.assertLess(len(flow["nodes"]), len(everything["nodes"]))
 
     def test_a_play_with_no_beats_has_no_drawing_to_make(self):
         found = {"initial": None, "props": [], "nodes": [], "edges": []}

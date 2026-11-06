@@ -209,8 +209,8 @@ def step_details(events: list[dict]) -> dict[str, dict]:
             for each in events if each.get("event") == "beat_completed" and "beat" in each}
 
 
-def describe(directory: Path, now: datetime | None = None) -> dict:
-    """One run as the page draws it."""
+def describe(directory: Path, now: datetime | None = None, view: str = "auto") -> dict:
+    """One run as the page draws it; `view` is how much of its plan the diagram shows (`auto`, `flow` or `all`)."""
     now = now or datetime.now(UTC)
     run, summary, events = read_json(directory / "run.json"), read_json(directory / "summary.json"), read_events(directory)
     started = next((each for each in events if each.get("event") == "run_started"), {})
@@ -237,7 +237,7 @@ def describe(directory: Path, now: datetime | None = None) -> dict:
         },
         "mode": mode,
         "story": "plan" in started,
-        "chart": overlay(started, events, state, ended) if "plan" in started else None,
+        "chart": overlay(started, events, state, ended, view) if "plan" in started else None,
         "steps": step_details(events),
         "spending": read_spending(directory),
         "tube": tube,

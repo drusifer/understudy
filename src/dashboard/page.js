@@ -220,6 +220,7 @@ function drawChart(run) {
   state.shownRun = run;
   if (state.view === 'plan') return; // the picked play's plan is on screen (controls.js); a run tab or a start brings the run back
   $('chart-title').textContent = `DIAGRAM OF RUN ${stamp(run.id)}`;
+  drawViewButton(chart);
   drawDiagram($('chart-wrap'), chart, { pick: pickStep, picked: state.stepBeat, mode: 'show', can: (node) => node.kind === 'beat' });
   drawStep(run);
   if (!chart) {
@@ -352,7 +353,7 @@ async function loadJev(id) {
     ];
   }
   drawJev();
-  const run = await getJson(`api/runs/${id}`);
+  const run = await getJson(runUrl(id));
   if (run && state.chosen === id) drawStatus(run);
 }
 
@@ -372,6 +373,32 @@ for (const id of ['find-text', 'find-failures', 'find-stage']) $(id).addEventLis
 $('jump-start').addEventListener('click', () => { $('paper-window').scrollTop = 0; });
 $('jump-end').addEventListener('click', () => { $('paper-window').scrollTop = $('paper-window').scrollHeight; });
 $('jump-failure').addEventListener('click', () => jumpTo(state.failures[0]));
+
+// The address of a run's description (or one of its parts), with the diagram view the person chose (the server picks when none).
+function runUrl(id, more = '', query = '') {
+  const parts = [query, state.diagramView ? `view=${state.diagramView}` : ''].filter(Boolean);
+  return `api/runs/${id}${more}${parts.length ? `?${parts.join('&')}` : ''}`;
+}
+
+// The button that shows a big play whole or as its flow only (it is there when the flow view hides anything).
+function drawViewButton(chart) {
+  const button = $('diagram-view');
+  button.hidden = !chart || chart.hidden === 0;
+  if (!chart || chart.hidden === 0) return;
+  const flow = chart.view === 'flow';
+  button.textContent = flow ? `SHOW ALL ${chart.total} NODES` : 'SHOW ONLY THE FLOW';
+  button.title = flow ? `${chart.hidden} beats that wait to be read are hidden; their reads are drawn from the files to the flow beats`
+    : 'Hide the beats that wait to be read';
+  button.dataset.next = flow ? 'all' : 'flow';
+}
+
+async function switchView() {
+  state.diagramView = $('diagram-view').dataset.next;
+  if (state.view === 'plan') { showPlan(); return; }
+  if (typeof replay !== 'undefined' && replay.open) { replayTo(replay.at); return; }
+  const run = state.chosen ? await getJson(runUrl(state.chosen)) : null;
+  if (run) drawStatus(run);
+}
 
 // A fetch that says so when the server cannot be reached, and recovers by itself on the next one that works.
 async function getJson(url) {
@@ -397,7 +424,7 @@ async function choose(id) {
   state.view = 'run'; // a run tab brings the run's diagram back from a play's plan
   state.stepBeat = null; // the step view follows the new run until a beat is clicked
   rack();
-  const run = await getJson(`api/runs/${id}`);
+  const run = await getJson(runUrl(id));
   if (!run) return;
   draw(run);
   loadJev(id);
@@ -407,7 +434,7 @@ async function choose(id) {
   state.follow = source;
   let skip = run.count;
   source.onmessage = (message) => { if (skip > 0) skip -= 1; else { append(JSON.parse(message.data)); refreshSoon(id); } };
-  source.addEventListener('end', async () => { source.close(); const done = await getJson(`api/runs/${id}`); if (done) drawStatus(done); loadJev(id); if (typeof loadDecisions === 'function') loadDecisions(id); loadRuns(); });
+  source.addEventListener('end', async () => { source.close(); const done = await getJson(runUrl(id)); if (done) drawStatus(done); loadJev(id); if (typeof loadDecisions === 'function') loadDecisions(id); loadRuns(); });
 }
 
 // A new event line while a run goes: refresh what the run says about itself (the lit state, the gauges) soon, but once for a burst.
@@ -416,7 +443,7 @@ function refreshSoon(id) {
   if (refreshTimer) return;
   refreshTimer = setTimeout(async () => {
     refreshTimer = null;
-    const run = await getJson(`api/runs/${id}`);
+    const run = await getJson(runUrl(id));
     if (run && state.chosen === id) drawStatus(run);
   }, 250);
 }
@@ -474,7 +501,7 @@ async function loadRuns() {
   rack();
   if (!state.chosen && state.runs.length > 0) choose(state.runs[0].id);
   else if (state.chosen && ['running', 'paused', 'stalled'].includes(state.chosenState)) {
-    const run = await getJson(`api/runs/${state.chosen}`);
+    const run = await getJson(runUrl(state.chosen));
     if (run) drawStatus(run);
   }
 }

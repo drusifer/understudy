@@ -36,7 +36,7 @@ async function openReplay() {
     replaySay(info?.problem ?? 'this run cannot be replayed', 'problem');
     return;
   }
-  replay.live = await getJson(`api/runs/${id}`);
+  replay.live = await getJson(runUrl(id));
   if (!replay.live) return;
   replay.open = true;
   replay.of = info.events;
@@ -56,7 +56,7 @@ async function replayTo(target) {
   if (!replay.open) return;
   const at = Math.max(0, Math.min(replay.of, Number(target) || 0));
   const ticket = ++replay.ticket;
-  const frame = await getJson(`api/runs/${state.chosen}/replay?at=${at}`);
+  const frame = await getJson(runUrl(state.chosen, '/replay', `at=${at}`));
   if (ticket !== replay.ticket || !replay.open) return; // a newer position was asked for, or the replay was closed
   if (!frame || frame.problem) {
     replaySay(frame?.problem ?? 'could not read the run', 'problem');

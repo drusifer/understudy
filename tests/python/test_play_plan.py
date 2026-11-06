@@ -5,7 +5,7 @@ from typing import ClassVar
 
 from src.paths import ROOT
 from src.play.loader import read_template
-from src.play.plan import WITH_CHARS, plan
+from src.play.plan import WITH_CHARS, fold, plan
 
 HOUSEHOLD = ROOT / "examples" / "household" / "household.yaml"
 EVENING = ROOT / "examples" / "evening" / "evening.yaml"
@@ -83,6 +83,42 @@ class SmallPlan(unittest.TestCase):
 
     def test_the_scene_starts_at_the_initial_beat(self):
         self.assertEqual(self.found["initial"], "checker")
+
+
+class FlowView(unittest.TestCase):
+    """UND-117: a big play can be shown as its flow only: the files and the flow beats, with each read passed through the
+    beats that wait to be read."""
+
+    def setUp(self):
+        self.full = plan(SmallPlan.document)
+
+    def test_the_flow_view_drops_the_waiting_beats_and_passes_their_reads_through(self):
+        found = fold(self.full, "flow")
+        self.assertEqual({each["id"] for each in found["nodes"]}, {"rows", "other", "out", "checker", "writer", "done", "gone"})
+        self.assertEqual(edges(found, "reads"), {("rows", "checker"), ("other", "checker"), ("rows", "writer"), ("other", "writer")})
+        self.assertEqual(edges(found, "move"), edges(self.full, "move"))
+        self.assertEqual(edges(found, "writes"), {("writer", "out")})
+        self.assertEqual((found["view"], found["hidden"], found["total"]), ("flow", 1, 8))
+
+    def test_the_all_view_is_the_plan_itself_and_says_how_many_beats_the_flow_view_hides(self):
+        found = fold(self.full, "all")
+        self.assertEqual(found["nodes"], self.full["nodes"])
+        self.assertEqual((found["view"], found["hidden"], found["total"]), ("all", 1, 8))
+
+    def test_auto_folds_only_a_big_play(self):
+        self.assertEqual(fold(self.full, "auto")["view"], "all")
+        big = plan(read_template(HOUSEHOLD)[0])
+        folded = fold(big, "auto")
+        self.assertEqual(folded["view"], "flow")
+        self.assertLess(len(folded["nodes"]), 50)
+        names = {each["id"] for each in folded["nodes"]}
+        for each in folded["edges"]:
+            self.assertIn(each["from"], names)
+            self.assertIn(each["to"], names)
+
+    def test_an_unknown_view_is_refused(self):
+        with self.assertRaises(ValueError):
+            fold(self.full, "everything")
 
 
 class RealPlans(unittest.TestCase):

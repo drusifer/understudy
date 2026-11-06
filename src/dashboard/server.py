@@ -31,6 +31,7 @@ from src.dashboard.replay import decisions, replay
 from src.dashboard.runs import Launcher, Refused
 from src.dashboard.view import describe, list_runs, printed, read_events
 from src.paths import ROOT
+from src.play.plan import VIEWS
 from src.play.sources.capture import CACHE
 
 HERE = Path(__file__).parent
@@ -101,21 +102,32 @@ def _run_answer(console: Console, directory: Path, match: re.Match, query: str) 
         return "events", directory
     if match["more"] == "/jev":
         return "json", jev_reads(directory, console.cache, console.project)
-    if match["more"] in ("/replay", "/decisions"):
-        try:
-            return "json", decisions(directory) if match["more"] == "/decisions" else replay(directory, _position(query))
-        except Refused as refused:
-            return "refused", (refused.status, refused.message)
-    return "json", describe(directory)
+    try:
+        view = _view(query)
+        if match["more"] in ("/replay", "/decisions"):
+            return "json", decisions(directory) if match["more"] == "/decisions" else replay(directory, _position(query), view)
+    except Refused as refused:
+        return "refused", (refused.status, refused.message)
+    return "json", describe(directory, view=view)
+
+
+def _view(query: str) -> str:
+    """The `view` of a request (how much of a play's diagram to draw: auto, flow or all); `auto` when it has none."""
+    values = parse_qs(query).get("view")
+    if not values:
+        return "auto"
+    if values[0] not in VIEWS:
+        raise Refused(HTTPStatus.BAD_REQUEST, f"view is one of {', '.join(VIEWS)}")
+    return values[0]
 
 
 def _plan_answer(console: Console, query: str) -> tuple[str, object]:
-    """The plan of the play `?play=<file>` names, or why there is none."""
+    """The plan of the play `?play=<file>` names (in `?view=`), or why there is none."""
     names = parse_qs(query).get("play")
     if not names or console.launcher is None:
         return "refused", (HTTPStatus.BAD_REQUEST, "name a play: /api/plan?play=<file>")
     try:
-        return "json", console.launcher.plan(names[0])
+        return "json", console.launcher.plan(names[0], _view(query))
     except Refused as refused:
         return "refused", (refused.status, refused.message)
 

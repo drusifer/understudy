@@ -37,6 +37,49 @@ def plan(document: dict) -> dict:
     return {"nodes": nodes, "edges": edges, "props": props, "initial": document["scene"].get("initial")}
 
 
+AUTO_FOLD = 40  # a play with more nodes than this is shown as its flow unless the person asks for everything
+VIEWS = ("auto", "flow", "all")
+
+
+def fold(found: dict, view: str = "auto") -> dict:
+    """`found` (a plan) as the `view` asks: `all` is the plan itself, `flow` keeps the files and the beats of the flow and
+    passes each read through the beats that wait to be read (a flow beat reads the files and flow beats those beats read, one
+    arrow each), and `auto` is `flow` for a play of more than `AUTO_FOLD` nodes and `all` for any other. The answer says
+    which it is (`view`), how many beats the flow view hides (`hidden`) and how many nodes the whole plan has (`total`)."""
+    if view not in VIEWS:
+        raise ValueError(f"the view is one of {', '.join(VIEWS)}, not {view!r}")
+    hidden = sum(1 for each in found["nodes"] if each["waits"])
+    chosen = ("flow" if len(found["nodes"]) > AUTO_FOLD else "all") if view == "auto" else view
+    facts = {"view": chosen, "hidden": hidden, "total": len(found["nodes"])}
+    if chosen == "all":
+        return {**found, **facts}
+    waiting = {each["id"] for each in found["nodes"] if each["waits"]}
+    reading: dict[str, list[str]] = {}
+    for each in found["edges"]:
+        if each["kind"] == "reads":
+            reading.setdefault(each["to"], []).append(each["from"])
+
+    def sources(name: str, seen: set[str]) -> list[str]:
+        """What `name` reads once the waiting beats between are passed through (a beat is passed once, so a cycle ends)."""
+        found_here = []
+        for source in reading.get(name, []):
+            if source in waiting:
+                if source not in seen:
+                    seen.add(source)
+                    found_here.extend(sources(source, seen))
+            elif source not in found_here:
+                found_here.append(source)
+        return found_here
+
+    kept = [each for each in found["nodes"] if each["id"] not in waiting]
+    ids = {each["id"] for each in kept}
+    folded = [each for each in found["edges"] if each["kind"] != "reads" and each["from"] in ids and each["to"] in ids]
+    for each in kept:
+        folded.extend({"from": source, "to": each["id"], "kind": "reads"}
+                      for source in dict.fromkeys(sources(each["id"], {each["id"]})) if source in ids and source != each["id"])
+    return {**found, "nodes": kept, "edges": folded, **facts}
+
+
 def _action(beat: dict) -> str | None:
     """What a beat does, in a few words: `map.join`, `jev.choice`, `write:booking`, `play:seating.yaml`."""
     if not beat.get("do"):

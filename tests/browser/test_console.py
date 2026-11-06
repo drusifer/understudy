@@ -264,6 +264,36 @@ class SpendingListTest(BrowserCase):
                                       " return box.left >= 0 && box.right <= window.innerWidth; })()"))
 
 
+class BigPlayTest(BrowserCase):
+    """UND-117: a big play is drawn as its flow, with a button for everything and back."""
+
+    def test_a_big_plan_shows_its_flow_and_a_button_shows_all_nodes_and_back(self):
+        waiting = [{**beat(f"w{number}"), "flow": False, "waits": True} for number in range(45)]
+        story = plan_of([beat("a"), beat("b", True), *waiting], [("a", "b")], "a")
+        story["plan"]["edges"] += [{"from": "w0", "to": "a", "kind": "reads"}]
+        started = {"event": "run_started", "at": stamp(0), "play": "x/big.yaml", "mode": "live", **story}
+        write_run(self.runs, "run-20261101T180000-00000001", [started, entered(1, "a", "start")], {"status": "running", "beats": {}})
+        page = self.page(1600, 1000)
+        page.goto(self.start())
+        page.wait_for_selector(".state")
+        self.assertEqual(page.locator("#chart-wrap .state").count(), 2)  # the flow only
+        button = page.locator("#diagram-view")
+        self.assertEqual(button.inner_text(), "SHOW ALL 47 NODES")
+        button.click()
+        page.wait_for_function("document.querySelectorAll('#chart-wrap .state').length === 47")
+        self.assertEqual(button.inner_text(), "SHOW ONLY THE FLOW")
+        button.click()
+        page.wait_for_function("document.querySelectorAll('#chart-wrap .state').length === 2")
+
+    def test_a_small_plan_has_no_such_button(self):
+        started = {"event": "run_started", "at": stamp(0), "play": "x/small.yaml", "mode": "live", **STORY}
+        write_run(self.runs, "run-20261101T180100-00000001", [started, entered(1, "a", "start")], {"status": "running", "beats": {}})
+        page = self.page(1600, 1000)
+        page.goto(self.start())
+        page.wait_for_selector(".state")
+        self.assertTrue(page.locator("#diagram-view").is_hidden())
+
+
 WIDTHS = ((390, "one"), (1280, "two"), (1600, "three"), (1920, "three"), (2560, "three"), (3840, "three"))  # 3840: 1920 zoomed to 50%
 
 
