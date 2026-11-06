@@ -1613,3 +1613,145 @@ sequenceDiagram
 ## Sprint close-out
 
 - **Cypher**: \*pm launch sprint-28. Sprint complete: 6 stories (UND-105..110), 7 phases, a sketch is a play (stage, scene, beats, Jev beat, calls that bi…
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Neo
+    participant User
+    participant All
+    participant Oracle
+    participant Mouse
+    participant Cypher
+    participant Smith
+    participant Switch
+    participant Morpheus
+    Note over Neo,Morpheus: 📅 2026-11-05
+    Neo->>User: "swe push"
+    Note right of Neo: "Sprint 28 merged into<br/>main (54071de) and<br/>pushed with bobp make<br/>push (gate 601 OK,<br/>gitleaks clean), the<br/>owner's Bob Protocol<br/>tooling changes…"
+    User->>All: "request"
+    Note right of User: "*ora groom docs"
+    Oracle->>All: "groom"
+    Note right of Oracle: "Docs groomed (*ora groom<br/>docs): rubric GROOM:<br/>ACCURACY=A USABILITY=A<br/>CONSISTENCY=A SYNC=n/a.<br/>Current docs use the<br/>play words, remaining<br/>'sk…"
+    Neo->>All: "checkpoint"
+    Note right of Neo: "Checkpoint saved in<br/>agents/neo/state.md.<br/>Sprint 28 closed: merged<br/>and pushed (main =<br/>origin/main = 5c6206e),<br/>a docs-groom commit is<br/>local o…"
+    User->>All: "request"
+    Note right of User: "/init *resume"
+    Neo->>All: "resume"
+    Note right of Neo: "Resuming from Neo<br/>checkpoint: Sprint 28<br/>closed, groom commit<br/>local on main, Sprint 29<br/>next."
+    User->>All: "request"
+    Note right of User: "/sprint 29 go"
+    Mouse->>All: "sprint 29 start"
+    Note right of Mouse: "Decision 43 recorded:<br/>Sprint 29 = whole-play<br/>diagram + held-start<br/>stepping with hold-at-<br/>beat and per-beat<br/>pieces. Branch<br/>sprint-29. Next: C…"
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Sprint 29 story+arch<br/>(Tier 2) written: docs/s<br/>prints/STORY_ARCH_SPRINT<br/>29.md. UND-111 whole-<br/>play diagram, UND-112<br/>held start + hold-at-<br/>beat,…"
+    Smith->>Switch: "user approve"
+    Note right of Smith: "*user approve sprint-29<br/>(stories+arch, combined<br/>gate). rubric STORIES:<br/>OUT=A TEST=A, ARCH:<br/>BOUND=A FLOW=A FAIL=A<br/>USER=A DECS=A FEAS=A.<br/>Note…"
+    Switch->>Mouse: "sec handoff"
+    Note right of Switch: "security gate (design):<br/>No blocking findings.<br/>Checked: plan URL name<br/>(whitelist of listed<br/>plays), hold_at (checked<br/>against the play's<br/>beats…"
+    Mouse->>Morpheus: "sm handoff"
+    Note right of Mouse: "Sprint planned: 4 phases<br/>+ closeout in task.md.<br/>rubric PLAN: SIZE=A<br/>GATE=A VERIF=A ALIGN=A<br/>OWNER=A LEVEL=A (self-<br/>check). @Morpheus *lead<br/>re…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Sprint plan approved.<br/>rubric PLAN: SIZE=A<br/>GATE=A VERIF=A ALIGN=A<br/>OWNER=A LEVEL=A. Phase 1<br/>ready. @Neo *swe impl<br/>phase-1"
+```
+
+## Phase 1 starts
+
+Phase 1: the plan of a play (UND-111 part 1)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-05
+    Mouse->>All: "phase 1"
+    Note right of Mouse: "Phase 1: the plan of a<br/>play (UND-111 part 1)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 1 impl complete:<br/>src/play/plan.py,<br/>chart.plan_layout, GET<br/>/api/plan?play=. make<br/>check 616 OK. @Trin *qa<br/>uat phase-1"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 1 passed:<br/>household plan = 14<br/>pieces (4 read, 10<br/>write) and 152 nodes/174<br/>edges, every write beat<br/>has its writes edge,<br/>moves matc…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 1):<br/>No blocking findings.<br/>Plan route opens only<br/>plays list_sketches<br/>offers (../ and unlisted<br/>names get 403, tested),<br/>r…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 1 review passed.<br/>Uses the registry's<br/>Source params so the<br/>diagram and check cannot<br/>disagree. Committing.<br/>@Neo *swe impl phase-2"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 2 impl complete:<br/>run_started carries the<br/>plan (replaces the<br/>beats/transitions story<br/>line), one chart path<br/>for runs and replays,<br/>page…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 2 passed on<br/>the live console:<br/>evening plan drawn (read<br/>pieces, booking write<br/>piece, dashed beats that<br/>wait, solid flow beats,<br/>dou…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 2):<br/>No blocking findings.<br/>Page sets names and<br/>titles via textContent<br/>only (hostile-name<br/>browser test passes),<br/>the plan…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 2 review passed.<br/>Note: run_started grew<br/>(household ~30 KB), one<br/>line per run,<br/>acceptable. Committing.<br/>@Neo *swe impl phase-3"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 3 impl complete:<br/>control.json stop_at +<br/>stateless Hold rule,<br/>run_sketch(stop_at), CLI<br/>--stop-at/--by-console,<br/>launcher hold/hold_at (…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 3 passed on a<br/>real console + real<br/>child: hold_at=second<br/>paused before second,<br/>STEP then paused before<br/>third, RESUME ended done<br/>af…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 3):<br/>No blocking findings.<br/>hold_at checked against<br/>the play's flow beats<br/>before anything starts,<br/>secret still required…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 3 review passed.<br/>Runner never writes<br/>control.json (the<br/>console's next write<br/>spends stop_at), so<br/>ADR-0058 still holds.<br/>Committing. @Ne…"
+```
+
+## Phase 1 close-out
+
+- **Neo**: Phase 3 impl complete: control.json stop\_at + stateless Hold rule, run\_sketch(stop\_at), CLI --stop-at/--by-console, launcher hold/hold\_at (…
+- **Trin**: UAT phase 3 passed on a real console + real child: hold\_at=second paused before second, STEP then paused before third, RESUME ended done af…
+- **Morpheus**: Phase 3 review passed. Runner never writes control.json (the console's next write spends stop\_at), so ADR-0058 still holds. Committing. @Ne…
+
+## Phase 4 starts
+
+Phase 4: see what each step read and wrote (UND-113)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    participant Tank
+    participant Oracle
+    participant Smith
+    participant Cypher
+    Note over Mouse,Cypher: 📅 2026-11-05
+    Mouse->>All: "phase 4"
+    Note right of Mouse: "Phase 4: see what each<br/>step read and wrote<br/>(UND-113)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 4 impl complete:<br/>beat_completed carries<br/>read/made/wrote (names,<br/>rows, keys), plan nodes<br/>carry 'with', run +<br/>replay carry 'steps',<br/>ste…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 4 passed on<br/>real data: household<br/>replay of live<br/>run-20261103T215207 with<br/>the real Monarch+Amex<br/>files: all 11 outputs<br/>byte-identic…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 4):<br/>No blocking findings.<br/>Event fields hold names,<br/>row counts and column<br/>names only (checked on<br/>real data: no payee va…"
+    Morpheus->>Tank: "lead handoff"
+    Note right of Morpheus: "Phase 4 review passed.<br/>Two additions beyond the<br/>story, recorded: 'made'<br/>(a beat's result shape)<br/>beside read/wrote so a<br/>beat that writes not…"
+    Tank->>Oracle: "devops handoff"
+    Note right of Tank: "SDLC check passed<br/>(Sprint 29): no change<br/>to pyproject.toml,<br/>uv.lock, .python-version<br/>or Makefile since main,<br/>make check exit 0 (636<br/>tests),…"
+    Oracle->>Smith: "ora handoff"
+    Note right of Oracle: "Docs groomed: CHANGELOG<br/>Sprint 29, ADR-0062, 2<br/>lessons (unique element<br/>ids, focus after a<br/>redraw),<br/>UAT_PLAN_SPRINT29,<br/>RETRO_SPRINT29, PLAYS…"
+    Smith->>All: "user approve"
+    Note right of Smith: "*user approve sprint-29.<br/>rubric UAT: COVER=A<br/>STEPS=A FAIL=A DATA=S<br/>EVID=A. UAT-29-1..9<br/>pass, real data byte-<br/>identical, live<br/>hold/step/resum…"
+    Mouse->>Cypher: "retro"
+    Note right of Mouse: "Sprint 29 retro posted<br/>in docs/sprints/RETRO_SP<br/>RINT29.md, including<br/>that I repeated Sprint<br/>28's sed/shell-edit<br/>slips. Backlog: fold big<br/>dia…"
+    Cypher->>All: "pm launch"
+    Note right of Cypher: "*pm launch sprint-29.<br/>Sprint complete: 3<br/>stories (UND-111..113),<br/>4 phases, the console<br/>draws the whole play,<br/>starts held or held<br/>before a b…"
+```
+
+## Phase 4 close-out
+
+- **Morpheus**: Phase 4 review passed. Two additions beyond the story, recorded: 'made' (a beat's result shape) beside read/wrote so a beat that writes not…
+- **Tank**: SDLC check passed (Sprint 29): no change to pyproject.toml, uv.lock, .python-version or Makefile since main, make check exit 0 (636 tests),…
+- **Smith**: \*user approve sprint-29. rubric UAT: COVER=A STEPS=A FAIL=A DATA=S EVID=A. UAT-29-1..9 pass, real data byte-identical, live hold/step/resum…
+
+## Sprint close-out
+
+- **Cypher**: \*pm launch sprint-29. Sprint complete: 3 stories (UND-111..113), 4 phases, the console draws the whole play, starts held or held before a b…

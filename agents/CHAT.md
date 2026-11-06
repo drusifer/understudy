@@ -2039,3 +2039,186 @@ OK
 ---
 [<small>2026-11-05 16:29:46</small>] [**Cypher**]->[**all**] *pm launch*:
  *pm launch sprint-28. Sprint complete: 6 stories (UND-105..110), 7 phases; a sketch is a play (stage, scene, beats, Jev beat, calls that bind a stage); household byte-identical on real data; 601 tests 30.4 s; browser 39/39. Branch sprint-28 committed locally, NOT merged or pushed: merge and push only when the owner asks.
+
+---
+[<small>2026-11-05 16:43:25</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make push | /home/drusifer/Projects/understudy/build/build.out
+4:43PM INF scanned ~79902 bytes (79.90 KB) in 260ms
+4:43PM INF no leaks found
+To github.com:drusifer/understudy.git
+9be83be..5c6206e  main -> main
+
+---
+[<small>2026-11-05 16:43:32</small>] [**Neo**]->[**User**] *swe push*:
+ Sprint 28 merged into main (54071de) and pushed with bobp make push (gate 601 OK, gitleaks clean); the owner's Bob Protocol tooling changes went in as 5c6206e at their request. main = origin/main = 5c6206e.
+
+---
+[<small>2026-11-05 16:49:39</small>] [**User**]->[**all**] *request*:
+ *ora groom docs
+
+---
+[<small>2026-11-05 16:50:03</small>] [**Oracle**]->[**all**] *groom*:
+ Docs groomed (*ora groom docs): rubric GROOM: ACCURACY=A USABILITY=A CONSISTENCY=A SYNC=n/a. Current docs use the play words; remaining 'sketch' is history (CHANGELOG, old ADRs, old sprint files) or named debt in ARCH. Fixed: DESIGN_SKETCH_MODEL points to PLAYS.md; BACKLOG gained the Sprint 25-27 and 28 retro items (Sprint 29 = scene diagram + stepping). DOCUMENTATION_INDEX.md is the template index, unchanged. Not run: nothing executed.
+
+---
+[<small>2026-11-05 16:51:36</small>] [**Neo**]->[**all**] *checkpoint*:
+ Checkpoint saved in agents/neo/state.md. Sprint 28 closed: merged and pushed (main = origin/main = 5c6206e); a docs-groom commit is local on main, not pushed. Next: Sprint 29 (scene diagram + stepping, decision 39); ask the owner about pushing the groom commit. Ready for context clear. Resume with /init.
+
+---
+[<small>2026-11-05 20:24:52</small>] [**User**]->[**all**] *request*:
+ /init *resume
+
+---
+[<small>2026-11-05 20:24:56</small>] [**Neo**]->[**all**] *resume*:
+ Resuming from Neo checkpoint: Sprint 28 closed; groom commit local on main, Sprint 29 next.
+
+---
+[<small>2026-11-05 20:25:34</small>] [**User**]->[**all**] *request*:
+ /sprint 29 go
+
+---
+[<small>2026-11-05 20:26:43</small>] [**Mouse**]->[**all**] *sprint 29 start*:
+ Decision 43 recorded: Sprint 29 = whole-play diagram + held-start stepping with hold-at-beat and per-beat pieces. Branch sprint-29. Next: Cypher+Morpheus Tier 2 story/arch doc.
+
+---
+[<small>2026-11-05 20:27:39</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Sprint 29 story+arch (Tier 2) written: docs/sprints/STORY_ARCH_SPRINT29.md. UND-111 whole-play diagram, UND-112 held start + hold-at-beat, UND-113 per-step pieces. @Smith *user review sprint-29
+
+---
+[<small>2026-11-05 20:27:45</small>] [**Smith**]->[**Switch**] *user approve*:
+ *user approve sprint-29 (stories+arch, combined gate). rubric STORIES: OUT=A TEST=A; ARCH: BOUND=A FLOW=A FAIL=A USER=A DECS=A FEAS=A. Note for build: label hold-at-beat clearly on the diagram so a person sees why a run stops. @Switch *sec threat sprint-29
+
+---
+[<small>2026-11-05 20:27:45</small>] [**Switch**]->[**Mouse**] *sec handoff*:
+ security gate (design): No blocking findings. Checked: plan URL name (whitelist of listed plays), hold_at (checked against the play's beats), new event fields (names and counts, no rows), control.json stop_at (read_control still rejects unknown shapes). @Mouse *sm plan sprint-29
+
+---
+[<small>2026-11-05 20:28:06</small>] [**Mouse**]->[**Morpheus**] *sm handoff*:
+ Sprint planned: 4 phases + closeout in task.md. rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A LEVEL=A (self-check). @Morpheus *lead review sprint plan
+
+---
+[<small>2026-11-05 20:28:06</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Sprint plan approved. rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A LEVEL=A. Phase 1 ready. @Neo *swe impl phase-1
+
+---
+[<small>2026-11-05 20:28:06</small>] [**Mouse**]->[**all**] *phase 1*:
+ Phase 1: the plan of a play (UND-111 part 1)
+
+---
+[<small>2026-11-05 20:31:11</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+----------------------------------------------------------------------
+Ran 616 tests in 30.556s
+
+OK
+
+---
+[<small>2026-11-05 20:31:18</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 1 impl complete: src/play/plan.py, chart.plan_layout, GET /api/plan?play=. make check 616 OK. @Trin *qa uat phase-1
+
+---
+[<small>2026-11-05 20:31:18</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 1 passed: household plan = 14 pieces (4 read, 10 write) and 152 nodes/174 edges, every write beat has its writes edge, moves match the YAML; layout clean (no arrow through a box) on household, evening, coffee. @Switch *sec review phase-1
+
+---
+[<small>2026-11-05 20:31:18</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 1): No blocking findings. Plan route opens only plays list_sketches offers (../ and unlisted names get 403, tested); returns names and layout, no data. @Morpheus *lead review phase-1
+
+---
+[<small>2026-11-05 20:31:18</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 1 review passed. Uses the registry's Source params so the diagram and check cannot disagree. Committing. @Neo *swe impl phase-2
+
+---
+[<small>2026-11-05 20:38:06</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+----------------------------------------------------------------------
+Ran 615 tests in 30.566s
+
+OK
+
+---
+[<small>2026-11-05 20:38:56</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 2 impl complete: run_started carries the plan (replaces the beats/transitions story line); one chart path for runs and replays; page draws pieces/beats/reads/writes; picked play shows its plan in the controls. make check 615 OK, browser 40/40. @Trin *qa uat phase-2
+
+---
+[<small>2026-11-05 20:38:56</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 2 passed on the live console: evening plan drawn (read pieces, booking write piece, dashed beats that wait, solid flow beats, double-bordered finals, guards labeled), no arrow through a box; the run chart lights from events (browser tests). @Switch *sec review phase-2
+
+---
+[<small>2026-11-05 20:38:56</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 2): No blocking findings. Page sets names and titles via textContent only (hostile-name browser test passes); the plan in run_started holds names and guards, no data. @Morpheus *lead review phase-2
+
+---
+[<small>2026-11-05 20:38:56</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 2 review passed. Note: run_started grew (household ~30 KB), one line per run; acceptable. Committing. @Neo *swe impl phase-3
+
+---
+[<small>2026-11-05 20:50:01</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+----------------------------------------------------------------------
+Ran 630 tests in 30.810s
+
+OK
+
+---
+[<small>2026-11-05 20:50:10</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 3 impl complete: control.json stop_at + stateless Hold rule, run_sketch(stop_at), CLI --stop-at/--by-console, launcher hold/hold_at (validated vs the flow), START HELD + click-a-beat on the plan, 'never reached' note. make check 630 OK. @Trin *qa uat phase-3
+
+---
+[<small>2026-11-05 20:50:10</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 3 passed on a real console + real child: hold_at=second paused before second, STEP then paused before third, RESUME ended done after 3 beats; hold=true paused before first; hold_at=done refused 400 naming first, second, third. Keyboard Enter/Space toggle works (browser tests). @Switch *sec review phase-3
+
+---
+[<small>2026-11-05 20:50:10</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 3): No blocking findings. hold_at checked against the play's flow beats before anything starts; secret still required on POST; stop_at read from control.json is length-capped (200) and type-checked, a bad file still means run; --by-console only relaxes the hold-flag refusal, adds no surface to a person's CLI beyond --watch. @Morpheus *lead review phase-3
+
+---
+[<small>2026-11-05 20:50:10</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 3 review passed. Runner never writes control.json (the console's next write spends stop_at), so ADR-0058 still holds. Committing. @Neo *swe impl phase-4
+
+---
+[<small>2026-11-05 20:50:11</small>] [**Mouse**]->[**all**] *phase 4*:
+ Phase 4: see what each step read and wrote (UND-113)
+
+---
+[<small>2026-11-05 21:02:37</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make lint | /home/drusifer/Projects/understudy/build/build.out
+=== make lint @ 2026-11-05 21:02:37 ===
+.venv/bin/ruff check src tests
+All checks passed!
+
+---
+[<small>2026-11-05 21:02:38</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 4 impl complete: beat_completed carries read/made/wrote (names, rows, keys), plan nodes carry 'with', run + replay carry 'steps', step view under the diagram (click a beat; follows the run by default). make check 636 OK, browser 44/44. @Trin *qa uat phase-4
+
+---
+[<small>2026-11-05 21:02:38</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 4 passed on real data: household replay of live run-20261103T215207 with the real Monarch+Amex files: all 11 outputs byte-identical to build/baseline-sprint28/full; 3786 beat_completed lines all carry read+wrote; 0 of 77 checked payee values appear in them. Log grew 594 KB -> 1.06 MB. @Switch *sec review phase-4
+
+---
+[<small>2026-11-05 21:02:38</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 4): No blocking findings. Event fields hold names, row counts and column names only (checked on real data: no payee values); the plan's with-text is the play file's own config, cut at 160 chars; page writes via textContent. @Morpheus *lead review phase-4
+
+---
+[<small>2026-11-05 21:02:38</small>] [**Morpheus**]->[**Tank**] *lead handoff*:
+ Phase 4 review passed. Two additions beyond the story, recorded: 'made' (a beat's result shape) beside read/wrote so a beat that writes nothing still shows its output; run-diagram beats are buttons (a11y names unchanged). Committing; Phase 4 done, closeout next. @Tank *devops sdlc-check
+
+---
+[<small>2026-11-05 21:02:50</small>] [**Tank**]->[**Oracle**] *devops handoff*:
+ SDLC check passed (Sprint 29): no change to pyproject.toml, uv.lock, .python-version or Makefile since main; make check exit 0 (636 tests); browser 44/44 ~112 s. Last verified updated. @Oracle *ora groom
+
+---
+[<small>2026-11-05 21:04:26</small>] [**Oracle**]->[**Smith**] *ora handoff*:
+ Docs groomed: CHANGELOG Sprint 29, ADR-0062, 2 lessons (unique element ids; focus after a redraw), UAT_PLAN_SPRINT29, RETRO_SPRINT29, PLAYS/USER_GUIDE/ARCH updated, BACKLOG. rubric DECISION ADR-0062: CONTEXT=A OPTIONS=A OUTCOME=A CONSEQ=A (self-check). CHAT archive left for the owner, as in Sprints 27-28. @Smith *user test sprint-29
+
+---
+[<small>2026-11-05 21:04:26</small>] [**Smith**]->[**all**] *user approve*:
+ *user approve sprint-29. rubric UAT: COVER=A STEPS=A FAIL=A DATA=S EVID=A. UAT-29-1..9 pass; real data byte-identical; live hold/step/resume works. Rough edges for the owner: household's plan is 152 nodes tall; the log doubled in size. @all *sprint retro
+
+---
+[<small>2026-11-05 21:04:26</small>] [**Mouse**]->[**Cypher**] *retro*:
+ Sprint 29 retro posted in docs/sprints/RETRO_SPRINT29.md, including that I repeated Sprint 28's sed/shell-edit slips. Backlog: fold big diagrams; step into called plays; trim the log; rename console API keys; household hold-at-beat check. @Cypher *pm launch sprint-29
+
+---
+[<small>2026-11-05 21:04:26</small>] [**Cypher**]->[**all**] *pm launch*:
+ *pm launch sprint-29. Sprint complete: 3 stories (UND-111..113), 4 phases; the console draws the whole play, starts held or held before a beat, and shows what each step read, made and wrote; household byte-identical on real data; 636 tests 31 s; browser 44/44. Branch sprint-29 committed locally, NOT merged or pushed: merge and push only when the owner asks.
