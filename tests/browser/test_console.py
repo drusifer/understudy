@@ -448,25 +448,38 @@ class TypedControlsTest(BrowserCase):
         self.assertTrue(page.locator("#field-note").is_visible())  # a name the sketch takes but does not declare stays a text box
         self.assertEqual(page.locator("#field-note").get_attribute("type"), "text")
 
-    def test_the_picked_play_shows_its_plan_before_any_run(self):
+    def test_there_is_one_diagram_and_it_follows_the_last_choice_a_play_picked_or_a_run_chosen(self):
         page = self.open()
-        page.wait_for_selector("#plan-wrap .state")
-        self.assertEqual(page.locator("#plan-wrap .state-name").all_text_contents(), ["only"])
-        self.assertIn("1 node:", page.locator("#plan-note").inner_text())
+        self.assertEqual(page.locator(".chart-svg").count(), 0)  # the chosen run has no plan in its log
+        page.click("#show-plan")
+        page.wait_for_selector("#chart-wrap .state")
+        self.assertEqual(page.locator(".chart-svg").count(), 1)
+        self.assertEqual(page.locator("#chart-title").inner_text(), "PLAN OF typed")
+        self.assertEqual(page.locator("#plan").count(), 0)  # the start panel has no diagram of its own
+        page.locator(".sketch-tab").first.click()
+        page.wait_for_function("document.getElementById('chart-title').textContent.startsWith('DIAGRAM OF RUN')")
+        self.assertEqual(page.locator(".chart-svg").count(), 0)  # the run's own diagram (none in this log)
+
+    def test_the_picked_play_shows_its_plan(self):
+        page = self.open()
+        page.click("#show-plan")
+        page.wait_for_selector("#chart-wrap .state")
+        self.assertEqual(page.locator("#chart-wrap .state-name").all_text_contents(), ["only"])
+        self.assertIn("1 node:", page.locator("#chart-note").inner_text())
 
     def test_a_beat_clicked_on_the_plan_is_held_before_and_start_held_holds_at_the_first_beat(self):
         page = self.open()
         self.unlock(page)
         page.select_option("#sketch-pick", "zflow.yaml")
-        page.wait_for_selector("#plan-wrap .state.pickable")
-        self.assertEqual(page.locator("#plan-wrap .state.pickable").count(), 2)  # the flow's two beats; the final one is not
-        page.locator("#plan-wrap .state[data-state='second']").click()
-        self.assertEqual(page.locator("#plan-wrap .state.hold-here").get_attribute("data-state"), "second")
-        self.assertIn("hold before second", page.locator("#plan-note").inner_text())
+        page.wait_for_selector("#chart-wrap .state.pickable")
+        self.assertEqual(page.locator("#chart-wrap .state.pickable").count(), 2)  # the flow's two beats; the final one is not
+        page.locator("#chart-wrap .state[data-state='second']").click()
+        self.assertEqual(page.locator("#chart-wrap .state.hold-here").get_attribute("data-state"), "second")
+        self.assertIn("hold before second", page.locator("#chart-note").inner_text())
         page.click("#play")
         page.wait_for_function("document.getElementById('start-message').textContent.includes('started')")
         self.assertEqual(self.started[-1][self.started[-1].index("--stop-at") + 1], "second")
-        self.assertEqual(page.locator("#plan-wrap .state.hold-here").count(), 0)  # spent by the start
+        self.assertEqual(page.locator("#chart-wrap .state.hold-here").count(), 0)  # spent by the start
         page.click("#play-held")
         page.wait_for_function("document.getElementById('start-message').textContent.includes('already running') || "
                                "document.getElementById('start-message').textContent.includes('started')")
@@ -474,14 +487,14 @@ class TypedControlsTest(BrowserCase):
     def test_a_clicked_beat_is_cleared_by_clicking_it_again_and_works_from_the_keyboard(self):
         page = self.open()
         page.select_option("#sketch-pick", "zflow.yaml")
-        page.wait_for_selector("#plan-wrap .state.pickable")
-        beat = page.locator("#plan-wrap .state[data-state='first']")
+        page.wait_for_selector("#chart-wrap .state.pickable")
+        beat = page.locator("#chart-wrap .state[data-state='first']")
         beat.focus()
         page.keyboard.press("Enter")
-        self.assertEqual(page.locator("#plan-wrap .state.hold-here").count(), 1)
+        self.assertEqual(page.locator("#chart-wrap .state.hold-here").count(), 1)
         self.assertEqual(beat.get_attribute("aria-pressed"), "true")
         page.keyboard.press(" ")
-        self.assertEqual(page.locator("#plan-wrap .state.hold-here").count(), 0)
+        self.assertEqual(page.locator("#chart-wrap .state.hold-here").count(), 0)
 
     def test_every_control_works_from_the_keyboard(self):
         page = self.open()

@@ -410,16 +410,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .start-panel { margin: 0 0 12px; padding: 8px 12px; border-radius: 8px; border: 2px solid var(--brass-deep); background: rgba(0,0,0,.18); font-family: VT323, monospace; font-size: 18px; color: var(--cream); }
 .start-panel > summary { cursor: pointer; font-family: Cinzel, serif; font-size: 12px; letter-spacing: 3px; color: var(--brass); padding: 2px 0; }
 .start-panel > summary:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
-/* The controls on the left and the picked play's plan beside them on a wide screen; stacked on a narrow one. */
-.start-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px 20px; margin-top: 8px; }
-.start-layout > .start-grid { margin-top: 0; }
-.plan-side .chart-title { margin-top: 0; }
-.plan-side .chart-wrap { max-height: min(72vh, 680px); }
-@media (min-width: 1000px) {
-  .start-layout { grid-template-columns: minmax(380px, 5fr) minmax(0, 6fr); align-items: start; }
-  .plan-side { position: sticky; top: 8px; }
-}
-.start-grid { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 12px; align-items: center; margin-top: 8px; }
+.start-grid { max-width: 860px; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 12px; align-items: center; margin-top: 8px; }
 .start-grid > .start-gate, .start-grid > .start-fields, .start-grid > .start-buttons, .start-grid > .start-message, .start-grid > #sketch-about { grid-column: 1 / -1; }
 .start-gate { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .start-gate .find-field { flex: 0 1 260px; }

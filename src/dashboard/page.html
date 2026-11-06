@@ -52,7 +52,6 @@
 
 <details id="controls" class="start-panel" hidden>
   <summary>START A RUN</summary>
-  <div class="start-layout">
   <div class="start-grid">
     <label for="sketch-pick" data-launcher>Play</label>
     <select id="sketch-pick" class="find-field" data-launcher></select>
@@ -61,6 +60,7 @@
     <label for="replay-pick" data-launcher>Replay from</label>
     <select id="replay-pick" class="find-field" data-launcher><option value="">no - run live</option></select>
     <div class="start-buttons">
+      <button type="button" id="show-plan" class="find-button" data-launcher disabled title="Show this play's plan in the diagram; click a beat of the flow to hold a run before it">SHOW PLAN</button>
       <button type="button" id="play" class="find-button" data-launcher disabled>PLAY</button>
       <button type="button" id="play-held" class="find-button" data-launcher disabled>START HELD</button>
       <button type="button" id="stop" class="find-button" data-launcher disabled>STOP THIS RUN</button>
@@ -69,12 +69,6 @@
       <button type="button" id="resume" class="find-button" data-hold disabled>RESUME</button>
     </div>
     <div id="start-message" class="start-message" role="status" aria-live="polite"></div>
-  </div>
-  <section id="plan" class="chart plan-side" aria-labelledby="plan-title" data-launcher>
-    <h3 id="plan-title" class="chart-title">PLAN OF THIS PLAY</h3>
-    <p id="plan-note" class="chart-note"></p>
-    <div id="plan-wrap" class="chart-wrap" role="group" aria-label="Plan of the picked play" tabindex="0" hidden></div>
-  </section>
   </div>
 </details>
 
@@ -119,16 +113,6 @@
     <div id="ended" class="ended about"></div>
     <div id="tube" class="tube stages"></div>
     <div id="gauges" class="gauges" role="group" aria-label="Gauges"></div>
-    <section id="chart" class="chart" aria-labelledby="chart-title">
-      <h3 id="chart-title" class="chart-title">PLAY DIAGRAM</h3>
-      <p id="chart-note" class="chart-note"></p>
-      <div id="chart-wrap" class="chart-wrap" role="group" aria-label="Play diagram" tabindex="0" hidden></div>
-    </section>
-    <section id="step-view" class="chart" aria-labelledby="step-title" hidden>
-      <h3 id="step-title" class="chart-title">STEP</h3>
-      <p id="step-note" class="chart-note"></p>
-      <dl id="step-body" class="summary" aria-label="What this beat read and made"></dl>
-    </section>
     <dl id="summary" class="summary" aria-label="Run summary"></dl>
     <section id="spending" class="spending" aria-labelledby="spending-title" hidden>
       <h3 id="spending-title" class="spend-title">WHERE THE MONEY WENT</h3>
@@ -144,6 +128,19 @@
       <label class="find-check"><input id="jev-unsure" type="checkbox"> unsure only</label>
       <div id="jev-list" class="jev-list"></div>
     </details>
+  </section>
+
+  <section class="tube-panel diagram-panel" aria-label="Diagram">
+    <section id="chart" class="chart" aria-labelledby="chart-title">
+      <h3 id="chart-title" class="chart-title">PLAY DIAGRAM</h3>
+      <p id="chart-note" class="chart-note"></p>
+      <div id="chart-wrap" class="chart-wrap" role="group" aria-label="Play diagram" tabindex="0" hidden></div>
+    </section>
+    <section id="step-view" class="chart" aria-labelledby="step-title" hidden>
+      <h3 id="step-title" class="chart-title">STEP</h3>
+      <p id="step-note" class="chart-note"></p>
+      <dl id="step-body" class="summary" aria-label="What this beat read and made"></dl>
+    </section>
   </section>
 </main>
 </div>

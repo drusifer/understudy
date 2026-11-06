@@ -32,6 +32,7 @@ function drawButtons() {
   const playable = Boolean(sketch?.ok);
   $('play').disabled = !playable;
   $('play').title = playable ? 'Run this play' : 'this file cannot be read as a play';
+  $('show-plan').disabled = !playable;
   $('play-held').disabled = !playable;
   $('play-held').title = playable ? 'Start this play held before its first beat, then STEP through it' : 'this file cannot be read as a play';
   const running = ['running', 'stalled', 'paused'].includes(state.chosenState);
@@ -183,16 +184,18 @@ function drawFields() {
         placeholder: fieldHint(sketch, name) }))));
   drawReplays();
   drawButtons();
-  drawPlan(sketch);
 }
 
-// The picked play's plan: its pieces and beats and who reads what, before any run exists. A beat of the flow can be clicked
-// to hold the next run before it; click it again to clear.
-async function drawPlan(sketch) {
-  $('plan').hidden = !sketch?.ok;
+// The one diagram shows the picked play's plan (its pieces and beats and who reads what) from the moment a play is picked or
+// SHOW PLAN is pressed, until a run is chosen or started. A beat of the flow can be clicked to hold the next run before it;
+// click it again to clear. The step view describes the held beat.
+async function showPlan() {
+  const sketch = currentSketch();
   if (!sketch?.ok) return;
+  state.view = 'plan';
+  state.stepBeat = null;
   const plan = await getJson(`api/plan?play=${encodeURIComponent(sketch.file)}`);
-  if (currentSketch()?.file !== sketch.file) return; // the pick changed while this was on its way
+  if (state.view !== 'plan' || currentSketch()?.file !== sketch.file) return; // the choice changed while this was on its way
   if (controls.planFile !== sketch.file) controls.holdAt = null;
   controls.planFile = sketch.file;
   controls.plan = plan?.nodes ? plan : null;
@@ -202,18 +205,22 @@ async function drawPlan(sketch) {
 
 function pickBeat(node) {
   controls.holdAt = controls.holdAt === node.id ? null : node.id;
+  state.stepBeat = controls.holdAt;
   paintPlan();
   // the diagram was drawn again, so keyboard focus goes back to the beat that was chosen
-  $('plan-wrap').querySelector(`[data-state="${CSS.escape(node.id)}"]`)?.focus();
+  $('chart-wrap').querySelector(`[data-state="${CSS.escape(node.id)}"]`)?.focus();
 }
 
 function paintPlan() {
   const plan = controls.plan;
-  drawDiagram($('plan-wrap'), plan, { pick: pickBeat, picked: controls.holdAt, mode: 'hold', can: (node) => node.kind === 'beat' && node.flow && !node.final });
-  $('plan-note').textContent = !plan ? controls.planProblem
+  const sketch = currentSketch();
+  drawDiagram($('chart-wrap'), plan, { pick: pickBeat, picked: controls.holdAt, mode: 'hold', can: (node) => node.kind === 'beat' && node.flow && !node.final });
+  $('chart-title').textContent = `PLAN OF ${sketch ? sketch.name : 'THIS PLAY'}`;
+  $('chart-note').textContent = !plan ? controls.planProblem
     : controls.holdAt ? `the next run will hold before ${controls.holdAt}; click it again to clear`
     : plan.nodes.length === 0 ? 'this play has no stage pieces and no beats'
     : `${plan.nodes.length} ${plan.nodes.length === 1 ? 'node' : 'nodes'}: pieces are rounded, beats are boxes, a dashed box waits until it is read; click a beat of the flow to hold a run before it`;
+  drawStep({ chart: plan, steps: {}, state: 'plan' });
 }
 
 function drawSketches() {
@@ -242,6 +249,7 @@ async function loadControls() {
   controls.sketches = (await getJson('api/sketches')) ?? [];
   controls.replays = (await getJson('api/replays')) ?? [];
   drawSketches();
+  if (state.runs.length === 0 && !state.chosen) showPlan(); // nothing has run yet: show what the first play would do
 }
 
 // Replay offers only the captured runs of the picked play (a capture is read by the play that made it), newest first.
@@ -266,7 +274,9 @@ async function play(held = false) {
   drawButtons();
   if (status === 200) {
     controls.holdAt = null;
-    paintPlan();
+    state.view = 'run';
+    state.stepBeat = null;
+    if (state.shownRun) drawChart(state.shownRun);
     controls.watching = body.run;
     say(body.run ? `started ${body.run}` : 'started; it will appear in the rack in a moment', 'ok');
     await loadRuns();
@@ -299,7 +309,8 @@ function afterStatus(run) {
   }
 }
 
-$('sketch-pick').addEventListener('change', drawFields);
+$('sketch-pick').addEventListener('change', () => { drawFields(); showPlan(); });
+$('show-plan').addEventListener('click', showPlan);
 $('play').addEventListener('click', () => play(false));
 $('play-held').addEventListener('click', () => play(true));
 $('stop').addEventListener('click', stop);

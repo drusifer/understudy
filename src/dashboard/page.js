@@ -15,7 +15,7 @@ const remembered = (key) => { try { return localStorage.getItem(`understudy.${ke
 const remember = (key, value) => { try { localStorage.setItem(`understudy.${key}`, value); } catch { /* private mode */ } };
 const known = (list, ...candidates) => candidates.find((each) => list.includes(each)) ?? list[0];
 
-const state = { runs: [], chosen: null, chosenState: null, follow: null, openGroups: new Set(), theme: 'steampunk', mode: 'auto' };
+const state = { view: 'run', runs: [], chosen: null, chosenState: null, follow: null, openGroups: new Set(), theme: 'steampunk', mode: 'auto' };
 const query = new URLSearchParams(location.search);
 const device = matchMedia('(prefers-color-scheme: dark)');
 
@@ -218,6 +218,8 @@ function drawDiagram(wrap, chart, options = {}) {
 function drawChart(run) {
   const chart = run.chart;
   state.shownRun = run;
+  if (state.view === 'plan') return; // the picked play's plan is on screen (controls.js); a run tab or a start brings the run back
+  $('chart-title').textContent = `DIAGRAM OF RUN ${stamp(run.id)}`;
   drawDiagram($('chart-wrap'), chart, { pick: pickStep, picked: state.stepBeat, mode: 'show', can: (node) => node.kind === 'beat' });
   drawStep(run);
   if (!chart) {
@@ -392,6 +394,7 @@ async function choose(id) {
   if (typeof endReplay === 'function') endReplay(false); // replay.js: choosing a run closes a replay
   state.follow?.close();
   state.chosen = id;
+  state.view = 'run'; // a run tab brings the run's diagram back from a play's plan
   state.stepBeat = null; // the step view follows the new run until a beat is clicked
   rack();
   const run = await getJson(`api/runs/${id}`);
