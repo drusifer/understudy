@@ -417,11 +417,23 @@ scene: { initial: only, beats: { only: { final: true } } }
 """
 
 
+FLOW = """name: flow
+description: A play with a beat to hold before.
+scene:
+  initial: first
+  beats:
+    first: { do: { map: { action: rows } }, with: { rows: [ { a: 1 } ] }, to: second }
+    second: { do: { map: { action: rows } }, with: { rows: [ { a: 2 } ] }, to: done }
+    done: { final: true }
+"""
+
+
 class TypedControlsTest(BrowserCase):
     def open(self, width=1300, height=900):
         sketches = self.root / "sketches"
         sketches.mkdir()
         (sketches / "typed.yaml").write_text(TYPED, encoding="utf-8")
+        (sketches / "zflow.yaml").write_text(FLOW, encoding="utf-8")
         run = write_run(self.runs, "run-20261101T150000-0000000e", [{"event": "run_started", "at": stamp(-1), "play": "typed.yaml",
                                                                     "mode": "live"}], {"status": "running", "beats":{}})
         self.started: list[list[str]] = []
@@ -462,6 +474,35 @@ class TypedControlsTest(BrowserCase):
         page.wait_for_selector("#plan-wrap .state")
         self.assertEqual(page.locator("#plan-wrap .state-name").all_text_contents(), ["only"])
         self.assertIn("1 node:", page.locator("#plan-note").inner_text())
+
+    def test_a_beat_clicked_on_the_plan_is_held_before_and_start_held_holds_at_the_first_beat(self):
+        page = self.open()
+        self.unlock(page)
+        page.select_option("#sketch-pick", "zflow.yaml")
+        page.wait_for_selector("#plan-wrap .state.pickable")
+        self.assertEqual(page.locator("#plan-wrap .state.pickable").count(), 2)  # the flow's two beats; the final one is not
+        page.locator("#plan-wrap .state[data-state='second']").click()
+        self.assertEqual(page.locator("#plan-wrap .state.hold-here").get_attribute("data-state"), "second")
+        self.assertIn("hold before second", page.locator("#plan-note").inner_text())
+        page.click("#play")
+        page.wait_for_function("document.getElementById('start-message').textContent.includes('started')")
+        self.assertEqual(self.started[-1][self.started[-1].index("--stop-at") + 1], "second")
+        self.assertEqual(page.locator("#plan-wrap .state.hold-here").count(), 0)  # spent by the start
+        page.click("#play-held")
+        page.wait_for_function("document.getElementById('start-message').textContent.includes('already running') || "
+                               "document.getElementById('start-message').textContent.includes('started')")
+
+    def test_a_clicked_beat_is_cleared_by_clicking_it_again_and_works_from_the_keyboard(self):
+        page = self.open()
+        page.select_option("#sketch-pick", "zflow.yaml")
+        page.wait_for_selector("#plan-wrap .state.pickable")
+        beat = page.locator("#plan-wrap .state[data-state='first']")
+        beat.focus()
+        page.keyboard.press("Enter")
+        self.assertEqual(page.locator("#plan-wrap .state.hold-here").count(), 1)
+        self.assertEqual(beat.get_attribute("aria-pressed"), "true")
+        page.keyboard.press(" ")
+        self.assertEqual(page.locator("#plan-wrap .state.hold-here").count(), 0)
 
     def test_every_control_works_from_the_keyboard(self):
         page = self.open()

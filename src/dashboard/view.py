@@ -214,6 +214,9 @@ def describe(directory: Path, now: datetime | None = None) -> dict:
     tube = stage_tree(events)
     mode = run.get("mode", started.get("mode", ""))
     ended = f"paused before {held['stage']}" if held else _ended(state, run, failure, last_at, now)
+    asked = started.get("stop_at")
+    if ended and asked and not any(each.get("event") == "paused" and each.get("beat") == asked for each in events):
+        ended += f"; never reached {asked}, the beat it was to hold before"
     return {
         "id": directory.name,
         "sketch": Path(started.get("play", run.get("play", "?"))).stem,

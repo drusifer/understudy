@@ -34,10 +34,10 @@ Complexity levels follow `agents/templates/_template_task.md`. **Run only the te
 
 ### Phase 3: Start held and hold at a beat (UND-112)
 *Phase goal: a play starts held, or held before a beat picked on the diagram.*
-- [ ] **Task 3.1:** Tests first, then `Hold` with `stop_at` (reaching it switches to `hold` and clears it), `control.json` accepts it, `run_sketch(stop_at=)`, CLI `--stop-at`, and the launcher's hold choice (`hold` / `hold_at` on `POST /api/runs`, checked against the play's flow beats, secret required). **L3** (runner gate, CLI and launcher together). (*Owner: Neo | Trace: UND-112 AC3-5 | Verification: `bobp make test ARGS="test_play_control.py"` and the route tests*)
-- [ ] **Task 3.2:** The page: START HELD, click a flow beat to hold before it (shown on the diagram, cleared by clicking again or by starting), "never reached" when the run ends with the hold unspent. **L2**. (*Owner: Neo | Trace: UND-112 AC1, AC2 | Verification: page tests*)
-- [ ] **Task 3.3:** UAT: start held on coffee and step to the end; hold at a middle beat and see the stop; a bad `hold_at` refused. **L2**. (*Owner: Trin | Trace: UND-112 AC1-3 | Verification: verdicts*)
-- [ ] **Task 3.4:** Security review (the new input), then code review. **L1**. (*Owner: Switch, then Morpheus | Trace: design gate | Verification: verdict lines*)
+- [x] **Task 3.1:** Tests first, then `Hold` with `stop_at` (reaching it switches to `hold` and clears it), `control.json` accepts it, `run_sketch(stop_at=)`, CLI `--stop-at`, and the launcher's hold choice (`hold` / `hold_at` on `POST /api/runs`, checked against the play's flow beats, secret required). **L3** (runner gate, CLI and launcher together). (*Owner: Neo | Trace: UND-112 AC3-5 | Verification: `bobp make test ARGS="test_play_control.py"` and the route tests*)
+- [x] **Task 3.2:** The page: START HELD, click a flow beat to hold before it (shown on the diagram, cleared by clicking again or by starting), "never reached" when the run ends with the hold unspent. **L2**. (*Owner: Neo | Trace: UND-112 AC1, AC2 | Verification: page tests*)
+- [x] **Task 3.3:** UAT: start held on coffee and step to the end; hold at a middle beat and see the stop; a bad `hold_at` refused. **L2**. (*Owner: Trin | Trace: UND-112 AC1-3 | Verification: verdicts*)
+- [x] **Task 3.4:** Security review (the new input), then code review. **L1**. (*Owner: Switch, then Morpheus | Trace: design gate | Verification: verdict lines*)
 
 ### Phase 4: See what each step read and wrote (UND-113)
 *Phase goal: the log and the step view say what a beat read and wrote, in names and counts.*

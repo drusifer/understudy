@@ -227,9 +227,11 @@ def stage_computer(  # noqa: PLR0913 - what a stage source's stage runs against:
 async def run_sketch(  # noqa: PLR0913 - what a run takes: the sketch, where, its stages, how to announce, capture, pause
     sketch: Play, out: Path, library: Mapping[str, StageFn], announce: Callable[[str], None] = print,
     capture: Capture | None = None, pause: bool = False, on_start: Callable[[Path], None] | None = None,
+    stop_at: str | None = None,
 ) -> RunResult:
     """Run the sketch's machine. Raises whatever a stage raises, after recording the failure. With `pause` the run
-    starts held before its first stage (see `control.py`); `on_start` is told the run's folder as soon as it exists."""
+    starts held before its first stage, and with `stop_at` it runs up to that beat and holds before it (see `control.py`);
+    `on_start` is told the run's folder as soon as it exists."""
     capture = capture or Capture.live(CaptureStore())
     out = Path(out).resolve()
     check_writable(out)
@@ -237,6 +239,8 @@ async def run_sketch(  # noqa: PLR0913 - what a run takes: the sketch, where, it
     directory.mkdir(parents=True)
     if pause:
         write_control(directory, "hold", 0)
+    elif stop_at:
+        write_control(directory, "run", 0, stop_at)
     if on_start:
         on_start(directory)
     files = [f for sink in sketch.sinks.values() for f in (sink.file, f"{sink.file}.part")]
@@ -244,7 +248,8 @@ async def run_sketch(  # noqa: PLR0913 - what a run takes: the sketch, where, it
     if capture.replay_dir:
         facts["replay_of"] = _shown_path(capture.replay_dir)
     record = EventedRecord(directory, announce, cleanup=[*files, "summary.json"], mode=capture.mode, play=sketch.name, **facts)
-    record.emit("run_started", play=_shown_path(sketch.path), mode=capture.mode, **_story_of(sketch))
+    record.emit("run_started", play=_shown_path(sketch.path), mode=capture.mode, **({"stop_at": stop_at} if stop_at else {}),
+                **_story_of(sketch))
     if capture.replay_dir:
         announce(f"replay: reading captures from {capture.replay_dir}, no live calls")
     sources = Sources(capture, directory.name, announce)

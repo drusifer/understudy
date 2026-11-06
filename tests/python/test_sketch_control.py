@@ -29,6 +29,17 @@ class ControlFileTests(unittest.TestCase):
         self.assertEqual(read_control(self.dir), {"mode": "hold", "steps": 2})
         self.assertEqual([p.name for p in self.dir.iterdir()], ["control.json"])
 
+    def test_a_beat_to_hold_before_is_written_and_read_back_beside_the_mode(self):
+        write_control(self.dir, "run", 0, stop_at="write")
+        self.assertEqual(read_control(self.dir), {"mode": "run", "steps": 0, "stop_at": "write"})
+        write_control(self.dir, "hold", 1)  # a console action rewrites the file, and the beat is spent
+        self.assertEqual(read_control(self.dir), {"mode": "hold", "steps": 1})
+
+    def test_a_bad_beat_to_hold_before_means_run(self):
+        for stop in ("1", "[]", '""', json.dumps("x" * 300), "null"):
+            (self.dir / "control.json").write_text(f'{{"mode": "hold", "steps": 1, "stop_at": {stop}}}', encoding="utf-8")
+            self.assertEqual(read_control(self.dir), {"mode": "run", "steps": 0}, stop[:20])
+
     def test_a_bad_file_means_run(self):
         for text in ("not json", "[]", '{"mode": "sleep", "steps": 1}', '{"mode": "hold", "steps": -1}',
                      '{"mode": "hold", "steps": "1"}', '{"mode": "hold", "steps": true}', "x" * 5000):
@@ -96,6 +107,26 @@ class HoldTests(unittest.TestCase):
         self.before(hold, "b")  # held again with no step left
         self.assertEqual(len(sleeps), 1)
 
+    def test_a_run_goes_through_every_beat_but_the_one_to_hold_before_and_waits_there_naming_it(self):
+        write_control(self.dir, "run", 0, stop_at="write")
+        hold, sleeps = self.hold(lambda n: write_control(self.dir, "hold", 1) if n == 1 else write_control(self.dir, "run", 1))
+        self.before(hold, "count")
+        self.assertEqual((self.emitted, sleeps), ([], []))
+        self.before(hold, "write")  # waits, is stepped, goes on
+        self.assertEqual(self.emitted, [("paused", {"beat": "write"}), ("resumed", {"beat": "write"})])
+        self.emitted.clear()
+        self.before(hold, "after")  # the console's step made it a hold: the next beat waits too (here until a resume)
+        self.assertEqual([kind for kind, _ in self.emitted], ["paused", "resumed"])
+        self.assertEqual(len(sleeps), 2)  # one wait at the beat, one at the next
+
+    def test_resuming_at_the_beat_lets_the_rest_run_free(self):
+        write_control(self.dir, "run", 0, stop_at="write")
+        hold, _ = self.hold(lambda n: write_control(self.dir, "run", 0))
+        self.before(hold, "write")
+        self.emitted.clear()
+        self.before(hold, "after")
+        self.assertEqual(self.emitted, [])
+
     def test_a_bad_file_while_held_releases_the_run(self):
         write_control(self.dir, "hold", 0)
         hold, sleeps = self.hold(lambda n: (self.dir / "control.json").write_text("junk", encoding="utf-8"))
@@ -104,11 +135,11 @@ class HoldTests(unittest.TestCase):
 
 
 class HeldRunTests(RunCase):
-    def run_held(self, driver):
-        """Run the branch sketch started held; `driver(folder)` is an async task that steps and resumes it."""
+    def run_held(self, driver, **options):
+        """Run the branch sketch started held (or held before `stop_at`); `driver(task)` steps and resumes it."""
         async def go():
             sketch = load_checked(self.sketch())
-            task = asyncio.create_task(run_sketch(sketch, self.out, library(), lambda line: None, pause=True))
+            task = asyncio.create_task(run_sketch(sketch, self.out, library(), lambda line: None, **{"pause": True, **options}))
             await driver(task)
             return await task
 
@@ -145,6 +176,18 @@ class HeldRunTests(RunCase):
         self.assertEqual(kinds.count("paused"), 2)
         self.assertEqual(kinds.count("resumed"), 2)
         self.assertEqual(kinds[-1], "run_finished")
+
+    def test_held_before_a_beat_it_runs_the_earlier_beats_then_waits_there(self):
+        async def driver(task):
+            folder = await self.wait_for(self.folder, "paused")
+            events = events_of(folder)
+            self.assertEqual([e["beat"] for e in events if e["event"] == "beat_started"], ["count", "quiet"])
+            self.assertEqual(next(e for e in events if e["event"] == "paused")["beat"], "write")
+            write_control(folder, "run", 0)  # resume
+
+        result = self.run_held(driver, pause=False, stop_at="write")
+        kinds = [e["event"] for e in events_of(result.directory)]
+        self.assertEqual((kinds.count("paused"), kinds.count("resumed"), kinds[-1]), (1, 1, "run_finished"))
 
     def test_a_run_never_held_has_no_paused_events(self):
         result, _ = self.run_it(library())

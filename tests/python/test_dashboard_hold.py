@@ -55,6 +55,18 @@ class HeldViewTests(unittest.TestCase):
         shown = describe(folder, NOW)
         self.assertEqual((shown["state"], shown["hold"]), ("running", None))
 
+    def test_a_run_that_ends_without_reaching_its_beat_to_hold_before_says_so(self):
+        asked = {**STARTED, "stop_at": "b"}
+        folder = write_run(self.root, [asked, {"event": "beat_started", "beat": "a"},
+                                       {"event": "run_finished", "outcome": "complete"}], status="complete")
+        self.assertIn("never reached b", describe(folder, NOW)["ended"])
+
+    def test_a_run_held_at_its_beat_does_not_say_it_was_missed(self):
+        asked = {**STARTED, "stop_at": "a"}
+        folder = write_run(self.root, [asked, {"event": "paused", "beat": "a"}, {"event": "resumed", "beat": "a"},
+                                       {"event": "run_finished", "outcome": "complete"}], status="complete")
+        self.assertNotIn("never reached", describe(folder, NOW)["ended"])
+
     def test_a_run_held_for_hours_is_paused_not_stalled(self):
         folder = write_run(self.root, [STARTED, {"event": "paused", "beat": "a"}])
         self.assertEqual(describe(folder, NOW + timedelta(hours=5))["state"], "paused")

@@ -82,7 +82,10 @@ def _parser() -> argparse.ArgumentParser:
                      help="read the captured Jev answers of a run or folder instead of calling Jev (no key, no network)")
     run.add_argument("--watch", action="store_true",
                      help="open a console on this machine for this run, where you can pause, step and resume it")
-    run.add_argument("--pause", action="store_true", help="start the run held before its first stage (needs --watch)")
+    run.add_argument("--pause", action="store_true", help="start the run held before its first beat (needs --watch)")
+    run.add_argument("--stop-at", metavar="BEAT", default=None,
+                     help="run up to this beat of the scene's flow and hold before it (needs --watch)")
+    run.add_argument("--by-console", action="store_true", help=argparse.SUPPRESS)  # a console that started this run steps it
     run.add_argument("--port", type=int, default=0, help="the port --watch listens on (default: any free one)")
     return parser
 
@@ -138,11 +141,12 @@ def main(  # noqa: PLR0911, PLR0913 - the command line's injection points
         stderr.write(f"understudy: {message}\n")
         return code
 
-    if getattr(args, "pause", False) and not args.watch:
-        return fail("--pause needs --watch", 2)
+    if message := _needs_watch(args):
+        return fail(message, 2)
 
     try:
         sketch = load_checked(args.sketch, {}, _values(args.values))
+        _require_stop_beat(sketch, getattr(args, "stop_at", None))
     except PlayError as error:
         for problem in error.problems[:-1]:
             stderr.write(f"understudy: {problem}\n")
@@ -173,6 +177,24 @@ def main(  # noqa: PLR0911, PLR0913 - the command line's injection points
             watch.close()
 
 
+def _needs_watch(args) -> str | None:
+    """The refusal for a hold flag given with nothing to step the run (a console of its own or one that started it)."""
+    if getattr(args, "watch", False) or getattr(args, "by_console", False):
+        return None
+    flag = next((name for name, given in (("--pause", getattr(args, "pause", False)), ("--stop-at", getattr(args, "stop_at", None)))
+                 if given), None)
+    return f"{flag} needs --watch" if flag else None
+
+
+def _require_stop_beat(sketch, beat: str | None) -> None:
+    """Refuse `--stop-at beat` unless it names a beat in the scene's flow that is not final."""
+    states = sketch.machine["states"]
+    if beat is None or (beat in states and not states[beat].get("final")):
+        return
+    flow = ", ".join(name for name, state in states.items() if not state.get("final"))
+    raise PlayError([f"--stop-at: {beat!r} is not a beat the run holds before (the flow has: {flow})"])
+
+
 def _execute(args, plan, streams, watch) -> int:
     """Run the sketch and say what it made; every way it can fail is one line and its exit code. `plan` is the sketch,
     its capture and the stages that run it."""
@@ -180,7 +202,7 @@ def _execute(args, plan, streams, watch) -> int:
     stdout, stderr = streams
     try:
         result = asyncio.run(run_sketch(sketch, args.out, stages, lambda line: stdout.write(line + "\n"), capture,
-                                        pause=args.pause, on_start=watch.started if watch else None))
+                                        pause=args.pause, on_start=watch.started if watch else None, stop_at=args.stop_at))
     except OutputPathError as error:
         stderr.write(f"understudy: {error}\n")
         return 2

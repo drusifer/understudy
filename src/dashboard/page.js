@@ -167,7 +167,9 @@ function nodeWords(node) {
   return `${node.final ? 'final beat' : node.waits ? 'beat performed when read' : 'beat'}${node.action ? `, ${node.action}` : ''}`;
 }
 
-function stateGroup(node) {
+// `options.pick(node)` makes the beats of the flow clickable (and `options.picked` names the one chosen), for a diagram the
+// person chooses a beat on; a diagram that only shows a run passes nothing.
+function stateGroup(node, options = {}) {
   const name = svgEl('text', { class: 'state-name', x: node.x + node.w / 2, y: node.y + node.h / 2 + 5, 'text-anchor': 'middle' });
   name.textContent = node.id;
   const extra = node.kind === 'piece' ? `, ${nodeWords(node)}` : node.waits ? ', performed when read' : '';
@@ -175,10 +177,18 @@ function stateGroup(node) {
   const piece = node.kind === 'piece';
   const box = svgEl('rect', { class: 'state-box', x: node.x, y: node.y, width: node.w, height: node.h, rx: piece ? node.h / 2 : 6 });
   const ring = node.final ? [svgEl('rect', { class: 'final-ring', x: node.x + 4, y: node.y + 4, width: node.w - 8, height: node.h - 8, rx: 4 })] : [];
+  const pickable = Boolean(options.pick) && node.kind === 'beat' && node.flow && !node.final;
+  const picked = pickable && options.picked === node.id;
   const classes = ['state', piece ? 'piece' : '', piece && node.write ? 'write' : '', node.waits ? 'waits' : '', node.final ? 'final' : '',
-    node.current ? 'current' : '', node.initial ? 'initial' : ''].filter(Boolean).join(' ');
-  const group = svgEl('g', { class: classes, role: 'img', 'aria-label': label, 'data-state': node.id }, svgEl('title', {}), box, ...ring, name);
-  group.querySelector('title').textContent = nodeWords(node);
+    node.current ? 'current' : '', node.initial ? 'initial' : '', pickable ? 'pickable' : '', picked ? 'hold-here' : ''].filter(Boolean).join(' ');
+  const attributes = pickable ? { role: 'button', tabindex: 0, 'aria-pressed': String(picked),
+    'aria-label': `hold before ${node.id}` } : { role: 'img', 'aria-label': label };
+  const group = svgEl('g', { class: classes, ...attributes, 'data-state': node.id }, svgEl('title', {}), box, ...ring, name);
+  group.querySelector('title').textContent = pickable ? `${nodeWords(node)}: click to hold the run before this beat` : nodeWords(node);
+  if (pickable) {
+    group.addEventListener('click', () => options.pick(node));
+    group.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); options.pick(node); } });
+  }
   return group;
 }
 
@@ -193,12 +203,12 @@ function edgeGroup(edge) {
 }
 
 // A play's plan as boxes, tags and arrows from the server's layout (src/dashboard/chart.py); the page only draws it.
-function drawDiagram(wrap, chart) {
+function drawDiagram(wrap, chart, options = {}) {
   wrap.hidden = !chart;
   if (!chart) { wrap.replaceChildren(); return; }
   wrap.replaceChildren(svgEl('svg', { class: 'chart-svg', width: chart.width, height: chart.height, viewBox: `0 0 ${chart.width} ${chart.height}`, 'aria-hidden': 'false' },
     svgEl('defs', {}, arrowMarker('arrow', 'arrowhead'), arrowMarker('arrow-taken', 'arrowhead taken')),
-    ...chart.edges.flatMap(edgeGroup), ...chart.nodes.map(stateGroup)));
+    ...chart.edges.flatMap(edgeGroup), ...chart.nodes.map((node) => stateGroup(node, options))));
 }
 
 // The chosen run's diagram, with the beat it is in lit.

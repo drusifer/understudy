@@ -211,6 +211,47 @@ class StartTest(LauncherCase):
         self.assertIs(process.options.get("shell", False), False)
         self.assertEqual(Path(process.options["cwd"]), self.project)
 
+    def test_started_held_the_child_is_told_to_pause_and_that_a_console_steps_it(self):
+        result = self.launcher_.start("plain.yaml", {}, hold=True)
+        self.assertTrue(result["started"])
+        (process,) = self.processes
+        self.assertIn("--pause", process.argv)
+        self.assertIn("--by-console", process.argv)
+        self.assertNotIn("--stop-at", process.argv)
+
+    def test_a_start_not_held_passes_no_hold_flags(self):
+        self.launcher_.start("plain.yaml", {})
+        (process,) = self.processes
+        for flag in ("--pause", "--stop-at", "--by-console"):
+            self.assertNotIn(flag, process.argv)
+
+    def test_held_before_a_beat_the_child_is_told_which(self):
+        self.write("parent.yaml", PARENT)
+        self.write("child.yaml", CHILD)
+        self.launcher_.start("parent.yaml", {}, hold_at="ask")
+        (process,) = self.processes
+        self.assertEqual(process.argv[process.argv.index("--stop-at") + 1], "ask")
+        self.assertIn("--by-console", process.argv)
+
+    def test_a_beat_that_is_not_in_the_flow_or_is_final_is_refused_with_the_beats_there_are_and_nothing_starts(self):
+        self.write("parent.yaml", PARENT)
+        self.write("child.yaml", CHILD)
+        for beat in ("nowhere", "done", "x"):
+            with self.assertRaises(Refused) as caught:
+                self.launcher_.start("parent.yaml", {}, hold_at=beat)
+            self.assertEqual(caught.exception.status, 400)
+            self.assertIn("ask", caught.exception.message)
+        self.assertEqual(self.processes, [])
+
+    def test_hold_must_be_yes_or_no_and_a_beat_a_name_and_not_both(self):
+        self.write("parent.yaml", PARENT)
+        self.write("child.yaml", CHILD)
+        for options in ({"hold": "yes"}, {"hold_at": 3}, {"hold": True, "hold_at": "ask"}):
+            with self.assertRaises(Refused) as caught:
+                self.launcher_.start("parent.yaml", {}, **options)
+            self.assertEqual(caught.exception.status, 400, options)
+        self.assertEqual(self.processes, [])
+
     def test_a_failing_check_returns_its_lines_and_starts_nothing(self):
         launcher = self.launcher(spawn=lambda *a, **k: self.fail("must not start"),
                                  check=lambda argv: ["understudy: file: cannot be read"])
@@ -341,7 +382,9 @@ class HttpTest(LauncherCase):
         self.write("plain.yaml", PLAIN)
         self.started: list[tuple[str, dict]] = []
         launcher = self.launcher(spawn=lambda *a, **k: self.fail("not here"), check=lambda argv: [])
-        launcher.start = lambda sketch, values, replay=None: self.started.append((sketch, values)) or {"started": True, "run": None}
+        self.hold_choices: list[tuple] = []
+        launcher.start = lambda sketch, values, replay=None, hold=False, hold_at=None: (
+            self.started.append((sketch, values)) or self.hold_choices.append((hold, hold_at)) or {"started": True, "run": None})
         self.server = serve(self.runs, port=0, cache=self.cache, project=self.project, launcher=launcher, secret=SECRET)
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
         self.addCleanup(self.server.server_close)
@@ -386,6 +429,13 @@ class HttpTest(LauncherCase):
         self.assertEqual(self.call("/api/start", {"sketch": "plain.yaml", "with": {}}, {"X-Understudy-Secret": "wrong"})[0], 401)
         self.assertGreaterEqual(time.monotonic() - began, 2 * PAUSE)  # each failed guess costs a pause
         self.assertEqual(self.started, [])
+
+    def test_the_hold_choice_in_a_start_request_reaches_the_launcher(self):
+        headers = {"X-Understudy-Secret": SECRET}
+        self.call("/api/start", {"sketch": "plain.yaml", "with": {}, "hold": True}, headers)
+        self.call("/api/start", {"sketch": "plain.yaml", "with": {}, "hold_at": "only"}, headers)
+        self.call("/api/start", {"sketch": "plain.yaml", "with": {}}, headers)
+        self.assertEqual(self.hold_choices, [(True, None), (False, "only"), (False, None)])
 
     def test_the_right_secret_starts_the_sketch_with_the_values_given(self):
         request = {"sketch": "plain.yaml", "with": {"file": "data/in.csv"}}

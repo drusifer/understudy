@@ -45,6 +45,20 @@ class RefusalTests(WatchCase):
         self.assertEqual(self.err_text.getvalue(), "understudy: --pause needs --watch\n")
         self.assertFalse(self.out.exists())
 
+    def test_stop_at_without_watch_is_refused_before_anything_starts(self):
+        self.assertEqual(self.run_main("--stop-at", "write"), 2)
+        self.assertEqual(self.err_text.getvalue(), "understudy: --stop-at needs --watch\n")
+        self.assertFalse(self.out.exists())
+
+    def test_stop_at_a_beat_that_is_not_in_the_flow_or_is_final_names_the_beats_there_are(self):
+        for beat in ("nowhere", "done"):
+            self.err_text.truncate(0)
+            self.err_text.seek(0)
+            self.assertEqual(self.run_main("--by-console", "--stop-at", beat), 2)
+            self.assertIn(f"--stop-at: '{beat}' is not a beat the run holds before (the flow has: ", self.err_text.getvalue())
+            self.assertIn("count", self.err_text.getvalue())
+        self.assertFalse(self.out.exists())
+
     def test_a_port_already_in_use_is_one_line_and_no_run_starts(self):
         with socket.socket() as busy:
             busy.bind(("127.0.0.1", 0))

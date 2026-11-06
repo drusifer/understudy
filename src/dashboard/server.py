@@ -274,7 +274,7 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         values = body.get("with", {})
         if not isinstance(body.get("sketch"), str) or not isinstance(values, dict):
             raise Refused(400, "start needs a sketch name and an object of values")
-        return self.console.launcher.start(body["sketch"], values, body.get("replay"))
+        return self.console.launcher.start(body["sketch"], values, body.get("replay"), body.get("hold", False), body.get("hold_at"))
 
     def _stop(self, body: dict) -> dict:
         if not isinstance(body.get("run"), str):

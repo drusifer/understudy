@@ -156,10 +156,13 @@ class Launcher:
 
     # -- start and stop ---------------------------------------------------------------------------------------
 
-    def start(self, sketch: str, values: dict, replay: str | None = None) -> dict:
+    def start(self, sketch: str, values: dict, replay: str | None = None, hold: object = False, hold_at: object = None) -> dict:
+        """Start the listed play `sketch`. `hold` starts it held before its first beat; `hold_at` names a beat of its flow to
+        hold before instead. Either way this console steps the run (it is the one that started it)."""
         path, entry = self._sketch(sketch)
         arguments = self._values(entry, values)
         folder = self._replay(replay)
+        flags = self._hold_arguments(path, hold, hold_at)
         with self._lock:
             self._reap()
             if sketch in self._children:
@@ -171,7 +174,8 @@ class Launcher:
             if problems:
                 raise Refused(400, "\n".join(problems))
             before = {each.name for each in self.runs.iterdir()} if self.runs.is_dir() else set()
-            argv = [*COMMAND, "run", str(path), *arguments, "--out", str(self.runs), *([f"--replay={folder}"] if folder else [])]
+            argv = [*COMMAND, "run", str(path), *arguments, *flags, "--out", str(self.runs),
+                    *([f"--replay={folder}"] if folder else [])]
             child = self.spawn(argv, cwd=str(self.project), env=_environment(), start_new_session=True)
             self._settle(child)
             run = self.find_run(sketch, before)
@@ -211,6 +215,21 @@ class Launcher:
         if entry is None or not entry["ok"] or resolved.suffix != ".yaml" or not resolved.is_file():
             raise Refused(403, f"{name!r} is not a sketch in the sketches folder")
         return resolved, entry
+
+    def _hold_arguments(self, path: Path, hold: object, hold_at: object) -> list[str]:
+        """The flags that start a run held (nothing when it is not), after checking the choice: `hold` a yes or no, `hold_at`
+        a beat of the play's flow that is not final, and not both."""
+        if not isinstance(hold, bool) or not (hold_at is None or isinstance(hold_at, str)):
+            raise Refused(400, "hold is yes or no, and hold_at is the name of a beat")
+        if hold and hold_at is not None:
+            raise Refused(400, "choose hold or hold_at, not both")
+        if hold_at is not None:
+            nodes = plan(read_template(path)[0])["nodes"]
+            flow = [each["id"] for each in nodes if each["kind"] == "beat" and each["flow"] and not each["final"]]
+            if hold_at not in flow:
+                raise Refused(400, f"{hold_at!r} is not a beat the run can hold before; the flow has: {', '.join(flow)}")
+            return ["--by-console", "--stop-at", hold_at]
+        return ["--by-console", "--pause"] if hold else []
 
     def _values(self, entry: dict, values: dict) -> list[str]:
         """The `--with name=value` arguments for the values given, refusing a name the sketch does not take, a value over
