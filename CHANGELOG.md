@@ -1,5 +1,13 @@
 # Changelog
 
+## Sprint 29 — see the whole play, and step through it (2026-11-05, branch `sprint-29`, not yet merged)
+
+- **The whole play is drawn:** the console's diagram shows the stage's files (read and written), the beats (a dashed border for a beat that waits until it is read) and who reads what, from one plan built from the play file (`src/play/plan.py`). A run lights it up as before; a replay does too. The same picture shows the picked play before any run (`GET /api/plan?play=<file>`).
+- **Start held, or held before a beat:** START HELD next to PLAY; click a beat of the flow on the plan (or Enter on it) and the next run holds before it. `understudy run --watch --stop-at <beat>` does the same from the command line. `control.json` gains `stop_at`; the runner still never writes the file. A beat never reached ends the run saying so.
+- **A step view:** under the diagram, a beat's action, `with`, what the plan says it reads and, once completed, what it read, made and wrote (names, row counts, column names; no values). `beat_completed` carries `read`, `wrote` and `made`.
+- **The run's first line carries the plan** (`run_started.plan`) in place of `beats` and `transitions`; runs recorded before this sprint show "no plan" (no back-compat). The real household replay's outputs are byte-identical to the baseline; its `events.jsonl` grew from 594 KB to 1.06 MB.
+- **Docs and tests:** ADR-0062, `STORY_ARCH_SPRINT29.md`, `UAT_PLAN_SPRINT29.md`, `RETRO_SPRINT29.md`, two lessons, owner decision 43. 636 unit tests in about 31 s; browser 44/44 in about 112 s.
+
 ## Sprint 28 — plays (2026-11-05, branch `sprint-28`, not yet merged)
 
 - **A sketch is a play.** A play has a **stage**, its whole interface (props, files read, files written with `access: write`), and a **scene** of **beats**. A beat with `to:`/`transitions:` is in the flow; a beat without them is performed when another beat first reads it. Jev is a beat (`do: { jev: ... }`). `from:` names an action's main input; `do: { write: x }` and `do: { play: x.yaml }` replace sinks and sketch calls. Reference: `docs/PLAYS.md`; ADR-0061.

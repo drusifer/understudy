@@ -10,6 +10,34 @@ ADR-0011 say "adapter" and "part"; since ADR-0011 those are `hooks.mjs` and `ske
 
 ---
 
+# ADR-0062: The console draws a play from one plan, and holds a run before a beat through the control file
+
+*   **Status**: Accepted
+*   **Deciders**: owner (decisions 39 and 43), Morpheus
+*   **Date**: 2026-11-05
+*   **Related**: `docs/sprints/STORY_ARCH_SPRINT29.md`, UND-111 to UND-113, ADR-0054 (the chart), ADR-0058 (hold and step), ADR-0061
+
+## 1. Context and Problem Statement
+
+The console drew only the scene's flow (ADR-0054) and could hold a run only between flow beats, one after another (ADR-0058). The owner wanted the whole play drawn (files, beats, who reads what), a play started held or held before a chosen beat, and each step to say what it read and wrote.
+
+## 2. Considered Options
+
+| Option | Costs / risks | Reason |
+|---|---|---|
+| Keep the flow chart and draw the plan as a second picture | Two drawing paths and two shapes in the log | Rejected |
+| One plan built from the play file (`src/play/plan.py`), laid out by the existing router, carried in `run_started` | The first log line grows (household about 30 KB) | Selected: the picture of a run and of a play before it runs are the same data, and a replay needs no file |
+| The page asks the server for the plan of a run's play by name | The play file may have changed since the run; the run's play path is not a listed play | Rejected |
+| The runner writes `control.json` when it reaches the beat to hold before | The console and the runner both write one file; a step could be lost | Rejected |
+| `control.json` gains `stop_at`; the runner only reads it; the console's next pause, step or resume writes the file without it | One more key; the beat is "spent" by the next console write | Selected |
+
+## 3. Decision Outcome
+
+* **Chosen Option:** `plan(document)` returns `{nodes, edges, props, initial}`; the reads come from the parameters an action declares as `Source` (the registry `check` uses), plus `each`, a Jev beat's options and state, and a call's bindings. `plan_layout` lays out every node and edge with the router of ADR-0054 (nodes carry `kind`, `write`, `flow`, `waits`, `action`, `with`; edges carry `kind`). `run_started` carries the plan; `overlay` lights it from events, for a run and for a replay. `GET /api/plan?play=` serves the plan of a listed play before any run. `Hold` holds before a beat that is `stop_at` whatever the mode, and a start takes `hold` or `hold_at` (checked against the flow beats; `--by-console` lets the console's child accept `--pause` and `--stop-at`). `beat_completed` carries `read`, `wrote` and (added beyond the story) `made`: names, row counts and column names only.
+* **Consequences:** the old story line (`beats`, `transitions`) is gone; a run recorded before Sprint 29 shows "no plan" and no diagram (no back-compat, decision 41). The events log of the real household run grew from 594 KB to 1.06 MB. The household outputs stayed byte-identical on the real files. The page's diagram nodes became focusable buttons where a person can choose a beat, so the keyboard test and the accessible names changed with them.
+
+---
+
 # ADR-0061: A sketch is a play: a stage that is its interface, and a scene of beats
 
 *   **Status**: Accepted

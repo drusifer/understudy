@@ -268,3 +268,11 @@ Everything above this heading about the old player (watch page, dashboard, proce
 - A test that the household's stand-ins still match what `categorize_merchant` really writes. (Trin)
 - A play editor in the console (was the YAML editor, UND-86). (Cypher)
 - Act on the expiries: SEC-002 by 2026-12-01; SEC-005 by 2027-01-30. (Switch, owner)
+
+## From the sprint 29 retro (2026-11-05)
+- Done in Sprint 29: the whole-play diagram, the plan of a picked play, start held and hold before a beat, and a step view with what each beat read, made and wrote. `docs/sprints/RETRO_SPRINT29.md`, ADR-0062.
+- A big play (household: 152 nodes) is a tall picture; fold or filter it (only the flow, only one beat's neighbors) if the owner finds it hard to read. (Cypher, owner)
+- Step into a called play's beats, and hold before a beat that waits to be read (both left out of Sprint 29). (Cypher)
+- `events.jsonl` doubled (594 KB to 1.06 MB for the real household run): trim `made` for beats nobody reads, or compress, if it matters. (Neo)
+- The console API keys `sketch`/`stage`, the `/api/sketches` route and the controls' `sketch-*` names still use the old word; rename with the engine's internals. (Neo, Morpheus)
+- Run a small test of hold-at-beat on the household play itself with the Jev double (only the scratch play and coffee were exercised live). (Trin)

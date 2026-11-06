@@ -79,9 +79,9 @@ graph LR
 
 1. `cli.py` loads and checks the play (`loader`, `check`); any problem is printed one per line and the command exits 2 before anything starts.
 2. A capture is chosen: live (Jev client created only if the play has a Jev beat) or replay (a complete capture must exist, else exit 2).
-3. `run.py` makes the run folder (refused under `data/` or tracked folders), writes `run_started`, and builds the scene's flow.
+3. `run.py` makes the run folder (refused under `data/` or tracked folders), writes `run_started` (with the play's plan from `src/play/plan.py`: its pieces, beats, who reads what, and the moves between beats; ADR-0062), and builds the scene's flow.
 4. `machine_runner` walks the flow. Each flow beat performs its action; a piece it reads is a stage file, or a beat without `to:` performed on first read (Jev through capture); `decide` and `blend` turn rows into weighted rows; `write` beats write `<file>.part`. A `play` beat performs another play in memory: its bound files are provided rows and what it writes is the beat's result.
-5. Each beat start, completion or failure is appended to `events.jsonl` and `run.json`.
+5. Each beat start, completion or failure is appended to `events.jsonl` and `run.json`; a completion also says what the beat read, made and wrote (names, rows and column names, never values).
 6. On reaching a final beat the `.part` files are renamed to their names and `run_finished` is written; on a failure no file is published and the command exits 1.
 
 **Watching a run:** the page requests `/api/runs` and `/api/runs/<id>`, then, for a running run, `/events/<id>`; the server re-reads `events.jsonl` every half second and sends each new printed line until `run_finished`.

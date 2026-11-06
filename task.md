@@ -4,7 +4,7 @@
 *   **Tier**: Tier 2 (story and architecture in one document)
 *   **Total Points**: about 18
 *   **Branch**: `sprint-29` (cut from `main` 158edd4)
-*   **Status**: In progress (planned 2026-11-05)
+*   **Status**: Complete 2026-11-05 (launched); branch `sprint-29` committed, not merged or pushed
 *   **Plan**: `docs/sprints/STORY_ARCH_SPRINT29.md`. Decision: `OWNER_DECISIONS_SPRINT22.md` 43.
 
 ---
@@ -50,8 +50,8 @@ Complexity levels follow `agents/templates/_template_task.md`. **Run only the te
 
 ## Stage 3: Sprint Closeout
 
-- [ ] **Task C.1:** SDLC conformance check (`*devops sdlc-check`). (*Owner: Tank | Trace: N/A — closeout | Verification: `bobp make check` exit 0*)
-- [ ] **Task C.2:** Document grooming (USER_GUIDE, PLAYS, ARCH, ADR for the plan and hold-at-beat), lessons, chat report. (*Owner: Oracle | Trace: N/A — closeout | Verification: `bobp chat-report --moniker SPRINT_29 --summary "..."`*)
-- [ ] **Task C.3:** End-to-end user testing against `docs/sprints/UAT_PLAN_SPRINT29.md`. (*Owner: Smith | Trace: UND-111..113 | Verification: Smith's verdict*)
-- [ ] **Task C.4:** Retrospective and backlog grooming (`docs/sprints/RETRO_SPRINT29.md`). (*Owner: Mouse | Trace: N/A — closeout | Verification: retros posted*)
-- [ ] **Task C.5:** Sprint launch. Merge and push only when the owner asks. (*Owner: Cypher | Trace: N/A — release decision | Verification: launch post*)
+- [x] **Task C.1:** SDLC conformance check (`*devops sdlc-check`). (*Owner: Tank | Trace: N/A — closeout | Verification: `bobp make check` exit 0*)
+- [x] **Task C.2:** Document grooming (USER_GUIDE, PLAYS, ARCH, ADR for the plan and hold-at-beat), lessons, chat report. (*Owner: Oracle | Trace: N/A — closeout | Verification: `bobp chat-report --moniker SPRINT_29 --summary "..."`*)
+- [x] **Task C.3:** End-to-end user testing against `docs/sprints/UAT_PLAN_SPRINT29.md`. (*Owner: Smith | Trace: UND-111..113 | Verification: Smith's verdict*)
+- [x] **Task C.4:** Retrospective and backlog grooming (`docs/sprints/RETRO_SPRINT29.md`). (*Owner: Mouse | Trace: N/A — closeout | Verification: retros posted*)
+- [x] **Task C.5:** Sprint launch. Merge and push only when the owner asks. (*Owner: Cypher | Trace: N/A — release decision | Verification: launch post*)

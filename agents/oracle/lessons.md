@@ -830,3 +830,37 @@ Never end an Edit replacement with a space. Include the next character (the word
 ### Evidence and Scope
 - **References:** `tests/python/test_sketch_run.py` ("beat count"), Sprint 28 Phase 6
 - **Applies when:** any Edit whose old or new text ends in whitespace.
+
+## [2026-11-05] An element id on the page must be unique, and the page's helper only finds the first
+
+> **Tags:** #console #page #Neo
+
+### Context
+Sprint 29 added a step view to the console page with `id="step"`. The page already had a STEP button with that id, so `$('step')` (a `getElementById`) found the button and the view's `hidden` flag was set on the wrong element; the browser test reported the view's text as "not visible".
+
+### Observation and Cause
+Two elements shared an id; the browser accepts that and returns the first. Confirmed by a Playwright strict-mode error naming both elements. The cause was adding an id without searching the page for it.
+
+### Rule
+Before adding an `id` to `page.html`, search the page for it (`grep 'id="name"' src/dashboard/page.html`); give the new element a name that says what it is (`step-view`).
+
+### Evidence and Scope
+- **References:** `src/dashboard/page.html` (`step-view`, the `step` button), Sprint 29 Phase 4
+- **Applies when:** adding any element to the console page.
+
+## [2026-11-05] A diagram redrawn on click loses keyboard focus unless the code puts it back
+
+> **Tags:** #console #accessibility #Neo
+
+### Context
+Sprint 29 made the diagram's beats focusable buttons (Enter or Space toggles a beat to hold before, or to show its step). The page redraws the whole SVG on each choice.
+
+### Observation and Cause
+Redrawing replaces the focused element, so focus fell to the page body and the next key press did nothing; the browser test (Enter, then Space to clear) failed on it. Confirmed: after the fix, which focuses the element with the same `data-state` after the redraw, the test passes. SVG groups also needed their own focus outline, and the keyboard test's identifier had to use the `class` attribute, because an SVG element's `className` is an object.
+
+### Rule
+When a control's click redraws the container it sits in, put focus back on the equivalent new element in the same handler, and give an SVG element an explicit `:focus-visible` outline.
+
+### Evidence and Scope
+- **References:** `src/dashboard/controls.js` (`pickBeat`), `src/dashboard/page.js` (`pickStep`), `tests/browser/test_console.py` (the two keyboard tests), Sprint 29 Phases 3 and 4
+- **Applies when:** any console control that redraws what contains it.
