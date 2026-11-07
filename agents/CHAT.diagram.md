@@ -1903,3 +1903,148 @@ sequenceDiagram
 ## Sprint close-out
 
 - **Cypher**: \*pm launch sprint-30. Sprint complete: 3 stories (UND-114..116), 3 phases, one diagram, a one-row rack, three columns on desktop with width…
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Cypher
+    participant Smith
+    participant Switch
+    Note over Mouse,Switch: 📅 2026-11-06
+    Mouse->>All: "sprint 31 start"
+    Note right of Mouse: "Sprint 31 start: fold a<br/>big play's diagram (flow<br/>view). Branch sprint-31<br/>from main."
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Sprint 31 story+arch: do<br/>cs/sprints/STORY_ARCH_SP<br/>RINT31.md (UND-117 fold<br/>a big play). @Smith<br/>*user review sprint-31"
+    Smith->>Switch: "user approve"
+    Note right of Smith: "*user approve sprint-31.<br/>rubric STORIES: OUT=A<br/>TEST=A, ARCH: BOUND=A<br/>FLOW=A FAIL=A USER=A<br/>DECS=A FEAS=A. Household<br/>reads in 31 nodes, wide…"
+    Switch->>Mouse: "sec handoff"
+    Note right of Switch: "security gate (design<br/>and phase): No blocking<br/>findings. One new query<br/>value checked against a<br/>fixed list (auto, flow,<br/>all), 400 otherwise.…"
+    Cypher->>All: "pm launch"
+    Note right of Cypher: "Phase 1 impl complete<br/>and reviewed: fold, view<br/>through routes, page<br/>button, check 637,<br/>browser 51/51, live<br/>household 152 -> 31<br/>nodes and ba…"
+```
+
+## Sprint close-out
+
+- **Cypher**: Phase 1 impl complete and reviewed: fold, view through routes, page button, check 637, browser 51/51, live household 152 -&gt; 31 nodes and ba…
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Neo
+    participant All
+    participant User
+    participant Cypher
+    participant Smith
+    participant Switch
+    participant Mouse
+    participant Morpheus
+    Note over Neo,Morpheus: 📅 2026-11-06
+    Neo->>All: "swe"
+    Note right of Neo: "Diagram details (owner<br/>request): action under<br/>each name, file path,<br/>START tag, rows tag,<br/>legend. check 639,<br/>browser 52/52. Committed<br/>on spr…"
+    Neo->>All: "swe"
+    Note right of Neo: "Run log made<br/>informative: done lines<br/>say what a beat did<br/>(action, rows<br/>in/made/wrote),<br/>next/paused lines, and a<br/>jev line per answer<br/>(level,…"
+    User->>All: "request"
+    Note right of User: "Owner on the beat tube:<br/>replace it with a 'beat<br/>box' (inputs and outputs<br/>of the current beat as<br/>compact bar/pie/gauge,<br/>the iteration's own…"
+    Cypher->>Smith: "pm handoff"
+    Note right of Cypher: "Sprint 32 plan (beat<br/>box): docs/sprints/STORY<br/>_ARCH_SPRINT32.md,<br/>decision 45 recorded.<br/>UND-118 runner profiles<br/>+ iteration events,<br/>UND-119 b…"
+    Smith->>Switch: "user approve"
+    Note right of Smith: "*user approve sprint-32.<br/>rubric STORIES: OUT=A<br/>TEST=A, ARCH: BOUND=A<br/>FLOW=A FAIL=A USER=A<br/>DECS=A FEAS=A. Note for<br/>review: 'stepping' here<br/>i…"
+    Switch->>Mouse: "sec handoff"
+    Note right of Switch: "security gate (design):<br/>No blocking findings,<br/>with a watch item: the<br/>log now carries<br/>summarized values and<br/>one row per iteration of<br/>the own…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Sprint planned: 3 phases<br/>+ closeout. rubric PLAN:<br/>SIZE=A GATE=A VERIF=A<br/>ALIGN=A OWNER=A LEVEL=A.<br/>Phase 1 ready. @Neo *swe<br/>impl phase-1"
+```
+
+## Phase 1 starts
+
+Phase 1: the runner says what flows through a beat (UND-118)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-06
+    Mouse->>All: "phase 1"
+    Note right of Mouse: "Phase 1: the runner says<br/>what flows through a<br/>beat (UND-118)"
+    Mouse->>All: "sm backlog"
+    Note right of Mouse: "Queued for the owner's<br/>backlog: 'a way to<br/>change the play'<br/>(docs/BACKLOG.md,<br/>console UX section,<br/>needs a clarifying<br/>question before plannin…"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 1 impl complete:<br/>profile.py, columns on<br/>top-level pieces,<br/>iteration events, jev<br/>levels. check 656 OK.<br/>@Trin *qa uat phase-1"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 1 passed: real<br/>household replay, all 11<br/>outputs byte-identical<br/>to the baseline, 1282<br/>iteration events,<br/>events.jsonl 1.06 MB -><br/>3.…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 1):<br/>No blocking findings.<br/>The log now carries<br/>summaries (top 5 values<br/>per text column, cut at<br/>40 chars) and one row<br/>pe…"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 1 review passed.<br/>Watch: log size 3x, trim<br/>iteration profiles if it<br/>matters. Committing.<br/>@Neo *swe impl phase-2"
+```
+
+## Phase 1 close-out
+
+- **Trin**: UAT phase 1 passed: real household replay, all 11 outputs byte-identical to the baseline, 1282 iteration events, events.jsonl 1.06 MB -&gt; 3.…
+- **Switch**: security gate (phase 1): No blocking findings. The log now carries summaries (top 5 values per text column, cut at 40 chars) and one row pe…
+- **Morpheus**: Phase 1 review passed. Watch: log size 3x, trim iteration profiles if it matters. Committing. @Neo \*swe impl phase-2
+
+## Phase 2 starts
+
+Phase 2: the beat box (UND-119)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Neo
+    participant Trin
+    participant Switch
+    participant Morpheus
+    Note over Mouse,Morpheus: 📅 2026-11-06
+    Mouse->>All: "phase 2"
+    Note right of Mouse: "Phase 2: the beat box<br/>(UND-119)"
+    Neo->>Trin: "swe handoff"
+    Note right of Neo: "Phase 2 impl complete:<br/>box.js (IN|beat|OUT<br/>cards, gauge/donut/bars,<br/>pass stepper, Jev and<br/>decision bars), steps<br/>carry<br/>passes/jev/decisions,…"
+    Trin->>Switch: "qa handoff"
+    Note right of Trin: "UAT phase 2 passed on<br/>the live console<br/>(evening replay): booker<br/>shows booked -> booking<br/>as labeled values, pick<br/>shows Jev bars with<br/>UNSURE…"
+    Switch->>Morpheus: "sec handoff"
+    Note right of Switch: "security gate (phase 2):<br/>No blocking findings<br/>(page text via<br/>textContent only, svg<br/>built with svgEl).<br/>@Morpheus *lead review<br/>phase-2"
+    Morpheus->>Neo: "lead handoff"
+    Note right of Morpheus: "Phase 2 review passed.<br/>Committing. @Neo *swe<br/>impl phase-3"
+```
+
+## Phase 2 close-out
+
+- **Neo**: Phase 2 impl complete: box.js (IN|beat|OUT cards, gauge/donut/bars, pass stepper, Jev and decision bars), steps carry passes/jev/decisions,…
+- **Trin**: UAT phase 2 passed on the live console (evening replay): booker shows booked -&gt; booking as labeled values, pick shows Jev bars with UNSURE…
+- **Morpheus**: Phase 2 review passed. Committing. @Neo \*swe impl phase-3
+
+## Phase 3 starts
+
+Phase 3: one place for the run's details (UND-120)
+
+```mermaid
+%%{init: {"sequence": {"messageFontSize": 14, "noteFontSize": 18, "actorFontSize": 14}}}%%
+sequenceDiagram
+    autonumber
+    participant Mouse
+    participant All
+    participant Cypher
+    Note over Mouse,Cypher: 📅 2026-11-06
+    Mouse->>All: "phase 3"
+    Note right of Mouse: "Phase 3: one place for<br/>the run's details<br/>(UND-120)"
+    Cypher->>All: "pm launch"
+    Note right of Cypher: "Phase 3 impl complete:<br/>DECISIONS/JEV<br/>READS/SUMMARY removed,<br/>run header added,<br/>decisions.js reduced to<br/>the printer jump, dead<br/>CSS removed. c…"
+```
+
+## Sprint close-out
+
+- **Cypher**: Phase 3 impl complete: DECISIONS/JEV READS/SUMMARY removed, run header added, decisions.js reduced to the printer jump, dead CSS removed. c…

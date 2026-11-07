@@ -2380,3 +2380,165 @@ All checks passed!
 ---
 [<small>2026-11-06 17:22:14</small>] [**Cypher**]->[**all**] *pm launch*:
  *pm launch sprint-30. Sprint complete: 3 stories (UND-114..116), 3 phases; one diagram, a one-row rack, three columns on desktop with width tests. Branch sprint-30 committed locally, NOT merged or pushed.
+
+---
+[<small>2026-11-06 17:37:30</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make push | /home/drusifer/Projects/understudy/build/build.out
+49f5408 Merge sprint 30: one diagram, short rack, desktop columns
+5:37PM INF no leaks found
+To github.com:drusifer/understudy.git
+bb866aa..49f5408  main -> main
+
+---
+[<small>2026-11-06 18:02:00</small>] [**Mouse**]->[**all**] *sprint 31 start*:
+ Sprint 31 start: fold a big play's diagram (flow view). Branch sprint-31 from main.
+
+---
+[<small>2026-11-06 18:08:03</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-browser | /home/drusifer/Projects/understudy/build/build.out
+...................................................
+----------------------------------------------------------------------
+Ran 51 tests in 103.568s
+
+OK
+
+---
+[<small>2026-11-06 18:08:21</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Sprint 31 story+arch: docs/sprints/STORY_ARCH_SPRINT31.md (UND-117 fold a big play). @Smith *user review sprint-31
+
+---
+[<small>2026-11-06 18:08:21</small>] [**Smith**]->[**Switch**] *user approve*:
+ *user approve sprint-31. rubric STORIES: OUT=A TEST=A; ARCH: BOUND=A FLOW=A FAIL=A USER=A DECS=A FEAS=A. Household reads in 31 nodes; wide arrow fan is the next rough edge. @Switch *sec threat sprint-31
+
+---
+[<small>2026-11-06 18:08:21</small>] [**Switch**]->[**Mouse**] *sec handoff*:
+ security gate (design and phase): No blocking findings. One new query value checked against a fixed list (auto, flow, all); 400 otherwise. @Mouse *sm plan sprint-31
+
+---
+[<small>2026-11-06 18:08:21</small>] [**Cypher**]->[**all**] *pm launch*:
+ Phase 1 impl complete and reviewed: fold, view through routes, page button; check 637, browser 51/51; live household 152 -> 31 nodes and back. UAT passed (Trin), review passed (Morpheus), SDLC check passed (Tank). Docs groomed (Oracle). *pm launch sprint-31: branch sprint-31 committed, NOT merged or pushed.
+
+---
+[<small>2026-11-06 18:17:13</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+----------------------------------------------------------------------
+Ran 639 tests in 31.089s
+
+OK
+
+---
+[<small>2026-11-06 18:17:13</small>] [**Neo**]->[**all**] *swe*:
+ Diagram details (owner request): action under each name, file path, START tag, rows tag, legend. check 639, browser 52/52. Committed on sprint-31, not merged.
+
+---
+[<small>2026-11-06 20:17:45</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make lint | /home/drusifer/Projects/understudy/build/build.out
+=== make lint @ 2026-11-06 20:17:45 ===
+.venv/bin/ruff check src tests
+All checks passed!
+
+---
+[<small>2026-11-06 20:17:45</small>] [**Neo**]->[**all**] *swe*:
+ Run log made informative: done lines say what a beat did (action, rows in/made/wrote), next/paused lines, and a jev line per answer (level, probability, runner-up, options). check 642, browser 52/52 x3. On sprint-31, not merged.
+
+---
+[<small>2026-11-06 21:50:33</small>] [**User**]->[**all**] *request*:
+ Owner on the beat tube: replace it with a 'beat box' (inputs and outputs of the current beat as compact bar/pie/gauge, the iteration's own data when stepping, not whole lists); consolidate the scattered expandable text. Owner answer recorded.
+
+---
+[<small>2026-11-06 21:51:19</small>] [**Cypher**]->[**Smith**] *pm handoff*:
+ Sprint 32 plan (beat box): docs/sprints/STORY_ARCH_SPRINT32.md; decision 45 recorded. UND-118 runner profiles + iteration events; UND-119 beat box with gauge/donut/bars and iteration stepper; UND-120 fold the expanders. @Smith *user review sprint-32
+
+---
+[<small>2026-11-06 21:51:34</small>] [**Smith**]->[**Switch**] *user approve*:
+ *user approve sprint-32. rubric STORIES: OUT=A TEST=A; ARCH: BOUND=A FLOW=A FAIL=A USER=A DECS=A FEAS=A. Note for review: 'stepping' here is a stepper over past/latest iterations, not a hold between passes; say so in the UI. @Switch *sec threat sprint-32
+
+---
+[<small>2026-11-06 21:51:35</small>] [**Switch**]->[**Mouse**] *sec handoff*:
+ security gate (design): No blocking findings, with a watch item: the log now carries summarized values and one row per iteration of the owner's data (decision 44 accepts this); check size and that nothing carries a whole list. @Mouse *sm plan sprint-32
+
+---
+[<small>2026-11-06 21:51:35</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Sprint planned: 3 phases + closeout. rubric PLAN: SIZE=A GATE=A VERIF=A ALIGN=A OWNER=A LEVEL=A. Phase 1 ready. @Neo *swe impl phase-1
+
+---
+[<small>2026-11-06 21:51:35</small>] [**Mouse**]->[**all**] *phase 1*:
+ Phase 1: the runner says what flows through a beat (UND-118)
+
+---
+[<small>2026-11-06 21:54:08</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+----------------------------------------------------------------------
+Ran 656 tests in 31.762s
+
+OK
+
+---
+[<small>2026-11-06 21:54:17</small>] [**Mouse**]->[**all**] *sm backlog*:
+ Queued for the owner's backlog: 'a way to change the play' (docs/BACKLOG.md, console UX section; needs a clarifying question before planning). Continuing Sprint 32 phase 1.
+
+---
+[<small>2026-11-06 21:57:34</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make run | /home/drusifer/Projects/understudy/build/build.out
+wrote /home/drusifer/Projects/understudy/build/sprint32-phase1/run-20261107T025418-fdb595cb/payments.jsonl
+
+---
+[<small>2026-11-06 21:57:49</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 1 impl complete: profile.py, columns on top-level pieces, iteration events, jev levels. check 656 OK. @Trin *qa uat phase-1
+
+---
+[<small>2026-11-06 21:57:50</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 1 passed: real household replay, all 11 outputs byte-identical to the baseline; 1282 iteration events; events.jsonl 1.06 MB -> 3.49 MB (3x; the iteration events). @Switch *sec review phase-1
+
+---
+[<small>2026-11-06 21:57:50</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 1): No blocking findings. The log now carries summaries (top 5 values per text column, cut at 40 chars) and one row per pass, cut at 60 chars and 12 fields; accepted by decision 45; never a whole list. @Morpheus *lead review phase-1
+
+---
+[<small>2026-11-06 21:57:50</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 1 review passed. Watch: log size 3x; trim iteration profiles if it matters. Committing. @Neo *swe impl phase-2
+
+---
+[<small>2026-11-06 21:57:50</small>] [**Mouse**]->[**all**] *phase 2*:
+ Phase 2: the beat box (UND-119)
+
+---
+[<small>2026-11-06 22:07:34</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make test-browser | /home/drusifer/Projects/understudy/build/build.out
+......................
+----------------------------------------------------------------------
+Ran 53 tests in 107.645s
+
+OK
+
+---
+[<small>2026-11-06 22:07:43</small>] [**Neo**]->[**Trin**] *swe handoff*:
+ Phase 2 impl complete: box.js (IN|beat|OUT cards, gauge/donut/bars, pass stepper, Jev and decision bars), steps carry passes/jev/decisions, tube and step view removed. check 659, browser 53/53. @Trin *qa uat phase-2
+
+---
+[<small>2026-11-06 22:07:44</small>] [**Trin**]->[**Switch**] *qa handoff*:
+ UAT phase 2 passed on the live console (evening replay): booker shows booked -> booking as labeled values; pick shows Jev bars with UNSURE at 0.67; scored shows pass 8 of 8 with stepper; contrast test passes with the new classes. @Switch *sec review phase-2
+
+---
+[<small>2026-11-06 22:07:44</small>] [**Switch**]->[**Morpheus**] *sec handoff*:
+ security gate (phase 2): No blocking findings (page text via textContent only; svg built with svgEl). @Morpheus *lead review phase-2
+
+---
+[<small>2026-11-06 22:07:44</small>] [**Morpheus**]->[**Neo**] *lead handoff*:
+ Phase 2 review passed. Committing. @Neo *swe impl phase-3
+
+---
+[<small>2026-11-06 22:07:44</small>] [**Mouse**]->[**all**] *phase 3*:
+ Phase 3: one place for the run's details (UND-120)
+
+---
+[<small>2026-11-06 22:22:56</small>] [**make**]->[**all**] *build*:
+ Build PASSED | make check | /home/drusifer/Projects/understudy/build/build.out
+----------------------------------------------------------------------
+Ran 659 tests in 31.708s
+
+OK
+
+---
+[<small>2026-11-06 22:23:49</small>] [**Cypher**]->[**all**] *pm launch*:
+ Phase 3 impl complete: DECISIONS/JEV READS/SUMMARY removed, run header added, decisions.js reduced to the printer jump, dead CSS removed. check 659, browser 51/51 x3. UAT passed (Trin), security quick pass (Switch), review passed (Morpheus). SDLC check passed (Tank). Docs groomed (Oracle). *user approve sprint-32 (Smith). Retro posted. *pm launch sprint-32: branch sprint-32 committed, NOT merged or pushed.
