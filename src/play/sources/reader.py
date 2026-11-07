@@ -11,6 +11,8 @@ from src.play.sources import jev as jev_source
 from src.play.sources.capture import CaptureStore, choose_replay, read_capture
 from src.play.sources.file import read_rows
 
+NAME_CHARS = 60  # the most of a level's name the log keeps
+
 
 def capture_key(sketch: Play, name: str) -> str:
     return f"{sketch.name}.{name}"
@@ -62,6 +64,7 @@ class Sources:
         self.capture, self.run_id, self.announce = capture, run_id, announce
         self.jev = GatedJev(capture.jev) if capture.jev is not None else None
         self.stale = False
+        self.emit: Callable[..., None] = lambda *_, **__: None  # replaced by the run: tells the run's log what Jev answered
         self._read: dict[str, list[dict]] = {}
         self._computing: set[str] = set()
         self.compute = self._cannot_compute  # replaced by the run, which holds the stage library
@@ -128,10 +131,22 @@ class Sources:
             if meta["request_hash"] != digest:
                 self.stale = True
                 self.announce(f"replay of {key} is stale: the sketch or its rubric changed since it was captured")
+            self._told(key, rows)
             return rows
         if self.jev is None:
             raise JevError(f"{key} needs Jev, and this run has none")
         rows = await jev_source.read_live(self.jev, config, asked["state"])
         self.capture.store.write(self.run_id, key, rows, digest, config["instructions"],
                                  levels_from_data="options" in sketch.sources[name].config)
+        self._told(key, rows)
         return rows
+
+    def _told(self, key: str, rows: list[dict]) -> None:
+        """Tell the run's log what Jev answered: the likeliest level and the one after it, and how many it chose among."""
+        ranked = sorted(rows, key=lambda row: row["probability"], reverse=True)
+        if not ranked:
+            return
+        after = ranked[1] if len(ranked) > 1 else None
+        self.emit("jev_read", source=key, top=str(ranked[0]["level"])[:NAME_CHARS], probability=round(ranked[0]["probability"], 2),
+                  next=str(after["level"])[:NAME_CHARS] if after else None,
+                  next_probability=round(after["probability"], 2) if after else None, options=len(ranked))

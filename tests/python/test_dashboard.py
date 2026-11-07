@@ -49,6 +49,26 @@ class PrintedTest(unittest.TestCase):
         self.assertEqual(run["lines"][3]["tone"], "held")
         self.assertEqual(printed(EVENTS[4])["text"], "01:00:30  === COMPLETE ===")
 
+    def test_a_completed_beat_prints_what_it_did_read_and_made(self):
+        said = {"event": "beat_completed", "at": "2026-10-31T01:00:11+00:00", "beat": "weighed", "action": "map.weigh",
+                "read": {"joined": {"rows": 12, "keys": ["a"]}, "films": {"rows": 8, "keys": ["t"]}}, "wrote": {},
+                "made": {"rows": 5, "keys": ["score"]}}
+        self.assertEqual(printed(said)["text"], "01:00:11    done   weighed  map.weigh  in: joined 12, films 8  made 5 rows")
+        wrote = {**said, "beat": "booker", "action": "write:booking", "read": {}, "made": None,
+                 "wrote": {"booking": {"rows": 1, "keys": ["x"]}}}
+        self.assertEqual(printed(wrote)["text"], "01:00:11    done   booker  write:booking  wrote booking 1 row")
+        self.assertEqual(printed({"event": "beat_completed", "beat": "read"})["text"], "  done   read")  # an older log
+
+    def test_a_move_a_hold_and_a_jev_answer_print_in_words(self):
+        self.assertEqual(printed({"event": "beat_entered", "beat": "pick", "caused_by": "ok"})["text"], "  next   pick")
+        self.assertEqual(printed({"event": "beat_entered", "beat": "x", "caused_by": "fail"})["text"], "  next   x  (after a failure)")
+        self.assertEqual(printed({"event": "paused", "beat": "pick"})["text"], "  paused before pick")
+        self.assertEqual(printed({"event": "resumed", "beat": "pick"})["text"], "  resumed pick")
+        jev = {"event": "jev_read", "source": "pick", "top": "showing_9", "probability": 0.82, "next": "showing_3",
+               "next_probability": 0.1, "options": 5}
+        self.assertEqual(printed(jev)["text"], "  jev    pick: showing_9 0.82 (then showing_3 0.10; 5 options)")
+        self.assertEqual(printed({**jev, "next": None, "options": 1})["text"], "  jev    pick: showing_9 0.82 (1 option)")
+
     def test_an_unknown_event_still_prints(self):
         self.assertEqual(printed({"event": "novelty"})["text"], "  novelty")
 

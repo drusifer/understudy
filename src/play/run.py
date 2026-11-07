@@ -200,6 +200,12 @@ async def _run_child(context: StageContext, library: Mapping[str, StageFn], reco
     return [] if nested.outcome == NOTHING else [row for rows in written.values() for row in rows]
 
 
+def _action_of(state: dict) -> str:
+    """What a beat does, in a few words, as the log and the diagram say it: `map.where`, `write:booking`, `play:seating.yaml`."""
+    kind, target = stage_of(state)
+    return {"sink": f"write:{target}", "sketch": f"play:{target}.yaml"}.get(kind, f"{kind}.{target}")
+
+
 def _stages(  # noqa: PLR0913 - a beat needs the play, the library, its context, the results, the record, where writes go
     sketch: Play, library: Mapping[str, StageFn], make_context: Callable[[str, dict], StageContext], results: dict,
     record: EventedRecord, written: dict[str, list[dict]] | None = None,
@@ -221,7 +227,7 @@ def _stages(  # noqa: PLR0913 - a beat needs the play, the library, its context,
                 else:
                     _check_rows(rows)
                     written.setdefault(target, []).extend(rows)
-                record.detail(name, read=context.reads, wrote={target: shape(rows)})
+                record.detail(name, action=_action_of(state), read=context.reads, wrote={target: shape(rows)})
                 return rows
             if kind == "sketch":
                 run = _run_each if "each" in state else _run_child
@@ -229,7 +235,8 @@ def _stages(  # noqa: PLR0913 - a beat needs the play, the library, its context,
             else:
                 result = await _stage_function(state, library)(context, **state.get("with", {}))
             results[name] = result
-            record.detail(name, read=context.reads, wrote={}, **({"made": shape(result)} if isinstance(result, list) else {}))
+            record.detail(name, action=_action_of(state), read=context.reads, wrote={},
+                          **({"made": shape(result)} if isinstance(result, list) else {}))
             return result
 
         stages[name] = stage
@@ -282,6 +289,7 @@ async def run_sketch(  # noqa: PLR0913 - what a run takes: the sketch, where, it
     if capture.replay_dir:
         announce(f"replay: reading captures from {capture.replay_dir}, no live calls")
     sources = Sources(capture, directory.name, announce)
+    sources.emit = record.emit
     results: dict = {}
     summary: dict = {}
     last = {"value": None}

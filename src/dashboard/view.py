@@ -64,6 +64,35 @@ def _edge_events(directory: Path) -> tuple[dict, dict]:
     return parsed[0], next((each for each in parsed[1:] if each), {})
 
 
+def _rows_text(count: int) -> str:
+    return f"{count} row" if count == 1 else f"{count} rows"
+
+
+def _done_text(event: dict) -> str:
+    """`  done   weighed  map.weigh  in: joined 12, films 8  made 5 rows`: what the beat did, from what its completion says
+    (a log written before beats said so prints just `  done   weighed`)."""
+    parts = [f"  done   {event.get('beat', '')}"]
+    if event.get("action"):
+        parts.append(event["action"])
+    read = event.get("read") or {}
+    if read:
+        parts.append("in: " + ", ".join(f"{name} {each.get('rows', 0)}" for name, each in read.items()))
+    wrote = event.get("wrote") or {}
+    if wrote:
+        parts.append("wrote " + ", ".join(f"{name} {_rows_text(each.get('rows', 0))}" for name, each in wrote.items()))
+    elif event.get("made"):
+        parts.append(f"made {_rows_text(event['made'].get('rows', 0))}")
+    return "  ".join(parts)
+
+
+def _jev_text(event: dict) -> str:
+    """`  jev    pick: showing_9 0.82 (then showing_3 0.10; 5 options)`: what Jev chose and how sure it was."""
+    options = event.get("options", 0)
+    count = f"{options} option" + ("" if options == 1 else "s")
+    after = f"then {event['next']} {event.get('next_probability', 0):.2f}; " if event.get("next") else ""
+    return f"  jev    {event.get('source', '')}: {event.get('top', '?')} {event.get('probability', 0):.2f} ({after}{count})"
+
+
 def printed(event: dict) -> dict:
     """What the printer prints for one event: its text and its tone."""
     kind = event.get("event", "")
@@ -71,7 +100,11 @@ def printed(event: dict) -> dict:
     detail = {
         "run_started": lambda: f"=== UNDERSTUDY RUN LOG ===  {event.get('play', '')}  ({event.get('mode', '')})",
         "beat_started": lambda: f"  start  {event.get('beat', '')}",
-        "beat_completed": lambda: f"  done   {event.get('beat', '')}",
+        "beat_completed": lambda: _done_text(event),
+        "beat_entered": lambda: f"  next   {event.get('beat', '')}{'  (after a failure)' if event.get('caused_by') == 'fail' else ''}",
+        "paused": lambda: f"  paused before {event.get('beat', '')}",
+        "resumed": lambda: f"  resumed {event.get('beat', '')}",
+        "jev_read": lambda: _jev_text(event),
         "beat_failed": lambda: f"  FAILED {event.get('beat', '')}: {event.get('reason', '')}",
         "run_finished": lambda: f"=== {str(event.get('outcome', '')).upper()} ===",
         "decision": lambda: (f"  decision {event.get('beat', '')}: {event.get('row', '?')} {event.get('dimension', '?')}"

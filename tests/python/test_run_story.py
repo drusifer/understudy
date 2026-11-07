@@ -50,6 +50,17 @@ class RunStoryTests(CoffeeCase):
         self.assertGreater(written["ingredients"]["rows"], 0)
         self.assertIn("ingredient", written["ingredients"]["keys"])
 
+    def test_a_completed_beat_names_its_action_and_every_jev_answer_is_a_line(self):
+        done = self.completed()
+        self.assertEqual(done["split_trade"]["action"], "map.split_by_share")
+        self.assertEqual(done["write"]["action"], "write:ingredients")
+        self.assertEqual(done["weather"]["action"], "play:weather_change.yaml")
+        reads = [each for each in self.events if each["event"] == "jev_read"]
+        self.assertTrue(reads)
+        for each in reads:
+            self.assertTrue(each["top"] and 0 <= each["probability"] <= 1)
+            self.assertIn("options", each)
+
     def test_the_log_names_and_counts_but_carries_no_row_values(self):
         text = json.dumps([each for each in self.events if each["event"] == "beat_completed"])
         self.assertNotIn("2026-W43", text)  # the week in the sales file

@@ -4,7 +4,8 @@
 
 - **The diagram of a play of more than 40 nodes shows its flow:** the stage's files and the flow beats, with the waiting beats left out and their reads passed through (household: 152 nodes down to 31). `SHOW ALL <n> NODES` / `SHOW ONLY THE FLOW` switches, for a plan, a run and a replay. `fold` in `src/play/plan.py`; `view=auto|flow|all` on `GET /api/plan`, `/api/runs/<id>` and `/replay`.
 - **More in the diagram (owner: "hard to understand what it is doing"):** each box shows its action under its name (and a file its path), the first beat is marked START, a completed beat shows the rows it made in a tag above its box, and a legend explains the shapes and arrows. Boxes widen for the second line.
-- **Tests:** 639 unit tests in about 31 s; browser 52/52 in about 116 s. No change to the run log. The contrast test's cleanup no longer fails when the page redraws a diagram between the picture and the cleanup.
+- **A more informative run log (owner: "super uninformative"):** a `done` line now says what the beat did (`done weighed  map.weigh  in: joined 12  made 5 rows`; `wrote booking 1 row`), each move is `next <beat>`, each hold is `paused before <beat>`, and every Jev answer is a `jev` line with the level, its probability, the runner-up and the option count. New events `jev_read` and an `action` on `beat_completed` (`docs/PLAYS.md`).
+- **Tests:** 642 unit tests in about 31 s; browser 52/52 in about 116 s. The contrast test's cleanup no longer fails when the page redraws a diagram between the picture and the cleanup.
 
 ## Sprint 30 — a console that uses the desktop (2026-11-06, branch `sprint-30`, not yet merged)
 
