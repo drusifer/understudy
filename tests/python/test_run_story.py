@@ -41,7 +41,9 @@ class RunStoryTests(CoffeeCase):
             self.assertIn("read", each)
             self.assertIn("wrote", each)
         split = done["split_trade"]
-        self.assertEqual(split["read"], {"sales": {"rows": 1, "keys": ["drinks", "week"]}})
+        sales = split["read"]["sales"]
+        self.assertEqual((list(split["read"]), sales["rows"], sales["keys"]), (["sales"], 1, ["drinks", "week"]))
+        self.assertEqual({each["name"]: each["kind"] for each in sales["columns"]}, {"drinks": "number", "week": "text"})
         self.assertEqual(split["wrote"], {})
         self.assertGreater(split["made"]["rows"], 1)
         self.assertIn("segment", split["made"]["keys"])
@@ -61,10 +63,15 @@ class RunStoryTests(CoffeeCase):
             self.assertTrue(each["top"] and 0 <= each["probability"] <= 1)
             self.assertIn("options", each)
 
-    def test_the_log_names_and_counts_but_carries_no_row_values(self):
-        text = json.dumps([each for each in self.events if each["event"] == "beat_completed"])
-        self.assertNotIn("2026-W43", text)  # the week in the sales file
-        self.assertNotIn("1600", text)  # the drinks sold
+    def test_the_log_carries_summaries_of_a_piece_never_its_rows(self):
+        for each in (each for each in self.events if each["event"] == "beat_completed"):
+            for piece in (*each["read"].values(), *each["wrote"].values(), *([each["made"]] if each.get("made") else [])):
+                self.assertLessEqual(len(piece.get("columns", [])), 6)
+                for column in piece.get("columns", []):
+                    self.assertLessEqual(len(column.get("top", [])), 5)
+            self.assertLess(len(json.dumps(each)), 4000)
+        text = json.dumps(self.events)
+        self.assertNotIn('{"week": "2026-W43", "drinks": 1600}', text)  # a whole row of the sales file is never logged
 
     def test_every_move_to_a_beat_is_a_line_naming_the_beat_and_the_event_behind_it(self):
         moves = [(e["beat"], e["caused_by"]) for e in self.events if e["event"] == "beat_entered"]

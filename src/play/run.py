@@ -20,6 +20,7 @@ from src.play.loader import bound_pieces, child_path, children, load, read_templ
 from src.play.machine import build_machine
 from src.play.model import Play
 from src.play.plan import plan
+from src.play.profile import brief, profile
 from src.play.registry import StageFn
 from src.play.sources.capture import CaptureStore
 from src.play.sources.reader import Capture, Sources
@@ -40,21 +41,24 @@ class StageContext:
     sources: Sources | None = None
     emit: Callable[..., None] | None = None  # records an event in the run's story (`events.jsonl`)
     reads: dict[str, dict] = field(default_factory=dict)  # what this beat read, by name: rows and keys (`shape`)
+    profiled: bool = False  # whether the pieces it reads, makes and writes are also summarized by column (a top-level beat)
 
     async def read(self, name: str) -> list[dict]:
         """The rows of one of this sketch's sources."""
         rows = await self.sources.read(self.sketch, name)
-        self.reads[name] = shape(rows)
+        self.reads[name] = shape(rows, self.profiled)
         return rows
 
 
 KEYS_SHOWN = 12  # keys of a piece's first row that the log names
 
 
-def shape(rows) -> dict:
-    """A piece as the log tells it: how many rows and the keys of the first, never a value."""
+def shape(rows, profiled: bool = False) -> dict:
+    """A piece as the log tells it: how many rows and the keys of the first, and with `profiled` a summary of each column
+    (`src/play/profile.py`); never the rows."""
     keys = sorted(rows[0])[:KEYS_SHOWN] if isinstance(rows, list) and rows and isinstance(rows[0], dict) else []
-    return {"rows": len(rows) if isinstance(rows, list) else 0, "keys": keys}
+    found = {"rows": len(rows) if isinstance(rows, list) else 0, "keys": keys}
+    return {**found, "columns": profile(rows)} if profiled and isinstance(rows, list) else found
 
 
 @dataclass(frozen=True)
@@ -165,10 +169,14 @@ async def _run_each(context: StageContext, library: Mapping[str, StageFn], recor
     path = child_path(context.sketch, stage_of(state)[1])
     folding = state.get("reduce")
     carried, running = [], []
-    for index, row in enumerate(await context.read(state["each"])):
+    passes = await context.read(state["each"])
+    for index, row in enumerate(passes):
         values = {**state.get("with", {}), **row, **({folding["into"]: list(running)} if folding else {})}
         child = replace(load(path, variables=values), name=f"{context.name}.{path.stem}[{index}]")
         output = await _run_child(context, library, record, child)
+        if isinstance(record, EventedRecord):  # a pass of a top-level beat: say which row it was for and what it made
+            record.emit("iteration", beat=context.name, index=index, of=len(passes), item=brief(row),
+                        made={"rows": len(output), "columns": profile(output)})
         running += output
         carried += [{**row, **written} for written in output]
     return running if folding else carried
@@ -227,7 +235,7 @@ def _stages(  # noqa: PLR0913 - a beat needs the play, the library, its context,
                 else:
                     _check_rows(rows)
                     written.setdefault(target, []).extend(rows)
-                record.detail(name, action=_action_of(state), read=context.reads, wrote={target: shape(rows)})
+                record.detail(name, action=_action_of(state), read=context.reads, wrote={target: shape(rows, context.profiled)})
                 return rows
             if kind == "sketch":
                 run = _run_each if "each" in state else _run_child
@@ -236,7 +244,7 @@ def _stages(  # noqa: PLR0913 - a beat needs the play, the library, its context,
                 result = await _stage_function(state, library)(context, **state.get("with", {}))
             results[name] = result
             record.detail(name, action=_action_of(state), read=context.reads, wrote={},
-                          **({"made": shape(result)} if isinstance(result, list) else {}))
+                          **({"made": shape(result, context.profiled)} if isinstance(result, list) else {}))
             return result
 
         stages[name] = stage
@@ -295,7 +303,7 @@ async def run_sketch(  # noqa: PLR0913 - what a run takes: the sketch, where, it
     last = {"value": None}
 
     def make_context(name: str, state: dict) -> StageContext:
-        return StageContext(sketch, name, state, results, last["value"], directory, summary, sources, record.emit)
+        return StageContext(sketch, name, state, results, last["value"], directory, summary, sources, record.emit, profiled=True)
 
     sources.compute = stage_computer(library, record, results, directory, summary, sources)
     stages = _stages(sketch, library, make_context, results, record)

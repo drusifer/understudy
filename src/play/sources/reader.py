@@ -12,6 +12,7 @@ from src.play.sources.capture import CaptureStore, choose_replay, read_capture
 from src.play.sources.file import read_rows
 
 NAME_CHARS = 60  # the most of a level's name the log keeps
+MAX_LEVELS = 8  # the most levels of one Jev answer the log keeps
 
 
 def capture_key(sketch: Play, name: str) -> str:
@@ -149,4 +150,5 @@ class Sources:
         after = ranked[1] if len(ranked) > 1 else None
         self.emit("jev_read", source=key, top=str(ranked[0]["level"])[:NAME_CHARS], probability=round(ranked[0]["probability"], 2),
                   next=str(after["level"])[:NAME_CHARS] if after else None,
-                  next_probability=round(after["probability"], 2) if after else None, options=len(ranked))
+                  next_probability=round(after["probability"], 2) if after else None, options=len(ranked),
+                  levels=[[str(row["level"])[:NAME_CHARS], round(row["probability"], 2)] for row in ranked[:MAX_LEVELS]])

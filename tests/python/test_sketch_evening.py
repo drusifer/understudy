@@ -126,6 +126,40 @@ class FailureTests(EveningCase):
         self.assertEqual(stdout.getvalue(), "ok: evening\n")
 
 
+class EventTests(EveningCase):
+    """UND-118: the log says what flowed through each beat and each pass of a repeated one."""
+
+    def events(self):
+        self.go()
+        (log,) = self.out.glob("*/events.jsonl")
+        return [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines()]
+
+    def test_a_top_level_beat_carries_the_profile_of_its_pieces_and_a_nested_one_only_their_shape(self):
+        done = {each["beat"]: each for each in self.events() if each["event"] == "beat_completed"}
+        qualifying_read = done["showing_checker"]["read"]["qualifying"]
+        self.assertTrue(qualifying_read["columns"])
+        self.assertTrue(all(each["kind"] in ("number", "text", "other") for each in qualifying_read["columns"]))
+        nested = next(each for name, each in done.items() if name.startswith("scored.review_score[0]."))
+        for piece in (*nested["read"].values(), *nested["wrote"].values()):
+            self.assertNotIn("columns", piece)
+
+    def test_each_pass_of_a_repeated_beat_says_which_row_it_was_for_and_what_it_made(self):
+        passes = [each for each in self.events() if each["event"] == "iteration" and each["beat"] == "scored"]
+        self.assertGreater(len(passes), 1)
+        self.assertEqual([each["index"] for each in passes], list(range(len(passes))))
+        self.assertTrue(all(each["of"] == len(passes) for each in passes))
+        self.assertTrue(all("title" in each["item"] for each in passes))
+        self.assertTrue(all(each["made"]["rows"] >= 1 for each in passes))
+
+    def test_a_jev_answer_carries_its_levels_and_probabilities(self):
+        reads = [each for each in self.events() if each["event"] == "jev_read"]
+        self.assertTrue(reads)
+        for each in reads:
+            self.assertEqual(each["levels"][0][0], each["top"])  # the likeliest level first
+            self.assertTrue(all(0 <= probability <= 1 for _, probability in each["levels"]))
+            self.assertLessEqual(len(each["levels"]), 8)
+
+
 class ReplayTests(EveningCase):
     def test_a_captured_run_replays_offline_with_the_same_booking(self):
         _, lines, _ = self.go()

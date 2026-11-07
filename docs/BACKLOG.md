@@ -285,3 +285,4 @@ Done on 2026-11-06: no login; each file box says whether it may be left empty; R
 - **Zoomed out the page was unusable** (owner screenshot at about 25%): check the layout at common desktop widths (1280, 1600, 1920, 2560) and at browser zoom 50 percent, and keep phones working (narrow is fine).
 - **Big plays:** done in Sprint 31 (flow view above 40 nodes, a button for everything). Left: show one beat's neighbors; the fan of read arrows from the files in household's flow view is wide.
 - Add a browser test for each width above, so a layout change cannot undo it.
+- **Queued by the owner, 2026-11-06 ("need a way to change the play"):** a way to change a play from the console. Not yet specified; to ask the owner before planning: edit the play's own file (the play editor already in this backlog, UND-86), change a beat's `with` values from the diagram, or something else (pick a different play is already the Play select). (Cypher, Smith)
