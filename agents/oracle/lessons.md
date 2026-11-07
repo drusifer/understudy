@@ -864,3 +864,20 @@ When a control's click redraws the container it sits in, put focus back on the e
 ### Evidence and Scope
 - **References:** `src/dashboard/controls.js` (`pickBeat`), `src/dashboard/page.js` (`pickStep`), `tests/browser/test_console.py` (the two keyboard tests), Sprint 29 Phases 3 and 4
 - **Applies when:** any console control that redraws what contains it.
+
+## [2026-11-06] A test that photographs the page races every redraw: look again, and check the thing photographed is the thing found
+
+> **Tags:** #testing #console #Neo
+
+### Context
+The contrast test finds a text, hides its color, photographs it and measures what is behind it. Sprints 29 to 32 added things the page redraws on its own (the plan, the rack, the box); it began to fail now and then with "Element is not attached to the DOM", and once with a contrast of 1.00.
+
+### Observation and Cause
+Confirmed: if the page redraws between finding the text and the picture, the picture fails (not attached); if it redraws during the picture, the new element has its text visible, so the text's own color is "behind" it (ratio 1.00). Both vanished when the test looked again on an error and checked that the tagged element was still there after the picture.
+
+### Rule
+A test that photographs or measures a part of the page must tolerate a redraw: find, photograph, check the same element is still there, and otherwise find again (a few times). Never loosen the threshold to make it pass.
+
+### Evidence and Scope
+- **References:** `tests/browser/test_console.py` (`contrast_problems`), Sprint 32 Phase 3
+- **Applies when:** any browser test that measures pixels or positions of something the page redraws.

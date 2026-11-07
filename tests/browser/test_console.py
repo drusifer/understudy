@@ -48,9 +48,9 @@ PLAIN = ("name: plain\ndescription: a play to start\nstage:\n  data: { kind: fil
 # What each piece of text is checked for: the selectors worth reading on every screen (WCAG AA: 4.5:1, 3:1 for large text).
 READABLE = [
     "h1", ".subtitle", "#status-text", ".theme-label", ".theme-choice", ".mode-choice", ".plate-label", ".sketch-tab .name",
-    ".rack-group", ".badge", ".printer-head span", ".paper .line", ".find-button", ".find-check", ".ended", ".summary dt", ".summary dd",
+    ".rack-group", ".badge", ".printer-head span", ".paper .line", ".find-button", ".find-check", ".ended", ".run-header",
     ".box-title", ".box-card-head", ".box-zone-name", ".box-quiet", ".box-item-name", ".box-axis", ".gauge .figure", ".gauge-name", ".start-message", ".start-panel > summary", ".banner",
-    ".panel-head span", ".jev > summary", ".offline", ".no-match",
+    ".panel-head span", ".offline", ".no-match",
     "#spending-title", ".spend-name", ".spend-amount", ".spend-more",
     ".typed-label", ".pick-option", ".toggle", ".readout", ".count-box", ".step-button",
     "#chart-title", "#chart-note", ".state-name", ".state-detail", ".row-badge", ".start-tag", ".legend", ".edge-label-text",
@@ -911,7 +911,9 @@ def contrast_problems(base: str, theme: str, mode: str) -> list[str]:
                 try:
                     # the text is invisible here (see HIDE_TEXT), so this is only what is behind it
                     pixels = decode_png(page.locator("[data-contrast-target]").first.screenshot(timeout=5000))
-                    break
+                    if page.evaluate("Boolean(document.querySelector('[data-contrast-target]'))"):
+                        break
+                    pixels = None  # the page drew the text again while the picture was taken: its text was visible in it
                 except PlaywrightError:
                     pixels = None
             page.evaluate("document.querySelector('[data-contrast-target]')?.removeAttribute('data-contrast-target')")
@@ -1102,11 +1104,14 @@ FORBIDDEN = [{"name": "small", "weight": 0.0, "removed_by": "forbid rule 2"}, {"
              {"name": "medium", "weight": 0.3, "removed_by": "shortlist"}]
 
 
-class DecisionPanelTest(BrowserCase):
+class DecisionBoxTest(BrowserCase):
+    """A blend's decisions are drawn as weight bars in the beat box; there is no panel for them."""
+
     NAME = "run-20261101T180000-00000001"
 
     def deciding(self, decisions, name=None):
-        started = {"event": "run_started", "at": stamp(0), "play": "x/chart.yaml", "mode": "live", **STORY}
+        story = plan_of([beat("a"), beat("match"), beat("c", True)], [("a", "match"), ("match", "c")], "a")
+        started = {"event": "run_started", "at": stamp(0), "play": "x/chart.yaml", "mode": "live", **story}
         events = [started, entered(1, "a", "start"), {"event": "beat_started", "at": stamp(2), "beat": "match"}, *decisions,
                   {"event": "beat_completed", "at": stamp(8), "beat": "match"}, {"event": "run_finished", "at": stamp(9), "outcome": "complete"}]
         return write_run(self.runs, name or self.NAME, events,
@@ -1119,41 +1124,28 @@ class DecisionPanelTest(BrowserCase):
         page.wait_for_function("document.getElementById('status-text').textContent === 'DONE'")
         return page
 
-    def test_each_decision_opens_to_its_options_the_rule_that_removed_them_and_the_pick(self):
+    def test_a_beats_decisions_are_weight_bars_with_the_pick_marked_and_the_removed_options_named(self):
         self.deciding([a_decision(3, "teens", "hot", HOT), a_decision(4, "adults", "large", FORBIDDEN)])
         page = self.open()
-        page.wait_for_function("document.getElementById('decisions-summary').textContent === 'DECISIONS · 2'")
-        page.locator("#decisions-summary").click()
-        self.assertEqual(page.locator(".decision-read").count(), 2)
-        page.locator(".decision-read > summary").nth(1).click()
-        text = page.locator(".decision-read").nth(1).inner_text()
-        for expected in ("match", "adults", "temp", "large", "small", "removed by forbid rule 2", "held back by the shortlist", "picked"):
-            self.assertIn(expected, text)
-        self.assertEqual(page.locator(".decision-read").nth(1).locator(".option-row").count(), 3)
-        self.assertEqual(page.locator(".decision-read").nth(1).locator(".option-row.picked").count(), 1)
+        page.locator(".state[data-state='match']").click()
+        charts = page.locator(".box-extras .box-chart").evaluate_all("els => els.map(e => e.getAttribute('aria-label'))")
+        self.assertEqual(len(charts), 2)
+        self.assertIn("adults temp: picked large; small 0, large 0.7, medium 0.3", charts[1])
+        self.assertEqual(page.locator("#decisions, #decisions-list").count(), 0)  # no panel
+        self.assertIn("(removed)", page.locator(".box-extras .box-chart").nth(1).text_content())
 
-    def test_a_run_with_no_decisions_says_so(self):
+    def test_a_beat_with_no_decisions_shows_no_decision_charts(self):
         self.deciding([])
         page = self.open()
-        page.wait_for_function("document.getElementById('decisions-summary').textContent === 'DECISIONS'")
-        page.locator("#decisions-summary").click()
-        self.assertIn("made no decisions", page.locator("#decisions-list").inner_text())
-
-    def test_a_decision_with_a_missing_field_shows_what_it_has_and_names_what_is_missing(self):
-        self.deciding([{"event": "decision", "at": stamp(3), "beat": "match", "dimension": "temp"}])
-        page = self.open()
-        page.wait_for_function("document.getElementById('decisions-summary').textContent === 'DECISIONS · 1'")
-        page.locator("#decisions-summary").click()
-        page.locator(".decision-read > summary").first.click()
-        self.assertIn("lacks row, pick, probability, options", page.locator(".decision-read").first.inner_text())
+        page.locator(".state[data-state='match']").click()
+        self.assertEqual(page.locator(".box-extras").count(), 0)
 
     def test_names_from_a_log_are_drawn_as_text_and_run_nothing(self):
         self.deciding([a_decision(3, "<b id='x'>teens</b>", "<img src=x onerror=window.pwned=1>", HOT)])
         page = self.open()
-        page.wait_for_function("document.getElementById('decisions-summary').textContent === 'DECISIONS · 1'")
-        page.locator("#decisions-summary").click()
-        self.assertEqual(page.locator("#decisions-list b, #decisions-list img").count(), 0)
-        self.assertIn("<b id='x'>teens</b>", page.locator("#decisions-list").inner_text())
+        page.locator(".state[data-state='match']").click()
+        self.assertEqual(page.locator("#beat-box b, #beat-box img").count(), 0)
+        self.assertIn("<b id='x'>teens</b>", page.locator(".box-extras .box-chart").first.get_attribute("aria-label"))
         self.assertFalse(page.evaluate("Boolean(window.pwned)"))
 
     def test_the_printer_names_each_decision(self):
@@ -1161,42 +1153,15 @@ class DecisionPanelTest(BrowserCase):
         page = self.open()
         self.assertIn("decision match: teens temp = hot (0.7)", page.locator("#paper .line.decision").first.inner_text())
 
-    def test_in_a_replay_a_decision_in_the_list_or_in_the_printer_moves_the_cursor_to_its_event(self):
+    def test_in_a_replay_a_decision_in_the_printer_moves_the_cursor_to_its_event(self):
         self.deciding([a_decision(3, "teens", "hot", HOT), a_decision(4, "adults", "large", FORBIDDEN)])  # events 3 and 4 (0-based)
         page = self.open()
-        page.locator("#decisions-summary").click()
-        self.assertTrue(page.locator(".decision-read .jump").first.is_disabled())  # no replay open: nothing to move
         page.click("#replay-open")
         page.wait_for_function("!document.getElementById('replay-scrub').disabled")
-        page.locator(".decision-read > summary").nth(1).click()
-        page.locator(".decision-read").nth(1).locator(".jump").click()
-        page.wait_for_function("document.getElementById('replay-at').textContent.startsWith('event 5 of ')")  # index 4 + 1
+        page.locator("#replay-scrub").fill("7")  # to the end (seven events), so every line is on the paper
+        page.wait_for_function("document.getElementById('replay-at').textContent.startsWith('event 7 of ')")
         page.locator("#paper .line.decision").first.click()
         page.wait_for_function("document.getElementById('replay-at').textContent.startsWith('event 4 of ')")  # index 3 + 1
-
-    def test_the_panel_is_readable_in_every_theme_and_mode(self):
-        self.deciding([a_decision(3, "teens", "hot", HOT), a_decision(4, "adults", "large", FORBIDDEN)])
-        base = self.start()
-        problems = []
-        # one look, not six: the panel reuses classes (.jev > summary, .jev-level, .find-button) that ContrastTest measures in all six
-        for theme, mode in LOOKS[1:2]:  # steampunk, dark
-            page = self.page()
-            page.goto(f"{base}/?theme={theme}&mode={mode}")
-            page.add_style_tag(content=HIDE_TEXT)
-            page.wait_for_function("document.getElementById('decisions-summary').textContent === 'DECISIONS · 2'")
-            page.locator("#decisions-summary").click()
-            page.locator(".decision-read > summary").nth(1).click()
-            for selector in ("#decisions-summary", ".decision-read > summary", ".option-row", ".decision-note"):
-                found = page.evaluate(FIRST_VISIBLE_JS, selector)
-                if found is None:
-                    continue
-                target = page.locator("[data-contrast-target]").first
-                pixels = decode_png(target.screenshot())
-                page.evaluate("document.querySelector('[data-contrast-target]')?.removeAttribute('data-contrast-target')")
-                worst = min((contrast(found["color"], background) for background in backdrops(pixels)), default=21.0)
-                if worst < 4.5:
-                    problems.append(f"{theme}/{mode} {selector}: {worst:.2f}")
-        self.assertEqual(problems, [], "\n" + "\n".join(problems))
 
 
 if __name__ == "__main__":

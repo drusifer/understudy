@@ -30,7 +30,6 @@ function look() {
 // The printer holds every line of the chosen run in state.lines; the finder decides which of them are on the paper.
 state.lines = [];
 state.failures = [];
-state.jev = null;
 state.jevGauges = [];
 const finder = () => ({ text: $('find-text').value.trim().toLowerCase(), failures: $('find-failures').checked, stage: $('find-stage').value });
 
@@ -134,16 +133,15 @@ function jumpTo(index) {
   node?.scrollIntoView({ block: 'center' });
 }
 
-function drawSummary(run) {
+// One line about the run: how it was run, how long it took, what it was given, what it wrote.
+function drawRunHeader(run) {
   const { summary } = run;
   const pairs = Object.entries(summary.with);
   const outputs = Object.entries(summary.outputs);
-  const rows = [
-    ['outcome', summary.outcome ?? '-'], ['mode', summary.mode || '-'], ['stale', summary.stale === null ? '-' : String(summary.stale)],
-    ['took', `${summary.seconds}s`], ['with', pairs.length ? pairs.map(([name, value]) => `${name}=${value}`).join(' ') : '-'],
-    ['wrote', outputs.length ? outputs.map(([file, count]) => `${file} (${count} ${count === 1 ? 'row' : 'rows'})`).join(', ') : '-'],
-  ];
-  $('summary').replaceChildren(...rows.flatMap(([name, value]) => [make('dt', {}, name), make('dd', {}, value)]));
+  const parts = [summary.mode || null, `${summary.seconds}s`, summary.stale ? 'its Jev captures are stale' : null,
+    pairs.length ? `given ${pairs.map(([name, value]) => `${name}=${value}`).join(' ')}` : null,
+    outputs.length ? `wrote ${outputs.map(([file, count]) => `${file} (${count} ${count === 1 ? 'row' : 'rows'})`).join(', ')}` : null];
+  $('run-header').textContent = parts.filter(Boolean).join(' · ');
 }
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -277,7 +275,7 @@ function drawStatus(run) {
   $('status-lamp').className = `lamp ${LAMPS[run.state]}`;
   $('status-text').textContent = WORDS[run.state];
   drawBanner(run);
-  drawSummary(run);
+  drawRunHeader(run);
   drawSpending(run.spending);
   drawChart(run);
   state.chosenState = run.state;
@@ -291,28 +289,10 @@ function fillStageFilter(run) {
   $('find-stage').replaceChildren(make('option', { value: '' }, 'all stages'), ...names.map((name) => make('option', { value: name }, name)));
 }
 
-// The Jev list: what Jev was asked in this run and how sure it was, from the run's captured answers.
-function drawJev() {
-  const jev = state.jev;
-  const unsure = $('jev-unsure').checked;
-  if (!jev) { $('jev-summary').textContent = 'JEV READS'; $('jev-list').replaceChildren(); return; }
-  const flagged = jev.reads.filter((each) => each.flagged).length;
-  $('jev-summary').textContent = jev.kept ? `JEV READS · ${jev.reads.length} read, ${flagged} unsure` : `JEV READS · ${jev.note}`;
-  const items = jev.reads.filter((each) => !unsure || each.flagged).map((each) => make('details', { class: `jev-read ${each.flagged ? 'unsure' : ''}` },
-    make('summary', {}, `${each.source} · ${each.top} ${each.probability.toFixed(2)}${each.flagged ? ' · UNSURE' : ''}`),
-    ...(each.instructions ? [make('div', { class: 'jev-question' }, each.instructions)] : []),
-    ...each.levels.map(([level, probability]) => make('div', { class: 'jev-level' }, `${level} ${probability.toFixed(2)}`))));
-  const notes = [];
-  if (!jev.kept) notes.push(make('div', { class: 'about' }, jev.note));
-  if (jev.missing.length) notes.push(make('div', { class: 'about' }, `missing capture halves: ${jev.missing.join(', ')}`));
-  if (jev.kept && !items.length) notes.push(make('div', { class: 'about' }, unsure ? 'no unsure reads' : 'no reads'));
-  $('jev-list').replaceChildren(...notes, ...items);
-}
-
+// The SURE and ASKED gauges, from the run's captured Jev answers (what Jev answered is in the beat box and the log).
 async function loadJev(id) {
   const jev = await getJson(`api/runs/${id}/jev`);
   if (state.chosen !== id) return;
-  state.jev = jev;
   state.jevGauges = [];
   if (jev?.kept && jev.reads.length) {
     const total = jev.asked + jev.reused;
@@ -321,15 +301,11 @@ async function loadJev(id) {
       { name: 'ASKED', level: total ? jev.asked / total : null, text: `${jev.asked}·${jev.reused}`, about: 'answers asked live · answers reused from a capture' },
     ];
   }
-  drawJev();
   const run = await getJson(runUrl(id));
   if (run && state.chosen === id) drawStatus(run);
 }
 
-$('jev-unsure').addEventListener('input', drawJev);
-
 function draw(run) {
-  state.jev = null;
   state.jevGauges = [];
   state.lines = run.lines;
   setFailures(run.failures);
@@ -397,13 +373,12 @@ async function choose(id) {
   if (!run) return;
   draw(run);
   loadJev(id);
-  if (typeof loadDecisions === 'function') loadDecisions(id); // decisions.js: the run's decisions
   if (!['running', 'paused'].includes(run.state)) return;
   const source = new EventSource(`events/${id}`);
   state.follow = source;
   let skip = run.count;
   source.onmessage = (message) => { if (skip > 0) skip -= 1; else { append(JSON.parse(message.data)); refreshSoon(id); } };
-  source.addEventListener('end', async () => { source.close(); const done = await getJson(runUrl(id)); if (done) drawStatus(done); loadJev(id); if (typeof loadDecisions === 'function') loadDecisions(id); loadRuns(); });
+  source.addEventListener('end', async () => { source.close(); const done = await getJson(runUrl(id)); if (done) drawStatus(done); loadJev(id); loadRuns(); });
 }
 
 // A new event line while a run goes: refresh what the run says about itself (the lit state, the gauges) soon, but once for a burst.

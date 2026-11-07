@@ -2,7 +2,7 @@
 
 *   **Goal**: Replace the beat tube with a beat box: a chart picture of the current beat's inputs and outputs (gauges, donuts, bars), an iteration stepper for beats that run once per row, Jev and blend options as bars; fold the scattered expanders into the box and a run header.
 *   **Tier**: Tier 2. **Points**: about 14. **Branch**: `sprint-32` (cut from `sprint-31`, committed, not yet merged)
-*   **Status**: In progress (planned 2026-11-06)
+*   **Status**: Complete 2026-11-06 (launched); branch `sprint-32` committed, not merged or pushed
 *   **Plan**: `docs/sprints/STORY_ARCH_SPRINT32.md`. Decision 45.
 
 ## Stage 0: SDLC Gate
@@ -25,13 +25,13 @@
 
 ## Phase 3: One place for the run's details (UND-120)
 
-- [ ] **Task 3.1:** The run header line; remove the DECISIONS and JEV READS expanders and the SUMMARY list; gauges keep their figures; dead script and styles removed; docs. **L2**. (*Owner: Neo, Oracle | Trace: UND-120 AC1-3 | Verification: browser tests, `rg` for dead ids*)
-- [ ] **Task 3.2:** UAT, security quick pass, code review. **L1**. (*Owner: Trin, Switch, Morpheus*)
+- [x] **Task 3.1:** The run header line; remove the DECISIONS and JEV READS expanders and the SUMMARY list; gauges keep their figures; dead script and styles removed; docs. **L2**. (*Owner: Neo, Oracle | Trace: UND-120 AC1-3 | Verification: browser tests, `rg` for dead ids*)
+- [x] **Task 3.2:** UAT, security quick pass, code review. **L1**. (*Owner: Trin, Switch, Morpheus*)
 
 ## Stage 3: Closeout
 
-- [ ] **Task C.1:** SDLC check. (*Owner: Tank*)
-- [ ] **Task C.2:** Docs groom (USER_GUIDE, PLAYS, ARCH, ADR, changelog, lesson), chat report. (*Owner: Oracle*)
-- [ ] **Task C.3:** User test against `docs/sprints/UAT_PLAN_SPRINT32.md`. (*Owner: Smith*)
-- [ ] **Task C.4:** Retro. (*Owner: Mouse*)
-- [ ] **Task C.5:** Launch. Merge and push only when the owner asks. (*Owner: Cypher*)
+- [x] **Task C.1:** SDLC check. (*Owner: Tank*)
+- [x] **Task C.2:** Docs groom (USER_GUIDE, PLAYS, ARCH, ADR, changelog, lesson), chat report. (*Owner: Oracle*)
+- [x] **Task C.3:** User test against `docs/sprints/UAT_PLAN_SPRINT32.md`. (*Owner: Smith*)
+- [x] **Task C.4:** Retro. (*Owner: Mouse*)
+- [x] **Task C.5:** Launch. Merge and push only when the owner asks. (*Owner: Cypher*)

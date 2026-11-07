@@ -324,9 +324,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .offline { margin: 0 0 12px; padding: 8px 14px; border-radius: 6px; border: 2px solid var(--amber); background: #3a2a0a; color: #ffe9b8; font-family: VT323, monospace; font-size: 18px; }
 .stage.stale { opacity: .6; }
 .ended { align-self: stretch; min-height: 1.2em; }
-.summary { align-self: stretch; display: grid; grid-template-columns: max-content 1fr; gap: 2px 14px; margin: 0; font-family: VT323, monospace; font-size: 18px; color: var(--cream); }
-.summary dt { color: var(--cream); opacity: .75; }
-.summary dd { margin: 0; overflow-wrap: anywhere; }
+.run-header { align-self: stretch; margin: 0; font-family: VT323, monospace; font-size: 17px; color: var(--cream); overflow-wrap: anywhere; }
+.run-header:empty { display: none; }
 /* Sprint 24 UND-82: the statechart is drawn on a light canvas with fixed dark and light pairs, so it reads in every theme. */
 .tube-panel { min-width: 0; } /* so a wide diagram scrolls inside its own box instead of widening the page */
 .chart { align-self: stretch; min-width: 0; font-family: VT323, monospace; font-size: 18px; color: var(--cream); }
@@ -439,16 +438,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .no-match { padding: 12px; font-family: VT323, monospace; font-size: 20px; color: #24170a; }
 .paper .line.flash { background: #ffe08a; }
 
-/* Sprint 22 UND-78: the Jev list, and room for two more gauges. */
+/* Sprint 22 UND-78: room for two more gauges (the Jev SURE and ASKED). */
 .gauges { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
-.jev { align-self: stretch; font-family: VT323, monospace; font-size: 18px; color: var(--cream); }
-.jev > summary { cursor: pointer; font-family: Cinzel, serif; font-size: 12px; letter-spacing: 3px; color: var(--brass); padding: 4px 0; }
-.jev > summary:focus-visible, .jev-read > summary:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
-.jev-list { max-height: 260px; overflow: auto; margin-top: 4px; }
-.jev-read > summary { cursor: pointer; padding: 1px 4px; }
-.jev-read.unsure > summary { color: #ff9a3c; }
-.jev-question { margin: 2px 0 2px 18px; font-style: italic; opacity: .85; }
-.jev-level { margin-left: 18px; opacity: .85; }
 
 /* Sprint 22 UND-79: start, replay and stop. */
 .start-panel { margin: 0 0 12px; padding: 8px 12px; border-radius: 8px; border: 2px solid var(--brass-deep); background: rgba(0,0,0,.18); font-family: VT323, monospace; font-size: 18px; color: var(--cream); }
@@ -478,10 +469,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .start-message { min-height: 1.2em; white-space: pre-wrap; overflow-wrap: anywhere; }
 .start-message.problem { color: #ff9a8a; }
 .start-message.ok { color: #9be8a6; }
-/* Sprint 26 UND-85: a decision opens to its options; the picked one is marked, and a line in the printer can be clicked in a replay. */
-.option-row { margin: 1px 0 1px 18px; overflow-wrap: anywhere; }
-.option-row.picked { font-weight: 700; }
-.decision-read > .jump { margin: 4px 0 4px 18px; }
+/* Sprint 26 UND-85: a decision line in the printer can be clicked in a replay (src/dashboard/decisions.js). */
 .paper .line.decision { cursor: default; }
 /* Sprint 26 UND-84: the replay bar reuses the start panel's look; its buttons, scrubber and readout wrap on a phone. */
 .replay-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -495,7 +483,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .status, .theme-label { color: #1f1408; }
 .printer-head { color: #5f5a53; }
 .ended, .tube-panel .panel-head span { color: var(--cream); font-style: normal; }
-.rack-group, .start-panel > summary, .jev > summary { color: var(--cream); }
+.rack-group, .start-panel > summary { color: var(--cream); }
 .no-match { background: var(--note-bg, #efe6cf); color: var(--note-ink, #24170a); }
 :root[data-theme="steampunk"][data-mode="dark"] .find-check { color: #e8d9b8; }
 :root[data-theme="steampunk"][data-mode="dark"] .printer-head { color: #b3aea6; }

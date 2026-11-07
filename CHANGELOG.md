@@ -1,5 +1,11 @@
 # Changelog
 
+## Sprint 32 — the beat box (2026-11-06, branch `sprint-32`, not yet merged)
+
+- **The beat tube is the beat box** (owner decision 45): for the beat the run is on (or the one clicked on the diagram) it draws what goes IN and what comes OUT as small charts: a gauge for a number column, a donut or bars for a text column; a beat that runs once per row shows one pass's own row and what it made, with a pass stepper over the latest 40; Jev's answers and a blend's decisions are bars. The step view, the DECISIONS and JEV READS expanders and the summary list are gone; a one-line run header replaces the summary. `src/dashboard/box.js`.
+- **The runner says what flows through a beat:** `columns` (a profile per column) on a top-level beat's pieces (`src/play/profile.py`), an `iteration` event per pass of a repeated beat, `levels` on `jev_read`. The household replay's outputs stayed byte-identical to the baseline; `events.jsonl` grew from 1.06 MB to 3.49 MB (the iteration events).
+- **Tests:** 659 unit tests in about 32 s; browser 51/51 in about 100 s. The contrast test now looks again when the page redraws a text while it is photographed.
+
 ## Sprint 31 — a big play folded to its flow (2026-11-06, branch `sprint-31`, not yet merged)
 
 - **The diagram of a play of more than 40 nodes shows its flow:** the stage's files and the flow beats, with the waiting beats left out and their reads passed through (household: 152 nodes down to 31). `SHOW ALL <n> NODES` / `SHOW ONLY THE FLOW` switches, for a plan, a run and a replay. `fold` in `src/play/plan.py`; `view=auto|flow|all` on `GET /api/plan`, `/api/runs/<id>` and `/replay`.
