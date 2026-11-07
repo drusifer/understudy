@@ -34,6 +34,7 @@ from src.dashboard.runs import Launcher, _Child
 from src.dashboard.server import serve
 
 try:
+    from playwright.sync_api import Error as PlaywrightError
     from playwright.sync_api import sync_playwright
 except ImportError:  # the optional group is not installed
     sync_playwright = None
@@ -869,15 +870,25 @@ def contrast_problems(base: str, theme: str, mode: str) -> list[str]:
         page.wait_for_selector(".banner")
         page.locator("#controls > summary").click()
         page.select_option("#sketch-pick", "typed.yaml")  # its dial, fader, stepper and switch are read in every look
-        page.wait_for_selector("#chart-wrap .state")  # the picked play's plan replaces the diagram; let it settle before measuring
+        # the picked play's plan replaces the run's diagram; wait for it (the run's own diagram is there before) and let it settle
+        page.wait_for_function("document.getElementById('chart-title').textContent.startsWith('PLAN OF')")
+        page.wait_for_selector("#chart-wrap .state")
         page.fill("#find-text", "zzz-nothing")
         for selector in READABLE:
-            found = page.evaluate(FIRST_VISIBLE_JS, selector)
-            if found is None:
-                continue
-            target = page.locator("[data-contrast-target]").first
-            pixels = decode_png(target.screenshot())  # the text is invisible here (see HIDE_TEXT), so this is only what is behind it
+            found, pixels = None, None
+            for _ in range(3):  # the page may redraw (a diagram) between finding a text and taking its picture: look again
+                found = page.evaluate(FIRST_VISIBLE_JS, selector)
+                if found is None:
+                    break
+                try:
+                    # the text is invisible here (see HIDE_TEXT), so this is only what is behind it
+                    pixels = decode_png(page.locator("[data-contrast-target]").first.screenshot(timeout=5000))
+                    break
+                except PlaywrightError:
+                    pixels = None
             page.evaluate("document.querySelector('[data-contrast-target]')?.removeAttribute('data-contrast-target')")
+            if found is None or pixels is None:
+                continue
             large = found["size"] >= 24 or (found["size"] >= 18.66 and found["weight"] >= 700)
             needed = 3.0 if large else 4.5
             worst = min((contrast(found["color"], background) for background in backdrops(pixels)), default=21.0)
