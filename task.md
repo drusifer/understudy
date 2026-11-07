@@ -18,10 +18,10 @@
 
 ## Phase 2: The beat box (UND-119)
 
-- [ ] **Task 2.1:** `step_details` gains iterations, Jev answers and decisions by beat (live and replay). **L2**. (*Owner: Neo | Trace: UND-119 AC3, 4, 6 | Verification: view and replay tests*)
-- [ ] **Task 2.2:** `src/dashboard/box.js`: the box (IN, beat, OUT), gauge, donut, bars, the iteration stepper, Jev and decision bars; the tube and step view removed from the page. **L3**. (*Owner: Neo | Trace: UND-119 AC1-5 | Verification: browser tests*)
-- [ ] **Task 2.3:** UAT on the live console with an evening replay (each pass, Jev bars) and the household plan; contrast test and widths pass. **L2**. (*Owner: Trin | Trace: UND-119*)
-- [ ] **Task 2.4:** Security quick pass, then code review. **L1**. (*Owner: Switch, Morpheus*)
+- [x] **Task 2.1:** `step_details` gains iterations, Jev answers and decisions by beat (live and replay). **L2**. (*Owner: Neo | Trace: UND-119 AC3, 4, 6 | Verification: view and replay tests*)
+- [x] **Task 2.2:** `src/dashboard/box.js`: the box (IN, beat, OUT), gauge, donut, bars, the iteration stepper, Jev and decision bars; the tube and step view removed from the page. **L3**. (*Owner: Neo | Trace: UND-119 AC1-5 | Verification: browser tests*)
+- [x] **Task 2.3:** UAT on the live console with an evening replay (each pass, Jev bars) and the household plan; contrast test and widths pass. **L2**. (*Owner: Trin | Trace: UND-119*)
+- [x] **Task 2.4:** Security quick pass, then code review. **L1**. (*Owner: Switch, Morpheus*)
 
 ## Phase 3: One place for the run's details (UND-120)
 

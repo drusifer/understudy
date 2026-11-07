@@ -49,7 +49,7 @@ PLAIN = ("name: plain\ndescription: a play to start\nstage:\n  data: { kind: fil
 READABLE = [
     "h1", ".subtitle", "#status-text", ".theme-label", ".theme-choice", ".mode-choice", ".plate-label", ".sketch-tab .name",
     ".rack-group", ".badge", ".printer-head span", ".paper .line", ".find-button", ".find-check", ".ended", ".summary dt", ".summary dd",
-    ".stage-lamp", ".group summary", ".gauge .figure", ".gauge-name", ".start-message", ".start-panel > summary", ".banner",
+    ".box-title", ".box-card-head", ".box-zone-name", ".box-quiet", ".box-item-name", ".box-axis", ".gauge .figure", ".gauge-name", ".start-message", ".start-panel > summary", ".banner",
     ".panel-head span", ".jev > summary", ".offline", ".no-match",
     "#spending-title", ".spend-name", ".spend-amount", ".spend-more",
     ".typed-label", ".pick-option", ".toggle", ".readout", ".count-box", ".step-button",
@@ -438,7 +438,7 @@ class LiveFollowTest(BrowserCase):
             events.write(json.dumps({"event": "run_finished", "at": stamp(-1), "outcome": "complete"}) + "\n")
         (directory / "run.json").write_text(json.dumps({"status": "complete", "beats":{"build": "complete"}}))
         page.wait_for_function("document.getElementById('status-text').textContent === 'DONE'", timeout=15000)
-        self.assertEqual(page.locator(".stage-lamp.complete").count(), 1)
+        self.assertEqual(page.locator("#beat-box").count(), 1)
 
 
 class StartAndStopTest(BrowserCase):
@@ -718,33 +718,61 @@ class StatechartTest(BrowserCase):
         self.assertEqual(page.locator(".start-tag").all_text_contents(), ["START"])
         self.assertIn("map.where", page.get_by_role("button", name="a, current beat, map.where, 3 rows").get_attribute("aria-label"))
 
-    def test_the_step_view_follows_the_run_and_a_clicked_beat_shows_what_it_read_and_made(self):
+    def test_the_beat_box_follows_the_run_and_a_clicked_beat_shows_its_inputs_and_outputs_as_charts(self):
         name = "run-20261101T165000-00000009"
-        done = {"event": "beat_completed", "at": stamp(2), "beat": "a", "read": {"sales": {"rows": 3, "keys": ["drinks", "week"]}},
-                "made": {"rows": 1, "keys": ["total"]}, "wrote": {}}
+        sales = {"rows": 40, "keys": ["amount", "payee"], "columns": [
+            {"name": "amount", "kind": "number", "rows": 40, "min": 2, "max": 90, "mean": 31.5},
+            {"name": "payee", "kind": "text", "rows": 40, "distinct": 9, "top": [["Cafe", 12], ["Bus", 9], ["Books", 5], ["Rent", 3], ["Gym", 2]]}]}
+        made = {"rows": 40, "keys": ["kind"], "columns": [
+            {"name": "kind", "kind": "text", "rows": 40, "distinct": 2, "top": [["food", 30], ["travel", 10]]}]}
+        done = {"event": "beat_completed", "at": stamp(2), "beat": "a", "action": "map.where", "read": {"sales": sales}, "made": made, "wrote": {}}
         self.run_with_story(name, [entered(1, "a", "start"), done, entered(3, "b", "ok")], {"status": "running", "beats": {}})
         page = self.open(name)
-        page.wait_for_selector("#step-body dd")
-        self.assertEqual(page.locator("#step-title").inner_text(), "STEP: b")  # follows the beat the run is in
+        page.wait_for_selector(".box-title")
+        self.assertIn("b", page.locator(".box-title").inner_text())  # follows the beat the run is on
         page.locator(".state[data-state='a']").click()
-        text = page.locator("#step-body").inner_text()
-        self.assertEqual(page.locator("#step-title").inner_text(), "STEP: a")
-        self.assertIn("completed", text)
-        self.assertIn("sales: 3 rows (keys: drinks, week)", text)
-        self.assertIn("result: 1 row (keys: total)", text)
+        self.assertTrue(page.locator(".box-title").inner_text().startswith("a"))
+        self.assertIn("map.where", page.locator(".box-title").inner_text())
+        self.assertEqual(page.locator(".box-zone").first.locator(".box-card-head").inner_text(), "sales · 40 rows")
+        charts = page.locator(".box-chart").evaluate_all("els => els.map(e => e.getAttribute('aria-label'))")
+        self.assertTrue(any(each.startswith("amount: from 2 to 90, mean 31.5") for each in charts), charts)  # a gauge
+        self.assertTrue(any(each.startswith("payee: 9 different values") for each in charts), charts)  # bars
+        self.assertTrue(any(each.startswith("kind: food 30, travel 10") for each in charts), charts)  # a donut
         self.assertEqual(page.locator(".state.chosen").get_attribute("data-state"), "a")
         page.locator(".state[data-state='a']").click()  # again: back to following the run
-        self.assertEqual(page.locator("#step-title").inner_text(), "STEP: b")
+        self.assertIn("b", page.locator(".box-title").inner_text())
 
-    def test_a_beat_logged_without_the_lists_shows_the_step_without_them_and_without_error(self):
+    def test_a_beat_that_runs_once_per_row_shows_one_pass_and_a_stepper_and_that_passs_jev_answer(self):
+        name = "run-20261101T165200-0000000c"
+        columns = [{"name": "score", "kind": "number", "rows": 1, "min": 0.5, "max": 0.5, "mean": 0.5}]
+        passes = [{"event": "iteration", "at": stamp(2), "beat": "a", "index": number, "of": 3, "item": {"title": f"Film {number}"},
+                   "made": {"rows": 1, "columns": columns}} for number in range(3)]
+        jev = [{"event": "jev_read", "at": stamp(2), "source": f"a.review[{number}].audience", "top": "loved" if number else "bored",
+                "probability": 0.9 if number else 0.4, "options": 2, "levels": [["loved" if number else "bored", 0.9 if number else 0.4], ["mixed", 0.1]]}
+               for number in range(3)]
+        started = [entered(1, "a", "start"), {"event": "beat_started", "at": stamp(1), "beat": "a"}]
+        self.run_with_story(name, [*started, *passes, *jev], {"status": "running", "beats": {}})
+        page = self.open(name)
+        page.wait_for_selector(".box-pass")
+        self.assertEqual(page.locator(".box-pass").inner_text(), "pass 3 of 3")  # the latest while the run goes
+        self.assertIn("Film 2", page.locator(".box-item-value").first.inner_text())
+        self.assertEqual(page.locator(".box-extras .box-chart").count(), 1)  # only this pass's answer
+        page.get_by_role("button", name="previous pass").click()
+        self.assertEqual(page.locator(".box-pass").inner_text(), "pass 2 of 3")
+        self.assertIn("Film 1", page.locator(".box-item-value").first.inner_text())
+        page.get_by_role("button", name="previous pass").click()
+        page.get_by_role("button", name="previous pass").is_disabled()
+        self.assertIn("UNSURE", page.locator(".box-extras .box-chart").first.get_attribute("aria-label").upper())  # 0.4 is under 0.7
+
+    def test_a_beat_logged_without_the_lists_shows_in_the_box_without_them_and_without_error(self):
         name = "run-20261101T165100-0000000a"
         self.run_with_story(name, [entered(1, "a", "start"), {"event": "beat_completed", "at": stamp(2), "beat": "a"}],
                             {"status": "running", "beats": {}})
         page = self.open(name)
-        page.wait_for_selector("#step-body dd")
+        page.wait_for_selector(".box-title")
         page.locator(".state[data-state='a']").click()
-        self.assertIn("completed", page.locator("#step-body").inner_text())
-        self.assertNotIn("sales", page.locator("#step-body").inner_text())
+        self.assertIn("makes nothing to draw", page.locator("#beat-box").inner_text())
+        self.assertEqual(page.locator(".box-chart").count(), 0)
 
     def test_each_state_is_a_box_with_a_name_finals_are_double_bordered_and_only_guarded_moves_have_labels(self):
         name = "run-20261101T160000-00000001"

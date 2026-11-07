@@ -114,6 +114,50 @@ class StepTests(ReplayCase):
         self.assertEqual(replay(folder, 4)["steps"], {"a": SAID})
         self.assertEqual(replay(folder, 7)["steps"], describe(folder, NOW)["steps"])
 
+    def box_events(self):
+        columns = [{"name": "n", "kind": "number", "rows": 2, "min": 1, "max": 3, "mean": 2}]
+        jev = {"event": "jev_read", "source": "evening.pick", "top": "x", "probability": 0.8, "next": "y", "next_probability": 0.2,
+               "options": 2, "levels": [["x", 0.8], ["y", 0.2]]}
+        decision = {"event": "decision", "beat": "b", "row": "teens", "dimension": "temp", "pick": "hot", "probability": 0.7,
+                    "options": [{"name": "hot", "weight": 0.7, "removed_by": None},
+                                {"name": "iced", "weight": 0.3, "removed_by": None}]}
+        passes = [{"event": "iteration", "beat": "a", "index": number, "of": 60, "item": {"title": f"film {number}"},
+                   "made": {"rows": 1, "columns": columns}} for number in range(60)]
+        return [STORY, {"event": "beat_started", "beat": "a"}, *passes, jev,
+                {"event": "beat_completed", "beat": "a", "action": "play:x.yaml", "read": {}, "wrote": {}},
+                {"event": "beat_started", "beat": "b"}, decision,
+                {"event": "beat_completed", "beat": "b", "action": "reduce.blend", "read": {}, "wrote": {}}]
+
+    def test_a_beat_lists_its_latest_passes_with_the_true_count_the_jev_answers_it_asked_and_its_decisions(self):
+        folder = write(self.root, self.box_events(), {"status": "running", "beats": {}})
+        steps = describe(folder, NOW)["steps"]
+        self.assertEqual(steps["a"]["action"], "play:x.yaml")
+        passes = steps["a"]["iterations"]
+        self.assertEqual((passes["count"], len(passes["latest"])), (60, 40))  # the latest 40 are sent, the count is true
+        self.assertEqual((passes["latest"][0]["index"], passes["latest"][-1]["index"]), (20, 59))
+        self.assertEqual(passes["latest"][-1]["item"], {"title": "film 59"})
+        self.assertEqual(steps["a"]["jev"][0]["levels"], [["x", 0.8], ["y", 0.2]])
+        self.assertNotIn("jev", steps["b"])  # the answer was read inside beat a
+        self.assertEqual(steps["b"]["decisions"][0]["pick"], "hot")
+
+    def test_a_jev_answer_belongs_to_the_beat_its_source_names_not_the_one_running(self):
+        def answer(source):
+            return {"event": "jev_read", "source": source, "top": "x", "probability": 0.9, "options": 1, "levels": [["x", 0.9]]}
+
+        events = [STORY, {"event": "beat_started", "beat": "done"}, answer("coffee.b"), answer("a.child[3].reading"), answer("odd")]
+        steps = describe(write(self.root, events, {"status": "running", "beats": {}}), NOW)["steps"]
+        self.assertEqual([each["source"] for each in steps["b"]["jev"]], ["coffee.b"])  # "play.beat" is that beat's own answer
+        self.assertEqual([each["source"] for each in steps["a"]["jev"]], ["a.child[3].reading"])  # inside a beat that calls a play
+        self.assertEqual([each["source"] for each in steps["done"]["jev"]], ["odd"])  # no owner: the beat that was running
+
+    def test_a_replay_shows_the_passes_and_answers_up_to_that_event(self):
+        folder = write(self.root, self.box_events(), {"status": "running", "beats": {}})
+        early = replay(folder, 5)  # run_started, beat_started a, three passes
+        self.assertEqual(early["steps"]["a"]["iterations"]["count"], 3)  # a running beat shows the passes so far
+        self.assertNotIn("action", early["steps"]["a"])  # but it has not completed
+        done = replay(folder, 64)  # through beat a's completion
+        self.assertEqual(done["steps"]["a"]["iterations"]["count"], 60)
+
     def test_a_beat_logged_before_this_said_nothing_and_is_shown_without_the_lists_and_without_error(self):
         events = [STORY, {"event": "beat_started", "beat": "a"}, {"event": "beat_completed", "beat": "a"}]
         folder = write(self.root, events, {"status": "running", "beats": {}})

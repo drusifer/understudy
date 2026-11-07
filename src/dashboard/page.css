@@ -353,6 +353,41 @@ button:focus-visible, input:focus-visible { outline: 3px solid #ffd88a; outline-
 .chart-svg .state.pickable:hover .state-box, .chart-svg .state.pickable:focus-visible .state-box { stroke: #c2410c; stroke-width: 2.5; }
 .chart-svg .state.hold-here .state-box { fill: #ffe9b8; stroke: #8f2d1a; stroke-width: 3.5; }
 .step-text { white-space: pre-wrap; }
+
+/* The beat box: IN | beat | OUT cards with small charts (src/dashboard/box.js). */
+.beat-box { align-self: stretch; display: flex; flex-direction: column; gap: 8px; font-family: VT323, monospace; font-size: 18px; color: var(--cream); }
+.box-title { font-family: Cinzel, serif; font-size: 15px; letter-spacing: 1px; color: var(--cream); overflow-wrap: anywhere; }
+.box-status { font-family: VT323, monospace; font-size: 18px; letter-spacing: 0; }
+.box-flow { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: start; }
+.box-zone { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.box-zone-name { font-family: Cinzel, serif; font-size: 11px; letter-spacing: 3px; color: var(--cream); }
+.box-arrow { align-self: center; font-family: Cinzel, serif; font-size: 22px; color: var(--cream); }
+.box-card { padding: 6px 8px; border-radius: 6px; border: 1px solid #8a6a1f; background: #fffaf0; color: #24170a; overflow: hidden; }
+.box-card-head { font-size: 17px; overflow-wrap: anywhere; }
+.box-item { display: flex; gap: 8px; font-size: 16px; }
+.box-item-name { color: #4a3a28; flex: 0 0 auto; }
+.box-item-value { overflow-wrap: anywhere; min-width: 0; }
+.box-quiet { font-size: 15px; color: var(--cream); }
+.box-card .box-quiet { color: #4a3a28; }
+.box-extras { display: flex; flex-direction: column; gap: 6px; padding: 6px 8px; border-radius: 6px; background: #fffaf0; color: #24170a; border: 1px solid #8a6a1f; overflow: hidden; }
+.box-stepper { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.box-pass { min-width: 8ch; text-align: center; }
+.box-chart { display: block; max-width: 100%; height: auto; }
+.box-chart .box-axis { color: #3b2c1a; fill: currentColor; font: 11px monospace; }
+.box-chart .box-top { color: #8f2d1a; font-weight: bold; }
+.box-chart .gauge-track { fill: #e4d7b8; }
+.box-chart .gauge-fill { fill: #d9993a; }
+.box-chart .gauge-tick { stroke: #24170a; stroke-width: 2; }
+.box-chart .bar { fill: #7a9bb0; }
+.box-chart .bar-top { fill: #c2410c; }
+.box-chart .bar-unsure { fill: #a8893a; }
+.box-chart .bar-unsure.bar-top { fill: #8f2d1a; }
+.box-chart .slice-0 { stroke: #c2410c; } .box-chart .slice-1 { stroke: #7a9bb0; } .box-chart .slice-2 { stroke: #d9993a; } .box-chart .slice-3 { stroke: #5b7a4a; }
+.box-chart .swatch-0 { fill: #c2410c; } .box-chart .swatch-1 { fill: #7a9bb0; } .box-chart .swatch-2 { fill: #d9993a; } .box-chart .swatch-3 { fill: #5b7a4a; }
+@media (max-width: 640px) {
+  .box-flow { grid-template-columns: 1fr; }
+  .box-arrow { transform: rotate(90deg); justify-self: center; }
+}
 .legend { margin: 0 0 8px; font-size: 14px; line-height: 1.3; color: var(--cream); }
 .chart-svg .state-detail { color: #4a3a28; fill: currentColor; font: 11px monospace; }
 .chart-svg .state.current .state-detail { color: #ffe9b8; }

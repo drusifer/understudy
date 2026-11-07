@@ -238,7 +238,7 @@ function drawChart(run) {
   $('chart-title').textContent = `DIAGRAM OF RUN ${stamp(run.id)}`;
   drawViewButton(chart);
   drawDiagram($('chart-wrap'), chart, { pick: pickStep, picked: state.stepBeat, mode: 'show', can: (node) => node.kind === 'beat', steps: run.steps });
-  drawStep(run);
+  drawBox(run);
   if (!chart) {
     $('chart-note').textContent = 'this run\'s log has no plan, so there is no diagram to draw';
     return;
@@ -252,36 +252,6 @@ function pickStep(node) {
   state.stepBeat = state.stepBeat === node.id ? null : node.id;
   drawChart(state.shownRun);
   $('chart-wrap').querySelector(`[data-state="${CSS.escape(node.id)}"]`)?.focus(); // the diagram was drawn again
-}
-
-// "12 rows (keys: a, b, c)" for one piece a beat read, made or wrote.
-function pieceText(name, said) {
-  const keys = said.keys.length > 0 ? ` (keys: ${said.keys.join(', ')})` : '';
-  return `${name}: ${said.rows} ${said.rows === 1 ? 'row' : 'rows'}${keys}`;
-}
-
-// The step view: one beat of the play, from the plan (its action, its `with`, what it would read) and from the log (what it
-// did read, make and write, once it has completed). It names things and counts rows; the log carries no values.
-function drawStep(run) {
-  const chart = run.chart;
-  const beats = chart ? chart.nodes.filter((node) => node.kind === 'beat') : [];
-  $('step-view').hidden = beats.length === 0;
-  if (beats.length === 0) { $('step-body').replaceChildren(); return; }
-  const beat = beats.find((node) => node.id === state.stepBeat) ?? beats.find((node) => node.current) ?? beats.find((node) => node.initial) ?? beats[0];
-  const said = run.steps?.[beat.id];
-  const reads = chart.edges.filter((edge) => edge.kind === 'reads' && edge.to === beat.id).map((edge) => edge.from);
-  const status = said ? 'completed' : beat.current ? (run.state === 'paused' ? 'held before it runs' : 'running or next') : 'not run yet';
-  const lines = (found) => found && Object.keys(found).length > 0 ? Object.entries(found).map(([name, each]) => pieceText(name, each)).join('\n') : 'nothing';
-  const rows = [
-    ['beat', `${beat.id}${beat.final ? ' (final)' : beat.waits ? ' (performed when read)' : ''} - ${status}`],
-    ['action', beat.action ?? 'none'],
-    ['with', beat.with ?? 'none'],
-    ['reads, by the plan', reads.length > 0 ? reads.join(', ') : 'nothing'],
-  ];
-  if (said) rows.push(['read', lines(said.read)], ['made', said.made ? pieceText('result', said.made) : 'nothing'], ['wrote', lines(said.wrote)]);
-  $('step-title').textContent = `STEP: ${beat.id}`;
-  $('step-note').textContent = state.stepBeat ? 'click the beat again on the diagram to follow the run' : 'follows the run; click a beat on the diagram to look at another';
-  $('step-body').replaceChildren(...rows.flatMap(([name, value]) => [make('dt', {}, name), make('dd', { class: 'step-text' }, value)]));
 }
 
 const dollars = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
@@ -298,25 +268,8 @@ function drawSpending(spending) {
     : spending.more > 0 ? `and ${spending.more} more` : '');
 }
 
-// One top-level stage: its lamp, and under it each group of nested stages (open or closed as the reader left it).
-function stageBlock(stage) {
-  const block = make('div', { class: 'stage-block' }, make('div', { class: `stage-lamp ${stage.state}` }, make('i'), stage.name));
-  for (const group of stage.groups) {
-    const key = `${stage.name}/${group.name}`;
-    const progress = group.seen > 0 ? `${group.done} of ${group.seen} done` : group.state;
-    const details = make('details', { class: `group ${group.state}` },
-      make('summary', {}, `${group.name} · ${progress}${group.seen > 0 && group.state === 'running' ? ' · running' : ''}`),
-      ...group.stages.map((child) => make('div', { class: 'group-stage' }, `${child.name} · ${child.completed} of ${child.started} done`)));
-    details.open = state.openGroups.has(key);
-    details.addEventListener('toggle', () => { if (details.open) state.openGroups.add(key); else state.openGroups.delete(key); });
-    block.append(details);
-  }
-  return block;
-}
-
 // Everything but the printer's lines, so it can be refreshed while a run goes without losing the reader's place.
 function drawStatus(run) {
-  $('tube').replaceChildren(...run.tube.map(stageBlock));
   $('gauges').replaceChildren(...[...run.gauges, ...state.jevGauges].map(gauge));
   $('tube-caption').textContent = `${run.sketch} · ${WORDS[run.state]} · ${run.mode}`;
   $('ended').textContent = run.ended;

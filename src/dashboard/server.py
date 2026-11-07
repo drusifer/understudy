@@ -37,7 +37,7 @@ from src.play.sources.capture import CACHE
 HERE = Path(__file__).parent
 STATIC_TYPES = {".html": "text/html", ".css": "text/css", ".js": "text/javascript", ".woff2": "font/woff2"}
 STATIC_NAMES = re.compile(
-    r"(page\.html|page\.css|page\.js|controls\.js|replay\.js|decisions\.js|theme-[a-z-]+\.css|fonts/[a-z0-9-]+\.woff2)")
+    r"(page\.html|page\.css|page\.js|controls\.js|box\.js|replay\.js|decisions\.js|theme-[a-z-]+\.css|fonts/[a-z0-9-]+\.woff2)")
 RUN_ROUTE = re.compile(r"/(?P<what>api/runs|events)/(?P<run>run-[0-9A-Za-z-]+)(?P<more>/jev|/replay|/decisions)?")
 MAX_STREAMS = 32  # watchers at once; more get a 503 (SEC-001)
 IDLE_SECONDS = 600  # a stream with no new line for this long ends (SEC-001)

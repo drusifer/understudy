@@ -221,7 +221,7 @@ function paintPlan() {
     : controls.holdAt ? `the next run will hold before ${controls.holdAt}; click it again to clear`
     : plan.nodes.length === 0 ? 'this play has no stage pieces and no beats'
     : `${plan.nodes.length} ${plan.nodes.length === 1 ? 'node' : 'nodes'}: pieces are rounded, beats are boxes, a dashed box waits until it is read; click a beat of the flow to hold a run before it`;
-  drawStep({ chart: plan, steps: {}, state: 'plan' });
+  drawBox({ chart: plan, steps: {}, state: 'plan' });
 }
 
 function drawSketches() {

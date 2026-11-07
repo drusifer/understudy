@@ -235,11 +235,47 @@ def _ended(state: str, run: dict, failure: dict | None, last_at: str | None, now
     return "no details for this run" if state == "unreadable" else ""
 
 
+def _owner_of(source: str, beats: list[str]) -> str | None:
+    """The beat a Jev answer belongs to, from its source name: `evening.pick` is the beat `pick` (the play's name and the
+    beat), `scored.review_score[3].audience` is inside the beat `scored`. The longest matching beat name wins."""
+    named = [name for name in beats if source.endswith(f".{name}") or source.startswith(f"{name}.")]
+    return max(named, key=len) if named else None
+
+
+PASSES_SENT = 40  # the latest passes of a repeated beat the page is sent (the count is the true number)
+ANSWERS_SENT = 12  # the latest Jev answers and decisions of one beat the page is sent
+
+
 def step_details(events: list[dict]) -> dict[str, dict]:
-    """What each completed beat said it read, made and wrote (names, rows and keys; no values), from the log alone. A beat
-    logged before the log said so is there with nothing in it."""
-    return {each["beat"]: {key: each[key] for key in ("read", "made", "wrote") if key in each}
-            for each in events if each.get("event") == "beat_completed" and "beat" in each}
+    """What the beat box draws, by beat, from the log alone: for a completed beat its `action` and what it `read`, `made`
+    and `wrote`; for a beat that repeats once per row its passes (`iterations`: the true `count` and the `latest`); the Jev
+    answers read while it ran (`jev`, with their levels) and its blend `decisions`. A beat logged before the log said so is
+    there with nothing in it."""
+    steps: dict[str, dict] = {}
+    current = None  # the top-level beat now running: a Jev answer with no owner of its own belongs to the beat that read it
+    passes: dict[str, list[dict]] = {}
+    known = [node["id"] for each in events[:1] for node in each.get("plan", {}).get("nodes", []) if node.get("kind") == "beat"]
+    for each in events:
+        kind, beat = each.get("event"), each.get("beat")
+        if kind == "beat_started" and beat and "." not in beat:
+            current = beat
+        if kind == "beat_completed" and beat:
+            steps.setdefault(beat, {}).update({key: each[key] for key in ("action", "read", "made", "wrote") if key in each})
+        elif kind == "iteration" and beat:
+            passes.setdefault(beat, []).append({key: each[key] for key in ("index", "of", "item", "made") if key in each})
+        elif kind == "jev_read" and (owner := _owner_of(each.get("source", ""), known) or current):
+            steps.setdefault(owner, {}).setdefault("jev", []).append(
+                {key: each[key] for key in ("source", "top", "probability", "options", "levels") if key in each})
+        elif kind == "decision" and beat:
+            steps.setdefault(beat, {}).setdefault("decisions", []).append(
+                {key: each[key] for key in ("row", "dimension", "pick", "probability", "options") if key in each})
+    for beat, found in passes.items():
+        steps.setdefault(beat, {})["iterations"] = {"count": len(found), "latest": found[-PASSES_SENT:]}
+    for found in steps.values():
+        for key in ("jev", "decisions"):
+            if key in found:
+                found[key] = found[key][-ANSWERS_SENT:]
+    return steps
 
 
 def describe(directory: Path, now: datetime | None = None, view: str = "auto") -> dict:

@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="theme-professional.css">
 <link rel="stylesheet" href="theme-starship.css">
 <script src="page.js" defer></script>
+<script src="box.js" defer></script>
 <script src="controls.js" defer></script>
 <script src="replay.js" defer></script>
 <script src="decisions.js" defer></script>
@@ -108,10 +109,10 @@
     <div class="roller take-up" aria-hidden="true"></div>
   </section>
 
-  <section class="tube-panel" aria-label="Beat tube">
-    <div class="panel-head"><span>BEAT TUBE</span><span id="tube-caption" class="about">no run chosen</span></div>
+  <section class="tube-panel" aria-label="Beat box">
+    <div class="panel-head"><span>BEAT BOX</span><span id="tube-caption" class="about">no run chosen</span></div>
     <div id="ended" class="ended about"></div>
-    <div id="tube" class="tube stages"></div>
+    <div id="beat-box" class="beat-box" aria-live="polite"></div>
     <div id="gauges" class="gauges" role="group" aria-label="Gauges"></div>
     <dl id="summary" class="summary" aria-label="Run summary"></dl>
     <section id="spending" class="spending" aria-labelledby="spending-title" hidden>
@@ -140,11 +141,6 @@
         beat writing its file. A small tag above a box, on the right, is how many rows the beat made once it has run; START marks the first beat.</p>
       <button type="button" id="diagram-view" class="find-button" hidden></button>
       <div id="chart-wrap" class="chart-wrap" role="group" aria-label="Play diagram" tabindex="0" hidden></div>
-    </section>
-    <section id="step-view" class="chart" aria-labelledby="step-title" hidden>
-      <h3 id="step-title" class="chart-title">STEP</h3>
-      <p id="step-note" class="chart-note"></p>
-      <dl id="step-body" class="summary" aria-label="What this beat read and made"></dl>
     </section>
   </section>
 </main>
